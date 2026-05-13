@@ -19,6 +19,16 @@ config/
 
 ## 一次更新的流程
 
+开始写正式简报前，先按模板和筛选规则统一口径：
+
+```text
+content/templates/paper-report-template.md
+content/templates/paper-selection-rubric.md
+content/templates/digest-template.md
+```
+
+论文详细报告建议保持相同叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成组内后续讨论的问题导向论文。
+
 1. 为每篇入选论文新建一个文件：
 
 ```text

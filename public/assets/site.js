@@ -214,6 +214,7 @@ function renderDigest() {
         <div class="cover-stat"><strong>${digest.tags.length}</strong><span>topic tags</span></div>
       </div>
     </section>
+    ${digest.bodyHtml ? `<section class="issue-note">${digest.bodyHtml}</section>` : ""}
     <div class="tag-strip" aria-label="本期内容标签">${tagButtons}</div>
     ${sections}
   `;

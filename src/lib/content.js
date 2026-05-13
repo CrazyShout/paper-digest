@@ -149,6 +149,7 @@ export async function getDigests() {
     return {
       ...doc.data,
       body: doc.body,
+      bodyHtml: markdownToHtml(doc.body),
       tags: digestTags,
       papers: digestPapers
     };

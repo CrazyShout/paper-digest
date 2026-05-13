@@ -1,0 +1,45 @@
+---
+{
+  "id": "vadv2-probabilistic-planning",
+  "tag": "end-to-end-autonomous-driving",
+  "title": "VADv2: End-to-End Vectorized Autonomous Driving via Probabilistic Planning",
+  "source": "ICLR 2026 / arXiv:2402.13243 / https://hgao-cv.github.io/VADv2/",
+  "authors": ["Bo Jiang", "Shaoyu Chen", "Hao Gao", "Bencheng Liao", "Qian Zhang", "Wenyu Liu", "Xinggang Wang"],
+  "affiliations": ["Huazhong University of Science and Technology", "Horizon Robotics"],
+  "comment": "把端到端驾驶规划从确定性轨迹回归转为概率规划分布，适合作为端到端自动驾驶方向的核心阅读论文。",
+  "visual": "visual-wave",
+  "visualLabel": "probabilistic plan"
+}
+---
+
+## 导读判断
+
+VADv2 的核心价值在于它正面处理规划的不确定性。许多端到端驾驶方法直接回归一条轨迹或控制量，但真实驾驶存在多种合理动作，确定性输出容易把多模态行为压成平均解。VADv2 用概率规划分布来建模动作空间，适合作为端到端自动驾驶方向的本期代表。
+
+## 研究背景与问题
+
+端到端驾驶希望从多视角传感器输入直接到规划控制，但规划动作处在高维连续时空空间，既难学习也难解释。已有确定性模型在闭环中容易出现不稳定行为，还常依赖规则 wrapper 修正。VADv2 的问题定义是：能否把规划动作离散为大规模 planning vocabulary，再通过 planning tokens 与 scene tokens 交互，输出动作概率分布并采样执行。
+
+## 方法主线
+
+- 模型以流式多视角图像序列为输入，将传感器信息转成环境 token 表征。
+- 它把连续规划动作空间离散成规划词表，并进一步 token 化，让规划 token 和场景 token 交互。
+- 模型从大规模驾驶示范中监督动作概率分布，最终采样动作控制车辆，而不是直接回归单一轨迹。
+
+## 实验与证据
+
+VADv2 被 ICLR 2026 接收，项目页和论文报告了 CARLA Town05 长路线闭环 benchmark 的强表现，并补充 NAVSIM 与大规模 3DGS-based benchmark 评估。重要之处在于它强调无规则 wrapper 的稳定闭环运行，这比只在 nuScenes 上报告开环规划误差更接近真实驾驶研究关心的问题。
+
+## 和组内方向的关系
+
+这篇论文对组内端到端驾驶方向有两点启发。第一，规划输出可以是分布而不是一条确定轨迹，这给不确定性交互、风险控制和多模态规划留下空间。第二，评价必须回到闭环和长路线，而不是只看短时 horizon 的 L2 error。它也可以和 V2X-VLM 对照：一个强调语义协同，一个强调概率规划。
+
+## 局限与阅读风险
+
+概率规划的 tokenization 会引入离散化设计选择，planning vocabulary 的覆盖质量会影响模型上限。CARLA 闭环结果虽重要，但仍需检查真实数据和长尾场景上的泛化。另一个问题是采样式动作如何和安全约束结合，论文结果不应被理解为概率规划自动解决安全验证。
+
+## 后续跟进
+
+- 查看项目页代码发布状态，记录 CARLA、NAVSIM 和 3DGS benchmark 的评估差异。
+- 复现时优先比较确定性回归、概率分布输出和规则 wrapper 三类设置。
+- 组会可讨论：端到端驾驶中的不确定性应该出现在规划动作、世界模型 rollout，还是两者都建模。
