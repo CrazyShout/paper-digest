@@ -14,6 +14,7 @@ config/
   research-interests.json   # 组内研究兴趣配置，给后续抓取脚本使用
   runtime.json              # 前端运行时配置，例如评论 Worker URL
 content/
+  README.md                 # 更新简报的具体操作说明
   digests/                  # 每期简报 Markdown
   papers/                   # 每篇论文详细报告 Markdown
 src/
@@ -62,6 +63,12 @@ docs/index.html
 ```
 
 ## Content Model
+
+日常更新简报的具体步骤见：
+
+```text
+content/README.md
+```
 
 研究方向统一放在：
 
