@@ -1,68 +1,96 @@
 # Paper Digest
 
-一个用于组内周期性论文抓取、阅读报告和简报分享的静态站点原型。
+组内周期性论文抓取、阅读报告和简报分享站点。当前路线是：
 
-当前版本采用：
+- Codex 或抓取脚本生成 Markdown 内容源。
+- Astro 作为静态站点模板层，负责页面、组件和构建。
+- GitHub Actions 自动构建并部署到 GitHub Pages。
+- Cloudflare Worker 可选接入匿名评论，把评论写回仓库。
 
-- `content/`：Markdown 内容源，适合 Codex 或抓取脚本生成。
-- `src/`：页面样式和前端交互模板。
-- `scripts/build-site.mjs`：零依赖静态生成器。
-- `docs/`：构建产物，匹配当前 GitHub Pages 的 `main /docs` 发布设置。
+## Project Layout
 
-## 本地使用
+```text
+config/
+  research-interests.json   # 组内研究兴趣配置，给后续抓取脚本使用
+  runtime.json              # 前端运行时配置，例如评论 Worker URL
+content/
+  digests/                  # 每期简报 Markdown
+  papers/                   # 每篇论文详细报告 Markdown
+src/
+  components/               # Astro 页面组件
+  layouts/                  # 基础 HTML 布局
+  lib/content.js            # 读取 Markdown 和配置并生成页面数据
+  pages/                    # 首页、论文详情页、静态数据端点
+public/assets/              # 前端交互脚本和 CSS
+docs/                       # Astro 构建产物，兼容 main /docs 发布方式
+.github/workflows/          # GitHub Pages 自动部署 workflow
+worker/                     # 评论写回仓库的 Cloudflare Worker 示例
+```
+
+`docs/` 现在仍然保留并提交，是为了兼容你当前 GitHub Pages 的 `main /docs` 设置。等 GitHub Actions 发布稳定后，可以选择不再提交 `docs/`，只把它作为 CI 产物。
+
+## Local Development
+
+首次安装依赖：
+
+```bash
+npm install
+```
+
+本地开发预览：
+
+```bash
+npm run dev
+```
+
+生成静态站点：
 
 ```bash
 npm run build
+```
+
+预览构建产物：
+
+```bash
 npm run preview
 ```
 
-`npm run build` 会读取 `content/`，生成：
-
-- `docs/index.html`：简报首页。
-- `docs/papers/*/index.html`：每篇论文的详细报告页。
-- `docs/assets/data.js`：由 Markdown 汇总出的前端数据。
-- `docs/assets/styles.css` 和 `docs/assets/site.js`：页面视觉和交互。
-
-如果只是本地看效果，也可以直接打开：
+只想快速看静态结果，也可以直接打开：
 
 ```text
 docs/index.html
 ```
 
-## 内容结构
+## Content Model
 
 研究方向统一放在：
 
 ```text
-content/tags.json
+config/research-interests.json
 ```
+
+这个文件主要服务后续论文抓取和筛选。页面顶部的 tag 不做固定筛选下拉，而是每期简报根据实际入选论文动态生成。
 
 每篇论文一个 Markdown：
 
 ```text
-content/papers/agent-collaboration.md
+content/papers/cooperative-driving-planning.md
 ```
 
-每期简报一个 Markdown：
-
-```text
-content/digests/2026-05-11.md
-```
-
-论文 Markdown 的 frontmatter 示例：
+示例：
 
 ```md
 ---
 {
-  "id": "agent-collaboration",
-  "tag": "agent-reasoning",
-  "title": "Long-Horizon Agent Collaboration with Shared Memory",
-  "source": "arXiv / OpenReview / GitHub",
-  "authors": ["Lin Zhao", "Mei Chen", "Daniel Park"],
+  "id": "cooperative-driving-planning",
+  "tag": "cooperative-autonomous-driving",
+  "title": "Cooperative Planning for Connected Autonomous Vehicles",
+  "source": "arXiv / project page",
+  "authors": ["Yifan Zhang", "Mei Chen", "Daniel Park"],
   "affiliations": ["Tsinghua University", "Stanford University", "MIT CSAIL"],
   "comment": "一句简评",
   "visual": "visual-network",
-  "visualLabel": "agent trace"
+  "visualLabel": "CAV planning"
 }
 ---
 
@@ -71,7 +99,13 @@ content/digests/2026-05-11.md
 这里写详细阅读报告。
 ```
 
-简报 Markdown 只需要引用论文 id：
+每期简报一个 Markdown：
+
+```text
+content/digests/2026-05-11.md
+```
+
+示例：
 
 ```md
 ---
@@ -81,39 +115,92 @@ content/digests/2026-05-11.md
   "title": "本期标题",
   "summary": "本期摘要",
   "keywords": ["关键词1", "关键词2"],
-  "papers": ["agent-collaboration", "robot-world-model"],
+  "papers": ["cooperative-driving-planning", "driving-world-model"],
   "notes": []
 }
 ---
 ```
 
-## GitHub Pages Source
+## GitHub Pages Deploy
 
-你截图里现在是：
+本仓库已经加入：
 
 ```text
-Deploy from a branch
-main /docs
+.github/workflows/deploy-pages.yml
 ```
 
-这个设置目前不用改。因为本项目已经把构建产物输出到 `docs/`，只要提交并 push `docs/`，GitHub Pages 就会继续从 `https://crazyshout.github.io/paper-digest/` 发布。
+workflow 会在 push 到 `main` 后执行：
 
-后续有两种路线：
+1. `npm ci`
+2. `npm run build`
+3. 上传 `docs/`
+4. 部署到 GitHub Pages
 
-1. 保持现在的 `main /docs`：最简单，但需要把 `docs/` 构建产物一起 commit。
-2. 改成 `GitHub Actions`：更干净，仓库可以只维护 `content/`、`src/`、`scripts/`，Actions 每次 push 后自动构建并部署，不需要 commit `docs/`。
+要启用 Actions 发布，需要在 GitHub 仓库页面操作：
 
-短期建议先保持 `main /docs`。等内容流和页面设计稳定后，再切到 GitHub Actions。
+```text
+Settings -> Pages -> Build and deployment -> Source -> GitHub Actions
+```
 
-## 后续升级点
+如果暂时不切换，保持 `Deploy from a branch` 和 `main /docs` 也能继续工作，因为 Astro 仍然输出到 `docs/`。
 
-- 把零依赖生成器替换为 Astro content collections，获得 schema 校验和更强模板能力。
-- 接入 Pagefind，替换当前前端简易搜索，支持更强的全文搜索和 tag filter。
-- 把论文主图从抓取脚本保存到 `docs/assets/figures/` 或 `public/figures/`，替换现在的 CSS 占位图。
-- 如果要真正组内私密，不要只依赖 GitHub Pages 隐藏路径，应部署到 Cloudflare Access、Netlify/Vercel 登录、Tailscale/VPN 或 GitHub Enterprise Cloud private Pages。
+## Anonymous Comments
 
-参考：
+纯 GitHub Pages 不能安全地直接写仓库，因为前端不能暴露 GitHub token。本项目用可选的 Cloudflare Worker 作为后端：
 
-- [GitHub Docs: About GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages)
-- [GitHub Docs: Changing the visibility of your GitHub Pages site](https://docs.github.com/en/enterprise-cloud@latest/pages/getting-started-with-github-pages/changing-the-visibility-of-your-github-pages-site)
-- [giscus configuration requirements](https://giscus.app/)
+```text
+GitHub Pages frontend
+  -> Cloudflare Worker
+    -> GitHub Contents API
+      -> comments/YYYY-MM-DD.json
+```
+
+部署 Worker 后，把 URL 写入：
+
+```text
+config/runtime.json
+```
+
+```json
+{
+  "commentsEndpoint": "https://paper-digest-comments.your-name.workers.dev"
+}
+```
+
+然后重新构建：
+
+```bash
+npm run build
+```
+
+Worker 文件：
+
+```text
+worker/comments-worker.mjs
+```
+
+部署时可以复制示例配置：
+
+```bash
+cp worker/wrangler.toml.example worker/wrangler.toml
+cd worker
+wrangler secret put GITHUB_TOKEN
+wrangler deploy
+```
+
+`GITHUB_TOKEN` 建议使用 GitHub fine-grained personal access token，只给当前仓库 `Contents: Read and write` 权限。不要把 token 写进前端代码或提交到仓库。
+
+Worker 需要这些变量：
+
+- `GITHUB_OWNER`：例如 `CrazyShout`
+- `GITHUB_REPO`：例如 `paper-digest`
+- `GITHUB_BRANCH`：通常是 `main`
+- `COMMENTS_DIR`：默认 `comments`
+- `ALLOWED_ORIGIN`：建议填 `https://crazyshout.github.io`
+
+注意：匿名评论没有登录鉴权，任何能访问页面的人理论上都能提交评论。Worker 已做长度和字段校验；公开使用后建议再加 Cloudflare Turnstile、限流或人工 review。
+
+## References
+
+- [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/)
+- [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)

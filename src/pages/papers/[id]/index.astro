@@ -1,0 +1,54 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Visual from "../../../components/Visual.astro";
+import { getPaperWithTag, getPapers, markdownToHtml } from "../../../lib/content.js";
+
+export async function getStaticPaths() {
+  const papers = await getPapers();
+  return papers.map((paper) => ({
+    params: { id: paper.id }
+  }));
+}
+
+const { id } = Astro.params;
+const result = await getPaperWithTag(id);
+
+if (!result) {
+  return Astro.redirect("../../");
+}
+
+const { paper, tag } = result;
+const reportHtml = markdownToHtml(paper.body);
+---
+
+<BaseLayout title={`${paper.title} · Paper Digest`} stylesheet="../../assets/styles.css">
+  <main class="paper-page">
+    <a class="back-link" href="../../">返回简报</a>
+    <section class="paper-hero">
+      <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
+      <h1>{paper.title}</h1>
+      <p>{paper.comment}</p>
+    </section>
+
+    <section class="paper-detail-grid">
+      <aside class="paper-detail-meta">
+        <Visual paper={paper} />
+        <dl>
+          <div>
+            <dt>抓取位置</dt>
+            <dd>{paper.source}</dd>
+          </div>
+          <div>
+            <dt>作者</dt>
+            <dd>{paper.authors.join(", ")}</dd>
+          </div>
+          <div>
+            <dt>单位</dt>
+            <dd>{paper.affiliations.join("; ")}</dd>
+          </div>
+        </dl>
+      </aside>
+      <article class="paper-report" set:html={reportHtml} />
+    </section>
+  </main>
+</BaseLayout>
