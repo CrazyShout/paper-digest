@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #475a70">车路协同</span> <h1>V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models</h1> <p>把车端和路侧多视角图像与文本语义对齐后做轨迹规划，适合评估车路协同是否能进入端到端驾驶闭环。</p> </section> <section class="paper-detail-grid"> <aside class="paper-detail-meta"> <div class="paper-visual visual-wave" data-label="V2X-VLM" aria-label="V2X-VLM"> <span></span><span></span><span></span> </div> <dl> <div> <dt>抓取位置</dt> <dd>arXiv:2408.09251 / https://arxiv.org/abs/2408.09251</dd> </div> <div> <dt>作者</dt> <dd>Junwei You, Haotian Shi, Zhuoyu Jiang, Zilin Huang, Rui Gan, Keshu Wu, Xi Cheng, Xiaopeng Li, Bin Ran</dd> </div> <div> <dt>单位</dt> <dd>University of Wisconsin-Madison and collaborators</dd> </div> </dl> </aside> <article class="paper-report"><h2>导读判断</h2>
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #475a70">车路协同</span> <h1>V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models</h1> <p>把车端和路侧多视角图像与文本语义对齐后做轨迹规划，适合评估车路协同是否能进入端到端驾驶闭环。</p> <div class="paper-hero-meta"> <dl class="paper-meta-list"> <div> <dt>抓取位置</dt> <dd>arXiv:2408.09251 / https://arxiv.org/abs/2408.09251</dd> </div> <div> <dt>作者</dt> <dd>Junwei You, Haotian Shi, Zhuoyu Jiang, Zilin Huang, Rui Gan, Keshu Wu, Xi Cheng, Xiaopeng Li, Bin Ran</dd> </div> <div> <dt>单位</dt> <dd>University of Wisconsin-Madison and collaborators</dd> </div> </dl> <button class="share-link" type="button" data-share-button> <span data-share-label>分享链接</span> </button> </div> </section> <section class="paper-detail-grid"> <article class="paper-report"><h2>导读判断</h2>
 <p>这篇论文的重点不是单纯把 VLM 套到驾驶上，而是尝试把车端和基础设施端的多视角信息、文本场景描述和轨迹规划合成一个 V2X 端到端框架。它适合放在车路协同方向，因为它直接面对异构视觉语义融合和规划稳定性，而不是只做路侧感知增强。</p>
 <h2>研究背景与问题</h2>
 <p>车路协同的直觉很强：路侧传感器能看见 ego 看不见的遮挡区域。但实际问题在于车辆与基础设施视角不同、语义粒度不同、传感器质量不同，直接拼接特征容易产生错配。V2X-VLM 试图用视觉语言模型的语义能力统一多视角信息，并把这种理解用于规划输出。</p>
@@ -11,4 +11,47 @@
 <h2>局限与阅读风险</h2>
 <p>VLM 的语义能力可能带来额外计算成本和不可解释错误，文本描述如何生成也会影响系统可靠性。论文需要重点检查是否存在数据集特定的语言模板、是否评估极端遮挡和异常交通行为，以及基础设施传感器失效时模型是否退化明显。</p>
 <h2>后续跟进</h2>
-<ul><li>检查论文使用的数据集是否包含真实基础设施传感器，以及文本描述如何构建。</li><li>对比 V2X-VLM 与纯视觉 V2X 方法在碰撞率、规划误差和推理成本上的差异。</li><li>组会可讨论：车路协同中的语言语义是必要中间层，还是目前主要起到正则化和解释作用。</li></ul></article> </section> </main>  </body></html>
+<ul><li>检查论文使用的数据集是否包含真实基础设施传感器，以及文本描述如何构建。</li><li>对比 V2X-VLM 与纯视觉 V2X 方法在碰撞率、规划误差和推理成本上的差异。</li><li>组会可讨论：车路协同中的语言语义是必要中间层，还是目前主要起到正则化和解释作用。</li></ul></article> </section> </main> <script>
+    const shareButton = document.querySelector("[data-share-button]");
+    const shareLabel = shareButton?.querySelector("[data-share-label]");
+
+    async function copyShareLink() {
+      const shareData = {
+        title: document.title.replace(" · Paper Digest", ""),
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return "已打开分享";
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareData.url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      return "已复制链接";
+    }
+
+    shareButton?.addEventListener("click", async () => {
+      try {
+        const message = await copyShareLink();
+        if (shareLabel) shareLabel.textContent = message;
+      } catch (error) {
+        if (shareLabel) shareLabel.textContent = "复制失败";
+      }
+
+      window.setTimeout(() => {
+        if (shareLabel) shareLabel.textContent = "分享链接";
+      }, 1800);
+    });
+  </script>  </body></html>

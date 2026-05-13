@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import Visual from "../../../components/Visual.astro";
 import { getPaperWithTag, getPapers, markdownToHtml } from "../../../lib/content.js";
 
 export async function getStaticPaths() {
@@ -28,12 +27,8 @@ const reportHtml = markdownToHtml(paper.body);
       <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
       <h1>{paper.title}</h1>
       <p>{paper.comment}</p>
-    </section>
-
-    <section class="paper-detail-grid">
-      <aside class="paper-detail-meta">
-        <Visual paper={paper} />
-        <dl>
+      <div class="paper-hero-meta">
+        <dl class="paper-meta-list">
           <div>
             <dt>抓取位置</dt>
             <dd>{paper.source}</dd>
@@ -47,8 +42,59 @@ const reportHtml = markdownToHtml(paper.body);
             <dd>{paper.affiliations.join("; ")}</dd>
           </div>
         </dl>
-      </aside>
+        <button class="share-link" type="button" data-share-button>
+          <span data-share-label>分享链接</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="paper-detail-grid">
       <article class="paper-report" set:html={reportHtml} />
     </section>
   </main>
+
+  <script is:inline>
+    const shareButton = document.querySelector("[data-share-button]");
+    const shareLabel = shareButton?.querySelector("[data-share-label]");
+
+    async function copyShareLink() {
+      const shareData = {
+        title: document.title.replace(" · Paper Digest", ""),
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return "已打开分享";
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareData.url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      return "已复制链接";
+    }
+
+    shareButton?.addEventListener("click", async () => {
+      try {
+        const message = await copyShareLink();
+        if (shareLabel) shareLabel.textContent = message;
+      } catch (error) {
+        if (shareLabel) shareLabel.textContent = "复制失败";
+      }
+
+      window.setTimeout(() => {
+        if (shareLabel) shareLabel.textContent = "分享链接";
+      }, 1800);
+    });
+  </script>
 </BaseLayout>

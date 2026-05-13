@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #9a5b42">自动驾驶模型攻防</span> <h1>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving</h1> <p>把对抗训练扩展到感知、预测、规划耦合的端到端驾驶模型，适合作为自动驾驶模型攻防方向的防御样本。</p> </section> <section class="paper-detail-grid"> <aside class="paper-detail-meta"> <div class="paper-visual visual-network" data-label="MA2T defense" aria-label="MA2T defense"> <span></span><span></span><span></span> </div> <dl> <div> <dt>抓取位置</dt> <dd>arXiv:2409.07321 / https://arxiv.org/abs/2409.07321</dd> </div> <div> <dt>作者</dt> <dd>Tianyuan Zhang, Lu Wang, Jiaqi Kang, Xinwei Zhang, Siyuan Liang, Yuwei Chen, Aishan Liu, Xianglong Liu</dd> </div> <div> <dt>单位</dt> <dd>Beihang University and collaborators</dd> </div> </dl> </aside> <article class="paper-report"><h2>导读判断</h2>
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #9a5b42">自动驾驶模型攻防</span> <h1>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving</h1> <p>把对抗训练扩展到感知、预测、规划耦合的端到端驾驶模型，适合作为自动驾驶模型攻防方向的防御样本。</p> <div class="paper-hero-meta"> <dl class="paper-meta-list"> <div> <dt>抓取位置</dt> <dd>arXiv:2409.07321 / https://arxiv.org/abs/2409.07321</dd> </div> <div> <dt>作者</dt> <dd>Tianyuan Zhang, Lu Wang, Jiaqi Kang, Xinwei Zhang, Siyuan Liang, Yuwei Chen, Aishan Liu, Xianglong Liu</dd> </div> <div> <dt>单位</dt> <dd>Beihang University and collaborators</dd> </div> </dl> <button class="share-link" type="button" data-share-button> <span data-share-label>分享链接</span> </button> </div> </section> <section class="paper-detail-grid"> <article class="paper-report"><h2>导读判断</h2>
 <p>MA2T 入选是因为它把安全鲁棒性问题从单个感知模块推进到端到端驾驶链路。端到端模型的攻击影响不只体现在检测或分割错误上，而是会穿过感知、预测和规划，最终改变驾驶动作。论文尝试做模块级自适应对抗训练，适合作为组内自动驾驶模型攻防方向的防御基线。</p>
 <h2>研究背景与问题</h2>
 <p>普通对抗训练通常假设模型有一个清晰输出和单一损失，但端到端驾驶模型包含感知、预测、规划等多阶段目标，各模块强耦合。直接套用分类或检测领域的对抗训练，可能只增强局部模块而损害整体驾驶目标。MA2T 的问题定义是：如何在端到端驾驶模型内部注入扰动并动态平衡各模块损失，使整体驾驶决策更稳健。</p>
@@ -11,4 +11,47 @@
 <h2>局限与阅读风险</h2>
 <p>对抗训练通常带来训练成本和 clean performance trade-off，需要核查论文是否报告正常场景性能。攻击设置也可能覆盖有限，真实世界中的物理攻击、传感器失效、通信异常和场景级扰动更复杂。MA2T 的模块划分还依赖具体端到端架构，迁移到 VLM 或世界模型式驾驶系统时未必直接适用。</p>
 <h2>后续跟进</h2>
-<ul><li>记录论文使用的端到端模型、攻击类型和闭环指标，作为未来安全评测清单。</li><li>如果复现，优先做 clean、white-box、black-box、natural corruption 四类对照。</li><li>组会可讨论：端到端驾驶鲁棒性应按模块防御，还是按最终规划风险统一建模。</li></ul></article> </section> </main>  </body></html>
+<ul><li>记录论文使用的端到端模型、攻击类型和闭环指标，作为未来安全评测清单。</li><li>如果复现，优先做 clean、white-box、black-box、natural corruption 四类对照。</li><li>组会可讨论：端到端驾驶鲁棒性应按模块防御，还是按最终规划风险统一建模。</li></ul></article> </section> </main> <script>
+    const shareButton = document.querySelector("[data-share-button]");
+    const shareLabel = shareButton?.querySelector("[data-share-label]");
+
+    async function copyShareLink() {
+      const shareData = {
+        title: document.title.replace(" · Paper Digest", ""),
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return "已打开分享";
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareData.url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      return "已复制链接";
+    }
+
+    shareButton?.addEventListener("click", async () => {
+      try {
+        const message = await copyShareLink();
+        if (shareLabel) shareLabel.textContent = message;
+      } catch (error) {
+        if (shareLabel) shareLabel.textContent = "复制失败";
+      }
+
+      window.setTimeout(() => {
+        if (shareLabel) shareLabel.textContent = "分享链接";
+      }, 1800);
+    });
+  </script>  </body></html>
