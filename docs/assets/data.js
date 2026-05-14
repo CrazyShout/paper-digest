@@ -183,49 +183,49 @@ window.PAPER_DIGESTS = [
       {
         "id": "cooperative-autonomous-driving",
         "label": "协同自动驾驶",
-        "color": "#b45f49",
+        "color": "#2f6f8f",
         "description": "关注多车协同、V2X 信息共享、协同规划和闭环自动驾驶系统。",
         "priority": 1
       },
       {
         "id": "cooperative-trajectory-prediction",
         "label": "协同轨迹预测",
-        "color": "#60715f",
+        "color": "#3f7d58",
         "description": "关注多智能体交互建模、车车/车路信息融合和轨迹预测不确定性。",
         "priority": 1
       },
       {
         "id": "vehicle-road-cooperation",
         "label": "车路协同",
-        "color": "#475a70",
+        "color": "#6a668f",
         "description": "关注路侧感知、车路协同感知、基础设施辅助定位和通信约束。",
         "priority": 1
       },
       {
         "id": "3d-reconstruction",
         "label": "三维重建",
-        "color": "#8b5e83",
+        "color": "#b66a3c",
         "description": "关注自动驾驶场景的 3D/4D 重建、NeRF/Gaussian Splatting、占据和地图构建。",
         "priority": 2
       },
       {
         "id": "autonomous-driving-security",
         "label": "自动驾驶模型攻防",
-        "color": "#9a5b42",
+        "color": "#a33f4a",
         "description": "关注感知、预测、规划和端到端驾驶模型的攻击、防御、鲁棒性和安全评测。",
         "priority": 2
       },
       {
         "id": "end-to-end-autonomous-driving",
         "label": "端到端自动驾驶",
-        "color": "#6d6254",
+        "color": "#526274",
         "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
         "priority": 1
       },
       {
         "id": "world-models",
         "label": "世界模型",
-        "color": "#645063",
+        "color": "#7a5fa8",
         "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
         "priority": 2
       }
@@ -363,35 +363,35 @@ window.PAPER_DIGESTS = [
       {
         "id": "cooperative-autonomous-driving",
         "label": "协同自动驾驶",
-        "color": "#b45f49",
+        "color": "#2f6f8f",
         "description": "关注多车协同、V2X 信息共享、协同规划和闭环自动驾驶系统。",
         "priority": 1
       },
       {
         "id": "cooperative-trajectory-prediction",
         "label": "协同轨迹预测",
-        "color": "#60715f",
+        "color": "#3f7d58",
         "description": "关注多智能体交互建模、车车/车路信息融合和轨迹预测不确定性。",
         "priority": 1
       },
       {
         "id": "vehicle-road-cooperation",
         "label": "车路协同",
-        "color": "#475a70",
+        "color": "#6a668f",
         "description": "关注路侧感知、车路协同感知、基础设施辅助定位和通信约束。",
         "priority": 1
       },
       {
         "id": "end-to-end-autonomous-driving",
         "label": "端到端自动驾驶",
-        "color": "#6d6254",
+        "color": "#526274",
         "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
         "priority": 1
       },
       {
         "id": "world-models",
         "label": "世界模型",
-        "color": "#645063",
+        "color": "#7a5fa8",
         "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
         "priority": 2
       }
@@ -460,14 +460,14 @@ window.PAPER_DIGESTS = [
       {
         "id": "3d-reconstruction",
         "label": "三维重建",
-        "color": "#8b5e83",
+        "color": "#b66a3c",
         "description": "关注自动驾驶场景的 3D/4D 重建、NeRF/Gaussian Splatting、占据和地图构建。",
         "priority": 2
       },
       {
         "id": "autonomous-driving-security",
         "label": "自动驾驶模型攻防",
-        "color": "#9a5b42",
+        "color": "#a33f4a",
         "description": "关注感知、预测、规划和端到端驾驶模型的攻击、防御、鲁棒性和安全评测。",
         "priority": 2
       }

@@ -45,7 +45,7 @@ function getActiveDigest() {
 }
 
 function tagById(digest, tagId) {
-  return digest.tags.find((tag) => tag.id === tagId) || { id: tagId, label: tagId, color: "#b45f49" };
+  return digest.tags.find((tag) => tag.id === tagId) || { id: tagId, label: tagId, color: "#2f6f8f" };
 }
 
 function escapeHtml(value) {
@@ -62,7 +62,7 @@ function getRandomItem(items) {
 }
 
 function randomIdentity() {
-  const colors = ["#b45f49", "#60715f", "#475a70", "#8b5e83", "#9a5b42", "#6d6254"];
+  const colors = ["#2f6f8f", "#3f7d58", "#6a668f", "#b66a3c", "#a33f4a", "#526274"];
   const moods = ["认真", "困困", "敏锐", "安静", "好奇", "清醒", "准时", "稳重"];
   const names = ["小猫", "小狗", "论文猫", "读论文狗", "陶土猫", "笔记狗"];
   const emoji = Math.random() > 0.5 ? "🐱" : "🐶";
@@ -104,7 +104,7 @@ function setIdentity(identity) {
 function renderAvatar(identity) {
   const avatar = identity.avatar || {};
   return `
-    <div class="anon-avatar" style="--avatar-color: ${escapeHtml(avatar.color || "#b45f49")}">
+    <div class="anon-avatar" style="--avatar-color: ${escapeHtml(avatar.color || "#2f6f8f")}">
       <span>${escapeHtml(avatar.emoji || "✦")}</span>
     </div>
   `;
@@ -195,10 +195,11 @@ function renderDigest() {
 
   els.digestArticle.innerHTML = `
     <section class="issue-cover">
-      <div>
+      <div class="cover-copy">
         <p class="eyebrow">Weekly Digest · ${escapeHtml(digest.date)}</p>
         <h1 class="issue-title">${escapeHtml(digest.title)}</h1>
         <p class="issue-summary">${escapeHtml(digest.summary)}</p>
+        <div class="tag-strip" aria-label="本期内容标签">${tagButtons}</div>
       </div>
       <div class="cover-meta">
         <div class="cover-stat"><strong>${digest.papers.length}</strong><span>papers collected</span></div>
@@ -206,7 +207,6 @@ function renderDigest() {
       </div>
     </section>
     ${digest.bodyHtml ? `<section class="issue-note">${digest.bodyHtml}</section>` : ""}
-    <div class="tag-strip" aria-label="本期内容标签">${tagButtons}</div>
     ${sections}
   `;
 
@@ -234,7 +234,7 @@ function normalizeSeedNote(note) {
     nickname: note.user.replace(/^@/, ""),
     avatar: {
       emoji: "✦",
-      color: "#b45f49"
+      color: "#2f6f8f"
     },
     time: note.time,
     text: note.text,
