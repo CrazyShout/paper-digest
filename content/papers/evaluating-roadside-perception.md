@@ -4,9 +4,9 @@
   "tag": "vehicle-road-cooperation",
   "tags": ["vehicle-road-cooperation"],
   "title": "Evaluating Roadside Perception for Autonomous Vehicles",
-  "source": "arXiv:2401.12392",
-  "authors": ["Infrastructure Perception Team"],
-  "affiliations": ["Research Institute A", "Smart City Lab B"],
+  "source": "arXiv:2401.12392 / https://arxiv.org/abs/2401.12392",
+  "authors": ["Rusheng Zhang", "Depu Meng", "Shengyin Shen", "Tinghan Wang", "Tai Karir", "Michael Maile", "Henry X. Liu"],
+  "affiliations": ["University of Michigan (Mcity)"],
   "comment": "这篇论文首次系统性地提出了路侧感知的评估方法论，解决了车路协同系统中路侧单元性能缺乏统一标准的问题，是车路协同感知评测的基础工作。"
 }
 ---
@@ -28,11 +28,11 @@
 
 ## 关键图与可视化结果
 
-![图 1：路侧感知评估框架展示指标体系和场景分类](https://example.com/roadside-eval-framework.png)
+![图 1：路侧感知评估框架展示指标体系和场景分类](https://arxiv.org/html/2401.12392v1/x1.png)
 
 这张图说明路侧感知评估需要考虑车端评估没有的维度，如通信延迟和安装几何。这是论文的核心贡献。
 
-![图 2：不同安装配置下的性能对比，展示高度和角度的影响](https://example.com/roadside-config.png)
+![图 2：不同安装配置下的性能对比，展示高度和角度的影响](https://arxiv.org/html/2401.12392v1/x2.png)
 
 这张可视化对实际部署很有参考价值。需要注意结果可能特定于测试场景和传感器型号，推广到其他环境需要验证。
 

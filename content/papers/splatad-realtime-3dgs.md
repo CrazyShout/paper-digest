@@ -4,9 +4,9 @@
   "tag": "3d-reconstruction",
   "tags": ["3d-reconstruction", "end-to-end-autonomous-driving"],
   "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting",
-  "source": "CVPR 2025 / arXiv:2501.XXXXX / project page",
-  "authors": ["First Author", "Second Author", "Third Author"],
-  "affiliations": ["University A", "Research Lab B", "Company C"],
+  "source": "arXiv:2411.16816 / https://arxiv.org/abs/2411.16816",
+  "authors": ["Georg Hess", "Carl Lindström", "Maryam Fatemi", "Christoffer Petersson", "Lennart Svensson"],
+  "affiliations": ["Zenseact / Chalmers University of Technology"],
   "comment": "SplatAD 首次将 3D Gaussian Splatting 应用于自动驾驶场景的多模态传感器渲染，实现了相机和 LiDAR 的实时联合渲染，为闭环仿真和多模态标注提供了新范式。"
 }
 ---
@@ -28,11 +28,11 @@ SplatAD 是一篇将 3D Gaussian Splatting 扩展到自动驾驶多模态渲染�
 
 ## 关键图与可视化结果
 
-![图 1：SplatAD 架构展示静态/动态分解、多模态 Gaussian 属性和联合渲染管线](https://example.com/splatad-arch.png)
+![图 1：SplatAD 架构展示静态/动态分解、多模态 Gaussian 属性和联合渲染管线](https://arxiv.org/html/2411.16816v3/x1.png)
 
 这张图说明 SplatAD 如何将传统 3DGS 的单一 RGB 属性扩展为多模态属性。关键在于渲染器可以同时输出图像和点云，且两者在几何上严格对齐。
 
-![图 2：KITTI 和 nuScenes 数据集上的定性对比，展示 RGB、深度和强度的一致性](https://example.com/splatad-qualitative.png)
+![图 2：KITTI 和 nuScenes 数据集上的定性对比，展示 RGB、深度和强度的一致性](https://arxiv.org/html/2411.16816v3/x2.png)
 
 这张可视化展示了多模态渲染的一致性优势。需要注意的是，动态对象（如移动车辆）的渲染质量需要仔细检查边界伪影。
 
