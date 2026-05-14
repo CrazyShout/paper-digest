@@ -1,5 +1,290 @@
 window.PAPER_DIGESTS = [
   {
+    "id": "2026-05-14",
+    "date": "2026-05-14",
+    "title": "从可归责测试到世界-动作闭环",
+    "summary": "本期新增自动驾驶测试方向，并按八个长期方向扫描近期论文。主线是自动驾驶研究正在把协同、重建、世界模型和安全评测统一到闭环、可交互、可归责的证据链里。",
+    "keywords": [
+      "自动驾驶测试",
+      "责任归因",
+      "V2X 协同",
+      "4DGS",
+      "世界模型"
+    ],
+    "papers": [
+      {
+        "id": "cars-responsibility-testing",
+        "tag": "autonomous-driving-testing",
+        "tags": [
+          "autonomous-driving-testing",
+          "autonomous-driving-security"
+        ],
+        "title": "Learning Responsibility-Attributed Adversarial Scenarios for Testing Autonomous Vehicles",
+        "source": "arXiv:2605.13751 / https://arxiv.org/abs/2605.13751",
+        "authors": [
+          "Yizhuo Xiao",
+          "Haotian Yan",
+          "Ying Wang",
+          "Zhongpan Zhu",
+          "Yuxin Zhang",
+          "Xintao Yan",
+          "Mustafa Suphi Erden",
+          "Cheng Wang"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "CARS 把自动驾驶测试从发现碰撞推进到责任归因：测试用例不仅要危险，还要能判断失败是否来自 ADS 可避免缺陷。",
+        "body": "## 一句话定位\n\nCARS 是一篇自动驾驶测试和安全关键场景生成论文。它的核心新意是把 responsibility attribution 直接纳入 adversarial scenario generation，让闭环仿真生成的碰撞场景既物理可行，又能区分 ADS 可避免缺陷和不可避免交通冲突。\n\n## 论文要解决的问题\n\n很多 adversarial simulation 方法能高效找到碰撞，但碰撞本身不等于有用测试证据。如果对方车辆行为不合理，或者冲突本身不可避免，测试只能证明场景危险，不能证明 ADS 有可修复问题。CARS 的问题是：如何生成既能触发失败、又能按规范驾驶责任模型归因的测试场景，从而让 ADS validation 产生可解释、可监管对齐的安全证据。\n\n## 方法和系统设计\n\n- Context-aware adversary selection 根据场景上下文选择合适的对手交通参与者，避免无意义或不现实攻击。\n- Generative adversarial policy 在闭环仿真中优化，生成可导致碰撞的交互行为。\n- Responsibility attribution 与场景生成过程耦合，使用 regulation-prescribed careful and competent driver models 判断失败责任。\n\n## 关键图与可视化结果\n\n![图 1：CARS 的问题定义，区分普通碰撞发现和带责任归因的安全测试证据](https://arxiv.org/html/2605.13751v1/nc_images/problem.png)\n\n这张图清楚说明新增“自动驾驶测试”方向为什么必要：测试不是把系统撞坏就结束，而是要回答事故是否源于 ADS 可避免缺陷。\n\n![图 2：CARS 方法流程，展示上下文对手选择、生成式对抗策略和责任归因的耦合](https://arxiv.org/html/2605.13751v1/nc_images/methodology.png)\n\n这张图是论文最值得复用的框架：scenario generation、closed-loop simulation 和 responsibility model 不应是三段互不相干的后处理，而应共同定义测试目标。\n\n## 实验结论与证据\n\n论文在覆盖多种国家交通环境的 benchmark 数据集上评估，并报告 CARS 能持续发现 physically feasible collision scenarios，同时保持较高 attribution rates，并在多个 regulation-prescribed careful and competent driver models 下验证。证据主线是：自动驾驶测试应该从“发现碰撞”升级到“构造可解释、可归责、可监管对齐的失败证据”。\n\n## 应用场景与启发\n\n- 应用场景：ADS 仿真测试、安全关键场景生成、事故责任分析、闭环安全回归和监管证据包构建。\n- 方法启发：场景生成目标函数要同时包含 criticality、feasibility、behavioral realism 和 responsibility attribution。\n- 讨论问题：责任归因模型应采用交通法规、RSS/ISO 类模型、人类驾驶数据，还是多模型交叉一致性。\n\n## 局限与阅读风险\n\n责任归因高度依赖法规模型和场景抽象。不同国家、不同道路类型、不同 ADS ODD 下，careful and competent driver model 可能不一致。另一个风险是生成场景为了归责而变窄，遗漏不可归责但工程上仍危险的 corner cases。\n\n## 后续跟进\n\n- 详细记录论文使用的责任模型、数据集、仿真环境和 adversarial policy 训练细节。\n- 和 Dynasto、SaFeR、Drivora 对比，整理自动驾驶测试方向的四个维度：场景有效性、行为真实性、闭环可重复性和责任归因。\n- 将 CARS 作为新增测试方向的首篇核心报告，后续补充闭环协同 benchmark 和搜索式测试基础设施。",
+        "link": "papers/cars-responsibility-testing/"
+      },
+      {
+        "id": "caad-causality-aware-driving",
+        "tag": "end-to-end-autonomous-driving",
+        "title": "Causality-Aware End-to-End Autonomous Driving via Ego-Centric Joint Scene Modeling",
+        "source": "arXiv:2605.13646 / https://arxiv.org/abs/2605.13646",
+        "authors": [
+          "Seokha Moon",
+          "Minseung Lee",
+          "Joon Seo",
+          "Jinkyu Kim",
+          "Jungbeom Lee"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "CaAD 把端到端驾驶中的自车规划和周围交通参与者响应放进同一个因果场景建模框架，重点看交互场景下闭环规划是否更一致。",
+        "tags": [
+          "end-to-end-autonomous-driving"
+        ],
+        "body": "## 一句话定位\n\nCaAD 是一篇因果感知端到端自动驾驶论文。它认为现有 E2E 模型常把自车轨迹预测和周围 agent 行为预测处理成弱耦合问题，忽略“自车动作会改变别人、别人反应又会改变自车决策”的因果互依赖，因此在交互密集场景中容易输出不一致规划。\n\n## 论文要解决的问题\n\n端到端驾驶已经从传感器到轨迹的直接映射走向闭环 benchmark，但很多方法仍用边际预测或隐式特征融合处理交互。真实路口、并线和避让场景中，自车决策和周围 agent 的未来并不是独立变量。CaAD 的问题是：能否在 ego-centric shared latent scene representation 中显式学习自车与交互相关 agent 的 causal dependencies，并把这种因果结构对齐到闭环规划反馈。\n\n## 方法和系统设计\n\n- Ego-centric joint-causal modeling module 基于边际预测分支，学习自车和交互相关 agent 之间的因果依赖。\n- Causality-aware policy alignment 使用 joint-mode embeddings，将随机自车策略和来自交通、地图上下文的闭环反馈对齐。\n- 模型目标不是只提升开环轨迹误差，而是让规划在交互关键场景中更一致、更可闭环执行。\n\n## 关键图与可视化结果\n\n![图 1：CaAD 框架，展示 ego-centric joint scene modeling 和 causality-aware policy alignment](https://arxiv.org/html/2605.13646v1/x1.png)\n\n这张图展示了 CaAD 把因果依赖放在场景潜表示里的方式。值得关注的是它不是后处理规则，而是在策略学习阶段就让自车动作和周围 agent 反应共同进入表示。\n\n![图 2：CaAD 的交互建模和规划结果可视化](https://arxiv.org/html/2605.13646v1/x2.png)\n\n这张可视化结果用于检查论文主张是否落到交互场景：如果因果建模有效，收益应该集中在并线、路口、跟车和避让等 reciprocal interaction 明显的片段。\n\n## 实验结论与证据\n\n论文在 Bench2Drive 和 NAVSIM 上报告强闭环表现：Bench2Drive Driving Score 87.53、Success Rate 71.81，NAVSIM PDMS 91.1。证据重点是因果联合建模和 policy alignment 对闭环规划有贡献，而不只是开环 trajectory prediction 更准。\n\n## 应用场景与启发\n\n- 应用场景：端到端闭环驾驶、交互关键场景规划、Bench2Drive/NAVSIM 方法对比和多 agent 行为建模。\n- 方法启发：端到端模型需要把“自车动作改变场景”的反馈纳入训练目标，而不是只预测一个静态未来。\n- 讨论问题：因果依赖应该从数据中学，还是需要交通规则、责任模型和安全约束共同定义。\n\n## 局限与阅读风险\n\n因果命名容易高估模型解释性，详细阅读时需要确认因果模块是否有可验证干预实验，还是主要通过结构设计和 benchmark 指标间接证明。Bench2Drive/NAVSIM 成绩重要，但真实道路长尾、传感器异常和多车博弈仍需要进一步验证。\n\n## 后续跟进\n\n- 检查消融：joint-causal modeling、joint-mode embeddings 和 policy alignment 各自贡献多少。\n- 对照 VADv2 概率规划，比较多模态动作分布和因果交互建模是否互补。\n- 在组会中用 CaAD 作为端到端闭环规划方向的最新代表，重点讨论因果表征能否真正提高可解释安全性。",
+        "link": "papers/caad-causality-aware-driving/"
+      },
+      {
+        "id": "real2sim-physics-4dgs",
+        "tag": "3d-reconstruction",
+        "tags": [
+          "3d-reconstruction",
+          "autonomous-driving-testing"
+        ],
+        "title": "Real2Sim: A Physics-driven and Editable Gaussian Splatting Framework for Autonomous Driving Scenes",
+        "source": "arXiv:2605.13591 / https://arxiv.org/abs/2605.13591",
+        "authors": [
+          "Kaicong Huang",
+          "Talha Azfar",
+          "Weisong Shi",
+          "Ruimin Ke"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "Real2Sim 把 4D Gaussian Splatting 和可微 MPM 物理求解结合，目标是让驾驶场景重建不仅可看，还能编辑、碰撞和生成可用于下游测试的 corner cases。",
+        "body": "## 一句话定位\n\nReal2Sim 是一篇自动驾驶场景 4D 重建与仿真生成论文。它把动态场景重建成时间连续 Gaussian primitives，并接入 differentiable Material Point Method，让重建资产支持 instance-level editing、物体交互和碰撞后的轨迹模拟。\n\n## 论文要解决的问题\n\n驾驶场景重建和生成最近进展很快，但很多方法仍主要优化视觉真实感，缺少时间一致性、空间一致性和物理可交互性。对自动驾驶来说，仅能渲染好看的视频不够，场景还要能编辑、能制造安全关键事件、能服务 perception、tracking、trajectory prediction 和 policy learning。Real2Sim 的问题是：如何把真实数据重建成可编辑、物理驱动的仿真资产，缩小传统仿真和真实数据之间的 reality gap。\n\n## 方法和系统设计\n\n- 用 4D Gaussian Splatting 重建动态驾驶场景，把车辆、行人等动态实体表示为时间连续高斯基元。\n- 通过 instance-level editing 改变物体位置、动作或交互关系，使真实场景能生成新场景变体。\n- 引入 differentiable MPM solver 模拟 object-object 和 object-environment interaction，重点支持碰撞、接触和 post-impact trajectory。\n\n## 关键图与可视化结果\n\n![图 1：Real2Sim 总体框架，展示从真实驾驶数据到 4DGS 重建、编辑和物理仿真的流程](https://arxiv.org/html/2605.13591v1/x1.png)\n\n这张图说明 Real2Sim 的目标不是单纯重建，而是把重建结果转成可用于生成和测试的仿真接口。对组内研究来说，它把三维重建、场景编辑和自动驾驶测试连接成一条链。\n\n![图 2：Real2Sim 的编辑与物理交互可视化结果](https://arxiv.org/html/2605.13591v1/x2.png)\n\n这张图支撑论文对 physics-aware synthesis 的主张。需要关注的是编辑后的场景是否同时保持视觉真实、几何一致和物理合理，而不是只看单帧渲染质量。\n\n## 实验结论与证据\n\n论文在 Waymo Open Dataset 上验证 rendering、reconstruction、editing 和 physics simulation 能力，并强调生成场景可服务下游 perception、tracking、trajectory prediction 和 end-to-end policy learning。证据重点是 4DGS 重建不再停留在视觉结果，而是能支持碰撞和碰后轨迹这类 safety-critical scenario synthesis。\n\n## 应用场景与启发\n\n- 应用场景：驾驶仿真资产生成、corner case 扩增、碰撞场景编辑、感知与预测模型数据增强和端到端策略学习。\n- 方法启发：3D/4D 重建如果要进入自动驾驶闭环，必须提供可编辑对象、物理交互和可重复评测接口。\n- 讨论问题：物理驱动生成的场景如何验证“真实合理”，是依赖物理约束、真实轨迹分布，还是下游模型失效模式。\n\n## 局限与阅读风险\n\n4DGS 与 MPM 的结合会引入计算成本、材质参数估计和物体交互建模假设。Waymo 数据上的结果说明可行性，但真实事故、非刚体对象、复杂天气和传感器退化仍需要更细验证。另一个风险是生成的 corner case 可能物理可行但统计上过于罕见，需要和测试责任归因方法配合。\n\n## 后续跟进\n\n- 检查代码、资产导出格式和 Waymo 数据处理流程是否开放。\n- 复现时不要只看 PSNR/视觉质量，要加入几何一致性、物理合理性和下游检测/预测变化。\n- 和 CARS、Dynasto 等测试论文连接，评估 Real2Sim 生成场景是否能成为可归责 ADS 测试用例。",
+        "link": "papers/real2sim-physics-4dgs/"
+      },
+      {
+        "id": "dawn-world-action-model",
+        "tag": "world-models",
+        "tags": [
+          "world-models",
+          "end-to-end-autonomous-driving"
+        ],
+        "title": "The DAWN of World-Action Interactive Models",
+        "source": "arXiv:2605.11550 / https://arxiv.org/abs/2605.11550",
+        "authors": [
+          "Hongbo Lu",
+          "Liang Yao",
+          "Chenghao He",
+          "Haoyu Wang",
+          "Xiang Gu",
+          "Xianfei Li",
+          "Wenlong Liao",
+          "Tao He",
+          "Pai Peng"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "DAWN 把驾驶世界模型从单向预测推进到 world-action 交互生成：世界假设条件动作，动作假设再反过来更新世界预测。",
+        "body": "## 一句话定位\n\nDAWN 是一篇驾驶 World-Action Interactive Model 论文。它把世界演化和动作生成看成互相制约的过程，而不是先预测世界、再独立规划动作，核心是用 latent generative baseline 递归细化 world hypothesis 和 action hypothesis。\n\n## 论文要解决的问题\n\n驾驶世界模型常见两类缺口：一类只生成未来场景，看起来真实但未必能指导规划；另一类把动作生成和世界预测做成并行分支或 rigid predict-then-plan pipeline，缺少双向反馈。真实驾驶里，某个机动动作会改变场景未来，而可行机动又取决于场景未来。DAWN 的问题是：如何让 world prediction 和 action denoising 在推理时相互条件化，从而生成更可行动的未来和轨迹。\n\n## 方法和系统设计\n\n- DAWN 在紧凑语义 latent space 中工作，避免在像素空间做长时域全量 rollout。\n- World Predictor 预测未来世界假设，并把这个假设作为 World-Conditioned Action Denoiser 的条件。\n- Denoised action hypothesis 再反馈给世界预测器，推理阶段递归细化世界和动作，实现短显式 latent rollout 支撑长时域轨迹生成。\n\n## 关键图与可视化结果\n\n![图 1：DAWN 的 World-Action Interactive Model 框架，展示世界预测和动作去噪的递归耦合](https://arxiv.org/html/2605.11550v1/x1.png)\n\n这张图说明 DAWN 的新意在耦合方式：世界模型不是 planner 的旁路解释器，而是直接参与动作生成；动作也不是世界预测后的静态输出，而会反向修正世界假设。\n\n![图 2：DAWN 的规划和世界-动作交互可视化结果](https://arxiv.org/html/2605.11550v1/x2.png)\n\n这张图适合检查 DAWN 是否真正服务规划。阅读时不要只看生成结果自然不自然，还要看世界假设变化是否和动作选择存在一致关系。\n\n## 实验结论与证据\n\n摘要报告 DAWN 在多个自动驾驶 benchmark 上取得强规划表现和较好的 safety-related results。证据主线是 interactive world-action generation 比孤立世界预测或 rigid pipeline 更适合复杂交互场景。由于摘要未给出具体数据，详细阅读应重点核对 benchmark 名称、闭环指标、消融设置和 safety-related 指标定义。\n\n## 应用场景与启发\n\n- 应用场景：驾驶世界模型、长时域规划、动作条件未来生成、闭环 planner evaluator 和端到端策略学习。\n- 方法启发：世界模型的下一步不是更长视频，而是更可被动作查询、更能反作用于规划的 latent rollout。\n- 讨论问题：world-action 交互应在 latent space 中完成，还是需要显式几何、交通规则和风险约束参与。\n\n## 局限与阅读风险\n\n论文主张依赖 benchmark 和安全指标是否足够覆盖真实交互风险。Latent world hypothesis 可行动，但可解释性和物理一致性未必天然成立。若缺少真实闭环仿真或长尾场景验证，DAWN 更适合作为方法方向信号，而不是工程可部署结论。\n\n## 后续跟进\n\n- 检查论文是否发布代码、模型和 benchmark 配置。\n- 对照 Vista、DriveFuture、WorldLens 等工作，把“生成质量”“规划收益”“闭环安全”分开记录。\n- 尝试把 DAWN 和 CaAD 一起读：一个强调世界-动作递归，一个强调 ego-agent 因果依赖，二者可能是端到端驾驶闭环建模的两条互补线。",
+        "link": "papers/dawn-world-action-model/"
+      },
+      {
+        "id": "view-induced-trajectory-manipulation",
+        "tag": "autonomous-driving-security",
+        "tags": [
+          "autonomous-driving-security",
+          "autonomous-driving-testing"
+        ],
+        "title": "Still Camouflage, Moving Illusion: View-Induced Trajectory Manipulation in Autonomous Driving",
+        "source": "arXiv:2605.12743 / https://arxiv.org/abs/2605.12743",
+        "authors": [
+          "Shuo Ju",
+          "Qingzhao Zhang",
+          "Huashan Chen",
+          "Xuheng Wang",
+          "Haotang Li",
+          "Wanqian Zhang",
+          "Feng Liu",
+          "Kebin Peng",
+          "Sen He"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "这篇论文把视角变化从物理攻击的难点变成攻击机制本身，展示静态伪装如何诱导轨迹漂移并触发下游急刹。",
+        "body": "## 一句话定位\n\nStill Camouflage, Moving Illusion 是一篇面向视觉自动驾驶链路的物理对抗攻击论文。它的关键新意是：不再努力让 adversarial patch 在多视角下保持同一错误，而是利用车辆相对运动带来的视角变化，让静态伪装自然产生随时间演化的特征漂移，进而误导轨迹推断。\n\n## 论文要解决的问题\n\n已有物理攻击常把视角变化当作鲁棒优化挑战，需要复杂多视角 patch 或主动变化装置。自动驾驶系统真正关心的不是单帧检测是否错，而是多帧跟踪、轨迹预测和决策是否被持续误导。论文的问题是：一个静态、被动、看似普通的伪装物，能否在正常相对运动中制造“物理合理但错误”的轨迹，例如虚假 cut-in，并传导到规划层触发不必要急刹。\n\n## 方法和系统设计\n\n- 攻击对象是视觉自动驾驶中的多帧感知与轨迹推断链路，而不是单帧分类。\n- 静态 adversarial camouflage 安装在车辆上，利用视角变化让外观随相对运动自然变化。\n- 这种 view-induced feature drift 会让系统推断错误轨迹，进而影响 downstream decision-making，例如在通过停放车辆时触发 hard braking。\n\n## 关键图与可视化结果\n\n![图 1：视角诱导轨迹操纵的攻击场景，展示静态伪装如何随相对运动产生误导](https://arxiv.org/html/2605.12743v1/fig/attack-scenario-1.png)\n\n这张图直接说明论文的攻击面：威胁不是孤立图片上的误检，而是伪装车辆和受害车辆之间的相对运动。它适合作为自动驾驶攻防讨论里的“时间维物理攻击”案例。\n\n![图 2：攻击流程，展示从伪装设计到轨迹误导和下游急刹事件的传播链路](https://arxiv.org/html/2605.12743v1/fig/pipeline.png)\n\n这张流程图支撑论文的系统性主张。读者应重点检查攻击是否真的穿过 detection/tracking/prediction/planning 链路，而不是只在某个中间模块上制造局部误差。\n\n## 实验结论与证据\n\n论文在 nuScenes 上展示攻击效果，摘要报告以 hard-braking event 计量的端到端成功率最高达到 87.5%，并在不同场景背景、受害车速度和感知模型上做鲁棒性验证。证据重点是静态伪装可以诱导看似物理合理的错误轨迹，并影响最终驾驶行为。\n\n## 应用场景与启发\n\n- 应用场景：自动驾驶物理攻击评测、多帧感知鲁棒性测试、轨迹预测安全验证和端到端急刹回归测试。\n- 方法启发：鲁棒性不能只看单帧检测框；视角变化、时间一致性和下游规划响应必须一起评估。\n- 讨论问题：防御应该针对伪装纹理、轨迹一致性、物体运动学约束，还是针对规划层对异常轨迹的风险响应。\n\n## 局限与阅读风险\n\nnuScenes 离线验证能说明攻击链路，但真实道路物理可实施性、材质可制造性、法规可见性、天气光照和多传感器冗余仍需要实车或高保真仿真确认。硬刹成功率是重要安全信号，但还需要看误报代价和防御后的正常驾驶性能。\n\n## 后续跟进\n\n- 检查攻击对不同 perception stack、tracking smoothing 和 prediction horizon 的敏感性。\n- 复现时加入 LiDAR/radar fusion，观察多模态系统是否能削弱 view-induced feature drift。\n- 和测试方向的责任归因结合，判断攻击引发的急刹是否能被归类为 ADS 可避免缺陷。",
+        "link": "papers/view-induced-trajectory-manipulation/"
+      },
+      {
+        "id": "swarmdrive-v2v-coordination",
+        "tag": "cooperative-autonomous-driving",
+        "title": "SwarmDrive: Semantic V2V Coordination for Latency-Constrained Cooperative Autonomous Driving",
+        "source": "arXiv:2604.22852 / https://arxiv.org/abs/2604.22852",
+        "authors": [
+          "Anjie Qiu",
+          "Donglin Wang",
+          "Zexin Fang",
+          "Sanket Partani",
+          "Hans D. Schotten"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "SwarmDrive 把协同自动驾驶的共享对象从大特征图转成不确定性触发的语义意图分布，关注 V2V 协同在遮挡路口和低延迟约束下是否真正改变决策。",
+        "tags": [
+          "cooperative-autonomous-driving"
+        ],
+        "body": "## 一句话定位\n\nSwarmDrive 是一篇面向低时延协同驾驶的 V2V 语义协调论文。它不把云端大模型当成默认推理中心，而是让邻近车辆在本地运行小语言模型，只在不确定性高时共享紧凑意图分布，并用事件触发共识来降低延迟和通信负担。\n\n## 论文要解决的问题\n\n协同自动驾驶的关键矛盾正在从“能不能共享更多传感器信息”转向“什么信息值得在有限时延内共享”。云端 LLM 推理有往返通信延迟和连接稳定性问题，单车本地模型又容易在遮挡路口缺少视野。SwarmDrive 的切入点是：在遮挡导致单车意图判断不可靠时，能否用 V2V 语义信息补齐局部视角，同时避免持续广播带来的带宽和丢包问题。\n\n## 方法和系统设计\n\n- 每辆车本地运行 Small Language Model，输出场景理解和意图分布，而不是依赖云端闭环推理。\n- 系统用熵阈值判断是否触发协同，只有不确定性较高时才向邻车共享意图分布。\n- 多车意图通过事件触发共识融合，目标是在遮挡交互中提升成功率，同时把端到端延迟控制在车端可用范围内。\n\n## 关键图与可视化结果\n\n![图 1：SwarmDrive 的语义 V2V 协同流程，展示本地 SLM、意图分布共享和事件触发共识](https://arxiv.org/html/2604.22852v1/x1.png)\n\n这张图说明论文的核心不是把更多原始感知发给其他车辆，而是把通信接口压缩成决策相关的语义意图。它适合用来讨论协同驾驶中“共享表征”从 feature map 向 intent distribution 的转移。\n\n![图 2：遮挡路口场景和不同通信设置下的协同效果对比](https://arxiv.org/html/2604.22852v1/x2.png)\n\n这张结果图支撑了论文的主要应用场景：遮挡路口里，单车模型视野不足，邻车意图能改变通行决策。但它也提醒读者，实验仍集中在一个可执行遮挡场景，不等于真实 6G 车联网部署已经验证。\n\n## 实验结论与证据\n\n论文在一个遮挡路口案例上做 5-seed executable study，并报告 Swarm 6G 设置把成功率从单车本地 SLM 的 68.9% 提升到 94.1%，同时把云端参考延迟 510 ms 降到 151.4 ms。它还做了 swarm size、packet loss 和 entropy threshold 的鲁棒性扫描，当前原型中约 4 辆活跃协同车、0.65 熵阈值是较平衡的配置。证据重点是低延迟语义协同在目标场景中可行，但外推到复杂路网前还需要更多交互类型和真实通信栈验证。\n\n## 应用场景与启发\n\n- 应用场景：低带宽 V2V 协同、遮挡路口通行、车端小模型协同推理和通信触发策略设计。\n- 方法启发：协同信息不一定是密集特征或点云，意图分布可以成为更轻量、面向规划的共享接口。\n- 讨论问题：如果加入路侧单元、轨迹预测器或世界模型，熵触发策略应该由谁来定义，通信预算又应该和安全风险如何绑定。\n\n## 局限与阅读风险\n\n论文的实验规模较小，主要支撑 targeted intersection case 下的可行性，而不是通用协同驾驶能力。SLM 的语义输出稳定性、意图分布校准、丢包下的安全退化和多车数量增长后的通信拥塞都需要独立评估。\n\n## 后续跟进\n\n- 检查论文代码或仿真配置是否开放，优先复现实验中的遮挡路口。\n- 对比持续广播、Top-K feature sharing、reference point sharing 和 entropy-triggered intent sharing 的通信-安全曲线。\n- 跟进 V2V 语义协同是否能和闭环测试 benchmark 结合，形成可重复的协同驾驶评测协议。",
+        "link": "papers/swarmdrive-v2v-coordination/"
+      },
+      {
+        "id": "urbanv2x-cooperative-navigation",
+        "tag": "vehicle-road-cooperation",
+        "tags": [
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving"
+        ],
+        "title": "UrbanV2X: A Multisensory Vehicle-Infrastructure Dataset for Cooperative Navigation in Urban Areas",
+        "source": "IEEE ITSC 2025 / arXiv:2512.20224 / https://arxiv.org/abs/2512.20224 / https://polyu-taslab.github.io/UrbanV2X/",
+        "authors": [
+          "Qijun Qin",
+          "Ziqi Zhang",
+          "Yihan Zhong",
+          "Feng Huang",
+          "Xikun Liu",
+          "Runzhi Hu",
+          "Hang Chen",
+          "Wei Hu",
+          "Dongzhe Su",
+          "Jun Zhang",
+          "Hoi-Fung Ng",
+          "Weisong Wen"
+        ],
+        "affiliations": [
+          "The Hong Kong Polytechnic University and collaborators"
+        ],
+        "comment": "UrbanV2X 提供香港 C-V2X 测试场里的车端和路侧多传感器数据，价值在于把车路协同导航从仿真或单模态感知推进到真实城市数据资产。",
+        "body": "## 一句话定位\n\nUrbanV2X 是一个面向城市车路协同导航的多传感器数据集。它的核心新意不是提出一个新网络，而是提供车端和路侧同步采集的 camera、LiDAR、4D radar、UWB、IMU、GNSS-RTK/INS 等数据，用真实 Hong Kong C-V2X testbed 支撑协同导航研究。\n\n## 论文要解决的问题\n\n车路协同研究长期缺少真实、多模态、可标定、可同步的数据。很多方法在仿真或单车数据集上验证，难以评估路侧基础设施在定位、感知覆盖和导航鲁棒性上的真实贡献。UrbanV2X 的问题定义是：如何构建一个覆盖车端与路侧传感器、包含时间同步和标定信息、并能支持 cooperative navigation benchmark 的城市数据资产。\n\n## 方法和系统设计\n\n- 车端平台包含多工业相机、LiDAR、4D radar、UWB、IMU 和高精度 GNSS-RTK/INS。\n- 路侧基础设施提供 LiDAR、GNSS 和 UWB 测量，并和车端通过 Precision Time Protocol 做同步。\n- 数据集提供传感器标定和导航算法 benchmark，降低后续研究从数据清洗到评估协议的启动成本。\n\n## 关键图与可视化结果\n\n![图 1：UrbanV2X 数据集总体概览，展示车辆、路侧基础设施和协同导航数据流](https://arxiv.org/html/2512.20224v1/pic/Overview.png)\n\n这张图说明 UrbanV2X 的价值在“系统形态”而非单一算法。它把车端感知、路侧基础设施和通信同步放在同一数据框架里，适合作为车路协同研究的数据入口。\n\n![图 2：UrbanV2X 车端与路侧传感器系统架构](https://arxiv.org/html/2512.20224v1/pic/sys_architecture.png)\n\n这张图帮助读者检查数据集是否足以支撑自己的任务：如果研究关注定位、同步误差、UWB 辅助或路侧 LiDAR 视角，这里的传感器组合比普通单车数据集更匹配。\n\n## 实验结论与证据\n\n论文报告数据来自香港 C-V2X testbed，并提供同步、标定和多类传感器数据，还 benchmark 多种导航算法。证据价值在于真实设备、真实城市环境和公开数据，而不是某个单一模型指标。对车路协同方向，它可以支撑基础设施辅助定位、V2I 感知覆盖、UWB/GNSS 融合和多传感器协同导航等后续实验。\n\n## 应用场景与启发\n\n- 应用场景：车路协同导航、路侧辅助定位、V2I 数据融合、城市 C-V2X 测试场评估和多传感器标定流程。\n- 方法启发：车路协同 benchmark 需要把时间同步、标定、坐标系转换和通信假设显式写进协议。\n- 讨论问题：如果只用车端数据能达到接近表现，路侧基础设施的增益应该用遮挡、长尾和定位退化场景来重新定义。\n\n## 局限与阅读风险\n\n数据集论文的直接贡献是数据资产和 benchmark，不等同于证明某个协同算法已经达到部署级效果。需要继续检查场景规模、路线多样性、天气/光照覆盖、标注粒度和数据许可。若后续研究只在 UrbanV2X 上做离线融合，还要额外补闭环导航或安全收益评估。\n\n## 后续跟进\n\n- 下载项目页数据样例，确认传感器时间戳、标定文件和 benchmark 代码格式。\n- 选取一个最小任务做基线复现：GNSS/UWB 融合定位或路侧 LiDAR 辅助导航。\n- 和 DAIR-V2X、V2X-Seq 等数据集对比，整理各自适合的协同感知、预测和导航任务。",
+        "link": "papers/urbanv2x-cooperative-navigation/"
+      },
+      {
+        "id": "copad-v2x-trajectory-prediction",
+        "tag": "cooperative-trajectory-prediction",
+        "tags": [
+          "cooperative-trajectory-prediction",
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving"
+        ],
+        "title": "CoPAD: Multi-source Trajectory Fusion and Cooperative Trajectory Prediction with Anchor-oriented Decoder in V2X Scenarios",
+        "source": "IROS 2025 / arXiv:2509.15984 / https://arxiv.org/abs/2509.15984",
+        "authors": [
+          "Kangyu Wu",
+          "Jiaqi Qiao",
+          "Ya Zhang"
+        ],
+        "affiliations": [
+          "作者单位见论文 PDF"
+        ],
+        "comment": "CoPAD 是近期协同轨迹预测里较直接的一篇 V2X 工作，用多源轨迹融合、历史交互注意力和 anchor-oriented decoder 处理单车感知轨迹不稳定的问题。",
+        "body": "## 一句话定位\n\nCoPAD 是一篇 V2X 场景下的协同轨迹预测论文。它把车端和路侧的多源历史轨迹先做轻量融合，再用时间注意力和稀疏 anchor 解码未来轨迹，核心价值在于把协同信息从“补感知范围”推进到“稳定预测输入”。\n\n## 论文要解决的问题\n\n轨迹预测通常假设历史轨迹可靠，但单车感知在遮挡、远距离、小目标和传感器噪声下会产生断裂、漂移和漏检。V2X 可以提供更多视角，但多源轨迹存在重复、时序不齐和质量差异。CoPAD 的问题是：如何在不引入过重通信和模型复杂度的前提下，把车端与路侧轨迹融合成更完整的历史上下文，并让预测器利用交互信息输出多模态未来。\n\n## 方法和系统设计\n\n- 多源轨迹融合模块用 Hungarian matching 和 Kalman filtering 对车端、路侧轨迹进行早期融合，降低重复和断裂。\n- Past Time Attention 模块建模历史轨迹之间的潜在交互，补充单点或单帧协同感知无法表达的时序依赖。\n- Mode attention 和 anchor-oriented decoder 用稀疏 anchors 生成多样化未来轨迹，避免只输出单一平均轨迹。\n\n## 关键图与可视化结果\n\n![图 1：CoPAD 总体框架，包含多源轨迹融合、历史时间注意力、模式注意力和 anchor-oriented decoder](https://arxiv.org/html/2509.15984v1/1.png)\n\n这张图展示了 CoPAD 的信息流：协同不发生在最终预测结果之后，而是从历史轨迹质量控制开始。对组内复现来说，最值得关注的是融合模块和预测模块是否可以拆开评估。\n\n![图 2：CoPAD 在 V2X 场景中的多源轨迹输入与预测输出示意](https://arxiv.org/html/2509.15984v1/2.png)\n\n这张图支撑论文对“多源轨迹更完整”的主张。它能帮助读者检查模型收益到底来自 V2X 视野补全，还是来自 decoder 对多模态轨迹的更好表达。\n\n## 实验结论与证据\n\n论文在 DAIR-V2X-Seq 数据集上评估，并声称 CoPAD 达到 state-of-the-art cooperative trajectory prediction 表现。摘要给出的证据链主要是融合模块提升历史轨迹完整性，PTA 捕捉历史交互，anchor decoder 提升多样性。详细阅读时应重点核对每个模块的消融，以及不同遮挡、距离和路侧参与程度下的收益是否一致。\n\n## 应用场景与启发\n\n- 应用场景：车路协同轨迹预测、路口遮挡目标预测、V2X planner 输入预处理和轨迹数据质量增强。\n- 方法启发：协同预测的第一步可能不是换更大的预测网络，而是把多源历史轨迹融合做稳。\n- 讨论问题：当 V2X 轨迹融合出错时，预测器应该显式建模不确定性，还是把错误交给后续 planner 吸收。\n\n## 局限与阅读风险\n\nCoPAD 主要围绕 DAIR-V2X-Seq 展开，能否迁移到更复杂城市路网、异构传感器配置和通信延迟条件仍需验证。早期融合依赖匹配和滤波质量，一旦多源轨迹 ID association 错误，后续预测可能会放大错误。\n\n## 后续跟进\n\n- 优先检查 DAIR-V2X-Seq 上的评估协议、消融表和公开代码状态。\n- 复现时单独记录 fusion-only、PTA-only、mode attention 和 anchor decoder 的贡献。\n- 和 Co-MTP 对照：一个偏多源轨迹质量控制，一个偏多时间 V2X 融合，适合组成协同预测 baseline 组合。",
+        "link": "papers/copad-v2x-trajectory-prediction/"
+      }
+    ],
+    "notes": [
+      {
+        "user": "paper-lead",
+        "time": "09:10",
+        "text": "新增自动驾驶测试方向后，建议把 CARS、Real2Sim 和攻击论文一起看：测试用例需要危险、真实、可归责，也要能落到闭环系统。"
+      },
+      {
+        "user": "reading-owner",
+        "time": "09:30",
+        "text": "世界模型和端到端驾驶方向今天重点看闭环反馈：DAWN 处理世界-动作互相条件化，CaAD 处理自车和周围 agent 的因果依赖。"
+      }
+    ],
+    "body": "## 本期判断\n\n本期新增“自动驾驶测试”作为长期方向，因为近期论文的共同趋势已经不只是提出更强模型，而是追问模型失败能否被系统性构造、复现和归责。CARS 把测试目标从“找到碰撞”推进到“生成可归责安全证据”；Real2Sim 把 4DGS 重建推进到可编辑、可碰撞的场景生成；Still Camouflage 则提醒攻击可以沿多帧感知、轨迹预测和规划链路传播。与此同时，CaAD 和 DAWN 分别从因果交互和 world-action 递归建模推动端到端驾驶闭环化，SwarmDrive、UrbanV2X 与 CoPAD 则继续把 V2X 协同从感知共享推进到意图、导航和预测任务。\n\n## 筛选口径\n\n- 本期按八个配置方向扫描近期论文；单篇论文如果横跨多个方向，会在多个 tag 分区下出现，但详细报告只维护一份。\n- 优先保留能形成闭环证据链的论文：可归责测试、闭环规划、物理可编辑场景、真实车路协同数据、V2X 预测和多帧攻击传播。\n- 降权只展示视觉生成质量、只做单帧感知指标、或没有说明下游规划/安全收益的论文。\n- 对应报告均写入 arXiv 或项目页来源；有官方 arXiv HTML 图片的论文优先放入方法图、场景图或系统图，并在正文说明图片支撑的结论。\n\n## 方向扫描\n\n- 自动驾驶测试：最新热点是把 safety-critical scenario generation 从碰撞发现升级到 feasibility、behavioral realism 和 responsibility attribution。CARS 是今天最该读的代表；Dynasto、SaFeR、Drivora 可作为后续补充，分别偏有效失败发现、可行性约束和搜索式测试基础设施。\n- 端到端自动驾驶：CaAD、Action Emergence、MindVLA-U1、DIAL 等新论文集中在闭环能力、意图条件动作和 VLA 统一架构。今天入选 CaAD，因为它给出 Bench2Drive/NAVSIM 闭环数字，并把 ego-agent 交互作为核心问题。\n- 三维重建：Real2Sim、PointForward、Ground4D、CARD 说明驾驶 3D/4D 研究正在从重建质量转向仿真可用性、feedforward 速度、复杂地形和场景编辑。今天入选 Real2Sim，并同时标到自动驾驶测试，因为它把 4DGS 和物理求解连接到 corner case 生成。\n- 世界模型：DAWN、DeepSight、CoWorld-VLA、DriveFuture、WorldLens 同时出现，说明方向正在分化为可规划世界模型、VLA 中间表征和评测基准。今天入选 DAWN，因为它直接建模世界假设和动作假设的双向递归。\n- 自动驾驶模型攻防：最新进展从静态 patch 或单帧误检转向多帧轨迹操纵、MLLM transfer attack、RGB-T 物理攻击和极端天气 benchmark。今天入选 Still Camouflage，并同时标到自动驾驶测试，因为它把视角变化变成时间维攻击工具，并报告最高 87.5% hard-braking 成功率。\n- 协同自动驾驶：SwarmDrive、MDrive、混合交通 potential game 等工作说明协同不再只拼通信带宽，而是进入语义意图、闭环 multi-agent benchmark 和真实混合交通验证。今天入选 SwarmDrive，作为低时延 V2V 语义协同样本。\n- 车路协同：UrbanV2X、VRS、Infrastructure-Centric World Models 和 IMPACT 分别补数据集、路侧数据合成、路侧世界模型和混合数字孪生测试。今天入选 UrbanV2X，因为真实 C-V2X 多传感器数据对后续协同导航和定位任务最基础。\n- 协同轨迹预测：近期专门命中 V2X cooperative trajectory prediction 的论文少于世界模型和测试方向，CoPAD 是较直接的新样本；Co-MTP 仍是多时间融合的重要对照。今天入选 CoPAD，作为多源轨迹融合和 anchor 解码的轻量基线。\n\n## 应用场景与讨论线索\n\n- 测试证据链：CARS、Real2Sim 和 Still Camouflage 可以组成一条讨论线。CARS 负责“失败是否可归责”，Real2Sim 负责“场景能否物理编辑和复现”，Still Camouflage 负责“攻击如何穿过多帧链路影响驾驶行为”。\n- 闭环建模：CaAD 与 DAWN 可以一起读。前者强调自车与周围 agent 的因果互依赖，后者强调世界预测和动作生成的递归耦合，都在回答 E2E 驾驶如何从开环轨迹拟合走向可行动推理。\n- 协同数据和通信：SwarmDrive、UrbanV2X、CoPAD 对应语义通信、真实车路数据和协同预测三层问题。组会可以讨论 V2X 的增益到底来自信息更多、视角更稳，还是评测协议更接近真实遮挡与交互。\n- 本期最值得先读 CARS，其次读 Real2Sim 和 CaAD。CARS 决定新增测试方向的评价口径；Real2Sim 连接场景生成和下游测试；CaAD 代表端到端闭环规划的最新建模趋势。",
+    "bodyHtml": "<h2>本期判断</h2>\n<p>本期新增“自动驾驶测试”作为长期方向，因为近期论文的共同趋势已经不只是提出更强模型，而是追问模型失败能否被系统性构造、复现和归责。CARS 把测试目标从“找到碰撞”推进到“生成可归责安全证据”；Real2Sim 把 4DGS 重建推进到可编辑、可碰撞的场景生成；Still Camouflage 则提醒攻击可以沿多帧感知、轨迹预测和规划链路传播。与此同时，CaAD 和 DAWN 分别从因果交互和 world-action 递归建模推动端到端驾驶闭环化，SwarmDrive、UrbanV2X 与 CoPAD 则继续把 V2X 协同从感知共享推进到意图、导航和预测任务。</p>\n<h2>筛选口径</h2>\n<ul><li>本期按八个配置方向扫描近期论文；单篇论文如果横跨多个方向，会在多个 tag 分区下出现，但详细报告只维护一份。</li><li>优先保留能形成闭环证据链的论文：可归责测试、闭环规划、物理可编辑场景、真实车路协同数据、V2X 预测和多帧攻击传播。</li><li>降权只展示视觉生成质量、只做单帧感知指标、或没有说明下游规划/安全收益的论文。</li><li>对应报告均写入 arXiv 或项目页来源；有官方 arXiv HTML 图片的论文优先放入方法图、场景图或系统图，并在正文说明图片支撑的结论。</li></ul>\n<h2>方向扫描</h2>\n<ul><li>自动驾驶测试：最新热点是把 safety-critical scenario generation 从碰撞发现升级到 feasibility、behavioral realism 和 responsibility attribution。CARS 是今天最该读的代表；Dynasto、SaFeR、Drivora 可作为后续补充，分别偏有效失败发现、可行性约束和搜索式测试基础设施。</li><li>端到端自动驾驶：CaAD、Action Emergence、MindVLA-U1、DIAL 等新论文集中在闭环能力、意图条件动作和 VLA 统一架构。今天入选 CaAD，因为它给出 Bench2Drive/NAVSIM 闭环数字，并把 ego-agent 交互作为核心问题。</li><li>三维重建：Real2Sim、PointForward、Ground4D、CARD 说明驾驶 3D/4D 研究正在从重建质量转向仿真可用性、feedforward 速度、复杂地形和场景编辑。今天入选 Real2Sim，并同时标到自动驾驶测试，因为它把 4DGS 和物理求解连接到 corner case 生成。</li><li>世界模型：DAWN、DeepSight、CoWorld-VLA、DriveFuture、WorldLens 同时出现，说明方向正在分化为可规划世界模型、VLA 中间表征和评测基准。今天入选 DAWN，因为它直接建模世界假设和动作假设的双向递归。</li><li>自动驾驶模型攻防：最新进展从静态 patch 或单帧误检转向多帧轨迹操纵、MLLM transfer attack、RGB-T 物理攻击和极端天气 benchmark。今天入选 Still Camouflage，并同时标到自动驾驶测试，因为它把视角变化变成时间维攻击工具，并报告最高 87.5% hard-braking 成功率。</li><li>协同自动驾驶：SwarmDrive、MDrive、混合交通 potential game 等工作说明协同不再只拼通信带宽，而是进入语义意图、闭环 multi-agent benchmark 和真实混合交通验证。今天入选 SwarmDrive，作为低时延 V2V 语义协同样本。</li><li>车路协同：UrbanV2X、VRS、Infrastructure-Centric World Models 和 IMPACT 分别补数据集、路侧数据合成、路侧世界模型和混合数字孪生测试。今天入选 UrbanV2X，因为真实 C-V2X 多传感器数据对后续协同导航和定位任务最基础。</li><li>协同轨迹预测：近期专门命中 V2X cooperative trajectory prediction 的论文少于世界模型和测试方向，CoPAD 是较直接的新样本；Co-MTP 仍是多时间融合的重要对照。今天入选 CoPAD，作为多源轨迹融合和 anchor 解码的轻量基线。</li></ul>\n<h2>应用场景与讨论线索</h2>\n<ul><li>测试证据链：CARS、Real2Sim 和 Still Camouflage 可以组成一条讨论线。CARS 负责“失败是否可归责”，Real2Sim 负责“场景能否物理编辑和复现”，Still Camouflage 负责“攻击如何穿过多帧链路影响驾驶行为”。</li><li>闭环建模：CaAD 与 DAWN 可以一起读。前者强调自车与周围 agent 的因果互依赖，后者强调世界预测和动作生成的递归耦合，都在回答 E2E 驾驶如何从开环轨迹拟合走向可行动推理。</li><li>协同数据和通信：SwarmDrive、UrbanV2X、CoPAD 对应语义通信、真实车路数据和协同预测三层问题。组会可以讨论 V2X 的增益到底来自信息更多、视角更稳，还是评测协议更接近真实遮挡与交互。</li><li>本期最值得先读 CARS，其次读 Real2Sim 和 CaAD。CARS 决定新增测试方向的评价口径；Real2Sim 连接场景生成和下游测试；CaAD 代表端到端闭环规划的最新建模趋势。</li></ul>",
+    "tags": [
+      {
+        "id": "autonomous-driving-testing",
+        "label": "自动驾驶测试",
+        "color": "#9a7b2f",
+        "description": "关注自动驾驶系统的仿真测试、闭环评测、安全关键场景生成、责任归因、场景筛选和测试基础设施。",
+        "priority": 1
+      },
+      {
+        "id": "autonomous-driving-security",
+        "label": "自动驾驶模型攻防",
+        "color": "#a33f4a",
+        "description": "关注感知、预测、规划和端到端驾驶模型的攻击、防御、鲁棒性和安全评测。",
+        "priority": 2
+      },
+      {
+        "id": "end-to-end-autonomous-driving",
+        "label": "端到端自动驾驶",
+        "color": "#526274",
+        "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
+        "priority": 1
+      },
+      {
+        "id": "3d-reconstruction",
+        "label": "三维重建",
+        "color": "#b66a3c",
+        "description": "关注自动驾驶场景的 3D/4D 重建、NeRF/Gaussian Splatting、占据和地图构建。",
+        "priority": 2
+      },
+      {
+        "id": "world-models",
+        "label": "世界模型",
+        "color": "#7a5fa8",
+        "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
+        "priority": 2
+      },
+      {
+        "id": "cooperative-autonomous-driving",
+        "label": "协同自动驾驶",
+        "color": "#2f6f8f",
+        "description": "关注多车协同、V2X 信息共享、协同规划和闭环自动驾驶系统。",
+        "priority": 1
+      },
+      {
+        "id": "vehicle-road-cooperation",
+        "label": "车路协同",
+        "color": "#6a668f",
+        "description": "关注路侧感知、车路协同感知、基础设施辅助定位和通信约束。",
+        "priority": 1
+      },
+      {
+        "id": "cooperative-trajectory-prediction",
+        "label": "协同轨迹预测",
+        "color": "#3f7d58",
+        "description": "关注多智能体交互建模、车车/车路信息融合和轨迹预测不确定性。",
+        "priority": 1
+      }
+    ]
+  },
+  {
     "id": "2026-05-13",
     "date": "2026-05-13",
     "title": "从 V2X 协同到可规划世界模型",
@@ -14,6 +299,10 @@ window.PAPER_DIGESTS = [
       {
         "id": "select2drive-pragmatic-communications",
         "tag": "cooperative-autonomous-driving",
+        "tags": [
+          "cooperative-autonomous-driving",
+          "vehicle-road-cooperation"
+        ],
         "title": "Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications",
         "source": "arXiv:2501.12040 / https://arxiv.org/abs/2501.12040",
         "authors": [
@@ -33,6 +322,11 @@ window.PAPER_DIGESTS = [
       {
         "id": "co-mtp-v2x-trajectory-prediction",
         "tag": "cooperative-trajectory-prediction",
+        "tags": [
+          "cooperative-trajectory-prediction",
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving"
+        ],
         "title": "Co-MTP: A Cooperative Trajectory Prediction Framework with Multi-Temporal Fusion for Autonomous Driving",
         "source": "ICRA 2025 / arXiv:2502.16589 / https://arxiv.org/abs/2502.16589",
         "authors": [
@@ -53,6 +347,11 @@ window.PAPER_DIGESTS = [
       {
         "id": "v2x-vlm-cooperative-driving",
         "tag": "vehicle-road-cooperation",
+        "tags": [
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving",
+          "end-to-end-autonomous-driving"
+        ],
         "title": "V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models",
         "source": "arXiv:2408.09251 / https://arxiv.org/abs/2408.09251",
         "authors": [
@@ -76,6 +375,10 @@ window.PAPER_DIGESTS = [
       {
         "id": "desire-gs-4d-street-gaussians",
         "tag": "3d-reconstruction",
+        "tags": [
+          "3d-reconstruction",
+          "world-models"
+        ],
         "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
         "source": "CVPR 2025 / arXiv:2411.11921 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
         "authors": [
@@ -99,6 +402,11 @@ window.PAPER_DIGESTS = [
       {
         "id": "maat-e2e-adversarial-training",
         "tag": "autonomous-driving-security",
+        "tags": [
+          "autonomous-driving-security",
+          "end-to-end-autonomous-driving",
+          "autonomous-driving-testing"
+        ],
         "title": "Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving",
         "source": "arXiv:2409.07321 / https://arxiv.org/abs/2409.07321",
         "authors": [
@@ -137,12 +445,19 @@ window.PAPER_DIGESTS = [
           "Horizon Robotics"
         ],
         "comment": "VADv2 把端到端驾驶规划从确定性轨迹回归改成动作概率分布学习，用 planning vocabulary 表达多种合理驾驶动作。它适合作为闭环端到端驾驶和不确定性规划的核心阅读样本。",
+        "tags": [
+          "end-to-end-autonomous-driving"
+        ],
         "body": "## 一句话定位\n\nVADv2 是一篇以概率规划为核心的端到端自动驾驶论文。它认为真实驾驶中一个场景往往存在多种合理动作，确定性轨迹回归会把多模态行为压成平均解，而概率规划可以显式建模动作不确定性，并在闭环中采样可执行动作。\n\n## 论文要解决的问题\n\n端到端驾驶常把多视角传感器输入映射成一条轨迹或控制量，但驾驶动作空间是高维连续时空空间，并且受驾驶风格、交互对象、交通规则和短期目标影响。确定性模型在可行解非凸或多模态时容易输出中间轨迹，闭环执行时可能不稳定。VADv2 的问题定义是：能否从大规模驾驶示范中学习 scene-conditioned action distribution，而不是只学习一个平均轨迹。\n\n## 方法和系统设计\n\n- 模型以流式多视角图像序列为输入，将传感器信息 token 化为 scene representation。\n- 论文将连续规划动作空间离散成 planning vocabulary，并把动作也 token 化，让 planning tokens 与 scene tokens 交互。\n- 训练时用大规模驾驶示范和场景约束监督动作概率分布，推理时从分布中采样动作控制车辆，减少规则 wrapper 的依赖。\n\n## 关键图与可视化结果\n\n![图 1：VADv2 总体架构，展示多视角图像输入、场景 token、规划动作 token、动作概率分布和采样控制](https://arxiv.org/html/2402.13243v2/x2.png)\n\n这张图说明 VADv2 的关键设计在输出端。它不是直接回归一条轨迹，而是把 planning action space 建成词表，再预测动作分布。这使模型可以表达多个合理动作，也方便把场景约束纳入概率分布训练。\n\n![图 2：VADv2 在 CARLA Town05 Long benchmark 中的定性结果，展示不同速度、变道和交互场景下的多模态规划](https://arxiv.org/html/2402.13243v2/x3.png)\n\n这张可视化结果对应论文的核心主张：在跟车、变道、路口等场景中，模型可以生成多个合理候选动作，而不是单一平均轨迹。需要注意的是，可视化展示多样性，但安全性还要看闭环指标和不同交通密度下的消融结果。\n\n## 实验结论与证据\n\n论文报告 CARLA Town05 Long 闭环 benchmark、NAVSIM、NAVSIMv2 和 3DGS-based benchmark 结果，并强调在无规则 wrapper 设置下仍能获得稳定闭环表现。它还对多模态输出、planning vocabulary size、planning manners 和交通密度做消融。证据重点不是某个开环 L2 指标，而是概率规划是否能在长路线闭环中减少不稳定行为。\n\n## 应用场景与启发\n\n- 应用场景：端到端闭环驾驶、长路线仿真评估、自动驾驶不确定性建模、多候选轨迹规划和 planner benchmark。\n- 方法启发：规划输出可以是分布而不是单条轨迹；这样更适合风险评估、保守采样、交互式规划和后续安全约束。\n- 讨论问题：概率规划的不确定性应该只出现在动作层，还是应该同时和世界模型 rollout、其他 agent 预测一起建模。\n\n## 局限与阅读风险\n\nplanning vocabulary 的构建会引入离散化偏差，词表规模、采样方式和示范数据覆盖会影响上限。CARLA 闭环结果很重要，但真实道路长尾场景、传感器异常和交通规则复杂性仍需要单独验证。另一个风险是采样式动作不等于安全动作，概率分布还需要和可验证约束或风险模型结合。\n\n## 后续跟进\n\n- 检查项目页代码、CARLA/NAVSIM 配置和 3DGS-based benchmark 的可复现性。\n- 复现时比较确定性回归、概率规划、不同 vocabulary size 和是否使用规则 wrapper。\n- 跟进概率规划与 V2X 协同、世界模型动作评估之间的结合。",
         "link": "papers/vadv2-probabilistic-planning/"
       },
       {
         "id": "vista-driving-world-model",
         "tag": "world-models",
+        "tags": [
+          "world-models",
+          "autonomous-driving-testing"
+        ],
         "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
         "source": "NeurIPS 2024 / arXiv:2405.17398 / https://papers.nips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
         "authors": [
@@ -188,6 +503,13 @@ window.PAPER_DIGESTS = [
         "priority": 1
       },
       {
+        "id": "vehicle-road-cooperation",
+        "label": "车路协同",
+        "color": "#6a668f",
+        "description": "关注路侧感知、车路协同感知、基础设施辅助定位和通信约束。",
+        "priority": 1
+      },
+      {
         "id": "cooperative-trajectory-prediction",
         "label": "协同轨迹预测",
         "color": "#3f7d58",
@@ -195,10 +517,10 @@ window.PAPER_DIGESTS = [
         "priority": 1
       },
       {
-        "id": "vehicle-road-cooperation",
-        "label": "车路协同",
-        "color": "#6a668f",
-        "description": "关注路侧感知、车路协同感知、基础设施辅助定位和通信约束。",
+        "id": "end-to-end-autonomous-driving",
+        "label": "端到端自动驾驶",
+        "color": "#526274",
+        "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
         "priority": 1
       },
       {
@@ -209,6 +531,13 @@ window.PAPER_DIGESTS = [
         "priority": 2
       },
       {
+        "id": "world-models",
+        "label": "世界模型",
+        "color": "#7a5fa8",
+        "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
+        "priority": 2
+      },
+      {
         "id": "autonomous-driving-security",
         "label": "自动驾驶模型攻防",
         "color": "#a33f4a",
@@ -216,18 +545,11 @@ window.PAPER_DIGESTS = [
         "priority": 2
       },
       {
-        "id": "end-to-end-autonomous-driving",
-        "label": "端到端自动驾驶",
-        "color": "#526274",
-        "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
+        "id": "autonomous-driving-testing",
+        "label": "自动驾驶测试",
+        "color": "#9a7b2f",
+        "description": "关注自动驾驶系统的仿真测试、闭环评测、安全关键场景生成、责任归因、场景筛选和测试基础设施。",
         "priority": 1
-      },
-      {
-        "id": "world-models",
-        "label": "世界模型",
-        "color": "#7a5fa8",
-        "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
-        "priority": 2
       }
     ]
   },
@@ -260,12 +582,20 @@ window.PAPER_DIGESTS = [
         "comment": "把多车协同规划拆成通信、意图共享和安全约束三个层级，适合作为协同自动驾驶方向的日报样例。",
         "visual": "visual-network",
         "visualLabel": "CAV planning",
+        "tags": [
+          "cooperative-autonomous-driving"
+        ],
         "body": "## 核心问题\n\n协同自动驾驶需要在有限通信带宽下共享局部观测和意图，同时保证规划结果不会引入新的冲突。论文样例关注多车之间如何在闭环场景中协调动作。\n\n## 方法速读\n\n- 将车辆的局部目标、可行轨迹和风险区域编码成轻量消息。\n- 通过图结构聚合邻近车辆意图，减少重复或冲突决策。\n- 在规划层加入安全约束，优先处理交叉口和汇入场景。\n\n## 组内关注点\n\n抓取这类论文时，应优先关注是否有闭环仿真、通信延迟建模和真实交通交互复杂度。",
         "link": "papers/cooperative-driving-planning/"
       },
       {
         "id": "cooperative-trajectory-v2x",
         "tag": "cooperative-trajectory-prediction",
+        "tags": [
+          "cooperative-trajectory-prediction",
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving"
+        ],
         "title": "示例：V2X-Aware Cooperative Trajectory Prediction",
         "source": "OpenReview / arXiv",
         "authors": [
@@ -286,6 +616,10 @@ window.PAPER_DIGESTS = [
       {
         "id": "roadside-cooperative-perception",
         "tag": "vehicle-road-cooperation",
+        "tags": [
+          "vehicle-road-cooperation",
+          "cooperative-autonomous-driving"
+        ],
         "title": "示例：Roadside-Assisted Cooperative Perception for Urban Driving",
         "source": "IEEE Xplore / arXiv",
         "authors": [
@@ -320,12 +654,20 @@ window.PAPER_DIGESTS = [
         "comment": "把感知、预测和规划统一到一个可闭环评测的驾驶模型中，适合作为端到端自动驾驶方向的核心样例。",
         "visual": "visual-wave",
         "visualLabel": "driving rollout",
+        "tags": [
+          "end-to-end-autonomous-driving"
+        ],
         "body": "## 核心问题\n\n端到端自动驾驶希望减少模块间误差传播，但也带来可解释性、数据规模和闭环稳定性问题。样例论文关注规划导向的端到端训练。\n\n## 方法速读\n\n- 输入多传感器历史观测，输出未来轨迹或控制信号。\n- 用规划损失和闭环反馈约束模型行为。\n- 在复杂交互场景中比较端到端模型和模块化系统。\n\n## 组内关注点\n\n日报筛选时应优先保留报告闭环驾驶指标、失败案例和数据规模细节的论文。",
         "link": "papers/e2e-driving-model/"
       },
       {
         "id": "driving-world-model",
         "tag": "world-models",
+        "tags": [
+          "world-models",
+          "end-to-end-autonomous-driving",
+          "autonomous-driving-testing"
+        ],
         "title": "示例：World Models for Closed-Loop Autonomous Driving",
         "source": "project page / arXiv",
         "authors": [
@@ -394,6 +736,13 @@ window.PAPER_DIGESTS = [
         "color": "#7a5fa8",
         "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
         "priority": 2
+      },
+      {
+        "id": "autonomous-driving-testing",
+        "label": "自动驾驶测试",
+        "color": "#9a7b2f",
+        "description": "关注自动驾驶系统的仿真测试、闭环评测、安全关键场景生成、责任归因、场景筛选和测试基础设施。",
+        "priority": 1
       }
     ]
   },
@@ -411,6 +760,10 @@ window.PAPER_DIGESTS = [
       {
         "id": "driving-3d-reconstruction",
         "tag": "3d-reconstruction",
+        "tags": [
+          "3d-reconstruction",
+          "world-models"
+        ],
         "title": "示例：Dynamic 3D Reconstruction for Driving Scenes",
         "source": "CVF / project page",
         "authors": [
@@ -430,6 +783,10 @@ window.PAPER_DIGESTS = [
       {
         "id": "ad-model-robustness",
         "tag": "autonomous-driving-security",
+        "tags": [
+          "autonomous-driving-security",
+          "end-to-end-autonomous-driving"
+        ],
         "title": "示例：Adversarial Robustness of End-to-End Driving Models",
         "source": "arXiv / GitHub",
         "authors": [
@@ -465,11 +822,25 @@ window.PAPER_DIGESTS = [
         "priority": 2
       },
       {
+        "id": "world-models",
+        "label": "世界模型",
+        "color": "#7a5fa8",
+        "description": "关注自动驾驶和具身智能中的世界模型、视频预测、仿真生成和交互式 rollout。",
+        "priority": 2
+      },
+      {
         "id": "autonomous-driving-security",
         "label": "自动驾驶模型攻防",
         "color": "#a33f4a",
         "description": "关注感知、预测、规划和端到端驾驶模型的攻击、防御、鲁棒性和安全评测。",
         "priority": 2
+      },
+      {
+        "id": "end-to-end-autonomous-driving",
+        "label": "端到端自动驾驶",
+        "color": "#526274",
+        "description": "关注从传感器输入到规划控制输出的端到端驾驶模型、驾驶大模型和闭环评测。",
+        "priority": 1
       }
     ]
   }

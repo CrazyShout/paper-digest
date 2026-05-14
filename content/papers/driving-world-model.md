@@ -2,6 +2,7 @@
 {
   "id": "driving-world-model",
   "tag": "world-models",
+  "tags": ["world-models", "end-to-end-autonomous-driving", "autonomous-driving-testing"],
   "title": "示例：World Models for Closed-Loop Autonomous Driving",
   "source": "project page / arXiv",
   "authors": ["Lena Hoffmann", "Wei Liu", "Arjun Rao"],

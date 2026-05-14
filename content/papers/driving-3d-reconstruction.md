@@ -2,6 +2,7 @@
 {
   "id": "driving-3d-reconstruction",
   "tag": "3d-reconstruction",
+  "tags": ["3d-reconstruction", "world-models"],
   "title": "示例：Dynamic 3D Reconstruction for Driving Scenes",
   "source": "CVF / project page",
   "authors": ["Nora Wang", "Isaac Miller"],

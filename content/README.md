@@ -48,6 +48,7 @@ content/papers/driving-world-model.md
 {
   "id": "driving-world-model",
   "tag": "world-models",
+  "tags": ["world-models", "end-to-end-autonomous-driving"],
   "title": "示例：World Models for Autonomous Driving",
   "source": "arXiv / project page",
   "authors": ["First Author", "Second Author"],
@@ -87,7 +88,8 @@ content/papers/driving-world-model.md
 字段说明：
 
 - `id`：必须和文件名一致，不带 `.md`。
-- `tag`：必须来自 `config/research-interests.json` 里的某个 `id`。
+- `tag`：主方向，必须来自 `config/research-interests.json` 里的某个 `id`。
+- `tags`：可选数组，用于跨方向论文；数组里的每个 id 都必须来自 `config/research-interests.json`。如果省略，构建脚本会退回使用 `tag`。
 - `title`：论文标题。
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。
 - `authors` / `affiliations`：作者和单位数组。
@@ -153,7 +155,7 @@ npm run build
 
 - 检查 Markdown frontmatter 是否是合法 JSON。
 - 检查简报引用的论文 id 是否存在。
-- 检查论文 `tag` 是否存在于 `config/research-interests.json`。
+- 检查论文 `tag` / `tags` 是否存在于 `config/research-interests.json`。
 - 重新生成 `docs/` 里的静态页面。
 
 本地预览可以用：
@@ -193,6 +195,6 @@ https://crazyshout.github.io/paper-digest/
 ## 常见错误
 
 - `references missing paper`：简报里的 `papers` 写了不存在的论文 `id`。
-- `references missing tag`：论文里的 `tag` 不在 `config/research-interests.json`。
+- `references missing tag`：论文里的 `tag` 或 `tags` 不在 `config/research-interests.json`。
 - `invalid JSON frontmatter`：开头 `---` 中间的 JSON 有多余逗号、缺引号或数组格式错误。
 - 页面没更新：先看 GitHub Actions 是否完成，再强制刷新浏览器缓存。

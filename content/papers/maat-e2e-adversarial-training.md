@@ -2,6 +2,7 @@
 {
   "id": "maat-e2e-adversarial-training",
   "tag": "autonomous-driving-security",
+  "tags": ["autonomous-driving-security", "end-to-end-autonomous-driving", "autonomous-driving-testing"],
   "title": "Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving",
   "source": "arXiv:2409.07321 / https://arxiv.org/abs/2409.07321",
   "authors": ["Tianyuan Zhang", "Lu Wang", "Jiaqi Kang", "Xinwei Zhang", "Siyuan Liang", "Yuwei Chen", "Aishan Liu", "Xianglong Liu"],

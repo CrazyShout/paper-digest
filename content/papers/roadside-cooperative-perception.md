@@ -2,6 +2,7 @@
 {
   "id": "roadside-cooperative-perception",
   "tag": "vehicle-road-cooperation",
+  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving"],
   "title": "示例：Roadside-Assisted Cooperative Perception for Urban Driving",
   "source": "IEEE Xplore / arXiv",
   "authors": ["Qian He", "Morgan Lee", "Fatima Noor"],

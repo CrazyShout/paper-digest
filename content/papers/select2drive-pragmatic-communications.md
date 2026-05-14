@@ -2,6 +2,7 @@
 {
   "id": "select2drive-pragmatic-communications",
   "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation"],
   "title": "Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications",
   "source": "arXiv:2501.12040 / https://arxiv.org/abs/2501.12040",
   "authors": ["Jiahao Huang", "Jianhang Zhu", "Rongpeng Li", "Zhifeng Zhao", "Honggang Zhang"],

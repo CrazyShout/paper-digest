@@ -2,6 +2,7 @@
 {
   "id": "vista-driving-world-model",
   "tag": "world-models",
+  "tags": ["world-models", "autonomous-driving-testing"],
   "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
   "source": "NeurIPS 2024 / arXiv:2405.17398 / https://papers.nips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
   "authors": ["Shenyuan Gao", "Jiazhi Yang", "Li Chen", "Kashyap Chitta", "Yihang Qiu", "Andreas Geiger", "Jun Zhang", "Hongyang Li"],

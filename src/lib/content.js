@@ -163,13 +163,36 @@ export async function getTags() {
   }));
 }
 
+function normalizePaperTags(data) {
+  const tags = [];
+
+  if (typeof data.tag === "string" && data.tag.trim()) {
+    tags.push(data.tag.trim());
+  }
+
+  if (Array.isArray(data.tags)) {
+    for (const tag of data.tags) {
+      if (typeof tag === "string" && tag.trim() && !tags.includes(tag.trim())) {
+        tags.push(tag.trim());
+      }
+    }
+  }
+
+  return tags;
+}
+
 export async function getPapers() {
   const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
-  return paperDocs.map((doc) => ({
-    ...doc.data,
-    body: doc.body,
-    link: `papers/${doc.data.id}/`
-  }));
+  return paperDocs.map((doc) => {
+    const tags = normalizePaperTags(doc.data);
+    return {
+      ...doc.data,
+      tag: tags[0],
+      tags,
+      body: doc.body,
+      link: `papers/${doc.data.id}/`
+    };
+  });
 }
 
 export async function getDigests() {
@@ -188,9 +211,12 @@ export async function getDigests() {
 
     const digestTags = [];
     for (const paper of digestPapers) {
-      if (!tagMap.has(paper.tag)) throw new Error(`${paper.id} references missing tag: ${paper.tag}`);
-      if (!digestTags.some((tag) => tag.id === paper.tag)) {
-        digestTags.push(tagMap.get(paper.tag));
+      if (!paper.tags.length) throw new Error(`${paper.id} is missing tag/tags`);
+      for (const tagId of paper.tags) {
+        if (!tagMap.has(tagId)) throw new Error(`${paper.id} references missing tag: ${tagId}`);
+        if (!digestTags.some((tag) => tag.id === tagId)) {
+          digestTags.push(tagMap.get(tagId));
+        }
       }
     }
 
@@ -210,9 +236,11 @@ export async function getPaperWithTag(id) {
   const papers = await getPapers();
   const paper = papers.find((item) => item.id === id);
   if (!paper) return null;
+  const paperTags = paper.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean);
 
   return {
     paper,
-    tag: tagMap.get(paper.tag)
+    tag: paperTags[0],
+    tags: paperTags
   };
 }

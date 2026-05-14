@@ -48,6 +48,25 @@ function tagById(digest, tagId) {
   return digest.tags.find((tag) => tag.id === tagId) || { id: tagId, label: tagId, color: "#2f6f8f" };
 }
 
+function paperTagIds(paper) {
+  if (Array.isArray(paper.tags) && paper.tags.length) return paper.tags;
+  return paper.tag ? [paper.tag] : [];
+}
+
+function paperTagInfos(digest, paper) {
+  return paperTagIds(paper).map((tagId) => tagById(digest, tagId));
+}
+
+function renderTagBadges(tagInfos, className = "paper-tag-list") {
+  return `
+    <div class="${className}">
+      ${tagInfos.map((tag) => `
+        <span class="paper-tag" style="--tag-color: ${escapeHtml(tag.color)}">${escapeHtml(tag.label)}</span>
+      `).join("")}
+    </div>
+  `;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -55,6 +74,11 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function escapeCssIdentifier(value) {
+  if (window.CSS?.escape) return CSS.escape(value);
+  return String(value).replaceAll("\\", "\\\\").replaceAll('"', '\\"');
 }
 
 function getRandomItem(items) {
@@ -160,11 +184,13 @@ function renderDigest() {
   `).join("");
 
   const sections = digest.tags.map((tag) => {
-    const papers = digest.papers.filter((paper) => paper.tag === tag.id);
-    const paperCards = papers.map((paper) => `
-      <article class="paper-card" id="${escapeHtml(paper.id)}" style="--tag-color: ${escapeHtml(tag.color)}">
+    const papers = digest.papers.filter((paper) => paperTagIds(paper).includes(tag.id));
+    const paperCards = papers.map((paper) => {
+      const tagBadges = renderTagBadges(paperTagInfos(digest, paper));
+      return `
+      <article class="paper-card" id="paper-${escapeHtml(paper.id)}-${escapeHtml(tag.id)}" data-paper-id="${escapeHtml(paper.id)}" style="--tag-color: ${escapeHtml(tag.color)}">
         <div class="paper-body">
-          <span class="paper-tag">${escapeHtml(tag.label)}</span>
+          ${tagBadges}
           <h4>${escapeHtml(paper.title)}</h4>
           <p class="paper-comment">${escapeHtml(paper.comment)}</p>
           <div class="paper-meta">
@@ -177,7 +203,8 @@ function renderDigest() {
           </div>
         </div>
       </article>
-    `).join("");
+      `;
+    }).join("");
 
     return `
       <section class="research-section" id="section-${escapeHtml(tag.id)}">
@@ -331,11 +358,11 @@ function collectMatches() {
   }
 
   return getDigestsByDate().flatMap((digest) => digest.papers.map((paper) => {
-    const tagInfo = tagById(digest, paper.tag);
-    return { digest, paper, tagInfo };
-  })).filter(({ digest, paper, tagInfo }) => {
+    const tagInfos = paperTagInfos(digest, paper);
+    return { digest, paper, tagInfos };
+  })).filter(({ digest, paper, tagInfos }) => {
     const text = [
-      tagInfo.label,
+      tagInfos.map((tag) => tag.label).join(" "),
       paper.title,
       paper.source,
       paper.authors.join(" "),
@@ -356,10 +383,10 @@ function renderSearchResults() {
     return;
   }
 
-  const resultList = matches.map(({ digest, paper, tagInfo }) => `
+  const resultList = matches.map(({ digest, paper, tagInfos }) => `
     <article class="result-item">
       <div>
-        <span class="result-tag" style="--tag-color: ${escapeHtml(tagInfo.color)}">${escapeHtml(tagInfo.label)}</span>
+        ${renderTagBadges(tagInfos, "paper-tag-list result-tag-list")}
         <h4>${escapeHtml(paper.title)}</h4>
         <p>${escapeHtml(digest.date)} · ${escapeHtml(paper.authors.join(", "))} · ${escapeHtml(paper.source)}</p>
       </div>
@@ -385,7 +412,7 @@ function setActiveDigest(digestId) {
 function scrollToPaper(digestId, paperId) {
   setActiveDigest(digestId);
   requestAnimationFrame(() => {
-    const paper = document.getElementById(paperId);
+    const paper = document.querySelector(`[data-paper-id="${escapeCssIdentifier(paperId)}"]`);
     if (paper) {
       paper.scrollIntoView({ behavior: "smooth", block: "center" });
     }

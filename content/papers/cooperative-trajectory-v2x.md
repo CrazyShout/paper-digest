@@ -2,6 +2,7 @@
 {
   "id": "cooperative-trajectory-v2x",
   "tag": "cooperative-trajectory-prediction",
+  "tags": ["cooperative-trajectory-prediction", "vehicle-road-cooperation", "cooperative-autonomous-driving"],
   "title": "示例：V2X-Aware Cooperative Trajectory Prediction",
   "source": "OpenReview / arXiv",
   "authors": ["Ava Singh", "Rui Tan", "Yuki Sato"],

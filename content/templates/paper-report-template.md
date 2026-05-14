@@ -8,7 +8,8 @@
 ---
 {
   "id": "paper-id",
-  "tag": "必须来自 config/research-interests.json",
+  "tag": "主方向，必须来自 config/research-interests.json",
+  "tags": ["可选：跨方向论文可写多个 config/research-interests.json 里的 id"],
   "title": "论文正式标题",
   "source": "会议/期刊/平台 + URL 或 arXiv ID",
   "authors": ["First Author", "Second Author"],
@@ -61,3 +62,5 @@
 - 记录值得复现的最小实验。
 - 明确是否需要继续跟同方向后续论文或项目页更新。
 ```
+
+`tag` 保留为主方向，兼容旧内容；`tags` 用于跨方向论文。页面会把同一篇论文展示到每个匹配方向下，但详细报告文件仍只维护一份。

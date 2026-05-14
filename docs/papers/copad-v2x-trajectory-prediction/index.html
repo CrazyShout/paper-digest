@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CoPAD: Multi-source Trajectory Fusion and Cooperative Trajectory Prediction with Anchor-oriented Decoder in V2X Scenarios · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <div class="paper-tag-list"> <span class="paper-tag" style="--tag-color: #3f7d58">协同轨迹预测</span><span class="paper-tag" style="--tag-color: #6a668f">车路协同</span><span class="paper-tag" style="--tag-color: #2f6f8f">协同自动驾驶</span> </div> <h1>CoPAD: Multi-source Trajectory Fusion and Cooperative Trajectory Prediction with Anchor-oriented Decoder in V2X Scenarios</h1> <p>CoPAD 是近期协同轨迹预测里较直接的一篇 V2X 工作，用多源轨迹融合、历史交互注意力和 anchor-oriented decoder 处理单车感知轨迹不稳定的问题。</p> <div class="paper-hero-meta"> <dl class="paper-meta-list"> <div> <dt>抓取位置</dt> <dd>IROS 2025 / arXiv:2509.15984 / https://arxiv.org/abs/2509.15984</dd> </div> <div> <dt>作者</dt> <dd>Kangyu Wu, Jiaqi Qiao, Ya Zhang</dd> </div> <div> <dt>单位</dt> <dd>作者单位见论文 PDF</dd> </div> </dl> <button class="share-link" type="button" data-share-button> <span data-share-label>分享链接</span> </button> </div> </section> <section class="paper-detail-grid"> <article class="paper-report"><h2>一句话定位</h2>
+<p>CoPAD 是一篇 V2X 场景下的协同轨迹预测论文。它把车端和路侧的多源历史轨迹先做轻量融合，再用时间注意力和稀疏 anchor 解码未来轨迹，核心价值在于把协同信息从“补感知范围”推进到“稳定预测输入”。</p>
+<h2>论文要解决的问题</h2>
+<p>轨迹预测通常假设历史轨迹可靠，但单车感知在遮挡、远距离、小目标和传感器噪声下会产生断裂、漂移和漏检。V2X 可以提供更多视角，但多源轨迹存在重复、时序不齐和质量差异。CoPAD 的问题是：如何在不引入过重通信和模型复杂度的前提下，把车端与路侧轨迹融合成更完整的历史上下文，并让预测器利用交互信息输出多模态未来。</p>
+<h2>方法和系统设计</h2>
+<ul><li>多源轨迹融合模块用 Hungarian matching 和 Kalman filtering 对车端、路侧轨迹进行早期融合，降低重复和断裂。</li><li>Past Time Attention 模块建模历史轨迹之间的潜在交互，补充单点或单帧协同感知无法表达的时序依赖。</li><li>Mode attention 和 anchor-oriented decoder 用稀疏 anchors 生成多样化未来轨迹，避免只输出单一平均轨迹。</li></ul>
+<h2>关键图与可视化结果</h2>
+<figure class="paper-figure">
+            <img src="https://arxiv.org/html/2509.15984v1/1.png" alt="图 1：CoPAD 总体框架，包含多源轨迹融合、历史时间注意力、模式注意力和 anchor-oriented decoder" loading="lazy" decoding="async">
+            <figcaption>图 1：CoPAD 总体框架，包含多源轨迹融合、历史时间注意力、模式注意力和 anchor-oriented decoder</figcaption>
+          </figure>
+<p>这张图展示了 CoPAD 的信息流：协同不发生在最终预测结果之后，而是从历史轨迹质量控制开始。对组内复现来说，最值得关注的是融合模块和预测模块是否可以拆开评估。</p>
+<figure class="paper-figure">
+            <img src="https://arxiv.org/html/2509.15984v1/2.png" alt="图 2：CoPAD 在 V2X 场景中的多源轨迹输入与预测输出示意" loading="lazy" decoding="async">
+            <figcaption>图 2：CoPAD 在 V2X 场景中的多源轨迹输入与预测输出示意</figcaption>
+          </figure>
+<p>这张图支撑论文对“多源轨迹更完整”的主张。它能帮助读者检查模型收益到底来自 V2X 视野补全，还是来自 decoder 对多模态轨迹的更好表达。</p>
+<h2>实验结论与证据</h2>
+<p>论文在 DAIR-V2X-Seq 数据集上评估，并声称 CoPAD 达到 state-of-the-art cooperative trajectory prediction 表现。摘要给出的证据链主要是融合模块提升历史轨迹完整性，PTA 捕捉历史交互，anchor decoder 提升多样性。详细阅读时应重点核对每个模块的消融，以及不同遮挡、距离和路侧参与程度下的收益是否一致。</p>
+<h2>应用场景与启发</h2>
+<ul><li>应用场景：车路协同轨迹预测、路口遮挡目标预测、V2X planner 输入预处理和轨迹数据质量增强。</li><li>方法启发：协同预测的第一步可能不是换更大的预测网络，而是把多源历史轨迹融合做稳。</li><li>讨论问题：当 V2X 轨迹融合出错时，预测器应该显式建模不确定性，还是把错误交给后续 planner 吸收。</li></ul>
+<h2>局限与阅读风险</h2>
+<p>CoPAD 主要围绕 DAIR-V2X-Seq 展开，能否迁移到更复杂城市路网、异构传感器配置和通信延迟条件仍需验证。早期融合依赖匹配和滤波质量，一旦多源轨迹 ID association 错误，后续预测可能会放大错误。</p>
+<h2>后续跟进</h2>
+<ul><li>优先检查 DAIR-V2X-Seq 上的评估协议、消融表和公开代码状态。</li><li>复现时单独记录 fusion-only、PTA-only、mode attention 和 anchor decoder 的贡献。</li><li>和 Co-MTP 对照：一个偏多源轨迹质量控制，一个偏多时间 V2X 融合，适合组成协同预测 baseline 组合。</li></ul></article> </section> </main> <script>
+    const shareButton = document.querySelector("[data-share-button]");
+    const shareLabel = shareButton?.querySelector("[data-share-label]");
+
+    async function copyShareLink() {
+      const shareData = {
+        title: document.title.replace(" · Paper Digest", ""),
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return "已打开分享";
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareData.url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      return "已复制链接";
+    }
+
+    shareButton?.addEventListener("click", async () => {
+      try {
+        const message = await copyShareLink();
+        if (shareLabel) shareLabel.textContent = message;
+      } catch (error) {
+        if (shareLabel) shareLabel.textContent = "复制失败";
+      }
+
+      window.setTimeout(() => {
+        if (shareLabel) shareLabel.textContent = "分享链接";
+      }, 1800);
+    });
+  </script>  </body></html>

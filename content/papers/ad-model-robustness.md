@@ -2,6 +2,7 @@
 {
   "id": "ad-model-robustness",
   "tag": "autonomous-driving-security",
+  "tags": ["autonomous-driving-security", "end-to-end-autonomous-driving"],
   "title": "示例：Adversarial Robustness of End-to-End Driving Models",
   "source": "arXiv / GitHub",
   "authors": ["Elena Garcia", "Hao Wu"],

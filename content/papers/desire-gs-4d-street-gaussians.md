@@ -2,6 +2,7 @@
 {
   "id": "desire-gs-4d-street-gaussians",
   "tag": "3d-reconstruction",
+  "tags": ["3d-reconstruction", "world-models"],
   "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
   "source": "CVPR 2025 / arXiv:2411.11921 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
   "authors": ["Chensheng Peng", "Chengwei Zhang", "Yixiao Wang", "Chenfeng Xu", "Yichen Xie", "Wenzhao Zheng", "Kurt Keutzer", "Masayoshi Tomizuka", "Wei Zhan"],

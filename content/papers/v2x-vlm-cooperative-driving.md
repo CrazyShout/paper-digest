@@ -2,6 +2,7 @@
 {
   "id": "v2x-vlm-cooperative-driving",
   "tag": "vehicle-road-cooperation",
+  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving", "end-to-end-autonomous-driving"],
   "title": "V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models",
   "source": "arXiv:2408.09251 / https://arxiv.org/abs/2408.09251",
   "authors": ["Junwei You", "Haotian Shi", "Zhuoyu Jiang", "Zilin Huang", "Rui Gan", "Keshu Wu", "Xi Cheng", "Xiaopeng Li", "Bin Ran"],
