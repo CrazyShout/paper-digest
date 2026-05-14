@@ -14,6 +14,37 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function safeContentUrl(value) {
+  const url = String(value || "").trim();
+  if (/^https?:\/\//i.test(url) || url.startsWith("/") || url.startsWith("#")) return url;
+  return "";
+}
+
+function renderStrong(value) {
+  return escapeHtml(value).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function renderInlineMarkdown(value) {
+  const text = String(value);
+  const links = /\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let html = "";
+  let lastIndex = 0;
+  let match;
+
+  while ((match = links.exec(text)) !== null) {
+    html += renderStrong(text.slice(lastIndex, match.index));
+    const href = safeContentUrl(match[2]);
+    const label = renderStrong(match[1]);
+    html += href
+      ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      : label;
+    lastIndex = match.index + match[0].length;
+  }
+
+  html += renderStrong(text.slice(lastIndex));
+  return html;
+}
+
 function parseMarkdownFile(text, filePath) {
   const match = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/);
   if (!match) {
@@ -52,13 +83,13 @@ export function markdownToHtml(markdown) {
 
   function flushParagraph() {
     if (!paragraph.length) return;
-    html.push(`<p>${paragraph.map(escapeHtml).join(" ")}</p>`);
+    html.push(`<p>${renderInlineMarkdown(paragraph.join(" "))}</p>`);
     paragraph = [];
   }
 
   function flushList() {
     if (!list.length) return;
-    html.push(`<ul>${list.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`);
+    html.push(`<ul>${list.map((item) => `<li>${renderInlineMarkdown(item)}</li>`).join("")}</ul>`);
     list = [];
   }
 
@@ -76,7 +107,24 @@ export function markdownToHtml(markdown) {
       flushParagraph();
       flushList();
       const level = Math.min(heading[1].length, 3);
-      html.push(`<h${level}>${escapeHtml(heading[2])}</h${level}>`);
+      html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      continue;
+    }
+
+    const image = trimmed.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
+    if (image) {
+      flushParagraph();
+      flushList();
+      const src = safeContentUrl(image[2]);
+      if (src) {
+        const alt = image[1].trim();
+        html.push(`
+          <figure class="paper-figure">
+            <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async">
+            ${alt ? `<figcaption>${renderInlineMarkdown(alt)}</figcaption>` : ""}
+          </figure>
+        `.trim());
+      }
       continue;
     }
 

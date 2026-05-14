@@ -3,43 +3,53 @@
   "id": "desire-gs-4d-street-gaussians",
   "tag": "3d-reconstruction",
   "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
-  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
+  "source": "CVPR 2025 / arXiv:2411.11921 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
   "authors": ["Chensheng Peng", "Chengwei Zhang", "Yixiao Wang", "Chenfeng Xu", "Yichen Xie", "Wenzhao Zheng", "Kurt Keutzer", "Masayoshi Tomizuka", "Wei Zhan"],
   "affiliations": ["UC Berkeley"],
-  "comment": "用自监督 4D Gaussian Splatting 做静动态分解和表面重建，是驾驶场景三维重建方向质量较高的近期样本。",
-  "visual": "visual-grid",
-  "visualLabel": "4D street GS"
+  "comment": "DeSiRe-GS 用自监督 4D Gaussian Splatting 做城市驾驶场景的静动态分解和表面重建。它的价值在于把视觉渲染质量、动态对象处理和几何可信度放到同一个驾驶场景表示问题里。"
 }
 ---
 
-## 导读判断
+## 一句话定位
 
-DeSiRe-GS 值得入选，是因为它处理的是驾驶场景 3DGS 中最难的一类问题：动态物体、数据稀疏和表面漂浮。它不依赖额外 3D bounding box 标注，而是做自监督静动态分解和表面重建，和组内三维重建、仿真生成、可评估场景建模都有直接关系。
+DeSiRe-GS 是 CVPR 2025 的驾驶场景 4D Gaussian Splatting 工作，目标是在没有额外 3D bounding box 标注的情况下，同时做好静动态分解、动态街景表示和高保真表面重建。它适合作为三维重建和驾驶仿真方向的高质量样本。
 
-## 研究背景与问题
+## 论文要解决的问题
 
-自动驾驶场景不是静态室内重建。道路、建筑、车辆、行人同时存在，车辆还会快速移动。普通 3DGS 容易在动态区域产生鬼影或漂浮高斯，导致渲染看起来不错但几何不可信。对驾驶系统而言，这类错误会影响仿真、地图更新和下游感知评测，所以需要一种能区分静态背景和动态对象、并保持表面物理合理性的表示。
+普通 3DGS 在静态或受控场景里效果很好，但自动驾驶数据包含快速移动的车辆、行人、稀疏多视角、长距离道路和复杂遮挡。动态区域容易产生 ghosting、漂浮高斯和表面不一致，导致图像看起来能渲染，却难以作为仿真、地图更新或下游评测的可靠几何表示。DeSiRe-GS 的问题是：如何在自监督设置下从驾驶视频中分离静态背景和动态对象，并让动态区域的几何更贴合真实表面。
 
-## 方法主线
+## 方法和系统设计
 
-- 论文采用两阶段优化流程，先根据 3DGS 对动态区域重建不佳这一现象提取 2D motion masks。
-- 第二阶段把这些 2D motion priors 可微地映射到 Gaussian 空间，形成动态街景高斯表示。
-- 方法加入几何正则和时序跨视角一致性，减少数据稀疏带来的过拟合，让高斯更贴合物体表面而不是漂浮在空中。
+- 论文采用两阶段优化：先利用动态区域重建误差提取 2D motion masks，再将这些 motion priors 可微映射到 Gaussian 空间。
+- 表示层面构建 4D street Gaussian，将静态背景与动态对象分开建模，避免动态物体污染静态场景。
+- 正则设计包括 Gaussian scale、跨视角一致性和表面约束，目标是减少漂浮高斯，并提升动态区域几何质量。
 
-## 实验与证据
+## 关键图与可视化结果
 
-CVPR 2025 版本报告了复杂城市驾驶场景中的静动态分解、表面重建和新视角合成效果。论文强调自监督方法能超过已有自监督方法，并达到接近依赖外部 3D bounding box 标注方法的准确性。对本项目来说，关键不是单张渲染图是否漂亮，而是它是否改善动态对象的几何一致性和表面可信度。
+![图 1：DeSiRe-GS pipeline，展示自监督 motion prior、静动态分解和 4D street Gaussian 优化流程](https://arxiv.org/html/2411.11921v2/figures_low_res/pipeline4.png)
 
-## 和组内方向的关系
+这张图是理解论文方法的入口。DeSiRe-GS 不依赖外部 3D 框标注，而是从渲染误差和 motion masks 中获得动态先验，再把二维动态线索转到 Gaussian 空间中约束场景表示。
 
-这篇论文可以作为三维重建方向的核心模板：研究目标不只是 photorealistic rendering，而是可用于自动驾驶仿真和评测的几何表示。它也能和世界模型方向联动，后续可以讨论 3DGS 场景是否能作为闭环仿真的状态空间，或者作为世界模型生成结果的几何约束。
+![图 2：DeSiRe-GS 与 S3Gaussian、PVG 的定性对比，展示动态驾驶场景中的渲染和分解效果](https://arxiv.org/html/2411.11921v2/figures_low_res/qualitative_comp_2.png)
+
+这张定性对比图需要和表格一起读。它能展示 DeSiRe-GS 在动态对象边界、道路结构和局部表面质量上的优势，但定性图本身不能证明几何可用于闭环驾驶，还需要深度一致性和下游任务验证。
+
+## 实验结论与证据
+
+论文在 Waymo Open Dataset、KITTI 等驾驶数据上比较重建、novel view synthesis、静动态分解和渲染质量，并与自监督方法以及带 3D bbox 标注的方法对照。它的关键证据不只是 PSNR/SSIM/LPIPS，而是动态区域和表面重建质量的改善。多视角一致性深度图进一步说明方法在几何侧有收益，不只是生成更漂亮的图像。
+
+## 应用场景与启发
+
+- 应用场景：驾驶仿真资产构建、动态场景重放、闭环规划场景编辑、道路数字孪生和下游感知算法评测。
+- 方法启发：驾驶 3DGS 的成功标准不能只看新视角渲染，还要看动态对象是否分离、表面是否可信、几何是否能被下游任务消费。
+- 讨论问题：4DGS 场景表示能否成为世界模型 rollout 或闭环仿真的几何底座，而不是只做离线可视化。
 
 ## 局限与阅读风险
 
-自监督 motion prior 的质量会影响静动态分解结果，复杂天气、夜间、低纹理道路和长尾交通参与者可能仍有风险。方法属于 per-scene optimization 还是可泛化模型，需要在复现时明确。另一个风险是渲染指标提升不等于可驾驶仿真可靠，还需要下游规划或感知评测验证。
+自监督 motion prior 的质量是核心风险。夜间、雨雾、低纹理道路、稀有交通参与者和强反光场景可能破坏动态分解。另一个风险是 per-scene optimization 的效率和泛化能力；如果每个场景都需要较重优化，它更适合作为数据资产构建工具，而不一定适合实时驾驶系统。
 
 ## 后续跟进
 
-- 优先检查代码和数据，确认是否能在 Waymo、KITTI 或自有驾驶数据上复现。
-- 复现实验不要只看 PSNR/SSIM，要加入动态区域深度误差和表面一致性检查。
-- 组会可讨论：驾驶场景 3DGS 的成功标准应是视觉质量、几何准确，还是下游闭环可用性。
+- 检查代码开放情况、每个场景的优化时间和 Waymo/KITTI 数据预处理。
+- 复现时加入动态区域深度误差、表面一致性和下游感知评测，而不只看渲染指标。
+- 跟进 4DGS 与驾驶世界模型、闭环仿真 benchmark 的结合方式。

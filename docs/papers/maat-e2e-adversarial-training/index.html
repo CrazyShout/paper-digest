@@ -1,17 +1,28 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #9a5b42">自动驾驶模型攻防</span> <h1>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving</h1> <p>把对抗训练扩展到感知、预测、规划耦合的端到端驾驶模型，适合作为自动驾驶模型攻防方向的防御样本。</p> <div class="paper-hero-meta"> <dl class="paper-meta-list"> <div> <dt>抓取位置</dt> <dd>arXiv:2409.07321 / https://arxiv.org/abs/2409.07321</dd> </div> <div> <dt>作者</dt> <dd>Tianyuan Zhang, Lu Wang, Jiaqi Kang, Xinwei Zhang, Siyuan Liang, Yuwei Chen, Aishan Liu, Xianglong Liu</dd> </div> <div> <dt>单位</dt> <dd>Beihang University and collaborators</dd> </div> </dl> <button class="share-link" type="button" data-share-button> <span data-share-label>分享链接</span> </button> </div> </section> <section class="paper-detail-grid"> <article class="paper-report"><h2>导读判断</h2>
-<p>MA2T 入选是因为它把安全鲁棒性问题从单个感知模块推进到端到端驾驶链路。端到端模型的攻击影响不只体现在检测或分割错误上，而是会穿过感知、预测和规划，最终改变驾驶动作。论文尝试做模块级自适应对抗训练，适合作为组内自动驾驶模型攻防方向的防御基线。</p>
-<h2>研究背景与问题</h2>
-<p>普通对抗训练通常假设模型有一个清晰输出和单一损失，但端到端驾驶模型包含感知、预测、规划等多阶段目标，各模块强耦合。直接套用分类或检测领域的对抗训练，可能只增强局部模块而损害整体驾驶目标。MA2T 的问题定义是：如何在端到端驾驶模型内部注入扰动并动态平衡各模块损失，使整体驾驶决策更稳健。</p>
-<h2>方法主线</h2>
-<ul><li>方法提出 Module-wise Noise Injection，在不同模块输入前注入噪声，但训练目标由整体端到端任务而不是单个模块损失引导。</li><li>它提出 Dynamic Weight Accumulation Adaptation，根据模块对整体鲁棒训练的贡献动态调整损失权重。</li><li>评估覆盖白盒攻击、黑盒攻击和自然扰动，并把鲁棒性验证延伸到 CARLA 闭环环境。</li></ul>
-<h2>实验与证据</h2>
-<p>论文在 nuScenes 上使用多个端到端自动驾驶模型做实验，并报告在攻击场景下相较基线有明显提升。它还在 CARLA 中做闭环评估，验证防御不只是提升开环指标，也能改善模拟驾驶中的鲁棒性。这个证据结构符合本项目对安全方向的筛选要求：必须区分模型指标下降和真实驾驶风险上升。</p>
-<h2>和组内方向的关系</h2>
-<p>这篇论文适合作为安全鲁棒性方向的固定参考。后续组内无论做端到端驾驶、V2X 协同还是世界模型，都需要有类似的攻击和自然扰动评估。它还提醒我们，防御方法不能只看某个模块是否更鲁棒，而要看整体规划输出和闭环驾驶行为是否更安全。</p>
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving · Paper Digest</title><link rel="stylesheet" href="../../assets/styles.css"></head> <body>  <main class="paper-page"> <a class="back-link" href="../../">返回简报</a> <section class="paper-hero"> <span class="paper-tag" style="--tag-color: #9a5b42">自动驾驶模型攻防</span> <h1>Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving</h1> <p>MA2T 把对抗训练从分类或感知模块推进到端到端驾驶链路，关注攻击如何穿过感知、预测和规划影响最终驾驶行为。它适合作为自动驾驶鲁棒性评测与防御设计的基线论文。</p> <div class="paper-hero-meta"> <dl class="paper-meta-list"> <div> <dt>抓取位置</dt> <dd>arXiv:2409.07321 / https://arxiv.org/abs/2409.07321</dd> </div> <div> <dt>作者</dt> <dd>Tianyuan Zhang, Lu Wang, Jiaqi Kang, Xinwei Zhang, Siyuan Liang, Yuwei Chen, Aishan Liu, Xianglong Liu</dd> </div> <div> <dt>单位</dt> <dd>Beihang University and collaborators</dd> </div> </dl> <button class="share-link" type="button" data-share-button> <span data-share-label>分享链接</span> </button> </div> </section> <section class="paper-detail-grid"> <article class="paper-report"><h2>一句话定位</h2>
+<p>MA2T 是一篇端到端自动驾驶鲁棒训练论文，核心目标是在感知、预测、规划等模块强耦合的驾驶模型中做自适应对抗训练。它强调防御不能只保护某个局部任务，而要看最终规划输出和闭环驾驶行为是否更安全。</p>
+<h2>论文要解决的问题</h2>
+<p>传统对抗训练通常面对分类、检测或分割模型，输出目标单一，损失函数清楚。但端到端驾驶模型包含多个模块和多个任务，攻击可以在中间特征里传播，最终改变轨迹规划。直接把普通 PGD 对抗训练套进端到端模型，可能只提升局部模块鲁棒性，却损害整体驾驶效果。MA2T 的问题是：如何在不同模块注入扰动，并动态调整各模块训练贡献，使模型在攻击、自然扰动和闭环环境中都更稳。</p>
+<h2>方法和系统设计</h2>
+<ul><li>Module-wise Noise Injection 在输入或模块连接处引入扰动，使训练覆盖感知、预测、规划链路中的不同脆弱点。</li><li>Dynamic Weight Accumulation Adaptation 根据模块对鲁棒训练的贡献动态调整权重，避免某个模块损失主导训练。</li><li>评估覆盖 white-box、black-box、adaptive attack、natural corruption 和 CARLA 闭环模拟，尽量把开环指标与驾驶行为联系起来。</li></ul>
+<h2>关键图与可视化结果</h2>
+<figure class="paper-figure">
+            <img src="https://arxiv.org/html/2409.07321v1/x1.png" alt="图 1：MA2T 方法示意，以 UniAD 为例展示噪声可以注入输入数据和模块连接位置" loading="lazy" decoding="async">
+            <figcaption>图 1：MA2T 方法示意，以 UniAD 为例展示噪声可以注入输入数据和模块连接位置</figcaption>
+          </figure>
+<p>这张图说明 MA2T 的关键不是单个攻击算子，而是“模块级”训练视角。端到端驾驶模型的中间表示会跨模块传播，扰动位置不同，最终影响的规划风险也不同。</p>
+<figure class="paper-figure">
+            <img src="https://arxiv.org/html/2409.07321v1/x7.png" alt="图 2：同一场景中 clean、被攻击和 MA2T 防御后的规划可视化对比" loading="lazy" decoding="async">
+            <figcaption>图 2：同一场景中 clean、被攻击和 MA2T 防御后的规划可视化对比</figcaption>
+          </figure>
+<p>这张图展示了防御论文最需要的定性证据：攻击后规划可能从安全避让变成碰撞风险，而经过 MA2T 训练后，模型在同类攻击下能恢复更合理的轨迹。它提供了“规划风险”层面的直观证据，但仍需要和 CARLA 闭环统计一起判断稳定性。</p>
+<h2>实验结论与证据</h2>
+<p>论文在 nuScenes 上使用 UniAD、VAD 等端到端驾驶模型进行 white-box 和 black-box 设置评估，主要观察规划 Avg. L2 Error 等指标在攻击下的变化。它还补充自然扰动和 CARLA 闭环结果，说明防御不只改善开环误差，也可能降低模拟驾驶中的失效风险。更有价值的是 adaptive attack 结果，因为这能避免防御只对固定攻击方式有效。</p>
+<h2>应用场景与启发</h2>
+<ul><li>应用场景：端到端驾驶模型上线前的鲁棒性测试、自动驾驶攻防 benchmark、防御训练 baseline 和安全回归测试。</li><li>方法启发：鲁棒性评估应沿着模块链路定位脆弱点，并把最终规划和闭环风险纳入评价。</li><li>讨论问题：对 V2X-VLM、世界模型式驾驶系统和概率规划模型，模块级防御是否仍然适用，还是需要按任务风险重新定义攻击面。</li></ul>
 <h2>局限与阅读风险</h2>
-<p>对抗训练通常带来训练成本和 clean performance trade-off，需要核查论文是否报告正常场景性能。攻击设置也可能覆盖有限，真实世界中的物理攻击、传感器失效、通信异常和场景级扰动更复杂。MA2T 的模块划分还依赖具体端到端架构，迁移到 VLM 或世界模型式驾驶系统时未必直接适用。</p>
+<p>对抗训练通常有训练成本和 clean performance trade-off，需要检查正常场景性能是否下降。攻击设置虽然较丰富，但真实世界还包括物理扰动、传感器故障、通信异常、场景级诱导和数据分布漂移。MA2T 的模块划分依赖具体端到端架构，迁移到大模型或世界模型架构时未必直接可用。</p>
 <h2>后续跟进</h2>
-<ul><li>记录论文使用的端到端模型、攻击类型和闭环指标，作为未来安全评测清单。</li><li>如果复现，优先做 clean、white-box、black-box、natural corruption 四类对照。</li><li>组会可讨论：端到端驾驶鲁棒性应按模块防御，还是按最终规划风险统一建模。</li></ul></article> </section> </main> <script>
+<ul><li>记录论文使用的端到端模型、攻击类型、扰动预算和闭环指标，形成安全评测清单。</li><li>复现时至少包含 clean、white-box、black-box、adaptive attack、natural corruption 五类结果。</li><li>跟进端到端驾驶防御是否能与不确定性规划、安全约束和仿真世界模型结合。</li></ul></article> </section> </main> <script>
     const shareButton = document.querySelector("[data-share-button]");
     const shareLabel = shareButton?.querySelector("[data-share-label]");
 
