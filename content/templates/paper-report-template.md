@@ -11,9 +11,7 @@
   "source": "会议/期刊/平台 + URL 或 arXiv ID",
   "authors": ["First Author", "Second Author"],
   "affiliations": ["Institution A", "Institution B"],
-  "comment": "一句话说明为什么这篇值得组内读。",
-  "visual": "visual-network",
-  "visualLabel": "短标签"
+  "comment": "一句话说明为什么这篇值得组内读。"
 }
 ---
 

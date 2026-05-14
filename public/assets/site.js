@@ -145,14 +145,6 @@ function initNavState() {
   setNavCollapsed(localStorage.getItem(NAV_COLLAPSED_KEY) === "true");
 }
 
-function renderVisual(paper) {
-  return `
-    <div class="paper-visual ${escapeHtml(paper.visual)}" data-label="${escapeHtml(paper.visualLabel)}" aria-label="${escapeHtml(paper.visualLabel)}">
-      <span></span><span></span><span></span>
-    </div>
-  `;
-}
-
 function renderDigest() {
   const digest = getActiveDigest();
   if (!digest) return;
@@ -170,17 +162,16 @@ function renderDigest() {
   const sections = digest.tags.map((tag) => {
     const papers = digest.papers.filter((paper) => paper.tag === tag.id);
     const paperCards = papers.map((paper) => `
-      <article class="paper-card" id="${escapeHtml(paper.id)}">
-        ${renderVisual(paper)}
+      <article class="paper-card" id="${escapeHtml(paper.id)}" style="--tag-color: ${escapeHtml(tag.color)}">
         <div class="paper-body">
-          <span class="paper-tag" style="--tag-color: ${escapeHtml(tag.color)}">${escapeHtml(tag.label)}</span>
+          <span class="paper-tag">${escapeHtml(tag.label)}</span>
           <h4>${escapeHtml(paper.title)}</h4>
+          <p class="paper-comment">${escapeHtml(paper.comment)}</p>
           <div class="paper-meta">
             <span><strong>抓取位置：</strong>${escapeHtml(paper.source)}</span>
             <span><strong>作者：</strong>${escapeHtml(paper.authors.join(", "))}</span>
             <span><strong>单位：</strong>${escapeHtml(paper.affiliations.join("; "))}</span>
           </div>
-          <p class="paper-comment">${escapeHtml(paper.comment)}</p>
           <div class="paper-actions">
             <a class="read-link" href="${escapeHtml(paper.link)}">阅读全文</a>
           </div>

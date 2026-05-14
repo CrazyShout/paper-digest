@@ -52,9 +52,7 @@ content/papers/driving-world-model.md
   "source": "arXiv / project page",
   "authors": ["First Author", "Second Author"],
   "affiliations": ["University A", "Lab B"],
-  "comment": "一句简评，说明这篇论文为什么值得组内看。",
-  "visual": "visual-grid",
-  "visualLabel": "world model"
+  "comment": "一句简评，说明这篇论文为什么值得组内看。"
 }
 ---
 
@@ -80,7 +78,6 @@ content/papers/driving-world-model.md
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。
 - `authors` / `affiliations`：作者和单位数组。
 - `comment`：首页卡片上显示的短评。
-- `visual` / `visualLabel`：当前用于占位主图样式。
 
 3. 新建或更新当期简报文件：
 
