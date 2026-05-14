@@ -38,7 +38,7 @@ content/papers/<paper-id>.md
 `paper-id` 用英文小写、数字和连字符，例如：
 
 ```text
-content/papers/driving-world-model.md
+content/papers/example-world-model.md
 ```
 
 2. 在论文文件开头写 JSON frontmatter，下面正文写详细报告：
@@ -46,7 +46,7 @@ content/papers/driving-world-model.md
 ```md
 ---
 {
-  "id": "driving-world-model",
+  "id": "example-world-model",
   "tag": "world-models",
   "tags": ["world-models", "end-to-end-autonomous-driving"],
   "title": "示例：World Models for Autonomous Driving",
@@ -118,8 +118,8 @@ content/digests/2026-05-18.md
   "summary": "用一两句话概括本期内容。",
   "keywords": ["世界模型", "车路协同", "三维重建"],
   "papers": [
-    "driving-world-model",
-    "roadside-cooperative-perception"
+    "example-world-model",
+    "example-roadside-perception"
   ],
   "notes": []
 }
