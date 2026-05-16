@@ -6,7 +6,7 @@
   "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
   "source": "arXiv:2605.10904 / https://arxiv.org/abs/2605.10904",
   "authors": ["Marco Coscoy", "Zewei Zhou", "Seth Z. Zhao", "Henry Wei", "Angela Magtoto", "Johnson Liu", "Rui Song", "Walter Zimmer", "Zhiyu Huang", "Chen Tang", "Bolei Zhou", "Jiaqi Ma"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["University of California, Los Angeles"],
   "comment": "MDrive 把 V2X 协同驾驶评测推进到闭环 multi-agent benchmark，重点检验感知共享和协商机制是否真的转化为规划收益。"
 }
 ---
@@ -27,7 +27,13 @@ V2X 论文常见评测缺口是开环指标和真实闭环驾驶之间脱节。�
 
 ## 关键图与可视化结果
 
-arXiv 当前未提供可直接引用的 HTML 图片版本；后续阅读 PDF 时应优先补入 benchmark 场景构成图、闭环评测流程图和工具箱架构图。这里的关键不是静态可视化，而是 benchmark 是否能把 V2X 信息增益落到 closed-loop planning 指标。
+![图 1：MDrive 总览，展示三类 benchmark 场景、Real2Sim/agentic scenario generation/human-in-the-loop toolbox 和闭环协同评测目标](../../assets/papers/mdrive-teaser.png)
+
+这张图来自 arXiv source 中的官方 teaser。它说明 MDrive 的核心不是单一模型，而是把真实 V2X 日志重建、agentic 场景生成和人工接管仿真组合成闭环协同驾驶 benchmark。
+
+![图 2：MDrive 按场景类别统计 Driving Score 和 Success Rate 的 harmonic mean](../../assets/papers/mdrive-benchmark-across-categories.png)
+
+这张图支撑论文对闭环评测的主张。阅读时要看不同模型在不同交互类别上的差异，而不是只看平均分，因为协同感知和协商机制的收益会随场景复杂度变化。
 
 ## 实验结论与证据
 

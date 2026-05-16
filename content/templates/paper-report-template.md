@@ -2,7 +2,21 @@
 
 这个模板用于 `content/papers/<paper-id>.md`。每篇论文都按同一套叙述骨架写，避免简报之间风格漂移。正文不要写成纯摘要，要写成可以服务选题判断、复现规划和组会讨论的阅读报告。
 
-图片使用论文官方页面、arXiv HTML 或项目页中的图，写成标准 Markdown 图片语法。每张图下方必须解释它在论文论证里承担的作用，避免只贴图不解读。
+图片使用论文官方页面、arXiv HTML、项目页或 arXiv source/PDF 中的官方图，写成标准 Markdown 图片语法。每篇报告至少放 1 张官方图；优先放 2 张。每张图下方必须解释它在论文论证里承担的作用，避免只贴图不解读。
+
+作者单位必须从论文 PDF 首页、arXiv source、项目页或会议页面核验后填写。不要写“作者单位见论文 PDF”“unknown”“not confirmed”这类占位；如果 arXiv API 没有单位，必须继续查 PDF/source。只有确认论文自身没有公开单位时，才在正文“局限与阅读风险”里说明，不要把占位写进 frontmatter。
+
+如果 arXiv HTML 没有可直接引用的图片，应从官方 PDF/source 提取图并保存到：
+
+```text
+public/assets/papers/<paper-id>-figure-1.png
+```
+
+论文详情页中的相对引用写成：
+
+```md
+![图 1：一句话说明图片内容](../../assets/papers/<paper-id>-figure-1.png)
+```
 
 ```md
 ---

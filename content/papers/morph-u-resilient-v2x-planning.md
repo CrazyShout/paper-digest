@@ -6,7 +6,7 @@
   "title": "MORPH-U: Multi-Objective Resilient Motion Planning for V2X-Enabled Autonomous Driving in High-Uncertainty Environments via Simulation",
   "source": "arXiv:2605.07370 / https://arxiv.org/abs/2605.07370",
   "authors": ["Shih-Yu Lai"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["National Taiwan University"],
   "comment": "MORPH-U 把 V2X 消息延迟、丢包和伪造纳入闭环规划，使用 LDM、Hybrid-A*、Pareto tuning 和轻量 Byzantine gate 处理不确定事件触发。"
 }
 ---

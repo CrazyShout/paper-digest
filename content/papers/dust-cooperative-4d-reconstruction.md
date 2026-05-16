@@ -6,7 +6,7 @@
   "title": "One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction",
   "source": "arXiv:2605.07910 / https://arxiv.org/abs/2605.07910",
   "authors": ["Yulong Chen", "Xiaoyun Dong", "Haoyu Zhang", "Zongxian Yang", "Lewei Xie", "Xinke Li", "Yifan Zhang", "Kai Wang", "Jianping Wang"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["City University of Hong Kong (Dongguan)", "City University of Hong Kong", "SLAI, Shenzhen"],
   "comment": "DUST-GSG 把车端和路侧异步观测拆成双时间线，解决协同 4D Gaussian Scene Graph 在动态 agent 上的 ghosting 和梯度冲突。"
 }
 ---

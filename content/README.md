@@ -35,7 +35,9 @@ content/templates/paper-selection-rubric.md
 content/templates/digest-template.md
 ```
 
-论文详细报告建议保持相同叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告应尽量放入论文原图、官方项目图或可视化结果，并在正文里解释图片支撑的结论。
+论文详细报告建议保持相同叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 1 张论文原图、官方项目图或 arXiv source/PDF 提取图；优先放 2 张，并在正文里解释图片支撑的结论。
+
+作者单位必须从论文 PDF 首页、arXiv source、项目页或会议页面核验后填写。不要使用“作者单位见论文 PDF”“unknown”“not confirmed”这类占位。arXiv API 通常没有 affiliations；如果 API 没给单位，需要继续查 PDF/source。
 
 1. 为每篇入选论文新建一个文件：
 
@@ -101,8 +103,16 @@ content/papers/example-world-model.md
 - `title`：论文标题。
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。
 - `authors` / `affiliations`：作者和单位数组。
+- `affiliations`：必须是已核验的真实单位，不能写占位。单位来自 arXiv source/PDF 时按论文作者区块原文归并即可。
 - `comment`：首页卡片上显示的短评。
 - `revisionOf`：可选，仅用于保留原报告并新增人工修订版。修订版文件可以复用同一篇论文的标题和 arXiv ID，但必须指向原始论文 `id`，且不写入去重台账。
+
+图片要求：
+
+- 每篇论文报告至少 1 张官方图片，优先 2 张。
+- 优先使用 arXiv HTML、论文项目页或会议页面上的图片 URL。
+- 如果没有可直接引用的 HTML 图，从官方 PDF/source 提取图片到 `public/assets/papers/<paper-id>-figure-1.png`，并在论文详情页中用 `../../assets/papers/<paper-id>-figure-1.png` 引用。
+- 不要用无来源截图、二次摘要站图片或和论文不对应的占位图。
 
 去重要求：
 
@@ -178,6 +188,9 @@ npm run build
 - 检查 digest 日期是否是 `YYYY-MM-DD`，且 `id`、文件名和 `date` 一致。
 - 检查 arXiv ID、论文标题和 digest 引用是否重复。
 - 检查 `content/reported-papers.md` 是否和当前内容一致。
+- 检查论文 frontmatter 的作者、单位、关键词、notes 等 UI 依赖字段类型。
+- 检查新论文是否缺少图片，或是否使用“作者单位见论文 PDF”等占位单位。
+- 检查常见 arXiv HTML 图片路径错误。
 - 重新生成 `dist/` 里的静态页面。
 
 本地预览可以用：
@@ -222,4 +235,6 @@ https://crazyshout.github.io/paper-digest/
 - `duplicate arXiv id` / `duplicate paper title`：候选论文已经收录过，需要换论文。
 - `appears in multiple digests`：同一篇论文被放进多个简报，应该只保留第一次收录。
 - `reported-papers.md ... expected`：去重台账没有同步更新。
+- `must use verified affiliations`：论文单位仍是占位，需要从 PDF/source/项目页核验后填写。
+- `must include at least one official figure image`：论文报告缺少官方图片，需要补 arXiv HTML/项目页图片，或从官方 PDF/source 提取到 `public/assets/papers/`。
 - 页面没更新：先看 GitHub Actions 是否完成，再强制刷新浏览器缓存。

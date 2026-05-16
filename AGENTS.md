@@ -130,6 +130,8 @@ Do not commit `dist/`; it is an ignored build artifact uploaded by GitHub Action
 - Keep content frontmatter as strict JSON between `---` delimiters. Do not use YAML syntax, comments, or trailing commas.
 - Keep paper IDs lowercase with numbers and hyphens, and make each `id` match its filename without `.md`.
 - Use only topic IDs that exist in `config/research-interests.json` for `tag` and `tags`.
+- Do not use affiliation placeholders such as `作者单位见论文 PDF`, `unknown`, or `not confirmed`. If arXiv API lacks affiliations, inspect the paper PDF, arXiv source, project page, or venue page and record verified institutions.
+- Every new paper report must include at least one official figure image, preferably two. Use arXiv HTML/project-page URLs when available; otherwise extract a figure from the official PDF/source into `public/assets/papers/` and reference it from paper detail Markdown as `../../assets/papers/<file>.png`.
 - Prefer existing helper functions in `src/lib/content.js` for content parsing and HTML escaping.
 - `markdownToHtml` supports only a limited Markdown subset: headings, paragraphs, bullet lists, images, links, and `**strong**`. Do not assume tables, raw HTML, fenced code blocks, or arbitrary Markdown extensions will render.
 
@@ -231,6 +233,7 @@ Use the URL printed by Astro. Check the homepage, search, digest switching, pape
 - `revisionOf` must point to an original paper, not another revision. Revision papers should not be listed in `content/reported-papers.md`.
 - Duplicate arXiv IDs and normalized duplicate titles are rejected unless handled as a revision.
 - Every tag in `tag` or `tags` must exist in `config/research-interests.json`.
+- New paper reports fail validation if they omit official images or use affiliation placeholders. A small legacy allowlist exists only to avoid rewriting older archived reports.
 - Do not place drafts or explanatory Markdown files inside `content/digests/` or `content/papers/`; every `.md` file there is parsed as production content.
 - The Worker currently validates `digestId` as exactly `YYYY-MM-DD`. Digests with suffixes such as `YYYY-MM-DD-gpt` may not work with remote comments without Worker changes.
 - Files like `src/pages/assets/data.js.js` have double extensions because they are Astro endpoint source files that output asset routes. Renaming them can break script paths in `src/pages/index.astro`.

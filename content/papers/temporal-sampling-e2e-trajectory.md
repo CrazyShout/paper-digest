@@ -6,7 +6,7 @@
   "title": "Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction",
   "source": "arXiv:2605.10388 / https://arxiv.org/abs/2605.10388",
   "authors": ["Yumao Liu", "Tao Liu", "Xiangyu Li", "Jiaxiang Li", "Ke Ma"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["The Hong Kong University of Science and Technology (Guangzhou)"],
   "comment": "这篇论文把 E2E 驾驶轨迹预测中的 camera frame sampling frequency 当成训练集设计变量，提醒不同容量模型并不总是越高帧率越好。"
 }
 ---

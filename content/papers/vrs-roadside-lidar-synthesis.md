@@ -6,7 +6,7 @@
   "title": "Generating Roadside LiDAR Datasets from Vehicle-Side Datasets via Novel View Synthesis",
   "source": "arXiv:2605.05897 / https://arxiv.org/abs/2605.05897",
   "authors": ["Yuhan Xia", "Runxin Zhao", "Hanyang Zhuang", "Chunxiang Wang", "Ming Yang"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["School of Automation and Intelligent Sensing, Shanghai Jiao Tong University", "Key Laboratory of System Control and Information Processing, Ministry of Education of China", "Global College, Shanghai Jiao Tong University"],
   "comment": "VRS 用车端 LiDAR 数据合成带标注的路侧 LiDAR 数据，针对真实 roadside 数据稀缺和跨视角 domain gap 做补全、可见性约束和 novel view synthesis。"
 }
 ---

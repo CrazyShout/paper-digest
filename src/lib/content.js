@@ -17,6 +17,7 @@ export function escapeHtml(value) {
 function safeContentUrl(value) {
   const url = String(value || "").trim();
   if (/^https?:\/\//i.test(url) || url.startsWith("/") || url.startsWith("#")) return url;
+  if (/^(?:\.\.?\/)+[A-Za-z0-9._~!$&'()*+,;=:@/-]+$/i.test(url)) return url;
   return "";
 }
 

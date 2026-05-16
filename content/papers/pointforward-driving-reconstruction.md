@@ -6,7 +6,7 @@
   "title": "PointForward: Feedforward Driving Reconstruction through Point-Aligned Representations",
   "source": "arXiv:2605.11594 / https://arxiv.org/abs/2605.11594",
   "authors": ["Cheng Chi", "Xianqi Wang", "Hongcheng Luo", "Mingfei Tu", "Gangwei Xu", "Zehan Zhang", "Bing Wang", "Guang Chen", "Hangjun Ye", "Sida Peng", "Xin Yang", "Haiyang Sun"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Xiaomi EV", "Huazhong University of Science and Technology", "Zhejiang University"],
   "comment": "PointForward 用 world-space sparse 3D queries 和 point-aligned representation 做 feedforward driving reconstruction，目标是减少 pixel-aligned 3DGS 的多视角不一致和 layering artifacts。"
 }
 ---

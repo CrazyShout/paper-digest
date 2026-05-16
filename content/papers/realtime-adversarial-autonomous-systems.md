@@ -6,7 +6,7 @@
   "title": "Real-Time Evaluation of Autonomous Systems under Adversarial Attacks",
   "source": "arXiv:2605.03491 / https://arxiv.org/abs/2605.03491",
   "authors": ["Adithya Mohan", "Xujun Xie", "Venkatesh Thirugnana Sambandham", "Torsten Schön"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["AI Motion Institute, Technische Hochschule Ingolstadt"],
   "comment": "这篇论文用真实交叉口驾驶数据做离线轨迹学习和推理时 PGD 攻击评测，强调相近 nominal ADE 下模型鲁棒性可能差异很大。"
 }
 ---

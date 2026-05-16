@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,8 +7,30 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SCRIPT_DIR, "..");
 const CONTENT = path.join(ROOT, "content");
 const CONFIG = path.join(ROOT, "config");
+const PUBLIC = path.join(ROOT, "public");
 
 const errors = [];
+const LEGACY_AFFILIATION_PLACEHOLDER_FILES = new Set([
+  "caad-causality-aware-driving.md",
+  "cars-responsibility-testing.md",
+  "copad-v2x-trajectory-prediction.md",
+  "dawn-world-action-model.md",
+  "driving-world-model-video-gpt.md",
+  "driving-world-model-video.md",
+  "real2sim-physics-4dgs.md",
+  "revisiting-adversarial-attacks-gpt.md",
+  "revisiting-adversarial-attacks.md",
+  "safer-safety-scenario-gpt.md",
+  "safer-safety-scenario.md",
+  "swarmdrive-v2v-coordination.md",
+  "v2x-cooperative-planning-gpt.md",
+  "v2x-cooperative-planning.md",
+  "view-induced-trajectory-manipulation.md"
+]);
+const LEGACY_IMAGELESS_FILES = new Set([
+  "revisiting-adversarial-attacks.md",
+  "vla-end-to-end-driving.md"
+]);
 
 function addError(message) {
   errors.push(message);
@@ -121,6 +144,17 @@ function validateStringArrayField(data, field, file) {
   }
 }
 
+function validateAffiliations(data, file) {
+  validateStringArrayField(data, "affiliations", file);
+
+  if (LEGACY_AFFILIATION_PLACEHOLDER_FILES.has(file)) return;
+
+  const placeholders = data.affiliations.filter((item) => /作者单位|见论文|PDF/.test(item));
+  if (placeholders.length) {
+    addError(`${file} must use verified affiliations, not placeholders: ${placeholders.join(", ")}`);
+  }
+}
+
 function validateNotes(notes, file) {
   if (!Array.isArray(notes)) {
     addError(`${file} must define notes as an array`);
@@ -142,11 +176,14 @@ function validateNotes(notes, file) {
 }
 
 function validateImageUrls(markdown, file) {
-  const imagePattern = /!\[[^\]]*]\((https?:\/\/[^)\s]+)(?:\s+"[^"]*")?\)/g;
+  const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let count = 0;
   let match;
 
   while ((match = imagePattern.exec(markdown)) !== null) {
     const url = match[1];
+    count += 1;
+
     const duplicatedArxivHtmlAsset = url.match(
       /^https:\/\/arxiv\.org\/html\/(\d{4}\.\d{4,5}v\d+)\/\1\//
     );
@@ -154,6 +191,22 @@ function validateImageUrls(markdown, file) {
     if (duplicatedArxivHtmlAsset) {
       addError(`${file} has duplicated arXiv HTML asset path: ${url}`);
     }
+
+    if (/^(?:\.\.?\/)+/.test(url)) {
+      if (!url.startsWith("../../assets/")) {
+        addError(`${file} uses unsupported relative image path: ${url}`);
+        continue;
+      }
+
+      const publicPath = path.join(PUBLIC, url.replace(/^(?:\.\.\/)+/, ""));
+      if (!existsSync(publicPath)) {
+        addError(`${file} references missing local image asset: ${url}`);
+      }
+    }
+  }
+
+  if (!count && !LEGACY_IMAGELESS_FILES.has(file)) {
+    addError(`${file} must include at least one official figure image`);
   }
 }
 
@@ -178,7 +231,7 @@ const papers = paperDocs.map((doc) => {
   validateStringField(doc.data, "source", doc.file);
   validateStringField(doc.data, "comment", doc.file);
   validateStringArrayField(doc.data, "authors", doc.file);
-  validateStringArrayField(doc.data, "affiliations", doc.file);
+  validateAffiliations(doc.data, doc.file);
   validateImageUrls(doc.body, doc.file);
 
   if (!tags.length) {
