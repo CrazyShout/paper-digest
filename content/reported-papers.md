@@ -13,14 +13,21 @@
 | dawn-world-action-model | The DAWN of World-Action Interactive Models | 2605.11550 | 2026-05-14 |
 | desire-gs-4d-street-gaussians | DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction | 2411.11921 | 2026-05-13 |
 | driving-world-model-video | DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT | 2412.19505 | 2026-05-12 |
+| dust-cooperative-4d-reconstruction | One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction | 2605.07910 | 2026-05-16 |
+| eponav2-driving-world-model | EponaV2: Driving World Model with Comprehensive Future Reasoning | 2605.14696 | 2026-05-16 |
 | evaluating-roadside-perception | Evaluating Roadside Perception for Autonomous Vehicles | 2401.12392 | 2026-05-12 |
 | maat-e2e-adversarial-training | Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving | 2409.07321 | 2026-05-13 |
+| mdrive-closed-loop-cooperative-driving | MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems | 2605.10904 | 2026-05-16 |
+| morph-u-resilient-v2x-planning | MORPH-U: Multi-Objective Resilient Motion Planning for V2X-Enabled Autonomous Driving in High-Uncertainty Environments via Simulation | 2605.07370 | 2026-05-16 |
+| pointforward-driving-reconstruction | PointForward: Feedforward Driving Reconstruction through Point-Aligned Representations | 2605.11594 | 2026-05-16 |
 | real2sim-physics-4dgs | Real2Sim: A Physics-driven and Editable Gaussian Splatting Framework for Autonomous Driving | 2605.13591 | 2026-05-14 |
+| realtime-adversarial-autonomous-systems | Real-Time Evaluation of Autonomous Systems under Adversarial Attacks | 2605.03491 | 2026-05-16 |
 | revisiting-adversarial-attacks | Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving | 2505.11532 | 2026-05-12 |
 | safer-safety-scenario | SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling | 2603.04071 | 2026-05-12 |
 | select2drive-pragmatic-communications | Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications | 2501.12040 | 2026-05-13 |
 | splatad-realtime-3dgs | SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting | 2411.16816 | 2026-05-12 |
 | swarmdrive-v2v-coordination | SwarmDrive: Semantic V2V Coordination for Latency-Constrained Cooperative Autonomous Driving | 2604.22852 | 2026-05-14 |
+| temporal-sampling-e2e-trajectory | Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction | 2605.10388 | 2026-05-16 |
 | urbanv2x-cooperative-navigation | UrbanV2X: A Multisensory Vehicle-Infrastructure Dataset for Cooperative Navigation | 2512.20224 | 2026-05-14 |
 | v2x-cooperative-planning | Improved Consensus ADMM for Cooperative Motion Planning of Large-Scale CAVs | 2401.09032 | 2026-05-12 |
 | v2x-vlm-cooperative-driving | V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models | 2408.09251 | 2026-05-13 |
@@ -28,6 +35,7 @@
 | view-induced-trajectory-manipulation | Still Camouflage, Moving Illusion: View-Induced Trajectory Manipulation in Autonomous Driving | 2605.12743 | 2026-05-14 |
 | vista-driving-world-model | Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability | 2405.17398 | 2026-05-13 |
 | vla-end-to-end-driving | OpenDriveVLA: Towards End-to-end Autonomous Driving with Large Vision Language Action Model | 2503.23463 | 2026-05-12 |
+| vrs-roadside-lidar-synthesis | Generating Roadside LiDAR Datasets from Vehicle-Side Datasets via Novel View Synthesis | 2605.05897 | 2026-05-16 |
 
 ## 使用说明
 

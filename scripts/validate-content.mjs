@@ -105,6 +105,58 @@ function parseReportedPapers(text) {
   return rows;
 }
 
+function isStringArray(value) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && item.trim());
+}
+
+function validateStringField(data, field, file) {
+  if (typeof data[field] !== "string" || !data[field].trim()) {
+    addError(`${file} must define a non-empty ${field} string`);
+  }
+}
+
+function validateStringArrayField(data, field, file) {
+  if (!isStringArray(data[field])) {
+    addError(`${file} must define ${field} as a non-empty string array`);
+  }
+}
+
+function validateNotes(notes, file) {
+  if (!Array.isArray(notes)) {
+    addError(`${file} must define notes as an array`);
+    return;
+  }
+
+  for (const [index, note] of notes.entries()) {
+    if (!note || typeof note !== "object" || Array.isArray(note)) {
+      addError(`${file} notes[${index}] must be an object`);
+      continue;
+    }
+
+    for (const field of ["user", "time", "text"]) {
+      if (typeof note[field] !== "string" || !note[field].trim()) {
+        addError(`${file} notes[${index}] must define a non-empty ${field} string`);
+      }
+    }
+  }
+}
+
+function validateImageUrls(markdown, file) {
+  const imagePattern = /!\[[^\]]*]\((https?:\/\/[^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let match;
+
+  while ((match = imagePattern.exec(markdown)) !== null) {
+    const url = match[1];
+    const duplicatedArxivHtmlAsset = url.match(
+      /^https:\/\/arxiv\.org\/html\/(\d{4}\.\d{4,5}v\d+)\/\1\//
+    );
+
+    if (duplicatedArxivHtmlAsset) {
+      addError(`${file} has duplicated arXiv HTML asset path: ${url}`);
+    }
+  }
+}
+
 const interestConfig = JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
 const knownTags = new Set(interestConfig.interests.map((interest) => interest.id));
 const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
@@ -122,9 +174,12 @@ const papers = paperDocs.map((doc) => {
     addError(`${doc.file} has id "${id}", expected "${expectedId}"`);
   }
 
-  if (!normalizedTitle) {
-    addError(`${doc.file} is missing title`);
-  }
+  validateStringField(doc.data, "title", doc.file);
+  validateStringField(doc.data, "source", doc.file);
+  validateStringField(doc.data, "comment", doc.file);
+  validateStringArrayField(doc.data, "authors", doc.file);
+  validateStringArrayField(doc.data, "affiliations", doc.file);
+  validateImageUrls(doc.body, doc.file);
 
   if (!tags.length) {
     addError(`${doc.file} is missing tag/tags`);
@@ -211,6 +266,11 @@ for (const digest of digestDocs) {
   if (!dateFromId || date !== dateFromId) {
     addError(`${digest.file} date must match the YYYY-MM-DD prefix in file id`);
   }
+
+  validateStringField(digest.data, "title", digest.file);
+  validateStringField(digest.data, "summary", digest.file);
+  validateStringArrayField(digest.data, "keywords", digest.file);
+  validateNotes(digest.data.notes, digest.file);
 
   if (!Array.isArray(digest.data.papers)) {
     addError(`${digest.file} must define a papers array`);

@@ -1,5 +1,6 @@
 const DEFAULT_COMMENTS_DIR = "comments";
 const MAX_COMMENT_LENGTH = 800;
+const DEFAULT_MAX_COMMENTS_PER_DIGEST = 200;
 
 function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -38,7 +39,7 @@ function requireEnv(env, key) {
 }
 
 function validDigestId(value) {
-  return typeof value === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value);
+  return typeof value === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}(?:-[a-z0-9-]+)?$/.test(value);
 }
 
 function sanitizeText(value, maxLength) {
@@ -75,10 +76,24 @@ function githubPath(env, digestId) {
   return `${dir.replace(/^\/|\/$/g, "")}/${digestId}.json`;
 }
 
-function githubApiUrl(env, digestId) {
+function githubContentApiUrl(env, repoPath) {
   const owner = requireEnv(env, "GITHUB_OWNER");
   const repo = requireEnv(env, "GITHUB_REPO");
-  return `https://api.github.com/repos/${owner}/${repo}/contents/${githubPath(env, digestId)}`;
+  const safePath = repoPath.split("/").map((part) => encodeURIComponent(part)).join("/");
+  return `https://api.github.com/repos/${owner}/${repo}/contents/${safePath}`;
+}
+
+function githubApiUrl(env, digestId) {
+  return githubContentApiUrl(env, githubPath(env, digestId));
+}
+
+function digestContentPath(digestId) {
+  return `content/digests/${digestId}.md`;
+}
+
+function maxCommentsPerDigest(env) {
+  const value = Number.parseInt(env.MAX_COMMENTS_PER_DIGEST || "", 10);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_COMMENTS_PER_DIGEST;
 }
 
 async function githubFetch(url, env, init = {}) {
@@ -114,6 +129,20 @@ async function readComments(env, digestId) {
     comments: Array.isArray(parsed) ? parsed : [],
     sha: data.sha
   };
+}
+
+async function requireExistingDigest(env, digestId) {
+  const branch = env.GITHUB_BRANCH || "main";
+  const url = `${githubContentApiUrl(env, digestContentPath(digestId))}?ref=${encodeURIComponent(branch)}`;
+  const response = await githubFetch(url, env);
+
+  if (response.status === 404) {
+    throw new Error("Unknown digestId");
+  }
+
+  if (!response.ok) {
+    throw new Error(`GitHub digest check failed: ${response.status}`);
+  }
 }
 
 function createComment(payload) {
@@ -173,6 +202,7 @@ async function handleGet(request, env, cors) {
     return jsonResponse({ error: "Invalid digestId" }, 400, cors);
   }
 
+  await requireExistingDigest(env, digestId);
   const { comments } = await readComments(env, digestId);
   return jsonResponse({ comments }, 200, cors);
 }
@@ -180,9 +210,14 @@ async function handleGet(request, env, cors) {
 async function handlePost(request, env, cors) {
   const payload = await request.json();
   const comment = createComment(payload);
+  await requireExistingDigest(env, comment.digestId);
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const { comments, sha } = await readComments(env, comment.digestId);
+    if (comments.length >= maxCommentsPerDigest(env)) {
+      return jsonResponse({ error: "Comment limit reached" }, 429, cors);
+    }
+
     try {
       await writeComments(env, comment.digestId, [...comments, comment], sha);
       return jsonResponse({ comment }, 201, cors);
