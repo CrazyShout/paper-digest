@@ -4,6 +4,7 @@
 
 ## 必须满足
 
+- 候选论文的 arXiv ID 或标题不能已经出现在 `content/reported-papers.md`；同一篇论文只允许首次收录。
 - 主题必须命中 `config/research-interests.json` 至少一个方向，并能说清它和该方向的具体关系。
 - 来源必须可核验，优先正式会议、期刊、OpenReview、CVF、arXiv、项目页或作者主页。
 - 方法必须有明确问题定义，不能只是一组演示图片或泛泛综述。

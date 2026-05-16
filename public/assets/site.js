@@ -44,6 +44,10 @@ function getActiveDigest() {
   return DIGESTS.find((digest) => digest.id === state.activeDigestId) || getDigestsByDate()[0];
 }
 
+function digestDisplayDate(digest) {
+  return digest.displayDate || digest.date;
+}
+
 function tagById(digest, tagId) {
   return digest.tags.find((tag) => tag.id === tagId) || { id: tagId, label: tagId, color: "#2f6f8f" };
 }
@@ -150,7 +154,7 @@ function renderDigestList() {
       const brief = digest.keywords.join(" · ");
       return `
         <button class="digest-link" type="button" data-digest="${escapeHtml(digest.id)}" aria-current="${digest.id === state.activeDigestId}">
-          <span class="digest-date">${escapeHtml(digest.date)}</span>
+          <span class="digest-date">${escapeHtml(digestDisplayDate(digest))}</span>
           <span class="digest-brief">${escapeHtml(brief)}</span>
         </button>
       `;
@@ -173,9 +177,11 @@ function renderDigest() {
   const digest = getActiveDigest();
   if (!digest) return;
 
-  els.activeDate.textContent = digest.date;
+  const displayDate = digestDisplayDate(digest);
+
+  els.activeDate.textContent = displayDate;
   els.activeTitle.textContent = digest.title;
-  els.notesIssue.textContent = digest.date;
+  els.notesIssue.textContent = displayDate;
 
   const tagButtons = digest.tags.map((tag) => `
     <button class="tag-button" type="button" data-scroll-tag="${escapeHtml(tag.id)}" style="--tag-color: ${escapeHtml(tag.color)}">
@@ -223,7 +229,7 @@ function renderDigest() {
   els.digestArticle.innerHTML = `
     <section class="issue-cover">
       <div class="cover-copy">
-        <p class="eyebrow">Weekly Digest · ${escapeHtml(digest.date)}</p>
+        <p class="eyebrow">Weekly Digest · ${escapeHtml(displayDate)}</p>
         <h1 class="issue-title">${escapeHtml(digest.title)}</h1>
         <p class="issue-summary">${escapeHtml(digest.summary)}</p>
         <div class="tag-strip" aria-label="本期内容标签">${tagButtons}</div>
@@ -388,7 +394,7 @@ function renderSearchResults() {
       <div>
         ${renderTagBadges(tagInfos, "paper-tag-list result-tag-list")}
         <h4>${escapeHtml(paper.title)}</h4>
-        <p>${escapeHtml(digest.date)} · ${escapeHtml(paper.authors.join(", "))} · ${escapeHtml(paper.source)}</p>
+        <p>${escapeHtml(digestDisplayDate(digest))} · ${escapeHtml(paper.authors.join(", "))} · ${escapeHtml(paper.source)}</p>
       </div>
       <button class="open-result" type="button" data-open-digest="${escapeHtml(digest.id)}" data-open-paper="${escapeHtml(paper.id)}">打开</button>
     </article>

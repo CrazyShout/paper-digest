@@ -1,6 +1,6 @@
 # 更新论文简报说明
 
-这个目录是论文简报的内容源。日常更新简报时，主要改这里，不需要直接改 `docs/` 里的 HTML。
+这个目录是论文简报的内容源。日常更新简报时，主要改这里，不需要直接改构建产物里的 HTML。
 
 ## 文件放哪里
 
@@ -16,6 +16,14 @@ config/
 ```
 
 注意：不要把说明文档或草稿 Markdown 放进 `content/digests/` 或 `content/papers/`，这两个目录下的每个 `.md` 都会被构建脚本当成正式内容读取。
+
+历史已收录论文统一维护在：
+
+```text
+content/reported-papers.md
+```
+
+生成新简报前必须先按 arXiv ID 或论文标题查这个文件。已经出现过的论文不要再次放进新简报；如果新论文入选，需要同步新增一行。
 
 ## 一次更新的流程
 
@@ -94,6 +102,14 @@ content/papers/example-world-model.md
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。
 - `authors` / `affiliations`：作者和单位数组。
 - `comment`：首页卡片上显示的短评。
+- `revisionOf`：可选，仅用于保留原报告并新增人工修订版。修订版文件可以复用同一篇论文的标题和 arXiv ID，但必须指向原始论文 `id`，且不写入去重台账。
+
+去重要求：
+
+- 新论文的 arXiv ID 不能已经出现在 `content/reported-papers.md`。
+- 新论文标题不能和 `content/papers/` 里已有报告标题等价或只做轻微改写。
+- 同一篇论文只能出现在一个简报里；跨方向展示请用单个报告文件的 `tags` 数组，不要复制成多个 paper id。
+- 若是为了对照保留的修订版，文件名建议使用 `<paper-id>-gpt.md`，并在 frontmatter 中设置 `revisionOf`。
 
 3. 新建或更新当期简报文件：
 
@@ -114,6 +130,7 @@ content/digests/2026-05-18.md
 {
   "id": "2026-05-18",
   "date": "2026-05-18",
+  "displayDate": "2026-05-18 (optional-label)",
   "title": "本期简报标题",
   "summary": "用一两句话概括本期内容。",
   "keywords": ["世界模型", "车路协同", "三维重建"],
@@ -130,7 +147,9 @@ content/digests/2026-05-18.md
 
 字段说明：
 
-- `id` / `date`：建议都用 `YYYY-MM-DD`，左侧目录会按日期倒序显示，最新一期在最上方。
+- `id`：必须和文件名一致。常规日报使用 `YYYY-MM-DD`；同日期对照版可使用 `YYYY-MM-DD-gpt` 这类后缀。
+- `date`：必须是文件名开头的 `YYYY-MM-DD` 日期；左侧目录会按日期倒序显示，最新一期在最上方。
+- `displayDate`：可选，仅用于页面显示，例如标记测试来源；不要用它替代 `id` / `date`。
 - `keywords`：显示在左侧目录里的几个核心关键词，保持简短。
 - `papers`：本期包含的论文 `id` 列表，必须能在 `content/papers/` 里找到对应文件。
 - `notes`：可留空数组；页面右侧评论区会显示这里的种子笔记。
@@ -156,7 +175,10 @@ npm run build
 - 检查 Markdown frontmatter 是否是合法 JSON。
 - 检查简报引用的论文 id 是否存在。
 - 检查论文 `tag` / `tags` 是否存在于 `config/research-interests.json`。
-- 重新生成 `docs/` 里的静态页面。
+- 检查 digest 日期是否是 `YYYY-MM-DD`，且 `id`、文件名和 `date` 一致。
+- 检查 arXiv ID、论文标题和 digest 引用是否重复。
+- 检查 `content/reported-papers.md` 是否和当前内容一致。
+- 重新生成 `dist/` 里的静态页面。
 
 本地预览可以用：
 
@@ -167,20 +189,20 @@ npm run dev
 或者直接打开：
 
 ```text
-docs/index.html
+dist/index.html
 ```
 
 ## 发布到 GitHub Pages
 
-确认本地构建通过后提交并推送：
+确认本地构建通过后提交并推送。仓库已经使用 GitHub Actions 部署 GitHub Pages，push 到 `main` 后会自动构建并发布；不需要再提交 `dist/` 或旧的 `docs/` 构建产物。提交内容通常是：
 
 ```bash
-git add content config docs
+git add content config src public scripts package.json package-lock.json
 git commit -m "Add YYYY-MM-DD paper digest"
 git push origin main
 ```
 
-仓库已经使用 GitHub Actions 部署 GitHub Pages，push 到 `main` 后会自动构建并发布。Actions 页面：
+Actions 页面：
 
 ```text
 https://github.com/CrazyShout/paper-digest/actions
@@ -197,4 +219,7 @@ https://crazyshout.github.io/paper-digest/
 - `references missing paper`：简报里的 `papers` 写了不存在的论文 `id`。
 - `references missing tag`：论文里的 `tag` 或 `tags` 不在 `config/research-interests.json`。
 - `invalid JSON frontmatter`：开头 `---` 中间的 JSON 有多余逗号、缺引号或数组格式错误。
+- `duplicate arXiv id` / `duplicate paper title`：候选论文已经收录过，需要换论文。
+- `appears in multiple digests`：同一篇论文被放进多个简报，应该只保留第一次收录。
+- `reported-papers.md ... expected`：去重台账没有同步更新。
 - 页面没更新：先看 GitHub Actions 是否完成，再强制刷新浏览器缓存。

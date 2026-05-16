@@ -23,12 +23,12 @@ src/
   lib/content.js            # 读取 Markdown 和配置并生成页面数据
   pages/                    # 首页、论文详情页、静态数据端点
 public/assets/              # 前端交互脚本和 CSS
-docs/                       # Astro 构建产物，兼容 main /docs 发布方式
+dist/                       # Astro 本地构建产物，不提交仓库
 .github/workflows/          # GitHub Pages 自动部署 workflow
 worker/                     # 评论写回仓库的 Cloudflare Worker 示例
 ```
 
-`docs/` 现在仍然保留并提交，是为了兼容你当前 GitHub Pages 的 `main /docs` 设置。等 GitHub Actions 发布稳定后，可以选择不再提交 `docs/`，只把它作为 CI 产物。
+GitHub Pages 已使用 Actions 发布。构建产物输出到 `dist/`，由 workflow 上传为 Pages artifact，不再提交到仓库。
 
 ## Local Development
 
@@ -50,6 +50,12 @@ npm run dev
 npm run build
 ```
 
+只运行内容校验：
+
+```bash
+npm run validate
+```
+
 预览构建产物：
 
 ```bash
@@ -59,7 +65,7 @@ npm run preview
 只想快速看静态结果，也可以直接打开：
 
 ```text
-docs/index.html
+dist/index.html
 ```
 
 ## Content Model
@@ -139,8 +145,8 @@ content/digests/2026-05-11.md
 workflow 会在 push 到 `main` 后执行：
 
 1. `npm ci`
-2. `npm run build`
-3. 上传 `docs/`
+2. `npm run build`（包含内容去重和索引校验）
+3. 上传 `dist/`
 4. 部署到 GitHub Pages
 
 要启用 Actions 发布，需要在 GitHub 仓库页面操作：
@@ -149,7 +155,7 @@ workflow 会在 push 到 `main` 后执行：
 Settings -> Pages -> Build and deployment -> Source -> GitHub Actions
 ```
 
-如果暂时不切换，保持 `Deploy from a branch` 和 `main /docs` 也能继续工作，因为 Astro 仍然输出到 `docs/`。
+日常更新不需要提交构建产物，只提交 `content/`、`config/`、`src/`、`public/` 等源码文件。
 
 ## Anonymous Comments
 

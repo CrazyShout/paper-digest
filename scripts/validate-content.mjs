@@ -1,0 +1,311 @@
+import { readFile, readdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(SCRIPT_DIR, "..");
+const CONTENT = path.join(ROOT, "content");
+const CONFIG = path.join(ROOT, "config");
+
+const errors = [];
+
+function addError(message) {
+  errors.push(message);
+}
+
+function normalizeTitle(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseMarkdownFile(text, filePath) {
+  const match = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/);
+  if (!match) {
+    addError(`${filePath} is missing JSON frontmatter`);
+    return { data: {}, body: "" };
+  }
+
+  try {
+    return { data: JSON.parse(match[1]), body: match[2].trim() };
+  } catch (error) {
+    addError(`${filePath} has invalid JSON frontmatter: ${error.message}`);
+    return { data: {}, body: match[2].trim() };
+  }
+}
+
+async function readMarkdownDir(dir) {
+  const entries = await readdir(dir);
+  const docs = [];
+
+  for (const file of entries.filter((entry) => entry.endsWith(".md")).sort()) {
+    const filePath = path.join(dir, file);
+    const text = await readFile(filePath, "utf8");
+    docs.push({ file, filePath, ...parseMarkdownFile(text, filePath) });
+  }
+
+  return docs;
+}
+
+function normalizePaperTags(data) {
+  const tags = [];
+
+  if (typeof data.tag === "string" && data.tag.trim()) {
+    tags.push(data.tag.trim());
+  }
+
+  if (Array.isArray(data.tags)) {
+    for (const tag of data.tags) {
+      if (typeof tag === "string" && tag.trim() && !tags.includes(tag.trim())) {
+        tags.push(tag.trim());
+      }
+    }
+  }
+
+  return tags;
+}
+
+function extractArxivIds(...values) {
+  const ids = new Set();
+  const text = values.filter(Boolean).join(" ");
+  const patterns = [
+    /arXiv:?\s*(\d{4}\.\d{4,5})(?:v\d+)?/gi,
+    /arxiv\.org\/(?:abs|pdf|html)\/(\d{4}\.\d{4,5})(?:v\d+)?/gi
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      ids.add(match[1]);
+    }
+  }
+
+  return [...ids].sort();
+}
+
+function parseReportedPapers(text) {
+  const rows = [];
+
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim().startsWith("|")) continue;
+    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
+    if (cells.length < 4 || cells[0] === "论文 ID" || /^-+$/.test(cells[0])) continue;
+
+    rows.push({
+      paperId: cells[0],
+      title: cells[1],
+      arxivId: cells[2],
+      digests: cells[3].split(",").map((item) => item.trim()).filter(Boolean)
+    });
+  }
+
+  return rows;
+}
+
+const interestConfig = JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
+const knownTags = new Set(interestConfig.interests.map((interest) => interest.id));
+const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
+const digestDocs = await readMarkdownDir(path.join(CONTENT, "digests"));
+
+const papers = paperDocs.map((doc) => {
+  const expectedId = path.basename(doc.file, ".md");
+  const id = doc.data.id;
+  const revisionOf = typeof doc.data.revisionOf === "string" ? doc.data.revisionOf.trim() : "";
+  const tags = normalizePaperTags(doc.data);
+  const arxivIds = extractArxivIds(doc.data.source, doc.body);
+  const normalizedTitle = normalizeTitle(doc.data.title);
+
+  if (id !== expectedId) {
+    addError(`${doc.file} has id "${id}", expected "${expectedId}"`);
+  }
+
+  if (!normalizedTitle) {
+    addError(`${doc.file} is missing title`);
+  }
+
+  if (!tags.length) {
+    addError(`${doc.file} is missing tag/tags`);
+  }
+
+  for (const tag of tags) {
+    if (!knownTags.has(tag)) {
+      addError(`${doc.file} references unknown tag: ${tag}`);
+    }
+  }
+
+  return { ...doc, id, revisionOf, tags, arxivIds, normalizedTitle };
+});
+
+const paperById = new Map();
+for (const paper of papers) {
+  if (paperById.has(paper.id)) {
+    addError(`duplicate paper id: ${paper.id}`);
+  } else {
+    paperById.set(paper.id, paper);
+  }
+}
+
+for (const paper of papers) {
+  if (!paper.revisionOf) continue;
+  const sourcePaper = paperById.get(paper.revisionOf);
+  if (!sourcePaper) {
+    addError(`${paper.file} revisionOf references missing paper: ${paper.revisionOf}`);
+  } else if (sourcePaper.revisionOf) {
+    addError(`${paper.file} revisionOf must point to an original paper, not another revision: ${paper.revisionOf}`);
+  }
+}
+
+const papersByArxiv = new Map();
+for (const paper of papers) {
+  for (const arxivId of paper.arxivIds) {
+    const existing = papersByArxiv.get(arxivId) || new Map();
+    const canonicalId = paper.revisionOf || paper.id;
+    const existingIds = existing.get(canonicalId) || [];
+    existingIds.push(paper.id);
+    existing.set(canonicalId, existingIds);
+    papersByArxiv.set(arxivId, existing);
+  }
+}
+
+for (const [arxivId, papersByCanonicalId] of papersByArxiv) {
+  if (papersByCanonicalId.size > 1) {
+    const paperIds = [...papersByCanonicalId.values()].flat();
+    addError(`duplicate arXiv id ${arxivId}: ${paperIds.join(", ")}`);
+  }
+}
+
+const papersByTitle = new Map();
+for (const paper of papers) {
+  if (!paper.normalizedTitle) continue;
+  const existing = papersByTitle.get(paper.normalizedTitle) || new Map();
+  const canonicalId = paper.revisionOf || paper.id;
+  const existingIds = existing.get(canonicalId) || [];
+  existingIds.push(paper.id);
+  existing.set(canonicalId, existingIds);
+  papersByTitle.set(paper.normalizedTitle, existing);
+}
+
+for (const papersByCanonicalId of papersByTitle.values()) {
+  if (papersByCanonicalId.size > 1) {
+    const paperIds = [...papersByCanonicalId.values()].flat();
+    addError(`duplicate paper title: ${paperIds.join(", ")}`);
+  }
+}
+
+const digestById = new Map();
+const paperDigestMap = new Map();
+
+for (const digest of digestDocs) {
+  const expectedId = path.basename(digest.file, ".md");
+  const id = digest.data.id;
+  const date = digest.data.date;
+  const dateFromId = expectedId.match(/^(\d{4}-\d{2}-\d{2})(?:-[a-z0-9-]+)?$/)?.[1];
+
+  if (id !== expectedId) {
+    addError(`${digest.file} has id "${id}", expected "${expectedId}"`);
+  }
+
+  if (!dateFromId || date !== dateFromId) {
+    addError(`${digest.file} date must match the YYYY-MM-DD prefix in file id`);
+  }
+
+  if (!Array.isArray(digest.data.papers)) {
+    addError(`${digest.file} must define a papers array`);
+    continue;
+  }
+
+  digestById.set(id, digest);
+
+  for (const paperId of digest.data.papers) {
+    if (!paperById.has(paperId)) {
+      addError(`${digest.file} references missing paper: ${paperId}`);
+      continue;
+    }
+
+    const existingDigest = paperDigestMap.get(paperId);
+    if (existingDigest) {
+      addError(`${paperId} appears in multiple digests: ${existingDigest}, ${id}`);
+    } else {
+      paperDigestMap.set(paperId, id);
+    }
+  }
+}
+
+for (const paper of papers) {
+  if (!paperDigestMap.has(paper.id)) {
+    addError(`${paper.file} is not referenced by any digest`);
+  }
+}
+
+const reportedPath = path.join(CONTENT, "reported-papers.md");
+const reportedRows = parseReportedPapers(await readFile(reportedPath, "utf8"));
+const reportedById = new Map();
+const reportedByArxiv = new Map();
+
+for (const row of reportedRows) {
+  if (reportedById.has(row.paperId)) {
+    addError(`reported-papers.md has duplicate paper id: ${row.paperId}`);
+  } else {
+    reportedById.set(row.paperId, row);
+  }
+
+  if (row.arxivId && row.arxivId !== "-") {
+    if (reportedByArxiv.has(row.arxivId)) {
+      addError(`reported-papers.md has duplicate arXiv id ${row.arxivId}`);
+    } else {
+      reportedByArxiv.set(row.arxivId, row);
+    }
+  }
+
+  if (row.digests.length !== 1) {
+    addError(`reported-papers.md row ${row.paperId} must list exactly one digest`);
+  }
+
+  for (const digestId of row.digests) {
+    if (!digestById.has(digestId)) {
+      addError(`reported-papers.md row ${row.paperId} references missing digest: ${digestId}`);
+    }
+  }
+}
+
+for (const paper of papers.filter((paper) => !paper.revisionOf)) {
+  const row = reportedById.get(paper.id);
+  if (!row) {
+    addError(`reported-papers.md is missing row for ${paper.id}`);
+    continue;
+  }
+
+  if (paper.arxivIds.length && !paper.arxivIds.includes(row.arxivId)) {
+    addError(`reported-papers.md row ${paper.id} has arXiv ${row.arxivId}, expected ${paper.arxivIds.join(" or ")}`);
+  }
+
+  if (!paper.arxivIds.length && normalizeTitle(row.title) !== paper.normalizedTitle) {
+    addError(`reported-papers.md row ${paper.id} title does not match paper title`);
+  }
+
+  const digestId = paperDigestMap.get(paper.id);
+  if (digestId && row.digests[0] !== digestId) {
+    addError(`reported-papers.md row ${paper.id} lists digest ${row.digests[0]}, expected ${digestId}`);
+  }
+}
+
+for (const row of reportedRows) {
+  if (!paperById.has(row.paperId)) {
+    addError(`reported-papers.md references missing paper file: ${row.paperId}`);
+  } else if (paperById.get(row.paperId).revisionOf) {
+    addError(`reported-papers.md should not list revision paper: ${row.paperId}`);
+  }
+}
+
+if (errors.length) {
+  console.error("Content validation failed:");
+  for (const error of errors) {
+    console.error(`- ${error}`);
+  }
+  process.exit(1);
+}
+
+console.log(`Content validation passed: ${digestDocs.length} digests, ${paperDocs.length} papers.`);
