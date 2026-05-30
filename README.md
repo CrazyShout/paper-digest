@@ -213,6 +213,74 @@ Worker 需要这些变量：
 
 注意：匿名评论没有登录鉴权，任何能访问页面的人理论上都能提交评论。Worker 已做长度和字段校验；公开使用后建议再加 Cloudflare Turnstile、限流或人工 review。
 
+## Feishu Wiki Publishing
+
+本项目可以把某期简报发布为飞书知识库父页面，并把每篇详细论文报告发布为其子页面，便于组内直接在飞书里阅读和评论。
+
+先在本机设置环境变量，不要把密钥提交到仓库：
+
+```bash
+export FEISHU_APP_ID="cli_xxx"
+export FEISHU_APP_SECRET="xxx"
+export FEISHU_WIKI_URL="https://my.feishu.cn/wiki/xxx"
+export FEISHU_WEBHOOK_URL="https://open.feishu.cn/open-apis/bot/v2/hook/xxx" # 可选
+```
+
+如果脚本无法从 `FEISHU_WIKI_URL` 自动解析知识库空间，可以额外设置：
+
+```bash
+export FEISHU_SPACE_ID="xxx"
+export FEISHU_WIKI_PARENT_TOKEN="xxx"
+```
+
+注意：飞书开放平台里的 API 权限只表示应用允许调用接口；知识库本身还要给应用/机器人授权。若发布时报：
+
+```text
+permission denied: node permission denied, tenant needs edit permission
+```
+
+需要在飞书知识库的成员/权限设置中，把这个自建应用或应用机器人加入知识库空间，或至少加入目标父节点，并授予可编辑权限。仅把你本人设为知识库管理员不等于应用有写权限。
+
+发布前先预览将要发布的 Markdown 源内容：
+
+```bash
+npm run feishu:preview -- 2026-05-16
+```
+
+发布到飞书知识库：
+
+```bash
+npm run feishu:publish -- 2026-05-16
+```
+
+飞书发布结构为一篇父简报加多篇子页面：
+
+- 父页面是当期简报，标题格式为 `YYYY-MM-DD - 简报标题`，开头先列“方向导航”。
+- “方向导航”每个方向只保留一个链接，链接到下方对应的方向分区；方向分区里再列该方向的论文入口。
+- 每篇论文报告会发布为父页面下的一个子页面，标题带 `01`、`02` 等序号以保持阅读顺序。
+- 父页面中的论文标题会链接到对应子页面；子页面顶部会链接回父简报。
+- 跨方向论文会像网页版一样出现在多个方向下，但只维护一个子页面。
+
+发布记录写入：
+
+```text
+config/feishu-publications.json
+```
+
+如果同一期已经发布，脚本会复用 `config/feishu-publications.json` 中的父页面 `documentId` 和每篇论文的 `paperReports` 记录，更新同一组飞书页面。确实需要重新创建一套新页面时：
+
+```bash
+npm run feishu:publish -- 2026-05-16 -- --force-new
+```
+
+只修改父简报结构或导航、不需要重写每篇论文子页面时：
+
+```bash
+npm run feishu:publish -- 2026-05-16 -- --parent-only
+```
+
+当前发布脚本会先调用飞书 Markdown 转 Block 接口，再写入飞书原生 Docx blocks，因此标题、列表、链接和图片不会以 Markdown 语法裸露显示。图片会优先上传为飞书图片块；如果 Node fetch 访问远程图片超时，脚本会自动使用 `curl` 兜底下载；若仍不可访问，才会把该图片降级成可点击链接，避免整次发布失败或留下空白图片块。组内评论直接使用飞书文档原生评论能力。
+
 ## References
 
 - [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/)

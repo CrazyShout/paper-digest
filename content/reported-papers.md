@@ -36,6 +36,14 @@
 | vista-driving-world-model | Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability | 2405.17398 | 2026-05-13 |
 | vla-end-to-end-driving | OpenDriveVLA: Towards End-to-end Autonomous Driving with Large Vision Language Action Model | 2503.23463 | 2026-05-12 |
 | vrs-roadside-lidar-synthesis | Generating Roadside LiDAR Datasets from Vehicle-Side Datasets via Novel View Synthesis | 2605.05897 | 2026-05-16 |
+| anyscene-controllable-driving-scene-generation | AnyScene: Towards Highly Controllable Driving Scene Generation at Anywhere and Beyond | 2605.26113 | 2026-05-30 |
+| bench2drive-robust-deployment-perturbations | Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations | 2605.18059 | 2026-05-30 |
+| clap-v2x-prompt-optimization | CLAP: Contrastive Latent-space Prompt Optimization for End-to-end Autonomous Driving | 2605.17284 | 2026-05-30 |
+| drivewam-world-action-model | DriveWAM: Video Generative Priors Enable Scalable World-Action Modeling for Autonomous Driving | 2605.28544 | 2026-05-30 |
+| physically-consistent-4d-driving-reconstruction | Towards Physically Consistent 4D Scene Reconstruction for Closed-loop Autonomous Driving Simulation | 2605.21032 | 2026-05-30 |
+| reasonbreak-vla-vulnerability-driving | ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving | 2605.29114 | 2026-05-30 |
+| rs2ad-lidar-roadside-to-vehicle-generation | RS2AD-LiDAR: End-to-End Autonomous Driving LiDAR Data Generation from Roadside Sensor Observations | 2605.23406 | 2026-05-30 |
+| sparseworld-sparse-scene-world-model | SparseWorld: Enhancing End-to-End Autonomous Driving via World Models with Sparse Scene Representation | 2605.24354 | 2026-05-30 |
 
 ## 使用说明
 
