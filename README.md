@@ -281,6 +281,51 @@ npm run feishu:publish -- 2026-05-16 -- --parent-only
 
 当前发布脚本会先调用飞书 Markdown 转 Block 接口，再写入飞书原生 Docx blocks，因此标题、列表、链接和图片不会以 Markdown 语法裸露显示。图片会优先上传为飞书图片块；如果 Node fetch 访问远程图片超时，脚本会自动使用 `curl` 兜底下载；若仍不可访问，才会把该图片降级成可点击链接，避免整次发布失败或留下空白图片块。组内评论直接使用飞书文档原生评论能力。
 
+## Email Digest Notifications
+
+本项目支持一键将简报同步到邮箱。默认会给一个本地邮件列表发邮件，当前默认收件人为 `7608331@qq.com`。
+
+先准备本地收件人列表（文件不会提交）：
+
+```bash
+cat > config/email-recipients.local.json <<'JSON'
+{
+  "recipients": [
+    "7608331@qq.com"
+  ]
+}
+JSON
+```
+
+邮件发送所需 SMTP 环境变量（至少）：
+
+```bash
+export SMTP_HOST="smtp.qq.com"
+export SMTP_PORT="587"
+export SMTP_SECURE="false" # 或 true（如 465）
+export SMTP_USER="your-email@qq.com"
+export SMTP_PASS="your-smtp-password-or-token"
+export EMAIL_FROM="你的发件人 <your-email@qq.com>"
+export PAPER_DIGEST_SITE_URL="https://crazyshout.github.io/paper-digest"
+```
+
+预览邮件内容：
+
+```bash
+npm run email:preview -- 2026-05-30
+```
+
+正式发送邮件：
+
+```bash
+npm run email:publish -- 2026-05-30
+```
+
+可选：
+
+- `SMTP_REJECT_UNAUTHORIZED=false`：本地内网 SMTP 测试时关闭证书校验（不建议生产环境启用）。
+- `EMAIL_FROM` 不设置时默认使用 `SMTP_USER`。
+
 ## References
 
 - [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/)
