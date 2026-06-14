@@ -44,6 +44,16 @@
 | reasonbreak-vla-vulnerability-driving | ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving | 2605.29114 | 2026-05-30 |
 | rs2ad-lidar-roadside-to-vehicle-generation | RS2AD-LiDAR: End-to-End Autonomous Driving LiDAR Data Generation from Roadside Sensor Observations | 2605.23406 | 2026-05-30 |
 | sparseworld-sparse-scene-world-model | SparseWorld: Enhancing End-to-End Autonomous Driving via World Models with Sparse Scene Representation | 2605.24354 | 2026-05-30 |
+| camasa-v2x-trajectory-dataset | CAMASA: A CAM-based Dataset from the MASA Living Lab | 2606.10641 | 2026-06-14 |
+| compact-va-planning-token-compression | Planning-aligned Token Compression for Long-Context Autonomous Driving | 2606.07464 | 2026-06-14 |
+| diffusion-transformer-wam-scene-prediction | Diffusion Transformer World-Action Model for AV Scene Prediction | 2606.12987 | 2026-06-14 |
+| envision4d-feedforward-4dgs | Envision4D: Envisioning Visual Futures via Feed-forward 4D Gaussian Splatting for Autonomous Driving | 2606.10656 | 2026-06-14 |
+| intact-collaborative-perception | INTACT: Ego-Guided Typed Sparse Evidence Retrieval for Heterogeneous Collaborative Perception | 2606.04437 | 2026-06-14 |
+| omnidreams-closed-loop-world-model | NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation | 2606.03159 | 2026-06-14 |
+| perception-informed-sil-simulation | A Causal Probabilistic Framework for Perception-Informed Closed-Loop Simulation of Autonomous Driving | 2606.07186 | 2026-06-14 |
+| riskflow-safety-critical-scenario-generation | RiskFlow: Fast and Faithful Safety-Critical Traffic Scenario Generation | 2606.06423 | 2026-06-14 |
+| vladrivebench-cot-action-vla | VLADriveBench: Evaluating CoT-Action Relationship in VLA for Autonomous Driving | 2606.12706 | 2026-06-14 |
+| vlga-geometry-action-driving | VLGA: Vision-Language-Geometry-Action Models for Autonomous Driving | 2606.12396 | 2026-06-14 |
 
 ## 使用说明
 
