@@ -27,11 +27,11 @@ From Driving Videos to Simulatable Scenarios 提出 D-V2S，目标是把真实�
 
 ## 关键图与可视化结果
 
-![图 1：D-V2S 从驾驶视频提取结构化场景并转成可仿真 scenario 的整体流程](https://arxiv.org/html/2606.21993v1/x1.png)
+![图 1：D-V2S 两阶段流程，先做驾驶记录分析，再把自然语言描述转成可执行场景](https://arxiv.org/html/2606.21993v1/fig/paper_xai_flow.png)
 
 这张图展示视频到仿真的主链路。它的价值在于把真实视频从“只能看”变成“可以测”，为后续反事实测试和闭环回归提供入口。
 
-![图 2：从真实视频重建出的交通参与者、道路结构和可仿真场景可视化](https://arxiv.org/html/2606.21993v1/x2.png)
+![图 2：D-V2S 将 CARLA 第三视角驾驶视频转成 SCENIC 脚本并生成可修改场景](https://arxiv.org/html/2606.21993v1/fig/quali_synth.jpg)
 
 这张图应重点检查重建场景是否保留原视频中的关键交互关系。对于测试论文来说，真实感不如可重复性、结构正确性和可编辑性重要。
 

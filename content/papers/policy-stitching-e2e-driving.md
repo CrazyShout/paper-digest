@@ -28,13 +28,13 @@
 
 ## 关键图与可视化结果
 
-![图 1：端到端驾驶系统中感知更新导致 latent-policy 接口失配，stitcher 在模块边界恢复兼容性](https://arxiv.org/html/2606.21509v1/x1.png)
+![图 1：model stitching 在更新后的感知表征和冻结下游策略之间学习轻量映射](https://arxiv.org/html/2606.21509v1/imgs/diagram/model-stitching.png)
 
 这张图说明论文的工程动机：端到端并不意味着系统不能模块化维护，但模块边界需要显式处理 latent compatibility。
 
-![图 2：不同感知更新和 stitching 方法对 downstream driving score 的影响](https://arxiv.org/html/2606.21509v1/x2.png)
+![图 2：卷积 stitcher 在 BEV object detection 监督下恢复目标局部线索的可视化结果](https://arxiv.org/html/2606.21509v1/imgs/stitch_visualization/detection_model1_transform.png)
 
-这张图对应论文最关键的证据：stitcher 的价值不在提升感知指标，而在保持冻结策略的驾驶行为。尤其是跨域设置下，论文报告卷积 stitching 能以更短适配时间保留大部分无分布偏移分数。
+这张图对应论文的定性证据：stitcher 的价值不只是让 latent 距离更近，而是让冻结策略还能接收到目标位置等 policy-relevant cues。尤其是跨域设置下，论文报告卷积 stitching 能以更短适配时间保留大部分无分布偏移分数。
 
 ## 实验结论与证据
 

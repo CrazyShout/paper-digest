@@ -1,4 +1,5 @@
 import { execFile as execFileCallback } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -10,12 +11,33 @@ const ROOT = path.resolve(SCRIPT_DIR, "..");
 const CONTENT = path.join(ROOT, "content");
 const CONFIG = path.join(ROOT, "config");
 const PUBLICATIONS_PATH = path.join(CONFIG, "feishu-publications.json");
+const LOCAL_CONFIG_PATH = path.join(CONFIG, "feishu.local.json");
 const FEISHU_API = "https://open.feishu.cn/open-apis";
 const MAX_BLOCKS_PER_REQUEST = 50;
 const MAX_IMAGES_PER_REQUEST = 20;
 const FETCH_TIMEOUT_MS = 30000;
 const DEFAULT_SITE_URL = "https://crazyshout.github.io/paper-digest/";
 const HIERARCHY_FORMAT = "feishu-wiki-hierarchy-v1";
+
+function loadLocalConfig() {
+  try {
+    const data = JSON.parse(readFileSync(LOCAL_CONFIG_PATH, "utf8"));
+    return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  } catch (error) {
+    if (error.code === "ENOENT") return {};
+    throw new Error(`读取飞书本地配置失败：${error.message}`);
+  }
+}
+
+const localConfig = loadLocalConfig();
+
+function configValue(...keys) {
+  for (const key of keys) {
+    const value = localConfig[key] ?? process.env[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
 
 function usage() {
   console.error("Usage: npm run feishu:preview -- <digest-id>");
@@ -70,11 +92,11 @@ function parseWikiToken(value) {
 }
 
 function siteUrl() {
-  return String(process.env.SITE_URL || process.env.PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, "");
+  return String(configValue("siteUrl", "SITE_URL", "PUBLIC_SITE_URL") || DEFAULT_SITE_URL).replace(/\/$/, "");
 }
 
 function feishuWikiOrigin() {
-  const wikiUrl = String(process.env.FEISHU_WIKI_URL || "").trim();
+  const wikiUrl = configValue("wikiUrl", "FEISHU_WIKI_URL");
   if (wikiUrl) {
     try {
       return new URL(wikiUrl).origin;
@@ -284,8 +306,8 @@ async function feishuFetch(pathname, tenantAccessToken, options = {}) {
 }
 
 async function getTenantAccessToken() {
-  const appId = process.env.FEISHU_APP_ID;
-  const appSecret = process.env.FEISHU_APP_SECRET;
+  const appId = configValue("appId", "FEISHU_APP_ID");
+  const appSecret = configValue("appSecret", "FEISHU_APP_SECRET");
 
   if (!appId || !appSecret) {
     throw new Error("Missing FEISHU_APP_ID or FEISHU_APP_SECRET environment variable");
@@ -315,11 +337,11 @@ async function resolveWikiParent(tenantAccessToken) {
   if (wikiParentCache) return wikiParentCache;
 
   const parentNodeToken = parseWikiToken(
-    process.env.FEISHU_WIKI_PARENT_TOKEN ||
-    process.env.FEISHU_WIKI_URL ||
-    process.env.FEISHU_PARENT_NODE_TOKEN
+    configValue("wikiParentToken", "FEISHU_WIKI_PARENT_TOKEN") ||
+    configValue("wikiUrl", "FEISHU_WIKI_URL") ||
+    configValue("parentNodeToken", "FEISHU_PARENT_NODE_TOKEN")
   );
-  const explicitSpaceId = process.env.FEISHU_SPACE_ID;
+  const explicitSpaceId = configValue("spaceId", "FEISHU_SPACE_ID");
 
   if (!parentNodeToken) {
     throw new Error("Missing FEISHU_WIKI_URL or FEISHU_WIKI_PARENT_TOKEN environment variable");
@@ -814,7 +836,7 @@ async function writeMarkdownToDocument(tenantAccessToken, documentId, markdown, 
 }
 
 async function sendWebhookNotification(title, url, digestId) {
-  const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
+  const webhookUrl = configValue("webhookUrl", "FEISHU_WEBHOOK_URL");
   if (!webhookUrl) return;
 
   const response = await fetch(webhookUrl, {

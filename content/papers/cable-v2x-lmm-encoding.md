@@ -28,11 +28,11 @@ CABLE 是一篇 V2X 边云协同感知论文。它不是再训练一个新的检
 
 ## 关键图与可视化结果
 
-![图 1：CABLE 的边云 V2X 感知流程，用上一帧云端 mask 在边缘端生成当前帧 ROI](https://arxiv.org/html/2606.19258v1/x1.png)
+![图 1：CABLE 的边云 V2X 感知流程，用上一帧云端 mask 在边缘端生成当前帧 ROI](https://arxiv.org/html/2606.19258v1/figs/overview.png)
 
 这张图展示了 CABLE 的系统接口：边缘端不需要理解全部语义，只要把可能重要的视觉区域保留下来，让云端 LMM 负责开放词表推理。
 
-![图 2：ROI-masked 上传与全帧上传的感知质量和带宽开销对比](https://arxiv.org/html/2606.19258v1/x2.png)
+![图 2：CABLE 在五个数据集上的 ROI 区域、检测保持和带宽节省可视化对比](https://arxiv.org/html/2606.19258v1/figs/cable_5dataset_comparison.png)
 
 这张图是论文的实用性证据。阅读时要看 reduction 是否伴随严重质量下降，以及 ROI 生成是否在不同数据集、天气和场景下稳定。
 
