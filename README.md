@@ -297,17 +297,47 @@ cat > config/email-recipients.local.json <<'JSON'
 JSON
 ```
 
-邮件发送所需 SMTP 环境变量（至少）：
+如果你用的是 **Google 邮箱（Gmail）**，推荐用「应用专用密码」，避免账号主密码外泄。
+
+获取步骤（Google 侧）：
+
+1. 先到 Google 账户启用「两步验证」。
+2. 访问「应用专用密码」页面，创建一个新应用密码（比如 `paper-digest`）。
+3. 复制 16 位密码（不带空格），只会显示一次。
+4. 将下面配置写入本地文件 `config/smtp.local.json`（该文件已被 `.gitignore` 忽略，不会提交）：
 
 ```bash
-export SMTP_HOST="smtp.qq.com"
-export SMTP_PORT="587"
-export SMTP_SECURE="false" # 或 true（如 465）
-export SMTP_USER="your-email@qq.com"
-export SMTP_PASS="your-smtp-password-or-token"
-export EMAIL_FROM="你的发件人 <your-email@qq.com>"
-export PAPER_DIGEST_SITE_URL="https://crazyshout.github.io/paper-digest"
+cat > config/smtp.local.json <<'JSON'
+{
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "secure": false,
+  "user": "你的邮箱@gmail.com",
+  "pass": "16位应用专用密码",
+  "from": "你的昵称 <你的邮箱@gmail.com>",
+  "siteUrl": "https://crazyshout.github.io/paper-digest"
+}
+JSON
 ```
+
+你也可以继续沿用环境变量方式（优先级低于本地配置文件）：
+
+```bash
+export SMTP_HOST="smtp.gmail.com"   # Gmail 推荐也可用 465 + SMTP_SECURE=true
+export SMTP_PORT="587"
+export SMTP_SECURE="false"          # 若改用 465，这里可设为 "true"
+export SMTP_USER="your-email@gmail.com"
+export SMTP_PASS="your-16-digit-app-password"
+export EMAIL_FROM="你的发件人 <your-email@gmail.com>"
+export PAPER_DIGEST_SITE_URL="https://crazyshout.github.io/paper-digest"
+export SMTP_REJECT_UNAUTHORIZED="true"   # 一般不需要改
+```
+
+可选：
+
+- `SMTP_REJECT_UNAUTHORIZED=false`：本地内网 SMTP 测试时关闭证书校验（不建议生产环境启用）。
+- `EMAIL_FROM` 不设置时默认使用 `SMTP_USER`（或本地配置中的 `from`）。
+- `from` 未设置且 `user` 为 `xxx@gmail.com` 时，邮件发件人会显示该邮箱地址。
 
 预览邮件内容：
 
@@ -320,11 +350,6 @@ npm run email:preview -- 2026-05-30
 ```bash
 npm run email:publish -- 2026-05-30
 ```
-
-可选：
-
-- `SMTP_REJECT_UNAUTHORIZED=false`：本地内网 SMTP 测试时关闭证书校验（不建议生产环境启用）。
-- `EMAIL_FROM` 不设置时默认使用 `SMTP_USER`。
 
 ## References
 

@@ -10,6 +10,7 @@ const CONFIG = path.join(ROOT, "config");
 const DEFAULT_SITE_URL = "https://crazyshout.github.io/paper-digest";
 const DEFAULT_RECIPIENTS = ["7608331@qq.com"];
 const EMAIL_LIST_PATH = path.join(CONFIG, "email-recipients.local.json");
+const SMTP_CONFIG_PATH = path.join(CONFIG, "smtp.local.json");
 const FEISHU_PUBLICATIONS_PATH = path.join(CONFIG, "feishu-publications.json");
 
 let nodemailer;
@@ -24,8 +25,69 @@ function usage() {
   console.error("       npm run email:publish -- <digest-id>");
 }
 
-function siteUrl() {
-  return String(process.env.PAPER_DIGEST_SITE_URL || process.env.PUBLIC_SITE_URL || process.env.SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, "");
+function normalizeString(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const text = normalizeString(value).toLowerCase();
+  if (!text) return fallback;
+  if (["1", "true", "yes", "on", "y"].includes(text)) return true;
+  if (["0", "false", "no", "off", "n"].includes(text)) return false;
+  return fallback;
+}
+
+function normalizeNumber(value, fallback, options = {}) {
+  const number = Number(value);
+  if (Number.isNaN(number)) return fallback;
+  if (options.min !== undefined && number < options.min) return fallback;
+  return number;
+}
+
+function siteUrl(config = {}) {
+  return String(
+    config.siteUrl ||
+      process.env.PAPER_DIGEST_SITE_URL ||
+      process.env.PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
+      DEFAULT_SITE_URL
+  ).replace(/\/$/, "");
+}
+
+function loadOptionalJson(pathname) {
+  return readFile(pathname, "utf8")
+    .then((text) => JSON.parse(text))
+    .then((data) => (typeof data === "object" && data !== null ? data : {}))
+    .catch((error) => {
+      if (error.code === "ENOENT") return {};
+      throw error;
+    });
+}
+
+async function loadSmtpConfig() {
+  const envSiteUrl = process.env.PAPER_DIGEST_SITE_URL || process.env.PUBLIC_SITE_URL || process.env.SITE_URL;
+  try {
+    const config = await loadOptionalJson(SMTP_CONFIG_PATH);
+    const siteConfigUrl = config.siteUrl ?? config.PAPER_DIGEST_SITE_URL;
+    return {
+      host: normalizeString(config.host ?? config.SMTP_HOST ?? process.env.SMTP_HOST),
+      port: normalizeNumber(
+        config.port ?? config.SMTP_PORT ?? process.env.SMTP_PORT ?? 587,
+        587,
+        { min: 1 }
+      ),
+      secure: normalizeBoolean(config.secure ?? config.SMTP_SECURE ?? process.env.SMTP_SECURE, false),
+      user: normalizeString(config.user ?? config.SMTP_USER ?? process.env.SMTP_USER),
+      pass: normalizeString(config.pass ?? config.SMTP_PASS ?? process.env.SMTP_PASS),
+      rejectUnauthorized: normalizeBoolean(config.rejectUnauthorized ?? config.SMTP_REJECT_UNAUTHORIZED ?? process.env.SMTP_REJECT_UNAUTHORIZED, true),
+      from: normalizeString(config.from ?? config.EMAIL_FROM ?? process.env.EMAIL_FROM),
+      siteUrl: normalizeString(siteConfigUrl || envSiteUrl)
+    };
+  } catch (error) {
+    throw new Error(`读取SMTP配置失败：${error.message}`);
+  }
 }
 
 function escapeText(value) {
@@ -99,7 +161,7 @@ function buildEmailSubject(digestId, digest) {
   return `[Paper Digest] ${digestId} ${digest.title}`;
 }
 
-function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections) {
+function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
   const lines = [];
   lines.push(`[Paper Digest] ${digestId} ${digest.title}`);
   lines.push(`日期：${digest.displayDate || digest.date}`);
@@ -115,7 +177,7 @@ function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections) {
   for (const { tag, papers } of sections) {
     lines.push(`- ${tag.label}（${papers.length} 篇）`);
     for (const paper of papers) {
-      const paperUrl = `${siteUrl()}/papers/${paper.id}/index.html`;
+      const paperUrl = `${currentSiteUrl}/papers/${paper.id}/index.html`;
       lines.push(`  ${paper.title}`);
       lines.push(`    ${paperUrl}`);
       lines.push(`    ${paper.comment}`);
@@ -128,12 +190,12 @@ function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections) {
   return lines.join("\n");
 }
 
-function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections) {
+function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
   const sectionBlocks = sections
     .map((item) => {
       const paperList = item.papers
         .map((paper) => {
-          const paperUrl = `${siteUrl()}/papers/${paper.id}/index.html`;
+          const paperUrl = `${currentSiteUrl}/papers/${paper.id}/index.html`;
           const authors = (paper.authors || []).join("，");
           const tags = (paper.tags || []).join(" / ");
           return `
@@ -174,21 +236,21 @@ function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections) {
   `.trim();
 }
 
-function getDigestNavUrl(digestId) {
-  return `${siteUrl()}/index.html`;
+function getDigestNavUrl(digestId, currentSiteUrl) {
+  return `${currentSiteUrl}/index.html`;
 }
 
-function buildTransportOptions() {
-  const smtpHost = String(process.env.SMTP_HOST || "").trim();
+function buildTransportOptions(config) {
+  const smtpHost = String(config.host || "").trim();
   if (!smtpHost) {
     throw new Error("请设置 SMTP_HOST（如 smtp.qq.com）");
   }
 
-  const portValue = Number(process.env.SMTP_PORT || 587);
-  const secureValue = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
-  const username = String(process.env.SMTP_USER || "").trim();
-  const password = String(process.env.SMTP_PASS || "").trim();
-  const rejectUnauthorized = String(process.env.SMTP_REJECT_UNAUTHORIZED || "true").toLowerCase() !== "false";
+  const portValue = Number.isInteger(config.port) && config.port > 0 ? config.port : 587;
+  const secureValue = normalizeBoolean(config.secure, false);
+  const username = String(config.user || "").trim();
+  const password = String(config.pass || "").trim();
+  const rejectUnauthorized = normalizeBoolean(config.rejectUnauthorized, true);
 
   const options = {
     host: smtpHost,
@@ -209,6 +271,21 @@ function buildTransportOptions() {
   return options;
 }
 
+function explainSmtpError(error) {
+  const code = error?.code || error?.errno || "unknown";
+  const response = error?.response || "";
+  if (code === "ETIMEDOUT" || code === "ESOCKET" || code === "ECONNRESET" || code === "ECONNREFUSED" || code === "ENOTFOUND") {
+    return `SMTP连接失败（${code}）：无法与 ${error?.hostname || "smtp server"} 建立连接。请确认 SMTP_HOST/SMTP_PORT 可达，且当前网络未拦截 587/465 端口。`;
+  }
+  if (code === "EAUTH") {
+    return "SMTP认证失败（EAUTH）：请确认使用的是 Gmail 应用专用密码（非登录密码），且账号已开启两步验证。";
+  }
+  if (code === "535" || String(error?.responseCode || "").startsWith("535")) {
+    return "SMTP认证失败（535）：用户名/密码不正确，或账号策略要求应用专用密码。";
+  }
+  return `SMTP发送失败（${code}）：${error.message}${response ? `；服务端回复：${response}` : ""}`.trim();
+}
+
 async function publishDigest(digestId, dryRun = false) {
   const digests = await getDigests();
   const digest = digests.find((item) => item.id === digestId);
@@ -216,14 +293,16 @@ async function publishDigest(digestId, dryRun = false) {
     throw new Error(`未找到简报：${digestId}`);
   }
 
+  const smtpConfig = await loadSmtpConfig();
+  const currentSiteUrl = siteUrl(smtpConfig);
   const recipients = await loadRecipients();
   const sections = collectPapersByDirection(digest);
-  const digestUrl = getDigestNavUrl(digestId);
+  const digestUrl = getDigestNavUrl(digestId, currentSiteUrl);
   const feishuUrl = await loadFeishuLink(digestId);
   const subject = buildEmailSubject(digestId, digest);
-  const text = buildTextBody(digest, digestId, digestUrl, feishuUrl, sections);
-  const html = buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections);
-  const from = process.env.EMAIL_FROM || process.env.SMTP_USER;
+  const text = buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl);
+  const html = buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl);
+  const from = smtpConfig.from || smtpConfig.user;
 
   if (dryRun) {
     console.error(`Preview digest: ${digestId}`);
@@ -244,14 +323,18 @@ async function publishDigest(digestId, dryRun = false) {
     throw new Error("收件人列表为空");
   }
 
-  const transporter = nodemailer.default.createTransport(buildTransportOptions());
-  await transporter.sendMail({
-    from,
-    to: recipients.join(","),
-    subject,
-    text,
-    html
-  });
+  const transporter = nodemailer.default.createTransport(buildTransportOptions(smtpConfig));
+  try {
+    await transporter.sendMail({
+      from,
+      to: recipients.join(","),
+      subject,
+      text,
+      html
+    });
+  } catch (error) {
+    throw new Error(explainSmtpError(error));
+  }
 
   console.error(`已向 ${recipients.length} 位收件人发送：${digestId}`);
 }
