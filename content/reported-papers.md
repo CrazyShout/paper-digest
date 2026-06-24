@@ -54,6 +54,12 @@
 | riskflow-safety-critical-scenario-generation | RiskFlow: Fast and Faithful Safety-Critical Traffic Scenario Generation | 2606.06423 | 2026-06-14 |
 | vladrivebench-cot-action-vla | VLADriveBench: Evaluating CoT-Action Relationship in VLA for Autonomous Driving | 2606.12706 | 2026-06-14 |
 | vlga-geometry-action-driving | VLGA: Vision-Language-Geometry-Action Models for Autonomous Driving | 2606.12396 | 2026-06-14 |
+| world-engine-post-training-driving | World Engine: Towards the Era of Post-Training for Autonomous Driving | 2606.19836 | 2026-06-25 |
+| scaling-self-play-e2e-driving | Scaling Self-Play for End-to-End Driving | 2606.19641 | 2026-06-25 |
+| policy-stitching-e2e-driving | A Stitch in Time Saves Nine: Preserving Policy Compatibility Under Perception Updates in End-to-End Autonomous Driving | 2606.21509 | 2026-06-25 |
+| cable-v2x-lmm-encoding | CABLE: Cloud-Assisted Bandwidth-efficient LMM-based Encoding for V2X Systems | 2606.19258 | 2026-06-25 |
+| baddreamer-world-model-backdoor | BadDreamer: Transferable Backdoor Attacks against Video World Models for Autonomous Driving | 2606.21172 | 2026-06-25 |
+| driving-videos-to-simulatable-scenarios | From Driving Videos to Simulatable Scenarios | 2606.21993 | 2026-06-25 |
 
 ## 使用说明
 
