@@ -60,6 +60,14 @@
 | cable-v2x-lmm-encoding | CABLE: Cloud-Assisted Bandwidth-efficient LMM-based Encoding for V2X Systems | 2606.19258 | 2026-06-25 |
 | baddreamer-world-model-backdoor | BadDreamer: Transferable Backdoor Attacks against Video World Models for Autonomous Driving | 2606.21172 | 2026-06-25 |
 | driving-videos-to-simulatable-scenarios | From Driving Videos to Simulatable Scenarios | 2606.21993 | 2026-06-25 |
+| cooperscene-cv2x-benchmark | CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization | 2606.31219 | 2026-07-03 |
+| c2e-co-perception-distillation | C2E: Boosting Ego-Only 3D Object Detection via Multi-Teacher Contrastive Knowledge Distillation | 2607.01827 | 2026-07-03 |
+| driveteach-vla-trajectory-guided-prompts | Teaching Vision-Language-Action Models What to See and Where to Look | 2607.01658 | 2026-07-03 |
+| commonroad-game-hitl-simulation | CommonRoad-Game: A Human-in-the-Loop Simulation Framework for Autonomous Driving | 2607.01382 | 2026-07-03 |
+| x-mind-visual-cot-driving | X-Mind: Efficient Visual Chain-of-Thought via Predictive World Model for End-to-End Driving | 2606.28758 | 2026-07-03 |
+| cascadeocc-occupancy-world-model | CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations | 2606.27644 | 2026-07-03 |
+| trafficalign-traffic-scenario-generation | TrafficAlign: Aligning Large Language Models for Traffic Scenario Generation | 2606.29097 | 2026-07-03 |
+| lidar-robustness-3d-detection | Comprehensive Robustness Analysis of LiDAR-based 3D Object Detection in Autonomous Driving | 2607.02074 | 2026-07-03 |
 
 ## 使用说明
 
