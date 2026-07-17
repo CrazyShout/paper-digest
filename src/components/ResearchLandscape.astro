@@ -1,0 +1,219 @@
+---
+const { landscape } = Astro.props;
+
+const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+}).format(new Date(`${landscape.updatedAt}T00:00:00+08:00`));
+---
+
+<section class="landscape" id="researchLandscape" aria-labelledby="landscapeTitle">
+  <header class="landscape-hero">
+    <div class="landscape-copy">
+      <p class="eyebrow">Research Landscape · 更新于 {updatedLabel}</p>
+      <h1 id="landscapeTitle">全库研究态势</h1>
+      <p class="landscape-thesis">{landscape.title}</p>
+      <p class="landscape-summary">{landscape.summary}</p>
+      <a class="landscape-skip" href="#digestArticle">查看本期简报</a>
+    </div>
+
+    <dl class="landscape-stats" aria-label="内容库统计">
+      <div>
+        <dt>独立论文</dt>
+        <dd>{landscape.corpus.paperCount}</dd>
+      </div>
+      <div>
+        <dt>研究方向</dt>
+        <dd>{landscape.corpus.directionCount}</dd>
+      </div>
+      <div>
+        <dt>有效简报</dt>
+        <dd>{landscape.corpus.digestCount}</dd>
+      </div>
+    </dl>
+  </header>
+
+  <p class="landscape-scope">
+    统计范围：{landscape.corpus.scopeStart} 至 {landscape.corpus.scopeEnd}，去除同论文修订版；近期信号比较最近
+    {landscape.corpus.windowSize} 期（{landscape.corpus.recentPaperCount} 篇）与此前 {landscape.corpus.windowSize} 期（{landscape.corpus.previousPaperCount} 篇）。多标签论文会在相关方向分别计数。
+  </p>
+
+  <section class="landscape-section" aria-labelledby="directionCoverageTitle">
+    <div class="landscape-section-head">
+      <div>
+        <p class="eyebrow">Evidence</p>
+        <h2 id="directionCoverageTitle">方向覆盖与近期信号</h2>
+      </div>
+      <p>条形长度表示全库覆盖；右侧小柱按时间从左到右展示最近六期收录数。</p>
+    </div>
+
+    <div class="direction-evidence-list">
+      {landscape.directions.map((direction) => {
+        const maxIssueCount = Math.max(1, ...direction.issueCounts.map((issue) => issue.count));
+        return (
+          <article class="direction-evidence-row">
+            <div class="direction-evidence-name">
+              <span class="direction-dot" style={`--tag-color: ${direction.color}`}></span>
+              <div>
+                <h3>{direction.label}</h3>
+                <span>{direction.signal}</span>
+              </div>
+            </div>
+            <div class="direction-coverage">
+              <div class="direction-track" aria-hidden="true">
+                <span style={`--tag-color: ${direction.color}; --coverage: ${direction.barWidth}%`}></span>
+              </div>
+              <p><strong>{direction.total}</strong> 篇 · 覆盖 {direction.coverage}%</p>
+            </div>
+            <div class={`direction-motion is-${direction.motion}`}>
+              <strong>{direction.recentCount} / {direction.previousCount}</strong>
+              <span>{direction.motionLabel}</span>
+            </div>
+            <div class="direction-spark" aria-label={`${direction.label}最近六期收录数量`}>
+              {direction.issueCounts.map((issue) => (
+                <span
+                  title={`${issue.date}: ${issue.count} 篇`}
+                  style={`--tag-color: ${direction.color}; --issue-height: ${(issue.count / maxIssueCount) * 100}%`}
+                ></span>
+              ))}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+    <p class="landscape-compare-note">
+      “近期 / 此前”对应 {landscape.corpus.recentDateRange} 与 {landscape.corpus.previousDateRange} 的收录数。它反映本库筛选变化，不等同于全领域发表量。
+    </p>
+  </section>
+
+  <div class="landscape-two-column">
+    <section class="landscape-section" aria-labelledby="trendTitle">
+      <div class="landscape-section-head">
+        <div>
+          <p class="eyebrow">Synthesis</p>
+          <h2 id="trendTitle">趋势判断</h2>
+        </div>
+      </div>
+      <div class="trend-list">
+        {landscape.trends.map((trend, index) => (
+          <article class="trend-row">
+            <span class="trend-index">{String(index + 1).padStart(2, "0")}</span>
+            <div>
+              <h3>{trend.title}</h3>
+              <p>{trend.evidence}</p>
+              <p class="trend-judgement">{trend.judgement}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="landscape-section" aria-labelledby="hotspotTitle">
+      <div class="landscape-section-head">
+        <div>
+          <p class="eyebrow">Hotspots</p>
+          <h2 id="hotspotTitle">当前热点</h2>
+        </div>
+      </div>
+      <div class="hotspot-list">
+        {landscape.hotspots.map((hotspot) => (
+          <article class="hotspot-row">
+            <div class="hotspot-heading">
+              <span>{hotspot.level}</span>
+              <strong>{hotspot.jointCount} 篇交叉论文</strong>
+            </div>
+            <h3>{hotspot.title}</h3>
+            <p>{hotspot.evidence}</p>
+            <p class="hotspot-meaning">{hotspot.whyItMatters}</p>
+            <div class="paper-tag-list">
+              {hotspot.tagInfos.map((tag) => (
+                <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <section class="landscape-section opportunity-section" aria-labelledby="opportunityTitle">
+    <div class="landscape-section-head">
+      <div>
+        <p class="eyebrow">Research Opportunities</p>
+        <h2 id="opportunityTitle">值得立项验证的问题</h2>
+      </div>
+      <p>A 级更适合优先形成课题，B 级适合先做小规模机制实验。</p>
+    </div>
+
+    <div class="opportunity-list">
+      {landscape.opportunities.map((opportunity) => (
+        <article class="opportunity-row">
+          <div class={`opportunity-priority priority-${opportunity.priority.toLowerCase()}`}>
+            <span>优先级</span>
+            <strong>{opportunity.priority}</strong>
+          </div>
+          <div class="opportunity-content">
+            <h3>{opportunity.title}</h3>
+            <p class="opportunity-question">{opportunity.question}</p>
+            <dl>
+              <div>
+                <dt>为什么现在</dt>
+                <dd>{opportunity.whyNow}</dd>
+              </div>
+              <div>
+                <dt>最小可行实验</dt>
+                <dd>{opportunity.minimumStudy}</dd>
+              </div>
+              <div>
+                <dt>主要风险</dt>
+                <dd>{opportunity.risk}</dd>
+              </div>
+            </dl>
+            <div class="paper-tag-list">
+              {opportunity.tagInfos.map((tag) => (
+                <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
+              ))}
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="landscape-section direction-advice-section" aria-labelledby="directionAdviceTitle">
+    <div class="landscape-section-head">
+      <div>
+        <p class="eyebrow">Direction Notes</p>
+        <h2 id="directionAdviceTitle">八个方向的研究建议</h2>
+      </div>
+      <p>每个方向区分当前焦点、证据缺口和下一步建议。</p>
+    </div>
+
+    <div class="direction-advice-list">
+      {landscape.directions.map((direction) => (
+        <details class="direction-advice">
+          <summary>
+            <span class="direction-dot" style={`--tag-color: ${direction.color}`}></span>
+            <strong>{direction.label}</strong>
+            <span>{direction.signal}</span>
+          </summary>
+          <div class="direction-advice-body">
+            <div>
+              <h3>当前焦点</h3>
+              <p>{direction.focus}</p>
+            </div>
+            <div>
+              <h3>证据缺口</h3>
+              <p>{direction.gap}</p>
+            </div>
+            <div>
+              <h3>建议切入</h3>
+              <p>{direction.suggestion}</p>
+            </div>
+          </div>
+        </details>
+      ))}
+    </div>
+  </section>
+</section>

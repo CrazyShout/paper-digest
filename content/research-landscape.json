@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-18",
+  "analysisWindowIssues": 3,
+  "title": "从单点模型竞赛转向闭环证据链",
+  "summary": "当前内容库已经形成三条相互汇合的主线：端到端驾驶负责决策，世界模型与三维重建负责生成和复现环境，测试与安全负责判断结论能否成立。真正升温的不是某一个模型名字，而是把离线指标、仿真闭环、真实通信和实车结果连接成可核验的系统证据。",
+  "trends": [
+    {
+      "id": "testing-as-common-language",
+      "title": "测试正在成为所有方向的共同语言",
+      "evidence": "近期论文不再满足于离线精度，开始同时报告部署扰动、闭环失败、真实车辆、责任归因或仿真准入。",
+      "judgement": "未来更有说服力的工作会把方法贡献写成一条证据链：模型变化如何影响系统行为，失败能否复现，结论能否迁移到现实。",
+      "tags": ["autonomous-driving-testing", "autonomous-driving-security"]
+    },
+    {
+      "id": "world-models-become-instruments",
+      "title": "世界模型正在从生成器变成实验仪器",
+      "evidence": "视频生成、占据、4DGS 和可编辑 3DGS 正在与规划、长尾数据增强和策略排序连接，评价重点从画质转向动作响应和下游一致性。",
+      "judgement": "下一阶段的分水岭不是生成得更像，而是能否声明适用范围、识别自身失败，并证明由它得出的安全结论在目标系统上仍然有效。",
+      "tags": ["world-models", "3d-reconstruction", "autonomous-driving-testing"]
+    },
+    {
+      "id": "e2e-bottleneck-shifts",
+      "title": "端到端驾驶的瓶颈转向空间、记忆与更新安全",
+      "evidence": "VLA 双流、几何辅助监督、长上下文压缩、自博弈后训练和感知更新兼容性同时出现，说明单纯扩大语言或视觉骨干已不足以解释闭环收益。",
+      "judgement": "值得做的不是再堆一个端到端框架，而是隔离并测量语义推理、连续几何、时序记忆和模型版本变化分别带来的收益与风险。",
+      "tags": ["end-to-end-autonomous-driving", "autonomous-driving-security"]
+    },
+    {
+      "id": "v2x-systemization",
+      "title": "V2X 从融合精度走向真实通信和系统部署",
+      "evidence": "最新工作开始引入 C-V2X 通信特性、带宽约束、异构证据选择、云端编码和 Vehicle-in-the-Loop，而不再默认无损、同步、精确定位。",
+      "judgement": "协同方向的研究空间正从更复杂的融合网络转向通信、感知和规划的联合退化分析，这类工作更容易形成可复用的测试基础设施。",
+      "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation"]
+    }
+  ],
+  "hotspots": [
+    {
+      "level": "强热点",
+      "title": "闭环测试与部署扰动",
+      "evidence": "闭环 benchmark、持续控制漂移、传感器扰动、真实车辆和人机在环正在汇成统一测试问题。",
+      "whyItMatters": "它能直接回答离线分数是否会改变真实驾驶结论，也是各方法方向最容易共享的评价层。",
+      "tags": ["autonomous-driving-testing", "autonomous-driving-security"]
+    },
+    {
+      "level": "强热点",
+      "title": "可控世界模型与测试准入",
+      "evidence": "世界模型开始支持动作条件、多视角多模态、分钟级流式生成和对象编辑，并被要求证明动作可区分性与 verdict 可迁移性。",
+      "whyItMatters": "生成模型一旦进入安全测试，就必须从视觉资产升级为经过校准的测量工具。",
+      "tags": ["world-models", "autonomous-driving-testing"]
+    },
+    {
+      "level": "上升交叉",
+      "title": "VLA 的空间推理与鲁棒性",
+      "evidence": "语义链路和连续空间链路开始解耦，几何监督、视觉注意、CoT 与动作一致性成为核心变量。",
+      "whyItMatters": "这条线把可解释的中间表示与真实轨迹失败连接起来，比只比较最终驾驶分数更容易形成机制性结论。",
+      "tags": ["end-to-end-autonomous-driving", "autonomous-driving-security"]
+    },
+    {
+      "level": "工程转化",
+      "title": "面向仿真的快速 3D/4D 场景资产",
+      "evidence": "重建方法从逐场景优化转向前馈、分层、可编辑和动态一致，并开始检查检测或策略排序。",
+      "whyItMatters": "它有机会把海量车队日志转成可运行测试资产，但需要新的下游可用性指标。",
+      "tags": ["3d-reconstruction", "world-models"]
+    }
+  ],
+  "opportunities": [
+    {
+      "priority": "A",
+      "title": "世界模型 verdict 的现实可迁移性",
+      "question": "世界模型中得到的策略排名、失败集合和责任归因，在日志回放、传统仿真与真实车辆之间能保持到什么程度？",
+      "whyNow": "现有工作已经分别具备可控生成、闭环 rollout 和准入框架，但跨仿真器、跨现实层的校准证据仍然薄弱。",
+      "minimumStudy": "固定一组策略和场景，在神经仿真、传统仿真与真实或高保真日志回放中比较排名相关性、失败集合重合率和归因一致性。",
+      "risk": "真实闭环资源门槛较高；可以先用双仿真器加日志回放建立方法，再补少量实车验证。",
+      "tags": ["world-models", "autonomous-driving-testing", "autonomous-driving-security"]
+    },
+    {
+      "priority": "A",
+      "title": "通信受限下的协同闭环退化曲线",
+      "question": "丢包、时延、带宽、定位漂移和异步采样如何共同改变协同感知与规划的最终闭环收益？",
+      "whyNow": "已有真实 C-V2X characterization、稀疏证据选择、带宽编码和 ViL 平台，可以组合出比单点融合精度更完整的问题。",
+      "minimumStudy": "在同一数据与 ViL 场景中逐级注入通信和定位扰动，同时测量感知质量、轨迹安全、通行效率与恢复时间。",
+      "risk": "变量组合容易爆炸；需要先固定场景族，再用因果或分层设计减少实验数量。",
+      "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation", "autonomous-driving-testing"]
+    },
+    {
+      "priority": "A",
+      "title": "模型更新后的策略兼容性测试",
+      "question": "感知、占据或世界模型升级后，原有规划策略会在哪些场景中出现静默回归，能否在不完全重训的情况下恢复？",
+      "whyNow": "端到端系统开始讨论 policy stitching 和后训练，但缺少面向版本变更的公开回归协议。",
+      "minimumStudy": "构造多个感知或表征版本，冻结规划器，测量闭环回归、置信度漂移和最小适配成本，再比较轻量校准与完全重训。",
+      "risk": "需要避免把普通域偏移重新命名为版本问题；必须明确更新前后接口和语义变化。",
+      "tags": ["end-to-end-autonomous-driving", "autonomous-driving-testing"]
+    },
+    {
+      "priority": "B",
+      "title": "VLA 语义与几何通路的可解释失效注入",
+      "question": "语言语义错误、视觉注意偏移和连续几何误差分别如何传播到轨迹，双流结构是否真的隔离了这些失效？",
+      "whyNow": "双流 VLA、几何增强 VLA、视觉提示和 CoT-Action benchmark 已经提供可组合的模型与测量工具。",
+      "minimumStudy": "分别扰动文本指令、目标关注区域、BEV 几何和历史帧，比较轨迹误差、失败类型与中间表示变化。",
+      "risk": "解释性指标容易只描述相关性；应加入可干预实验和闭环反事实。",
+      "tags": ["end-to-end-autonomous-driving", "autonomous-driving-security"]
+    },
+    {
+      "priority": "B",
+      "title": "3DGS 场景资产的决策一致性指标",
+      "question": "PSNR、几何误差和动态轨迹误差中，哪些真正决定策略排序与安全失败能否被重现？",
+      "whyNow": "前馈重建已把成本降到秒级，但资产是否适合回归测试仍缺少统一验收标准。",
+      "minimumStudy": "对同一批日志建立多种重建质量等级，联合测量视觉、几何、动态误差、策略排名和失败集合重合率。",
+      "risk": "策略依赖性很强；需要至少覆盖不同感知输入和规划范式，避免只对单一栈有效。",
+      "tags": ["3d-reconstruction", "world-models", "autonomous-driving-testing"]
+    }
+  ],
+  "directions": [
+    {
+      "tag": "cooperative-autonomous-driving",
+      "signal": "系统化",
+      "focus": "研究重心已从多车协同算法扩展到语义通信、闭环 benchmark、C-V2X characterization 和 ViL 部署链。",
+      "gap": "真实网络、定位误差与多车决策通常仍被分开研究，系统级失败缺少可归因的统一协议。",
+      "suggestion": "优先做通信扰动到闭环驾驶结果的分层映射，并把可恢复性和最坏情况纳入指标。"
+    },
+    {
+      "tag": "cooperative-trajectory-prediction",
+      "signal": "稀缺机会",
+      "focus": "现有内容主要覆盖多源轨迹融合、时间采样、CAM 数据和视觉注意，论文数量明显少于协同感知与端到端规划。",
+      "gap": "异步通信、预测不确定性与下游规划收益之间尚未形成稳定证据链。",
+      "suggestion": "可以从异步 CAM/CPM、校准误差和多模态预测入手，直接测量规划风险而不只比较 ADE/FDE。"
+    },
+    {
+      "tag": "vehicle-road-cooperation",
+      "signal": "工程转化",
+      "focus": "数据集、路侧合成、异构感知、语义通信和带宽编码逐渐汇合，开始具备真实系统验证条件。",
+      "gap": "路侧到车端的域差异、通信成本和部署维护成本仍缺少联合评价。",
+      "suggestion": "建立通信、感知和规划三层联合 benchmark，特别关注跨城市、跨设备与跨天气迁移。"
+    },
+    {
+      "tag": "3d-reconstruction",
+      "signal": "评测转向",
+      "focus": "方法从 4D 分解和逐场景优化转向前馈、可编辑、动态一致与仿真就绪。",
+      "gap": "视觉指标和几何指标尚不能稳定预测闭环策略是否保持原有行为。",
+      "suggestion": "把策略排序、失败复现和编辑后物理一致性做成重建资产的验收指标。"
+    },
+    {
+      "tag": "autonomous-driving-security",
+      "signal": "闭环化",
+      "focus": "关注点从单帧攻击转向部署扰动、持续状态漂移、真实车辆失效和世界模型可信度。",
+      "gap": "攻击或扰动造成的系统失败经常无法定位到感知、表征、规划还是仿真器本身。",
+      "suggestion": "采用分层扰动和失败归因设计，并报告恢复时间、失效边界与现实复现率。"
+    },
+    {
+      "tag": "autonomous-driving-testing",
+      "signal": "强热点",
+      "focus": "闭环 benchmark、场景生成、责任归因、ViL/HITL 和世界模型准入共同推动测试从工具变成核心研究对象。",
+      "gap": "不同仿真器、日志回放与现实道路之间的结论可迁移性仍未被系统校准。",
+      "suggestion": "围绕证据等级、跨平台一致性和失败集合重合率建立可复用测试协议。"
+    },
+    {
+      "tag": "end-to-end-autonomous-driving",
+      "signal": "持续高位",
+      "focus": "VLA、世界动作模型、自博弈、长上下文压缩和模型更新兼容性构成当前主线。",
+      "gap": "语言推理、连续几何、时序记忆和闭环控制的贡献常被总分掩盖。",
+      "suggestion": "减少新框架堆叠，优先做可干预的模块归因、版本回归和训练外闭环测试。"
+    },
+    {
+      "tag": "world-models",
+      "signal": "平台化",
+      "focus": "世界模型正连接视频、占据、4DGS、动作条件、对象编辑和长时流式生成，并进入规划与测试流程。",
+      "gap": "生成质量、动作可控性、因果一致性和安全 verdict 之间缺少统一准入标准。",
+      "suggestion": "把模型适用范围、失败检测和 verdict 迁移验证作为系统接口，而不只优化生成指标。"
+    }
+  ]
+}

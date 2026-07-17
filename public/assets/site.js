@@ -25,6 +25,7 @@ const els = {
   activeTitle: document.getElementById("activeTitle"),
   paperSearch: document.getElementById("paperSearch"),
   searchResults: document.getElementById("searchResults"),
+  researchLandscape: document.getElementById("researchLandscape"),
   digestArticle: document.getElementById("digestArticle"),
   notesToggle: document.getElementById("notesToggle"),
   notesDrawer: document.getElementById("notesDrawer"),
@@ -386,9 +387,11 @@ function renderSearchResults() {
   if (!state.query.trim()) {
     els.searchResults.hidden = true;
     els.searchResults.innerHTML = "";
+    els.researchLandscape.hidden = false;
     return;
   }
 
+  els.researchLandscape.hidden = true;
   const resultList = matches.map(({ digest, paper, tagInfos }) => `
     <article class="result-item">
       <div>
@@ -436,7 +439,9 @@ els.digestList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-digest]");
   if (button) {
     setActiveDigest(button.dataset.digest);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    requestAnimationFrame(() => {
+      els.digestArticle.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 });
 

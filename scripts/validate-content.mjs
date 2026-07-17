@@ -175,6 +175,44 @@ function validateNotes(notes, file) {
   }
 }
 
+function validateObjectArrayField(data, field, requiredFields, file) {
+  const items = data[field];
+  if (!Array.isArray(items) || !items.length) {
+    addError(`${file} must define ${field} as a non-empty array`);
+    return [];
+  }
+
+  for (const [index, item] of items.entries()) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      addError(`${file} ${field}[${index}] must be an object`);
+      continue;
+    }
+
+    for (const requiredField of requiredFields) {
+      if (typeof item[requiredField] !== "string" || !item[requiredField].trim()) {
+        addError(`${file} ${field}[${index}] must define a non-empty ${requiredField} string`);
+      }
+    }
+  }
+
+  return items.filter((item) => item && typeof item === "object" && !Array.isArray(item));
+}
+
+function validateLandscapeTagArrays(items, field, knownTags, file) {
+  for (const [index, item] of items.entries()) {
+    if (!isStringArray(item.tags) || !item.tags.length) {
+      addError(`${file} ${field}[${index}] must define tags as a non-empty string array`);
+      continue;
+    }
+
+    for (const tag of item.tags) {
+      if (!knownTags.has(tag)) {
+        addError(`${file} ${field}[${index}] references unknown tag: ${tag}`);
+      }
+    }
+  }
+}
+
 function validateImageUrls(markdown, file) {
   const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let count = 0;
@@ -212,6 +250,73 @@ function validateImageUrls(markdown, file) {
 
 const interestConfig = JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
 const knownTags = new Set(interestConfig.interests.map((interest) => interest.id));
+const landscapeFile = "research-landscape.json";
+let landscapeConfig = {};
+
+try {
+  landscapeConfig = JSON.parse(await readFile(path.join(CONTENT, landscapeFile), "utf8"));
+} catch (error) {
+  addError(`${landscapeFile} has invalid JSON: ${error.message}`);
+}
+
+validateStringField(landscapeConfig, "title", landscapeFile);
+validateStringField(landscapeConfig, "summary", landscapeFile);
+validateStringField(landscapeConfig, "updatedAt", landscapeFile);
+
+if (!/^\d{4}-\d{2}-\d{2}$/.test(landscapeConfig.updatedAt || "")) {
+  addError(`${landscapeFile} updatedAt must use YYYY-MM-DD`);
+}
+
+if (!Number.isInteger(landscapeConfig.analysisWindowIssues) || landscapeConfig.analysisWindowIssues < 1) {
+  addError(`${landscapeFile} analysisWindowIssues must be a positive integer`);
+}
+
+const landscapeTrends = validateObjectArrayField(
+  landscapeConfig,
+  "trends",
+  ["id", "title", "evidence", "judgement"],
+  landscapeFile
+);
+const landscapeHotspots = validateObjectArrayField(
+  landscapeConfig,
+  "hotspots",
+  ["level", "title", "evidence", "whyItMatters"],
+  landscapeFile
+);
+const landscapeOpportunities = validateObjectArrayField(
+  landscapeConfig,
+  "opportunities",
+  ["priority", "title", "question", "whyNow", "minimumStudy", "risk"],
+  landscapeFile
+);
+const landscapeDirections = validateObjectArrayField(
+  landscapeConfig,
+  "directions",
+  ["tag", "signal", "focus", "gap", "suggestion"],
+  landscapeFile
+);
+
+validateLandscapeTagArrays(landscapeTrends, "trends", knownTags, landscapeFile);
+validateLandscapeTagArrays(landscapeHotspots, "hotspots", knownTags, landscapeFile);
+validateLandscapeTagArrays(landscapeOpportunities, "opportunities", knownTags, landscapeFile);
+
+const landscapeDirectionTags = new Set();
+for (const [index, direction] of landscapeDirections.entries()) {
+  if (!knownTags.has(direction.tag)) {
+    addError(`${landscapeFile} directions[${index}] references unknown tag: ${direction.tag}`);
+  } else if (landscapeDirectionTags.has(direction.tag)) {
+    addError(`${landscapeFile} has duplicate direction analysis for tag: ${direction.tag}`);
+  } else {
+    landscapeDirectionTags.add(direction.tag);
+  }
+}
+
+for (const tag of knownTags) {
+  if (!landscapeDirectionTags.has(tag)) {
+    addError(`${landscapeFile} is missing direction analysis for tag: ${tag}`);
+  }
+}
+
 const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
 const digestDocs = await readMarkdownDir(path.join(CONTENT, "digests"));
 

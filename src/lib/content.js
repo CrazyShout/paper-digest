@@ -245,3 +245,121 @@ export async function getPaperWithTag(id) {
     tags: paperTags
   };
 }
+
+function roundPercentage(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function countPapersWithTag(papers, tagId) {
+  return papers.filter((paper) => paper.tags.includes(tagId)).length;
+}
+
+function uniquePapersFromDigests(digests) {
+  return [...new Map(
+    digests.flatMap((digest) => digest.papers.map((paper) => [paper.id, paper]))
+  ).values()];
+}
+
+export async function getResearchLandscape() {
+  const [landscapeConfig, tags, papers, digests] = await Promise.all([
+    readFile(path.join(CONTENT, "research-landscape.json"), "utf8").then(JSON.parse),
+    getTags(),
+    getPapers(),
+    getDigests()
+  ]);
+
+  const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
+  const canonicalPapers = papers.filter((paper) => !paper.revisionOf);
+  const canonicalPaperIds = new Set(canonicalPapers.map((paper) => paper.id));
+  const effectiveDigests = digests
+    .map((digest) => ({
+      ...digest,
+      papers: digest.papers.filter((paper) => canonicalPaperIds.has(paper.id))
+    }))
+    .filter((digest) => digest.papers.length);
+
+  const windowSize = Math.max(1, Number(landscapeConfig.analysisWindowIssues) || 3);
+  const recentDigests = effectiveDigests.slice(0, windowSize);
+  const previousDigests = effectiveDigests.slice(windowSize, windowSize * 2);
+  const recentPapers = uniquePapersFromDigests(recentDigests);
+  const previousPapers = uniquePapersFromDigests(previousDigests);
+  const directionAnalysis = new Map(
+    landscapeConfig.directions.map((direction) => [direction.tag, direction])
+  );
+  const maxDirectionCount = Math.max(
+    1,
+    ...tags.map((tag) => countPapersWithTag(canonicalPapers, tag.id))
+  );
+
+  const directions = tags.map((tag) => {
+    const total = countPapersWithTag(canonicalPapers, tag.id);
+    const recentCount = countPapersWithTag(recentPapers, tag.id);
+    const previousCount = countPapersWithTag(previousPapers, tag.id);
+    const recentShare = recentPapers.length ? (recentCount / recentPapers.length) * 100 : 0;
+    const previousShare = previousPapers.length ? (previousCount / previousPapers.length) * 100 : 0;
+    const countDelta = recentCount - previousCount;
+    const motion = countDelta >= 3 ? "up" : countDelta <= -3 ? "down" : "steady";
+
+    return {
+      ...tag,
+      ...directionAnalysis.get(tag.id),
+      total,
+      coverage: roundPercentage((total / canonicalPapers.length) * 100),
+      barWidth: roundPercentage((total / maxDirectionCount) * 100),
+      recentCount,
+      previousCount,
+      recentShare: roundPercentage(recentShare),
+      previousShare: roundPercentage(previousShare),
+      shareDelta: roundPercentage(recentShare - previousShare),
+      motion,
+      motionLabel: motion === "up" ? "近期收录上升" : motion === "down" ? "近期收录回落" : "近期收录稳定",
+      issueCounts: effectiveDigests.slice(0, 6).reverse().map((digest) => ({
+        date: digest.date,
+        count: countPapersWithTag(digest.papers, tag.id)
+      }))
+    };
+  });
+
+  function attachTagInfo(item) {
+    return {
+      ...item,
+      tagInfos: item.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean)
+    };
+  }
+
+  const dates = effectiveDigests.map((digest) => digest.date).sort();
+  const recentDateRange = recentDigests.length
+    ? `${recentDigests.at(-1).date} 至 ${recentDigests[0].date}`
+    : "";
+  const previousDateRange = previousDigests.length
+    ? `${previousDigests.at(-1).date} 至 ${previousDigests[0].date}`
+    : "";
+
+  return {
+    version: landscapeConfig.version,
+    updatedAt: landscapeConfig.updatedAt,
+    title: landscapeConfig.title,
+    summary: landscapeConfig.summary,
+    corpus: {
+      paperCount: canonicalPapers.length,
+      directionCount: tags.length,
+      digestCount: effectiveDigests.length,
+      scopeStart: dates[0] || "",
+      scopeEnd: dates.at(-1) || "",
+      recentPaperCount: recentPapers.length,
+      previousPaperCount: previousPapers.length,
+      recentDateRange,
+      previousDateRange,
+      windowSize
+    },
+    directions,
+    trends: landscapeConfig.trends.map(attachTagInfo),
+    hotspots: landscapeConfig.hotspots.map((hotspot) => ({
+      ...attachTagInfo(hotspot),
+      jointCount: canonicalPapers.filter((paper) =>
+        hotspot.tags.every((tagId) => paper.tags.includes(tagId))
+      ).length
+    })),
+    opportunities: landscapeConfig.opportunities.map(attachTagInfo)
+  };
+}

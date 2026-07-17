@@ -7,6 +7,7 @@
 ```text
 content/
   README.md                 # 当前说明文件
+  research-landscape.json   # 首页全库趋势、热点和科研建议
   digests/
     YYYY-MM-DD.md           # 每期简报索引
   papers/
@@ -172,6 +173,23 @@ config/research-interests.json
 
 这里是给后续自动抓取使用的长期兴趣配置。普通每周更新通常不需要改它。首页顶部的 tag 会根据当期 `papers` 自动生成，不需要手动维护固定筛选项。
 
+5. 每次形成一批正式简报后，复核首页研究态势：
+
+```text
+content/research-landscape.json
+```
+
+这个文件只维护需要人工判断的内容：全库总判断、趋势解释、热点、可立项问题，以及每个长期方向的焦点、缺口和建议。方向论文数、全库覆盖率、最近三期与此前三期的变化、交叉论文数量由构建代码从 `content/papers/` 和 `content/digests/` 自动计算，不要手填。
+
+更新时注意：
+
+- `updatedAt` 改成实际复核日期。
+- `trends` 解释跨期变化，避免把单篇论文写成领域趋势。
+- `hotspots` 至少关联两个方向，交叉论文数会自动显示。
+- `opportunities` 必须同时写研究问题、为什么现在、最小可行实验和主要风险。
+- `directions` 必须覆盖 `config/research-interests.json` 中的全部方向；新增长期方向时要在这里同步补充分析。
+- 页面统计反映本内容库的筛选结果，不代表完整领域计量，正文中不要把它外推为全体论文发表趋势。
+
 ## 本地检查
 
 更新完内容后运行：
@@ -191,6 +209,7 @@ npm run build
 - 检查论文 frontmatter 的作者、单位、关键词、notes 等 UI 依赖字段类型。
 - 检查新论文是否缺少图片，或是否使用“作者单位见论文 PDF”等占位单位。
 - 检查常见 arXiv HTML 图片路径错误。
+- 检查首页研究态势是否覆盖全部方向，热点和课题建议引用的 tags 是否有效。
 - 重新生成 `dist/` 里的静态页面。
 
 本地预览可以用：
