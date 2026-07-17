@@ -331,6 +331,7 @@ export SMTP_PASS="your-16-digit-app-password"
 export EMAIL_FROM="你的发件人 <your-email@gmail.com>"
 export PAPER_DIGEST_SITE_URL="https://crazyshout.github.io/paper-digest"
 export SMTP_REJECT_UNAUTHORIZED="true"   # 一般不需要改
+export SMTP_RETRIES="2"                  # 仅对投递前的 DNS/连接故障重试
 ```
 
 可选：
@@ -338,6 +339,15 @@ export SMTP_REJECT_UNAUTHORIZED="true"   # 一般不需要改
 - `SMTP_REJECT_UNAUTHORIZED=false`：本地内网 SMTP 测试时关闭证书校验（不建议生产环境启用）。
 - `EMAIL_FROM` 不设置时默认使用 `SMTP_USER`（或本地配置中的 `from`）。
 - `from` 未设置且 `user` 为 `xxx@gmail.com` 时，邮件发件人会显示该邮箱地址。
+- `SMTP_RETRIES` 默认为 `2`。脚本只重试明确发生在投递前的 DNS 或连接故障，避免服务端已经收信时产生重复邮件。
+
+先验证本地配置能否完成 DNS、TLS 和 SMTP 认证；该命令不会发送邮件，也不会输出密码：
+
+```bash
+npm run email:check
+```
+
+若提示配置文件已读取、但 DNS 或网络拦截了 SMTP，请换到允许访问 `smtp.gmail.com:587`（或服务商对应端口）的执行环境后重试。受限容器或沙箱即使密钥正确，也可能禁止 SMTP 外连。
 
 预览邮件内容：
 
