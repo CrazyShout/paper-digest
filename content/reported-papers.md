@@ -68,6 +68,14 @@
 | cascadeocc-occupancy-world-model | CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations | 2606.27644 | 2026-07-03 |
 | trafficalign-traffic-scenario-generation | TrafficAlign: Aligning Large Language Models for Traffic Scenario Generation | 2606.29097 | 2026-07-03 |
 | lidar-robustness-3d-detection | Comprehensive Robustness Analysis of LiDAR-based 3D Object Detection in Autonomous Driving | 2607.02074 | 2026-07-03 |
+| deployed-vil-cooperative-perception | A Deployed Hybrid Vehicle-in-the-Loop Platform for Validating Cooperative Perception | 2607.13806 | 2026-07-17 |
+| shift-drift-planning-benchmark | Shift & Drift: A Zero-Shot Benchmark for Generalizable and Robust Autonomous Driving Motion Planning | 2607.07844 | 2026-07-17 |
+| real-world-perturbation-testing | Real-World Perturbation Testing of Autonomous Driving Systems | 2607.04953 | 2026-07-17 |
+| world-model-simulator-admissibility | Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators | 2607.07196 | 2026-07-17 |
+| terrazero-self-play-driving | TerraZero: Procedural Driving Simulation for Zero-Demonstration Self-Play at Scale | 2607.13028 | 2026-07-17 |
+| s2-vla-semantic-spatial | S-squared-VLA: Decoupling Semantic and Spatial Streams in Vision-Language-Action Models for Autonomous Driving | 2607.13926 | 2026-07-17 |
+| m4world-multimodal-driving-world | M4World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming | 2607.14005 | 2026-07-17 |
+| instant-nurec-feedforward-3dgs | Instant NuRec: Feed-Forward 3D Gaussian Reconstruction for Driving Scene Simulation | 2607.14203 | 2026-07-17 |
 
 ## 使用说明
 
