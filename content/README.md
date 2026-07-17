@@ -187,7 +187,8 @@ content/research-landscape.json
 - `trends` 解释跨期变化，避免把单篇论文写成领域趋势。
 - `hotspots` 至少关联两个方向，交叉论文数会自动显示。
 - `opportunities` 必须同时写研究问题、为什么现在、最小可行实验和主要风险。
-- `directions` 必须覆盖 `config/research-interests.json` 中的全部方向；新增长期方向时要在这里同步补充分析。
+- `directions` 必须覆盖 `config/research-interests.json` 中的全部方向；每个方向都要写最新趋势、现有不足、吸引人的 idea 标题、核心假设、可行方法、最小验证和相对已有工作的区别。
+- 新增长期方向时要同步补充一套完整的方向 idea，不能只写“继续关注”或“建立 benchmark”这类泛化建议。
 - 页面统计反映本内容库的筛选结果，不代表完整领域计量，正文中不要把它外推为全体论文发表趋势。
 
 ## 本地检查

@@ -292,7 +292,7 @@ const landscapeOpportunities = validateObjectArrayField(
 const landscapeDirections = validateObjectArrayField(
   landscapeConfig,
   "directions",
-  ["tag", "signal", "focus", "gap", "suggestion"],
+  ["tag", "signal", "focus", "gap", "ideaTitle", "idea", "method", "validation", "novelty"],
   landscapeFile
 );
 
