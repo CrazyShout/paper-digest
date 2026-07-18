@@ -231,6 +231,53 @@ export async function getDigests() {
   }).sort((a, b) => b.date.localeCompare(a.date));
 }
 
+export function buildClientDigestData(digests) {
+  return digests.map((digest) => ({
+    id: digest.id,
+    date: digest.date,
+    displayDate: digest.displayDate,
+    title: digest.title,
+    summary: digest.summary,
+    keywords: digest.keywords,
+    notes: digest.notes,
+    bodyHtml: digest.bodyHtml,
+    tags: digest.tags,
+    papers: digest.papers.map((paper) => ({
+      id: paper.id,
+      title: paper.title,
+      source: paper.source,
+      authors: paper.authors,
+      affiliations: paper.affiliations,
+      comment: paper.comment,
+      tag: paper.tag,
+      tags: paper.tags,
+      link: paper.link
+    }))
+  }));
+}
+
+export function buildPaperSearchIndex(digests) {
+  return digests.flatMap((digest) => digest.papers.map((paper) => {
+    const tagLabels = digest.tags
+      .filter((tag) => paper.tags.includes(tag.id))
+      .map((tag) => tag.label);
+
+    return {
+      digestId: digest.id,
+      paperId: paper.id,
+      text: [
+        ...tagLabels,
+        paper.title,
+        paper.source,
+        ...paper.authors,
+        ...paper.affiliations,
+        paper.comment,
+        paper.body
+      ].filter(Boolean).join(" ").toLowerCase()
+    };
+  }));
+}
+
 export async function getPaperWithTag(id) {
   const tags = await getTags();
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
@@ -243,6 +290,41 @@ export async function getPaperWithTag(id) {
     paper,
     tag: paperTags[0],
     tags: paperTags
+  };
+}
+
+export function calculateIdeaScore(scoring, values = {}) {
+  const dimensions = Array.isArray(scoring?.dimensions) ? scoring.dimensions : [];
+  const totalWeight = dimensions.reduce((sum, dimension) => sum + Number(dimension.weight || 0), 0);
+  if (!totalWeight) return 0;
+
+  const weightedScore = dimensions.reduce((sum, dimension) => {
+    return sum + Number(values[dimension.id] || 0) * Number(dimension.weight || 0);
+  }, 0);
+
+  return Math.round(weightedScore / totalWeight);
+}
+
+export async function getIdeaCenter() {
+  const [ideaCenter, papers] = await Promise.all([
+    readFile(path.join(CONTENT, "idea-center.json"), "utf8").then(JSON.parse),
+    getPapers()
+  ]);
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
+
+  return {
+    ...ideaCenter,
+    directions: ideaCenter.directions.map((direction) => ({
+      ...direction,
+      ideas: (direction.ideas || []).map((idea) => ({
+        ...idea,
+        computedScore: calculateIdeaScore(ideaCenter.scoring, idea.score?.dimensions),
+        evidence: idea.evidence.map((source) => ({
+          ...source,
+          localLink: source.localPaperId ? paperMap.get(source.localPaperId)?.link : undefined
+        }))
+      }))
+    }))
   };
 }
 
@@ -270,6 +352,7 @@ export async function getResearchLandscape() {
 
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
   const canonicalPapers = papers.filter((paper) => !paper.revisionOf);
+  const canonicalPaperMap = new Map(canonicalPapers.map((paper) => [paper.id, paper]));
   const canonicalPaperIds = new Set(canonicalPapers.map((paper) => paper.id));
   const effectiveDigests = digests
     .map((digest) => ({
@@ -286,12 +369,24 @@ export async function getResearchLandscape() {
   const directionAnalysis = new Map(
     landscapeConfig.directions.map((direction) => [direction.tag, direction])
   );
+
+  function evidencePapersFor(item = {}) {
+    return (item.evidencePaperIds || [])
+      .map((paperId) => canonicalPaperMap.get(paperId))
+      .filter(Boolean)
+      .map((paper) => ({
+        id: paper.id,
+        title: paper.title,
+        link: paper.link
+      }));
+  }
   const maxDirectionCount = Math.max(
     1,
     ...tags.map((tag) => countPapersWithTag(canonicalPapers, tag.id))
   );
 
   const directions = tags.map((tag) => {
+    const analysis = directionAnalysis.get(tag.id) || {};
     const total = countPapersWithTag(canonicalPapers, tag.id);
     const recentCount = countPapersWithTag(recentPapers, tag.id);
     const previousCount = countPapersWithTag(previousPapers, tag.id);
@@ -302,7 +397,7 @@ export async function getResearchLandscape() {
 
     return {
       ...tag,
-      ...directionAnalysis.get(tag.id),
+      ...analysis,
       total,
       coverage: roundPercentage((total / canonicalPapers.length) * 100),
       barWidth: roundPercentage((total / maxDirectionCount) * 100),
@@ -313,6 +408,7 @@ export async function getResearchLandscape() {
       shareDelta: roundPercentage(recentShare - previousShare),
       motion,
       motionLabel: motion === "up" ? "近期收录上升" : motion === "down" ? "近期收录回落" : "近期收录稳定",
+      evidencePapers: evidencePapersFor(analysis),
       issueCounts: effectiveDigests.slice(0, 6).reverse().map((digest) => ({
         date: digest.date,
         count: countPapersWithTag(digest.papers, tag.id)
@@ -323,7 +419,8 @@ export async function getResearchLandscape() {
   function attachTagInfo(item) {
     return {
       ...item,
-      tagInfos: item.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean)
+      tagInfos: item.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean),
+      evidencePapers: evidencePapersFor(item)
     };
   }
 

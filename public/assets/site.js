@@ -4,6 +4,12 @@ const LOCAL_NOTES_KEY = "paper-digest-local-notes";
 const ANON_IDENTITY_KEY = "paper-digest-anon-identity";
 const NAV_COLLAPSED_KEY = "paper-digest-nav-collapsed";
 const COMMENTS_ENDPOINT = (RUNTIME.commentsEndpoint || "").replace(/\/$/, "");
+const DIGEST_BY_ID = new Map(DIGESTS.map((digest) => [digest.id, digest]));
+const PAPER_BY_DIGEST = new Map(DIGESTS.flatMap((digest) =>
+  digest.papers.map((paper) => [`${digest.id}:${paper.id}`, paper])
+));
+let searchIndexPromise = null;
+let notesReturnFocus = null;
 
 function getDigestsByDate() {
   return DIGESTS.slice().sort((a, b) => b.date.localeCompare(a.date));
@@ -14,7 +20,13 @@ const state = {
   query: "",
   identity: null,
   remoteNotes: {},
-  remoteLoading: false
+  remoteLoading: false,
+  searchIndex: Array.isArray(window.PAPER_DIGEST_SEARCH_INDEX)
+    ? window.PAPER_DIGEST_SEARCH_INDEX
+    : null,
+  searchLoading: false,
+  searchError: "",
+  searchRequestId: 0
 };
 
 const els = {
@@ -360,38 +372,73 @@ function renderNotes() {
 
 function collectMatches() {
   const query = state.query.trim().toLowerCase();
-  if (!query) {
+  if (!query || !state.searchIndex) {
     return [];
   }
 
-  return getDigestsByDate().flatMap((digest) => digest.papers.map((paper) => {
+  return state.searchIndex.filter((entry) => entry.text.includes(query)).map((entry) => {
+    const digest = DIGEST_BY_ID.get(entry.digestId);
+    const paper = PAPER_BY_DIGEST.get(`${entry.digestId}:${entry.paperId}`);
+    if (!digest || !paper) return null;
     const tagInfos = paperTagInfos(digest, paper);
     return { digest, paper, tagInfos };
-  })).filter(({ digest, paper, tagInfos }) => {
-    const text = [
-      tagInfos.map((tag) => tag.label).join(" "),
-      paper.title,
-      paper.source,
-      paper.authors.join(" "),
-      paper.affiliations.join(" "),
-      paper.comment,
-      paper.body || ""
-    ].join(" ").toLowerCase();
+  }).filter(Boolean);
+}
 
-    return text.includes(query);
+function loadSearchIndex() {
+  if (state.searchIndex) return Promise.resolve(state.searchIndex);
+  if (searchIndexPromise) return searchIndexPromise;
+
+  searchIndexPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = new URL("assets/search-index.js", document.baseURI).href;
+    script.async = true;
+    script.addEventListener("load", () => {
+      if (!Array.isArray(window.PAPER_DIGEST_SEARCH_INDEX)) {
+        reject(new Error("Search index did not initialize"));
+        return;
+      }
+      resolve(window.PAPER_DIGEST_SEARCH_INDEX);
+    }, { once: true });
+    script.addEventListener("error", () => {
+      reject(new Error("Search index failed to load"));
+    }, { once: true });
+    document.head.appendChild(script);
+  }).then((searchIndex) => {
+    state.searchIndex = searchIndex;
+    return searchIndex;
+  }).catch((error) => {
+    searchIndexPromise = null;
+    throw error;
   });
+
+  return searchIndexPromise;
 }
 
 function renderSearchResults() {
-  const matches = collectMatches();
   if (!state.query.trim()) {
     els.searchResults.hidden = true;
     els.searchResults.innerHTML = "";
+    els.searchResults.setAttribute("aria-busy", "false");
     els.researchLandscape.hidden = false;
     return;
   }
 
   els.researchLandscape.hidden = true;
+  els.searchResults.hidden = false;
+  els.searchResults.setAttribute("aria-busy", String(state.searchLoading));
+
+  if (state.searchLoading) {
+    els.searchResults.innerHTML = '<p class="search-status">正在载入全文检索索引...</p>';
+    return;
+  }
+
+  if (state.searchError) {
+    els.searchResults.innerHTML = `<p class="search-status is-error">${escapeHtml(state.searchError)}</p>`;
+    return;
+  }
+
+  const matches = collectMatches();
   const resultList = matches.map(({ digest, paper, tagInfos }) => `
     <article class="result-item">
       <div>
@@ -403,7 +450,6 @@ function renderSearchResults() {
     </article>
   `).join("");
 
-  els.searchResults.hidden = false;
   els.searchResults.innerHTML = `
     <h3>找到 ${matches.length} 篇</h3>
     <div class="result-list">${resultList || "<p>没有匹配的论文。</p>"}</div>
@@ -461,9 +507,36 @@ els.searchResults.addEventListener("click", (event) => {
   }
 });
 
-els.paperSearch.addEventListener("input", (event) => {
+els.paperSearch.addEventListener("input", async (event) => {
   state.query = event.target.value;
+  state.searchError = "";
+  const requestId = ++state.searchRequestId;
+
+  if (!state.query.trim()) {
+    state.searchLoading = false;
+    renderSearchResults();
+    return;
+  }
+
+  if (state.searchIndex) {
+    renderSearchResults();
+    return;
+  }
+
+  state.searchLoading = true;
   renderSearchResults();
+
+  try {
+    await loadSearchIndex();
+    if (requestId !== state.searchRequestId) return;
+    state.searchLoading = false;
+    renderSearchResults();
+  } catch (error) {
+    if (requestId !== state.searchRequestId) return;
+    state.searchLoading = false;
+    state.searchError = "全文检索索引载入失败，请刷新页面后重试。";
+    renderSearchResults();
+  }
 });
 
 els.navToggle.addEventListener("click", () => {
@@ -474,17 +547,57 @@ els.shuffleIdentity.addEventListener("click", () => {
   setIdentity(randomIdentity());
 });
 
-els.notesToggle.addEventListener("click", () => {
-  const open = !els.notesDrawer.classList.contains("is-open");
+function setNotesDrawerOpen(open, { restoreFocus = true } = {}) {
+  if (open) {
+    notesReturnFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : els.notesToggle;
+  }
+
   els.notesDrawer.classList.toggle("is-open", open);
   els.notesDrawer.setAttribute("aria-hidden", String(!open));
+  els.notesDrawer.inert = !open;
   els.notesToggle.setAttribute("aria-expanded", String(open));
+
+  if (open) {
+    requestAnimationFrame(() => els.closeNotes.focus());
+  } else if (restoreFocus && notesReturnFocus?.isConnected) {
+    notesReturnFocus.focus();
+  }
+}
+
+els.notesToggle.addEventListener("click", () => {
+  setNotesDrawerOpen(!els.notesDrawer.classList.contains("is-open"));
 });
 
 els.closeNotes.addEventListener("click", () => {
-  els.notesDrawer.classList.remove("is-open");
-  els.notesDrawer.setAttribute("aria-hidden", "true");
-  els.notesToggle.setAttribute("aria-expanded", "false");
+  setNotesDrawerOpen(false);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!els.notesDrawer.classList.contains("is-open")) return;
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    setNotesDrawerOpen(false);
+    return;
+  }
+
+  if (event.key !== "Tab") return;
+  const focusable = [...els.notesDrawer.querySelectorAll(
+    'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]'
+  )].filter((element) => element.getClientRects().length > 0);
+  if (!focusable.length) return;
+
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 });
 
 els.noteComposer.addEventListener("submit", async (event) => {
@@ -543,6 +656,7 @@ els.noteComposer.addEventListener("submit", async (event) => {
 
 initFromHash();
 initNavState();
+setNotesDrawerOpen(false, { restoreFocus: false });
 renderIdentity();
 renderDigestList();
 renderDigest();

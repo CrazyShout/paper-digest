@@ -213,6 +213,23 @@ function validateLandscapeTagArrays(items, field, knownTags, file) {
   }
 }
 
+function validateLandscapeEvidenceArrays(items, field, file) {
+  for (const [index, item] of items.entries()) {
+    if (!isStringArray(item.evidencePaperIds) || !item.evidencePaperIds.length) {
+      addError(`${file} ${field}[${index}] must define evidencePaperIds as a non-empty string array`);
+      continue;
+    }
+
+    if (item.evidencePaperIds.length < 2 || item.evidencePaperIds.length > 4) {
+      addError(`${file} ${field}[${index}] must cite between 2 and 4 evidence papers`);
+    }
+
+    if (new Set(item.evidencePaperIds).size !== item.evidencePaperIds.length) {
+      addError(`${file} ${field}[${index}] has duplicate evidencePaperIds`);
+    }
+  }
+}
+
 function validateImageUrls(markdown, file) {
   const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let count = 0;
@@ -248,10 +265,289 @@ function validateImageUrls(markdown, file) {
   }
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function validateRequiredStrings(item, fields, label) {
+  if (!isPlainObject(item)) {
+    addError(`${label} must be an object`);
+    return false;
+  }
+
+  for (const field of fields) {
+    if (typeof item[field] !== "string" || !item[field].trim()) {
+      addError(`${label} must define a non-empty ${field} string`);
+    }
+  }
+  return true;
+}
+
+function validateIdeaCenter(config, knownTags, paperById, latestDigestDate, file) {
+  validateStringField(config, "title", file);
+  validateStringField(config, "summary", file);
+  validateStringField(config, "updatedAt", file);
+
+  if (!Number.isInteger(config.version) || config.version < 1) {
+    addError(`${file} version must be a positive integer`);
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(config.updatedAt || "")) {
+    addError(`${file} updatedAt must use YYYY-MM-DD`);
+  } else if (latestDigestDate && config.updatedAt < latestDigestDate) {
+    addError(`${file} updatedAt ${config.updatedAt} is older than latest digest ${latestDigestDate}`);
+  }
+
+  const workflow = isPlainObject(config.workflow) ? config.workflow : {};
+  validateRequiredStrings(workflow, ["label", "principle"], `${file} workflow`);
+  const searchPolicy = isPlainObject(workflow.searchPolicy) ? workflow.searchPolicy : {};
+  validateRequiredStrings(searchPolicy, ["localCorpusRole", "dateWindow"], `${file} workflow.searchPolicy`);
+  for (const field of ["sourcePriority", "venueScope", "queryExpansion"]) {
+    if (!isStringArray(searchPolicy[field]) || !searchPolicy[field].length) {
+      addError(`${file} workflow.searchPolicy.${field} must be a non-empty string array`);
+    }
+  }
+
+  const workflowSteps = Array.isArray(workflow.steps) ? workflow.steps : [];
+  if (workflowSteps.length < 6) {
+    addError(`${file} workflow must define at least 6 exploration steps`);
+  }
+  const workflowStepIds = new Set();
+  for (const [index, step] of workflowSteps.entries()) {
+    validateRequiredStrings(
+      step,
+      ["id", "number", "title", "question", "deliverable", "failAction"],
+      `${file} workflow.steps[${index}]`
+    );
+    if (workflowStepIds.has(step?.id)) addError(`${file} has duplicate workflow step id: ${step.id}`);
+    workflowStepIds.add(step?.id);
+  }
+
+  const workflowGates = Array.isArray(workflow.gates) ? workflow.gates : [];
+  if (workflowGates.length !== 4) {
+    addError(`${file} workflow must define exactly 4 hard gates`);
+  }
+  const gateById = new Map();
+  for (const [index, gate] of workflowGates.entries()) {
+    validateRequiredStrings(gate, ["id", "label", "description"], `${file} workflow.gates[${index}]`);
+    if (!Number.isFinite(gate?.threshold) || gate.threshold < 0 || gate.threshold > 100) {
+      addError(`${file} workflow.gates[${index}] threshold must be between 0 and 100`);
+    }
+    if (gateById.has(gate?.id)) addError(`${file} has duplicate workflow gate id: ${gate.id}`);
+    gateById.set(gate?.id, gate);
+  }
+
+  if (!isStringArray(workflow.stopRules) || workflow.stopRules.length < 3) {
+    addError(`${file} workflow.stopRules must contain at least 3 rules`);
+  }
+
+  const scoring = isPlainObject(config.scoring) ? config.scoring : {};
+  validateRequiredStrings(scoring, ["label", "disclaimer"], `${file} scoring`);
+  const dimensions = Array.isArray(scoring.dimensions) ? scoring.dimensions : [];
+  if (!dimensions.length) addError(`${file} scoring.dimensions must be a non-empty array`);
+  const dimensionById = new Map();
+  let totalWeight = 0;
+  for (const [index, dimension] of dimensions.entries()) {
+    validateRequiredStrings(
+      dimension,
+      ["id", "label", "description"],
+      `${file} scoring.dimensions[${index}]`
+    );
+    if (!Number.isFinite(dimension?.weight) || dimension.weight <= 0) {
+      addError(`${file} scoring.dimensions[${index}] weight must be positive`);
+    } else {
+      totalWeight += dimension.weight;
+    }
+    if (dimensionById.has(dimension?.id)) addError(`${file} has duplicate scoring dimension: ${dimension.id}`);
+    dimensionById.set(dimension?.id, dimension);
+  }
+  if (totalWeight !== 100) addError(`${file} scoring dimension weights must total 100, got ${totalWeight}`);
+
+  const directions = Array.isArray(config.directions) ? config.directions : [];
+  if (!directions.length) addError(`${file} directions must be a non-empty array`);
+  const directionIds = new Set();
+  const allIdeaIds = new Set();
+
+  for (const [directionIndex, direction] of directions.entries()) {
+    const directionLabel = `${file} directions[${directionIndex}]`;
+    validateRequiredStrings(direction, ["id", "label", "color", "status", "subtitle"], directionLabel);
+    if (!knownTags.has(direction?.id)) addError(`${directionLabel} references unknown direction: ${direction?.id}`);
+    if (directionIds.has(direction?.id)) addError(`${file} has duplicate direction: ${direction?.id}`);
+    directionIds.add(direction?.id);
+    if (!["ready", "planned"].includes(direction?.status)) {
+      addError(`${directionLabel} status must be ready or planned`);
+    }
+    if (!/^#[0-9a-f]{6}$/i.test(direction?.color || "")) {
+      addError(`${directionLabel} color must be a six-digit hex value`);
+    }
+
+    if (direction?.status !== "ready") continue;
+    validateRequiredStrings(direction, ["scope"], directionLabel);
+
+    const run = isPlainObject(direction.explorationRun) ? direction.explorationRun : {};
+    validateRequiredStrings(
+      run,
+      ["runId", "searchedAt", "searchWindow", "sourcePolicy", "verdict"],
+      `${directionLabel}.explorationRun`
+    );
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(run.searchedAt || "")) {
+      addError(`${directionLabel}.explorationRun searchedAt must use YYYY-MM-DD`);
+    }
+    for (const field of ["venueScope", "queryFamilies"]) {
+      if (!isStringArray(run[field]) || !run[field].length) {
+        addError(`${directionLabel}.explorationRun.${field} must be a non-empty string array`);
+      }
+    }
+    if (!Number.isInteger(run.coreEvidenceCount) || run.coreEvidenceCount < 1) {
+      addError(`${directionLabel}.explorationRun.coreEvidenceCount must be a positive integer`);
+    }
+
+    const runGates = Array.isArray(run.gates) ? run.gates : [];
+    const runGateIds = new Set();
+    for (const [gateIndex, gate] of runGates.entries()) {
+      const gateLabel = `${directionLabel}.explorationRun.gates[${gateIndex}]`;
+      validateRequiredStrings(gate, ["id", "label", "result", "judgement"], gateLabel);
+      if (!gateById.has(gate?.id)) addError(`${gateLabel} references unknown hard gate: ${gate?.id}`);
+      if (runGateIds.has(gate?.id)) addError(`${directionLabel} has duplicate run gate: ${gate?.id}`);
+      runGateIds.add(gate?.id);
+      if (!Number.isFinite(gate?.score) || gate.score < 0 || gate.score > 100) {
+        addError(`${gateLabel} score must be between 0 and 100`);
+      } else if (gateById.has(gate.id) && gate.score < gateById.get(gate.id).threshold) {
+        addError(`${gateLabel} score ${gate.score} does not pass threshold ${gateById.get(gate.id).threshold}`);
+      }
+    }
+    for (const gateId of gateById.keys()) {
+      if (!runGateIds.has(gateId)) addError(`${directionLabel} is missing exploration gate: ${gateId}`);
+    }
+
+    const saturation = isPlainObject(run.saturation) ? run.saturation : {};
+    validateRequiredStrings(saturation, ["verdict"], `${directionLabel}.explorationRun.saturation`);
+    const crowdedZones = Array.isArray(saturation.crowdedZones) ? saturation.crowdedZones : [];
+    const openZones = Array.isArray(saturation.openZones) ? saturation.openZones : [];
+    if (!crowdedZones.length) addError(`${directionLabel} must identify at least one crowded zone`);
+    if (!openZones.length) addError(`${directionLabel} must identify at least one open zone`);
+    for (const [index, zone] of crowdedZones.entries()) {
+      validateRequiredStrings(zone, ["title", "evidence", "decision"], `${directionLabel} crowdedZones[${index}]`);
+    }
+    for (const [index, zone] of openZones.entries()) {
+      validateRequiredStrings(zone, ["title", "whyOpen"], `${directionLabel} openZones[${index}]`);
+    }
+
+    const solutionFamilies = Array.isArray(run.solutionFamilies) ? run.solutionFamilies : [];
+    if (solutionFamilies.length < 3) addError(`${directionLabel} must explore at least 3 solution families`);
+    for (const [index, family] of solutionFamilies.entries()) {
+      validateRequiredStrings(
+        family,
+        ["title", "borrowedFrom", "use"],
+        `${directionLabel} solutionFamilies[${index}]`
+      );
+    }
+
+    const frontierEvidence = Array.isArray(run.frontierEvidence) ? run.frontierEvidence : [];
+    if (frontierEvidence.length < 5) addError(`${directionLabel} must cite at least 5 frontier sources`);
+    const frontierUrls = new Set();
+    for (const [index, source] of frontierEvidence.entries()) {
+      const sourceLabel = `${directionLabel} frontierEvidence[${index}]`;
+      validateRequiredStrings(source, ["title", "venue", "url", "finding"], sourceLabel);
+      if (!Number.isInteger(source?.year)) addError(`${sourceLabel} year must be an integer`);
+      if (!/^https:\/\//.test(source?.url || "")) addError(`${sourceLabel} must use an HTTPS primary-source URL`);
+      if (frontierUrls.has(source?.url)) addError(`${directionLabel} has duplicate frontier URL: ${source?.url}`);
+      frontierUrls.add(source?.url);
+    }
+
+    const problemSignals = Array.isArray(direction.problemSignals) ? direction.problemSignals : [];
+    if (problemSignals.length < 5) addError(`${directionLabel} must define at least 5 problem signals`);
+    for (const [index, signal] of problemSignals.entries()) {
+      validateRequiredStrings(signal, ["title", "status", "detail"], `${directionLabel} problemSignals[${index}]`);
+    }
+
+    const ideas = Array.isArray(direction.ideas) ? direction.ideas : [];
+    if (!ideas.length) addError(`${directionLabel} must define at least one idea`);
+    const ranks = new Set();
+    const evidenceUrls = new Set();
+
+    for (const [ideaIndex, idea] of ideas.entries()) {
+      const ideaLabel = `${directionLabel} ideas[${ideaIndex}]`;
+      validateRequiredStrings(
+        idea,
+        [
+          "id", "title", "hook", "decision", "effort", "timeline", "output", "whyNow",
+          "unresolved", "hypothesis"
+        ],
+        ideaLabel
+      );
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(idea?.id || "")) {
+        addError(`${ideaLabel} id must use lowercase letters, numbers, and hyphens`);
+      }
+      if (allIdeaIds.has(idea?.id)) addError(`${file} has duplicate idea id: ${idea?.id}`);
+      allIdeaIds.add(idea?.id);
+      if (!Number.isInteger(idea?.rank) || idea.rank < 1) addError(`${ideaLabel} rank must be a positive integer`);
+      if (ranks.has(idea?.rank)) addError(`${directionLabel} has duplicate idea rank: ${idea?.rank}`);
+      ranks.add(idea?.rank);
+      for (const field of ["method", "minimumStudy", "successCriteria", "killCriteria", "risks"]) {
+        if (!isStringArray(idea?.[field]) || !idea[field].length) {
+          addError(`${ideaLabel}.${field} must be a non-empty string array`);
+        }
+      }
+
+      const score = isPlainObject(idea.score) ? idea.score : {};
+      validateRequiredStrings(score, ["band"], `${ideaLabel}.score`);
+      if (!Number.isInteger(score.overall) || score.overall < 0 || score.overall > 100) {
+        addError(`${ideaLabel}.score.overall must be an integer between 0 and 100`);
+      }
+      const values = isPlainObject(score.dimensions) ? score.dimensions : {};
+      let weightedScore = 0;
+      for (const [dimensionId, dimension] of dimensionById.entries()) {
+        const value = values[dimensionId];
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          addError(`${ideaLabel}.score.dimensions.${dimensionId} must be between 0 and 100`);
+        } else {
+          weightedScore += value * dimension.weight;
+        }
+      }
+      const computedScore = totalWeight ? Math.round(weightedScore / totalWeight) : 0;
+      if (Number.isInteger(score.overall) && score.overall !== computedScore) {
+        addError(`${ideaLabel}.score.overall ${score.overall} does not match weighted score ${computedScore}`);
+      }
+
+      const evidence = Array.isArray(idea.evidence) ? idea.evidence : [];
+      if (evidence.length < 3 || evidence.length > 5) {
+        addError(`${ideaLabel} must cite between 3 and 5 evidence sources`);
+      }
+      const ideaEvidenceUrls = new Set();
+      for (const [sourceIndex, source] of evidence.entries()) {
+        const sourceLabel = `${ideaLabel}.evidence[${sourceIndex}]`;
+        validateRequiredStrings(source, ["title", "venue", "url", "role"], sourceLabel);
+        if (!Number.isInteger(source?.year)) addError(`${sourceLabel} year must be an integer`);
+        if (!/^https:\/\//.test(source?.url || "")) addError(`${sourceLabel} must use an HTTPS primary-source URL`);
+        if (ideaEvidenceUrls.has(source?.url)) addError(`${ideaLabel} has duplicate evidence URL: ${source?.url}`);
+        ideaEvidenceUrls.add(source?.url);
+        evidenceUrls.add(source?.url);
+        if (source?.localPaperId && !paperById.has(source.localPaperId)) {
+          addError(`${sourceLabel} references missing local paper: ${source.localPaperId}`);
+        }
+      }
+    }
+
+    for (let rank = 1; rank <= ideas.length; rank += 1) {
+      if (!ranks.has(rank)) addError(`${directionLabel} idea ranks must be contiguous; missing ${rank}`);
+    }
+    if (Number.isInteger(run.coreEvidenceCount) && run.coreEvidenceCount !== evidenceUrls.size) {
+      addError(`${directionLabel}.explorationRun.coreEvidenceCount ${run.coreEvidenceCount} does not match ${evidenceUrls.size} unique idea sources`);
+    }
+  }
+
+  for (const tag of knownTags) {
+    if (!directionIds.has(tag)) addError(`${file} is missing direction: ${tag}`);
+  }
+}
+
 const interestConfig = JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
 const knownTags = new Set(interestConfig.interests.map((interest) => interest.id));
 const landscapeFile = "research-landscape.json";
 let landscapeConfig = {};
+const ideaCenterFile = "idea-center.json";
+let ideaCenterConfig = {};
 
 try {
   landscapeConfig = JSON.parse(await readFile(path.join(CONTENT, landscapeFile), "utf8"));
@@ -259,9 +555,19 @@ try {
   addError(`${landscapeFile} has invalid JSON: ${error.message}`);
 }
 
+try {
+  ideaCenterConfig = JSON.parse(await readFile(path.join(CONTENT, ideaCenterFile), "utf8"));
+} catch (error) {
+  addError(`${ideaCenterFile} has invalid JSON: ${error.message}`);
+}
+
 validateStringField(landscapeConfig, "title", landscapeFile);
 validateStringField(landscapeConfig, "summary", landscapeFile);
 validateStringField(landscapeConfig, "updatedAt", landscapeFile);
+
+if (!Number.isInteger(landscapeConfig.version) || landscapeConfig.version < 1) {
+  addError(`${landscapeFile} version must be a positive integer`);
+}
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(landscapeConfig.updatedAt || "")) {
   addError(`${landscapeFile} updatedAt must use YYYY-MM-DD`);
@@ -299,6 +605,10 @@ const landscapeDirections = validateObjectArrayField(
 validateLandscapeTagArrays(landscapeTrends, "trends", knownTags, landscapeFile);
 validateLandscapeTagArrays(landscapeHotspots, "hotspots", knownTags, landscapeFile);
 validateLandscapeTagArrays(landscapeOpportunities, "opportunities", knownTags, landscapeFile);
+validateLandscapeEvidenceArrays(landscapeTrends, "trends", landscapeFile);
+validateLandscapeEvidenceArrays(landscapeHotspots, "hotspots", landscapeFile);
+validateLandscapeEvidenceArrays(landscapeOpportunities, "opportunities", landscapeFile);
+validateLandscapeEvidenceArrays(landscapeDirections, "directions", landscapeFile);
 
 const landscapeDirectionTags = new Set();
 for (const [index, direction] of landscapeDirections.entries()) {
@@ -319,6 +629,16 @@ for (const tag of knownTags) {
 
 const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
 const digestDocs = await readMarkdownDir(path.join(CONTENT, "digests"));
+
+const latestDigestDate = digestDocs
+  .map((digest) => digest.data.date)
+  .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date || ""))
+  .sort()
+  .at(-1);
+
+if (latestDigestDate && landscapeConfig.updatedAt < latestDigestDate) {
+  addError(`${landscapeFile} updatedAt ${landscapeConfig.updatedAt} is older than latest digest ${latestDigestDate}`);
+}
 
 const papers = paperDocs.map((doc) => {
   const expectedId = path.basename(doc.file, ".md");
@@ -368,6 +688,54 @@ for (const paper of papers) {
     addError(`${paper.file} revisionOf references missing paper: ${paper.revisionOf}`);
   } else if (sourcePaper.revisionOf) {
     addError(`${paper.file} revisionOf must point to an original paper, not another revision: ${paper.revisionOf}`);
+  }
+}
+
+validateIdeaCenter(ideaCenterConfig, knownTags, paperById, latestDigestDate, ideaCenterFile);
+
+const canonicalPaperIds = new Set(papers.filter((paper) => !paper.revisionOf).map((paper) => paper.id));
+const effectiveEvidenceDigests = digestDocs
+  .map((digest) => ({
+    id: digest.data.id,
+    date: digest.data.date,
+    paperIds: Array.isArray(digest.data.papers)
+      ? digest.data.papers.filter((paperId) => canonicalPaperIds.has(paperId))
+      : []
+  }))
+  .filter((digest) => digest.paperIds.length)
+  .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+const recentEvidencePaperIds = new Set(
+  effectiveEvidenceDigests
+    .slice(0, landscapeConfig.analysisWindowIssues || 1)
+    .flatMap((digest) => digest.paperIds)
+);
+
+for (const [field, items] of [
+  ["trends", landscapeTrends],
+  ["hotspots", landscapeHotspots],
+  ["opportunities", landscapeOpportunities],
+  ["directions", landscapeDirections]
+]) {
+  for (const [index, item] of items.entries()) {
+    const evidenceIds = Array.isArray(item.evidencePaperIds) ? item.evidencePaperIds : [];
+    const itemTags = field === "directions"
+      ? [item.tag].filter(Boolean)
+      : (Array.isArray(item.tags) ? item.tags : []);
+
+    for (const paperId of evidenceIds) {
+      const paper = paperById.get(paperId);
+      if (!paper) {
+        addError(`${landscapeFile} ${field}[${index}] references missing evidence paper: ${paperId}`);
+      } else if (paper.revisionOf) {
+        addError(`${landscapeFile} ${field}[${index}] evidence must reference canonical paper: ${paperId}`);
+      } else if (!paper.tags.some((tag) => itemTags.includes(tag))) {
+        addError(`${landscapeFile} ${field}[${index}] evidence paper ${paperId} does not match its direction tags`);
+      }
+    }
+
+    if (evidenceIds.length && !evidenceIds.some((paperId) => recentEvidencePaperIds.has(paperId))) {
+      addError(`${landscapeFile} ${field}[${index}] must cite at least one paper from the latest analysis window`);
+    }
   }
 }
 

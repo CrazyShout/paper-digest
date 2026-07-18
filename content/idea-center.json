@@ -1,0 +1,913 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-18",
+  "title": "从论文缺口走到可验证课题",
+  "summary": "Idea 中心不按论文题目堆灵感，而是先确认未解问题是否真实存在，再给出可以被实验推翻的假设、最小验证路径和停止条件。第一版以协同感知为样例，覆盖可靠融合、异步误差、通信价值、协作信任、降级部署与系统验收。",
+  "workflow": {
+    "label": "Direction-to-Idea Funnel",
+    "principle": "已有简报只负责提供初始线索，不能定义研究边界。每次探索都要重新检索一手论文和顶级会议前沿；方向未通过价值、余量、新颖性和可行性门槛时，不生成候选 Idea。",
+    "searchPolicy": {
+      "localCorpusRole": "线索库与组内兴趣约束，不作为相关工作的全集。",
+      "dateWindow": "默认覆盖近 3–5 年，并向前追溯奠基工作；快速演化方向额外检索最近 12 个月预印本。",
+      "sourcePriority": [
+        "会议官方 proceedings、论文 PDF、项目页与作者代码仓库",
+        "arXiv 原始版本及后续修订记录",
+        "综述只用于扩展关键词，关键判断必须回到一手论文"
+      ],
+      "venueScope": [
+        "CVPR / ICCV / ECCV / WACV",
+        "ICRA / IROS / CoRL",
+        "NeurIPS / ICML / ICLR",
+        "方向相关的高质量期刊与最新 arXiv"
+      ],
+      "queryExpansion": [
+        "任务名 + failure / limitation / robustness / deployment",
+        "任务名 + benchmark / real-world / sim-to-real / closed-loop",
+        "候选机制名 + 同义词 + 相邻领域方法",
+        "最接近论文的标题、引用链、后续工作与负面结果"
+      ]
+    },
+    "steps": [
+      {
+        "id": "significance",
+        "number": "01",
+        "title": "意义审计",
+        "question": "失败是否影响真实任务、科学认知或系统成本，而不只是让某个榜单再涨一点？",
+        "deliverable": "明确受影响对象、失败频率、代价、现有证据和不做的后果。",
+        "failAction": "证据只来自主观直觉或极小指标差异时，归档方向。"
+      },
+      {
+        "id": "frontier-search",
+        "number": "02",
+        "title": "前沿检索",
+        "question": "顶会和最新一手论文已经把问题推进到哪里，最强基线真正解决了什么？",
+        "deliverable": "形成任务、数据、指标、假设和代码可用性的前沿证据表。",
+        "failAction": "只找到二手摘要或无法核验的结论时，不进入判断。"
+      },
+      {
+        "id": "saturation",
+        "number": "03",
+        "title": "余量与饱和度审计",
+        "question": "性能是否已接近数据或指标上限，近年增益是否只靠规模、数据或工程堆叠？",
+        "deliverable": "区分拥挤区、疑似极限区和仍有余量的失败轴，并说明判断依据。",
+        "failAction": "若剩余增益不可测、资源不可承受或短期无突破杠杆，停止投入。"
+      },
+      {
+        "id": "novelty",
+        "number": "04",
+        "title": "新颖性碰撞",
+        "question": "同一机制、同一研究问题或等价组合是否已经被近期工作实现？",
+        "deliverable": "检索直接竞品、相邻任务和可迁移方法，写清最近工作的交集与不可替代差异。",
+        "failAction": "若贡献只能改名、换 backbone 或重复已有模块，淘汰候选。"
+      },
+      {
+        "id": "solution-space",
+        "number": "05",
+        "title": "解法空间扩展",
+        "question": "哪些来自不确定性、控制、因果、安全或系统领域的机制能改变问题定义？",
+        "deliverable": "同时探索保守解、跨领域解和高风险解，标出关键假设与依赖。",
+        "failAction": "没有可检验机制、只能描述愿景时，不进入 Idea 排名。"
+      },
+      {
+        "id": "feasibility",
+        "number": "06",
+        "title": "最小研究闭环",
+        "question": "能否用公开数据、可获得算力和明确指标在 6–12 周内证伪核心假设？",
+        "deliverable": "给出最小实验、强基线、成功标准、止损条件、风险和资源估计。",
+        "failAction": "无法定义失败或依赖不可获得数据时，降级为观察项。"
+      },
+      {
+        "id": "publish",
+        "number": "07",
+        "title": "评分与发布",
+        "question": "证据、可做性和差异化是否足以支持组内投入？",
+        "deliverable": "发布带证据链和可做成度评分的研究档案，并记录更新时间。",
+        "failAction": "未通过任一硬门槛的方向不凑数，只保留淘汰原因。"
+      }
+    ],
+    "gates": [
+      {
+        "id": "significance",
+        "label": "研究意义",
+        "threshold": 75,
+        "description": "问题有可核验的真实代价或科学价值。"
+      },
+      {
+        "id": "headroom",
+        "label": "突破余量",
+        "threshold": 55,
+        "description": "现有指标或方法仍留下可测且可利用的失败轴。"
+      },
+      {
+        "id": "novelty",
+        "label": "新颖空间",
+        "threshold": 65,
+        "description": "相对直接竞品存在问题定义或机制层面的清晰差异。"
+      },
+      {
+        "id": "feasibility",
+        "label": "短期可行",
+        "threshold": 70,
+        "description": "可在有限周期内完成足以证伪假设的最小研究闭环。"
+      }
+    ],
+    "stopRules": [
+      "榜单已高度饱和，剩余提升主要依赖不可获得的数据、算力或硬件。",
+      "最近工作已经覆盖同一问题、机制和验证协议，且没有新的失效条件。",
+      "研究价值依赖无法验证的部署假设，或公开数据无法构成有效代理。",
+      "最小实验无法在 12 周内回答核心假设，且没有更小的可证伪切口。"
+    ]
+  },
+  "scoring": {
+    "label": "可做成度",
+    "disclaimer": "评分衡量在当前公开数据、算力和工程条件下形成可信研究结果的可行性，不是论文录用概率。总分按五个维度加权，并应随新论文、数据开放和复现实验更新。",
+    "dimensions": [
+      {
+        "id": "problem-evidence",
+        "label": "问题证据",
+        "weight": 25,
+        "description": "现有论文和真实系统是否反复暴露同一缺口。"
+      },
+      {
+        "id": "data-readiness",
+        "label": "数据与基线",
+        "weight": 20,
+        "description": "公开数据、代码、仿真和对比方法是否足以启动。"
+      },
+      {
+        "id": "tractability",
+        "label": "技术可控性",
+        "weight": 20,
+        "description": "能否在有限周期内完成实现、调试和关键消融。"
+      },
+      {
+        "id": "validation",
+        "label": "验证清晰度",
+        "weight": 20,
+        "description": "成功与失败是否有明确、可复现的判据。"
+      },
+      {
+        "id": "differentiation",
+        "label": "差异化空间",
+        "weight": 15,
+        "description": "相对最新工作是否存在足够清楚的新贡献边界。"
+      }
+    ]
+  },
+  "directions": [
+    {
+      "id": "cooperative-autonomous-driving",
+      "label": "协同感知",
+      "color": "#2f6f8f",
+      "status": "ready",
+      "subtitle": "从“融合更多信息”转向“证明何时值得融合、何时必须拒绝”",
+      "scope": "聚焦车辆、路侧单元和异构传感器之间的协同 3D 感知，同时把通信、定位、时序、攻击和下游闭环纳入研究问题。相关工作检索截至 2026-07-18。",
+      "explorationRun": {
+        "runId": "cooperative-perception-2026-07",
+        "searchedAt": "2026-07-18",
+        "searchWindow": "2022–2026，向前追溯协同感知代表性工作，并重点核对 2025–2026 的官方 proceedings 与最新 arXiv。",
+        "sourcePolicy": "关键判断只使用论文原文、会议官方页面和 arXiv；本库论文只作为检索种子，不作为领域边界。",
+        "venueScope": ["CVPR", "ICCV", "WACV", "arXiv recent"],
+        "queryFamilies": [
+          "cooperative perception + latency / pose error / calibration noise",
+          "collaborative perception + communication efficient / receiver-centric / sparse",
+          "cooperative perception + attack / untrusted vehicle / robust consensus",
+          "V2X perception + real-world / online / closed-loop / sim-to-real",
+          "heterogeneous collaborative perception + distillation / query / adaptation"
+        ],
+        "coreEvidenceCount": 20,
+        "verdict": "值得做，但不能再泛化为“设计一个更好的融合模块”。标准同步检测和单纯 AP-per-byte 优化已经拥挤；可靠拒绝、联合误差后验、闭环信息价值、故障归因与跨证据等级迁移仍有明确余量。",
+        "gates": [
+          {
+            "id": "significance",
+            "label": "研究意义",
+            "score": 95,
+            "result": "通过",
+            "judgement": "真实链路数据、在线平台和多篇鲁棒性工作反复显示时延、位姿、异构、攻击和失联会直接改变感知可靠性；问题不只是离线 AP。"
+          },
+          {
+            "id": "headroom",
+            "label": "突破余量",
+            "score": 79,
+            "result": "通过",
+            "judgement": "通信压缩与标准 BEV 融合仍在快速刷新，通用模块切口拥挤；但有害融合率、风险覆盖、联合误差、闭环安全收益和跨平台迁移尚未形成稳定答案。"
+          },
+          {
+            "id": "novelty",
+            "label": "新颖空间",
+            "score": 81,
+            "result": "有条件通过",
+            "judgement": "单独做不确定性、异步补偿或区域选择容易撞题；把决策目标改成可拒绝融合、规划风险或故障来源，并配套新评测，仍可建立清晰贡献边界。"
+          },
+          {
+            "id": "feasibility",
+            "label": "短期可行",
+            "score": 84,
+            "result": "通过",
+            "judgement": "OPV2V、DAIR-V2X、CooperScene、V2X-ReaLO 等数据或平台，以及多个公开强基线足以启动；实车结论需要分阶段，不应作为首轮硬依赖。"
+          }
+        ],
+        "saturation": {
+          "verdict": "领域整体没有到极限，但三个常见切口已进入高竞争区。应优先研究新的失败轴和决策目标，而不是继续堆叠融合块。",
+          "crowdedZones": [
+            {
+              "title": "理想同步条件下只追平均 AP",
+              "evidence": "稀疏表征、长距建模和多阶段融合仍能提升榜单，但新工作密集、比较成本高。",
+              "decision": "除非同时改变部署约束或验证对象，否则不建议作为主线。"
+            },
+            {
+              "title": "为单一噪声增加一个补偿模块",
+              "evidence": "时延、位姿和标定误差已有各自强方法，真实系统的难点已转向相关误差与突变。",
+              "decision": "只保留能估计联合后验、在线更新或给出失效边界的方案。"
+            },
+            {
+              "title": "只报告带宽压缩比的消息选择",
+              "evidence": "区域选择、codebook、供需匹配和接收端请求已形成连续技术线。",
+              "decision": "需要把每字节收益连接到校准风险或闭环规划价值。"
+            }
+          ],
+          "openZones": [
+            {
+              "title": "有害协作的识别与拒绝",
+              "whyOpen": "现有不确定性通常用于加权，缺少覆盖保证、反事实贡献和拒绝后的安全退化协议。"
+            },
+            {
+              "title": "相关时空误差的联合后验",
+              "whyOpen": "时延、位姿和标定在真实链路中相互耦合，分开校正会留下不可观测和过度自信问题。"
+            },
+            {
+              "title": "跨 planner 的每字节安全价值",
+              "whyOpen": "检测 AP 无法说明一条消息是否改变规划决策，也缺少对 planner 过拟合的检验。"
+            },
+            {
+              "title": "普通故障、域偏移与攻击的来源归因",
+              "whyOpen": "防御通常输出可信或不可信二分类，尚不能稳定解释异常来自哪里以及如何恢复。"
+            },
+            {
+              "title": "离线、仿真、在线链路和实车证据迁移",
+              "whyOpen": "各平台独立报告结果，方法排序和失败集合是否跨证据等级保持仍缺少系统验证。"
+            }
+          ]
+        },
+        "solutionFamilies": [
+          {
+            "title": "选择性预测与风险控制",
+            "borrowedFrom": "selective prediction / conformal risk control",
+            "use": "把融合从连续权重改成融合、补问、拒绝三态决策，并校准风险覆盖。"
+          },
+          {
+            "title": "联合状态估计",
+            "borrowedFrom": "Bayesian filtering / factor graph / smoothing",
+            "use": "把时延、位姿、标定和消息新鲜度表示成可更新的相关后验，而非独立噪声开关。"
+          },
+          {
+            "title": "主动感知与预算分配",
+            "borrowedFrom": "active sensing / contextual bandit / constrained optimization",
+            "use": "按预期风险下降请求区域和协作者，在硬带宽预算下优化真正有价值的信息。"
+          },
+          {
+            "title": "反事实贡献估计",
+            "borrowedFrom": "causal attribution / counterfactual evaluation",
+            "use": "比较 ego-only 与 fused 决策，区分相关置信度和协作者的真实边际贡献。"
+          },
+          {
+            "title": "时序来源与鲁棒共识",
+            "borrowedFrom": "provenance graph / Byzantine inference / change-point detection",
+            "use": "利用跨帧行为和物理一致性区分恶意节点、普通故障与域偏移。"
+          },
+          {
+            "title": "协同教师与动态部署",
+            "borrowedFrom": "knowledge distillation / curriculum / communication dropout",
+            "use": "训练期吸收全协同知识，部署期仅在高风险区域唤醒协作并支持失联回退。"
+          }
+        ],
+        "frontierEvidence": [
+          {
+            "title": "A Survey on Collaborative Perception in Intelligent Transportation Systems",
+            "year": 2023,
+            "venue": "arXiv",
+            "url": "https://arxiv.org/abs/2308.16714",
+            "finding": "系统整理通信、定位、异构和 sim-to-real 缺口，提供问题空间基线。"
+          },
+          {
+            "title": "Cooperative Perception for 3D Object Detection in Driving Scenarios Using Infrastructure Sensors: A Comprehensive Review",
+            "year": 2024,
+            "venue": "arXiv",
+            "url": "https://arxiv.org/abs/2401.01544",
+            "finding": "将异步、数据量和位姿误差列为真实部署核心挑战。"
+          },
+          {
+            "title": "TraF-Align: Trajectory-aware Feature Alignment for Asynchronous Multi-agent Perception",
+            "year": 2025,
+            "venue": "CVPR",
+            "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Song_TraF-Align_Trajectory-aware_Feature_Alignment_for_Asynchronous_Multi-agent_Perception_CVPR_2025_paper.html",
+            "finding": "代表异步特征对齐前沿，也说明单一时延补偿已经有强基线。"
+          },
+          {
+            "title": "mmCooper: A Multi-agent Multi-stage Communication-efficient and Collaboration-robust Cooperative Perception Framework",
+            "year": 2025,
+            "venue": "ICCV",
+            "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Liu_mmCooper_A_Multi-agent_Multi-stage_Communication-efficient_and_Collaboration-robust_Cooperative_Perception_Framework_ICCV_2025_paper.html",
+            "finding": "同时推进通信效率和标定误差鲁棒性，抬高通用融合框架基线。"
+          },
+          {
+            "title": "WhisperNet: A Scalable Solution for Bandwidth-Efficient Collaboration",
+            "year": 2026,
+            "venue": "CVPR",
+            "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_WhisperNet_A_Scalable_Solution_for_Bandwidth-Efficient_Collaboration_CVPR_2026_paper.html",
+            "finding": "接收端全局请求与极低通信成本说明纯区域选择赛道竞争已经很强。"
+          },
+          {
+            "title": "Long-SCOPE: Fully Sparse Long-Range Cooperative 3D Perception",
+            "year": 2026,
+            "venue": "CVPR",
+            "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_Long-SCOPE_Fully_Sparse_Long-Range_Cooperative_3D_Perception_CVPR_2026_paper.html",
+            "finding": "长距稀疏感知仍在快速提高性能与效率，说明领域未整体饱和。"
+          },
+          {
+            "title": "All Vehicles Can Lie: Efficient Adversarial Defense in Fully Untrusted-Vehicle Environments",
+            "year": 2026,
+            "venue": "CVPR",
+            "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yu_All_Vehicles_Can_Lie_Efficient_Adversarial_Defense_in_Fully_Untrusted-Vehicle_CVPR_2026_paper.html",
+            "finding": "把威胁推进到全部车辆不可信，显示协作信任仍是开放问题。"
+          },
+          {
+            "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+            "year": 2026,
+            "venue": "arXiv",
+            "url": "https://arxiv.org/abs/2606.31219",
+            "finding": "真实 C-V2X 吞吐和多模态场景使部署约束可以进入可复现实验。"
+          }
+        ]
+      },
+      "problemSignals": [
+        {
+          "title": "真实通信已经进入 benchmark，但闭环价值仍未闭合",
+          "status": "证据变强",
+          "detail": "CooperScene、V2X-ReaLO 和 ViL 平台开始记录真实吞吐、在线时延与物理车辆链路，但大多数方法仍以 AP 为终点。"
+        },
+        {
+          "title": "异构协作者可以接入，开放世界兼容仍然昂贵",
+          "status": "部分解决",
+          "detail": "INTACT、One is Plenty 等工作降低了跨传感器和跨 backbone 适配成本，但未同时处理时间、位姿、丢包和新节点可信度。"
+        },
+        {
+          "title": "时延、位姿和标定误差通常被分开处理",
+          "status": "未闭合",
+          "detail": "TraF-Align、CoST、CATNet 分别推进异步补偿与噪声抑制，真实系统中的联合、相关和突变误差仍缺少可校准后验。"
+        },
+        {
+          "title": "协同可能有害，但系统缺少可审计的拒绝机制",
+          "status": "新热点",
+          "detail": "UECP 开始用物理不确定性衡量节点贡献，现有融合器仍很少报告 harmful-fusion rate、风险覆盖曲线和拒绝后的安全退化。"
+        },
+        {
+          "title": "每个字节的感知收益不等于规划收益",
+          "status": "证据不足",
+          "detail": "WhisperNet 和 Select2Drive 已从区域选择推进到接收端请求与闭环通信，但跨 planner 的边际安全价值尚未形成稳定定义。"
+        },
+        {
+          "title": "恶意信息和普通传感器故障仍容易混淆",
+          "status": "快速演化",
+          "detail": "MVIG、PRBI 与 ROBOSAC 显示共识防御仍会被时序化、区域化攻击绕过，故障、域偏移和攻击之间缺少统一归因。"
+        },
+        {
+          "title": "在线协同失效后，系统如何平滑退回单车仍缺答案",
+          "status": "可切入",
+          "detail": "C2E 证明协同教师可增强 ego-only 模型，但训练期蒸馏、按需在线协同和失联回退尚未被统一。"
+        },
+        {
+          "title": "离线、仿真、在线链路与实车结论之间缺少迁移校准",
+          "status": "空缺明显",
+          "detail": "现有平台提供了不同证据等级，却很少回答一个协同方法的排序和失败集合能否跨平台保持。"
+        }
+      ],
+      "ideas": [
+        {
+          "id": "selective-safe-fusion",
+          "rank": 1,
+          "title": "会拒绝有害协作的风险校准融合器",
+          "hook": "不再默认远端信息有益，而是为每次融合给出“融合、补问、拒绝”三种可审计决策。",
+          "decision": "首选",
+          "score": {
+            "overall": 88,
+            "band": "优先验证",
+            "dimensions": {
+              "problem-evidence": 95,
+              "data-readiness": 90,
+              "tractability": 82,
+              "validation": 92,
+              "differentiation": 79
+            }
+          },
+          "effort": "中等",
+          "timeline": "8–10 周",
+          "output": "可靠融合方法 + 评测协议",
+          "whyNow": "真实 C-V2X 数据和物理不确定性建模刚刚成熟，研究重心正从平均 AP 提升转向节点贡献、异常条件和可信退化。",
+          "unresolved": "置信度通常与检测头共同训练，无法独立证明协作者提供了可靠物理证据；当定位漂移、时延或遮挡使远端特征有害时，融合器仍会强制写入。",
+          "hypothesis": "如果用 ego-only 与 fused prediction 的反事实差异监督节点边际贡献，并用消息新鲜度、位姿协方差和传感器点密度做物理校准，系统可以在保持正常场景收益的同时显著降低有害融合率。",
+          "method": [
+            "建立区域级 marginal utility head，同时预测融合后的检测收益与风险变化，而不是直接复用 detection confidence。",
+            "把 point density、age of information、pose covariance 和跨视角几何一致性编码成独立 evidence token。",
+            "用 conformal risk control 校准三态门控：低风险融合，中风险发起局部 query，高风险拒绝并回退 ego-only。"
+          ],
+          "minimumStudy": [
+            "以 Where2comm 或 mmCooper 为融合基线，在 OPV2V、DAIR-V2X 和 CooperScene 至少选两个数据集。",
+            "联合注入 0–1 m 位姿噪声、0–500 ms 时延、丢包和传感器稀疏，不只做单因素扫描。",
+            "比较置信度门控、UECP uncertainty、固定阈值拒绝和所提反事实门控。",
+            "报告 AP、harmful-fusion rate、risk-coverage、拒绝率、校准误差和通信量。"
+          ],
+          "successCriteria": [
+            "在相同 AP 或相同通信预算下，有害融合率相对最强基线下降至少 30%。",
+            "在未见过的混合扰动上，风险覆盖曲线和 ECE 同时改善，拒绝决策不过度集中于单一数据集。",
+            "去掉反事实监督或物理 evidence token 后，收益有稳定且可解释的下降。"
+          ],
+          "killCriteria": [
+            "门控收益只能来自大幅提高拒绝率，且相同覆盖率下不优于简单置信度阈值。",
+            "联合扰动训练后无法迁移到第二个真实数据集，说明信号只是数据集特征。"
+          ],
+          "risks": [
+            "反事实贡献依赖 ego-only 分支质量，弱 ego 可能把任何协作都误判为有益。",
+            "conformal 校准在时序相关数据上需要按场景划分，否则覆盖保证会被高估。"
+          ],
+          "evidence": [
+            {
+              "title": "UECP: Uncertainty-Enhanced Collaborative Perception",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2606.23046",
+              "role": "证明物理不确定性可用于衡量协作者贡献，但尚未形成可拒绝的风险覆盖决策。"
+            },
+            {
+              "title": "WhisperNet: A Scalable Solution for Bandwidth-Efficient Collaboration",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_WhisperNet_A_Scalable_Solution_for_Bandwidth-Efficient_Collaboration_CVPR_2026_paper.html",
+              "role": "提供 receiver-centric 请求和全局预算分配机制，可借鉴为中风险补问接口。"
+            },
+            {
+              "title": "mmCooper: A Multi-agent Multi-stage Communication-efficient and Collaboration-robust Cooperative Perception Framework",
+              "year": 2025,
+              "venue": "ICCV",
+              "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Liu_mmCooper_A_Multi-agent_Multi-stage_Communication-efficient_and_Collaboration-robust_Cooperative_Perception_Framework_ICCV_2025_paper.html",
+              "role": "给出通信效率和标定误差下的强基线。"
+            },
+            {
+              "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2606.31219",
+              "localPaperId": "cooperscene-cv2x-benchmark",
+              "role": "提供真实吞吐、多节点和异构传感器证据。"
+            }
+          ]
+        },
+        {
+          "id": "hybrid-collaboration-student",
+          "rank": 2,
+          "title": "训练期全协同、部署期按风险唤醒的双态感知器",
+          "hook": "让模型平时像单车系统一样运行，只在自身证据不足时请求局部协作，并能在失联后无缝退回。",
+          "decision": "低成本首发",
+          "score": {
+            "overall": 87,
+            "band": "优先验证",
+            "dimensions": {
+              "problem-evidence": 92,
+              "data-readiness": 88,
+              "tractability": 89,
+              "validation": 88,
+              "differentiation": 76
+            }
+          },
+          "effort": "中低",
+          "timeline": "6–8 周",
+          "output": "部署策略 + 蒸馏方法",
+          "whyNow": "C2E 已证明协同知识能蒸馏回单车，INTACT 又提供了局部 query-response 接口，两条路线尚未在同一模型中形成动态部署策略。",
+          "unresolved": "纯在线协同始终承担通信与对齐成本，纯蒸馏又无法恢复真正不可见的长尾目标；现有系统通常只能二选一。",
+          "hypothesis": "先用多协作者教师训练强 ego student，再让 student 的校准不确定性触发 typed evidence query，可以用少量在线通信恢复最关键的遮挡信息，同时保持失联时的稳定性能。",
+          "method": [
+            "用多教师 BEV 特征和跨视角一致性蒸馏 ego-only 主干，得到无需通信的基础模式。",
+            "训练 risk trigger 识别遮挡、远距和分布外区域，仅为这些区域生成 hypothesis/coverage queries。",
+            "加入 communication dropout curriculum，使模型在全协同、局部协同和完全失联三种状态间共享参数。"
+          ],
+          "minimumStudy": [
+            "在同一 backbone 下比较 ego-only、C2E distilled、always-online、uncertainty-triggered 四种接口。",
+            "使用 OPV2V-H 和 DAIR-V2X 构造不同在线率、带宽和协作者异构组合。",
+            "单独统计完全遮挡目标、远距小目标和普通可见目标，避免平均 AP 掩盖触发价值。",
+            "测量每帧通信字节、唤醒频率、失联性能跌幅和恢复延迟。"
+          ],
+          "successCriteria": [
+            "使用不超过 always-online 20% 的通信量，保留其至少 85% 的遮挡目标增益。",
+            "完全失联时性能不低于独立训练的 ego-only 基线，恢复通信后两帧内稳定。",
+            "触发器在第二个数据集上仍能优先选中协同增益最大的区域。"
+          ],
+          "killCriteria": [
+            "student 蒸馏后已吸收全部可见收益，在线 query 对长尾目标没有稳定增量。",
+            "触发器与简单熵阈值等价，无法在相同带宽下提高遮挡目标召回。"
+          ],
+          "risks": [
+            "教师的伪标签可能把多视角配准误差蒸馏给 student。",
+            "真实系统的请求往返时延可能超过目标出现后的有效窗口。"
+          ],
+          "evidence": [
+            {
+              "title": "C2E: Boosting Ego-Only 3D Object Detection via Multi-Teacher Contrastive Knowledge Distillation",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2607.01827",
+              "localPaperId": "c2e-co-perception-distillation",
+              "role": "提供训练期协同、推理期 ego-only 的直接基线。"
+            },
+            {
+              "title": "INTACT: Ego-Guided Typed Sparse Evidence Retrieval for Heterogeneous Collaborative Perception",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2606.04437",
+              "localPaperId": "intact-collaborative-perception",
+              "role": "提供按区域发起证据请求和异构协作者接入接口。"
+            },
+            {
+              "title": "Unsupervised Multi-agent and Single-agent Perception from Cooperative Views",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yang_Unsupervised_Multi-agent_and_Single-agent_Perception_from_Cooperative_Views_CVPR_2026_paper.html",
+              "role": "说明协同视角可反向监督单智能体感知。"
+            },
+            {
+              "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+              "year": 2025,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2503.10034",
+              "role": "提供在线真实链路、融合阶段和时延评测环境。"
+            }
+          ]
+        },
+        {
+          "id": "joint-error-state",
+          "rank": 3,
+          "title": "把时延、位姿和标定漂移合成一个可估计的误差状态",
+          "hook": "不再为每类噪声各做一个补丁，而是让每条消息携带可更新的时空后验。",
+          "decision": "稳健方法线",
+          "score": {
+            "overall": 84,
+            "band": "值得启动",
+            "dimensions": {
+              "problem-evidence": 94,
+              "data-readiness": 87,
+              "tractability": 72,
+              "validation": 88,
+              "differentiation": 77
+            }
+          },
+          "effort": "中高",
+          "timeline": "10–12 周",
+          "output": "时空对齐方法 + 混合扰动基准",
+          "whyNow": "2025–2026 年的工作已经分别把轨迹对齐、统一时空融合和多源噪声推进到强基线，下一步的差异点应是联合不确定性和在线可观测性。",
+          "unresolved": "真实链路中时延会改变有效位姿，标定漂移又会影响跨视角关联；独立高斯噪声和确定性 warp 无法表达这些误差的相关性、突变和多峰性。",
+          "hypothesis": "用消息 age、ego motion、相对位姿和匹配残差在线估计联合误差后验，并把后验传播到 feature association，可以比确定性时序补偿更稳定地处理混合扰动。",
+          "method": [
+            "为每个协作者维护轻量 latent error state，状态包含 clock offset、translation、heading 和 calibration drift。",
+            "通过可微 factor graph 或 recurrent state estimator 融合时间戳、车辆运动和静态锚点残差。",
+            "用 posterior samples 驱动多假设 feature warp，并让融合权重随对齐熵自适应收缩。"
+          ],
+          "minimumStudy": [
+            "以 TraF-Align 或 CoST 为主干，在 V2V4Real 与 DAIR-V2X-Seq 上复现异步基线。",
+            "构造相关扰动：时延随带宽变化、heading error 随时间漂移、局部标定突变。",
+            "比较独立补偿、联合状态估计、oracle pose/time 和无协同四类基线。",
+            "报告 AP、association error、NLL、校准误差、恢复时间和计算延迟。"
+          ],
+          "successCriteria": [
+            "混合扰动下 AP 降幅比最强确定性对齐方法减少至少 20%。",
+            "后验 NLL 与实际对齐误差相关，并能提前识别突变而非只在检测失败后响应。",
+            "在单一扰动下不牺牲现有方法性能，证明联合建模没有过度复杂化。"
+          ],
+          "killCriteria": [
+            "联合状态不可观测，估计结果主要由人工噪声先验决定。",
+            "多假设 warp 的计算开销抵消实时协同收益，且稀疏近似仍无法保留优势。"
+          ],
+          "risks": [
+            "公开数据的原始时钟和标定日志可能不足，需要可控回放构造扰动。",
+            "若不同误差在 benchmark 中近似独立，联合模型的价值会被低估。"
+          ],
+          "evidence": [
+            {
+              "title": "TraF-Align: Trajectory-aware Feature Alignment for Asynchronous Multi-agent Perception",
+              "year": 2025,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Song_TraF-Align_Trajectory-aware_Feature_Alignment_for_Asynchronous_Multi-agent_Perception_CVPR_2025_paper.html",
+              "role": "异步轨迹对齐的强基线。"
+            },
+            {
+              "title": "CoST: Efficient Collaborative Perception From Unified Spatiotemporal Perspective",
+              "year": 2025,
+              "venue": "ICCV",
+              "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Tang_CoST_Efficient_Collaborative_Perception_From_Unified_Spatiotemporal_Perspective_ICCV_2025_paper.html",
+              "role": "提供统一时空表示和时延、位姿鲁棒基线。"
+            },
+            {
+              "title": "CATNet: Collaborative Alignment and Transformation Network for Cooperative Perception",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_CATNet_Collaborative_Alignment_and_Transformation_Network_for_Cooperative_Perception_CVPR_2026_paper.html",
+              "role": "联合处理 temporal latency 与 multi-source noise，界定最新方法边界。"
+            },
+            {
+              "title": "One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2605.07910",
+              "localPaperId": "dust-cooperative-4d-reconstruction",
+              "role": "证明表示层需要允许多源时间线并存。"
+            }
+          ]
+        },
+        {
+          "id": "planning-value-per-byte",
+          "rank": 4,
+          "title": "按闭环风险下降分配每一个通信字节",
+          "hook": "让接收端询问“哪条消息会改变我的规划”，而不是“哪里检测置信度最高”。",
+          "decision": "高新颖潜力",
+          "score": {
+            "overall": 82,
+            "band": "值得启动",
+            "dimensions": {
+              "problem-evidence": 90,
+              "data-readiness": 78,
+              "tractability": 70,
+              "validation": 81,
+              "differentiation": 91
+            }
+          },
+          "effort": "中高",
+          "timeline": "10–14 周",
+          "output": "通信策略 + 闭环系统论文",
+          "whyNow": "WhisperNet 已把通信改成 receiver-centric 预算，Select2Drive 与 Coopernaut 又证明闭环驾驶可以作为终点；尚缺的是跨 planner 稳定的信息价值定义。",
+          "unresolved": "按检测 confidence、显著性或目标区域选消息，可能把带宽花在不会改变规划的对象上，也可能漏掉低置信但高风险的遮挡参与者。",
+          "hypothesis": "用候选消息加入前后的预测分布和规划风险差定义 expected risk reduction per byte，可以在相同带宽下比感知导向选择获得更稳定的闭环收益。",
+          "method": [
+            "接收端生成 message candidates，并用冻结 planner 的可微代理估计每条消息对碰撞风险、舒适性和可行域的边际影响。",
+            "采用预算约束的 contextual bandit 或 differentiable knapsack 分配跨节点、跨区域和跨时间的字节。",
+            "加入 planner ensemble，惩罚只对单一驾驶风格有用的消息，提升跨规划器可迁移性。"
+          ],
+          "minimumStudy": [
+            "在 V2Xverse 或 EI-Drive 构建遮挡路口、合流和急刹三类闭环场景。",
+            "比较随机、confidence、Where2comm、WhisperNet 风格请求和所提 planning-value 策略。",
+            "至少使用两种规划器，固定 5%、10%、20% 三档通信预算。",
+            "同时报告 detection AP、route completion、collision、TTC、jerk 和 bytes/frame。"
+          ],
+          "successCriteria": [
+            "在 10% 通信预算下，碰撞或不可行规划率相对最强感知导向基线下降至少 15%。",
+            "换用第二个 planner 后仍保留多数收益，且消息选择重合率有可解释变化。",
+            "边际风险估计与真实 rollout 收益显著相关，而不只是 detection confidence 的重命名。"
+          ],
+          "killCriteria": [
+            "代理 planner 价值与真实闭环结果相关性过低，导致训练不稳定。",
+            "收益只存在于一个手工场景或一个 planner，无法形成一般方法结论。"
+          ],
+          "risks": [
+            "闭环训练和多 planner rollout 成本较高，需要先做离线反事实筛选。",
+            "规划价值可能偏向短视风险，需防止忽略长期交通交互。"
+          ],
+          "evidence": [
+            {
+              "title": "WhisperNet: A Scalable Solution for Bandwidth-Efficient Collaboration",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_WhisperNet_A_Scalable_Solution_for_Bandwidth-Efficient_Collaboration_CVPR_2026_paper.html",
+              "role": "receiver-centric 全局请求与预算分配基线。"
+            },
+            {
+              "title": "Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications",
+              "year": 2025,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2501.12040",
+              "localPaperId": "select2drive-pragmatic-communications",
+              "role": "证明通信选择应进入感知、决策和控制闭环。"
+            },
+            {
+              "title": "Coopernaut: End-to-End Driving With Cooperative Perception for Networked Vehicles",
+              "year": 2022,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2022/html/Cui_Coopernaut_End-to-End_Driving_With_Cooperative_Perception_for_Networked_Vehicles_CVPR_2022_paper.html",
+              "role": "提供网络增强驾驶场景与端到端闭环基线。"
+            },
+            {
+              "title": "V2X-UniPool: Unifying Multimodal Perception and Knowledge Reasoning for Autonomous Driving",
+              "year": 2026,
+              "venue": "CVPRW",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026W/DriveX/html/Luo_V2X-UniPool_Unifying_Multimodal_Perception_and_Knowledge_Reasoning_for_Autonomous_Driving_CVPRW_2026_paper.html",
+              "role": "展示结构化、时间索引知识可以以较低通信成本服务规划。"
+            }
+          ]
+        },
+        {
+          "id": "provenance-trust-graph",
+          "rank": 5,
+          "title": "区分恶意协作者、普通故障和域偏移的时序信任图",
+          "hook": "不只判断一条消息是否异常，还要回答谁在何时、以什么故障机制破坏了融合。",
+          "decision": "高风险高回报",
+          "score": {
+            "overall": 81,
+            "band": "审慎启动",
+            "dimensions": {
+              "problem-evidence": 94,
+              "data-readiness": 77,
+              "tractability": 66,
+              "validation": 80,
+              "differentiation": 86
+            }
+          },
+          "effort": "高",
+          "timeline": "12–16 周",
+          "output": "安全方法 + 攻防 benchmark",
+          "whyNow": "2026 年攻击与防御同时快速升级，最新攻击已能利用置信信息和时序目标区域绕过共识机制，单帧阈值防御的边界变得清楚。",
+          "unresolved": "当前防御往往假设 ego 可信，或把所有不一致都当攻击；现实中的时钟漂移、传感器退化、域偏移和恶意伪造会产生相似残差。",
+          "hypothesis": "融合消息来源、历史一致性、跨节点互证和可解释故障模型的 provenance graph，可以在未知攻击下维持检测，同时减少把普通故障误报为恶意行为。",
+          "method": [
+            "为每个 agent-message-region 建立时序 provenance graph，边表示共同可见、几何一致和消息依赖。",
+            "采用 pseudo-random subset verification 估计节点后验信任，并用故障字典区分偏置、延迟、掉线和目标伪造。",
+            "通过 counterfactual removal 检查移除可疑节点后预测是否恢复，输出节点级归因和安全回退。"
+          ],
+          "minimumStudy": [
+            "在 OPV2V、Adv-OPV2V 上复现 ROBOSAC、PRBI 和最新 adaptive attack。",
+            "统一注入 benign faults 与 malicious attacks，训练时保留至少一种攻击完全未见。",
+            "比较单帧阈值、二分类器、随机共识、Bayesian trust 和所提 provenance graph。",
+            "报告 attack success、clean AP、故障/攻击混淆矩阵、归因延迟和验证次数。"
+          ],
+          "successCriteria": [
+            "未知攻击下 attack success rate 相对最强防御下降至少 20%，clean AP 损失小于 3 点。",
+            "良性故障被判为攻击的误报率低于 10%，并能给出节点级、时间级归因。",
+            "移除 provenance 或故障字典后，未知攻击和良性故障区分显著下降。"
+          ],
+          "killCriteria": [
+            "模型只记住攻击生成器，面对未见扰动时不优于随机共识。",
+            "验证成本随节点数近线性增长，无法满足实时系统预算。"
+          ],
+          "risks": [
+            "安全结论对威胁模型非常敏感，必须公开攻击知识和可信节点假设。",
+            "真实恶意 V2X 数据稀缺，主要证据仍来自仿真攻击。"
+          ],
+          "evidence": [
+            {
+              "title": "All Vehicles Can Lie: Efficient Adversarial Defense in Fully Untrusted-Vehicle Collaborative Perception via Pseudo-Random Bayesian Inference",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yu_All_Vehicles_Can_Lie_Efficient_Adversarial_Defense_in_Fully_Untrusted-Vehicle_CVPR_2026_paper.html",
+              "role": "给出 fully untrusted 环境和高效 Bayesian verification 基线。"
+            },
+            {
+              "title": "Learning Mutual View Information Graph for Adaptive Adversarial Collaborative Perception",
+              "year": 2026,
+              "venue": "CVPR",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Tao_Learning_Mutual_View_Information_Graph_for_Adaptive_Adversarial_Collaborative_Perception_CVPR_2026_paper.html",
+              "role": "证明系统化时序与区域攻击可显著绕过现有防御。"
+            },
+            {
+              "title": "Among Us: Adversarially Robust Collaborative Perception by Consensus",
+              "year": 2023,
+              "venue": "ICCV",
+              "url": "https://openaccess.thecvf.com/content/ICCV2023/html/Li_Among_Us_Adversarially_Robust_Collaborative_Perception_by_Consensus_ICCV_2023_paper.html",
+              "role": "提供无需已知攻击机制的 sampling consensus 基线。"
+            },
+            {
+              "title": "UECP: Uncertainty-Enhanced Collaborative Perception",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2606.23046",
+              "role": "物理不确定性可作为良性低质量信息的独立证据。"
+            }
+          ]
+        },
+        {
+          "id": "evidence-ladder-benchmark",
+          "rank": 6,
+          "title": "协同感知结论能否迁移现实的四级证据阶梯",
+          "hook": "把同一算法从离线数据、网络仿真、在线回放推到 Vehicle-in-the-Loop，测量结论在哪一级失效。",
+          "decision": "系统型机会",
+          "score": {
+            "overall": 81,
+            "band": "资源匹配时启动",
+            "dimensions": {
+              "problem-evidence": 97,
+              "data-readiness": 73,
+              "tractability": 69,
+              "validation": 92,
+              "differentiation": 66
+            }
+          },
+          "effort": "高",
+          "timeline": "12–20 周",
+          "output": "评测框架 + 系统论文",
+          "whyNow": "CooperScene、V2X-ReaLO、EI-Drive 和已部署 ViL 平台首次让四种证据等级具备可连接的公开接口，可以开始研究结论迁移而不只是单点 demo。",
+          "unresolved": "离线 AP、通信仿真、在线 ROS 回放和实体车辆使用不同时间、网络和真值接口，研究者无法知道方法排序、失败集合和安全 verdict 在升级证据等级后是否保持。",
+          "hypothesis": "用一组配对场景和统一事件日志测量 transfer gap，并为每个算法输出可迁移置信区间，可以提前识别只在理想离线条件下成立的协同收益。",
+          "method": [
+            "定义 L0 离线同步、L1 网络扰动回放、L2 在线 ROS/C-V2X、L3 混合 ViL 四级协议。",
+            "统一记录消息时间、位姿、带宽、检测、占据和下游风险事件，构建跨级场景对应关系。",
+            "用 conformal ranking 或 hierarchical Bayesian model 估计方法排序和失败集合的迁移置信度。"
+          ],
+          "minimumStudy": [
+            "先选 ego-only、late fusion、intermediate fusion 和 selective communication 四种代表方法。",
+            "在 CooperScene/V2X-ReaLO 日志和 EI-Drive/ViL 中复现至少 20 个配对场景。",
+            "比较 AP 排序、失败集合 IoU、通信延迟、占据风险与场景级 verdict。",
+            "公开统一日志 schema、扰动配置和最小可复现 runner。"
+          ],
+          "successCriteria": [
+            "识别至少一类离线排序反转，并能用可观测的网络或时空变量解释。",
+            "迁移置信区间能在保留足够覆盖率时显著降低错误 verdict。",
+            "第三方可仅用公开日志复现 L0–L2 的主要结论。"
+          ],
+          "killCriteria": [
+            "各平台场景无法建立足够可靠的对应关系，transfer gap 主要来自不可控内容差异。",
+            "只有少量私有设备才能运行核心协议，无法形成可复用研究资产。"
+          ],
+          "risks": [
+            "系统工程量大，需要先锁定最小协议，避免变成无边界平台建设。",
+            "实车真值与安全审批可能限制 L3 规模，必须允许 L0–L2 独立形成论文结果。"
+          ],
+          "evidence": [
+            {
+              "title": "A Deployed Hybrid Vehicle-in-the-Loop Platform for Validating Cooperative Perception",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2607.13806",
+              "localPaperId": "deployed-vil-cooperative-perception",
+              "role": "提供真实 CAM/CPM、数字孪生和占据融合的 L3 接口。"
+            },
+            {
+              "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+              "year": 2026,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2606.31219",
+              "localPaperId": "cooperscene-cv2x-benchmark",
+              "role": "提供同步感知、真实吞吐和多节点离线证据。"
+            },
+            {
+              "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+              "year": 2025,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2503.10034",
+              "role": "连接静态数据与真实在线 intermediate fusion。"
+            },
+            {
+              "title": "EI-Drive: A Platform for Cooperative Perception with Realistic Communication Models",
+              "year": 2024,
+              "venue": "arXiv",
+              "url": "https://arxiv.org/abs/2412.09782",
+              "role": "提供带时延和传输错误的网络增强仿真层。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cooperative-trajectory-prediction",
+      "label": "协同轨迹预测",
+      "color": "#3f7d58",
+      "status": "planned",
+      "subtitle": "准备构建交互不确定性、V2X 历史和预测到规划的证据地图"
+    },
+    {
+      "id": "vehicle-road-cooperation",
+      "label": "车路协同",
+      "color": "#6a668f",
+      "status": "planned",
+      "subtitle": "准备构建路侧可信度、基础设施维护和跨城市迁移的证据地图"
+    },
+    {
+      "id": "3d-reconstruction",
+      "label": "三维重建",
+      "color": "#b66a3c",
+      "status": "planned",
+      "subtitle": "准备构建策略一致性、动态编辑和仿真资产准入的证据地图"
+    },
+    {
+      "id": "autonomous-driving-security",
+      "label": "模型攻防",
+      "color": "#a33f4a",
+      "status": "planned",
+      "subtitle": "准备构建跨层攻击、故障归因和恢复策略的证据地图"
+    },
+    {
+      "id": "autonomous-driving-testing",
+      "label": "自动驾驶测试",
+      "color": "#9a7b2f",
+      "status": "planned",
+      "subtitle": "准备构建场景生成、责任归因和测试结论迁移的证据地图"
+    },
+    {
+      "id": "end-to-end-autonomous-driving",
+      "label": "端到端驾驶",
+      "color": "#526274",
+      "status": "planned",
+      "subtitle": "准备构建空间瓶颈、模型更新和闭环后训练的证据地图"
+    },
+    {
+      "id": "world-models",
+      "label": "世界模型",
+      "color": "#7a5fa8",
+      "status": "planned",
+      "subtitle": "准备构建动作可控性、适用范围和测试准入的证据地图"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+---
+import IdeaScore from "./IdeaScore.astro";
+
+const { idea, scoring } = Astro.props;
+---
+
+<article class="idea-card" id={`idea-${idea.id}`}>
+  <header class="idea-card-head">
+    <div class="idea-rank" aria-label={`推荐顺位 ${idea.rank}`}>{String(idea.rank).padStart(2, "0")}</div>
+    <div class="idea-card-title">
+      <div class="idea-card-labels">
+        <span>{idea.decision}</span>
+        <span>{idea.output}</span>
+      </div>
+      <h3>{idea.title}</h3>
+      <p class="idea-hook">{idea.hook}</p>
+    </div>
+    <a class="idea-anchor" href={`#idea-${idea.id}`} aria-label={`定位到 ${idea.title}`}>#</a>
+  </header>
+
+  <div class="idea-card-overview">
+    <IdeaScore score={idea.score} scoring={scoring} />
+
+    <div class="idea-card-thesis">
+      <dl class="idea-meta">
+        <div>
+          <dt>投入</dt>
+          <dd>{idea.effort}</dd>
+        </div>
+        <div>
+          <dt>首轮周期</dt>
+          <dd>{idea.timeline}</dd>
+        </div>
+      </dl>
+
+      <section>
+        <h4>为什么是现在</h4>
+        <p>{idea.whyNow}</p>
+      </section>
+      <section>
+        <h4>尚未解决</h4>
+        <p>{idea.unresolved}</p>
+      </section>
+      <section class="idea-hypothesis">
+        <h4>可证伪假设</h4>
+        <p>{idea.hypothesis}</p>
+      </section>
+    </div>
+  </div>
+
+  <details class="idea-dossier">
+    <summary>展开完整研究档案</summary>
+    <div class="idea-dossier-body">
+      <section class="idea-method-section">
+        <p class="eyebrow">Possible Approach</p>
+        <h4>可能解法</h4>
+        <ol>
+          {idea.method.map((item) => <li>{item}</li>)}
+        </ol>
+      </section>
+
+      <section class="idea-study-section">
+        <p class="eyebrow">Minimum Study</p>
+        <h4>最小研究闭环</h4>
+        <ol>
+          {idea.minimumStudy.map((item) => <li>{item}</li>)}
+        </ol>
+      </section>
+
+      <div class="idea-criteria-grid">
+        <section class="is-success">
+          <p class="eyebrow">Go</p>
+          <h4>继续投入的证据</h4>
+          <ul>
+            {idea.successCriteria.map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+        <section class="is-kill">
+          <p class="eyebrow">Stop</p>
+          <h4>停止条件</h4>
+          <ul>
+            {idea.killCriteria.map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+        <section class="is-risk">
+          <p class="eyebrow">Risk</p>
+          <h4>主要风险</h4>
+          <ul>
+            {idea.risks.map((item) => <li>{item}</li>)}
+          </ul>
+        </section>
+      </div>
+
+      <section class="idea-evidence-section">
+        <p class="eyebrow">Primary Evidence</p>
+        <h4>关键相关工作</h4>
+        <ol class="idea-evidence-list">
+          {idea.evidence.map((source) => (
+            <li>
+              <div>
+                <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>
+                <span>{source.venue} · {source.year}</span>
+              </div>
+              <p>{source.role}</p>
+              {source.localLink && (
+                <a class="idea-local-paper" href={`../${source.localLink}`}>查看本库详细报告</a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  </details>
+</article>

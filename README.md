@@ -6,6 +6,7 @@
 - Astro 作为静态站点模板层，负责页面、组件和构建。
 - GitHub Actions 自动构建并部署到 GitHub Pages。
 - Cloudflare Worker 可选接入匿名评论，把评论写回仓库。
+- Idea 中心用独立的方向审计工作流检索顶会前沿、判断研究余量并形成可证伪候选课题。
 
 ## Project Layout
 
@@ -15,6 +16,8 @@ config/
   runtime.json              # 前端运行时配置，例如评论 Worker URL
 content/
   README.md                 # 更新简报的具体操作说明
+  idea-center.json          # Idea 探索工作流、方向审计与候选课题
+  research-landscape.json   # 全库趋势、热点和方向建议
   digests/                  # 每期简报 Markdown
   papers/                   # 每篇论文详细报告 Markdown
 src/
@@ -56,6 +59,12 @@ npm run build
 npm run validate
 ```
 
+运行脚本单元测试：
+
+```bash
+npm test
+```
+
 预览构建产物：
 
 ```bash
@@ -84,6 +93,12 @@ config/research-interests.json
 
 这个文件主要服务后续论文抓取和筛选。页面顶部的 tag 不做固定筛选下拉，而是每期简报根据实际入选论文动态生成。
 
+Idea 中心位于 `/ideas/`。它不会只从本站历史论文外推灵感，而是先检索一手论文和顶会前沿，再通过研究意义、突破余量、新颖空间和短期可行四道门槛。通过的方向才会展示带证据、最小实验、成功标准、停止条件和统一评分的候选 Idea。长期格式见：
+
+```text
+content/templates/idea-exploration-template.md
+```
+
 每篇论文一个 Markdown：
 
 ```text
@@ -102,8 +117,7 @@ content/papers/cooperative-driving-planning.md
   "authors": ["Yifan Zhang", "Mei Chen", "Daniel Park"],
   "affiliations": ["Tsinghua University", "Stanford University", "MIT CSAIL"],
   "comment": "一句简评",
-  "visual": "visual-network",
-  "visualLabel": "CAV planning"
+  "tags": ["cooperative-autonomous-driving", "driving-world-model"]
 }
 ---
 
@@ -145,9 +159,10 @@ content/digests/2026-05-11.md
 workflow 会在 push 到 `main` 后执行：
 
 1. `npm ci`
-2. `npm run build`（包含内容去重和索引校验）
-3. 上传 `dist/`
-4. 部署到 GitHub Pages
+2. `npm test`
+3. `npm run build`（包含内容去重、研究态势证据和索引校验）
+4. 上传 `dist/`
+5. 部署到 GitHub Pages
 
 要启用 Actions 发布，需要在 GitHub 仓库页面操作：
 
@@ -283,7 +298,7 @@ npm run feishu:publish -- 2026-05-16 -- --parent-only
 
 ## Email Digest Notifications
 
-本项目支持一键将简报同步到邮箱。默认会给一个本地邮件列表发邮件，当前默认收件人为 `7608331@qq.com`。
+本项目支持一键将简报同步到邮箱。收件人必须保存在本地邮件列表中，项目不会在源码里保留默认地址。
 
 先准备本地收件人列表（文件不会提交）：
 
@@ -291,11 +306,13 @@ npm run feishu:publish -- 2026-05-16 -- --parent-only
 cat > config/email-recipients.local.json <<'JSON'
 {
   "recipients": [
-    "7608331@qq.com"
+    "your-recipient@example.com"
   ]
 }
 JSON
 ```
+
+该文件缺失、为空或包含非法地址时，发送命令会直接失败，避免意外回退到其他收件人。
 
 如果你用的是 **Google 邮箱（Gmail）**，推荐用「应用专用密码」，避免账号主密码外泄。
 

@@ -7,6 +7,7 @@
 ```text
 content/
   README.md                 # 当前说明文件
+  idea-center.json          # 方向审计、前沿证据与可验证 Idea
   research-landscape.json   # 首页全库趋势、热点和科研建议
   digests/
     YYYY-MM-DD.md           # 每期简报索引
@@ -31,6 +32,7 @@ content/reported-papers.md
 开始写正式简报前，先按模板和筛选规则统一口径：
 
 ```text
+content/templates/idea-exploration-template.md
 content/templates/paper-report-template.md
 content/templates/paper-selection-rubric.md
 content/templates/digest-template.md
@@ -189,7 +191,29 @@ content/research-landscape.json
 - `opportunities` 必须同时写研究问题、为什么现在、最小可行实验和主要风险。
 - `directions` 必须覆盖 `config/research-interests.json` 中的全部方向；每个方向都要写最新趋势、现有不足、吸引人的 idea 标题、核心假设、可行方法、最小验证和相对已有工作的区别。
 - 新增长期方向时要同步补充一套完整的方向 idea，不能只写“继续关注”或“建立 benchmark”这类泛化建议。
+- 每条趋势、热点、立项机会和方向建议都必须提供 `evidencePaperIds`，引用 2–4 篇最直接的支撑论文，其中至少一篇来自最近 `analysisWindowIssues` 期；页面会展示论文入口，构建会校验引用、方向匹配和新鲜度。
+- `updatedAt` 不能早于最新一期简报日期，否则构建会失败，避免首页继续展示已经过期的趋势判断。
 - 页面统计反映本内容库的筛选结果，不代表完整领域计量，正文中不要把它外推为全体论文发表趋势。
+
+6. 需要探索可立项 Idea 时，更新：
+
+```text
+content/idea-center.json
+content/templates/idea-exploration-template.md
+```
+
+Idea 中心不是 `research-landscape.json` 的加长版。研究态势从本站内容库总结方向变化；Idea 中心必须重新检索站外一手论文和顶会前沿，依次完成意义审计、前沿检索、饱和度审计、新颖性碰撞、解法空间扩展和最小研究闭环。
+
+更新时注意：
+
+- 本站已总结论文只能作为检索种子，不得当作相关工作的全集。
+- `directions` 必须覆盖全部长期方向；未完成审计的方向使用 `planned`，不得提前填未经验证的 Idea。
+- `ready` 方向必须通过研究意义、突破余量、新颖空间和短期可行四道硬门槛。
+- 必须公开检索日期、时间范围、venue、查询族、关键一手证据、高竞争区和仍有余量的失败轴。
+- 每个 Idea 引用 3–5 篇最直接的一手论文，并写清每篇证据具体支持或限制什么。
+- 每个 Idea 都要有可证伪假设、最小实验、定量成功标准和停止条件；不能只写方法愿景。
+- 可做成度总分由统一五维权重自动复算，维度分与总分不一致时构建会失败。
+- `updatedAt` 和已完成方向的 `searchedAt` 随实际复核更新，不能早于最新简报。
 
 ## 本地检查
 
@@ -210,7 +234,8 @@ npm run build
 - 检查论文 frontmatter 的作者、单位、关键词、notes 等 UI 依赖字段类型。
 - 检查新论文是否缺少图片，或是否使用“作者单位见论文 PDF”等占位单位。
 - 检查常见 arXiv HTML 图片路径错误。
-- 检查首页研究态势是否覆盖全部方向，热点和课题建议引用的 tags 是否有效。
+- 检查首页研究态势是否覆盖全部方向，tags 和证据论文是否有效，并确保至少引用一篇近期论文。
+- 检查 Idea 中心是否覆盖全部方向、通过准入门槛、使用可核验一手证据，并保证评分可复算。
 - 重新生成 `dist/` 里的静态页面。
 
 本地预览可以用：

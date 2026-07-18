@@ -9,7 +9,6 @@ const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(SCRIPT_DIR, "..");
 const CONFIG = path.join(ROOT, "config");
 const DEFAULT_SITE_URL = "https://crazyshout.github.io/paper-digest";
-const DEFAULT_RECIPIENTS = ["7608331@qq.com"];
 const DEFAULT_SMTP_RETRIES = 2;
 const DEFAULT_RETRY_DELAY_MS = 800;
 const DEFAULT_CONNECTION_TIMEOUT_MS = 15_000;
@@ -133,7 +132,7 @@ function escapeText(value) {
 }
 
 function escapeAttr(value) {
-  return String(value || "").replaceAll('"', "&quot;");
+  return escapeText(value);
 }
 
 function normalizeEmail(value) {
@@ -158,16 +157,33 @@ function isValidEmail(value) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
 }
 
+export function parseRecipientsConfig(data) {
+  const list = Array.isArray(data) ? data : (Array.isArray(data?.recipients) ? data.recipients : null);
+  if (!list) {
+    throw new Error("邮箱配置必须是数组，或包含 recipients 数组");
+  }
+
+  const invalid = list.filter((item) => typeof item !== "string" || !isValidEmail(item));
+  if (invalid.length) {
+    throw new Error(`邮箱配置包含 ${invalid.length} 个无效地址`);
+  }
+
+  const recipients = uniqueEmails(list);
+  if (!recipients.length) {
+    throw new Error("邮箱配置中的 recipients 不能为空");
+  }
+
+  return recipients;
+}
+
 async function loadRecipients() {
   try {
     const text = await readFile(EMAIL_LIST_PATH, "utf8");
     const data = JSON.parse(text);
-    const list = Array.isArray(data) ? data : (Array.isArray(data?.recipients) ? data.recipients : []);
-    const valid = uniqueEmails(list.filter(isValidEmail));
-    return valid.length ? valid : uniqueEmails(DEFAULT_RECIPIENTS);
+    return parseRecipientsConfig(data);
   } catch (error) {
     if (error.code === "ENOENT") {
-      return uniqueEmails(DEFAULT_RECIPIENTS);
+      throw new Error("未找到 config/email-recipients.local.json，请先配置本地收件人列表");
     }
     throw new Error(`读取邮箱配置失败：${error.message}`);
   }
@@ -224,7 +240,7 @@ function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, current
   return lines.join("\n");
 }
 
-function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
+export function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
   const sectionBlocks = sections
     .map((item) => {
       const paperList = item.papers
@@ -259,19 +275,27 @@ function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, current
     ${feishuUrl ? `<p><strong>飞书：</strong><a href="${escapeAttr(feishuUrl)}">查看飞书版本</a></p>` : ""}
   `.trim();
 
+  const digestBodyHtml = normalizeString(digest.bodyHtml)
+    ? digest.bodyHtml
+    : String(digest.body || "")
+      .split(/\n\s*\n/)
+      .filter(Boolean)
+      .map((item) => `<p>${escapeText(item)}</p>`)
+      .join("");
+
   return `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.6;">
       <h2>${escapeText(`${digestId} ${digest.title}`)}</h2>
       ${digestSummary}
-      <div>${escapeText(digest.body || "").split("\n\n").map((item) => `<p>${escapeText(item)}</p>`).join("")}</div>
+      <div>${digestBodyHtml}</div>
       ${sectionBlocks}
       <p style="font-size: 12px;color:#777;">发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</p>
     </div>
   `.trim();
 }
 
-function getDigestNavUrl(digestId, currentSiteUrl) {
-  return `${currentSiteUrl}/index.html`;
+export function getDigestNavUrl(digestId, currentSiteUrl) {
+  return `${currentSiteUrl}/index.html#${encodeURIComponent(digestId)}`;
 }
 
 export function buildTransportOptions(config) {

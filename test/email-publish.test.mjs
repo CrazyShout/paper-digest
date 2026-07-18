@@ -1,12 +1,46 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildHtmlBody,
   buildTransportOptions,
   explainSmtpError,
+  getDigestNavUrl,
   isRetryableSmtpError,
+  parseRecipientsConfig,
   validateDelivery,
   withSmtpRetry
 } from "../scripts/email-publish.mjs";
+
+test("digest navigation URL preserves the requested issue", () => {
+  assert.equal(
+    getDigestNavUrl("2026-07-17", "https://example.com/paper-digest"),
+    "https://example.com/paper-digest/index.html#2026-07-17"
+  );
+});
+
+test("recipient configuration fails closed", () => {
+  assert.deepEqual(
+    parseRecipientsConfig({ recipients: ["Reader@Example.com", "reader@example.com"] }),
+    ["reader@example.com"]
+  );
+  assert.throws(() => parseRecipientsConfig({ recipients: [] }), /不能为空/);
+  assert.throws(() => parseRecipientsConfig({ recipients: ["not-an-email"] }), /无效地址/);
+});
+
+test("email HTML uses the already-rendered digest body without double escaping", () => {
+  const html = buildHtmlBody({
+    title: "Test digest",
+    date: "2026-07-17",
+    displayDate: "2026-07-17",
+    keywords: [],
+    summary: "Summary",
+    body: "Shift & Drift",
+    bodyHtml: "<p>Shift &amp; Drift</p>"
+  }, "2026-07-17", "https://example.com/#2026-07-17", "", [], "https://example.com");
+
+  assert.match(html, /Shift &amp; Drift/);
+  assert.doesNotMatch(html, /&amp;amp;/);
+});
 
 test("buildTransportOptions validates credentials and keeps SMTP timeouts", () => {
   const options = buildTransportOptions({
