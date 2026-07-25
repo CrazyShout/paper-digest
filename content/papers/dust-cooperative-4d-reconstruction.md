@@ -2,7 +2,7 @@
 {
   "id": "dust-cooperative-4d-reconstruction",
   "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction", "cooperative-autonomous-driving", "vehicle-road-cooperation"],
+  "tags": ["3d-reconstruction", "cooperative-autonomous-driving"],
   "title": "One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction",
   "source": "arXiv:2605.07910 / https://arxiv.org/abs/2605.07910",
   "authors": ["Yulong Chen", "Xiaoyun Dong", "Haoyu Zhang", "Zongxian Yang", "Lewei Xie", "Xinke Li", "Yifan Zhang", "Kai Wang", "Jianping Wang"],

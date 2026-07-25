@@ -1,8 +1,8 @@
 ---
 {
   "id": "cooperscene-cv2x-benchmark",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving", "autonomous-driving-testing"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving", "autonomous-driving-testing"],
   "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
   "source": "arXiv:2606.31219 / https://arxiv.org/abs/2606.31219",
   "authors": ["Bo Wu", "Ruoshen Mo", "Justin Yue", "Yanyu Zhang", "Janice Nguyen", "Guoyuan Wu", "Amit Roy-Chowdhury", "Matthew J. Barth", "Hang Qiu"],

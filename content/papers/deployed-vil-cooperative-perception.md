@@ -2,7 +2,7 @@
 {
   "id": "deployed-vil-cooperative-perception",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation", "autonomous-driving-testing"],
+  "tags": ["cooperative-autonomous-driving", "autonomous-driving-testing"],
   "title": "A Deployed Hybrid Vehicle-in-the-Loop Platform for Validating Cooperative Perception",
   "source": "arXiv:2607.13806 / https://arxiv.org/abs/2607.13806",
   "authors": ["Anastasia Bolovinou", "Giorgos Hadjipavlis", "Markos Antonopoulos", "Panagiotis Tachtalis", "Konstantinos Petousakis", "Konstantinos Lazaridis", "Alexandros Siskos", "Bill Roungas", "Angelos Amditis"],

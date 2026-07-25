@@ -2,7 +2,7 @@
 {
   "id": "clap-v2x-prompt-optimization",
   "tag": "end-to-end-autonomous-driving",
-  "tags": ["end-to-end-autonomous-driving", "vehicle-road-cooperation", "autonomous-driving-testing"],
+  "tags": ["end-to-end-autonomous-driving", "cooperative-autonomous-driving", "autonomous-driving-testing"],
   "title": "CLAP: Contrastive Latent-space Prompt Optimization for End-to-end Autonomous Driving",
   "source": "arXiv:2605.17284 / https://arxiv.org/abs/2605.17284",
   "authors": ["Ruiyang Zhu", "Yuehan He", "Boyuan Zheng", "Zesen Zhao", "Ahmad Chalhoub", "Qingzhao Zhang", "Z. Morley Mao"],

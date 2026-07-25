@@ -1,8 +1,8 @@
 ---
 {
   "id": "vrs-roadside-lidar-synthesis",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "3d-reconstruction"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving", "3d-reconstruction"],
   "title": "Generating Roadside LiDAR Datasets from Vehicle-Side Datasets via Novel View Synthesis",
   "source": "arXiv:2605.05897 / https://arxiv.org/abs/2605.05897",
   "authors": ["Yuhan Xia", "Runxin Zhao", "Hanyang Zhuang", "Chunxiang Wang", "Ming Yang"],

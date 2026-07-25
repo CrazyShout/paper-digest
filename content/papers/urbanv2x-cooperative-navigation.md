@@ -1,8 +1,8 @@
 ---
 {
   "id": "urbanv2x-cooperative-navigation",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "UrbanV2X: A Multisensory Vehicle-Infrastructure Dataset for Cooperative Navigation in Urban Areas",
   "source": "IEEE ITSC 2025 / arXiv:2512.20224 / https://arxiv.org/abs/2512.20224 / https://polyu-taslab.github.io/UrbanV2X/",
   "authors": ["Qijun Qin", "Ziqi Zhang", "Yihan Zhong", "Feng Huang", "Xikun Liu", "Runzhi Hu", "Hang Chen", "Wei Hu", "Dongzhe Su", "Jun Zhang", "Hoi-Fung Ng", "Weisong Wen"],

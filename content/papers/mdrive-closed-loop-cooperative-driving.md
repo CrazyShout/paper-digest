@@ -2,7 +2,7 @@
 {
   "id": "mdrive-closed-loop-cooperative-driving",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation", "end-to-end-autonomous-driving", "autonomous-driving-testing"],
+  "tags": ["cooperative-autonomous-driving", "end-to-end-autonomous-driving", "autonomous-driving-testing", "agentic-driving"],
   "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
   "source": "arXiv:2605.10904 / https://arxiv.org/abs/2605.10904",
   "authors": ["Marco Coscoy", "Zewei Zhou", "Seth Z. Zhao", "Henry Wei", "Angela Magtoto", "Johnson Liu", "Rui Song", "Walter Zimmer", "Zhiyu Huang", "Chen Tang", "Bolei Zhou", "Jiaqi Ma"],

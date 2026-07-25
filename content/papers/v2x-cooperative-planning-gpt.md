@@ -3,7 +3,7 @@
   "id": "v2x-cooperative-planning-gpt",
   "revisionOf": "v2x-cooperative-planning",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation"],
+  "tags": ["cooperative-autonomous-driving"],
   "title": "Improved Consensus ADMM for Cooperative Motion Planning of Large-Scale Connected Autonomous Vehicles with Limited Communication",
   "source": "arXiv:2401.09032 / https://arxiv.org/abs/2401.09032",
   "authors": ["Haichao Liu", "Zhenmin Huang", "Zicheng Zhu", "Yulin Li", "Shaojie Shen", "Jun Ma"],

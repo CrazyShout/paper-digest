@@ -1,8 +1,8 @@
 ---
 {
   "id": "cable-v2x-lmm-encoding",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "CABLE: Cloud-Assisted Bandwidth-efficient LMM-based Encoding for V2X Systems",
   "source": "arXiv:2606.19258 / https://arxiv.org/abs/2606.19258",
   "authors": ["Haohua Que", "Zhipeng Bao", "Qianyi Wu", "Handong Yao"],

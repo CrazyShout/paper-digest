@@ -2,7 +2,7 @@
 {
   "id": "morph-u-resilient-v2x-planning",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "vehicle-road-cooperation", "autonomous-driving-security", "autonomous-driving-testing"],
+  "tags": ["cooperative-autonomous-driving", "autonomous-driving-security", "autonomous-driving-testing"],
   "title": "MORPH-U: Multi-Objective Resilient Motion Planning for V2X-Enabled Autonomous Driving in High-Uncertainty Environments via Simulation",
   "source": "arXiv:2605.07370 / https://arxiv.org/abs/2605.07370",
   "authors": ["Shih-Yu Lai"],

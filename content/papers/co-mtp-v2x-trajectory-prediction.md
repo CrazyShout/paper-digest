@@ -1,8 +1,8 @@
 ---
 {
   "id": "co-mtp-v2x-trajectory-prediction",
-  "tag": "cooperative-trajectory-prediction",
-  "tags": ["cooperative-trajectory-prediction", "vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "Co-MTP: A Cooperative Trajectory Prediction Framework with Multi-Temporal Fusion for Autonomous Driving",
   "source": "ICRA 2025 / arXiv:2502.16589 / https://arxiv.org/abs/2502.16589",
   "authors": ["Xinyu Zhang", "Zewei Zhou", "Zhaoyi Wang", "Yangjie Ji", "Yanjun Huang", "Hong Chen"],

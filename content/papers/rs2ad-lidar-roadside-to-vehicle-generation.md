@@ -1,8 +1,8 @@
 ---
 {
   "id": "rs2ad-lidar-roadside-to-vehicle-generation",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "3d-reconstruction", "end-to-end-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving", "3d-reconstruction", "end-to-end-autonomous-driving"],
   "title": "RS2AD-LiDAR: End-to-End Autonomous Driving LiDAR Data Generation from Roadside Sensor Observations",
   "source": "arXiv:2605.23406 / https://arxiv.org/abs/2605.23406",
   "authors": ["Runyi Huang", "Ni Ding", "Ruidan Xing", "Yuheng Shi", "Lei He", "Keqiang Li"],

@@ -2,7 +2,7 @@
 {
   "id": "temporal-sampling-e2e-trajectory",
   "tag": "end-to-end-autonomous-driving",
-  "tags": ["end-to-end-autonomous-driving", "cooperative-trajectory-prediction"],
+  "tags": ["end-to-end-autonomous-driving", "cooperative-autonomous-driving"],
   "title": "Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction",
   "source": "arXiv:2605.10388 / https://arxiv.org/abs/2605.10388",
   "authors": ["Yumao Liu", "Tao Liu", "Xiangyu Li", "Jiaxiang Li", "Ke Ma"],

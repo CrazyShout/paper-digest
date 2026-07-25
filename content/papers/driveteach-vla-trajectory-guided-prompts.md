@@ -2,7 +2,7 @@
 {
   "id": "driveteach-vla-trajectory-guided-prompts",
   "tag": "end-to-end-autonomous-driving",
-  "tags": ["end-to-end-autonomous-driving", "cooperative-trajectory-prediction"],
+  "tags": ["end-to-end-autonomous-driving", "cooperative-autonomous-driving"],
   "title": "Teaching Vision-Language-Action Models What to See and Where to Look",
   "source": "arXiv:2607.01658 / https://arxiv.org/abs/2607.01658",
   "authors": ["Yuguang Yang", "Canyu Chen", "Zhewen Tan", "Yizhi Wang", "Zichao Feng", "Chunyang Liu", "Kehua Sheng", "Juan Zhang", "Linlin Yang", "Baochang Zhang", "Yan Wang", "Bo Zhang", "Xianbin Cao"],

@@ -2,8 +2,8 @@
 {
   "id": "evaluating-roadside-perception-gpt",
   "revisionOf": "evaluating-roadside-perception",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "Evaluating Roadside Perception for Autonomous Vehicles",
   "source": "arXiv:2401.12392 / https://arxiv.org/abs/2401.12392",
   "authors": ["Rusheng Zhang", "Depu Meng", "Shengyin Shen", "Tinghan Wang", "Tai Karir", "Michael Maile", "Henry X. Liu"],

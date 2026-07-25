@@ -1,8 +1,8 @@
 ---
 {
   "id": "camasa-v2x-trajectory-dataset",
-  "tag": "cooperative-trajectory-prediction",
-  "tags": ["cooperative-trajectory-prediction", "vehicle-road-cooperation"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "CAMASA: A CAM-based Dataset from the MASA Living Lab",
   "source": "arXiv:2606.10641 / https://arxiv.org/abs/2606.10641 ; dataset: https://www.automotivesmartarea.it/dataset/",
   "authors": ["Salvatore Iandolo", "Marco Savarese", "Gaetano Orazio Cauchi", "Antonio Solida", "Martin Klapez", "Maurizio Casoni", "Angelo Porrello", "Carlo Augusto Grazia"],

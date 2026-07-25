@@ -76,6 +76,14 @@
 | s2-vla-semantic-spatial | S-squared-VLA: Decoupling Semantic and Spatial Streams in Vision-Language-Action Models for Autonomous Driving | 2607.13926 | 2026-07-17 |
 | m4world-multimodal-driving-world | M4World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming | 2607.14005 | 2026-07-17 |
 | instant-nurec-feedforward-3dgs | Instant NuRec: Feed-Forward 3D Gaussian Reconstruction for Driving Scene Simulation | 2607.14203 | 2026-07-17 |
+| defer-to-plan-v2x-driving | Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving | 2607.19774 | 2026-07-25 |
+| update-unseen-aoi-collaborative-perception | Update the Unseen Only: Minimizing AoI for Collaborative Perception through Online Learning | 2607.20967 | 2026-07-25 |
+| cognitive-dual-process-driving | Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency | 2607.19194 | 2026-07-25 |
+| geoworldad-geometry-world-action | GeoWorldAD: Geometry World Action Model for Autonomous Driving | 2607.17521 | 2026-07-25 |
+| commercial-av-failure-sampling | Importance Sampling and PCA for Finding Failures in Commercial Autonomous Vehicles | 2607.18106 | 2026-07-25 |
+| sind2-sotif-validation | SinD 2.0: A Multi-City UAV Dataset with Semantic Risk Annotations for SOTIF-Oriented Safety Validation at Signalized Intersections | 2607.16943 | 2026-07-25 |
+| cvaa-driving-interpretability | What Do They See? Interpreting Complex Road Scenarios Through the Eyes of Vision-Language-Action Models for Safe and Trustworthy Autonomous Vehicle Learning | 2607.16938 | 2026-07-25 |
+| safegen-critical-video-diffusion | SafeGen: Goal-Conditioned Video Diffusion of Safety-Critical Scenarios for VLM-Based Autonomous Driving | 2607.19701 | 2026-07-25 |
 
 ## 使用说明
 

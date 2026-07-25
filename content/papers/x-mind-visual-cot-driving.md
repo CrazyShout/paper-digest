@@ -2,7 +2,7 @@
 {
   "id": "x-mind-visual-cot-driving",
   "tag": "world-models",
-  "tags": ["world-models", "end-to-end-autonomous-driving"],
+  "tags": ["world-models", "end-to-end-autonomous-driving", "agentic-driving"],
   "title": "X-Mind: Efficient Visual Chain-of-Thought via Predictive World Model for End-to-End Driving",
   "source": "arXiv:2606.28758 / https://arxiv.org/abs/2606.28758",
   "authors": ["Bohao Zhao", "Chengrui Wei", "Guangfeng Jiang", "Ruixin Liu", "Xuejie Lv", "Liu Liang", "Sutao Deng", "Xiuyang Fan", "Pengkun Zheng", "Jinyun Zhou", "Rui Guo", "Hanpeng Liu", "Yutong Zheng", "Yi Guo", "Xinlong Zheng", "Qingyu Luo", "Zhuangzhuang Ding", "Yu Zhang", "Hang Zhang", "Xianming Liu"],

@@ -1,8 +1,8 @@
 ---
 {
   "id": "intact-collaborative-perception",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "INTACT: Ego-Guided Typed Sparse Evidence Retrieval for Heterogeneous Collaborative Perception",
   "source": "arXiv:2606.04437 / https://arxiv.org/abs/2606.04437",
   "authors": ["Chen Li", "Shengrong Yuan", "Jialong Zuo", "Xinzhong Zhu", "Nong Sang", "Changxin Gao"],

@@ -2,7 +2,7 @@
 {
   "id": "trafficalign-traffic-scenario-generation",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing", "world-models", "end-to-end-autonomous-driving"],
+  "tags": ["autonomous-driving-testing", "world-models", "end-to-end-autonomous-driving", "agentic-driving"],
   "title": "TrafficAlign: Aligning Large Language Models for Traffic Scenario Generation",
   "source": "arXiv:2606.29097 / https://arxiv.org/abs/2606.29097",
   "authors": ["Zhi Tu", "Liangkun Niu", "Tianyi Zhang"],

@@ -1,8 +1,8 @@
 ---
 {
   "id": "copad-v2x-trajectory-prediction",
-  "tag": "cooperative-trajectory-prediction",
-  "tags": ["cooperative-trajectory-prediction", "vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "CoPAD: Multi-source Trajectory Fusion and Cooperative Trajectory Prediction with Anchor-oriented Decoder in V2X Scenarios",
   "source": "IROS 2025 / arXiv:2509.15984 / https://arxiv.org/abs/2509.15984",
   "authors": ["Kangyu Wu", "Jiaqi Qiao", "Ya Zhang"],

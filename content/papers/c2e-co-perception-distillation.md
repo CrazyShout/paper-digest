@@ -1,8 +1,8 @@
 ---
 {
   "id": "c2e-co-perception-distillation",
-  "tag": "vehicle-road-cooperation",
-  "tags": ["vehicle-road-cooperation", "cooperative-autonomous-driving"],
+  "tag": "cooperative-autonomous-driving",
+  "tags": ["cooperative-autonomous-driving"],
   "title": "C2E: Boosting Ego-Only 3D Object Detection via Multi-Teacher Contrastive Knowledge Distillation",
   "source": "arXiv:2607.01827 / https://arxiv.org/abs/2607.01827",
   "authors": ["Jinlong Wang", "Xun Huang", "Qiming Xia", "Shijia Zhao", "Chenglu Wen"],
