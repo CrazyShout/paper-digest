@@ -8,7 +8,10 @@
 content/
   README.md                 # 当前说明文件
   idea-center.json          # 方向审计、前沿证据与可验证 Idea
+  review-center.json        # 综述中心说明与写作范式
   research-landscape.json   # 首页全库趋势、热点和科研建议
+  reviews/
+    direction-id.json       # 每个长期方向一份持续更新的综述
   digests/
     YYYY-MM-DD.md           # 每期简报索引
   papers/
@@ -214,6 +217,25 @@ Idea 中心不是 `research-landscape.json` 的加长版。研究态势从本站
 - 每个 Idea 都要有可证伪假设、最小实验、定量成功标准和停止条件；不能只写方法愿景。
 - 可做成度总分由统一五维权重自动复算，维度分与总分不一致时构建会失败。
 - `updatedAt` 和已完成方向的 `searchedAt` 随实际复核更新，不能早于最新简报。
+
+7. 需要维护方向综述时，更新：
+
+```text
+content/review-center.json
+content/reviews/<direction-id>.json
+```
+
+综述中心面向“一个方向已经知道什么、证据在哪里、还缺什么”组织内容，而不是把本站论文卡片重新排列一遍。`content/reviews/` 必须恰好覆盖 `config/research-interests.json` 中的全部长期方向；文件名、正文 `id` 和方向 id 必须一致。
+
+每份方向综述固定包含六类章节：`scope`、`evolution`、`taxonomy`、`evidence`、`challenges`、`outlook`。每节先提出可讨论的判断，再比较方法和证据，最后说明结论边界。参考文献同时覆盖本库报告和站外重要论文：
+
+- 本库论文填写 `localPaperId`，标题必须与对应论文报告完全一致；页面会派生“本库已报告”标记并跳转本站详情。
+- 站外论文不填写 `localPaperId`，使用 DOI、会议、期刊或 arXiv 的 HTTPS 一手链接；页面会派生“外部文献”标记并直达原文。
+- 不要手填来源布尔值。本库状态以 `localPaperId` 为唯一依据；论文日后入库时补上该字段即可自动切换状态。
+- 每方向至少 6 篇参考文献，并同时包含本库论文、外部论文和至少一篇 `survey` 或 `tutorial`。
+- `publicationType` 只使用 `survey`、`tutorial`、`method`、`benchmark`、`dataset`、`standard`、`position`。
+- 外部引用若与本库论文的规范化标题或 arXiv ID 重合会校验失败，防止同一论文被错误标成两种来源。
+- `reviewedAt` 和 `searchWindow` 必须记录真实复核时间与检索范围；综述不应为了追平简报日期而虚假刷新。
 
 ## 本地检查
 

@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "id": "cooperative-autonomous-driving",
+  "title": "协同自动驾驶：从共享感知到可归因的联合行动",
+  "subtitle": "真正的协同不在于传得更多，而在于知道什么信息值得传、何时可信，以及它是否改善了闭环决策。",
+  "abstract": "协同自动驾驶已经从车辆间共享检测结果，扩展到车—车—路侧共同完成感知、轨迹预测、意图交互和规划。早期工作证明额外视角能够补盲，随后研究集中于特征融合、位姿对齐和通信压缩；近期证据则暴露出更深的系统问题：感知指标提升并不必然转化为规划收益，理想带宽和同步假设会高估部署价值，错误或过时的远端证据还可能伤害本来可靠的自车决策。本综述据此把领域组织为“观测扩展—消息价值—不确定性传播—联合决策—闭环验证”五层链路，并主张未来基准必须同时报告任务收益、通信代价、失效回退与责任归因。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2021–2026，覆盖协同感知基准、通信感知方法、规划阶段融合与真实/混合闭环验证",
+  "researchQuestions": [
+    "协同消息的价值应由感知增益、信息新鲜度还是当前规划风险定义？",
+    "位姿误差、异步、带宽波动和恶意节点的不确定性如何跨感知、预测与规划传播？",
+    "多智能体协商何时优于单车回退，何时反而放大延迟和错误？",
+    "什么证据足以证明协同模块改善了真实闭环，而不只是提高离线检测分数？"
+  ],
+  "sections": [
+    {
+      "id": "scope",
+      "kind": "scope",
+      "title": "定义与边界：协同对象是决策链，不只是传感器",
+      "thesis": "协同自动驾驶应被定义为跨主体、跨层级的联合决策问题；只共享感知特征但不验证预测和规划后果，仍是不完整的协同。",
+      "body": "协同感知解决的是单车视野有限这一真实瓶颈：遮挡、远距目标和路口盲区可以由邻车或路侧补足。OPV2V 和 V2X-ViT 奠定了开放数据、异质主体与中间特征融合的实验范式，后续综述又把对齐、通信、攻击和 sim-to-real 纳入同一 taxonomy。然而，当远端信息进入车辆后，系统仍需回答三个连续问题：它描述的世界是否仍然新鲜，它是否会改变对其他交通参与者的预测，以及改变后的计划是否比 ego-only 更安全。\n\n因此，本方向不把“协同”限定为检测模块，也不把多车同时运行自动等同于协同。有效协同必须存在可观察的信息交换或意图协商，并能追踪该交换对动作的边际影响。没有这种链路，模型很难区分收益来自更强单车骨干、更多传感器，还是协同机制本身。",
+      "referenceIds": [
+        "survey-collaborative-perception-2023",
+        "opv2v-2022",
+        "v2x-vit-2022",
+        "defer-to-plan-2026"
+      ]
+    },
+    {
+      "id": "evolution",
+      "kind": "evolution",
+      "title": "技术演进：从“看得更多”转向“只交换对动作有用的证据”",
+      "thesis": "领域的主要演进不是融合网络越来越复杂，而是优化目标从感知精度逐步移向通信价值和闭环行动价值。",
+      "body": "第一阶段以数据和融合为中心。OPV2V 提供可复现的多车场景和早期、中期、晚期融合对照，V2X-ViT 则用注意力处理车辆与路侧的异质性、异步和位姿误差。它们证明协同有潜力，但实验通常默认可用消息已经到达，重点仍是“怎样融合”。\n\n第二阶段开始追问“该不该发送”。Update the Unseen Only 重新定义信息年龄：如果车辆已经自行看见某区域，路侧继续广播就是浪费；这一转变把通信状态与接收者的真实盲区绑定。第三阶段则把问题推进到“规划是否采用”。Defer to Plan 延后融合，让轨迹上下文决定远端 token 的作用。这个演进说明，统一目标应是单位通信成本带来的闭环风险下降，而不是一个脱离动作语境的 AP 增量。",
+      "referenceIds": [
+        "opv2v-2022",
+        "v2x-vit-2022",
+        "update-unseen-2026",
+        "defer-to-plan-2026"
+      ]
+    },
+    {
+      "id": "taxonomy",
+      "kind": "taxonomy",
+      "title": "方法谱系：共享层级、价值估计与决策耦合",
+      "thesis": "比“早期/中期/晚期融合”更有解释力的分类，是消息在决策链中的位置以及系统用什么标准估计它的价值。",
+      "body": "现有方法可分成三类。第一类是观测扩展型：共享原始数据、BEV 特征或对象级结果，以覆盖范围和检测质量为主要目标；其优势是接口清楚，弱点是通信与任务价值分离。第二类是通信选择型：按空间置信度、信息年龄、未见区域或带宽预算选择发送内容；它减少冗余，但若权重只依赖感知状态，仍可能发送与当前动作无关的信息。第三类是决策耦合型：让预测、规划或协商模块参与消息选择和融合；它更接近最终目标，却也引入策略耦合、解释困难和闭环不稳定。\n\n主体维度同样重要。V2V 面对动态拓扑和对等信任，V2I 借助较稳定的路侧视角但依赖基础设施覆盖，多车多站系统还要处理规模增长和冲突证据。CooperScene 把多模态传感、三车一站和真实 C-V2X 吞吐放在同一数据链中，使这些区别不再只是仿真参数。",
+      "referenceIds": [
+        "survey-collaborative-perception-2023",
+        "v2x-vit-2022",
+        "update-unseen-2026",
+        "cooperscene-2026"
+      ]
+    },
+    {
+      "id": "evidence",
+      "kind": "evidence",
+      "title": "证据与评测：离线增益必须经过通信和闭环两道门槛",
+      "thesis": "协同方法只有在受控失效条件下仍改善闭环安全，才具有比单车强基线更高的系统证据等级。",
+      "body": "当前证据形成了三级阶梯。离线感知基准适合比较融合能力，却无法证明消息到达及时或动作受益；记录真实吞吐与多主体传感的 CooperScene 把通信真实性加入数据层；混合 Vehicle-in-the-Loop 平台进一步把实体车辆、标准 CAM/CPM、数字孪生和定位噪声接入同一条运行链。最强的一层应是闭环：Defer to Plan 直接比较驾驶分、违规和进度，结果也提醒我们安全收益可能伴随更保守行为。\n\n因此评测至少应同时报告感知或预测质量、碰撞与通行效率、空口负载/时延/丢包、位姿与时间误差、回退质量，以及协同相对 ego-only 的边际收益。单一平均分会掩盖一个关键事实：协同可能在遮挡路口有益，在开阔场景只增加延迟，在冲突证据下甚至有害。",
+      "referenceIds": [
+        "cooperscene-2026",
+        "deployed-vil-2026",
+        "defer-to-plan-2026",
+        "survey-collaborative-perception-2023"
+      ]
+    },
+    {
+      "id": "challenges",
+      "kind": "challenges",
+      "title": "共识、争议与失败边界",
+      "thesis": "领域已确认协同能够补盲，但尚未解决消息可信度、规模化协商和跨层归因；这些问题决定协同是否能从演示走向安全功能。",
+      "body": "共识是明确的：额外视角对遮挡和远距目标有效，通信带宽、异步和位姿误差不能继续被当作次要实现细节。争议集中在优化目标。以 AoI 保持新鲜不代表信息与当前轨迹相关，以规划注意力赋权也不代表远端证据真实；两者需要在统一风险模型中结合。另一个争议是端到端融合是否优于模块化接口：前者能直接优化动作，后者更容易检查消息来源、校准不确定性和执行回退。\n\n主要失败边界包括训练外通信分布、节点数量增长、恶意或故障参与者、不同传感器和模型版本之间的异质性，以及协商等待导致的控制过期。尤其应避免“多数节点一致即可信”的假设，因为相关误差、共享训练数据或同源攻击会让多个节点同时出错。",
+      "referenceIds": [
+        "survey-collaborative-perception-2023",
+        "v2x-vit-2022",
+        "update-unseen-2026",
+        "deployed-vil-2026"
+      ]
+    },
+    {
+      "id": "outlook",
+      "kind": "outlook",
+      "title": "研究议程：建立可拒绝、可回退、可归因的协同栈",
+      "thesis": "下一阶段的关键不是让所有主体持续协作，而是让系统在需要时协作、在证据不足时拒绝，并能解释一次通信为何改变了动作。",
+      "body": "优先方向之一是任务条件化消息价值：发送端联合估计盲区、Age-of-Information 和风险，接收端再判断证据是否改变预测分布或规划安全边界。第二是跨层不确定性传播，把定位、时间、模型和语义置信度沿感知—预测—规划传递，而不是在融合后丢失来源。第三是安全回退：远端证据冲突、过期或超出校准域时，系统应降级到 ego-only、请求复核或触发保守策略。\n\n验证上应建立反事实归因：固定自车输入，逐条移除或替换协同消息，测量动作与闭环结局变化；再通过真实 C-V2X trace、Vehicle-in-the-Loop 和多故障组合检查结论是否稳定。一个有说服力的协同系统最终应能回答：为什么此刻发这条消息、为什么相信它、若不采用会怎样，以及采用错误时如何恢复。",
+      "referenceIds": [
+        "update-unseen-2026",
+        "defer-to-plan-2026",
+        "cooperscene-2026",
+        "deployed-vil-2026"
+      ]
+    }
+  ],
+  "takeaways": [
+    "协同自动驾驶的研究单元应从单个融合模块提升为消息—预测—规划—闭环结果的完整证据链。",
+    "真实带宽、异步、位姿误差和失效回退不是部署附录，而是方法设计的核心变量。",
+    "未来最值得研究的是任务条件化协作：只交换对当前风险有边际价值、且可校验来源的证据。",
+    "任何协同增益都应与 ego-only 强基线比较，并报告安全与通行效率的共同变化。"
+  ],
+  "references": [
+    {
+      "id": "cooperscene-2026",
+      "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "localPaperId": "cooperscene-cv2x-benchmark"
+    },
+    {
+      "id": "defer-to-plan-2026",
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "localPaperId": "defer-to-plan-v2x-driving"
+    },
+    {
+      "id": "update-unseen-2026",
+      "title": "Update the Unseen Only: Minimizing AoI for Collaborative Perception through Online Learning",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2607.20967",
+      "localPaperId": "update-unseen-aoi-collaborative-perception"
+    },
+    {
+      "id": "deployed-vil-2026",
+      "title": "A Deployed Hybrid Vehicle-in-the-Loop Platform for Validating Cooperative Perception",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2607.13806",
+      "localPaperId": "deployed-vil-cooperative-perception"
+    },
+    {
+      "id": "survey-collaborative-perception-2023",
+      "title": "Towards Vehicle-to-everything Autonomous Driving: A Survey on Collaborative Perception",
+      "year": 2023,
+      "venue": "arXiv",
+      "publicationType": "survey",
+      "url": "https://arxiv.org/abs/2308.16714"
+    },
+    {
+      "id": "opv2v-2022",
+      "title": "OPV2V: An Open Benchmark Dataset and Fusion Pipeline for Perception with Vehicle-to-Vehicle Communication",
+      "year": 2022,
+      "venue": "ICRA 2022",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2109.07644"
+    },
+    {
+      "id": "v2x-vit-2022",
+      "title": "V2X-ViT: Vehicle-to-Everything Cooperative Perception with Vision Transformer",
+      "year": 2022,
+      "venue": "ECCV 2022",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2203.10638"
+    }
+  ]
+}

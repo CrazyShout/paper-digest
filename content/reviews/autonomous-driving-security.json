@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "id": "autonomous-driving-security",
+  "title": "自动驾驶模型攻防：从单点对抗样本到闭环安全失效",
+  "subtitle": "攻击是否成功，不应由模型输出改变来定义，而应由它能否跨越感知、规划和控制层的安全屏障来判断。",
+  "abstract": "自动驾驶模型安全研究从交通标志贴纸、道路补丁和 LiDAR 欺骗等单传感器攻击，扩展到相机—LiDAR融合、端到端驾驶、VLA 推理通道、世界模型与部署侧故障。研究对象的扩大揭示了一个核心矛盾：模型级攻击成功率容易测量，却不等同于车辆级风险；反之，闭环碰撞也可能由普通分布偏移、延迟或状态估计错误引起，不能全部归因于恶意攻击。本综述以“威胁如何沿系统链传播、哪里可以检测或阻断”为主线，把安全问题分为输入/物理攻击、模型与训练攻击、跨模态与推理攻击、部署扰动和仿真裁判可信度，并主张采用明确威胁模型、逐层因果归因、适应性攻击和闭环恢复指标共同评价防御。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2017–2026，覆盖物理世界攻击、多传感器融合、生产级感知、端到端/VLA、部署扰动与世界模型测试准入",
+  "researchQuestions": [
+    "模型输出被操纵到什么程度才会跨越规划与控制安全边界，并造成不可恢复风险？",
+    "感知、语言、地图、V2X、记忆和世界模型等新增接口如何改变攻击面与信任边界？",
+    "防御在自适应攻击、正常场景性能、实时延迟和跨模型迁移下是否仍有效？",
+    "如何区分恶意攻击、自然分布偏移、传感器故障和仿真器自身失真，并给出可归因结论？"
+  ],
+  "sections": [
+    {
+      "id": "scope",
+      "kind": "scope",
+      "title": "定义与边界：安全研究必须声明攻击者、接口与后果",
+      "thesis": "没有明确攻击能力、知识、物理约束和车辆级目标的“鲁棒性下降”，不足以构成可比较的自动驾驶攻防证据。",
+      "body": "早期工作以视觉分类器为主要目标，Robust Physical-World Attacks 证明贴纸式扰动可以在视角和距离变化下持续误导交通标志识别。Dirty Road 将攻击目标推进到量产级车道居中，让道路补丁通过连续控制反馈导致车辆偏离。Invisible for both Camera and LiDAR 又挑战了“多传感器天然互相兜底”的假设，展示单个物理对象同时影响相机与 LiDAR 融合的可能性。\n\n本方向同时覆盖恶意攻击和与安全机制密切相关的系统鲁棒性，但必须区分二者：攻击需要主动对手和目标，部署扰动则可由故障、噪声或延迟产生。二者可以共享注入与闭环评测工具，却不能混用结论。每项研究都应写清攻击者是否接触训练数据、模型梯度、物理环境、文本接口或 V2X 消息，以及目标是误检、轨迹偏移、碰撞还是拒绝服务。",
+      "referenceIds": [
+        "cybersecurity-survey-2023",
+        "robust-physical-attacks-2018",
+        "dirty-road-2021",
+        "invisible-camera-lidar-2021",
+        "revisiting-attacks-2025"
+      ]
+    },
+    {
+      "id": "evolution",
+      "kind": "evolution",
+      "title": "技术演进：攻击面沿驾驶栈向上扩展",
+      "thesis": "领域演进不是单纯追求更强扰动，而是从局部识别错误走向能操纵时间、推理和闭环行为的系统攻击。",
+      "body": "第一阶段聚焦摄像头分类与检测，研究物理可打印、视角鲁棒和隐蔽扰动。第二阶段进入控制闭环和多传感器融合：连续帧之间的车辆运动会改变输入，攻击必须在动态反馈中保持效果；同时，多模态融合既可能提供冗余，也可能引入新的共同失效点。第三阶段扩展到端到端策略和部署链路，Bench2Drive-Robust 将相机流故障、ego-state 误差和推理延迟统一放入闭环，表明不修改图像像素也能造成累积失稳。\n\n最新攻击面来自 VLA 和世界模型。ReasonBreak 只扰动文本通道便可改变推理与轨迹，说明自然语言不再是旁路解释；世界模型若未经验证就担任测试裁判，其视觉逼真也可能掩盖错误动作响应。安全边界因此从“传感器是否被攻击”扩展为“任何进入决策或评价的学习接口是否可被信任”。",
+      "referenceIds": [
+        "dirty-road-2021",
+        "invisible-camera-lidar-2021",
+        "bench2drive-robust-2026",
+        "reasonbreak-2026",
+        "world-model-admissibility-2026"
+      ]
+    },
+    {
+      "id": "taxonomy",
+      "kind": "taxonomy",
+      "title": "方法谱系：按信任边界而不是扰动外观分类",
+      "thesis": "对防御最有用的 taxonomy 是攻击跨越了哪条信任边界，以及系统在哪一层仍有独立证据可以否决它。",
+      "body": "输入与物理层攻击操纵摄像头、LiDAR、道路或通信观测；可见性、可制造性和时序稳定性是核心约束。模型与训练层攻击包括对抗样本、后门和污染，其影响取决于攻击者知识与训练访问。融合和跨模态攻击利用多个传感器之间的对齐、注意力或共享表征，使“另一个传感器会纠错”的假设失效。推理与 Agent 攻击则利用文本、记忆、工具和自然语言中间链，攻击可能先改变理由，再传到轨迹。\n\n防御也应按位置分类：输入净化和异常检测试图在模型前阻断，鲁棒训练改变模型边界，跨模态一致性检查利用独立证据，规划安全盾和运行时监控限制错误动作，系统级降级则在证据不足时回到更保守功能。任何只在固定非自适应攻击下验证的防御，都不能自动外推到会针对防御调整策略的对手。",
+      "referenceIds": [
+        "cybersecurity-survey-2023",
+        "invisible-camera-lidar-2021",
+        "revisiting-attacks-2025",
+        "reasonbreak-2026"
+      ]
+    },
+    {
+      "id": "evidence",
+      "kind": "evidence",
+      "title": "证据与评测：建立攻击传播和恢复的闭环链条",
+      "thesis": "最有价值的实验不是最高攻击成功率，而是能逐层解释一次扰动如何改变状态估计、计划、控制和最终安全结局。",
+      "body": "评测应至少包含四层指标：输入或物理约束是否成立，模型任务输出改变多少，规划与轨迹是否跨过安全阈值，车辆能否检测、否决或恢复。Dirty Road 的价值在于把道路补丁、连续感知、车道控制与碰撞后果连接起来；ReasonBreak 同样将文本扰动、推理漂移、轨迹操控和闭环安全并列。Bench2Drive-Robust 则提供无主动攻击者的系统对照，可帮助判断某种退化是否真正属于攻击特异性。\n\n防御评价还需报告正常场景损失、计算延迟、跨模型迁移、未知攻击和 adaptive attack。对于世界模型或仿真测试，应先验证裁判自身的动作响应与适用包络；若仿真器会给不同动作生成相似未来，基于它得到的攻防结论没有足够证据等级。",
+      "referenceIds": [
+        "dirty-road-2021",
+        "reasonbreak-2026",
+        "bench2drive-robust-2026",
+        "world-model-admissibility-2026"
+      ]
+    },
+    {
+      "id": "challenges",
+      "kind": "challenges",
+      "title": "共识、争议与失败边界",
+      "thesis": "物理约束和闭环后果必须进入评测已成为共识，但威胁现实性、防御泛化与系统责任归因仍高度不统一。",
+      "body": "共识是数字域微扰不能代表全部车辆风险，多传感器也不是无条件安全，防御必须考虑实时性与正常性能。争议首先在威胁模型：白盒最坏情况有助于测上限，却可能不具备道路部署能力；黑盒或物理攻击更现实，但难以确认是否覆盖最强对手。其次是安全层的作用：独立规划约束可能阻断大量感知攻击，却也可能在复杂交互中过度保守或被共同输入污染。\n\n失败边界包括传感器和模型版本变化、天气与地域迁移、时钟和定位误差、多个攻击通道组合、文本/地图/通信接口污染，以及攻击后恢复过程。现有论文常只测试单一模型和固定场景，也较少公开无效攻击与防御失败，因此难以估计真实基率。安全研究还必须防止评价循环：用另一个未验证的学习模型判断攻击是否成功，会把裁判错误误写成被测系统漏洞。",
+      "referenceIds": [
+        "cybersecurity-survey-2023",
+        "invisible-camera-lidar-2021",
+        "revisiting-attacks-2025",
+        "world-model-admissibility-2026"
+      ]
+    },
+    {
+      "id": "outlook",
+      "kind": "outlook",
+      "title": "研究议程：跨层红队、独立安全屏障与可归因恢复",
+      "thesis": "下一阶段应把攻防从单模型竞赛改造成系统级故障注入与恢复实验，并保留足够独立的安全证据。",
+      "body": "第一条路线是组合威胁测试，同时扰动视觉、状态估计、语言、V2X 或延迟，但用因子化实验分离各通道和交互项。第二条是运行时证据仲裁：感知、地图、V2X 和 VLA 建议应携带不确定性与时间戳，安全屏障依据物理可达性和交通规则而非同一模型的自我解释做否决。第三条是恢复评测，报告检测时延、最小风险机动、重新进入正常功能的时间和错误否决成本。\n\n基准建设上应发布统一威胁清单、攻击预算、真实可实现性审核和强自适应基线，并把 nominal、自然扰动、故障和恶意攻击置于同一闭环场景中对照。最终目标不是证明某模型“安全”，而是为给定 ODD 建立可证伪声明：哪些攻击在何种约束下会突破哪些屏障，系统能否在剩余时间和空间内恢复。",
+      "referenceIds": [
+        "bench2drive-robust-2026",
+        "reasonbreak-2026",
+        "world-model-admissibility-2026",
+        "revisiting-attacks-2025"
+      ]
+    }
+  ],
+  "takeaways": [
+    "攻击成功率必须沿模型输出、规划、控制和车辆后果分层报告，不能用单点误分类替代闭环风险。",
+    "多传感器、语言推理和世界模型既提供能力也新增信任边界，冗余本身不构成防御。",
+    "防御需要在 adaptive attack、正常性能、实时成本和跨模型迁移下重新验证。",
+    "系统级安全的关键是独立否决和可恢复降级，而不是要求一个学习模型同时发现并修复自己的错误。"
+  ],
+  "references": [
+    {
+      "id": "revisiting-attacks-2025",
+      "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving",
+      "year": 2025,
+      "venue": "DSML 2025 Workshop",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2505.11532",
+      "localPaperId": "revisiting-adversarial-attacks"
+    },
+    {
+      "id": "reasonbreak-2026",
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving"
+    },
+    {
+      "id": "bench2drive-robust-2026",
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "localPaperId": "bench2drive-robust-deployment-perturbations"
+    },
+    {
+      "id": "world-model-admissibility-2026",
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "position",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "localPaperId": "world-model-simulator-admissibility"
+    },
+    {
+      "id": "cybersecurity-survey-2023",
+      "title": "Cybersecurity of Autonomous Vehicles: A Systematic Literature Review of Adversarial Attacks and Defense Models",
+      "year": 2023,
+      "venue": "IEEE Open Journal of Vehicular Technology",
+      "publicationType": "survey",
+      "url": "https://doi.org/10.1109/OJVT.2023.3265363"
+    },
+    {
+      "id": "robust-physical-attacks-2018",
+      "title": "Robust Physical-World Attacks on Deep Learning Visual Classification",
+      "year": 2018,
+      "venue": "CVPR 2018",
+      "publicationType": "method",
+      "url": "https://openaccess.thecvf.com/content_cvpr_2018/html/Eykholt_Robust_Physical-World_Attacks_CVPR_2018_paper.html"
+    },
+    {
+      "id": "invisible-camera-lidar-2021",
+      "title": "Invisible for both Camera and LiDAR: Security of Multi-Sensor Fusion based Perception in Autonomous Driving Under Physical-World Attacks",
+      "year": 2021,
+      "venue": "IEEE Symposium on Security and Privacy 2021",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2106.09249"
+    },
+    {
+      "id": "dirty-road-2021",
+      "title": "Dirty Road Can Attack: Security of Deep Learning based Automated Lane Centering under Physical-World Attack",
+      "year": 2021,
+      "venue": "USENIX Security 2021",
+      "publicationType": "method",
+      "url": "https://www.usenix.org/conference/usenixsecurity21/presentation/sato"
+    }
+  ]
+}

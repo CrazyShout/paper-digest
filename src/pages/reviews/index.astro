@@ -1,0 +1,181 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getReviewCenter } from "../../lib/content.js";
+
+const center = await getReviewCenter();
+const directions = center.directions || [];
+const referenceCount = directions.reduce(
+  (sum, direction) => sum + direction.references.length,
+  0
+);
+const externalCount = directions.reduce(
+  (sum, direction) => sum + direction.references.filter((reference) => reference.origin === "external").length,
+  0
+);
+const writingModel = center.writingModel || {};
+const sampleSurvey = writingModel.sampleSurvey || {};
+const citationSnapshot = sampleSurvey.citationSnapshot || {};
+const sampleAuthors = Array.isArray(sampleSurvey.authors)
+  ? sampleSurvey.authors.join(", ")
+  : sampleSurvey.authors;
+const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+}).format(new Date(`${center.updatedAt}T00:00:00+08:00`));
+---
+
+<BaseLayout
+  title="综述中心 · Paper Digest"
+  description={center.summary}
+  stylesheet="../assets/styles.css"
+  canonicalPath="reviews/"
+>
+  <div class="review-site">
+    <header class="review-site-header">
+      <a class="review-home-link" href="../" aria-label="返回 Paper Digest 首页">
+        <span>PD</span>
+        <strong>Paper Digest</strong>
+      </a>
+      <nav aria-label="综述中心页面导航">
+        <a href="#directions">方向综述</a>
+        <a href="../ideas/">Idea 中心</a>
+        <a href="../">返回简报</a>
+      </nav>
+    </header>
+
+    <main class="review-index-main">
+      <section class="review-index-hero" aria-labelledby="reviewCenterTitle">
+        <div>
+          <p class="eyebrow">Survey Center · 更新于 {updatedLabel}</p>
+          <h1 id="reviewCenterTitle">{center.title}</h1>
+          <p>{center.summary}</p>
+        </div>
+        <dl aria-label="综述中心统计">
+          <div>
+            <dt>关注方向</dt>
+            <dd>{directions.length}</dd>
+          </div>
+          <div>
+            <dt>引用文献</dt>
+            <dd>{referenceCount}</dd>
+          </div>
+          <div>
+            <dt>站外扩展</dt>
+            <dd>{externalCount}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="review-index-intro" aria-labelledby="reviewMethodTitle">
+        <div>
+          <p class="eyebrow">Editorial Method</p>
+          <h2 id="reviewMethodTitle">从论文清单走向问题地图</h2>
+        </div>
+        <div class="review-writing-model">
+          <p>
+            每篇方向综述同时覆盖本库已经深读的论文与尚未进入简报的重要工作，围绕概念边界、技术演化、方法谱系、评测协议和开放问题组织叙事。引用卡片会明确标出“本库已报告”或“外部文献”，避免把本站收录范围误当成整个领域。
+          </p>
+
+          {sampleSurvey.title && (
+            <article class="review-sample-survey">
+              <p class="eyebrow">Writing Model</p>
+              <h3>
+                <a href={sampleSurvey.url} target="_blank" rel="noopener noreferrer">
+                  {sampleSurvey.title}
+                  <span aria-hidden="true"> ↗</span>
+                  <span class="sr-only">（站外链接，在新窗口打开）</span>
+                </a>
+              </h3>
+              <p class="review-sample-meta">
+                {[sampleAuthors, sampleSurvey.venue, sampleSurvey.year].filter(Boolean).join(" · ")}
+              </p>
+              {Number.isFinite(citationSnapshot.count) && (
+                <dl>
+                  <div>
+                    <dt>引用快照</dt>
+                    <dd>{citationSnapshot.count.toLocaleString("zh-CN")} 次</dd>
+                  </div>
+                  <div>
+                    <dt>查询来源</dt>
+                    <dd>
+                      {citationSnapshot.url ? (
+                        <a href={citationSnapshot.url} target="_blank" rel="noopener noreferrer">
+                          {citationSnapshot.provider} <span aria-hidden="true">↗</span>
+                          <span class="sr-only">（站外链接，在新窗口打开）</span>
+                        </a>
+                      ) : citationSnapshot.provider}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>查询日期</dt>
+                    <dd>{citationSnapshot.checkedAt}</dd>
+                  </div>
+                </dl>
+              )}
+              {citationSnapshot.note && <p class="review-citation-note">{citationSnapshot.note}</p>}
+            </article>
+          )}
+
+          {Array.isArray(writingModel.principles) && writingModel.principles.length > 0 && (
+            <section class="review-writing-principles" aria-labelledby="writingPrinciplesTitle">
+              <h3 id="writingPrinciplesTitle">借鉴的组织原则</h3>
+              <ol>
+                {writingModel.principles.map((principle) => <li>{principle}</li>)}
+              </ol>
+            </section>
+          )}
+
+          {writingModel.note && <p class="review-writing-note">{writingModel.note}</p>}
+        </div>
+      </section>
+
+      <section class="review-index-directions" id="directions" aria-labelledby="reviewDirectionsTitle">
+        <header>
+          <div>
+            <p class="eyebrow">Directions</p>
+            <h2 id="reviewDirectionsTitle">{directions.length} 条研究主线，{directions.length} 份持续更新的综述</h2>
+          </div>
+          <p>每份综述都有独立地址，可直接分享并跳转到具体章节和参考文献。</p>
+        </header>
+
+        <div class="review-index-grid">
+          {directions.map((direction, index) => {
+            const localCount = direction.references.filter((reference) => reference.origin === "local").length;
+            const externalCountForDirection = direction.references.length - localCount;
+
+            return (
+              <article class="review-index-card" style={`--review-color: ${direction.color}`}>
+                <div class="review-index-card-number">{String(index + 1).padStart(2, "0")}</div>
+                <div class="review-index-card-copy">
+                  <p class="review-index-direction">{direction.label}</p>
+                  <h3><a href={`./${direction.id}/`}>{direction.title}</a></h3>
+                  <p class="review-index-subtitle">{direction.subtitle}</p>
+                  <p class="review-index-abstract">{direction.abstract}</p>
+                  <dl>
+                    <div>
+                      <dt>检索窗口</dt>
+                      <dd>{direction.searchWindow}</dd>
+                    </div>
+                    <div>
+                      <dt>文献构成</dt>
+                      <dd>{localCount} 篇本库已报告 · {externalCountForDirection} 篇外部文献</dd>
+                    </div>
+                  </dl>
+                </div>
+                <a class="review-index-open" href={`./${direction.id}/`} aria-label={`阅读${direction.label}综述`}>
+                  阅读综述 <span aria-hidden="true">→</span>
+                </a>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    </main>
+
+    <footer class="review-footer">
+      <p>Paper Digest · Survey Center</p>
+      <p>综述会随新论文、基准和复现实证持续更新。</p>
+    </footer>
+  </div>
+</BaseLayout>

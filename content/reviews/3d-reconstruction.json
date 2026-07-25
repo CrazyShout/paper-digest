@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "id": "3d-reconstruction",
+  "title": "自动驾驶三维重建：从可视化场景到可验收的闭环资产",
+  "subtitle": "驾驶重建的终点不是更高的 PSNR，而是一个几何可信、动态可编辑、传感器一致且不会改变策略结论的世界。",
+  "abstract": "NeRF 与 3D Gaussian Splatting 将驾驶日志转换为高保真可重放场景，使 novel-view synthesis、传感器仿真、数据增强和闭环测试可以共享同一类神经场景表示。技术进步已经从静态隐式辐射场演化到实时显式高斯、静动态分解、4D 时空建模和前馈重建；但“看起来真实”与“可用于自动驾驶验证”之间仍存在巨大证据缺口。纹理指标无法保证表面几何、动态轨迹、遮挡恢复和相机—LiDAR一致性，也不能保证仿真器给出的策略排序与现实一致。本综述以资产用途为主线，比较隐式/显式、逐场景优化/前馈、静态/4D、单模态/多模态四组范式，并主张用下游感知一致性、动作响应和闭环 verdict 保真度重新定义驾驶重建质量。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2020–2026，覆盖 NeRF、3DGS、驾驶 4D 重建、多模态传感器渲染、前馈 Real2Sim 与闭环仿真资产验证",
+  "researchQuestions": [
+    "渲染指标、几何指标和闭环策略结论之间的关系能否被稳定量化？",
+    "静态背景、刚体车辆、非刚体参与者和光照变化应如何分解，才能支持可编辑 4D 场景？",
+    "逐场景优化的高质量与前馈重建的车队规模化之间，最合理的混合接口是什么？",
+    "重建资产在什么适用包络内可以作为安全测试或训练数据，超出包络时如何拒绝使用？"
+  ],
+  "sections": [
+    {
+      "id": "scope",
+      "kind": "scope",
+      "title": "定义与边界：重建、渲染与仿真不是同义词",
+      "thesis": "驾驶三维重建负责恢复可查询的场景状态；只有当该状态对传感器、动作和时间具有足够一致性时，它才可能升级为仿真资产。",
+      "body": "NeRF 以连续隐式函数表达密度与颜色，证明稀疏多视图可以合成高质量新视角；3D Gaussian Splatting 用显式各向异性高斯和可微栅格化大幅提高训练与渲染速度。二者首先解决的是视图合成，而自动驾驶需要更多：大范围开放道路、快速自车运动、动态参与者、多个传感器和可编辑的反事实轨迹。\n\n因此，本方向覆盖从驾驶日志恢复静态/动态 3D 或 4D 场景，并服务于新视角、地图、传感器渲染、场景编辑和闭环仿真的工作；纯图像生成但没有持久几何的模型属于相邻世界模型方向。一个场景即使视觉逼真，也可能有错误深度、漂浮高斯或不物理运动，不能未经验证就作为策略安全性的裁判。",
+      "referenceIds": [
+        "nerf-2020",
+        "gaussian-splatting-2023",
+        "driving-3dgs-review-2025",
+        "splatad-2024"
+      ]
+    },
+    {
+      "id": "evolution",
+      "kind": "evolution",
+      "title": "技术演进：隐式辐射场、显式高斯与前馈资产化",
+      "thesis": "领域的演进由三个瓶颈驱动：渲染太慢、动态场景不可辨识、逐日志优化无法规模化。",
+      "body": "NeRF 建立了连续辐射场范式，但逐射线体渲染与每场景优化限制了实时使用。3DGS 以显式点状基元换取高速渲染，迅速成为驾驶重建的主流底座。随后研究从静态外观转向动态分解：DeSiRe-GS 用自监督运动先验分离静态背景和动态对象，并强调表面几何；物理一致 4D 重建则进一步指出单条车辆轨迹把时间与视角耦合，空间和时间参数会争夺解释权。\n\n近期的关键变化是前馈化。Instant NuRec 不再为每段日志长时间优化，而是一次网络推理输出分层高斯场景，并用闭环策略排序检查快速资产是否保留决策价值。这并不意味着逐场景优化被淘汰；更可能的架构是前馈模型快速初始化，困难区域再做测试时细化。",
+      "referenceIds": [
+        "nerf-2020",
+        "gaussian-splatting-2023",
+        "desire-gs-2025",
+        "physical-4d-2026",
+        "instant-nurec-2026"
+      ]
+    },
+    {
+      "id": "taxonomy",
+      "kind": "taxonomy",
+      "title": "方法谱系：表示、时间、优化方式与传感器输出",
+      "thesis": "驾驶重建方法应在四个正交轴上比较，而不是只按 NeRF 与 3DGS 二分。",
+      "body": "第一轴是表示：隐式场连续且紧凑，显式高斯易于渲染、分层和编辑。第二轴是时间：静态背景模型适合地图与重放，4D 模型需要同时表达对象运动、可见性和光照变化；动态全部塞入单一形变场会造成身份与几何混淆。第三轴是优化：逐场景方法通常质量高但吞吐低，前馈方法适合车队日志，却依赖训练分布并可能牺牲长尾细节。第四轴是输出模态：相机渲染只约束外观，SplatAD 这类相机—LiDAR联合表示才开始检查多传感器几何一致性。\n\n应用也决定优先级。用于人类浏览时，视觉质量可以主导；用于感知数据增强时，标注和传感器统计必须可信；用于闭环测试时，还需要动作条件、可编辑交通参与者和与现实一致的策略结论。把这些用途混成一个总分会导致错误选型。",
+      "referenceIds": [
+        "driving-3dgs-review-2025",
+        "splatad-2024",
+        "desire-gs-2025",
+        "instant-nurec-2026"
+      ]
+    },
+    {
+      "id": "evidence",
+      "kind": "evidence",
+      "title": "证据与评测：从像素保真到策略排序保持",
+      "thesis": "PSNR、SSIM 和 LPIPS 只能证明外观近似；驾驶资产至少还需通过几何、传感器、动态与下游决策四层验证。",
+      "body": "第一层是图像与新视角质量，便于快速比较但对几何错误不敏感。第二层应报告深度、法向、表面或点云误差，并针对动态区域单独统计。第三层是传感器与任务一致性：SplatAD 同时渲染相机和 LiDAR，使跨模态对齐、检测和点云指标可以进入评测。第四层才是闭环资产证据：Instant NuRec 检查不同驾驶策略在快速重建和昂贵基线中的排序是否一致，这比单纯画质更接近仿真用途。\n\n仍需警惕“相同平均排序”掩盖失败集合差异。更严格的协议应比较逐场景碰撞/离路一致性、策略排名置信区间、动作扰动响应和真实日志回放结果，并声明资产在相机 rig、天气、速度、动态密度和 rollout 时长上的适用包络。",
+      "referenceIds": [
+        "splatad-2024",
+        "desire-gs-2025",
+        "physical-4d-2026",
+        "instant-nurec-2026"
+      ]
+    },
+    {
+      "id": "challenges",
+      "kind": "challenges",
+      "title": "共识、争议与失败边界",
+      "thesis": "实时显式表示和静动态分解已成为共识，但几何真实性、时间可辨识性与仿真有效性仍没有统一准入标准。",
+      "body": "共识包括：驾驶场景必须分离静态与动态成分，动态区域应单独评测，纯逐场景优化难以处理车队规模数据，多传感器约束有助于减少只对 RGB 过拟合。争议则集中在显式与隐式、标注辅助与自监督、以及前馈速度与精细质量的取舍。显式高斯便于编辑却可能产生漂浮基元；自监督运动先验降低标注成本，却容易在低纹理、夜间、雨雾和缓慢目标上失效。\n\n更根本的失败来自观测不可辨识：单车轨迹将时间变化与视角变化绑定，未见表面、快速遮挡和非刚体动作无法仅凭重投影损失恢复。跨相机 rig、曝光、LiDAR 扫描模式和地域分布的迁移也仍脆弱。若这些边界没有显式标记，重建资产会在最需要长尾验证的场景中提供虚假确定性。",
+      "referenceIds": [
+        "driving-3dgs-review-2025",
+        "desire-gs-2025",
+        "physical-4d-2026",
+        "gaussian-splatting-2023"
+      ]
+    },
+    {
+      "id": "outlook",
+      "kind": "outlook",
+      "title": "研究议程：资产准入、混合重建与可证伪闭环",
+      "thesis": "下一代系统应把重建器视为需要验收的软件组件，而不是天然可信的数据生成器。",
+      "body": "第一条路线是前馈初始化加选择性优化：模型先在秒级生成分层场景，再由几何不确定性、动态残差或下游任务敏感度选择局部细化。第二条是统一资产准入，分别检查外观、几何、传感器一致性、动作响应和 verdict 迁移，任何一层失败都限制其用途。第三条是从对象可编辑走向物理可交互，使交通参与者轨迹、灯光、遮挡和传感器返回随反事实动作一致变化。\n\n研究报告还应公开失败地图，而不只给平均渲染分：哪些相机位置、速度、天气和对象类别会使场景不可信；策略排名何时翻转；模型能否检测并拒绝训练分布外日志。只有当重建误差能被传导到下游风险并触发拒绝，神经场景才真正具备进入安全测试链的资格。",
+      "referenceIds": [
+        "instant-nurec-2026",
+        "physical-4d-2026",
+        "splatad-2024",
+        "driving-3dgs-review-2025"
+      ]
+    }
+  ],
+  "takeaways": [
+    "驾驶重建必须按用途评测：浏览、感知增强和闭环测试需要完全不同的证据等级。",
+    "3DGS 解决了速度瓶颈，但动态可辨识、几何真实性和跨传感器一致性仍是主要风险。",
+    "前馈重建适合车队规模化，最有希望的路线是快速初始化与不确定性驱动的局部细化。",
+    "闭环资产应报告策略结论保持率、失败集合重合和适用包络，而不只报告视觉指标。"
+  ],
+  "references": [
+    {
+      "id": "splatad-2024",
+      "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting",
+      "year": 2024,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2411.16816",
+      "localPaperId": "splatad-realtime-3dgs"
+    },
+    {
+      "id": "desire-gs-2025",
+      "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
+      "year": 2025,
+      "venue": "CVPR 2025",
+      "publicationType": "method",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
+      "localPaperId": "desire-gs-4d-street-gaussians"
+    },
+    {
+      "id": "physical-4d-2026",
+      "title": "Towards Physically Consistent 4D Scene Reconstruction for Closed-loop Autonomous Driving Simulation",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2605.21032",
+      "localPaperId": "physically-consistent-4d-driving-reconstruction"
+    },
+    {
+      "id": "instant-nurec-2026",
+      "title": "Instant NuRec: Feed-Forward 3D Gaussian Reconstruction for Driving Scene Simulation",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2607.14203",
+      "localPaperId": "instant-nurec-feedforward-3dgs"
+    },
+    {
+      "id": "driving-3dgs-review-2025",
+      "title": "Scene reconstruction techniques for autonomous driving: a review of 3D Gaussian splatting",
+      "year": 2025,
+      "venue": "Artificial Intelligence Review",
+      "publicationType": "survey",
+      "url": "https://link.springer.com/article/10.1007/s10462-024-10955-4"
+    },
+    {
+      "id": "nerf-2020",
+      "title": "NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis",
+      "year": 2020,
+      "venue": "ECCV 2020",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2003.08934"
+    },
+    {
+      "id": "gaussian-splatting-2023",
+      "title": "3D Gaussian Splatting for Real-Time Radiance Field Rendering",
+      "year": 2023,
+      "venue": "ACM SIGGRAPH 2023",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2308.04079"
+    }
+  ]
+}

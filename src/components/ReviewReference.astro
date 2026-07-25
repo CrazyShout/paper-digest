@@ -1,0 +1,52 @@
+---
+const {
+  reference,
+  compact = false
+} = Astro.props;
+
+const isExternal = reference.origin === "external";
+const badge = reference.badge || (isExternal ? "外部文献" : "本库已报告");
+const meta = [
+  reference.venue,
+  reference.year,
+  reference.publicationTypeLabel || reference.publicationType
+].filter(Boolean);
+---
+
+<article
+  class:list={[
+    "review-reference",
+    compact && "is-compact",
+    isExternal ? "is-external" : "is-local"
+  ]}
+>
+  <div class="review-reference-heading">
+    <span class:list={["review-origin-badge", isExternal ? "is-external" : "is-local"]}>
+      {badge}
+      {isExternal && <span aria-hidden="true">↗</span>}
+    </span>
+    {meta.length > 0 && <span class="review-reference-meta">{meta.join(" · ")}</span>}
+  </div>
+
+  <a
+    class="review-reference-title"
+    href={reference.href}
+    target={isExternal ? "_blank" : undefined}
+    rel={isExternal ? "noopener noreferrer" : undefined}
+  >
+    {reference.title}
+    {isExternal && <span class="sr-only">（站外链接，在新窗口打开）</span>}
+  </a>
+
+  {!compact && !isExternal && reference.sourceHref && (
+    <a
+      class="review-reference-source"
+      href={reference.sourceHref}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      查看论文原文 <span aria-hidden="true">↗</span>
+      <span class="sr-only">（在新窗口打开）</span>
+    </a>
+  )}
+</article>

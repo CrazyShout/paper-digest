@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "id": "agentic-driving",
+  "title": "Agentic Driving：从语言推理走向可验证的具身驾驶智能体",
+  "subtitle": "驾驶 Agent 的价值不在于生成更长的推理，而在于选择何时思考、调用什么能力，并让错误无法直接进入控制链。",
+  "abstract": "Agentic Driving 将自动驾驶从固定前向策略扩展为具备感知、记忆、规划、工具调用、反思和环境交互的智能体。语言模型和 VLA 为开放词汇理解、常识推理与动作生成提供了统一接口，但也带来新的系统风险：文本解释可能与轨迹不一致，慢推理无法满足持续控制，工具或记忆会把陈旧证据注入决策，多智能体协商还可能放大延迟与错误。本综述以“认知闭环是否可执行、可校验、可回退”为主线，区分语言认知 Agent、闭环 VLA、世界模型式视觉思考、双过程路由和多智能体协商，并把评测重点从回答质量转向触发正确性、动作因果性、闭环安全和失效恢复。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2023–2026，覆盖语言驾驶 Agent、闭环 LLM/VLA、视觉思维链、双过程规划、多智能体协商与推理安全",
+  "researchQuestions": [
+    "哪些驾驶场景真正需要慢推理、工具调用或记忆检索，哪些应由快速确定性策略处理？",
+    "语言、视觉推理和世界模型中间表征是否因果地改善动作，还是只提供事后合理化？",
+    "驾驶 Agent 如何验证工具输出、拒绝冲突证据，并在超时或低置信度时安全回退？",
+    "多 Agent 协商相对单 Agent 的净收益能否覆盖通信、共识等待和错误传播成本？"
+  ],
+  "sections": [
+    {
+      "id": "scope",
+      "kind": "scope",
+      "title": "定义与边界：Agent 必须拥有可观察的行动闭环",
+      "thesis": "能解释场景的 VLM 不自动成为驾驶 Agent；Agentic Driving 至少要求状态更新、决策或工具行动、环境反馈和下一步调整形成闭环。",
+      "body": "A Language Agent for Autonomous Driving 把 LLM 的常识、记忆和推理接入传统感知—预测—规划流程，代表从被动识别向认知调度的早期转变。LMDrive 则把语言指令和视觉输入带入闭环端到端驾驶，说明语言接口可以影响连续行为。VLA 综述进一步把视觉、语言与动作统一为策略，但统一接口并不意味着统一可靠性。\n\n本综述把只做离线问答、字幕生成或驾驶解释且不影响决策的工作视为邻近领域，而非完整 Agentic Driving。进入核心范围的系统应至少具备以下一种可审计能力：根据场景选择推理路径，主动调用地图/检测/预测等工具，利用记忆改变后续策略，通过世界模型预演动作，或与其他主体协商并依据反馈修正计划。",
+      "referenceIds": [
+        "vla-survey-2025",
+        "language-agent-2023",
+        "lmdrive-2024",
+        "cognitive-dual-process-2026"
+      ]
+    },
+    {
+      "id": "evolution",
+      "kind": "evolution",
+      "title": "技术演进：语言接口、动作策略与可验证认知",
+      "thesis": "领域正从“让模型说出驾驶理由”推进到“让中间认知真正改变动作”，再转向“限制何时允许认知改变动作”。",
+      "body": "第一阶段以语言增强为主：模型读取结构化场景或图像，用常识解释并给出高层决策。它扩大了开放场景语义，却常停留在离线任务。第二阶段以 LMDrive 和 VLA 为代表，把语言条件与轨迹输出放进闭环，研究焦点从解释准确率转向是否完成路线与避免碰撞。第三阶段出现内部视觉思考和工具式推理：X-Mind 用压缩 BEV future sketch 代替长文本 CoT，让预测未来成为动作前的中间过程。\n\n最新阶段开始控制认知成本与风险。双过程规划只把复杂场景送入慢路径，并用规则检查推理—动作一致性；ReasonBreak 则证明语言推理通道本身可被扰动并传导到轨迹。这一正反两类证据共同表明，下一代 Agent 不应默认“更多推理更安全”，而应把触发、验证、否决和回退设计成一等接口。",
+      "referenceIds": [
+        "language-agent-2023",
+        "lmdrive-2024",
+        "x-mind-2026",
+        "cognitive-dual-process-2026",
+        "reasonbreak-2026"
+      ]
+    },
+    {
+      "id": "taxonomy",
+      "kind": "taxonomy",
+      "title": "方法谱系：Agent 的能力来自哪里",
+      "thesis": "区分 Agent 的关键不是模型参数量，而是决策闭环中由谁维护状态、产生候选行动、验证证据和执行最终控制。",
+      "body": "第一类是认知编排型 Agent：LLM 读取结构化环境，维护记忆并调用已有感知、预测、地图和规划模块。其优点是接口可替换、证据可追踪，缺点是级联误差和高延迟。第二类是端到端 VLA：视觉、语言和动作在一个策略中联合训练，动作更直接，但工具来源、错误定位和运行时约束更难解释。第三类是世界模型/视觉思考型：在行动前生成未来状态或紧凑几何草图，以物理 rollout 代替纯文本理由。第四类是双过程或分层 Agent：快路径处理常规场景，慢路径只在不确定或高风险时启动。\n\n多智能体是横跨上述类别的协作方式，而不是独立保证。MDrive 表明信息共享和协商的收益随场景变化，复杂交通中 negotiation 也可能退化。因而多 Agent 系统还需额外描述通信协议、共享记忆、冲突解决、恶意节点模型和无共识时的控制权归属。",
+      "referenceIds": [
+        "vla-survey-2025",
+        "language-agent-2023",
+        "x-mind-2026",
+        "cognitive-dual-process-2026",
+        "mdrive-2026"
+      ]
+    },
+    {
+      "id": "evidence",
+      "kind": "evidence",
+      "title": "证据与评测：从答案正确转向行为因果性",
+      "thesis": "Agentic Driving 的核心证据应证明认知模块在需要时改变了正确的动作，并且成本、错误和回退均可量化。",
+      "body": "离线问答、动作分类和开环轨迹误差适合验证基础能力，但会掩盖控制反馈。闭环评测必须记录路线完成、碰撞和违规，同时单独报告推理触发率、复杂场景漏触发、工具选择正确率、验证器否决率、平均/尾部延迟和 token 成本。对于世界模型式思考，还应检查预测未来是否与实际后续一致，以及删除中间 sketch 后动作是否系统性退化。\n\nMDrive 的多智能体闭环结果提醒我们，感知共享或协商机制不必然提高规划；ReasonBreak 则把文本扰动、推理漂移、轨迹操控和碰撞串成一条攻击证据链。好的 Agent benchmark 因此需要反事实干预：替换工具结果、污染记忆、隐藏推理、延迟回复或注入冲突 Agent，再观察安全盾与基础策略能否阻断错误。",
+      "referenceIds": [
+        "lmdrive-2024",
+        "mdrive-2026",
+        "reasonbreak-2026",
+        "cognitive-dual-process-2026"
+      ]
+    },
+    {
+      "id": "challenges",
+      "kind": "challenges",
+      "title": "共识、争议与失败边界",
+      "thesis": "语言和视觉推理为长尾场景提供新能力已形成共识，但推理真实性、实时性和控制权限仍没有统一答案。",
+      "body": "共识是开放词汇语义、常识和长时记忆能够补充纯模仿策略，结构化未来表征也比生成完整视频更适合车端。但“可解释文本”是否等于真实决策依据仍有争议：模型可能先产生动作再合理化，或生成正确理由却输出错误轨迹。端到端 VLA 与模块化 Agent 的优劣也未定；前者具有联合优化优势，后者更容易插入验证器和回退。\n\n失败边界包括文本提示注入、错误地图或检索、陈旧记忆、工具分布外输出、慢推理超时、视觉—语言冲突、不可达动作以及多 Agent 共识拖延。尤其危险的是不确定性未校准：一个语言上自信的 Agent 可能掩盖感知证据不足，而安全控制器又无法从自然语言中恢复可验证约束。",
+      "referenceIds": [
+        "vla-survey-2025",
+        "x-mind-2026",
+        "reasonbreak-2026",
+        "language-agent-2023"
+      ]
+    },
+    {
+      "id": "outlook",
+      "kind": "outlook",
+      "title": "研究议程：不确定性触发、证据绑定与安全否决",
+      "thesis": "可部署的驾驶 Agent 应是受约束的认知副驾驶：只在基础策略不确定时介入，所有建议携带来源，并由独立安全层掌握最终控制权。",
+      "body": "第一条研究线是触发学习：用感知冲突、预测多模态性、规划余量和模型校准共同决定是否启动慢推理，而不是由固定场景标签路由。第二条是证据绑定：每个高层动作应关联调用过的工具、时间戳、置信区间和反事实理由，验证器可据此检查结论是否超出证据。第三条是分层回退：工具失败时回到无工具 Agent，Agent 超时时回到基础 planner，安全约束不满足时由可达性、交通规则或控制屏障函数直接否决。\n\n多 Agent 研究应从“角色扮演式讨论”转向通信受限的可证伪协议，比较单 Agent、并行专家、共享世界模型和显式协商在相同预算下的净闭环收益。最终评价不只问 Agent 会不会推理，而要问它是否知道何时不该推理、何时不该相信自己，以及失败时能否保持车辆处于可恢复状态。",
+      "referenceIds": [
+        "cognitive-dual-process-2026",
+        "reasonbreak-2026",
+        "mdrive-2026",
+        "x-mind-2026"
+      ]
+    }
+  ],
+  "takeaways": [
+    "Agentic Driving 的最小闭环是感知—状态/记忆—行动—环境反馈，而不是单次语言解释。",
+    "更长的 CoT 不等于更安全；触发、验证、否决与回退必须与推理能力共同评测。",
+    "中间认知表征需要通过干预证明对动作有因果贡献，避免把事后解释当成机制证据。",
+    "多 Agent 只有在相同延迟、token 和通信预算下改善闭环结果，才构成有效协作。"
+  ],
+  "references": [
+    {
+      "id": "cognitive-dual-process-2026",
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "localPaperId": "cognitive-dual-process-driving"
+    },
+    {
+      "id": "x-mind-2026",
+      "title": "X-Mind: Efficient Visual Chain-of-Thought via Predictive World Model for End-to-End Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2606.28758",
+      "localPaperId": "x-mind-visual-cot-driving"
+    },
+    {
+      "id": "reasonbreak-2026",
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving"
+    },
+    {
+      "id": "mdrive-2026",
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "benchmark",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "localPaperId": "mdrive-closed-loop-cooperative-driving"
+    },
+    {
+      "id": "vla-survey-2025",
+      "title": "A Survey on Vision-Language-Action Models for Autonomous Driving",
+      "year": 2025,
+      "venue": "ICCV 2025 Workshop",
+      "publicationType": "survey",
+      "url": "https://arxiv.org/abs/2506.24044"
+    },
+    {
+      "id": "language-agent-2023",
+      "title": "A Language Agent for Autonomous Driving",
+      "year": 2024,
+      "venue": "Conference on Language Modeling (COLM 2024)",
+      "publicationType": "method",
+      "url": "https://openreview.net/forum?id=UPE6WYE8vg"
+    },
+    {
+      "id": "lmdrive-2024",
+      "title": "LMDrive: Closed-Loop End-to-End Driving with Large Language Models",
+      "year": 2024,
+      "venue": "CVPR 2024",
+      "publicationType": "method",
+      "url": "https://arxiv.org/abs/2312.07488"
+    }
+  ]
+}

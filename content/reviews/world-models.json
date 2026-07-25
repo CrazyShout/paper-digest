@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "id": "world-models",
+  "title": "驾驶世界模型：从视频生成器到可交互的决策环境",
+  "subtitle": "沿状态表征、动作条件、长时 rollout、规划用途与仿真准入重构世界模型谱系",
+  "abstract": "驾驶世界模型的价值不在于生成一段“像真的”视频，而在于预测不同动作会带来怎样的未来，并诚实表达哪些未来超出其能力边界。领域正从像素视频生成走向结构化占用预测、世界—动作联合推理和实时闭环仿真；但视觉保真、物理有效、规划有用与安全 verdict 可迁移仍是四个不能互相替代的证据层级。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2023–2026，覆盖驾驶视频生成、结构化未来、世界—动作模型与闭环仿真",
+  "researchQuestions": [
+    "什么条件使一个视频生成模型成为世界模型，而不只是条件式渲染器？",
+    "像素、离散 token、BEV/occupancy 和混合表征在可控性、物理性与规划用途上如何取舍？",
+    "长时 rollout 的视觉一致、动作跟随和真实动力学一致应如何分别评测？",
+    "世界模型何时可以用于训练、规划或安全测试，何时必须拒绝给出结论？"
+  ],
+  "sections": [
+    {
+      "id": "definition-and-boundary",
+      "kind": "scope",
+      "title": "世界模型的最低门槛是对行动后果建模",
+      "thesis": "只有当模型表示状态转移、接收可执行动作并对未来不确定性负责时，它才超出一般驾驶视频生成。",
+      "body": "“世界模型”在自动驾驶中覆盖的对象差异很大：有的方法从文本、地图或首帧生成视频，有的方法预测 BEV/occupancy，有的方法让规划动作与未来状态循环交互，还有的方法把生成器包装成闭环仿真器。为了避免概念膨胀，本综述采用功能定义：模型至少应近似某个状态在动作条件下的转移，并允许检验不同动作是否产生可区分、方向正确的后果。\n\n据此需要区分四种用途。**内容生成器**提供多样场景或训练数据；**预测模型**估计未来观测或结构状态；**规划世界模型**支持候选动作比较；**闭环仿真器**持续接收策略动作并返回新观测。后一个用途对前一个用途提出更强要求。GAIA-1 和 DriveDreamer 奠定了大规模动作条件驾驶生成的代表路线，近年的 DrivingWorld、Vista、EponaV2 等继续改善长时、控制与未来推理，但画面可控并不自动授予仿真裁决资格。",
+      "referenceIds": [
+        "world-model-survey-2024",
+        "gaia1-2023",
+        "drivedreamer-2024",
+        "drivingworld",
+        "vista",
+        "eponav2"
+      ]
+    },
+    {
+      "id": "from-video-to-interaction",
+      "kind": "evolution",
+      "title": "演化主线从生成未来画面，转向比较行动假设",
+      "thesis": "模型能力的跃迁来自更强动作条件和更适合决策的状态，而不只是分辨率与视频时长增长。",
+      "body": "早期驾驶世界模型主要借鉴视频预测和生成模型，以历史帧、文本、地图和自车控制为条件合成未来。GAIA-1 展示了规模化生成模型对驾驶场景概念、动作和事件的学习能力，DriveDreamer 强化了真实数据驱动的可控生成。随后，DrivingWorld 采用离散视频 token 与自回归预测追求长时一致，Vista 强调跨场景泛化、动作控制和多种下游用途。\n\n第二条路线把状态从像素迁移到更接近几何和规划的表征。CascadeOcc 用级联 VQ 表示由粗到细预测 3D occupancy，试图减少像素生成对物理结构的遮蔽；EponaV2 同时引入 RGB、深度、语义等未来监督。第三条路线进一步联结世界与行动：DAWN 不再让动作只是单向条件，而是让世界假设和动作假设递归修正；OmniDreams 则把实时、多视角和闭环接口推向工业规模。与此同时，准入研究提醒领域：随着用途从可视化走向测试，评价标准必须从“像不像”升级到“对动作是否正确、有效多久、结论能否迁移”。",
+      "referenceIds": [
+        "gaia1-2023",
+        "drivedreamer-2024",
+        "drivingworld",
+        "vista",
+        "cascadeocc",
+        "eponav2",
+        "dawn",
+        "omnidreams",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "model-taxonomy",
+      "kind": "taxonomy",
+      "title": "五个维度决定世界模型究竟能做什么",
+      "thesis": "表征、转移机制、条件信号、下游用途和证据等级应联合报告，单一“生成质量”类别无法容纳领域差异。",
+      "body": "第一维是**状态表征**：像素/视频最适合提供传感器级观测，离散 token 支持自回归序列建模，BEV 与 occupancy 更直接表达几何和可通行空间，混合表征则尝试兼顾规划和渲染。第二维是**转移机制**：自回归 token、扩散、流模型或结构化动力学，各自在长时漂移、采样速度和多模态表达上取舍。第三维是**条件信号**：自车轨迹、低层控制、文本、地图、其他交通参与者及历史状态；只有动作条件可辨识，模型才适合行动比较。\n\n第四维是**用途**：数据增强、反事实预测、规划代价/奖励、策略训练、闭环测试。第五维是**证据等级**：视觉保真与时序一致属于生成层；动作跟随与几何误差属于动力学代理层；下游规划提升属于任务层；安全 verdict 与现实一致才属于测试迁移层。相同模型在较低层用途上有效，并不意味着它能进入更高层。例如高质量视频可用于训练感知，却可能因动作响应错误而不适合比较规划策略。",
+      "referenceIds": [
+        "world-model-survey-2024",
+        "drivingworld",
+        "vista",
+        "cascadeocc",
+        "eponav2",
+        "dawn",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "evidence-boundaries",
+      "kind": "evidence",
+      "title": "视觉、几何、规划和测试证据必须逐层阅读",
+      "thesis": "现有工作证明了可控生成与结构预测快速进步，却尚未证明世界模型可以普遍替代真实环境或经典仿真。",
+      "body": "DrivingWorld 的长时自回归视频、Vista 的多用途可控生成和 EponaV2 的综合未来监督，共同说明驾驶生成正在摆脱短片段与弱控制；但视觉指标、演示视频和动作条件成功只支持生成能力。CascadeOcc 以 occupancy 把未来预测连接到几何和规划，是更强的下游证据，却仍依赖基准分布和预测时域。DAWN 的世界—动作递归为互动决策提供了更合理的计算图，但目前证据主要来自研究基准，不能自动等同于真实交通中的因果反应。\n\nOmniDreams 提供实时多视角闭环生成与工业系统集成的证据，显示世界模型开始成为可运行基础设施；其闭源组件、训练数据和代理指标也限制独立复核。最关键的反证来自世界模型准入研究：Vista 与另一模型的视觉质量排序，可以与动作跟随误差和可信 rollout 时域排序相反。这并非否定生成质量，而是证明不同证据层不可互换。当前合理结论是：世界模型已适合内容生成、训练增广和受限预测；用于规划需要动作响应和不确定性校准；用于安全测试还需要包络声明、仿真器失效归因及现实 verdict 迁移。",
+      "referenceIds": [
+        "drivingworld",
+        "vista",
+        "cascadeocc",
+        "eponav2",
+        "dawn",
+        "omnidreams",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "unresolved-risks",
+      "kind": "challenges",
+      "title": "长时漂移只是表象，根本问题是不可辨识与不可校准",
+      "thesis": "如果训练数据没有覆盖动作干预和罕见物理事件，再大的生成模型也可能学到外观相关性而非可用于决策的动力学。",
+      "body": "第一项挑战是**动作因果可辨识性**。自然驾驶日志中的动作与场景高度相关，模型可能忽略动作仍生成看似合理的未来；需要反事实动作、受控干预或专门动作跟随基准检验。第二是**多模态未来与不确定性**：其他参与者可能有多种合理反应，单次逼真 rollout 会掩盖尾部风险；模型需要输出分布、校准置信并允许拒绝。第三是**长时误差累积**：自回归、扩散和结构预测都会因状态偏差进入训练分布外区域，视频连续不代表几何与动力学没有漂移。\n\n第四是**物理与交互细节**。碰撞接触、轮胎/路面、遮挡中新目标和罕见交通协商在日志中稀缺，却直接决定安全 verdict。第五是**模型利用与循环证明**：策略可能发现生成器的漏洞，用世界模型训练并由同一模型评测会放大共同偏差。第六是**可复现和安全治理**：训练数据来源、隐私、闭源规模、潜在后门及生成内容真实性都影响部署。没有独立现实锚点时，模型越像通用仿真器，越需要明确其不能裁决的区域。",
+      "referenceIds": [
+        "world-model-survey-2024",
+        "gaia1-2023",
+        "drivedreamer-2024",
+        "dawn",
+        "omnidreams",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "credible-world-models",
+      "kind": "outlook",
+      "title": "下一代世界模型需要双重表征、干预基准和准入证书",
+      "thesis": "面向决策的世界模型应同时提供结构化可验证状态与传感器级观测，并把不确定性和拒绝写入接口。",
+      "body": "第一条研究路线是**结构—渲染双层模型**：用 occupancy、地图拓扑、对象状态或其他结构表征维持几何与交通约束，再由生成模型渲染多视角传感器观测；两层通过一致性检查相互约束。第二条是**行动干预基准**：对相同初始场景施加成组的转向、制动和策略动作，测量后果方向、幅度、其他参与者响应与可信时域，而非只比较单条真实视频。第三条是**世界—动作联合推理**：让策略提出多种动作，模型返回多模态后果与风险，同时用现实日志和经典仿真校准，避免单一生成器垄断真值。\n\n用于测试时，还需要类似仿真器认证的**准入证书**：声明支持的运行设计域、动作范围、最长可靠 rollout、分布外拒绝、已知失效和现实 verdict 校准。世界模型在证书之外应返回“不知道”。这会把世界模型与端到端驾驶、Agentic Driving 和自动驾驶测试真正连接起来：大模型负责生成假设和长时语义推演，结构模型维护几何与物理约束，测试框架负责验证其结论是否有资格进入工程决策。",
+      "referenceIds": [
+        "cascadeocc",
+        "eponav2",
+        "dawn",
+        "omnidreams",
+        "world-model-admissibility"
+      ]
+    }
+  ],
+  "takeaways": [
+    "视频生成只有在动作条件可辨识并能预测行动后果时，才跨过驾驶世界模型的最低门槛。",
+    "像素、token 与 occupancy 不是简单替代关系；规划常需要结构状态，闭环感知又需要传感器级观测。",
+    "视觉保真、动作跟随、下游规划增益和现实安全 verdict 是四个不同证据层级。",
+    "长时 rollout 必须同时报告误差增长、不确定性和最大可信时域，不能只展示连续视频。",
+    "用于安全测试的世界模型应具备准入、失败归因和拒绝机制，而不是在所有场景强制给出裁决。"
+  ],
+  "references": [
+    {
+      "id": "world-model-survey-2024",
+      "title": "World Models for Autonomous Driving: An Initial Survey",
+      "year": 2024,
+      "venue": "IEEE Transactions on Intelligent Vehicles",
+      "url": "https://doi.org/10.1109/TIV.2024.3398357",
+      "publicationType": "survey"
+    },
+    {
+      "id": "gaia1-2023",
+      "title": "GAIA-1: A Generative World Model for Autonomous Driving",
+      "year": 2023,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2309.17080",
+      "publicationType": "method"
+    },
+    {
+      "id": "drivedreamer-2024",
+      "title": "DriveDreamer: Towards Real-world-driven World Models for Autonomous Driving",
+      "year": 2024,
+      "venue": "ECCV",
+      "url": "https://eccv.ecva.net/virtual/2024/poster/994",
+      "publicationType": "method"
+    },
+    {
+      "id": "drivingworld",
+      "title": "DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT",
+      "year": 2024,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2412.19505",
+      "publicationType": "method",
+      "localPaperId": "driving-world-model-video"
+    },
+    {
+      "id": "vista",
+      "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
+      "year": 2024,
+      "venue": "NeurIPS",
+      "url": "https://papers.nips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
+      "publicationType": "method",
+      "localPaperId": "vista-driving-world-model"
+    },
+    {
+      "id": "cascadeocc",
+      "title": "CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.27644",
+      "publicationType": "method",
+      "localPaperId": "cascadeocc-occupancy-world-model"
+    },
+    {
+      "id": "dawn",
+      "title": "The DAWN of World-Action Interactive Models",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.11550",
+      "publicationType": "method",
+      "localPaperId": "dawn-world-action-model"
+    },
+    {
+      "id": "eponav2",
+      "title": "EponaV2: Driving World Model with Comprehensive Future Reasoning",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.14696",
+      "publicationType": "method",
+      "localPaperId": "eponav2-driving-world-model"
+    },
+    {
+      "id": "omnidreams",
+      "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.03159",
+      "publicationType": "method",
+      "localPaperId": "omnidreams-closed-loop-world-model"
+    },
+    {
+      "id": "world-model-admissibility",
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "publicationType": "position",
+      "localPaperId": "world-model-simulator-admissibility"
+    }
+  ]
+}

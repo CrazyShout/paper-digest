@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "id": "autonomous-driving-testing",
+  "title": "自动驾驶测试：从场景发现到可采信的安全证据",
+  "subtitle": "把闭环失效、责任归因、部署扰动与仿真器准入组织为一条测试证据链",
+  "abstract": "自动驾驶测试正在从“累计更多里程”转向“主动寻找有解释力的失败”。真正困难的不是制造一次碰撞，而是证明场景合理、失败由被测系统造成、结果能跨仿真与现实复现，并且用于裁决的仿真器本身足够可信。本综述据此把场景生成、闭环基准、责任归因、部署扰动和世界模型准入放进同一证据框架。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2017–2026，重点覆盖 2023–2026 年闭环测试与生成式仿真",
+  "researchQuestions": [
+    "怎样用有限测试预算发现低概率、高后果且仍然自然的安全关键场景？",
+    "一次闭环失败需要满足哪些条件，才能归因于被测自动驾驶系统而不是测试环境或其他交通参与者？",
+    "开环指标、仿真闭环、硬件在环和真实车辆测试之间，证据能否以及如何迁移？",
+    "生成式世界模型在什么条件下有资格充当安全测试的环境与裁判？"
+  ],
+  "sections": [
+    {
+      "id": "scope-and-evidence",
+      "kind": "scope",
+      "title": "测试对象不是一条轨迹，而是一项受边界约束的安全主张",
+      "thesis": "测试的基本单位应从行驶里程或单一碰撞事件，升级为“系统版本—运行设计域—失效机制—裁决依据”四元组。",
+      "body": "传统道路测试用累计里程近似安全覆盖，但罕见危险事件的概率太低，里程本身又不说明覆盖了哪些交互和部署故障。CARLA 一类开放仿真平台让研究者可以重复控制天气、交通和传感器，自动驾驶测试综述则进一步把场景、被测系统、测试方法和判定指标组织成系统工程问题。\n\n本综述把测试分成四个相互依赖的环节：**生成或抽取场景**、**在闭环中执行**、**用可辩护的 oracle 判定**、**解释结果的适用边界**。一个“发现碰撞很多”的生成器不一定优于另一个生成器：它可能只是在制造不自然场景，也可能让其他车辆承担主要责任。相反，一个没有碰撞但稳定暴露控制延迟、相机失流或规划不兼容的测试，可能更接近真实部署风险。",
+      "referenceIds": [
+        "testing-survey-2023",
+        "carla-2017",
+        "cars-responsibility",
+        "bench2drive-robust"
+      ]
+    },
+    {
+      "id": "historical-shift",
+      "kind": "evolution",
+      "title": "从被动累计里程，到主动搜索失败，再到审查裁判本身",
+      "thesis": "领域演化的主线不是仿真画面越来越逼真，而是测试预算越来越集中于可解释、可迁移的风险。",
+      "body": "第一阶段以道路里程、事故回放和规则场景为主，优势是直观，缺点是对长尾失效采样效率极低。第二阶段借助 CARLA 等平台，把参数化场景、搜索式测试和对抗式场景生成引入闭环；Bench2Drive 又把能力覆盖、路线完成和闭环驾驶质量纳入更系统的任务集合。第三阶段开始直接优化“哪里会失败”：重要性采样、强化搜索、生成模型和流模型都在压缩发现罕见风险所需的仿真次数。\n\n最新阶段把问题从“能否找到失败”推进为“这个失败是否可采信”。CARS 要求失效具有责任归因，Bench2Drive-Robust 把相机流异常、自车状态误差和计算延迟等部署扰动纳入评测；真实世界扰动测试则沿离线、硬件在环到实车逐级验证。随着世界模型成为闭环仿真器，研究对象还必须扩展到裁判本身：视觉逼真不等于动作响应正确，更不等于其安全 verdict 可以迁移到现实。",
+      "referenceIds": [
+        "carla-2017",
+        "bench2drive-2024",
+        "commercial-av-failure",
+        "riskflow",
+        "cars-responsibility",
+        "real-world-perturbation",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "test-taxonomy",
+      "kind": "taxonomy",
+      "title": "五个正交坐标比“仿真或实车”更能定位一项测试",
+      "thesis": "只有同时声明被测范围、反馈环、场景来源、判定 oracle 和保真层级，不同测试结果才可比较。",
+      "body": "一项自动驾驶测试可以沿五个坐标定位。其一是**被测范围**：感知模块、预测/规划模块、完整模块化系统或端到端策略；其二是**反馈环**：固定日志上的开环回放，还是动作会改变后续观测的闭环执行；其三是**场景来源**：自然日志、参数搜索、重要性采样、对抗优化或生成模型；其四是**判定 oracle**：碰撞、交通规则、舒适度、任务完成、责任归因或反事实差异；其五是**保真层级**：纯仿真、软件/硬件在环、封闭场地、公开道路，或由学习系统构成的世界模型。\n\n这些坐标解释了许多看似矛盾的结果。重要性采样可以提高故障命中率，却可能牺牲自然概率估计；高保真视觉可以改善人的观感，却不保证控制指令被正确执行；离线感知退化可能很小，进入闭环后却因误差累积造成路线失败。因此，测试论文应报告自己在哪些坐标上提供了新证据，而不是用一个综合分数替代边界声明。",
+      "referenceIds": [
+        "testing-survey-2023",
+        "bench2drive-2024",
+        "bench2drive-robust",
+        "commercial-av-failure",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "evidence-ladder",
+      "kind": "evidence",
+      "title": "现有证据支持“更快发现失败”，尚不支持“一次评测即可证明安全”",
+      "thesis": "闭环测试的价值在于暴露机制，而非给系统颁发脱离运行设计域的通用安全证书。",
+      "body": "仓库内研究形成了一条互补证据链。商用自动驾驶车辆的失败采样表明，朴素 Monte Carlo 可能在预算内观察不到碰撞，而主动搜索能显著提高失败命中率；但更高命中率与更自然的概率分布之间存在张力，PCA 式“特征失败方向”更适合诊断机制而非直接估计现实事故率。RiskFlow 同样把速度、逼真度和危险性作为需要共同权衡的目标，而不是默认三者一致。\n\n另一组证据说明 oracle 和迁移层级不可省略。CARS 将“责任是否属于自车策略”加入对抗场景，避免把不可避免或他车恶意造成的事故都记为系统缺陷。Bench2Drive-Robust 表明部署期数据流、状态估计与时延故障需要在闭环中单独测试；真实世界扰动研究进一步提示，模型级指标只能有限预测整车失败。最后，世界模型准入研究发现视觉质量排序可能与动作跟随排序反转。合起来，这些结果支持分层测试和机制诊断，却没有证明某个基准分数可以直接外推到所有道路、天气和系统版本。",
+      "referenceIds": [
+        "commercial-av-failure",
+        "riskflow",
+        "cars-responsibility",
+        "bench2drive-robust",
+        "real-world-perturbation",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "open-challenges",
+      "kind": "challenges",
+      "title": "最难的矛盾集中在自然性、归因性与可迁移性之间",
+      "thesis": "测试生成得越激进，越需要额外证据说明它没有偏离现实，也没有把仿真器缺陷误判为系统缺陷。",
+      "body": "首要难题是**危险性与自然性的冲突**。搜索算法会主动走向低概率区域，因此命中率不能直接解释为现实风险；需要似然校准、独立自然日志或分层采样恢复概率意义。第二是**oracle 歧义**：碰撞并不自动等于自车有责，未碰撞也不等于行为可接受；责任、可避免性、规则、舒适度和任务完成往往必须联合判定。第三是**仿真到现实的 verdict 迁移**：外观相似、轨迹相似和安全结论一致是三个不同层级。\n\n工程层面的缺口同样重要。闭环结果对随机交通、地图、传感器版本和算力调度敏感，缺少共同随机种子、置信区间和失败去重会放大排名噪声。端到端策略、模块化系统与商用黑盒系统又需要不同的可观测性。对生成式仿真而言，还存在循环论证风险：用与被测策略共享数据和偏差的世界模型证明策略安全。可复现测试必须把场景生成器、仿真器、策略和 oracle 分开版本化，并允许其中任何一层拒绝给出结论。",
+      "referenceIds": [
+        "testing-survey-2023",
+        "cars-responsibility",
+        "commercial-av-failure",
+        "real-world-perturbation",
+        "world-model-admissibility"
+      ]
+    },
+    {
+      "id": "research-agenda",
+      "kind": "outlook",
+      "title": "下一步是构建可审计的测试证据栈，而不是追逐单一排行榜",
+      "thesis": "成熟的测试中心应同时保存失败样本、生成概率、责任解释、复现条件和跨层验证结果。",
+      "body": "可执行的研究议程有三条。第一，建立**校准的场景生成器**：不仅输出危险场景，还输出其来源、似然、与自然数据的距离及失败机制簇，使测试预算与现实风险能够重新连接。第二，建立**多层测试阶梯**：开环筛查用于低成本过滤，经典仿真闭环用于机制复现，硬件在环用于暴露时序和系统集成问题，封闭场地或实车用于校准关键 verdict；各层结果只在声明的包络内继承。\n\n第三，建立**仿真器准入与拒绝机制**。经典仿真器和学习式世界模型都应报告动作响应、可信时间范围、分布外检测和失败归因；达不到准入条件时，系统应明确“无法裁决”，而不是输出一个看似精确的安全分。这样的证据栈也能把自动驾驶测试与端到端策略、世界模型和 Agentic Driving 连接起来：研究重点从谁在固定榜单上更高，转向谁能在可复现干预下稳定避免已知失效机制。",
+      "referenceIds": [
+        "bench2drive-2024",
+        "riskflow",
+        "bench2drive-robust",
+        "real-world-perturbation",
+        "world-model-admissibility"
+      ]
+    }
+  ],
+  "takeaways": [
+    "安全关键场景的数量不是充分指标；自然性、责任归因和现实概率必须同时报告。",
+    "开环退化不能替代闭环失效，仿真闭环也不能无条件替代硬件在环或真实车辆证据。",
+    "部署扰动、软件升级与计算时延应被视为一等测试对象，而不是感知精度之外的附录。",
+    "世界模型只有在动作响应、可信包络和 verdict 迁移得到验证后，才有资格参与安全裁决。",
+    "最有价值的测试产物是可复现的失效机制与适用边界，而不是一个脱离上下文的总分。"
+  ],
+  "references": [
+    {
+      "id": "testing-survey-2023",
+      "title": "A Survey on Automated Driving System Testing: Landscapes and Trends",
+      "year": 2023,
+      "venue": "ACM Transactions on Software Engineering and Methodology",
+      "url": "https://doi.org/10.1145/3579642",
+      "publicationType": "survey"
+    },
+    {
+      "id": "carla-2017",
+      "title": "CARLA: An Open Urban Driving Simulator",
+      "year": 2017,
+      "venue": "Conference on Robot Learning",
+      "url": "https://proceedings.mlr.press/v78/dosovitskiy17a.html",
+      "publicationType": "method"
+    },
+    {
+      "id": "bench2drive-2024",
+      "title": "Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-to-End Autonomous Driving",
+      "year": 2024,
+      "venue": "NeurIPS Datasets and Benchmarks Track",
+      "url": "https://papers.nips.cc/paper_files/paper/2024/hash/017761f94a1cd66d01c041aff85492c4-Abstract-Datasets_and_Benchmarks_Track.html",
+      "publicationType": "benchmark"
+    },
+    {
+      "id": "cars-responsibility",
+      "title": "Learning Responsibility-Attributed Adversarial Scenarios for Testing Autonomous Vehicles",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.13751",
+      "publicationType": "method",
+      "localPaperId": "cars-responsibility-testing"
+    },
+    {
+      "id": "bench2drive-robust",
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "publicationType": "benchmark",
+      "localPaperId": "bench2drive-robust-deployment-perturbations"
+    },
+    {
+      "id": "commercial-av-failure",
+      "title": "Importance Sampling and PCA for Finding Failures in Commercial Autonomous Vehicles",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.18106",
+      "publicationType": "method",
+      "localPaperId": "commercial-av-failure-sampling"
+    },
+    {
+      "id": "riskflow",
+      "title": "RiskFlow: Fast and Faithful Safety-Critical Traffic Scenario Generation",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.06423",
+      "publicationType": "method",
+      "localPaperId": "riskflow-safety-critical-scenario-generation"
+    },
+    {
+      "id": "real-world-perturbation",
+      "title": "Real-World Perturbation Testing of Autonomous Driving Systems",
+      "year": 2026,
+      "venue": "ASE",
+      "url": "https://arxiv.org/abs/2607.04953",
+      "publicationType": "method",
+      "localPaperId": "real-world-perturbation-testing"
+    },
+    {
+      "id": "world-model-admissibility",
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "publicationType": "position",
+      "localPaperId": "world-model-simulator-admissibility"
+    }
+  ]
+}

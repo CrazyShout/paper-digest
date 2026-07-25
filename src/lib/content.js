@@ -5,6 +5,12 @@ const ROOT = path.resolve(process.cwd());
 const CONFIG = path.join(ROOT, "config");
 const CONTENT = path.join(ROOT, "content");
 
+export function isValidIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -71,6 +77,20 @@ async function readMarkdownDir(dir) {
     const filePath = path.join(dir, file);
     const text = await readFile(filePath, "utf8");
     docs.push({ file, ...parseMarkdownFile(text, filePath) });
+  }
+
+  return docs;
+}
+
+async function readJsonDir(dir) {
+  const entries = await readdir(dir);
+  const files = entries.filter((entry) => entry.endsWith(".json")).sort();
+  const docs = [];
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const data = JSON.parse(await readFile(filePath, "utf8"));
+    docs.push({ file, data });
   }
 
   return docs;
@@ -326,6 +346,80 @@ export async function getIdeaCenter() {
       }))
     }))
   };
+}
+
+const REVIEW_TYPE_LABELS = {
+  survey: "综述",
+  tutorial: "教程",
+  method: "方法",
+  benchmark: "基准",
+  dataset: "数据集",
+  standard: "标准",
+  position: "观点"
+};
+
+export async function getReviewCenter() {
+  const [center, tags, papers, reviewDocs] = await Promise.all([
+    readFile(path.join(CONTENT, "review-center.json"), "utf8").then(JSON.parse),
+    getTags(),
+    getPapers(),
+    readJsonDir(path.join(CONTENT, "reviews"))
+  ]);
+  const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
+  const reviewMap = new Map(reviewDocs.map((doc) => [doc.data.id, doc.data]));
+
+  const directions = tags.map((tag) => {
+    const review = reviewMap.get(tag.id);
+    if (!review) throw new Error(`Missing review for configured direction: ${tag.id}`);
+
+    const references = review.references.map((reference) => {
+      const localPaper = reference.localPaperId
+        ? paperMap.get(reference.localPaperId)
+        : undefined;
+      if (reference.localPaperId && !localPaper) {
+        throw new Error(
+          `${review.id} review references missing local paper: ${reference.localPaperId}`
+        );
+      }
+      const origin = reference.localPaperId ? "local" : "external";
+
+      return {
+        ...reference,
+        title: localPaper?.title || reference.title,
+        origin,
+        badge: origin === "local" ? "本库已报告" : "外部文献",
+        href: origin === "local"
+          ? `../../papers/${localPaper.id}/`
+          : reference.url,
+        sourceHref: reference.url,
+        publicationTypeLabel: REVIEW_TYPE_LABELS[reference.publicationType] || reference.publicationType
+      };
+    });
+    const referenceMap = new Map(references.map((reference) => [reference.id, reference]));
+
+    return {
+      ...tag,
+      ...review,
+      sections: review.sections.map((section) => ({
+        ...section,
+        bodyHtml: markdownToHtml(section.body),
+        references: section.referenceIds
+          .map((referenceId) => referenceMap.get(referenceId))
+          .filter(Boolean)
+      })),
+      references
+    };
+  });
+
+  return {
+    ...center,
+    directions
+  };
+}
+
+export async function getDirectionReview(id) {
+  const center = await getReviewCenter();
+  return center.directions.find((direction) => direction.id === id) || null;
 }
 
 function roundPercentage(value) {

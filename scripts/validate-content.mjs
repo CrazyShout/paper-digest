@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isValidIsoDate } from "../src/lib/content.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -73,6 +74,32 @@ async function readMarkdownDir(dir) {
   return docs;
 }
 
+async function readJsonDir(dir) {
+  let entries = [];
+  try {
+    entries = await readdir(dir);
+  } catch (error) {
+    addError(`${path.relative(CONTENT, dir)} could not be read: ${error.message}`);
+    return [];
+  }
+
+  const docs = [];
+  for (const file of entries.filter((entry) => entry.endsWith(".json")).sort()) {
+    const filePath = path.join(dir, file);
+    try {
+      docs.push({
+        file,
+        filePath,
+        data: JSON.parse(await readFile(filePath, "utf8"))
+      });
+    } catch (error) {
+      addError(`${path.relative(CONTENT, filePath)} has invalid JSON: ${error.message}`);
+      docs.push({ file, filePath, data: {} });
+    }
+  }
+  return docs;
+}
+
 function normalizePaperTags(data) {
   const tags = [];
 
@@ -107,6 +134,19 @@ function extractArxivIds(...values) {
   }
 
   return [...ids].sort();
+}
+
+function extractDois(...values) {
+  const dois = new Set();
+  const text = values.filter(Boolean).join(" ");
+  const pattern = /\b10\.\d{4,9}\/[-._;()/:A-Z0-9]+/gi;
+  let match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    dois.add(match[0].replace(/[.,;]+$/g, "").toLowerCase());
+  }
+
+  return [...dois].sort();
 }
 
 function parseReportedPapers(text) {
@@ -542,12 +582,303 @@ function validateIdeaCenter(config, knownTags, paperById, latestDigestDate, file
   }
 }
 
+const REVIEW_SECTION_KINDS = [
+  "scope",
+  "evolution",
+  "taxonomy",
+  "evidence",
+  "challenges",
+  "outlook"
+];
+const REVIEW_PUBLICATION_TYPES = new Set([
+  "survey",
+  "tutorial",
+  "method",
+  "benchmark",
+  "dataset",
+  "standard",
+  "position"
+]);
+
+function isHttpsUrl(value) {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function validateReviewCenter(
+  center,
+  reviewDocs,
+  knownTags,
+  paperById,
+  centerFile
+) {
+  validateStringField(center, "title", centerFile);
+  validateStringField(center, "summary", centerFile);
+  validateStringField(center, "updatedAt", centerFile);
+
+  if (!Number.isInteger(center.version) || center.version < 1) {
+    addError(`${centerFile} version must be a positive integer`);
+  }
+  if (!isValidIsoDate(center.updatedAt)) {
+    addError(`${centerFile} updatedAt must be a real YYYY-MM-DD calendar date`);
+  }
+
+  const writingModel = isPlainObject(center.writingModel) ? center.writingModel : {};
+  validateRequiredStrings(writingModel, ["note"], `${centerFile} writingModel`);
+  if (!isStringArray(writingModel.principles) || writingModel.principles.length < 4) {
+    addError(`${centerFile} writingModel.principles must contain at least 4 strings`);
+  }
+  const sample = isPlainObject(writingModel.sampleSurvey) ? writingModel.sampleSurvey : {};
+  validateRequiredStrings(
+    sample,
+    ["title", "authors", "venue", "url"],
+    `${centerFile} writingModel.sampleSurvey`
+  );
+  if (!Number.isInteger(sample.year)) {
+    addError(`${centerFile} writingModel.sampleSurvey.year must be an integer`);
+  }
+  if (!isHttpsUrl(sample.url)) {
+    addError(`${centerFile} writingModel.sampleSurvey.url must be an HTTPS primary-source URL`);
+  }
+  const citation = isPlainObject(sample.citationSnapshot) ? sample.citationSnapshot : {};
+  validateRequiredStrings(
+    citation,
+    ["provider", "checkedAt", "url", "note"],
+    `${centerFile} writingModel.sampleSurvey.citationSnapshot`
+  );
+  if (!Number.isInteger(citation.count) || citation.count < 0) {
+    addError(`${centerFile} writingModel.sampleSurvey.citationSnapshot.count must be a non-negative integer`);
+  }
+  if (!isValidIsoDate(citation.checkedAt)) {
+    addError(`${centerFile} writingModel.sampleSurvey.citationSnapshot.checkedAt must be a real YYYY-MM-DD calendar date`);
+  }
+  if (!isHttpsUrl(citation.url)) {
+    addError(`${centerFile} writingModel.sampleSurvey.citationSnapshot.url must be HTTPS`);
+  }
+
+  const reviewIds = new Set();
+  const localTitles = new Set(
+    [...paperById.values()]
+      .filter((paper) => !paper.revisionOf)
+      .map((paper) => paper.normalizedTitle)
+      .filter(Boolean)
+  );
+  const localArxivIds = new Set(
+    [...paperById.values()]
+      .filter((paper) => !paper.revisionOf)
+      .flatMap((paper) => extractArxivIds(paper.data.source))
+  );
+  const localDois = new Set(
+    [...paperById.values()]
+      .filter((paper) => !paper.revisionOf)
+      .flatMap((paper) => extractDois(paper.data.source))
+  );
+
+  for (const doc of reviewDocs) {
+    const review = doc.data;
+    const file = `reviews/${doc.file}`;
+    const expectedId = path.basename(doc.file, ".json");
+    const label = file;
+
+    validateRequiredStrings(
+      review,
+      ["id", "title", "subtitle", "abstract", "reviewedAt", "searchWindow"],
+      label
+    );
+    if (!Number.isInteger(review.version) || review.version < 1) {
+      addError(`${label} version must be a positive integer`);
+    }
+    if (review.id !== expectedId) {
+      addError(`${label} has id "${review.id}", expected "${expectedId}"`);
+    }
+    if (!knownTags.has(review.id)) {
+      addError(`${label} references unknown direction: ${review.id}`);
+    }
+    if (reviewIds.has(review.id)) {
+      addError(`${centerFile} has duplicate review direction: ${review.id}`);
+    }
+    reviewIds.add(review.id);
+    if (!isValidIsoDate(review.reviewedAt)) {
+      addError(`${label} reviewedAt must be a real YYYY-MM-DD calendar date`);
+    }
+    if (!isStringArray(review.researchQuestions) || review.researchQuestions.length < 2) {
+      addError(`${label} researchQuestions must contain at least 2 strings`);
+    }
+    if (!isStringArray(review.takeaways) || review.takeaways.length < 3) {
+      addError(`${label} takeaways must contain at least 3 strings`);
+    }
+
+    const references = Array.isArray(review.references) ? review.references : [];
+    if (references.length < 6) {
+      addError(`${label} must define at least 6 references`);
+    }
+    const referenceById = new Map();
+    const referenceTitles = new Set();
+    const referenceUrls = new Set();
+    let localCount = 0;
+    let externalCount = 0;
+    let surveyCount = 0;
+
+    for (const [index, reference] of references.entries()) {
+      const referenceLabel = `${label} references[${index}]`;
+      validateRequiredStrings(
+        reference,
+        ["id", "title", "venue", "publicationType", "url"],
+        referenceLabel
+      );
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(reference?.id || "")) {
+        addError(`${referenceLabel} id must use lowercase letters, numbers, and hyphens`);
+      }
+      if (referenceById.has(reference?.id)) {
+        addError(`${label} has duplicate reference id: ${reference?.id}`);
+      } else {
+        referenceById.set(reference?.id, reference);
+      }
+      if (!Number.isInteger(reference?.year) || reference.year < 1900 || reference.year > 2100) {
+        addError(`${referenceLabel} year must be a reasonable integer`);
+      }
+      if (!REVIEW_PUBLICATION_TYPES.has(reference?.publicationType)) {
+        addError(`${referenceLabel} has unsupported publicationType: ${reference?.publicationType}`);
+      }
+      if (!isHttpsUrl(reference?.url)) {
+        addError(`${referenceLabel} must use an HTTPS primary-source URL`);
+      }
+
+      const normalizedReferenceTitle = normalizeTitle(reference?.title);
+      if (referenceTitles.has(normalizedReferenceTitle)) {
+        addError(`${label} has duplicate reference title: ${reference?.title}`);
+      }
+      referenceTitles.add(normalizedReferenceTitle);
+      if (referenceUrls.has(reference?.url)) {
+        addError(`${label} has duplicate reference URL: ${reference?.url}`);
+      }
+      referenceUrls.add(reference?.url);
+
+      if (["survey", "tutorial"].includes(reference?.publicationType)) {
+        surveyCount += 1;
+      }
+
+      if (reference?.localPaperId) {
+        localCount += 1;
+        const paper = paperById.get(reference.localPaperId);
+        if (!paper) {
+          addError(`${referenceLabel} references missing local paper: ${reference.localPaperId}`);
+        } else {
+          if (paper.revisionOf) {
+            addError(`${referenceLabel} must reference a canonical local paper: ${reference.localPaperId}`);
+          }
+          if (paper.data.title !== reference.title) {
+            addError(`${referenceLabel} title must exactly match local paper ${reference.localPaperId}`);
+          }
+          if (!paper.tags.includes(review.id)) {
+            addError(`${referenceLabel} local paper ${reference.localPaperId} is not tagged ${review.id}`);
+          }
+        }
+      } else {
+        externalCount += 1;
+        if (localTitles.has(normalizedReferenceTitle)) {
+          addError(`${referenceLabel} is already reported locally and must define localPaperId`);
+        }
+        const arxivIds = extractArxivIds(reference?.url, reference?.title);
+        for (const arxivId of arxivIds) {
+          if (localArxivIds.has(arxivId)) {
+            addError(`${referenceLabel} arXiv ${arxivId} is already reported locally and must define localPaperId`);
+          }
+        }
+        const dois = extractDois(reference?.url);
+        for (const doi of dois) {
+          if (localDois.has(doi)) {
+            addError(`${referenceLabel} DOI ${doi} is already reported locally and must define localPaperId`);
+          }
+        }
+      }
+    }
+    if (!localCount) addError(`${label} must cite at least one local paper`);
+    if (!externalCount) addError(`${label} must cite at least one external paper`);
+    if (!surveyCount) addError(`${label} must cite at least one survey or tutorial`);
+
+    const sections = Array.isArray(review.sections) ? review.sections : [];
+    if (sections.length !== REVIEW_SECTION_KINDS.length) {
+      addError(`${label} must define exactly ${REVIEW_SECTION_KINDS.length} review sections`);
+    }
+    const sectionIds = new Set();
+    const sectionKinds = new Set();
+    const usedReferenceIds = new Set();
+    for (const [index, section] of sections.entries()) {
+      const sectionLabel = `${label} sections[${index}]`;
+      validateRequiredStrings(
+        section,
+        ["id", "kind", "title", "thesis", "body"],
+        sectionLabel
+      );
+      if (sectionIds.has(section?.id)) addError(`${label} has duplicate section id: ${section?.id}`);
+      sectionIds.add(section?.id);
+      if (!REVIEW_SECTION_KINDS.includes(section?.kind)) {
+        addError(`${sectionLabel} has unsupported kind: ${section?.kind}`);
+      }
+      if (sectionKinds.has(section?.kind)) {
+        addError(`${label} has duplicate section kind: ${section?.kind}`);
+      }
+      sectionKinds.add(section?.kind);
+      if (!isStringArray(section?.referenceIds) || !section.referenceIds.length) {
+        addError(`${sectionLabel}.referenceIds must be a non-empty string array`);
+        continue;
+      }
+      if (new Set(section.referenceIds).size !== section.referenceIds.length) {
+        addError(`${sectionLabel} has duplicate referenceIds`);
+      }
+      for (const referenceId of section.referenceIds) {
+        if (!referenceById.has(referenceId)) {
+          addError(`${sectionLabel} references missing reference: ${referenceId}`);
+        }
+        usedReferenceIds.add(referenceId);
+      }
+    }
+    for (const kind of REVIEW_SECTION_KINDS) {
+      if (!sectionKinds.has(kind)) addError(`${label} is missing section kind: ${kind}`);
+    }
+    for (const referenceId of referenceById.keys()) {
+      if (!usedReferenceIds.has(referenceId)) {
+        addError(`${label} reference ${referenceId} is not cited by any section`);
+      }
+    }
+  }
+
+  for (const tag of knownTags) {
+    if (!reviewIds.has(tag)) addError(`${centerFile} is missing review for direction: ${tag}`);
+  }
+  for (const reviewId of reviewIds) {
+    if (!knownTags.has(reviewId)) addError(`${centerFile} has extra review direction: ${reviewId}`);
+  }
+}
+
 const interestConfig = JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
-const knownTags = new Set(interestConfig.interests.map((interest) => interest.id));
+const interests = Array.isArray(interestConfig.interests) ? interestConfig.interests : [];
+if (!interests.length) {
+  addError("research-interests.json must define a non-empty interests array");
+}
+const knownTags = new Set();
+for (const [index, interest] of interests.entries()) {
+  const label = `research-interests.json interests[${index}]`;
+  validateRequiredStrings(interest, ["id", "label", "color", "description"], label);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(interest?.id || "")) {
+    addError(`${label} id must use lowercase letters, numbers, and hyphens`);
+  }
+  if (knownTags.has(interest?.id)) {
+    addError(`research-interests.json has duplicate interest id: ${interest?.id}`);
+  }
+  knownTags.add(interest?.id);
+}
 const landscapeFile = "research-landscape.json";
 let landscapeConfig = {};
 const ideaCenterFile = "idea-center.json";
 let ideaCenterConfig = {};
+const reviewCenterFile = "review-center.json";
+let reviewCenterConfig = {};
+const reviewDocs = await readJsonDir(path.join(CONTENT, "reviews"));
 
 try {
   landscapeConfig = JSON.parse(await readFile(path.join(CONTENT, landscapeFile), "utf8"));
@@ -559,6 +890,12 @@ try {
   ideaCenterConfig = JSON.parse(await readFile(path.join(CONTENT, ideaCenterFile), "utf8"));
 } catch (error) {
   addError(`${ideaCenterFile} has invalid JSON: ${error.message}`);
+}
+
+try {
+  reviewCenterConfig = JSON.parse(await readFile(path.join(CONTENT, reviewCenterFile), "utf8"));
+} catch (error) {
+  addError(`${reviewCenterFile} has invalid JSON: ${error.message}`);
 }
 
 validateStringField(landscapeConfig, "title", landscapeFile);
@@ -692,6 +1029,13 @@ for (const paper of papers) {
 }
 
 validateIdeaCenter(ideaCenterConfig, knownTags, paperById, latestDigestDate, ideaCenterFile);
+validateReviewCenter(
+  reviewCenterConfig,
+  reviewDocs,
+  knownTags,
+  paperById,
+  reviewCenterFile
+);
 
 const canonicalPaperIds = new Set(papers.filter((paper) => !paper.revisionOf).map((paper) => paper.id));
 const effectiveEvidenceDigests = digestDocs
@@ -894,4 +1238,6 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Content validation passed: ${digestDocs.length} digests, ${paperDocs.length} papers.`);
+console.log(
+  `Content validation passed: ${digestDocs.length} digests, ${paperDocs.length} papers, ${reviewDocs.length} direction reviews.`
+);

@@ -37,6 +37,7 @@ const els = {
   activeTitle: document.getElementById("activeTitle"),
   paperSearch: document.getElementById("paperSearch"),
   searchResults: document.getElementById("searchResults"),
+  reviewCenterPreview: document.getElementById("reviewCenterPreview"),
   researchLandscape: document.getElementById("researchLandscape"),
   digestArticle: document.getElementById("digestArticle"),
   notesToggle: document.getElementById("notesToggle"),
@@ -420,10 +421,12 @@ function renderSearchResults() {
     els.searchResults.hidden = true;
     els.searchResults.innerHTML = "";
     els.searchResults.setAttribute("aria-busy", "false");
+    if (els.reviewCenterPreview) els.reviewCenterPreview.hidden = false;
     els.researchLandscape.hidden = false;
     return;
   }
 
+  if (els.reviewCenterPreview) els.reviewCenterPreview.hidden = true;
   els.researchLandscape.hidden = true;
   els.searchResults.hidden = false;
   els.searchResults.setAttribute("aria-busy", String(state.searchLoading));

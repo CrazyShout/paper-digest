@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "id": "end-to-end-autonomous-driving",
+  "title": "端到端自动驾驶：从模仿轨迹到可维护的闭环策略",
+  "subtitle": "沿输入表征、规划输出、学习信号、系统接口与闭环证据梳理端到端驾驶",
+  "abstract": "端到端自动驾驶并不等同于“一个黑盒直接输出方向盘”。它更准确地描述了训练目标和信息流是否围绕最终驾驶决策联合优化。领域已经从行为克隆和特权教师蒸馏，演化到规划导向的统一网络、概率动作建模、世界—动作交互、VLA 推理与自博弈训练；与此同时，闭环因果性、升级兼容和真实部署证据成为新的瓶颈。",
+  "reviewedAt": "2026-07-26",
+  "searchWindow": "2020–2026，重点覆盖规划导向、概率规划、VLA、自博弈与闭环部署",
+  "researchQuestions": [
+    "端到端驾驶的边界应按网络结构、训练目标还是传感器到动作的信息流来定义？",
+    "确定性轨迹、概率动作分布和语言/动作 token 分别适合哪些驾驶不确定性？",
+    "开环模仿指标为何经常不能预测闭环安全与路线完成，应该补充什么证据？",
+    "感知模块、数据分布或模型版本升级时，端到端策略如何保持可维护和可审计？"
+  ],
+  "sections": [
+    {
+      "id": "what-is-end-to-end",
+      "kind": "scope",
+      "title": "端到端的核心是目标对齐，不是取消所有中间结构",
+      "thesis": "只要感知信息能围绕最终规划或控制目标联合学习，显式 BEV、检测查询、轨迹 token 乃至语言推理都可以存在于端到端系统中。",
+      "body": "早期定义强调从相机直接预测转向或航点，容易把“端到端”误解为没有结构的单网络。规划导向方法改变了这一理解：UniAD 保留检测、跟踪、地图、运动预测和规划等任务，却用统一查询和规划目标把它们联结起来。端到端的关键因此不是中间变量是否可见，而是接口能否联合优化、最终损失能否影响上游表征，以及训练时依赖的特权信息在部署时是否被妥善消除。\n\n本综述区分三种常被混用的系统：**原始控制策略**直接输出转向/油门或低层动作；**规划导向策略**输出航点、轨迹或动作分布，可保留结构化场景中间层；**VLA/Agentic 策略**将语言、视觉、记忆或工具调用纳入决策链。三者都可能端到端训练，但其延迟、可解释性、安全接口和评测方式并不相同。",
+      "referenceIds": [
+        "e2e-survey-2024",
+        "learning-by-cheating-2020",
+        "uniad-2023",
+        "vadv2"
+      ]
+    },
+    {
+      "id": "paradigm-evolution",
+      "kind": "evolution",
+      "title": "演化主线从“复制专家”转向“学习闭环互动”",
+      "thesis": "每一代方法都在修补行为克隆的同一个根因：训练数据没有充分覆盖策略自身会访问的状态。",
+      "body": "Learning by Cheating 代表了重要过渡：先让特权视角教师学习驾驶，再把能力蒸馏到只看车载传感器的学生，说明中间监督和教师信息可以帮助端到端策略跨越纯模仿的优化困难。随后，多传感器融合与规划导向网络把感知、预测和规划放入可联合训练的系统，UniAD 的贡献尤其在于让上游任务服务于规划而非各自孤立优化。\n\n近期前沿沿三条路线继续推进。第一，VADv2 不再回归唯一平均轨迹，而是学习动作概率分布；第二，CaAD、DAWN 一类工作把自车动作与其他参与者响应联合建模，试图从相关性模仿走向交互建模；第三，自博弈与在线数据聚合让策略在自己诱发的状态上学习，削弱日志数据的覆盖限制。VLA 和双过程规划则把语义知识、推理和复杂场景分流引入驾驶，但它们只有在输出可执行动作并通过闭环检验后，才构成驾驶能力而非解释性附加层。",
+      "referenceIds": [
+        "learning-by-cheating-2020",
+        "uniad-2023",
+        "e2e-survey-2024",
+        "vadv2",
+        "caad",
+        "dawn-world-action",
+        "scaling-self-play",
+        "cognitive-dual-process"
+      ]
+    },
+    {
+      "id": "design-taxonomy",
+      "kind": "taxonomy",
+      "title": "用五层设计空间拆解端到端系统",
+      "thesis": "输入、输出、学习信号、内部接口和评价闭环共同决定一个方案的能力边界，单看骨干网络不足以比较方法。",
+      "body": "第一层是**输入表征**：原始多视角图像、融合后的 BEV、向量化实体、离散视觉 token 或世界模型状态。第二层是**输出空间**：低层控制、航点、连续轨迹、离散 planning vocabulary、动作概率分布或先语义元动作再由控制器执行。第三层是**学习信号**：日志模仿、特权教师蒸馏、辅助感知任务、在线数据聚合、自博弈或强化学习。第四层是**系统接口**：完全共享表征、查询耦合的任务模块、快慢双过程，或世界模型与动作模型的交互回路。第五层是**证据闭环**：仅开环轨迹误差、日志重放、经典仿真闭环、生成式仿真闭环及真实车辆测试。\n\n这套分类能解释为什么相似架构会给出不同结论。提高轨迹采样频率会增加监督密度，也会提高输出复杂度；小模型可能因容量不足反而退化，而大 VLA 模型可能继续获益。概率规划表达了多种合理动作，但词表离散化和采样策略决定其安全上限。快慢双过程降低平均推理成本，却把风险转移到场景复杂度识别和路径切换。因而“更端到端”不是单调优势，每层都需要与计算预算和安全接口共同设计。",
+      "referenceIds": [
+        "e2e-survey-2024",
+        "uniad-2023",
+        "temporal-sampling",
+        "vadv2",
+        "cognitive-dual-process",
+        "policy-stitching"
+      ]
+    },
+    {
+      "id": "what-evidence-says",
+      "kind": "evidence",
+      "title": "闭环证据改变了哪些判断，仍留下哪些空白",
+      "thesis": "现有结果支持概率输出、交互建模和在线数据聚合的价值，但没有单一基准足以证明真实道路泛化。",
+      "body": "VADv2 的闭环实验支持一个重要判断：多模态驾驶不应被压成单一平均轨迹，动作分布和 planning vocabulary 为候选行为保留了空间。CaAD 的自车—他车联合场景建模进一步针对互动驾驶，但“联合预测”与“因果理解”仍有距离；要建立因果主张，需要明确干预自车动作并验证其他参与者响应是否随之稳定变化，而不仅是闭环分数提升。时间采样研究则提示，数据与模型容量互相制约，不能把更高采样频率视为无条件增益。\n\nScaling Self-Play 展示了从日志模仿转向策略自生成训练状态的潜力，这类证据更接近闭环分布，但仿真器覆盖和奖励定义仍限制外推。Policy Stitching 揭示了另一个常被忽略的维度：即使新感知器开环指标更高，其潜在表征变化也可能破坏下游策略，版本升级本身就是闭环风险。双过程方法用规则验证推理—动作一致性，但若只输出元动作而非完整可执行轨迹，其证据不能与完整闭环驾驶等同。总体上，这些工作推进了机制理解，却仍主要依赖模拟器和研究基准。",
+      "referenceIds": [
+        "vadv2",
+        "caad",
+        "temporal-sampling",
+        "scaling-self-play",
+        "policy-stitching",
+        "cognitive-dual-process"
+      ]
+    },
+    {
+      "id": "failure-modes",
+      "kind": "challenges",
+      "title": "性能瓶颈正在从感知精度转向因果、维护和证据",
+      "thesis": "一个高分策略仍可能因为相关性捷径、版本漂移、延迟或不确定性失配在闭环中失败。",
+      "body": "第一类难题是**因果混淆与分布偏移**。日志只展示专家访问过的状态，策略犯一次小错后会进入训练集稀疏区域；自博弈能缓解覆盖，但也可能学习仿真器特有策略。第二类是**多模态未来与安全选择**：概率分布可以表示多个可行动作，却不自动提供风险约束，低概率高后果分支仍需显式处理。第三类是**语义推理与几何控制的错位**：VLA 可以说出合理理由，但语言一致不保证厘米级轨迹和毫秒级控制正确。\n\n第四类难题是**生命周期维护**。端到端系统的隐式接口难以像传统 API 一样版本化，替换相机、感知骨干或数据配方都可能使下游策略失配。第五类是**评价不稳定**：开环 L2 误差、闭环路线完成、安全违规、舒适性和计算延迟常给出不同排序，基准的交通随机性又放大方差。最后，解释性与安全冗余仍未解决；语言理由或注意力图不是验证，保守安全盾也可能与学习策略争夺控制权。",
+      "referenceIds": [
+        "e2e-survey-2024",
+        "caad",
+        "scaling-self-play",
+        "policy-stitching",
+        "cognitive-dual-process",
+        "temporal-sampling"
+      ]
+    },
+    {
+      "id": "next-generation",
+      "kind": "outlook",
+      "title": "下一代端到端系统将围绕干预、不确定性和版本契约设计",
+      "thesis": "研究目标应从拟合专家轨迹升级为：在干预下预测后果、在不确定时切换策略、在升级后保持可验证兼容。",
+      "body": "近期可行方向是把概率规划与交互式世界模型结合：策略提出多个动作假设，世界模型预测他车和环境响应，风险模块在明确的可信时域内筛选，而不是让单次生成结果直接接管控制。训练上，自博弈和数据聚合应与真实日志校准共存，持续记录策略诱发状态与现实状态的差异。VLA/Agentic Driving 更适合承担长时任务分解、语义异常识别和工具调用，低层轨迹仍应由满足时延与几何约束的模块执行；复杂度或不确定性触发“慢思考”，比所有场景都运行大模型更可控。\n\n系统工程上，需要为隐式表征建立**版本契约**：通过锚点数据、表征对齐、闭环回归测试和可回滚策略证明升级兼容。评价也应从单榜单转向证据矩阵，至少同时报告开环拟合、闭环任务、安全违规、扰动鲁棒性、尾延迟和跨版本回归。最终可信的端到端系统可能并非结构最简单的系统，而是能够联合优化、显式表达不确定性，并允许安全层审计和拒绝的系统。",
+      "referenceIds": [
+        "uniad-2023",
+        "vadv2",
+        "caad",
+        "scaling-self-play",
+        "policy-stitching",
+        "cognitive-dual-process"
+      ]
+    }
+  ],
+  "takeaways": [
+    "端到端描述的是信息流和目标对齐，不要求删除所有可解释中间结构。",
+    "行为克隆的核心局限是训练分布不包含策略犯错后会访问的状态，自博弈和在线数据聚合直接针对这一缺口。",
+    "动作概率分布比单条平均轨迹更适合多模态驾驶，但仍需风险约束和闭环验证。",
+    "VLA 的语言推理只有与可执行动作、延迟预算和闭环结果一致时，才构成驾驶证据。",
+    "感知或数据升级会破坏隐式策略接口；版本兼容应成为端到端研究的一等指标。"
+  ],
+  "references": [
+    {
+      "id": "e2e-survey-2024",
+      "title": "End-to-End Autonomous Driving: Challenges and Frontiers",
+      "year": 2024,
+      "venue": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+      "url": "https://doi.org/10.1109/TPAMI.2024.3435937",
+      "publicationType": "survey"
+    },
+    {
+      "id": "uniad-2023",
+      "title": "Planning-Oriented Autonomous Driving",
+      "year": 2023,
+      "venue": "CVPR",
+      "url": "https://openaccess.thecvf.com/content/CVPR2023/html/Hu_Planning-Oriented_Autonomous_Driving_CVPR_2023_paper.html",
+      "publicationType": "method"
+    },
+    {
+      "id": "learning-by-cheating-2020",
+      "title": "Learning by Cheating",
+      "year": 2020,
+      "venue": "Conference on Robot Learning",
+      "url": "https://proceedings.mlr.press/v100/chen20a.html",
+      "publicationType": "method"
+    },
+    {
+      "id": "caad",
+      "title": "Causality-Aware End-to-End Autonomous Driving via Ego-Centric Joint Scene Modeling",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.13646",
+      "publicationType": "method",
+      "localPaperId": "caad-causality-aware-driving"
+    },
+    {
+      "id": "dawn-world-action",
+      "title": "The DAWN of World-Action Interactive Models",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.11550",
+      "publicationType": "method",
+      "localPaperId": "dawn-world-action-model"
+    },
+    {
+      "id": "policy-stitching",
+      "title": "A Stitch in Time Saves Nine: Preserving Policy Compatibility Under Perception Updates in End-to-End Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.21509",
+      "publicationType": "method",
+      "localPaperId": "policy-stitching-e2e-driving"
+    },
+    {
+      "id": "scaling-self-play",
+      "title": "Scaling Self-Play for End-to-End Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.19641",
+      "publicationType": "method",
+      "localPaperId": "scaling-self-play-e2e-driving"
+    },
+    {
+      "id": "temporal-sampling",
+      "title": "Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.10388",
+      "publicationType": "method",
+      "localPaperId": "temporal-sampling-e2e-trajectory"
+    },
+    {
+      "id": "vadv2",
+      "title": "VADv2: End-to-End Vectorized Autonomous Driving via Probabilistic Planning",
+      "year": 2026,
+      "venue": "ICLR",
+      "url": "https://hgao-cv.github.io/VADv2/",
+      "publicationType": "method",
+      "localPaperId": "vadv2-probabilistic-planning"
+    },
+    {
+      "id": "cognitive-dual-process",
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "publicationType": "method",
+      "localPaperId": "cognitive-dual-process-driving"
+    }
+  ]
+}
