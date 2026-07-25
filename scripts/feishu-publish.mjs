@@ -211,10 +211,11 @@ function formatPaperBullet(paper, child) {
 }
 
 function directionLink(parentDoc, tag) {
+  const fragment = encodeURIComponent(tag.label);
   if (parentDoc?.url) {
-    return `${parentDoc.url}#${tag.label}`;
+    return `${parentDoc.url}#${fragment}`;
   }
-  return `#${tag.label}`;
+  return `#${fragment}`;
 }
 
 function buildDigestMarkdown(model, childDocsByPaperId = {}, parentDoc = null) {
