@@ -6,7 +6,7 @@
   "title": "Real2Sim: A Physics-driven and Editable Gaussian Splatting Framework for Autonomous Driving Scenes",
   "source": "arXiv:2605.13591 / https://arxiv.org/abs/2605.13591",
   "authors": ["Kaicong Huang", "Talha Azfar", "Weisong Shi", "Ruimin Ke"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Rensselaer Polytechnic Institute", "University of Delaware"],
   "comment": "Real2Sim 把 4D Gaussian Splatting 和可微 MPM 物理求解结合，目标是让驾驶场景重建不仅可看，还能编辑、碰撞和生成可用于下游测试的 corner cases。"
 }
 ---

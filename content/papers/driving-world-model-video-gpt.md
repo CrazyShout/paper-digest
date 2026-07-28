@@ -7,7 +7,7 @@
   "title": "DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT",
   "source": "arXiv:2412.19505 / https://arxiv.org/abs/2412.19505",
   "authors": ["Xiaotao Hu", "Wei Yin", "Mingkai Jia", "Junyuan Deng", "Xiaoyang Guo", "Qian Zhang", "Xiaoxiao Long", "Ping Tan"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["The Hong Kong University of Science and Technology", "Horizon Robotics"],
   "comment": "[GPT改] 修正原版 Figure 2 图注错配：x2 是 vanilla GPT vs temporal-aware GPT 推理示意，不是生成质量对比；改用 Figure 1 和 Figure 4。"
 }
 ---

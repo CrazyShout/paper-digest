@@ -1,207 +1,1079 @@
 {
-  "version": 1,
+  "version": 3,
   "id": "world-models",
-  "title": "驾驶世界模型：从视频生成器到可交互的决策环境",
-  "subtitle": "沿状态表征、动作条件、长时 rollout、规划用途与仿真准入重构世界模型谱系",
-  "abstract": "驾驶世界模型的价值不在于生成一段“像真的”视频，而在于预测不同动作会带来怎样的未来，并诚实表达哪些未来超出其能力边界。领域正从像素视频生成走向结构化占用预测、世界—动作联合推理和实时闭环仿真；但视觉保真、物理有效、规划有用与安全 verdict 可迁移仍是四个不能互相替代的证据层级。",
-  "reviewedAt": "2026-07-26",
-  "searchWindow": "2023–2026，覆盖驾驶视频生成、结构化未来、世界—动作模型与闭环仿真",
+  "title": "驾驶世界模型：从生成未来到可准入的闭环证据",
+  "subtitle": "会生成逼真视频只是起点；内容生成、未来预测、规划、交互仿真和测试裁判是证据义务不同的用途，不能用一个总分互相替代。",
+  "abstract": "驾驶世界模型正在从动作条件视频生成扩展到点云、占用、潜变量、结构引导渲染、策略学习和闭环仿真。但“世界模型”覆盖的五种用途不是一条所有方法都必须依次攀升的成熟度阶梯：内容生成器、未来预测器、规划模型和交互仿真器服务不同任务，只有当系统要充当测试裁判时，才需要从输出质量一路升级到适用包络、失效归因和现实 verdict 迁移的准入证据。本综述据此用“用途矩阵 + 证据矩阵”重组 2021 至 2026 年的基础工作、代表性方法、本库论文和正式评测，分别核验视觉质量、结构正确、动作跟随、规划收益、环境反应和裁决有效性。现有证据支持世界模型用于数据生成、预测先验、受限规划训练和若干闭环原型；尚不足以把逼真视频、可控轨迹或单一仿真分数解释为物理规律恢复、因果反事实或通用安全裁决。",
+  "reviewedAt": "2026-07-28",
+  "searchWindow": "2021-01-01 至 2026-07-28，覆盖驾驶前向模型、视频生成、点云与占用预测、潜变量动力学、结构引导渲染、world-action 模型、实时闭环仿真、正式评测、安全场景生成和模拟器准入",
   "researchQuestions": [
-    "什么条件使一个视频生成模型成为世界模型，而不只是条件式渲染器？",
-    "像素、离散 token、BEV/occupancy 和混合表征在可控性、物理性与规划用途上如何取舍？",
-    "长时 rollout 的视觉一致、动作跟随和真实动力学一致应如何分别评测？",
-    "世界模型何时可以用于训练、规划或安全测试，何时必须拒绝给出结论？"
+    "内容生成器、未来预测器、规划模型、交互仿真器和测试裁判分别需要什么最低证据，为什么只有测试裁判需要完整的递进准入链？",
+    "像素、点云、占用、潜变量和结构引导渲染路线分别保留了哪些驾驶状态，又在哪些长时、遮挡和反事实条件下失真？",
+    "动作作为条件、动作作为联合预测目标和真实闭环交互有何区别，如何检测模型忽略动作或只复现训练日志相关性？",
+    "视觉质量、结构正确、动作跟随、规划收益和安全 verdict 应如何由不同数据与指标独立测量？",
+    "安全关键场景生成与世界模型模拟器需要哪些现实锚点、适用包络和拒绝条件，才可进入测试结论链？"
   ],
   "sections": [
     {
-      "id": "definition-and-boundary",
+      "id": "scope",
       "kind": "scope",
-      "title": "世界模型的最低门槛是对行动后果建模",
-      "thesis": "只有当模型表示状态转移、接收可执行动作并对未来不确定性负责时，它才超出一般驾驶视频生成。",
-      "body": "“世界模型”在自动驾驶中覆盖的对象差异很大：有的方法从文本、地图或首帧生成视频，有的方法预测 BEV/occupancy，有的方法让规划动作与未来状态循环交互，还有的方法把生成器包装成闭环仿真器。为了避免概念膨胀，本综述采用功能定义：模型至少应近似某个状态在动作条件下的转移，并允许检验不同动作是否产生可区分、方向正确的后果。\n\n据此需要区分四种用途。**内容生成器**提供多样场景或训练数据；**预测模型**估计未来观测或结构状态；**规划世界模型**支持候选动作比较；**闭环仿真器**持续接收策略动作并返回新观测。后一个用途对前一个用途提出更强要求。GAIA-1 和 DriveDreamer 奠定了大规模动作条件驾驶生成的代表路线，近年的 DrivingWorld、Vista、EponaV2 等继续改善长时、控制与未来推理，但画面可控并不自动授予仿真裁决资格。",
+      "title": "范围与用途矩阵：先说明模型被拿来做什么",
+      "thesis": "驾驶世界模型不是单一能力，五种用途也不是线性等级；每种用途有自己的最低证据，测试裁判才需要额外通过递进的准入链。",
+      "body": "本综述区分五种用途。内容生成器回答“能否合成适合扩充数据或展示的样本”；未来预测器回答“给定历史与候选动作，未来传感器或场景状态是否在声明时域内正确”；规划模型回答“世界状态或想象 rollout 是否改善策略学习与决策”；交互仿真器回答“被测系统动作能否改变后续观测，环境参与者是否按明确模型响应”；测试裁判则必须进一步证明碰撞、离路或风险排序等 verdict 在声明的 ODD、动作包络和时域内与现实结论一致。这五类用途可以并行存在，内容生成器不必成为规划器，潜变量规划模型也不必生成相机视频；不能把它们排成一个总分。\n\nWorld on Rails 把记录日志视为不受自车干预的世界轨道，说明低成本前向预测可以支持驾驶学习，也明确暴露非反应环境的边界。GAIA-1 与 DriveDreamer 证明真实日志可支撑可控内容生成，Think2Drive 则让潜在动力学直接服务 CARLA 中的策略训练。UniSim 可根据新的自车轨迹和脚本化参与者轨迹重渲染相机与 LiDAR，但没有学习其他交通参与者对自车动作的响应；因此它是神经传感器闭环的重要实例，不等于完整多主体行为世界。Scenario Dreamer、DriveArena 和 ReactSim-Bench 才把参与者行为、交通管理或偏离日志后的反应单独拉进评测。\n\n因此，本综述只在论文确实测量动作干预时使用“动作跟随”，只在闭环输入持续更新世界状态时使用“交互仿真器”，只在现实锚定的 verdict 一致性成立时讨论“测试裁判”。“physics-aware”仅保留为个别论文的自称或结构约束描述，不外推为物理规律已恢复；“causal”也不用于仅从观察日志学习到的相关性预测。",
       "referenceIds": [
-        "world-model-survey-2024",
+        "world-on-rails-2021",
+        "world-models-survey-2024",
         "gaia1-2023",
         "drivedreamer-2024",
-        "drivingworld",
-        "vista",
-        "eponav2"
+        "think2drive-2024",
+        "unisim-2023",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "reactsim-bench-2026",
+        "world-model-admissibility-2026"
       ]
     },
     {
-      "id": "from-video-to-interaction",
+      "id": "evolution",
       "kind": "evolution",
-      "title": "演化主线从生成未来画面，转向比较行动假设",
-      "thesis": "模型能力的跃迁来自更强动作条件和更适合决策的状态，而不只是分辨率与视频时长增长。",
-      "body": "早期驾驶世界模型主要借鉴视频预测和生成模型，以历史帧、文本、地图和自车控制为条件合成未来。GAIA-1 展示了规模化生成模型对驾驶场景概念、动作和事件的学习能力，DriveDreamer 强化了真实数据驱动的可控生成。随后，DrivingWorld 采用离散视频 token 与自回归预测追求长时一致，Vista 强调跨场景泛化、动作控制和多种下游用途。\n\n第二条路线把状态从像素迁移到更接近几何和规划的表征。CascadeOcc 用级联 VQ 表示由粗到细预测 3D occupancy，试图减少像素生成对物理结构的遮蔽；EponaV2 同时引入 RGB、深度、语义等未来监督。第三条路线进一步联结世界与行动：DAWN 不再让动作只是单向条件，而是让世界假设和动作假设递归修正；OmniDreams 则把实时、多视角和闭环接口推向工业规模。与此同时，准入研究提醒领域：随着用途从可视化走向测试，评价标准必须从“像不像”升级到“对动作是否正确、有效多久、结论能否迁移”。",
+      "title": "技术演进：从日志前向预测到世界与动作联合建模",
+      "thesis": "路线演进不是把视频生成得越来越清晰，而是逐步补入多视角一致性、显式三维状态、动作条件、规划接口和闭环速度。",
+      "body": "2021 至 2023 年建立了两条起点：World on Rails 用非反应日志世界学习前向状态与驾驶，GAIA-1 用大规模驾驶数据展示动作、文本和视觉条件的视频生成。UniSim 随后从真实日志重建可编辑传感器环境，使新的自车或脚本化参与者轨迹改变相机和 LiDAR 输出；它推进了神经传感器闭环，但没有学习多主体反应。\n\n2024 年同时出现表示与用途分流。DriveDreamer 和 Drive-WM 用结构条件、多视角未来连接视频生成与动作或规划，Vista 扩展控制接口，DrivingWorld 用 GPT 式时空 token 预测把可控视频延长到论文报告的 40 秒以上；Copilot4D 和 OccWorld 分别改用点云与三维占用。Think2Drive 则走另一条路线：在 CARLA-v2 的潜在世界中训练强化学习规划器，重点不是传感器复现而是策略学习效率。DrivingDojo 补充动作与知识数据。这些工作共同说明表示、更长或更清晰的视频和规划收益是不同问题，任何一项都不能代替动作反事实或安全裁决。\n\n2025 年开始单独审计控制、行为和仿真。ACT-Bench 直接测动作指令是否在生成视频中兑现；Scenario Dreamer 生成场景并滚动数据驱动参与者行为，DriveArena 把交通管理器和生成式传感器闭合成模块化平台。LAW、Epona 与 DrivingGPT 分别探索潜空间规划和世界-动作联合建模。2026 年的路线进一步分叉：DAWN、DriveDreamer-Policy 与 DriveWAM 把视频生成和动作策略放进统一或相互条件化的模型，EponaV2 用未来图像、深度和语义监督连接预测与规划；GenieDrive 与已发表于 IEEE Signal Processing Letters 的 CascadeOcc 强化显式 4D occupancy，M4World 则把十相机、LiDAR、对象控制和分钟级流式生成放进同一系统。World Engine 把日志失败发现、3DGS 重建、行为世界模型和强化后训练组成闭环，在公开 nuPlan 与作者报告的工业系统上检验策略改进；OmniDreams 展示实时多视角闭环，ReactSim-Bench 用偏离日志的自车行为专门测量他车反应。DrivingGen、WorldLens 与准入框架进一步把“能生成”“能响应”和“能被信任给出测试 verdict”拆开。CascadeOcc 已正式发表，但其余多项 2026 工作仍是预印本、技术报告或私有数据证据，技术新颖性不能替代独立复现。",
       "referenceIds": [
+        "world-on-rails-2021",
         "gaia1-2023",
+        "unisim-2023",
         "drivedreamer-2024",
-        "drivingworld",
-        "vista",
-        "cascadeocc",
-        "eponav2",
-        "dawn",
-        "omnidreams",
-        "world-model-admissibility"
+        "drive-wm-2024",
+        "drivingworld-2024",
+        "vista-2024",
+        "copilot4d-2024",
+        "occworld-2024",
+        "think2drive-2024",
+        "drivingdojo-2024",
+        "act-bench-2025",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "law-2025",
+        "epona-2025",
+        "drivinggpt-2025",
+        "dawn-2026",
+        "drivedreamer-policy-2026",
+        "drivewam-2026",
+        "eponav2-2026",
+        "cascadeocc-2026",
+        "m4world-2026",
+        "world-engine-2026",
+        "geniedrive-2026",
+        "omnidreams-2026",
+        "drivinggen-2026",
+        "worldlens-2026",
+        "reactsim-bench-2026",
+        "world-model-admissibility-2026"
       ]
     },
     {
-      "id": "model-taxonomy",
+      "id": "taxonomy",
       "kind": "taxonomy",
-      "title": "五个维度决定世界模型究竟能做什么",
-      "thesis": "表征、转移机制、条件信号、下游用途和证据等级应联合报告，单一“生成质量”类别无法容纳领域差异。",
-      "body": "第一维是**状态表征**：像素/视频最适合提供传感器级观测，离散 token 支持自回归序列建模，BEV 与 occupancy 更直接表达几何和可通行空间，混合表征则尝试兼顾规划和渲染。第二维是**转移机制**：自回归 token、扩散、流模型或结构化动力学，各自在长时漂移、采样速度和多模态表达上取舍。第三维是**条件信号**：自车轨迹、低层控制、文本、地图、其他交通参与者及历史状态；只有动作条件可辨识，模型才适合行动比较。\n\n第四维是**用途**：数据增强、反事实预测、规划代价/奖励、策略训练、闭环测试。第五维是**证据等级**：视觉保真与时序一致属于生成层；动作跟随与几何误差属于动力学代理层；下游规划提升属于任务层；安全 verdict 与现实一致才属于测试迁移层。相同模型在较低层用途上有效，并不意味着它能进入更高层。例如高质量视频可用于训练感知，却可能因动作响应错误而不适合比较规划策略。",
+      "title": "方法谱系：表示、转移、动作接口与用途必须分轴比较",
+      "thesis": "像素、点云、占用、潜变量和结构渲染是状态表示选择；它们与转移模型、动作接口和最终用途正交，不能用一个标签替代完整方法描述。",
+      "body": "表示轴包括像素、点云、占用、潜变量和显式场景结构。GAIA-1、DriveDreamer、Drive-WM、DrivingWorld 与 Vista 保留纹理和语义细节，但高视觉分数或 40 秒以上生成时长可能掩盖深度、运动和遮挡错误；Copilot4D 的点云 token、OccWorld 与 CascadeOcc 的语义占用更容易直接测量几何，却受稀疏、量化、级联误差和体素分辨率限制。M4World 同时生成多视角视频与 LiDAR，并加入对象级控制，适合研究跨模态状态一致性，但私有车队数据和生成指标限制了可复核性。LAW 与 Think2Drive 学习面向规划或强化学习的潜状态，不要求逐像素还原，必须通过策略收益和失效分析证明状态保留了什么。GenieDrive 先预测 4D occupancy 再渲染视频；其“physics-aware”在此只表示结构约束，不表示守恒定律或碰撞动力学已经验证。\n\n转移和动作接口是另一轴。Vista 与 Drive-WM 把轨迹或控制作为未来生成条件；DrivingGPT 用多模态自回归序列统一世界与规划；DAWN 在推理中让世界假设与动作去噪递归反馈。DriveWAM 从预训练视频 DiT 迁移动态先验并联合产生动作，EponaV2 用未来图像、深度与语义作为规划中间监督。Epona 并非两个分支递归互相条件化：其 VisDiT 与 TrajDiT 是共享时序潜变量、分别生成视频与轨迹的扩散头，外部轨迹可作为视频条件。共享表示、联合训练或多任务未来监督可以减少接口损失，却不自动证明世界对干预动作敏感，也不保证他车响应正确。\n\n交互机制还需单列。UniSim 根据自车与脚本化参与者轨迹更新传感器，不学习他车反应；OmniDreams 和 DriveArena 在循环中持续消费规划输出，Scenario Dreamer 生成闭环参与者行为。World Engine 则把可编辑 3DGS 传感器环境、行为世界模型和强化后训练耦合起来，重点是让策略从合成长尾交互中学习，而不是让世界模型直接充当测试裁判。ACT-Bench 检查自车动作兑现，ReactSim-Bench 把自车控制与环境智能体控制分离，专门检查偏离日志后的响应。只有同时报告传感器更新、参与者响应、时域和越界条件，系统才是可审计的交互仿真候选；这仍不等于现实 verdict 有效。",
       "referenceIds": [
-        "world-model-survey-2024",
-        "drivingworld",
-        "vista",
-        "cascadeocc",
-        "eponav2",
-        "dawn",
-        "world-model-admissibility"
-      ]
-    },
-    {
-      "id": "evidence-boundaries",
-      "kind": "evidence",
-      "title": "视觉、几何、规划和测试证据必须逐层阅读",
-      "thesis": "现有工作证明了可控生成与结构预测快速进步，却尚未证明世界模型可以普遍替代真实环境或经典仿真。",
-      "body": "DrivingWorld 的长时自回归视频、Vista 的多用途可控生成和 EponaV2 的综合未来监督，共同说明驾驶生成正在摆脱短片段与弱控制；但视觉指标、演示视频和动作条件成功只支持生成能力。CascadeOcc 以 occupancy 把未来预测连接到几何和规划，是更强的下游证据，却仍依赖基准分布和预测时域。DAWN 的世界—动作递归为互动决策提供了更合理的计算图，但目前证据主要来自研究基准，不能自动等同于真实交通中的因果反应。\n\nOmniDreams 提供实时多视角闭环生成与工业系统集成的证据，显示世界模型开始成为可运行基础设施；其闭源组件、训练数据和代理指标也限制独立复核。最关键的反证来自世界模型准入研究：Vista 与另一模型的视觉质量排序，可以与动作跟随误差和可信 rollout 时域排序相反。这并非否定生成质量，而是证明不同证据层不可互换。当前合理结论是：世界模型已适合内容生成、训练增广和受限预测；用于规划需要动作响应和不确定性校准；用于安全测试还需要包络声明、仿真器失效归因及现实 verdict 迁移。",
-      "referenceIds": [
-        "drivingworld",
-        "vista",
-        "cascadeocc",
-        "eponav2",
-        "dawn",
-        "omnidreams",
-        "world-model-admissibility"
-      ]
-    },
-    {
-      "id": "unresolved-risks",
-      "kind": "challenges",
-      "title": "长时漂移只是表象，根本问题是不可辨识与不可校准",
-      "thesis": "如果训练数据没有覆盖动作干预和罕见物理事件，再大的生成模型也可能学到外观相关性而非可用于决策的动力学。",
-      "body": "第一项挑战是**动作因果可辨识性**。自然驾驶日志中的动作与场景高度相关，模型可能忽略动作仍生成看似合理的未来；需要反事实动作、受控干预或专门动作跟随基准检验。第二是**多模态未来与不确定性**：其他参与者可能有多种合理反应，单次逼真 rollout 会掩盖尾部风险；模型需要输出分布、校准置信并允许拒绝。第三是**长时误差累积**：自回归、扩散和结构预测都会因状态偏差进入训练分布外区域，视频连续不代表几何与动力学没有漂移。\n\n第四是**物理与交互细节**。碰撞接触、轮胎/路面、遮挡中新目标和罕见交通协商在日志中稀缺，却直接决定安全 verdict。第五是**模型利用与循环证明**：策略可能发现生成器的漏洞，用世界模型训练并由同一模型评测会放大共同偏差。第六是**可复现和安全治理**：训练数据来源、隐私、闭源规模、潜在后门及生成内容真实性都影响部署。没有独立现实锚点时，模型越像通用仿真器，越需要明确其不能裁决的区域。",
-      "referenceIds": [
-        "world-model-survey-2024",
         "gaia1-2023",
+        "drive-wm-2024",
         "drivedreamer-2024",
-        "dawn",
-        "omnidreams",
-        "world-model-admissibility"
+        "drivingworld-2024",
+        "vista-2024",
+        "copilot4d-2024",
+        "occworld-2024",
+        "law-2025",
+        "think2drive-2024",
+        "geniedrive-2026",
+        "epona-2025",
+        "drivinggpt-2025",
+        "dawn-2026",
+        "drivedreamer-policy-2026",
+        "drivewam-2026",
+        "eponav2-2026",
+        "cascadeocc-2026",
+        "m4world-2026",
+        "world-engine-2026",
+        "unisim-2023",
+        "omnidreams-2026",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "act-bench-2025",
+        "reactsim-bench-2026"
       ]
     },
     {
-      "id": "credible-world-models",
-      "kind": "outlook",
-      "title": "下一代世界模型需要双重表征、干预基准和准入证书",
-      "thesis": "面向决策的世界模型应同时提供结构化可验证状态与传感器级观测，并把不确定性和拒绝写入接口。",
-      "body": "第一条研究路线是**结构—渲染双层模型**：用 occupancy、地图拓扑、对象状态或其他结构表征维持几何与交通约束，再由生成模型渲染多视角传感器观测；两层通过一致性检查相互约束。第二条是**行动干预基准**：对相同初始场景施加成组的转向、制动和策略动作，测量后果方向、幅度、其他参与者响应与可信时域，而非只比较单条真实视频。第三条是**世界—动作联合推理**：让策略提出多种动作，模型返回多模态后果与风险，同时用现实日志和经典仿真校准，避免单一生成器垄断真值。\n\n用于测试时，还需要类似仿真器认证的**准入证书**：声明支持的运行设计域、动作范围、最长可靠 rollout、分布外拒绝、已知失效和现实 verdict 校准。世界模型在证书之外应返回“不知道”。这会把世界模型与端到端驾驶、Agentic Driving 和自动驾驶测试真正连接起来：大模型负责生成假设和长时语义推演，结构模型维护几何与物理约束，测试框架负责验证其结论是否有资格进入工程决策。",
+      "id": "evidence",
+      "kind": "evidence",
+      "title": "证据矩阵：按用途报告数据、反应性、时域与审计性",
+      "thesis": "视觉质量、结构正确、动作跟随、规划收益、环境反应和安全 verdict 是相互正交的证据维度；只有测试裁判需要把这些维度组织成递进准入。",
+      "body": "每项结果至少要标注四个上下文：数据来自真实日志还是仿真，环境是开环、伪闭环还是真正反应式，rollout 时域多长，以及输入、指标和失败样本能否独立审计。视频内容生成可用 FID、FVD、LPIPS、时序一致性和人工偏好；结构预测要另测深度、占用、点云距离、对象轨迹、多视角一致性和碰撞空间。动作跟随要求固定或匹配初态，改变转向、速度、轨迹或指令，并测偏差、单调性、训练分布外动作和无动作差异负对照。ACT-Bench 表明视觉质量高并不保证动作指令兑现。\n\n规划用途必须单独报告开环轨迹误差、CARLA 等反应式闭环中的碰撞/离路/进度、策略排序和跨规划器复现。LAW、Think2Drive、Drive-WM 与 DrivingGPT 提供不同层面的规划证据；EponaV2 在 NAVSIM 报告未来表征辅助规划，DriveWAM 也在 NAVSIM/PhysicalAI 报告动作策略结果，但二者仍是非反应式或受限闭环基准。只有等数据、等算力的消融和反应式闭环复测，才能把收益归因于世界模型。CascadeOcc 的占用预测与规划、M4World 的长尾对象增强分别提供结构和数据用途证据，却没有建立现实闭环因果链。World Engine 在公开 nuPlan 长尾场景中报告强化后训练的闭环改善，并由作者报告在超过一万条工业仿真场景和约 200 km 上海道路测试中的收益；公开部分与工业/道路部分必须分开解读，后两者缺少可独立复现的数据、平台与同初态对照，200 km 也不足以估计开放道路稀有事故率。交互用途还要确认环境是否响应自车：UniSim 的脚本轨迹更新不同于 Scenario Dreamer 的数据驱动参与者 rollout，DriveArena 的交通管理器闭环也不同于 ReactSim-Bench 对偏离日志后反应能力的专门测量。\n\n当系统要给出安全 verdict 时，才进入 L0–L4 准入链：L0 输出质量，L1 动作响应稳健性，L2 声明动作包络、最大时域与分布外拒绝，L3 失效归因，L4 现实 verdict 迁移。现有准入论文只以 Vista、Epona 支撑 L0/L1，并讨论 L2 的时域边界；分布外拒绝、L3 和 L4 尚未完成，也不是行业强制标准。DrivingGen 与 WorldLens 诊断模型输出，SafeGen 生成测试假设，均不能签发现实安全结论。",
       "referenceIds": [
-        "cascadeocc",
-        "eponav2",
-        "dawn",
-        "omnidreams",
-        "world-model-admissibility"
+        "copilot4d-2024",
+        "occworld-2024",
+        "geniedrive-2026",
+        "vista-2024",
+        "act-bench-2025",
+        "drivingdojo-2024",
+        "epona-2025",
+        "drivinggpt-2025",
+        "dawn-2026",
+        "drivedreamer-policy-2026",
+        "drivewam-2026",
+        "eponav2-2026",
+        "cascadeocc-2026",
+        "m4world-2026",
+        "world-engine-2026",
+        "law-2025",
+        "think2drive-2024",
+        "drive-wm-2024",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "reactsim-bench-2026",
+        "drivinggen-2026",
+        "worldlens-2026",
+        "world-model-admissibility-2026",
+        "safegen-2026"
+      ]
+    },
+    {
+      "id": "challenges",
+      "kind": "challenges",
+      "title": "共识、冲突与证据缺口",
+      "thesis": "领域已形成结构显式化、动作条件和任务评测的方向性共识，但对真实反事实、他车响应、长时稳定和安全裁决仍缺少可重复证据。",
+      "body": "共识是单一视频质量不足以评价驾驶未来，显式点云/占用或潜状态必须与用途证据配合；动作也不能只作为标签，要由匹配初态的干预测试确认。冲突在于表示与用途取舍：像素模型保留观感却容易产生结构幻觉，点和占用更易测量几何却损失传感器细节，潜模型对规划有效但难解释。CascadeOcc、EponaV2、DriveWAM 与 M4World 扩大了结构、动作和多模态能力，但没有一种表示在所有用途、时域和 ODD 上占优。\n\n观察日志把自车动作、道路、交通密度和驾驶员选择纠缠在一起。ACT-Bench 只检验生成视频对自车指令的响应，仍不回答他车如何反应；UniSim 的参与者是脚本化轨迹。Scenario Dreamer 提供数据驱动行为，DriveArena 用交通管理器更新布局，ReactSim-Bench 则用 2,636 个偏离日志的场景直接比较他车反应，但这些证据仍局限于各自数据、行为模型和指标。真实同初态、多动作、多主体反事实仍极少。\n\n长时 rollout 会积累视角漂移、对象身份切换、占用消散和动作误差；实时生成还可能以分辨率、视域或传感器覆盖换取速度。OmniDreams 的闭环实时性受技术报告、闭源资产和硬件条件限制；M4World 的分钟级多模态生成基于私有数据，DriveWAM 与 EponaV2 也尚无正式同行评审或现实闭环复现，CascadeOcc 虽已正式发表，证据仍限于公开占用/规划协议。World Engine 的公开 nuPlan 结果可复核范围强于纯私有演示，但生产仿真、道路路线和策略内部数据不可独立审计，约 200 km、三次运行（两条路线）及单次基线干预不足以证明稀有风险普遍下降；3DGS 大视角偏移和行为模型覆盖也仍是适用包络。WorldLens 与 DrivingGen 尚不能替代跨城市、天气、传感器和策略的现实对照；准入框架也只是工作坊接收的早期预印本。最大缺口不是新增综合分，而是公开模型错误如何传播为规划和 verdict 变化的可审计链，并允许系统在超出证据包络时拒绝裁决。",
+      "referenceIds": [
+        "world-models-survey-2024",
+        "copilot4d-2024",
+        "occworld-2024",
+        "law-2025",
+        "geniedrive-2026",
+        "drivingdojo-2024",
+        "act-bench-2025",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "reactsim-bench-2026",
+        "dawn-2026",
+        "drivewam-2026",
+        "eponav2-2026",
+        "cascadeocc-2026",
+        "m4world-2026",
+        "world-engine-2026",
+        "omnidreams-2026",
+        "drivinggen-2026",
+        "worldlens-2026",
+        "world-model-admissibility-2026"
+      ]
+    },
+    {
+      "id": "outlook",
+      "kind": "outlook",
+      "title": "研究议程：双状态模型、干预基准与用途限定准入",
+      "thesis": "下一步应把可观测渲染、结构状态、动作干预和裁决资格组织成可审计系统，让模型在证据不足时缩小用途或拒绝给出安全结论。",
+      "body": "第一条路线检验“结构指标是否真的增加决策解释力”。在固定训练数据和参数预算下训练纯视频模型、CascadeOcc 式占用模型、EponaV2 式多任务未来模型与结构 + 渲染模型，在预注册的留出城市和新传感器 rig 上，用嵌套回归检验占用、深度、语义、对象持久性和几何误差在控制 FVD 后能否显著预测规划失败；若增量解释度的置信区间覆盖零，或只在同域成立，就拒绝“结构改进带来驾驶有效性”的主张。GenieDrive 提供渲染起点，M4World 的视频/LiDAR双通道、点云、地图和潜状态探针可作为并行结构通道。\n\n第二条路线检验“模型是否学习动作干预和环境反应”。对同一初态生成匹配可执行动作，比较等数据、等算力的动作条件模型、DriveWAM 式 world-action 模型与 action-blind 基线；分别测自车动作兑现、他车让行/冲突响应、长时稳定和规划结果。ACT-Bench 可测第一项，ReactSim-Bench 可测第二项，Scenario Dreamer 与 DriveArena 可承载闭环；World Engine 可作为“合成交互是否真正改善策略”的系统基线，但应公开 3DGS 越界率、行为模型覆盖与训练奖励，且把公开 nuPlan、私有工业仿真和道路测试分层报告。若 action-blind 基线非劣，反应方向错误，或效应在留出城市/行为模型上消失，就拒绝“交互世界”主张。\n\n第三条路线检验“仿真 verdict 能否迁移”。预先声明 ODD、传感器、动作包络、最大时域、参与者模型、拒绝规则和目标策略集合，用仿真对策略风险排序，再在独立 HIL 或封闭场地复测；以预注册的秩相关阈值、错误接受率和置信下界决定准入。SafeGen 只能提出高价值测试假设，OmniDreams 可执行实时传感器 rollout，DrivingGen 与 WorldLens 负责分项诊断。若现实排序低于阈值、失败无法归因，或越界样本未被拒绝，系统不得充当测试裁判，只能退回生成、预测、规划辅助或实验仿真用途。",
+      "referenceIds": [
+        "geniedrive-2026",
+        "copilot4d-2024",
+        "occworld-2024",
+        "law-2025",
+        "epona-2025",
+        "drivinggpt-2025",
+        "dawn-2026",
+        "drivedreamer-policy-2026",
+        "drivewam-2026",
+        "eponav2-2026",
+        "cascadeocc-2026",
+        "m4world-2026",
+        "world-engine-2026",
+        "act-bench-2025",
+        "scenario-dreamer-2025",
+        "drivearena-2025",
+        "reactsim-bench-2026",
+        "safegen-2026",
+        "omnidreams-2026",
+        "drivinggen-2026",
+        "worldlens-2026",
+        "world-model-admissibility-2026"
       ]
     }
   ],
   "takeaways": [
-    "视频生成只有在动作条件可辨识并能预测行动后果时，才跨过驾驶世界模型的最低门槛。",
-    "像素、token 与 occupancy 不是简单替代关系；规划常需要结构状态，闭环感知又需要传感器级观测。",
-    "视觉保真、动作跟随、下游规划增益和现实安全 verdict 是四个不同证据层级。",
-    "长时 rollout 必须同时报告误差增长、不确定性和最大可信时域，不能只展示连续视频。",
-    "用于安全测试的世界模型应具备准入、失败归因和拒绝机制，而不是在所有场景强制给出裁决。"
+    "驾驶世界模型应先按用途定位：内容生成、未来预测、规划、交互仿真和测试裁判是五类并行用途，不是一条统一成熟度阶梯。",
+    "视觉、结构、动作、规划、环境反应和安全 verdict 是证据矩阵；只有测试裁判需要完整的 L0–L4 递进准入链。",
+    "像素、点云、占用、潜变量和结构渲染各自保留不同状态，没有一种表示能够自动同时满足生成、规划和安全测试。",
+    "把动作输入模型或联合输出动作，并不自动构成交互；还需证明动作改变世界、环境响应自车且长时闭环不沿日志惯性漂移。",
+    "正式 benchmark 可以诊断生成与控制能力，但只有现实锚定、用途包络和拒绝机制才能支持模拟器的安全准入。",
+    "安全场景生成适合发现测试假设和扩充长尾覆盖；在缺少现实概率与 verdict 对照时，它不能独立判定系统安全。"
   ],
   "references": [
     {
-      "id": "world-model-survey-2024",
+      "id": "world-on-rails-2021",
+      "title": "Learning To Drive From a World on Rails",
+      "authors": "Dian Chen, Vladlen Koltun, Philipp Krähenbühl",
+      "year": 2021,
+      "venue": "ICCV 2021",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2105.00636",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "提供驾驶前向模型的基础证据：可把记录日志视为沿固定轨道演化的世界，并利用预测状态学习驾驶。",
+      "limitation": "环境不响应候选自车动作，训练和评测中的“world on rails”不能代表真实闭环反事实或他车交互。",
+      "url": "https://openaccess.thecvf.com/content/ICCV2021/html/Chen_Learning_To_Drive_From_a_World_on_Rails_ICCV_2021_paper.html"
+    },
+    {
+      "id": "world-models-survey-2024",
       "title": "World Models for Autonomous Driving: An Initial Survey",
+      "authors": "Yanchen Guan, Haicheng Liao, Zhenning Li, Jia Hu, Runze Yuan, Yunjian Li, Guohui Zhang, Chengzhong Xu",
       "year": 2024,
       "venue": "IEEE Transactions on Intelligent Vehicles",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/TIV.2024.3398357",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "系统整理驾驶世界模型的定义、视频与占用表示、生成式预测、规划连接和数据集，是本综述术语与历史范围的基础来源。",
+      "limitation": "检索窗口早于 2025 至 2026 年 world-action、实时闭环和准入工作；综述分类本身不构成任何方法的独立有效性证据。",
       "url": "https://doi.org/10.1109/TIV.2024.3398357",
-      "publicationType": "survey"
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2403.02622"
+        }
+      ]
     },
     {
       "id": "gaia1-2023",
       "title": "GAIA-1: A Generative World Model for Autonomous Driving",
+      "authors": "Anthony Hu, Lloyd Russell, Hudson Yeo, Zak Murez, George Fedoseev, Alex Kendall, Jamie Shotton, Gianluca Corrado",
       "year": 2023,
-      "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2309.17080",
-      "publicationType": "method"
+      "venue": "Wayve Technical Report",
+      "publicationType": "method",
+      "publicationStatus": "technical-report",
+      "canonicalId": "arxiv:2309.17080",
+      "sourceFamily": "official-project",
+      "supports": "展示以视频、文本和车辆动作联合条件生成驾驶视频的规模化路线，确立动作条件内容生成器的代表性能力。",
+      "limitation": "作为企业技术报告，核心证据集中于生成样例和视频预测；未提供同行评审的闭环规划收益、他车反应或现实安全 verdict。",
+      "url": "https://wayve.ai/thinking/introducing-gaia1/"
     },
     {
       "id": "drivedreamer-2024",
       "title": "DriveDreamer: Towards Real-world-driven World Models for Autonomous Driving",
+      "authors": "Xiaofeng Wang, Zheng Zhu, Guan Huang, Xinze Chen, Jiagang Zhu, Jiwen Lu",
       "year": 2024,
-      "venue": "ECCV",
-      "url": "https://eccv.ecva.net/virtual/2024/poster/994",
-      "publicationType": "method"
+      "venue": "ECCV 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2309.09777",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以真实驾驶数据、结构化交通条件和扩散生成连接可控视频、未来状态与动作预测，是早期真实数据驱动世界模型代表。",
+      "limitation": "nuScenes 上的生成、动作预测和合成数据收益不证明闭环环境会响应自车，也不构成现实安全 verdict。",
+      "url": "https://eccv.ecva.net/virtual/2024/poster/994"
     },
     {
-      "id": "drivingworld",
+      "id": "drive-wm-2024",
+      "title": "Driving into the Future: Multiview Visual Forecasting and Planning with World Model for Autonomous Driving",
+      "authors": "Yuqi Wang, Jiawei He, Lue Fan, Hongxin Li, Yuntao Chen, Zhaoxiang Zhang",
+      "year": 2024,
+      "venue": "CVPR 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2311.17918",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把多视角一致的视频未来预测与候选轨迹条件、规划评测连接起来，提供像素世界模型服务驾驶决策的正式证据。",
+      "limitation": "视频与规划收益覆盖给定数据、规划接口和预测时域；结果不能证明长期结构稳定、环境对自车的真实响应或安全裁决迁移。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Wang_Driving_into_the_Future_Multiview_Visual_Forecasting_and_Planning_with_CVPR_2024_paper.html"
+    },
+    {
+      "id": "drivingworld-2024",
       "title": "DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT",
+      "authors": "Xiaotao Hu, Wei Yin, Mingkai Jia, Junyuan Deng, Xiaoyang Guo, Qian Zhang, Xiaoxiao Long, Ping Tan",
       "year": 2024,
       "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2412.19505",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2412.19505",
+      "sourceFamily": "local-corpus",
+      "supports": "用 GPT 式下一状态与下一 token 预测建模时空依赖，报告超过 40 秒的可控驾驶视频生成，是本库长时像素路线代表。",
+      "limitation": "截至截止日仍为预印本；长视频观感和 ego pose 可控性未证明三维结构持续正确、他车响应或闭环安全 verdict。",
+      "url": "https://arxiv.org/abs/2412.19505",
       "localPaperId": "driving-world-model-video"
     },
     {
-      "id": "vista",
-      "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
+      "id": "copilot4d-2024",
+      "title": "Copilot4D: Learning Unsupervised World Models for Autonomous Driving via Discrete Diffusion",
+      "authors": "Lunjun Zhang, Yuwen Xiong, Ze Yang, Sergio Casas, Rui Hu, Raquel Urtasun",
       "year": 2024,
-      "venue": "NeurIPS",
-      "url": "https://papers.nips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
+      "venue": "ICLR 2024",
       "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2311.01017",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用离散扩散预测未来 LiDAR 点云，为驾驶世界模型提供不依赖 RGB 观感的三维结构预测路线。",
+      "limitation": "点云 token 化、稀疏采样和多步 rollout 会引入量化与累积误差；点级预测不直接证明动作跟随、规划收益或闭环安全。",
+      "url": "https://openreview.net/forum?id=Psl75UCoZM"
+    },
+    {
+      "id": "occworld-2024",
+      "title": "OccWorld: Learning a 3D Occupancy World Model for Autonomous Driving",
+      "authors": "Wenzhao Zheng, Weiliang Chen, Yuanhui Huang, Borui Zhang, Yueqi Duan, Jiwen Lu",
+      "year": 2024,
+      "venue": "ECCV 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2311.16038",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以三维语义占用状态建模场景演化并连接规划，提供显式可行驶空间和未来结构的代表性证据。",
+      "limitation": "体素分辨率和占用监督限制细粒度几何与传感器外观；占用预测或规划改善不等于交通参与者反事实响应正确。",
+      "url": "https://eccv.ecva.net/virtual/2024/poster/2474"
+    },
+    {
+      "id": "think2drive-2024",
+      "title": "Think2Drive: Efficient Reinforcement Learning by Thinking in Latent World Model for Quasi-Realistic Autonomous Driving (in CARLA-v2)",
+      "authors": "Qifeng Li, Xiaosong Jia, Shaobo Wang, Junchi Yan",
+      "year": 2024,
+      "venue": "ECCV 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2402.16720",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用潜在世界模型作为高吞吐神经模拟器训练 CARLA-v2 规划策略，提供世界模型服务强化学习和闭环规划的正式路线。",
+      "limitation": "证据来自 CARLA-v2 与其场景/指标；潜在动力学的训练效率和闭环分数不能外推为真实传感器保真或现实风险迁移。",
+      "url": "https://eccv.ecva.net/virtual/2024/poster/1383"
+    },
+    {
+      "id": "unisim-2023",
+      "title": "UniSim: A Neural Closed-Loop Sensor Simulator",
+      "authors": "Ze Yang, Yun Chen, Jingkang Wang, Sivabalan Manivasagam, Wei-Chiu Ma, Anqi Joyce Yang, Raquel Urtasun",
+      "year": 2023,
+      "venue": "CVPR 2023",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2308.01898",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "从日志构建可编辑相机与 LiDAR 环境，并让新的自车轨迹或脚本化参与者轨迹改变传感器观测，是神经传感器闭环的基础正式工作。",
+      "limitation": "其他交通参与者不学习对自车动作的反应；闭环演示覆盖特定数据、传感器和 autonomy system，未建立现实反事实 verdict 一致性。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2023/html/Yang_UniSim_A_Neural_Closed-Loop_Sensor_Simulator_CVPR_2023_paper.html"
+    },
+    {
+      "id": "vista-2024",
+      "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
+      "authors": "Shenyuan Gao, Jiazhi Yang, Li Chen, Kashyap Chitta, Yihang Qiu, Andreas Geiger, Jun Zhang, Hongyang Li",
+      "year": 2024,
+      "venue": "NeurIPS 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2405.17398",
+      "sourceFamily": "local-corpus",
+      "supports": "提供本库动作条件视频路线的正式代表：同一模型支持轨迹、指令和目标点等多种控制，并评测生成保真与可控性。",
+      "limitation": "高保真和多控制接口主要证明内容生成与动作跟随；没有单独建立三维结构真值、通用规划收益或现实安全 verdict。",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
       "localPaperId": "vista-driving-world-model"
     },
     {
-      "id": "cascadeocc",
-      "title": "CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations",
-      "year": 2026,
-      "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2606.27644",
-      "publicationType": "method",
-      "localPaperId": "cascadeocc-occupancy-world-model"
+      "id": "drivingdojo-2024",
+      "title": "DrivingDojo Dataset: Advancing Interactive and Knowledge-Enriched Driving World Model",
+      "authors": "Yuqi Wang, Ke Cheng, Jiawei He, Qitai Wang, Hengchen Dai, Yuntao Chen, Fei Xia, Zhaoxiang Zhang",
+      "year": 2024,
+      "venue": "NeurIPS 2024 Datasets and Benchmarks Track",
+      "publicationType": "dataset",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2410.10738",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "提供覆盖驾驶动作、场景变化和知识描述的数据与评测资源，使可控未来和交互知识不再只依赖常规行驶日志。",
+      "limitation": "更丰富的数据覆盖仍不是干预后的现实真值；数据分布、动作频率和知识标注会限制对长尾博弈与碰撞演化的结论。",
+      "url": "https://openreview.net/forum?id=sLzD2rw9Ce"
     },
     {
-      "id": "dawn",
+      "id": "act-bench-2025",
+      "title": "ACT-Bench: Towards Action Controllable World Models for Autonomous Driving",
+      "authors": "Hidehisa Arai, Keishi Ishihara, Tsubasa Takahashi, Yu Yamaguchi",
+      "year": 2025,
+      "venue": "ICLR 2025 Workshop on World Models: Understanding, Modelling and Scaling",
+      "publicationType": "benchmark",
+      "publicationStatus": "workshop",
+      "canonicalId": "openreview:26KlsDgwLi",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "提供开放动作保真评测、动作估计器和 Terra 基线，直接显示高视觉质量模型可能不遵循给定驾驶指令。",
+      "limitation": "工作坊评测基于 nuScenes 短视频和估计器恢复的动作/轨迹；动作兑现不等于他车响应、长期闭环或安全 verdict。",
+      "url": "https://iclr.cc/virtual/2025/37570",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2412.05337"
+        }
+      ]
+    },
+    {
+      "id": "law-2025",
+      "title": "Enhancing End-to-End Autonomous Driving with Latent World Model",
+      "authors": "Yingyan Li, Lue Fan, Jiawei He, Yuqi Wang, Yuntao Chen, Zhaoxiang Zhang, Tieniu Tan",
+      "year": 2025,
+      "venue": "ICLR 2025",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2406.08481",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "证明潜变量未来预测可作为端到端驾驶的辅助训练目标并带来规划指标改善，代表不依赖像素还原的规划模型路线。",
+      "limitation": "潜状态不可直接观察，规划增益可能受架构、监督和训练规模共同影响；结果不证明生成传感器真实性或安全 verdict 有效。",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2025/hash/6aa4967920e495e90aeeaa3acf18d019-Abstract-Conference.html"
+    },
+    {
+      "id": "scenario-dreamer-2025",
+      "title": "Scenario Dreamer: Vectorized Latent Diffusion for Generating Driving Simulation Environments",
+      "authors": "Luke Rowe, Roger Girgis, Anthony Gosselin, Liam Paull, Christopher Pal, Felix Heide",
+      "year": 2025,
+      "venue": "CVPR 2025",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2503.22496",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "联合生成矢量化初始场景和数据驱动的闭环参与者行为，为行为世界模型与规划训练提供正式证据。",
+      "limitation": "仿真行为的逼真度、挑战性和效率仍受训练分布与行为模型限制；没有证明生成事故概率或现实策略排序一致。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Rowe_Scenario_Dreamer_Vectorized_Latent_Diffusion_for_Generating_Driving_Simulation_Environments_CVPR_2025_paper.html"
+    },
+    {
+      "id": "drivearena-2025",
+      "title": "DriveArena: A Closed-loop Generative Simulation Platform for Autonomous Driving",
+      "authors": "Xuemeng Yang, Licheng Wen, Tiantian Wei, Yukai Ma, Jianbiao Mei, Xin Li, Wenjie Lei, Daocheng Fu, Pinlong Cai, Min Dou, Liang He, Yong Liu, Botian Shi, Yu Qiao",
+      "year": 2025,
+      "venue": "ICCV 2025",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2408.00415",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把交通管理器、全球道路网络和条件生成式传感器闭成模块化仿真循环，使视觉驾驶智能体可持续产生并接收闭环状态。",
+      "limitation": "交通参与者响应来自交通管理器而非从同初态现实反事实验证；高保真闭环平台不自动保证现实风险排序或安全裁决迁移。",
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Yang_DriveArena_A_Closed-loop_Generative_Simulation_Platform_for_Autonomous_Driving_ICCV_2025_paper.html"
+    },
+    {
+      "id": "geniedrive-2026",
+      "title": "GenieDrive: Towards Physics-Aware Driving World Model with 4D Occupancy Guided Video Generation",
+      "authors": "Zhenya Yang, Zhe Liu, Yuxiang Lu, Liping Hou, Chenxuan Miao, Siyi Peng, Bailan Feng, Xiang Bai, Hengshuang Zhao",
+      "year": 2026,
+      "venue": "CVPR 2026",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2512.12751",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "先预测 4D occupancy 再生成视频，把显式未来结构作为渲染条件，为结构正确与视觉质量联合优化提供正式证据。",
+      "limitation": "论文所称 physics-aware 主要由占用引导和结构/预测指标支撑，未验证守恒规律、碰撞响应或现实反事实安全结论。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yang_GenieDrive_Towards_Physics-Aware_Driving_World_Model_with_4D_Occupancy_Guided_CVPR_2026_paper.html"
+    },
+    {
+      "id": "epona-2025",
+      "title": "Epona: Autoregressive Diffusion World Model for Autonomous Driving",
+      "authors": "Kaiwen Zhang, Zhenyu Tang, Xiaotao Hu, Xingang Pan, Xiaoyang Guo, Yuan Liu, Jingwei Huang, Li Yuan, Qian Zhang, Xiao-Xiao Long, Xun Cao, Wei Yin",
+      "year": 2025,
+      "venue": "ICCV 2025",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2506.24113",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用共享时序潜变量上的 VisDiT 与 TrajDiT 分别生成视频和轨迹，并支持外部轨迹条件视频，提供联合世界/动作训练的正式路线。",
+      "limitation": "两个扩散头并非在推理中递归双向更新；联合生成质量和动作指标不能证明他车对干预动作的现实响应或安全 verdict。",
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Zhang_Epona_Autoregressive_Diffusion_World_Model_for_Autonomous_Driving_ICCV_2025_paper.html"
+    },
+    {
+      "id": "drivinggpt-2025",
+      "title": "DrivingGPT: Unifying Driving World Modeling and Planning with Multi-modal Autoregressive Transformers",
+      "authors": "Yuntao Chen, Yuqi Wang, Zhaoxiang Zhang",
+      "year": 2025,
+      "venue": "ICCV 2025",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2412.18607",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用多模态自回归 Transformer 统一世界建模与规划输出，为共享表示和联合训练带来规划证据。",
+      "limitation": "统一序列建模会共享数据偏差，规划改善不能单独说明视觉未来结构正确，也不构成可交互模拟器或安全裁判。",
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Chen_DrivingGPT_Unifying_Driving_World_Modeling_and_Planning_with_Multi-modal_Autoregressive_ICCV_2025_paper.html"
+    },
+    {
+      "id": "dawn-2026",
       "title": "The DAWN of World-Action Interactive Models",
+      "authors": "Hongbo Lu, Liang Yao, Chenghao He, Haoyu Wang, Xiang Gu, Xianfei Li, Wenlong Liao, Tao He, Pai Peng",
       "year": 2026,
       "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2605.11550",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2605.11550",
+      "sourceFamily": "local-corpus",
+      "supports": "提出世界与动作双向联合建模的 world-action 框架，覆盖视频生成、动作预测及两者的条件关系，是本库最新路线之一。",
+      "limitation": "截至检索截止日仍为预印本；“interactive”主要指模型内部世界-动作联合与条件交互，不能等同于已验证的多主体现实闭环。",
+      "url": "https://arxiv.org/abs/2605.11550",
       "localPaperId": "dawn-world-action-model"
     },
     {
-      "id": "eponav2",
-      "title": "EponaV2: Driving World Model with Comprehensive Future Reasoning",
+      "id": "drivedreamer-policy-2026",
+      "title": "DriveDreamer-Policy: A Geometry-Grounded World-Action Model for Unified Generation and Planning",
+      "authors": "Yang Zhou, Xiaofeng Wang, Hao Shao, Letian Wang, Guosheng Zhao, Jiangnan Shao, Jiagang Zhu, Tingdong Yu, Zheng Zhu, Guan Huang, Steven L. Waslander",
       "year": 2026,
       "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2605.14696",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2604.01765",
+      "sourceFamily": "arxiv",
+      "supports": "以几何状态约束 world-action 联合模型，并统一视频生成与规划，代表结构信息进入动作生成接口的最新预印本路线。",
+      "limitation": "尚无正式同行评审；统一模型的报告收益不能排除额外几何监督、模型规模和训练数据影响，也未建立安全 verdict 准入。",
+      "url": "https://arxiv.org/abs/2604.01765"
+    },
+    {
+      "id": "drivewam-2026",
+      "title": "DriveWAM: Video Generative Priors Enable Scalable World-Action Modeling for Autonomous Driving",
+      "authors": "Chen Shi, Jinrui Xu, Shaoshuai Shi, Kehua Sheng, Bo Zhang, Li Jiang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2605.28544",
+      "sourceFamily": "local-corpus",
+      "supports": "把预训练视频 DiT 适配为联合视频与动作策略，结合 VLM guidance 和 selective KV memory 探索长时 world-action 建模及规模扩展。",
+      "limitation": "截至截止日仍为预印本；主要证据来自 NAVSIM/PhysicalAI 等基准，尚未证明在反应式多主体或真实道路闭环中保持动作因果性与安全收益。",
+      "url": "https://arxiv.org/abs/2605.28544",
+      "localPaperId": "drivewam-world-action-model"
+    },
+    {
+      "id": "eponav2-2026",
+      "title": "EponaV2: Driving World Model with Comprehensive Future Reasoning",
+      "authors": "Jiawei Xu, Zhizhou Zhong, Zhijian Shu, Mingkai Jia, Mingxiao Li, Jia-Wang Bian, Qian Zhang, Kaicheng Zhang, Jin Xie, Jian Yang, Wei Yin",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2605.14696",
+      "sourceFamily": "local-corpus",
+      "supports": "把未来图像、深度和语义图作为规划导向中间监督，并在 NAVSIM 报告相对基线的规划改进，扩展了 perception-free 世界模型的未来推理范围。",
+      "limitation": "截至截止日仍为预印本；NAVSIM 证据不能替代反应式或真实闭环，教师基础模型的伪标签偏差也可能同时影响未来表征和规划结果。",
+      "url": "https://arxiv.org/abs/2605.14696",
       "localPaperId": "eponav2-driving-world-model"
     },
     {
-      "id": "omnidreams",
-      "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
+      "id": "cascadeocc-2026",
+      "title": "CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations",
+      "authors": "Kyumin Hwang, Wonhyeok Choi, Jaeyeul Kim, Jihun Park, Daehee Park, Sunghoon Im",
+      "year": 2026,
+      "venue": "IEEE Signal Processing Letters",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/LSP.2026.3680426",
+      "sourceFamily": "local-corpus",
+      "supports": "用多尺度 VQ-VAE、由粗到细的占用生成和 TimeMixer 建模 4D occupancy，并把显式三维未来连接到轨迹规划。",
+      "limitation": "正式发表不改变证据边界：实验集中在 nuScenes/Occ3D 协议，未建立真实或反应式闭环中的长期对象保持、交互响应和安全 verdict。",
+      "url": "https://doi.org/10.1109/LSP.2026.3680426",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2606.27644"
+        }
+      ],
+      "localPaperId": "cascadeocc-occupancy-world-model"
+    },
+    {
+      "id": "m4world-2026",
+      "title": "M4World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming",
+      "authors": "Ke Cheng, Hanqiao Ye, Lei Shi, Yahui Liu, Yunhan Shen, Jingtao Dong, Zhenke Wang, Wenxuan Ao, Weixiang Xu, Kaining Huang, Shuhan Shen",
       "year": 2026,
       "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2606.03159",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.14005",
+      "sourceFamily": "local-corpus",
+      "supports": "联合十相机视频与 LiDAR 的分钟级流式生成，提供对象级 3D 布局、类别、文本和参考图控制，并报告稀有对象增强后的下游召回收益。",
+      "limitation": "截至截止日仍为预印本；训练依赖私有车队数据，长时高分辨率生成并非实时闭环，VLM 评审和下游增益也未验证现实交互或安全裁决。",
+      "url": "https://arxiv.org/abs/2607.14005",
+      "localPaperId": "m4world-multimodal-driving-world"
+    },
+    {
+      "id": "world-engine-2026",
+      "title": "World Engine: Towards the Era of Post-Training for Autonomous Driving",
+      "authors": "Tianyu Li, Li Chen, Caojun Wang, Haochen Liu, Kashyap Chitta, Zhenjie Yang, Yuhang Lu, Naisheng Ye, Yihang Qiu, Yufei Wang, Luoxi Zou, Jiaxin Peng, Jin Pan, Zhaoyu Su, Andrei Bursuc, Shengbo Eben Li, Andreas Geiger, Peng Su, Hongyang Li",
+      "year": 2026,
+      "venue": "Technical Report",
+      "publicationType": "method",
+      "publicationStatus": "technical-report",
+      "canonicalId": "arxiv:2606.19836",
+      "sourceFamily": "local-corpus",
+      "supports": "把真实日志中的失败发现、可编辑 3DGS 环境、行为世界模型和强化后训练组成闭环；在公开 nuPlan 长尾场景报告策略提升，并由作者报告工业仿真和约 200 km 道路验证。",
+      "limitation": "截至截止日为技术报告；公开 nuPlan 与私有工业/道路证据不可混算，生产平台和数据无法独立审计，约 200 km、三次运行（两条路线）及单次基线干预不足以估计开放道路稀有风险，3DGS 大偏移与行为模型覆盖仍限制适用包络。",
+      "url": "https://arxiv.org/abs/2606.19836",
+      "links": [
+        {
+          "label": "项目页",
+          "url": "https://opendrivelab.com/WorldEngine/"
+        }
+      ],
+      "localPaperId": "world-engine-post-training-driving"
+    },
+    {
+      "id": "omnidreams-2026",
+      "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
+      "authors": "Aarti Basant, Amlan Kar, Despoina Paschalidou, Fangyin Wei, Francesco Ferroni, Guillermo Garcia Cobo, Haithem Turki, Huan Ling, Jaewoo Seo, James Lucas, Jay Zhangjie Wu, Jialiang Wang, Jonathan Lorraine, Jun Gao, Kai He, Katarina Tothova, Kevin Xie, Michał Tyszkiewicz, Qi Wu, Riccardo de Lutio, Ruilong Li, Sanja Fidler, Seung Wook Kim, Tianchang Shen, Tianshi Cao, Tobias Pfaff, William Lew, Xindi Wu, Xuanchi Ren, Yifan Lu, Yuxuan Zhang, Zan Gojcic, Zian Wang",
+      "year": 2026,
+      "venue": "NVIDIA Technical Report",
+      "publicationType": "method",
+      "publicationStatus": "technical-report",
+      "canonicalId": "arxiv:2606.03159",
+      "sourceFamily": "local-corpus",
+      "supports": "展示实时、多视角、动作驱动的生成式闭环车辆仿真，提供世界模型进入交互执行循环的最新工程证据。",
+      "limitation": "截至截止日为企业技术报告且系统组件并非全部开放；实时性与闭环演示不能证明跨硬件、ODD、策略和现实安全 verdict 的一致性。",
+      "url": "https://arxiv.org/abs/2606.03159",
       "localPaperId": "omnidreams-closed-loop-world-model"
     },
     {
-      "id": "world-model-admissibility",
+      "id": "drivinggen-2026",
+      "title": "DrivingGen: A Comprehensive Benchmark for Generative Video World Models in Autonomous Driving",
+      "authors": "Yang Zhou, Hao Shao, Letian Wang, Zhuofan Zong, Hongsheng Li, Steven L. Waslander",
+      "year": 2026,
+      "venue": "ICLR 2026",
+      "publicationType": "benchmark",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2601.01528",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "建立生成式驾驶视频世界模型的正式综合 benchmark，把视频、时序、控制和驾驶相关能力拆成可比较维度。",
+      "limitation": "benchmark 主要衡量模型输出与任务代理指标；综合覆盖不等于评测分数已经与现实事故风险或闭环安全 verdict 校准。",
+      "url": "https://openreview.net/forum?id=OrgL5DsU0f"
+    },
+    {
+      "id": "worldlens-2026",
+      "title": "Is Your Driving World Model an All-Around Player?",
+      "authors": "Lingdong Kong, Ao Liang, Tianyi Yan, Hongsi Liu, Wesley Yang, Ziqi Huang, Xian Sun, Wei Yin, Jialong Zuo, Yixuan Hu, Dekai Zhu, Dongyue Lu, Youquan Liu, Guangfeng Jiang, Linfeng Li, Xiangtai Li, Long Zhuo, Lai Xing Ng, Benoit R. Cottereau, Changxin Gao, Liang Pan, Wei Tsang Ooi, Ziwei Liu",
+      "year": 2026,
+      "venue": "CVPR 2026 Workshop on Video World Models",
+      "publicationType": "benchmark",
+      "publicationStatus": "workshop",
+      "canonicalId": "arxiv:2605.10858",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "从多能力维度审视驾驶世界模型而非只看视频逼真度，为视觉、结构、可控和任务能力分项诊断提供正式 workshop 证据。",
+      "limitation": "作为 workshop benchmark，覆盖模型和指标仍有限；分项或总分尚未证明可迁移到现实闭环风险排序与安全准入。",
+      "url": "https://openreview.net/forum?id=8LUS9SiLSG"
+    },
+    {
+      "id": "world-model-admissibility-2026",
       "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "authors": "Christian Oefinger, Finn Rasmus Schäfer, Korbinian Moller, Mattia Piccinini, Johannes Betz",
+      "year": 2026,
+      "venue": "RSS 2026 Workshop on Robot World Models",
+      "publicationType": "position",
+      "publicationStatus": "workshop-accepted",
+      "canonicalId": "arxiv:2607.07196",
+      "sourceFamily": "local-corpus",
+      "supports": "提出 L0–L4 世界模型准入框架，并用 Vista 与 Epona 讨论输出质量、动作响应和时域边界，支持按用途限制 verdict。",
+      "limitation": "这是已接收的工作坊预印本而非强制标准；实证只覆盖 L0/L1 和部分 L2 时域，分布外拒绝、L3 失效归因与 L4 现实 verdict 迁移尚未完成。",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "localPaperId": "world-model-simulator-admissibility"
+    },
+    {
+      "id": "safegen-2026",
+      "title": "SafeGen: Goal-Conditioned Video Diffusion of Safety-Critical Scenarios for VLM-Based Autonomous Driving",
+      "authors": "Jiangfan Liu, Zexuan Cui, Tianyuan Zhang, Zonglei Jing, Zonghao Ying, Yaoyuan Zhang, Jiakai Wang, Xiaoqi Jiang, Aishan Liu, Xianglong Liu",
+      "year": 2026,
+      "venue": "ACM Multimedia 2026",
+      "publicationType": "method",
+      "publicationStatus": "accepted",
+      "canonicalId": "arxiv:2607.19701",
+      "sourceFamily": "local-corpus",
+      "supports": "用目标条件视频扩散生成安全关键驾驶场景，并以 VLM 驾驶系统为被测对象，代表世界模型用于长尾测试假设生成的最新方向。",
+      "limitation": "正式发表不改变证据边界：目标终态与 VLM judge 分数不能证明场景物理概率、事故因果链或被测系统的客观安全 verdict。",
+      "url": "https://arxiv.org/abs/2607.19701",
+      "localPaperId": "safegen-critical-video-diffusion"
+    },
+    {
+      "id": "reactsim-bench-2026",
+      "title": "ReactSim-Bench: Benchmarking Reactive Behavior World Model Simulation in Autonomous Driving",
+      "authors": "Zhiyuan Zhang, Yanlun Peng, Jianing Zhang, Xianda Guo, Zehan Huang, Haoran Liu, Qifeng Li, Shaofeng Zhang, Xiaosong Jia, Junchi Yan",
       "year": 2026,
       "venue": "arXiv",
-      "url": "https://arxiv.org/abs/2607.07196",
-      "publicationType": "position",
-      "localPaperId": "world-model-simulator-admissibility"
+      "publicationType": "benchmark",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2606.14058",
+      "sourceFamily": "arxiv",
+      "supports": "将自车输入与环境智能体控制分离，在 2,636 个偏离日志场景上直接评估行为世界模型的碰撞、地图合规和运动学反应。",
+      "limitation": "截至截止日为预印本；场景筛选、规划器输入和离线行为指标仍不能替代真实同初态反事实或现实安全 verdict 迁移。",
+      "url": "https://arxiv.org/abs/2606.14058"
     }
-  ]
+  ],
+  "searchAudit": {
+    "workflowVersion": 3,
+    "searchedAt": "2026-07-28",
+    "cutoffDate": "2026-07-28",
+    "skills": [
+      "research-lit",
+      "citation-audit"
+    ],
+    "queryFamilies": [
+      "驾驶视频生成与可控未来预测",
+      "几何、占用和对象级结构世界模型",
+      "动作条件与世界动作联合模型",
+      "可交互实时闭环仿真器",
+      "规划学习与反事实 rollout",
+      "保真度、因果有效性与安全准入"
+    ],
+    "sourceFamilies": [
+      "local-corpus",
+      "arxiv",
+      "publisher-and-venue",
+      "official-project"
+    ],
+    "counts": {
+      "candidates": 57,
+      "deduplicated": 46,
+      "included": 32,
+      "excluded": 14
+    },
+    "evidenceBoundary": "6 个查询族分别保存了可复核的查询串、来源、执行日期、候选数与规范化 ID 样本。本库真实检索命中 35 个文件，按方向标签和 revisionOf 归并为 21 篇候选；其中 10 篇纳入、11 篇逐组记录暂缓理由，未静默漏筛。各查询族共有 57 条结构化候选记录，允许同一论文跨查询族重复出现；去重后为 46 篇，其中纳入 32 篇、排除或暂缓 14 篇。所有纳入引用均回到可打开的一手记录核对书目、出版状态、支撑论断和限制；本轮没有复现实验、访问私有数据或获得同初态真实道路反事实，因此不把模拟、开环或生成质量结果外推为现实安全结论。",
+    "openSearchGaps": [
+      "仍缺同一真实初态下多组自车动作、他车响应和碰撞结局的成对反事实数据，观察日志不能单独填补这一缺口。",
+      "尚无统一 benchmark 同时覆盖多相机、LiDAR/占用、长时 world-action rollout、独立规划器和现实安全 verdict 迁移。",
+      "企业技术报告与闭源系统的训练数据、运行硬件和评测资产并不完全开放，实时闭环结果的独立复现受限。",
+      "VLM judge、生成器和 benchmark 可能共享训练分布或语义偏差，评价器独立性与现实风险校准仍需专门审计。",
+      "2026 年预印本和 workshop 工作的正式出版状态、版本与结论可能在截止日后变化，需要下一轮重新核验。"
+    ],
+    "independentReview": {
+      "completedAt": "2026-07-29",
+      "status": "passed",
+      "reviewers": 1,
+      "rounds": 8,
+      "snapshotFingerprint": "dd2c4adbb6c98326eefcff7ccd1d34f891318b42174b0db23230cb43095f117e"
+    },
+    "queryRuns": [
+      {
+        "family": "驾驶视频生成与可控未来预测",
+        "sourceFamily": "local-corpus",
+        "query": "世界模型|world model|video generation|simulation",
+        "executedAt": "2026-07-28",
+        "resultCount": 21,
+        "rawHitCount": 35,
+        "screenedOutCount": 14,
+        "screeningNote": "真实正则检索命中 35 个文件；按当前方向 tags 筛选并用 revisionOf 归并后得到 21 篇规范化候选。全部候选已写入 candidateLocalPaperIds，其中 10 篇进入引用，11 篇在 deferredGroups 中说明暂缓原因；其余 14 个命中文件是其他方向记录或同文修订。",
+        "resultIdSample": [
+          "arxiv:2412.19505",
+          "arxiv:2405.17398",
+          "arxiv:2606.03159"
+        ],
+        "scopeRationale": "用真实本库全文正则检索“驾驶视频生成与可控未来预测”相关中英文术语，再从命中文件中筛选规范化候选 ID。",
+        "retrieval": {
+          "provider": "ripgrep-local-corpus",
+          "endpoint": "content/papers",
+          "parameters": {
+            "query": "世界模型|world model|video generation|simulation",
+            "path": "content/papers",
+            "flags": [
+              "-l",
+              "-i"
+            ]
+          },
+          "sort": "path-ascending",
+          "limit": 200
+        },
+        "localCandidateDisposition": {
+          "candidateLocalPaperIds": [
+            "anyscene-controllable-driving-scene-generation",
+            "baddreamer-world-model-backdoor",
+            "cascadeocc-occupancy-world-model",
+            "dawn-world-action-model",
+            "desire-gs-4d-street-gaussians",
+            "diffusion-transformer-wam-scene-prediction",
+            "drivewam-world-action-model",
+            "driving-videos-to-simulatable-scenarios",
+            "driving-world-model-video",
+            "envision4d-feedforward-4dgs",
+            "eponav2-driving-world-model",
+            "geoworldad-geometry-world-action",
+            "instant-nurec-feedforward-3dgs",
+            "m4world-multimodal-driving-world",
+            "omnidreams-closed-loop-world-model",
+            "physically-consistent-4d-driving-reconstruction",
+            "sparseworld-sparse-scene-world-model",
+            "vista-driving-world-model",
+            "world-engine-post-training-driving",
+            "world-model-simulator-admissibility",
+            "x-mind-visual-cot-driving"
+          ],
+          "deferredGroups": [
+            {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "与本方向直接相关，但本轮未进入核心证据集：其问题或方法与已纳入代表工作高度重叠，或当前仍缺少更强的正式出版、独立复现或用途级证据；后续证据升级时优先复核。",
+              "localPaperIds": [
+                "anyscene-controllable-driving-scene-generation",
+                "diffusion-transformer-wam-scene-prediction",
+                "sparseworld-sparse-scene-world-model",
+                "x-mind-visual-cot-driving"
+              ]
+            },
+            {
+              "reasonCode": "cross-direction-support",
+              "reason": "对本方向提供补充证据，但主要贡献和完整讨论归入另一研究方向；本综述暂不重复纳入，以避免同一方法跨方向过度加权，后续若形成独立证据链再提升。",
+              "localPaperIds": [
+                "baddreamer-world-model-backdoor",
+                "desire-gs-4d-street-gaussians",
+                "driving-videos-to-simulatable-scenarios",
+                "envision4d-feedforward-4dgs",
+                "geoworldad-geometry-world-action",
+                "instant-nurec-feedforward-3dgs",
+                "physically-consistent-4d-driving-reconstruction"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "family": "几何、占用和对象级结构世界模型",
+        "sourceFamily": "arxiv",
+        "query": "ti:OccWorld OR ti:Copilot4D OR ti:\"DriveDreamer-Policy\"",
+        "executedAt": "2026-07-28",
+        "resultCount": 8,
+        "resultIdSample": [
+          "arxiv:2311.16038",
+          "arxiv:2311.01017",
+          "arxiv:2604.01765"
+        ],
+        "scopeRationale": "查询串直接覆盖“几何、占用和对象级结构世界模型”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "ARIS arxiv_fetch.py",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "ti:OccWorld OR ti:Copilot4D OR ti:\"DriveDreamer-Policy\""
+          }
+        }
+      },
+      {
+        "family": "动作条件与世界动作联合模型",
+        "sourceFamily": "publisher-and-venue",
+        "query": "autonomous driving action-conditioned world-action model generation planning",
+        "executedAt": "2026-07-28",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:2309.09777",
+          "arxiv:2405.17398",
+          "arxiv:2605.11550"
+        ],
+        "scopeRationale": "查询串直接覆盖“动作条件与世界动作联合模型”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-primary-domains",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous driving action-conditioned world-action model generation planning"
+          }
+        }
+      },
+      {
+        "family": "可交互实时闭环仿真器",
+        "sourceFamily": "arxiv",
+        "query": "interactive real-time closed-loop driving world model simulator UniSim DriveArena OmniDreams",
+        "executedAt": "2026-07-28",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:2308.01898",
+          "arxiv:2408.00415",
+          "arxiv:2606.03159"
+        ],
+        "scopeRationale": "查询串直接覆盖“可交互实时闭环仿真器”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "ARIS arxiv_fetch.py",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "interactive real-time closed-loop driving world model simulator UniSim DriveArena OmniDreams"
+          }
+        }
+      },
+      {
+        "family": "规划学习与反事实 rollout",
+        "sourceFamily": "official-project",
+        "query": "autonomous driving world model planning reinforcement learning counterfactual rollout",
+        "executedAt": "2026-07-28",
+        "resultCount": 6,
+        "resultIdSample": [
+          "arxiv:2105.00636",
+          "arxiv:2402.16720",
+          "arxiv:2406.08481"
+        ],
+        "scopeRationale": "查询串直接覆盖“规划学习与反事实 rollout”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-official-projects",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous driving world model planning reinforcement learning counterfactual rollout"
+          }
+        }
+      },
+      {
+        "family": "保真度、因果有效性与安全准入",
+        "sourceFamily": "publisher-and-venue",
+        "query": "driving world model fidelity causality reactive benchmark safety admissibility",
+        "executedAt": "2026-07-28",
+        "resultCount": 8,
+        "resultIdSample": [
+          "openreview:26KlsDgwLi",
+          "arxiv:2606.14058",
+          "arxiv:2607.07196"
+        ],
+        "scopeRationale": "查询串直接覆盖“保真度、因果有效性与安全准入”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-primary-domains",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "driving world model fidelity causality reactive benchmark safety admissibility"
+          }
+        }
+      }
+    ],
+    "deduplicationKeys": [
+      "doi",
+      "arxiv",
+      "venue-id",
+      "normalized-title"
+    ],
+    "retainedCanonicalIds": [
+      "arxiv:2105.00636",
+      "doi:10.1109/TIV.2024.3398357",
+      "arxiv:2309.17080",
+      "arxiv:2309.09777",
+      "arxiv:2311.17918",
+      "arxiv:2412.19505",
+      "arxiv:2311.01017",
+      "arxiv:2311.16038",
+      "arxiv:2402.16720",
+      "arxiv:2308.01898",
+      "arxiv:2405.17398",
+      "arxiv:2410.10738",
+      "openreview:26KlsDgwLi",
+      "arxiv:2406.08481",
+      "arxiv:2503.22496",
+      "arxiv:2408.00415",
+      "arxiv:2512.12751",
+      "arxiv:2506.24113",
+      "arxiv:2412.18607",
+      "arxiv:2605.11550",
+      "arxiv:2604.01765",
+      "arxiv:2605.28544",
+      "arxiv:2605.14696",
+      "doi:10.1109/LSP.2026.3680426",
+      "arxiv:2607.14005",
+      "arxiv:2606.19836",
+      "arxiv:2606.03159",
+      "arxiv:2601.01528",
+      "arxiv:2605.10858",
+      "arxiv:2607.07196",
+      "arxiv:2607.19701",
+      "arxiv:2606.14058"
+    ],
+    "exclusionCriteria": [
+      "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
+      "与方向范围不匹配，或只有通用任务证据而没有自动驾驶相关证据的候选不纳入核心表。",
+      "与已纳入代表作证据高度重叠且不能补足新方法、失败边界、正式出版或更强验证层级的候选不重复纳入。"
+    ],
+    "excludedCandidates": [
+      {
+        "canonicalId": "arxiv:2104.10157",
+        "title": "VideoGPT: Video Generation using VQ-VAE and Transformers",
+        "url": "https://arxiv.org/abs/2104.10157",
+        "reasonCode": "general-video-foundation",
+        "reason": "提供离散视频生成架构基础，但实验不是驾驶场景，也没有动作可控性、交通反应或规划转移证据；驾驶专用 VideoGPT 路线由 DrivingWorld 覆盖。"
+      },
+      {
+        "canonicalId": "arxiv:2301.04104",
+        "title": "Mastering Diverse Domains through World Models",
+        "url": "https://arxiv.org/abs/2301.04104",
+        "reasonCode": "general-control-foundation",
+        "reason": "DreamerV3 证明跨任务想象控制能力，但没有自动驾驶传感器、交通交互和安全 verdict；不把通用控制结果外推到驾驶准入。"
+      },
+      {
+        "canonicalId": "arxiv:1803.10122",
+        "title": "World Models",
+        "url": "https://arxiv.org/abs/1803.10122",
+        "reasonCode": "general-control-foundation",
+        "reason": "是潜空间想象与策略训练的概念基础，但实验域和规模不能直接支撑驾驶视频世界模型的保真度、反应性或现实安全迁移结论。"
+      }
+    ],
+    "sourceLimitations": [
+      "Semantic Scholar API 存在匿名限流；发生 HTTP 429 时使用其网页索引继续发现，不把聚合器摘要当作论据。",
+      "OpenAlex 搜索返回面较宽，只用于发现与出版元数据交叉核对；作者机构或出版状态仍以论文和正式页面为准。"
+    ],
+    "qualityChecksApplied": [
+      "query-family-alignment",
+      "source-fanout-trace",
+      "raw-hit-candidate-separation",
+      "local-candidate-closure",
+      "canonical-id-casefold",
+      "single-count-schema",
+      "publication-status-primary-source",
+      "formal-arxiv-link-retention",
+      "physical-evidence-boundary",
+      "independent-review-current-snapshot"
+    ],
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "世界模型|world model|video generation|simulation",
+        "endpoint": "content/papers",
+        "limit": 200,
+        "acceptedCount": 11,
+        "note": "实际执行 rg -l -i <pattern> content/papers，共原始命中 35 个文件；按方向标签及 revisionOf 归并为 21 篇规范化候选，全部进入引用或带理由的暂缓组。"
+      },
+      {
+        "sourceFamily": "arxiv",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 驾驶视频生成与可控未来预测 几何、占用和对象级结构世界模型 动作条件与世界动作联合模型 可交互实时闭环仿真器 规划学习与反事实 rollout 保真度、因果有效性与安全准入",
+        "endpoint": "https://export.arxiv.org/api/query",
+        "limit": 10,
+        "acceptedCount": 2,
+        "note": "通过已安装 ARIS arxiv_fetch.py 获取结构化元数据；候选仍逐篇打开一手页面复核。"
+      },
+      {
+        "sourceFamily": "publisher-and-venue",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 official proceedings journal standard",
+        "endpoint": "https://www.google.com/search",
+        "limit": 10,
+        "acceptedCount": 18,
+        "note": "限定正式会议、期刊、OpenReview 和标准机构页面核对出版状态与书目信息。"
+      },
+      {
+        "sourceFamily": "semantic-scholar",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "驾驶世界模型：从生成未来到可准入的闭环证据",
+        "endpoint": "https://www.semanticscholar.org/search",
+        "limit": 3,
+        "acceptedCount": 0,
+        "note": "ARIS API relevance search成功；结果仅用于发现，最终未直接采纳聚合器记录。"
+      },
+      {
+        "sourceFamily": "openalex",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "驾驶世界模型：从生成未来到可准入的闭环证据",
+        "endpoint": "https://api.openalex.org/works",
+        "limit": 3,
+        "acceptedCount": 0,
+        "note": "官方API返回HTTP 200；仅用于发现和出版元数据交叉核对，最终论断均回到一手来源。"
+      },
+      {
+        "sourceFamily": "official-project",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 official project code benchmark",
+        "endpoint": "https://www.google.com/search",
+        "limit": 10,
+        "acceptedCount": 1,
+        "note": "核对官方项目页、代码仓库和基准协议；项目自述不用于升级出版状态或现实安全等级。"
+      }
+    ]
+  }
 }

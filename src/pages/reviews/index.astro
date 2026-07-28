@@ -1,8 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getReviewCenter } from "../../lib/content.js";
+import { reviewCenterFingerprint } from "../../lib/review-fingerprint.js";
 
 const center = await getReviewCenter();
+const contentFingerprint = reviewCenterFingerprint(center);
 const directions = center.directions || [];
 const referenceCount = directions.reduce(
   (sum, direction) => sum + direction.references.length,
@@ -21,7 +23,8 @@ const sampleAuthors = Array.isArray(sampleSurvey.authors)
 const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
   month: "2-digit",
-  day: "2-digit"
+  day: "2-digit",
+  timeZone: "Asia/Shanghai"
 }).format(new Date(`${center.updatedAt}T00:00:00+08:00`));
 ---
 
@@ -44,7 +47,13 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
       </nav>
     </header>
 
-    <main class="review-index-main">
+    <main
+      class="review-index-main"
+      data-review-version={center.version}
+      data-review-updated={center.updatedAt}
+      data-review-directions={directions.length}
+      data-review-fingerprint={contentFingerprint}
+    >
       <section class="review-index-hero" aria-labelledby="reviewCenterTitle">
         <div>
           <p class="eyebrow">Survey Center · 更新于 {updatedLabel}</p>
@@ -160,6 +169,10 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
                     <div>
                       <dt>文献构成</dt>
                       <dd>{localCount} 篇本库已报告 · {externalCountForDirection} 篇外部文献</dd>
+                    </div>
+                    <div>
+                      <dt>检索记录</dt>
+                      <dd>{direction.searchAudit.queryFamilies.length} 类查询 · {direction.searchAudit.sourceFamilies.length} 类来源</dd>
                     </div>
                   </dl>
                 </div>

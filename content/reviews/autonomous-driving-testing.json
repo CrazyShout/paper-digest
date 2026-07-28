@@ -1,190 +1,945 @@
 {
-  "version": 1,
+  "version": 3,
   "id": "autonomous-driving-testing",
-  "title": "自动驾驶测试：从场景发现到可采信的安全证据",
-  "subtitle": "把闭环失效、责任归因、部署扰动与仿真器准入组织为一条测试证据链",
-  "abstract": "自动驾驶测试正在从“累计更多里程”转向“主动寻找有解释力的失败”。真正困难的不是制造一次碰撞，而是证明场景合理、失败由被测系统造成、结果能跨仿真与现实复现，并且用于裁决的仿真器本身足够可信。本综述据此把场景生成、闭环基准、责任归因、部署扰动和世界模型准入放进同一证据框架。",
-  "reviewedAt": "2026-07-26",
-  "searchWindow": "2017–2026，重点覆盖 2023–2026 年闭环测试与生成式仿真",
+  "title": "自动驾驶测试：从失效发现到可采信的安全证据",
+  "subtitle": "以系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界组织测试结论",
+  "abstract": "自动驾驶测试的核心任务不是制造尽可能多的碰撞，也不是用一个闭环分数替代安全论证，而是针对确定的系统版本和运行设计域，构造可追溯场景，在声明的执行层级中用可辩护的 oracle 识别失效，并说明结论的不确定度与外推边界。搜索式和生成式方法提高了罕见失效的发现效率，部署扰动、多仿真器与实车研究则不断提醒：高失败命中率不等于现实事故率，闭环不等于安全证明，生成式世界模型在充当测试环境或裁判前还必须经过准入审查。",
+  "reviewedAt": "2026-07-28",
+  "searchWindow": "2017–2026；检索截止 2026-07-28，重点覆盖 2024–2026 年闭环、生成式场景、仿真真实性与现实迁移证据",
   "researchQuestions": [
-    "怎样用有限测试预算发现低概率、高后果且仍然自然的安全关键场景？",
-    "一次闭环失败需要满足哪些条件，才能归因于被测自动驾驶系统而不是测试环境或其他交通参与者？",
-    "开环指标、仿真闭环、硬件在环和真实车辆测试之间，证据能否以及如何迁移？",
-    "生成式世界模型在什么条件下有资格充当安全测试的环境与裁判？"
+    "如何把一次测试写成“系统版本—ODD—场景—执行层级—oracle—不确定度—证据边界”完整记录，而不是脱离上下文的碰撞或总分？",
+    "搜索式、重要性采样和生成式方法提高失败命中率后，怎样恢复自然性、现实暴露率和责任归因的解释？",
+    "开环、仿真闭环、软件/硬件在环、封闭场地和真实道路之间，哪些结论能够迁移，迁移不确定度如何表达？",
+    "经典仿真器和生成式世界模型需要满足哪些准入条件，才有资格参与安全测试与 verdict 生成？"
   ],
   "sections": [
     {
-      "id": "scope-and-evidence",
+      "id": "claim-bounded-test-unit",
       "kind": "scope",
-      "title": "测试对象不是一条轨迹，而是一项受边界约束的安全主张",
-      "thesis": "测试的基本单位应从行驶里程或单一碰撞事件，升级为“系统版本—运行设计域—失效机制—裁决依据”四元组。",
-      "body": "传统道路测试用累计里程近似安全覆盖，但罕见危险事件的概率太低，里程本身又不说明覆盖了哪些交互和部署故障。CARLA 一类开放仿真平台让研究者可以重复控制天气、交通和传感器，自动驾驶测试综述则进一步把场景、被测系统、测试方法和判定指标组织成系统工程问题。\n\n本综述把测试分成四个相互依赖的环节：**生成或抽取场景**、**在闭环中执行**、**用可辩护的 oracle 判定**、**解释结果的适用边界**。一个“发现碰撞很多”的生成器不一定优于另一个生成器：它可能只是在制造不自然场景，也可能让其他车辆承担主要责任。相反，一个没有碰撞但稳定暴露控制延迟、相机失流或规划不兼容的测试，可能更接近真实部署风险。",
+      "title": "测试的基本单位是带证据边界的安全主张",
+      "thesis": "任何测试结论都应同时绑定系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界。",
+      "body": "ISO 21448、ISO 34502 和 UL 4600 把测试放在风险分析、验证确认与安全论证的上下文中。由此，自动驾驶测试不应只记录“跑了多少里程”或“是否发生碰撞”，而应先固定被测系统的软件、模型、传感器和配置版本，声明 ODD 与排除条件，再说明场景来源、执行环境和通过何种 oracle 得出结论。**系统版本—ODD—场景—执行层级—oracle—不确定度—证据边界**共同构成最小可审计测试单元。这里的七字段是本综述综合标准与测试研究提出的工作模板，不是 ISO 21448、ISO 34502 或 UL 4600 逐字规定的强制清单。\n\n这个结构也限定了测试能证明什么。一次碰撞可能来自被测系统缺陷、他车不可避免行为、仿真器错误或 oracle 误判；一次无碰撞执行也可能包含交通违规、极端制动或任务失败。场景式测试只有在场景抽取、参数化、执行、判定和外推的每一步都有可辩护假设时，才可能进入安全论证，而不能凭单个案例或单项指标宣布系统安全。",
       "referenceIds": [
+        "iso-sotif-2022",
+        "iso-scenario-testing-2022",
+        "ul-4600-ed3",
         "testing-survey-2023",
-        "carla-2017",
-        "cars-responsibility",
-        "bench2drive-robust"
+        "scenario-testing-considerations-2020"
       ]
     },
     {
-      "id": "historical-shift",
+      "id": "from-mileage-to-active-evidence",
       "kind": "evolution",
-      "title": "从被动累计里程，到主动搜索失败，再到审查裁判本身",
-      "thesis": "领域演化的主线不是仿真画面越来越逼真，而是测试预算越来越集中于可解释、可迁移的风险。",
-      "body": "第一阶段以道路里程、事故回放和规则场景为主，优势是直观，缺点是对长尾失效采样效率极低。第二阶段借助 CARLA 等平台，把参数化场景、搜索式测试和对抗式场景生成引入闭环；Bench2Drive 又把能力覆盖、路线完成和闭环驾驶质量纳入更系统的任务集合。第三阶段开始直接优化“哪里会失败”：重要性采样、强化搜索、生成模型和流模型都在压缩发现罕见风险所需的仿真次数。\n\n最新阶段把问题从“能否找到失败”推进为“这个失败是否可采信”。CARS 要求失效具有责任归因，Bench2Drive-Robust 把相机流异常、自车状态误差和计算延迟等部署扰动纳入评测；真实世界扰动测试则沿离线、硬件在环到实车逐级验证。随着世界模型成为闭环仿真器，研究对象还必须扩展到裁判本身：视觉逼真不等于动作响应正确，更不等于其安全 verdict 可以迁移到现实。",
+      "title": "四条并行演进：里程证据、失效发现、稀有事件估计与安全案例",
+      "thesis": "领域并非沿单一路线前进：主动搜索负责发现机制，重要性采样负责在假设成立时恢复概率，而闭环与安全案例负责限定证据用途。",
+      "body": "CARLA 使天气、交通、地图和传感器条件可以重复控制。失效发现支线中，Adaptive Stress Testing 把环境扰动写成序贯决策问题，用强化学习或树搜索寻找高可能失败路径；DriveFuzz 把搜索扩展到完整自动驾驶栈，以交通规则 oracle 和驾驶质量引导场景变异；AdvSim 又在传感器级场景中生成具有物理约束的安全关键交互。这些方法优化的是有限预算内发现失败的效率，不自动恢复自然交通中的事件概率。\n\n另一条支线把测试明确写成稀有事件估计。Zhao 等人的加速评估对切入场景的自然分布做重要性偏置，再以似然比恢复冲突、碰撞和伤害频率；NADE 只在关键时刻扭曲少量背景车辆行为，并以权重保持对自然环境事件率的无偏估计。它们与 AST、模糊测试的目标不同：前者在自然分布模型、似然可计算和代理模型误差可控时估计特定事件率，后者主要定位失效机制。Safe-Sim 等生成式方法则发展出第三类能力，用扩散引导生成可控且交互的长尾场景，但其危险样本频率仍不是现实暴露率。\n\n近年的第四条支线转向证据是否可采信。Bench2Drive 用多能力、路线级闭环协议减少开环规划指标的盲区；CARS 尝试区分可归因于自车的失败与不可避免冲突；Bench2Drive-Robust 把相机流、ego-state 和执行延迟纳入系统接口；商用卡车测试、RiskFlow、实车扰动和世界模型准入研究则分别追问失效搜索能否进入商业系统、生成场景是否仍然自然、离线结果能否迁移到实车，以及仿真器本身是否有资格给出 verdict。标准和安全案例把这些支线重新绑定到具体系统版本、ODD 与可审计主张。",
       "referenceIds": [
         "carla-2017",
+        "accelerated-evaluation-2017",
+        "nade-2021",
+        "adaptive-stress-testing-2018",
+        "drivefuzz-2022",
+        "advsim-2021",
+        "safe-sim-2024",
         "bench2drive-2024",
+        "cars-responsibility",
+        "bench2drive-robust",
         "commercial-av-failure",
         "riskflow",
-        "cars-responsibility",
         "real-world-perturbation",
         "world-model-admissibility"
       ]
     },
     {
-      "id": "test-taxonomy",
+      "id": "seven-field-test-record",
       "kind": "taxonomy",
-      "title": "五个正交坐标比“仿真或实车”更能定位一项测试",
-      "thesis": "只有同时声明被测范围、反馈环、场景来源、判定 oracle 和保真层级，不同测试结果才可比较。",
-      "body": "一项自动驾驶测试可以沿五个坐标定位。其一是**被测范围**：感知模块、预测/规划模块、完整模块化系统或端到端策略；其二是**反馈环**：固定日志上的开环回放，还是动作会改变后续观测的闭环执行；其三是**场景来源**：自然日志、参数搜索、重要性采样、对抗优化或生成模型；其四是**判定 oracle**：碰撞、交通规则、舒适度、任务完成、责任归因或反事实差异；其五是**保真层级**：纯仿真、软件/硬件在环、封闭场地、公开道路，或由学习系统构成的世界模型。\n\n这些坐标解释了许多看似矛盾的结果。重要性采样可以提高故障命中率，却可能牺牲自然概率估计；高保真视觉可以改善人的观感，却不保证控制指令被正确执行；离线感知退化可能很小，进入闭环后却因误差累积造成路线失败。因此，测试论文应报告自己在哪些坐标上提供了新证据，而不是用一个综合分数替代边界声明。",
+      "title": "七字段记录比“仿真或实车”更能定位一项测试",
+      "thesis": "不同工作只有在七个字段上同时对齐，失败率、覆盖率和闭环分数才具有可比较性。",
+      "body": "第一字段是**系统版本**，包括模型权重、软件提交、传感器和计算平台；第二是 **ODD**，明确道路、天气、交通和系统边界；第三是**场景**，记录来自自然日志、规则组合、搜索、重要性采样还是生成模型；第四是**执行层级**，区分开环日志、纯仿真闭环、SIL/HIL、封闭场地和道路车辆；第五是 **oracle**，区分碰撞、规则、任务、舒适度、风险、责任和反事实判定。\n\n第六字段是**不确定度**，至少包含随机种子、重复次数、置信区间、采样分布及失败去重；第七是**证据边界**，说明结果只适用于哪些版本、场景和层级。这七字段是本综述用于落实可追溯性的综合模板，不是对任一标准原文的转录。关键性指标综述表明不存在适合所有任务的单一风险指标，场景库覆盖研究也明确指出：在给定分类体系下达到覆盖，并不等于连续场景空间已经完备。闭环协议能够观察动作对后续状态的影响，但若场景分布、oracle 或仿真器不可信，闭环分数仍不能被解释为安全证明。",
       "referenceIds": [
         "testing-survey-2023",
         "bench2drive-2024",
         "bench2drive-robust",
-        "commercial-av-failure",
-        "world-model-admissibility"
+        "cars-responsibility",
+        "criticality-metrics-2022",
+        "scenario-coverage-2024"
       ]
     },
     {
-      "id": "evidence-ladder",
+      "id": "supported-evidence-and-nonclaims",
       "kind": "evidence",
-      "title": "现有证据支持“更快发现失败”，尚不支持“一次评测即可证明安全”",
-      "thesis": "闭环测试的价值在于暴露机制，而非给系统颁发脱离运行设计域的通用安全证书。",
-      "body": "仓库内研究形成了一条互补证据链。商用自动驾驶车辆的失败采样表明，朴素 Monte Carlo 可能在预算内观察不到碰撞，而主动搜索能显著提高失败命中率；但更高命中率与更自然的概率分布之间存在张力，PCA 式“特征失败方向”更适合诊断机制而非直接估计现实事故率。RiskFlow 同样把速度、逼真度和危险性作为需要共同权衡的目标，而不是默认三者一致。\n\n另一组证据说明 oracle 和迁移层级不可省略。CARS 将“责任是否属于自车策略”加入对抗场景，避免把不可避免或他车恶意造成的事故都记为系统缺陷。Bench2Drive-Robust 表明部署期数据流、状态估计与时延故障需要在闭环中单独测试；真实世界扰动研究进一步提示，模型级指标只能有限预测整车失败。最后，世界模型准入研究发现视觉质量排序可能与动作跟随排序反转。合起来，这些结果支持分层测试和机制诊断，却没有证明某个基准分数可以直接外推到所有道路、天气和系统版本。",
+      "title": "现有证据支持更快发现失效，不支持把命中率解释为事故率",
+      "thesis": "主动搜索、闭环评测和现实迁移各自提供不同层级的证据，任何一层都不能独立完成安全证明。",
+      "body": "Adaptive Stress Testing 将高可能失败路径搜索表述为序贯决策问题；商用卡车研究则具体报告 AST 和 DiFS 在传统 Monte Carlo 未发现碰撞的预算内找到碰撞。RiskFlow、Safe-Sim 等生成方法也能主动提高危险交互的出现频率。这些结果证明的是**失效发现效率和诊断能力**。搜索策略改变了采样分布，论文中的高碰撞命中率既不是自然交通中的场景发生概率，也不是被测系统的现实事故率。\n\n概率估计必须另立证据链。加速评估和 NADE 从自然驾驶数据建立参考分布，只对明确定义的切入或高速交互事件改变采样，再用可计算似然比加权；在分布模型、支持集覆盖、代理系统和权重方差等假设成立时，它们可以估计特定事件率并给出置信区间。该能力不能由 AST 或模糊测试的命中率替代，也不能不经校准推广到新的 ODD、行为模型或系统版本。\n\n闭环证据同样需要分层解释。Bench2Drive-Robust 证明帧流、定位和延迟误差会沿反馈环累积，实车扰动研究又表明离线模型指标只能有限预测整车失效；Digital Siblings 和事故重建则分别用跨仿真器一致性和真实事故反事实提高外部锚定。它们共同支持需要互补闭环和现实证据，但没有证明任何单个闭环基准、仿真器或事故重建集合能够代表完整 ODD，更没有提供脱离系统版本的通用安全结论。",
       "referenceIds": [
+        "adaptive-stress-testing-2018",
         "commercial-av-failure",
         "riskflow",
-        "cars-responsibility",
+        "accelerated-evaluation-2017",
+        "nade-2021",
+        "safe-sim-2024",
         "bench2drive-robust",
+        "digital-siblings-2024",
         "real-world-perturbation",
-        "world-model-admissibility"
+        "waymo-fatal-crash-reconstruction"
       ]
     },
     {
-      "id": "open-challenges",
+      "id": "oracle-fidelity-and-transfer",
       "kind": "challenges",
-      "title": "最难的矛盾集中在自然性、归因性与可迁移性之间",
-      "thesis": "测试生成得越激进，越需要额外证据说明它没有偏离现实，也没有把仿真器缺陷误判为系统缺陷。",
-      "body": "首要难题是**危险性与自然性的冲突**。搜索算法会主动走向低概率区域，因此命中率不能直接解释为现实风险；需要似然校准、独立自然日志或分层采样恢复概率意义。第二是**oracle 歧义**：碰撞并不自动等于自车有责，未碰撞也不等于行为可接受；责任、可避免性、规则、舒适度和任务完成往往必须联合判定。第三是**仿真到现实的 verdict 迁移**：外观相似、轨迹相似和安全结论一致是三个不同层级。\n\n工程层面的缺口同样重要。闭环结果对随机交通、地图、传感器版本和算力调度敏感，缺少共同随机种子、置信区间和失败去重会放大排名噪声。端到端策略、模块化系统与商用黑盒系统又需要不同的可观测性。对生成式仿真而言，还存在循环论证风险：用与被测策略共享数据和偏差的世界模型证明策略安全。可复现测试必须把场景生成器、仿真器、策略和 oracle 分开版本化，并允许其中任何一层拒绝给出结论。",
+      "title": "最难的问题是让场景、裁判和迁移同时可信",
+      "thesis": "测试越主动、仿真器越复杂，越需要把自然性、责任、oracle 缺陷和迁移失败作为一等不确定度。",
+      "body": "搜索式和生成式测试天然存在危险性与自然性的张力：生成器可能通过不自然急转、越界或不可避免冲突提高碰撞率。责任模型可以剔除部分无诊断价值的事故，但 FSM、CC-JP、RSS 等模型的适用范围和规范假设不同，责任归因是参考模型相对结论，不等于法律责任。类似地，TTC、DRAC、碰撞、路线完成和舒适度分别观察不同失效面，不能由一个综合分数替代。\n\n仿真真实性也不是单轴外观指标。车辆动力学、交通行为、传感器、计算时序、碰撞检测和策略动作响应都可能改变 verdict；同一测试在不同仿真器中还可能产生冲突结果。生成式世界模型进一步把环境和裁判都变成未经验证的学习系统，视觉质量高并不保证动作后果正确。用于测试前，世界模型至少需要动作跟随、有效包络、失效归因和现实 verdict 迁移审查；达不到准入条件时应输出“无法裁决”。",
       "referenceIds": [
-        "testing-survey-2023",
         "cars-responsibility",
-        "commercial-av-failure",
+        "digital-siblings-2024",
+        "criticality-metrics-2022",
+        "scenario-coverage-2024",
         "real-world-perturbation",
         "world-model-admissibility"
       ]
     },
     {
-      "id": "research-agenda",
+      "id": "auditable-evidence-stack",
       "kind": "outlook",
-      "title": "下一步是构建可审计的测试证据栈，而不是追逐单一排行榜",
-      "thesis": "成熟的测试中心应同时保存失败样本、生成概率、责任解释、复现条件和跨层验证结果。",
-      "body": "可执行的研究议程有三条。第一，建立**校准的场景生成器**：不仅输出危险场景，还输出其来源、似然、与自然数据的距离及失败机制簇，使测试预算与现实风险能够重新连接。第二，建立**多层测试阶梯**：开环筛查用于低成本过滤，经典仿真闭环用于机制复现，硬件在环用于暴露时序和系统集成问题，封闭场地或实车用于校准关键 verdict；各层结果只在声明的包络内继承。\n\n第三，建立**仿真器准入与拒绝机制**。经典仿真器和学习式世界模型都应报告动作响应、可信时间范围、分布外检测和失败归因；达不到准入条件时，系统应明确“无法裁决”，而不是输出一个看似精确的安全分。这样的证据栈也能把自动驾驶测试与端到端策略、世界模型和 Agentic Driving 连接起来：研究重点从谁在固定榜单上更高，转向谁能在可复现干预下稳定避免已知失效机制。",
+      "title": "下一步是可审计的多层证据栈，而不是更大的单一排行榜",
+      "thesis": "成熟测试流程应保存失效来源、采样概率、责任解释、复现条件、跨层结果和明确的拒绝边界。",
+      "body": "可执行的证据栈应从低成本到高成本逐层升级：先用自然日志和开环检查过滤明显问题，再用经典仿真闭环复现机制，用搜索或生成方法扩大失效邻域，以 SIL/HIL 暴露接口和时序问题，最后对高价值机制使用封闭场地、实车或真实事故数据校准。每层都应保存系统版本、ODD、场景 canonical ID、随机种子、oracle 版本、生成概率、置信区间和失败簇，且只继承已经验证能够跨层迁移的结论。\n\n稀有事件估计应设置可证伪终点：在同一自然分布和目标事件定义下，对比自然 Monte Carlo 与似然加权估计器，后者必须在预注册置信水平保持名义覆盖率，同时显著缩窄区间；若支持集缺失、权重退化或代理模型变化使覆盖率不达标，就只能报告失效发现，不能报告现实事件率。仿真、世界模型或 HIL 的 verdict 迁移也应在预注册的现实样本上给出预测区间；只有现实结果达到约定覆盖率，上一层证据才可继承，否则必须返回无法裁决。\n\n对经典仿真器和世界模型还需要独立准入与拒绝机制：验证接口和实现，校准动力学与传感器，检查动作响应和最大可信 rollout，识别分布外场景，并用多仿真器或现实锚点复核关键 verdict。这样的结构符合 UL 4600 所强调的组合证据，也使生成式测试的作用更清楚：它负责提出高价值假设和扩展失效空间，而不是自行证明现实风险或替代安全案例。",
       "referenceIds": [
+        "iso-sotif-2022",
+        "iso-scenario-testing-2022",
+        "ul-4600-ed3",
         "bench2drive-2024",
-        "riskflow",
         "bench2drive-robust",
+        "riskflow",
+        "digital-siblings-2024",
         "real-world-perturbation",
-        "world-model-admissibility"
+        "world-model-admissibility",
+        "waymo-fatal-crash-reconstruction",
+        "accelerated-evaluation-2017",
+        "nade-2021"
       ]
     }
   ],
   "takeaways": [
-    "安全关键场景的数量不是充分指标；自然性、责任归因和现实概率必须同时报告。",
-    "开环退化不能替代闭环失效，仿真闭环也不能无条件替代硬件在环或真实车辆证据。",
-    "部署扰动、软件升级与计算时延应被视为一等测试对象，而不是感知精度之外的附录。",
-    "世界模型只有在动作响应、可信包络和 verdict 迁移得到验证后，才有资格参与安全裁决。",
-    "最有价值的测试产物是可复现的失效机制与适用边界，而不是一个脱离上下文的总分。"
+    "任何测试结论都必须绑定系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界。",
+    "搜索或生成方法的高失败命中率表示诊断效率，不表示自然场景概率、系统现实事故率或风险已经校准。",
+    "闭环能暴露误差累积和交互反馈，但闭环本身既不保证场景真实，也不保证 oracle 与仿真器可信。",
+    "覆盖率只对已声明的场景分类、参数范围和 ODD 有意义，不能被写成连续开放世界的完备覆盖。",
+    "责任归因必须注明参考模型和适用范围；模型归因结论不能直接替代法律责任判断。",
+    "世界模型在参与安全 verdict 前必须经过动作跟随、适用包络、失效归因和现实迁移准入审查。"
   ],
   "references": [
     {
+      "id": "iso-sotif-2022",
+      "title": "ISO 21448:2022 Road Vehicles — Safety of the Intended Functionality",
+      "authors": "International Organization for Standardization (ISO)",
+      "year": 2022,
+      "venue": "ISO",
+      "url": "https://www.iso.org/standard/77490.html",
+      "publicationType": "standard",
+      "publicationStatus": "standard",
+      "canonicalId": "iso:21448:2022",
+      "sourceFamily": "official-project",
+      "supports": "规定在不存在 ISO 26262 所定义故障时，如何分析由预期功能不足、性能局限和可合理预见误用引起的风险，为 ODD、触发条件和 SOTIF 证据边界提供规范基础。",
+      "limitation": "不替代 ISO 26262 功能安全、网络安全或完整产品安全案例，也不为具体自动驾驶系统规定统一通过阈值。"
+    },
+    {
+      "id": "iso-scenario-testing-2022",
+      "title": "ISO 34502:2022 Road Vehicles — Test Scenarios for Automated Driving Systems — Scenario Based Safety Evaluation Framework",
+      "authors": "International Organization for Standardization (ISO)",
+      "year": 2022,
+      "venue": "ISO",
+      "url": "https://www.iso.org/standard/78951.html",
+      "publicationType": "standard",
+      "publicationStatus": "standard",
+      "canonicalId": "iso:34502:2022",
+      "sourceFamily": "official-project",
+      "supports": "提供自动驾驶场景式安全评价框架，要求把测试对象、ODD、场景、执行和评价过程组织成可追溯证据。",
+      "limitation": "其适用道路和功能范围有明确边界，不覆盖所有误用、人机交互、网络安全或任意 ODD，也不保证场景数据库完备。"
+    },
+    {
+      "id": "ul-4600-ed3",
+      "title": "UL 4600 Edition 3: Standard for Safety for the Evaluation of Autonomous Products",
+      "authors": "UL Standards & Engagement",
+      "year": 2023,
+      "venue": "UL 4600",
+      "url": "https://www.ul.com/news/ul-4600-edition-3-updates-incorporate-autonomous-trucking",
+      "publicationType": "standard",
+      "publicationStatus": "standard",
+      "canonicalId": "ul:4600:edition-3",
+      "sourceFamily": "official-project",
+      "supports": "以目标和技术中立的安全案例组织分析、仿真、封闭场地、道路测试、软件更新和部署后指标，支持多层证据而非单一里程门槛。",
+      "limitation": "不规定统一最低道路里程、固定可接受风险值或适用于所有产品的通过条件，具体论证仍由系统与 ODD 决定。"
+    },
+    {
       "id": "testing-survey-2023",
       "title": "A Survey on Automated Driving System Testing: Landscapes and Trends",
+      "authors": "Shuncheng Tang; Zhenya Zhang; Yi Zhang; Jixiang Zhou; Yan Guo; Shuang Liu; Shengjian Guo; Yan-Fu Li; Lei Ma; Yinxing Xue; Yang Liu",
       "year": 2023,
       "venue": "ACM Transactions on Software Engineering and Methodology",
       "url": "https://doi.org/10.1145/3579642",
-      "publicationType": "survey"
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1145/3579642",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "系统梳理感知、预测规划等模块级测试与完整系统级测试，并总结协同缺陷、部署问题和仿真到现实差距。",
+      "limitation": "综述建立的是问题与方法地图，不提供单一充分性标准；其覆盖截止时间也早于 2024–2026 年生成式世界模型和部署扰动工作。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2206.05961"
+        }
+      ]
+    },
+    {
+      "id": "scenario-testing-considerations-2020",
+      "title": "Fundamental Considerations around Scenario-Based Testing for Automated Driving",
+      "authors": "Christian Neurohr; Lukas Westhofen; Tabea Henning; Thies de Graaff; Eike Möhlmann; Eckard Böde",
+      "year": 2020,
+      "venue": "2020 IEEE Intelligent Vehicles Symposium",
+      "url": "https://doi.org/10.1109/IV47402.2020.9304823",
+      "publicationType": "position",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/iv47402.2020.9304823",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "指出场景式测试能否支持准入取决于场景识别、参数化、执行、评价和论证各步骤的假设与证据是否一致且充分。",
+      "limitation": "提供通用考虑和论证框架，而非经大规模产品验证的覆盖充分性算法或监管通过阈值。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2005.04045"
+        }
+      ]
     },
     {
       "id": "carla-2017",
       "title": "CARLA: An Open Urban Driving Simulator",
+      "authors": "Alexey Dosovitskiy; Germán Ros; Felipe Codevilla; Antonio López; Vladlen Koltun",
       "year": 2017,
       "venue": "Conference on Robot Learning",
       "url": "https://proceedings.mlr.press/v78/dosovitskiy17a.html",
-      "publicationType": "method"
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "pmlr:v78:dosovitskiy17a",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "提供可控制地图、天气、交通参与者和传感器的开放城市驾驶仿真环境，奠定大量可重复闭环 ADS 测试工作。",
+      "limitation": "平台能力和视觉展示不能证明交通行为、传感器、动力学或安全 verdict 与真实世界一致。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1711.03938"
+        }
+      ]
+    },
+    {
+      "id": "adaptive-stress-testing-2018",
+      "title": "Adaptive Stress Testing for Autonomous Vehicles",
+      "authors": "Mark Koren; Saud Alsaif; Ritchie Lee; Mykel J. Kochenderfer",
+      "year": 2018,
+      "venue": "2018 IEEE Intelligent Vehicles Symposium",
+      "url": "https://doi.org/10.1109/IVS.2018.8500400",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/ivs.2018.8500400",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把环境扰动建模为序贯决策问题，以 MCTS 或深度强化学习搜索导致碰撞的高可能路径，建立主动稀有失效发现范式。",
+      "limitation": "验证集中于车辆接近人行横道的仿真案例；搜索得到的失败频率不能直接解释为自然事故率。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1902.01909"
+        }
+      ]
+    },
+    {
+      "id": "accelerated-evaluation-2017",
+      "title": "Accelerated Evaluation of Automated Vehicles Safety in Lane Change Scenarios Based on Importance Sampling Techniques",
+      "authors": "Ding Zhao; Henry Lam; Huei Peng; Shan Bao; David J. LeBlanc; Kazutoshi Nobukawa; Christopher S. Pan",
+      "year": 2017,
+      "venue": "IEEE Transactions on Intelligent Transportation Systems",
+      "url": "https://doi.org/10.1109/TITS.2016.2582208",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/tits.2016.2582208",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以自然驾驶切入数据拟合参考分布，用交叉熵寻找重要性分布并以似然比估计冲突、碰撞和伤害频率，建立加速评估的概率路线。",
+      "limitation": "证据针对建模自动驾驶车辆和正面切入事件；无偏与加速率依赖行为分布、事件定义、支持集覆盖和模型正确性，不能直接推广到任意 ODD。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1605.04965"
+        }
+      ]
+    },
+    {
+      "id": "nade-2021",
+      "title": "Intelligent Driving Intelligence Test for Autonomous Vehicles with Naturalistic and Adversarial Environment",
+      "authors": "Shuo Feng; Xintao Yan; Haowei Sun; Yiheng Feng; Henry X. Liu",
+      "year": 2021,
+      "venue": "Nature Communications",
+      "url": "https://doi.org/10.1038/s41467-021-21007-8",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1038/s41467-021-21007-8",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "在自然驾驶环境中只于关键时刻扭曲少量背景车辆行为，并以重要性权重在仿真中保持事故率估计的无偏性、提高稀有事件评估效率。",
+      "limitation": "结果来自高速公路仿真、两个代表性 AV 模型和代理模型；自然分布与代理误差若失配，估计效率和有效性都会变化。"
+    },
+    {
+      "id": "safe-sim-2024",
+      "title": "Safe-Sim: Safety-Critical Closed-Loop Traffic Simulation with Diffusion-Controllable Adversaries",
+      "authors": "Wei-Jer Chang; Francesco Pittaluga; Masayoshi Tomizuka; Wei Zhan; Manmohan Chandraker",
+      "year": 2024,
+      "venue": "ECCV 2024",
+      "url": "https://eccv.ecva.net/virtual/2024/poster/253",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "ecva:eccv2024:chang-safe-sim",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用扩散过程中的对抗引导生成可控碰撞类型和攻击性，同时让场景参与者保持反应式交互，为长尾闭环测试提供生成式路线。",
+      "limitation": "真实性和可控性证据来自 nuScenes 派生仿真；生成频率没有自然交通概率含义，且未建立向实车或安全案例的 verdict 迁移。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2401.00391"
+        }
+      ]
+    },
+    {
+      "id": "drivefuzz-2022",
+      "title": "DriveFuzz: Discovering Autonomous Driving Bugs through Driving Quality-Guided Fuzzing",
+      "authors": "Seulbae Kim; Major Liu; Junghwan \"John\" Rhee; Yuseok Jeon; Yonghwi Kwon; Chung Hwan Kim",
+      "year": 2022,
+      "venue": "ACM Conference on Computer and Communications Security",
+      "url": "https://doi.org/10.1145/3548606.3560558",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1145/3548606.3560558",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用交通规则 oracle 和驾驶质量引导完整自动驾驶栈的场景变异，发现 30 个 ADS 缺陷及 3 个 CARLA 仿真器缺陷。",
+      "limitation": "结果来自两套系统和仿真环境；仿真器自身缺陷说明同一环境也可能污染测试输入与 oracle。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2211.01829"
+        }
+      ]
+    },
+    {
+      "id": "advsim-2021",
+      "title": "AdvSim: Generating Safety-Critical Scenarios for Self-Driving Vehicles",
+      "authors": "Jingkang Wang; Ava Pun; James Tu; Sivabalan Manivasagam; Abbas Sadat; Sergio Casas; Mengye Ren; Raquel Urtasun",
+      "year": 2021,
+      "venue": "IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+      "url": "https://openaccess.thecvf.com/content/CVPR2021/html/Wang_AdvSim_Generating_Safety-Critical_Scenarios_for_Self-Driving_Vehicles_CVPR_2021_paper.html",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "cvf:cvpr2021:wang-advsim",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "通过优化其他交通参与者的可行轨迹并重新生成 LiDAR 观测，在传感器级闭环中构造能够暴露完整驾驶栈弱点的安全关键场景。",
+      "limitation": "物理可行和传感器可渲染不等于场景具有正确现实暴露率，结果仍依赖合成 LiDAR、规划器和数据分布。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2101.06549"
+        }
+      ]
     },
     {
       "id": "bench2drive-2024",
       "title": "Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-to-End Autonomous Driving",
+      "authors": "Xiaosong Jia; Zhenjie Yang; Qifeng Li; Zhiyuan Zhang; Junchi Yan",
       "year": 2024,
-      "venue": "NeurIPS Datasets and Benchmarks Track",
+      "venue": "NeurIPS 2024 Datasets and Benchmarks Track",
       "url": "https://papers.nips.cc/paper_files/paper/2024/hash/017761f94a1cd66d01c041aff85492c4-Abstract-Datasets_and_Benchmarks_Track.html",
-      "publicationType": "benchmark"
+      "publicationType": "benchmark",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.52202/079017-0025",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以 220 条路线、44 类交互场景和多能力任务评估端到端驾驶的闭环路线完成、安全与驾驶质量，暴露开环指标看不到的累积误差。",
+      "limitation": "全部结果位于 CARLA 及其固定任务、交通逻辑和传感器模型内，闭环分数不能直接外推为真实道路安全性。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2406.03877"
+        }
+      ]
     },
     {
       "id": "cars-responsibility",
       "title": "Learning Responsibility-Attributed Adversarial Scenarios for Testing Autonomous Vehicles",
+      "authors": "Yizhuo Xiao; Haotian Yan; Ying Wang; Zhongpan Zhu; Yuxin Zhang; Xintao Yan; Mustafa Suphi Erden; Cheng Wang",
       "year": 2026,
       "venue": "arXiv",
       "url": "https://arxiv.org/abs/2605.13751",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2605.13751",
+      "sourceFamily": "local-corpus",
+      "supports": "把上下文对手选择、闭环生成策略和 FSM、CC-JP、RSS 责任模型结合，区分 ADS 可避免缺陷与不可避免冲突。",
+      "limitation": "仍是预印本；归因依赖所选参考驾驶模型，在横向冲突和跨数据集场景中表现会变化，也不能替代法律责任认定。",
       "localPaperId": "cars-responsibility-testing"
     },
     {
       "id": "bench2drive-robust",
       "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "authors": "Zhiyuan Zhang; Zhenghao Jin; Yanlun Peng; Xianda Guo; Haoran Liu; Shaofeng Zhang; Xingjun Ma; Zuxuan Wu; Junchi Yan; Xiaosong Jia; Yu-Gang Jiang",
       "year": 2026,
       "venue": "arXiv",
       "url": "https://arxiv.org/abs/2605.18059",
       "publicationType": "benchmark",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2605.18059",
+      "sourceFamily": "local-corpus",
+      "supports": "在 Bench2Drive 闭环中分别注入相机帧流故障、局部观测缺失、GPS/速度误差和 100–500 ms 执行延迟，显示清洁条件排名不能代表部署鲁棒性。",
+      "limitation": "仍是预印本；参数化注入是设备故障代理，不是经过现场统计校准的故障分布，且评价仍受 CARLA 边界约束。",
       "localPaperId": "bench2drive-robust-deployment-perturbations"
     },
     {
       "id": "commercial-av-failure",
       "title": "Importance Sampling and PCA for Finding Failures in Commercial Autonomous Vehicles",
+      "authors": "Hailey Warner; Duncan Eddy; Shreya Parjan; Caroline Cahilly; Harrison Delecki; Matthias Kleinstauber; Chaitanya Shinde; Jerry Lopez; Mykel J. Kochenderfer",
       "year": 2026,
-      "venue": "arXiv",
+      "venue": "arXiv; submitted to IEEE ICVES 2026",
       "url": "https://arxiv.org/abs/2607.18106",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.18106",
+      "sourceFamily": "local-corpus",
+      "supports": "在 Torc 商用卡车规划栈的切入与汇入场景中，AST 和 DiFS 在 Monte Carlo 未发现碰撞的预算内找到失败，并用 PCA 聚类可复现失效方向。",
+      "limitation": "截至检索日只确认投稿 ICVES 2026，不能写成已接收；主动采样命中率不是系统现实失效率，实验主要覆盖单一商用栈和感知噪声场景族。",
       "localPaperId": "commercial-av-failure-sampling"
     },
     {
       "id": "riskflow",
       "title": "RiskFlow: Fast and Faithful Safety-Critical Traffic Scenario Generation",
+      "authors": "Qi Lan; Yining Tang; Yu Shen; Yi Zhou; Yuhao Wei; Jie Li; Guofa Li",
       "year": 2026,
       "venue": "arXiv",
       "url": "https://arxiv.org/abs/2606.06423",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2606.06423",
+      "sourceFamily": "local-corpus",
+      "supports": "在动作空间使用 flow 生成和输出空间引导，在 nuScenes/tbsim 闭环中权衡风险交互、道路可行性、轨迹误差和运动学分布。",
+      "limitation": "仍是预印本；实验只覆盖 100 个验证场景，碰撞率和跨方法 min-max 真实性分数属于基准内部量，不能解释为现实风险概率。",
       "localPaperId": "riskflow-safety-critical-scenario-generation"
+    },
+    {
+      "id": "digital-siblings-2024",
+      "title": "Two is Better Than One: Digital Siblings to Improve Autonomous Driving Testing",
+      "authors": "Matteo Biagiola; Andrea Stocco; Vincenzo Riccio; Paolo Tonella",
+      "year": 2024,
+      "venue": "Empirical Software Engineering",
+      "url": "https://doi.org/10.1007/s10664-024-10458-4",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/s10664-024-10458-4",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用两个不同实现的仿真器共同预测缩比自动驾驶车辆数字孪生的失败，跨仿真器一致结果比任一单仿真器更接近物理平台。",
+      "limitation": "证据来自车道保持、两种开放仿真器和缩比车辆，不能推出多仿真器一致就必然等于全尺寸复杂系统的现实真实性。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2305.08060"
+        }
+      ]
+    },
+    {
+      "id": "criticality-metrics-2022",
+      "title": "Criticality Metrics for Automated Driving: A Review and Suitability Analysis of the State of the Art",
+      "authors": "Lukas Westhofen; Christian Neurohr; Tjark Koopmann; Martin Butz; Barbara Schütt; Fabian Utesch; Birte Neurohr; Christian Gutenkunst; Eckard Böde",
+      "year": 2022,
+      "venue": "Archives of Computational Methods in Engineering",
+      "url": "https://doi.org/10.1007/s11831-022-09788-7",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/s11831-022-09788-7",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "从目标、输入需求和适用情形比较自动驾驶关键性指标，说明 TTC 等单一代理不能覆盖所有交互、责任和风险用途。",
+      "limitation": "适用性分析不能替代针对具体 ODD、传感误差和测试目的的阈值校准，也不提供统一安全通过指标。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2108.02403"
+        }
+      ]
+    },
+    {
+      "id": "scenario-coverage-2024",
+      "title": "Coverage Metrics for a Scenario Database for the Scenario-Based Assessment of Automated Driving Systems",
+      "authors": "Erwin de Gelder; Maren Buermann; Olaf op den Camp",
+      "year": 2024,
+      "venue": "2024 IEEE International Automated Vehicle Validation Conference (IAVVC)",
+      "url": "https://doi.org/10.1109/IAVVC63304.2024.10786405",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/iavvc63304.2024.10786405",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "在超过 20 万个 HighD 场景和十类场景上构造 ODD、数据与场景库覆盖量，使覆盖声明能够绑定分类体系和条件。",
+      "limitation": "作者明确未解决场景库完备性；在既定标签、场景类别和条件下达到 100% 覆盖，不等于开放连续场景空间已经覆盖。",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2409.01139"
+        }
+      ]
     },
     {
       "id": "real-world-perturbation",
       "title": "Real-World Perturbation Testing of Autonomous Driving Systems",
+      "authors": "Stefano Carlo Lambertenghi; Matthias Weil; Andrea Stocco",
       "year": 2026,
-      "venue": "ASE",
+      "venue": "arXiv；作者报告已被 ASE 2026 接收",
       "url": "https://arxiv.org/abs/2607.04953",
       "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.04953",
+      "sourceFamily": "local-corpus",
+      "supports": "将 72 种相机和 LiDAR 扰动贯穿离线模型、硬件在环与全尺寸车辆闭环，显示模型级指标只能较弱地预测系统级失效，实时可执行性也是证据条件。",
+      "limitation": "截至截止日只能核验 arXiv 上的作者接收声明，ASE 官方论文页或 proceedings 尚未出现；实车证据也只来自有限车辆、路线、速度与系统栈，不能外推到其他 ODD、硬件或软件版本。",
       "localPaperId": "real-world-perturbation-testing"
     },
     {
       "id": "world-model-admissibility",
       "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "authors": "Christian Oefinger; Finn Rasmus Schäfer; Korbinian Moller; Mattia Piccinini; Johannes Betz",
       "year": 2026,
-      "venue": "arXiv",
+      "venue": "arXiv; accepted at RSS 2026 Workshop on Robot World Models",
       "url": "https://arxiv.org/abs/2607.07196",
       "publicationType": "position",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.07196",
+      "sourceFamily": "local-corpus",
+      "supports": "提出 L0–L4 世界模型准入阶梯，并在两种驾驶世界模型上显示视觉质量排序可能与动作跟随和可信 rollout 排序反转。",
+      "limitation": "工作坊接收不等于已经完成准入认证；实证主要覆盖低层级、两种模型和约 400 个片段，尚未验证 L3 失效归因或 L4 现实 verdict 迁移。",
       "localPaperId": "world-model-simulator-admissibility"
+    },
+    {
+      "id": "waymo-fatal-crash-reconstruction",
+      "title": "Waymo Simulated Driving Behavior in Reconstructed Fatal Crashes within an Autonomous Vehicle Operating Domain",
+      "authors": "John M. Scanlon; Kristofer D. Kusano; Tom Daniel; Christopher Alderson; Alexander Ogle; Trent Victor",
+      "year": 2021,
+      "venue": "Accident Analysis & Prevention",
+      "url": "https://doi.org/10.1016/j.aap.2021.106454",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1016/j.aap.2021.106454",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把 Waymo Driver 反事实置换进特定 ODD 内 72 起真实死亡事故重建，分别评估系统作为事故发起者和响应者时的避免与缓解能力。",
+      "limitation": "公司系统、单一地理 ODD、历史事故重建与缺失次生参与者限制外推；研究未估计系统进入这些场景的现实暴露率，也未声称构成完整安全证明。"
     }
-  ]
+  ],
+  "searchAudit": {
+    "workflowVersion": 3,
+    "searchedAt": "2026-07-28",
+    "cutoffDate": "2026-07-28",
+    "skills": [
+      "research-lit",
+      "citation-audit"
+    ],
+    "queryFamilies": [
+      "场景式测试与 SOTIF 安全论证",
+      "搜索式与重要性采样失效发现",
+      "生成式场景和世界模型测试",
+      "覆盖率、风险度量与责任归因",
+      "仿真真实性与 sim-to-real",
+      "真实系统、闭环与回归测试"
+    ],
+    "sourceFamilies": [
+      "local-corpus",
+      "arxiv",
+      "publisher-and-venue",
+      "official-project"
+    ],
+    "counts": {
+      "candidates": 69,
+      "deduplicated": 58,
+      "included": 23,
+      "excluded": 35
+    },
+    "evidenceBoundary": "6 个查询族分别保存了可复核的查询串、来源、执行日期、候选数与规范化 ID 样本。本库真实检索命中 85 个文件，按方向标签和 revisionOf 归并为 38 篇候选；其中 6 篇纳入、32 篇逐组记录暂缓理由，未静默漏筛。各查询族共有 69 条结构化候选记录，允许同一论文跨查询族重复出现；去重后为 58 篇，其中纳入 23 篇、排除或暂缓 35 篇。所有纳入引用均回到可打开的一手记录核对书目、出版状态、支撑论断和限制；本轮没有复现实验、访问私有数据或获得同初态真实道路反事实，因此不把模拟、开环或生成质量结果外推为现实安全结论。",
+    "openSearchGaps": [
+      "缺少跨经典仿真器、生成式世界模型、HIL、封闭场地和道路测试的统一 verdict 转移函数及置信区间。",
+      "缺少将搜索或生成场景的采样概率重新校准到自然交通暴露率的公开、多 ODD 实证。",
+      "责任模型在横向交互、复杂法规和不同司法辖区之间的一致性仍缺少系统比较。",
+      "世界模型 L3 失效归因和 L4 现实 verdict 迁移尚无公开、大规模、独立重复证据。",
+      "商用自动驾驶栈的软件更新、回归测试证据继承和部署后持续安全案例仍缺少开放基准。"
+    ],
+    "independentReview": {
+      "completedAt": "2026-07-29",
+      "status": "passed",
+      "reviewers": 1,
+      "rounds": 4,
+      "snapshotFingerprint": "6da81e7eeadcb4bff115eab685f90648878c3e9647940c40a63609535b1d7a1c"
+    },
+    "queryRuns": [
+      {
+        "family": "场景式测试与 SOTIF 安全论证",
+        "sourceFamily": "local-corpus",
+        "query": "测试|场景|testing|scenario|coverage",
+        "executedAt": "2026-07-28",
+        "resultCount": 38,
+        "rawHitCount": 85,
+        "screenedOutCount": 47,
+        "screeningNote": "真实正则检索命中 85 个文件；按当前方向 tags 筛选并用 revisionOf 归并后得到 38 篇规范化候选。全部候选已写入 candidateLocalPaperIds，其中 6 篇进入引用，32 篇在 deferredGroups 中说明暂缓原因；其余 47 个命中文件是其他方向记录或同文修订。",
+        "resultIdSample": [
+          "arxiv:2605.13751",
+          "arxiv:2605.18059",
+          "arxiv:2607.18106"
+        ],
+        "scopeRationale": "用真实本库全文正则检索“场景式测试与 SOTIF 安全论证”相关中英文术语，再从命中文件中筛选规范化候选 ID。",
+        "retrieval": {
+          "provider": "ripgrep-local-corpus",
+          "endpoint": "content/papers",
+          "parameters": {
+            "query": "测试|场景|testing|scenario|coverage",
+            "path": "content/papers",
+            "flags": [
+              "-l",
+              "-i"
+            ]
+          },
+          "sort": "path-ascending",
+          "limit": 200
+        },
+        "localCandidateDisposition": {
+          "candidateLocalPaperIds": [
+            "anyscene-controllable-driving-scene-generation",
+            "bench2drive-robust-deployment-perturbations",
+            "cars-responsibility-testing",
+            "clap-v2x-prompt-optimization",
+            "cognitive-dual-process-driving",
+            "commercial-av-failure-sampling",
+            "commonroad-game-hitl-simulation",
+            "cooperscene-cv2x-benchmark",
+            "cvaa-driving-interpretability",
+            "deployed-vil-cooperative-perception",
+            "driving-videos-to-simulatable-scenarios",
+            "instant-nurec-feedforward-3dgs",
+            "lidar-robustness-3d-detection",
+            "m4world-multimodal-driving-world",
+            "maat-e2e-adversarial-training",
+            "mdrive-closed-loop-cooperative-driving",
+            "morph-u-resilient-v2x-planning",
+            "omnidreams-closed-loop-world-model",
+            "perception-informed-sil-simulation",
+            "physically-consistent-4d-driving-reconstruction",
+            "policy-stitching-e2e-driving",
+            "real-world-perturbation-testing",
+            "real2sim-physics-4dgs",
+            "realtime-adversarial-autonomous-systems",
+            "reasonbreak-vla-vulnerability-driving",
+            "riskflow-safety-critical-scenario-generation",
+            "safegen-critical-video-diffusion",
+            "safer-safety-scenario",
+            "scaling-self-play-e2e-driving",
+            "shift-drift-planning-benchmark",
+            "sind2-sotif-validation",
+            "terrazero-self-play-driving",
+            "trafficalign-traffic-scenario-generation",
+            "view-induced-trajectory-manipulation",
+            "vista-driving-world-model",
+            "vladrivebench-cot-action-vla",
+            "world-engine-post-training-driving",
+            "world-model-simulator-admissibility"
+          ],
+          "deferredGroups": [
+            {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "与本方向直接相关，但本轮未进入核心证据集：其问题或方法与已纳入代表工作高度重叠，或当前仍缺少更强的正式出版、独立复现或用途级证据；后续证据升级时优先复核。",
+              "localPaperIds": [
+                "commonroad-game-hitl-simulation",
+                "driving-videos-to-simulatable-scenarios",
+                "perception-informed-sil-simulation",
+                "safegen-critical-video-diffusion",
+                "safer-safety-scenario",
+                "shift-drift-planning-benchmark",
+                "sind2-sotif-validation",
+                "trafficalign-traffic-scenario-generation",
+                "vladrivebench-cot-action-vla"
+              ]
+            },
+            {
+              "reasonCode": "cross-direction-support",
+              "reason": "对本方向提供补充证据，但主要贡献和完整讨论归入另一研究方向；本综述暂不重复纳入，以避免同一方法跨方向过度加权，后续若形成独立证据链再提升。",
+              "localPaperIds": [
+                "anyscene-controllable-driving-scene-generation",
+                "clap-v2x-prompt-optimization",
+                "cognitive-dual-process-driving",
+                "cooperscene-cv2x-benchmark",
+                "cvaa-driving-interpretability",
+                "deployed-vil-cooperative-perception",
+                "instant-nurec-feedforward-3dgs",
+                "lidar-robustness-3d-detection",
+                "m4world-multimodal-driving-world",
+                "maat-e2e-adversarial-training",
+                "mdrive-closed-loop-cooperative-driving",
+                "morph-u-resilient-v2x-planning",
+                "omnidreams-closed-loop-world-model",
+                "physically-consistent-4d-driving-reconstruction",
+                "policy-stitching-e2e-driving",
+                "real2sim-physics-4dgs",
+                "realtime-adversarial-autonomous-systems",
+                "reasonbreak-vla-vulnerability-driving",
+                "scaling-self-play-e2e-driving",
+                "terrazero-self-play-driving",
+                "view-induced-trajectory-manipulation",
+                "vista-driving-world-model",
+                "world-engine-post-training-driving"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "family": "搜索式与重要性采样失效发现",
+        "sourceFamily": "arxiv",
+        "query": "autonomous vehicle adaptive stress testing accelerated evaluation importance sampling failure discovery",
+        "executedAt": "2026-07-28",
+        "resultCount": 7,
+        "resultIdSample": [
+          "doi:10.1109/ivs.2018.8500400",
+          "doi:10.1109/tits.2016.2582208",
+          "arxiv:2607.18106"
+        ],
+        "scopeRationale": "查询串直接覆盖“搜索式与重要性采样失效发现”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "ARIS arxiv_fetch.py",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous vehicle adaptive stress testing accelerated evaluation importance sampling failure discovery"
+          }
+        }
+      },
+      {
+        "family": "生成式场景和世界模型测试",
+        "sourceFamily": "publisher-and-venue",
+        "query": "autonomous driving generative scenario world model safety testing diffusion adversary",
+        "executedAt": "2026-07-28",
+        "resultCount": 6,
+        "resultIdSample": [
+          "ecva:eccv2024:chang-safe-sim",
+          "cvf:cvpr2021:wang-advsim",
+          "arxiv:2606.06423"
+        ],
+        "scopeRationale": "查询串直接覆盖“生成式场景和世界模型测试”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-primary-domains",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous driving generative scenario world model safety testing diffusion adversary"
+          }
+        }
+      },
+      {
+        "family": "覆盖率、风险度量与责任归因",
+        "sourceFamily": "arxiv",
+        "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution",
+        "executedAt": "2026-07-28",
+        "resultCount": 6,
+        "resultIdSample": [
+          "doi:10.1007/s11831-022-09788-7",
+          "doi:10.1109/iavvc63304.2024.10786405",
+          "arxiv:2605.13751"
+        ],
+        "scopeRationale": "查询串直接覆盖“覆盖率、风险度量与责任归因”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "ARIS arxiv_fetch.py",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution"
+          }
+        }
+      },
+      {
+        "family": "仿真真实性与 sim-to-real",
+        "sourceFamily": "official-project",
+        "query": "CARLA Bench2Drive digital sibling reconstructed crash simulation validity autonomous driving",
+        "executedAt": "2026-07-28",
+        "resultCount": 5,
+        "resultIdSample": [
+          "pmlr:v78:dosovitskiy17a",
+          "doi:10.52202/079017-0025",
+          "doi:10.1016/j.aap.2021.106454"
+        ],
+        "scopeRationale": "查询串直接覆盖“仿真真实性与 sim-to-real”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-official-projects",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "CARLA Bench2Drive digital sibling reconstructed crash simulation validity autonomous driving"
+          }
+        }
+      },
+      {
+        "family": "真实系统、闭环与回归测试",
+        "sourceFamily": "publisher-and-venue",
+        "query": "autonomous driving real system closed-loop deployment perturbation regression testing",
+        "executedAt": "2026-07-28",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:2605.18059",
+          "arxiv:2607.04953",
+          "doi:10.1007/s10664-024-10458-4"
+        ],
+        "scopeRationale": "查询串直接覆盖“真实系统、闭环与回归测试”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "retrieval": {
+          "provider": "web-search-primary-domains",
+          "endpoint": "https://www.google.com/search",
+          "sort": "relevance",
+          "limit": 10,
+          "parameters": {
+            "query": "autonomous driving real system closed-loop deployment perturbation regression testing"
+          }
+        }
+      }
+    ],
+    "deduplicationKeys": [
+      "doi",
+      "arxiv",
+      "venue-id",
+      "normalized-title"
+    ],
+    "retainedCanonicalIds": [
+      "iso:21448:2022",
+      "iso:34502:2022",
+      "ul:4600:edition-3",
+      "doi:10.1145/3579642",
+      "doi:10.1109/iv47402.2020.9304823",
+      "pmlr:v78:dosovitskiy17a",
+      "doi:10.1109/ivs.2018.8500400",
+      "doi:10.1109/tits.2016.2582208",
+      "doi:10.1038/s41467-021-21007-8",
+      "ecva:eccv2024:chang-safe-sim",
+      "doi:10.1145/3548606.3560558",
+      "cvf:cvpr2021:wang-advsim",
+      "doi:10.52202/079017-0025",
+      "arxiv:2605.13751",
+      "arxiv:2605.18059",
+      "arxiv:2607.18106",
+      "arxiv:2606.06423",
+      "doi:10.1007/s10664-024-10458-4",
+      "doi:10.1007/s11831-022-09788-7",
+      "doi:10.1109/iavvc63304.2024.10786405",
+      "arxiv:2607.04953",
+      "arxiv:2607.07196",
+      "doi:10.1016/j.aap.2021.106454"
+    ],
+    "exclusionCriteria": [
+      "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
+      "与方向范围不匹配，或只有通用任务证据而没有自动驾驶相关证据的候选不纳入核心表。",
+      "与已纳入代表作证据高度重叠且不能补足新方法、失败边界、正式出版或更强验证层级的候选不重复纳入。"
+    ],
+    "excludedCandidates": [
+      {
+        "canonicalId": "arxiv:1708.08559",
+        "title": "DeepTest: Automated Testing of Deep-Neural-Network-driven Autonomous Cars",
+        "url": "https://arxiv.org/abs/1708.08559",
+        "reasonCode": "component-level-precursor",
+        "reason": "是自动驾驶 DNN 测试的重要前驱，但主要使用图像变换、神经元覆盖和 Udacity 模型，不能直接支撑当前全栈场景级 verdict；其历史位置由已纳入综述覆盖。"
+      },
+      {
+        "canonicalId": "arxiv:1802.02295",
+        "title": "DeepRoad: GAN-based Metamorphic Autonomous Driving System Testing",
+        "url": "https://arxiv.org/abs/1802.02295",
+        "reasonCode": "component-level-precursor",
+        "reason": "改进了天气变换的真实性，但仍以模型一致性为主，缺少交通交互、暴露率校准和全栈闭环后果，因此没有进入核心证据表。"
+      },
+      {
+        "canonicalId": "arxiv:1705.06640",
+        "title": "DeepXplore: Automated Whitebox Testing of Deep Learning Systems",
+        "url": "https://arxiv.org/abs/1705.06640",
+        "reasonCode": "general-testing-foundation",
+        "reason": "提供差分测试和神经元覆盖基础，但跨多个通用 DNN 任务，不能替代自动驾驶场景覆盖、风险度量和系统安全论证证据。"
+      }
+    ],
+    "sourceLimitations": [
+      "Semantic Scholar API 存在匿名限流；发生 HTTP 429 时使用其网页索引继续发现，不把聚合器摘要当作论据。",
+      "OpenAlex 搜索返回面较宽，只用于发现与出版元数据交叉核对；作者机构或出版状态仍以论文和正式页面为准。"
+    ],
+    "qualityChecksApplied": [
+      "query-family-alignment",
+      "source-fanout-trace",
+      "raw-hit-candidate-separation",
+      "local-candidate-closure",
+      "canonical-id-casefold",
+      "single-count-schema",
+      "publication-status-primary-source",
+      "formal-arxiv-link-retention",
+      "physical-evidence-boundary",
+      "independent-review-current-snapshot"
+    ],
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "测试|场景|testing|scenario|coverage",
+        "endpoint": "content/papers",
+        "limit": 200,
+        "acceptedCount": 6,
+        "note": "实际执行 rg -l -i <pattern> content/papers，共原始命中 85 个文件；按方向标签及 revisionOf 归并为 38 篇规范化候选，全部进入引用或带理由的暂缓组。"
+      },
+      {
+        "sourceFamily": "arxiv",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "自动驾驶测试：从失效发现到可采信的安全证据 场景式测试与 SOTIF 安全论证 搜索式与重要性采样失效发现 生成式场景和世界模型测试 覆盖率、风险度量与责任归因 仿真真实性与 sim-to-real 真实系统、闭环与回归测试",
+        "endpoint": "https://export.arxiv.org/api/query",
+        "limit": 10,
+        "acceptedCount": 0,
+        "note": "通过已安装 ARIS arxiv_fetch.py 获取结构化元数据；候选仍逐篇打开一手页面复核。"
+      },
+      {
+        "sourceFamily": "publisher-and-venue",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "自动驾驶测试：从失效发现到可采信的安全证据 official proceedings journal standard",
+        "endpoint": "https://www.google.com/search",
+        "limit": 10,
+        "acceptedCount": 14,
+        "note": "限定正式会议、期刊、OpenReview 和标准机构页面核对出版状态与书目信息。"
+      },
+      {
+        "sourceFamily": "semantic-scholar",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "自动驾驶测试：从失效发现到可采信的安全证据",
+        "endpoint": "https://www.semanticscholar.org/search",
+        "limit": 3,
+        "acceptedCount": 0,
+        "note": "ARIS API受HTTP 429限流后改用Semantic Scholar网页索引完成发现；最终未直接采纳聚合器记录。"
+      },
+      {
+        "sourceFamily": "openalex",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "自动驾驶测试：从失效发现到可采信的安全证据",
+        "endpoint": "https://api.openalex.org/works",
+        "limit": 3,
+        "acceptedCount": 0,
+        "note": "官方API返回HTTP 200；仅用于发现和出版元数据交叉核对，最终论断均回到一手来源。"
+      },
+      {
+        "sourceFamily": "official-project",
+        "status": "success",
+        "executedAt": "2026-07-28",
+        "query": "自动驾驶测试：从失效发现到可采信的安全证据 official project code benchmark",
+        "endpoint": "https://www.google.com/search",
+        "limit": 10,
+        "acceptedCount": 3,
+        "note": "核对官方项目页、代码仓库和基准协议；项目自述不用于升级出版状态或现实安全等级。"
+      }
+    ]
+  }
 }

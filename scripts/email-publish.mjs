@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getDigests } from "../src/lib/content.js";
+import { getDigests, getReviewCenter } from "../src/lib/content.js";
+import { reviewCenterFingerprint } from "../src/lib/review-fingerprint.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
@@ -29,6 +30,10 @@ function usage() {
   console.error("Usage: npm run email:check");
   console.error("       npm run email:preview -- <digest-id>");
   console.error("       npm run email:publish -- <digest-id>");
+  console.error("       npm run email:welcome:preview -- <digest-id>");
+  console.error("       npm run email:welcome -- <digest-id>");
+  console.error("       npm run email:review-update:preview");
+  console.error("       npm run email:review-update");
 }
 
 function normalizeString(value) {
@@ -176,17 +181,61 @@ export function parseRecipientsConfig(data) {
   return recipients;
 }
 
-async function loadRecipients() {
+export function parseRecipientState(data) {
+  const recipients = parseRecipientsConfig(data);
+  const list = data && !Array.isArray(data) && Array.isArray(data.onboardedRecipients)
+    ? data.onboardedRecipients
+    : [];
+  const invalid = list.filter((item) => typeof item !== "string" || !isValidEmail(item));
+  if (invalid.length) {
+    throw new Error(`已介绍收件人配置包含 ${invalid.length} 个无效地址`);
+  }
+
+  const onboardedRecipients = uniqueEmails(list);
+  const recipientSet = new Set(recipients);
+  const unknown = onboardedRecipients.filter((item) => !recipientSet.has(item));
+  if (unknown.length) {
+    throw new Error(`已介绍收件人中有 ${unknown.length} 个地址不在推送名单内`);
+  }
+
+  const onboardedSet = new Set(onboardedRecipients);
+  return {
+    data,
+    recipients,
+    onboardedRecipients,
+    welcomeRecipients: recipients.filter((item) => !onboardedSet.has(item))
+  };
+}
+
+async function loadRecipientState() {
   try {
     const text = await readFile(EMAIL_LIST_PATH, "utf8");
     const data = JSON.parse(text);
-    return parseRecipientsConfig(data);
+    return parseRecipientState(data);
   } catch (error) {
     if (error.code === "ENOENT") {
       throw new Error("未找到 config/email-recipients.local.json，请先配置本地收件人列表");
     }
     throw new Error(`读取邮箱配置失败：${error.message}`);
   }
+}
+
+async function loadRecipients() {
+  return (await loadRecipientState()).recipients;
+}
+
+async function markRecipientsOnboarded(state, recipients) {
+  const onboardedRecipients = uniqueEmails([
+    ...state.onboardedRecipients,
+    ...recipients
+  ]);
+  const base = state.data && !Array.isArray(state.data) ? state.data : {};
+  const next = {
+    ...base,
+    recipients: state.recipients,
+    onboardedRecipients
+  };
+  await writeFile(EMAIL_LIST_PATH, `${JSON.stringify(next, null, 2)}\n`);
 }
 
 async function loadFeishuLink(digestId) {
@@ -207,12 +256,63 @@ function collectPapersByDirection(digest) {
   }));
 }
 
-function buildEmailSubject(digestId, digest) {
-  return `[Paper Digest] ${digestId} ${digest.title}`;
+function buildEmailSubject(digestId, digest, options = {}) {
+  const prefix = options.welcome ? "[Paper Digest 新成员指南]" : "[Paper Digest]";
+  return `${prefix} ${digestId} ${digest.title}`;
 }
 
-function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
+function buildWelcomeText() {
+  return [
+    "欢迎加入 Paper Digest。",
+    "",
+    "这是面向课题组论文跟踪、周报阅读和科研方向判断的静态知识库，重点是高质量筛选、证据化整理和跨期检索，不提供 AI 问答。",
+    "",
+    "主要功能：",
+    "- 每期周报给出本期判断、筛选口径、应用场景与讨论线索。",
+    "- 每篇论文都有独立详细报告，包含问题、方法、关键图、量化证据、局限和可借鉴方向。",
+    "- 首页汇总全库趋势、热点和各研究方向的可行切入点；Idea 中心用于查看候选课题、证据和可行性判断。",
+    "- 搜索支持论文标题、作者、单位和关键词；网页端与飞书知识库可以按个人方向自由阅读。",
+    "",
+    "建议用法：",
+    "1. 先看本期判断和方向标签，只选择与你当前研究相关的条目，不设统一阅读顺序。",
+    "2. 对感兴趣的论文打开单篇报告，重点核对方法图、关键结果和局限，再决定是否阅读原文。",
+    "3. 需要回溯某个作者、机构或主题时使用首页搜索；需要找课题切口时再看研究态势和 Idea 中心。",
+    "",
+    "下面是最新一期周报。"
+  ].join("\n");
+}
+
+function buildWelcomeHtml() {
+  return `
+    <section style="margin:0 0 28px;padding:0 0 24px;border-bottom:1px solid #dfe3e8;">
+      <h2 style="margin:0 0 12px;">欢迎加入 Paper Digest</h2>
+      <p>这是面向课题组论文跟踪、周报阅读和科研方向判断的静态知识库，重点是高质量筛选、证据化整理和跨期检索，不提供 AI 问答。</p>
+      <p><strong>主要功能</strong></p>
+      <ul style="padding-left:20px;margin:8px 0 18px;">
+        <li>每期周报给出本期判断、筛选口径、应用场景与讨论线索。</li>
+        <li>每篇论文都有独立详细报告，包含问题、方法、关键图、量化证据、局限和可借鉴方向。</li>
+        <li>首页汇总全库趋势、热点和各研究方向的可行切入点；Idea 中心用于查看候选课题、证据和可行性判断。</li>
+        <li>搜索支持论文标题、作者、单位和关键词；网页端与飞书知识库可以按个人方向自由阅读。</li>
+      </ul>
+      <p><strong>建议用法</strong></p>
+      <ol style="padding-left:20px;margin:8px 0 18px;">
+        <li>先看本期判断和方向标签，只选择与你当前研究相关的条目，不设统一阅读顺序。</li>
+        <li>对感兴趣的论文打开单篇报告，重点核对方法图、关键结果和局限，再决定是否阅读原文。</li>
+        <li>需要回溯某个作者、机构或主题时使用首页搜索；需要找课题切口时再看研究态势和 Idea 中心。</li>
+      </ol>
+      <p style="margin-bottom:0;">下面是最新一期周报。</p>
+    </section>
+  `.trim();
+}
+
+export function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, options = {}) {
   const lines = [];
+  if (options.welcome) {
+    lines.push(buildWelcomeText());
+    lines.push("");
+    lines.push("------------------------------------------------------------");
+    lines.push("");
+  }
   lines.push(`[Paper Digest] ${digestId} ${digest.title}`);
   lines.push(`日期：${digest.displayDate || digest.date}`);
   lines.push(`关键词：${(digest.keywords || []).join(" / ")}`);
@@ -240,7 +340,7 @@ function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, current
   return lines.join("\n");
 }
 
-export function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl) {
+export function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, options = {}) {
   const sectionBlocks = sections
     .map((item) => {
       const paperList = item.papers
@@ -285,11 +385,145 @@ export function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, 
 
   return `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.6;">
+      ${options.welcome ? buildWelcomeHtml() : ""}
       <h2>${escapeText(`${digestId} ${digest.title}`)}</h2>
       ${digestSummary}
       <div>${digestBodyHtml}</div>
       ${sectionBlocks}
       <p style="font-size: 12px;color:#777;">发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</p>
+    </div>
+  `.trim();
+}
+
+export function getReviewCenterUrl(currentSiteUrl) {
+  return `${currentSiteUrl}/reviews/index.html`;
+}
+
+export function assertReviewCenterReady(center) {
+  if (!center || !Array.isArray(center.directions) || !center.directions.length) {
+    throw new Error("综述中心没有可发布的研究方向");
+  }
+
+  const incomplete = center.directions.filter((direction) => {
+    const review = direction?.searchAudit?.independentReview;
+    return review?.status !== "passed"
+      || !Number.isInteger(review?.reviewers)
+      || review.reviewers < 1
+      || !Number.isInteger(review?.rounds)
+      || review.rounds < 1
+      || !/^[0-9a-f]{64}$/.test(review?.snapshotFingerprint || "")
+      || review.snapshotFingerprint !== direction.currentSnapshotFingerprint;
+  });
+  if (incomplete.length) {
+    throw new Error(`仍有 ${incomplete.length} 个方向未通过独立复核，禁止发送综述更新`);
+  }
+}
+
+export async function verifyPublishedReviewCenter(center, currentSiteUrl, fetchImpl = fetch) {
+  const fingerprint = reviewCenterFingerprint(center);
+  const verificationUrl = `${getReviewCenterUrl(currentSiteUrl)}?verify=${encodeURIComponent(fingerprint)}`;
+  let response;
+  try {
+    response = await fetchImpl(verificationUrl, {
+      headers: {
+        "cache-control": "no-cache"
+      }
+    });
+  } catch (error) {
+    throw new Error(`无法核验线上综述中心：${error.message}`);
+  }
+  if (!response?.ok) {
+    throw new Error(`线上综述中心核验失败：HTTP ${response?.status || "unknown"}`);
+  }
+
+  const html = await response.text();
+  const markers = [
+    `data-review-version="${center.version}"`,
+    `data-review-updated="${center.updatedAt}"`,
+    `data-review-directions="${center.directions.length}"`,
+    `data-review-fingerprint="${fingerprint}"`
+  ];
+  if (markers.some((marker) => !html.includes(marker))) {
+    throw new Error("线上综述中心仍不是当前本地版本，禁止发送更新通知");
+  }
+}
+
+export function buildReviewUpdateSubject(center) {
+  return `[Paper Digest] ${center.updatedAt} 动态综述中心完成新一轮更新`;
+}
+
+function reviewDirectionTitle(direction) {
+  const title = normalizeString(direction.title);
+  const prefix = `${normalizeString(direction.label)}：`;
+  return title.startsWith(prefix) ? title.slice(prefix.length) : title;
+}
+
+export function buildReviewUpdateTextBody(center, currentSiteUrl) {
+  const centerUrl = getReviewCenterUrl(currentSiteUrl);
+  const lines = [
+    "[Paper Digest] 动态综述中心更新",
+    `更新日期：${center.updatedAt}`,
+    "",
+    "综述中心刚完成一轮系统更新。这里不是一次性论文列表，而是一张持续更新的研究证据地图：新论文、正式版本、复现结果或反例出现后，各方向都会重新检索、核验并改写。",
+    "",
+    "本轮更新重点：",
+    "- 每个方向同时覆盖奠基工作、正式发表论文、近期前沿和本库已报告论文。",
+    "- 关键判断回到论文、标准、正式会议或项目页等一手来源核验。",
+    "- 每条参考文献明确写出它能支撑什么、不能证明什么，避免把预印本、离线指标和真实部署证据混为一谈。",
+    "- 每篇综述公开检索范围、来源覆盖、候选去重情况和仍待补足的证据。",
+    "",
+    `进入综述中心：${centerUrl}`,
+    "",
+    `当前共 ${center.directions.length} 个研究方向：`
+  ];
+
+  for (const direction of center.directions) {
+    lines.push(`- ${direction.label}：${reviewDirectionTitle(direction)}`);
+    lines.push(`  ${currentSiteUrl}/reviews/${encodeURIComponent(direction.id)}/index.html`);
+    if (direction.subtitle) lines.push(`  ${direction.subtitle}`);
+  }
+
+  lines.push("");
+  lines.push("建议按自己的研究方向进入对应综述，不设统一阅读顺序。每个方向都保留问题边界、方法演进、证据冲突、可做切口和尚未解决的问题，后续会继续滚动更新。");
+  lines.push("");
+  lines.push(`发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`);
+  return lines.join("\n");
+}
+
+export function buildReviewUpdateHtmlBody(center, currentSiteUrl) {
+  const centerUrl = getReviewCenterUrl(currentSiteUrl);
+  const directionItems = center.directions
+    .map((direction) => {
+      const directionUrl = `${currentSiteUrl}/reviews/${encodeURIComponent(direction.id)}/index.html`;
+      return `
+        <li style="margin:0 0 14px;">
+          <a href="${escapeAttr(directionUrl)}" style="color:#175b69;font-weight:650;text-decoration:none;">${escapeText(direction.label)}</a>
+          <div style="margin-top:3px;color:#27333a;">${escapeText(reviewDirectionTitle(direction))}</div>
+          ${direction.subtitle ? `<div style="margin-top:3px;color:#667178;font-size:13px;">${escapeText(direction.subtitle)}</div>` : ""}
+        </li>
+      `.trim();
+    })
+    .join("");
+
+  return `
+    <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.65;color:#202b31;max-width:720px;margin:0 auto;">
+      <p style="margin:0 0 8px;color:#667178;font-size:13px;">PAPER DIGEST · ${escapeText(center.updatedAt)}</p>
+      <h2 style="margin:0 0 14px;font-size:25px;">动态综述中心完成新一轮更新</h2>
+      <p>综述中心不是一次性论文列表，而是一张<strong>持续更新的研究证据地图</strong>：新论文、正式版本、复现结果或反例出现后，各方向都会重新检索、核验并改写。</p>
+      <p><strong>本轮更新重点</strong></p>
+      <ul style="padding-left:20px;margin:8px 0 22px;">
+        <li>同时覆盖奠基工作、正式发表论文、近期前沿和本库已报告论文。</li>
+        <li>关键判断回到论文、标准、正式会议或项目页等一手来源核验。</li>
+        <li>每条参考文献明确写出可支撑结论与证据边界。</li>
+        <li>公开检索范围、来源覆盖、候选去重情况和仍待补足的证据。</li>
+      </ul>
+      <p style="margin:0 0 24px;">
+        <a href="${escapeAttr(centerUrl)}" style="display:inline-block;padding:10px 16px;background:#175b69;color:#fff;text-decoration:none;border-radius:4px;">进入综述中心</a>
+      </p>
+      <h3 style="margin:0 0 12px;">当前 ${center.directions.length} 个研究方向</h3>
+      <ul style="padding-left:20px;margin:0 0 24px;">${directionItems}</ul>
+      <p>建议按自己的研究方向进入对应综述，不设统一阅读顺序。每个方向都保留问题边界、方法演进、证据冲突、可做切口和尚未解决的问题，后续会继续滚动更新。</p>
+      <p style="font-size:12px;color:#78838a;">发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</p>
     </div>
   `.trim();
 }
@@ -394,7 +628,6 @@ export async function withSmtpRetry(action, options = {}) {
 export function explainSmtpError(error, config = {}) {
   const { codes, text } = errorContext(error);
   const code = codes.join("/") || "unknown";
-  const response = error?.response || "";
   const endpoint = config.host ? `${config.host}:${config.port || 587}` : (error?.hostname || "SMTP服务器");
   if (/certificate|self[- ]signed|unable to verify/i.test(text)) {
     return `SMTP TLS 校验失败（${code}）：请检查系统证书和 SMTP 主机名，不要通过关闭证书校验绕过生产环境问题。`;
@@ -408,7 +641,10 @@ export function explainSmtpError(error, config = {}) {
       : "请确认邮箱已开启 SMTP，并使用服务商要求的授权码或应用专用密码。";
     return `SMTP认证失败（${code}）：${providerHint}`;
   }
-  return `SMTP发送失败（${code}）：${error.message}${response ? `；服务端回复：${response}` : ""}`.trim();
+  const responseCode = Number.isInteger(error?.responseCode)
+    ? `，SMTP ${error.responseCode}`
+    : "";
+  return `SMTP发送失败（${code}${responseCode}）：服务端未接受本次投递；详细回复已省略以保护收件人信息。`;
 }
 
 async function withTransport(config, action) {
@@ -437,19 +673,30 @@ function normalizeDeliveryAddress(value) {
 export function validateDelivery(info, recipients) {
   const rejected = uniqueEmails((info?.rejected || []).map(normalizeDeliveryAddress));
   if (rejected.length) {
-    throw new Error(`SMTP服务端拒绝了 ${rejected.length} 位收件人：${rejected.join(", ")}`);
+    throw new Error(`SMTP服务端拒绝了 ${rejected.length} 位收件人`);
   }
 
-  if (Array.isArray(info?.accepted)) {
-    const accepted = new Set(info.accepted.map(normalizeDeliveryAddress).filter(Boolean));
-    const missing = recipients.filter((item) => !accepted.has(normalizeEmail(item)));
-    if (missing.length) {
-      throw new Error(`SMTP服务端未确认接受 ${missing.length} 位收件人：${missing.join(", ")}`);
-    }
-    return accepted.size;
+  if (!Array.isArray(info?.accepted)) {
+    throw new Error("SMTP服务端未返回 accepted 收件人列表，无法确认投递");
   }
 
+  const accepted = new Set(info.accepted.map(normalizeDeliveryAddress).filter(Boolean));
+  const missingCount = recipients.filter((item) => !accepted.has(normalizeEmail(item))).length;
+  if (missingCount) {
+    throw new Error(`SMTP服务端未确认接受 ${missingCount} 位收件人`);
+  }
   return recipients.length;
+}
+
+export function buildBulkMailOptions({ from, envelopeTo, recipients, subject, text, html }) {
+  return {
+    from,
+    to: envelopeTo || from,
+    bcc: recipients.join(","),
+    subject,
+    text,
+    html
+  };
 }
 
 async function checkSmtpConnection() {
@@ -469,7 +716,9 @@ async function checkSmtpConnection() {
   console.error(`SMTP自检通过：${smtpConfig.host}:${smtpConfig.port}（${mode}），本地收件人 ${recipients.length} 位。`);
 }
 
-async function publishDigest(digestId, dryRun = false) {
+async function publishDigest(digestId, options = {}) {
+  const dryRun = Boolean(options.dryRun);
+  const welcome = Boolean(options.welcome);
   const digests = await getDigests();
   const digest = digests.find((item) => item.id === digestId);
   if (!digest) {
@@ -478,18 +727,19 @@ async function publishDigest(digestId, dryRun = false) {
 
   const smtpConfig = await loadSmtpConfig();
   const currentSiteUrl = siteUrl(smtpConfig);
-  const recipients = await loadRecipients();
+  const recipientState = await loadRecipientState();
+  const recipients = welcome ? recipientState.welcomeRecipients : recipientState.recipients;
   const sections = collectPapersByDirection(digest);
   const digestUrl = getDigestNavUrl(digestId, currentSiteUrl);
   const feishuUrl = await loadFeishuLink(digestId);
-  const subject = buildEmailSubject(digestId, digest);
-  const text = buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl);
-  const html = buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl);
+  const subject = buildEmailSubject(digestId, digest, { welcome });
+  const text = buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, { welcome });
+  const html = buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, { welcome });
   const from = smtpConfig.from || smtpConfig.user;
 
   if (dryRun) {
-    console.error(`Preview digest: ${digestId}`);
-    console.error(`Recipients: ${recipients.join(", ")}`);
+    console.error(`Preview ${welcome ? "welcome digest" : "digest"}: ${digestId}`);
+    console.error(`Recipients: ${recipients.length}`);
     console.error(`From: ${from || "<未设置>"}`);
     console.error("----- Subject -----");
     console.error(subject);
@@ -503,18 +753,21 @@ async function publishDigest(digestId, dryRun = false) {
   }
 
   if (!recipients.length) {
-    throw new Error("收件人列表为空");
+    throw new Error(welcome ? "没有尚未完成新人介绍的收件人" : "收件人列表为空");
   }
 
   let info;
   try {
     info = await withSmtpRetry(
       () => withTransport(smtpConfig, (transporter) => transporter.sendMail({
-        from,
-        to: recipients.join(","),
-        subject,
-        text,
-        html
+        ...buildBulkMailOptions({
+          from,
+          envelopeTo: smtpConfig.user || from,
+          recipients,
+          subject,
+          text,
+          html
+        })
       })),
       retryOptions(smtpConfig)
     );
@@ -523,8 +776,70 @@ async function publishDigest(digestId, dryRun = false) {
   }
 
   const acceptedCount = validateDelivery(info, recipients);
+  if (welcome) {
+    await markRecipientsOnboarded(recipientState, recipients);
+  }
   const messageId = normalizeString(info?.messageId);
-  console.error(`SMTP服务端已接受 ${acceptedCount} 位收件人：${digestId}${messageId ? `（messageId: ${messageId}）` : ""}`);
+  console.error(`SMTP服务端已接受 ${acceptedCount} 位${welcome ? "新人" : "收件人"}：${digestId}${messageId ? `（messageId: ${messageId}）` : ""}`);
+}
+
+async function publishReviewUpdate(options = {}) {
+  const dryRun = Boolean(options.dryRun);
+  const [center, smtpConfig, recipientState] = await Promise.all([
+    getReviewCenter(),
+    loadSmtpConfig(),
+    loadRecipientState()
+  ]);
+  const currentSiteUrl = siteUrl(smtpConfig);
+  const recipients = recipientState.recipients;
+  assertReviewCenterReady(center);
+  const subject = buildReviewUpdateSubject(center);
+  const text = buildReviewUpdateTextBody(center, currentSiteUrl);
+  const html = buildReviewUpdateHtmlBody(center, currentSiteUrl);
+  const from = smtpConfig.from || smtpConfig.user;
+
+  if (dryRun) {
+    console.error(`Preview review update: ${center.updatedAt}`);
+    console.error(`Recipients: ${recipients.length}`);
+    console.error(`Directions: ${center.directions.length}`);
+    console.error(`From: ${from || "<未设置>"}`);
+    console.error("----- Subject -----");
+    console.error(subject);
+    console.error("----- Body -----");
+    console.error(text);
+    return;
+  }
+
+  if (!from) {
+    throw new Error("请设置 EMAIL_FROM 或 SMTP_USER（用于发件人地址）");
+  }
+  if (!recipients.length) {
+    throw new Error("收件人列表为空");
+  }
+  await verifyPublishedReviewCenter(center, currentSiteUrl);
+
+  let info;
+  try {
+    info = await withSmtpRetry(
+      () => withTransport(smtpConfig, (transporter) => transporter.sendMail(
+        buildBulkMailOptions({
+          from,
+          envelopeTo: smtpConfig.user || from,
+          recipients,
+          subject,
+          text,
+          html
+        })
+      )),
+      retryOptions(smtpConfig)
+    );
+  } catch (error) {
+    throw new Error(explainSmtpError(error, smtpConfig));
+  }
+
+  const acceptedCount = validateDelivery(info, recipients);
+  const messageId = normalizeString(info?.messageId);
+  console.error(`SMTP服务端已接受 ${acceptedCount} 位收件人的综述中心更新通知${messageId ? `（messageId: ${messageId}）` : ""}`);
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -535,12 +850,20 @@ export async function main(argv = process.argv.slice(2)) {
     return;
   }
 
-  if (!digestId || !["preview", "publish"].includes(command)) {
+  if (["review-update-preview", "review-update"].includes(command)) {
+    await publishReviewUpdate({ dryRun: command === "review-update-preview" });
+    return;
+  }
+
+  if (!digestId || !["preview", "publish", "welcome-preview", "welcome"].includes(command)) {
     usage();
     throw new Error("邮件命令参数不完整");
   }
 
-  await publishDigest(digestId, command === "preview");
+  await publishDigest(digestId, {
+    dryRun: command === "preview" || command === "welcome-preview",
+    welcome: command === "welcome" || command === "welcome-preview"
+  });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_PATH) {

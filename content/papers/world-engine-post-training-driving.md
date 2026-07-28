@@ -4,9 +4,9 @@
   "tag": "world-models",
   "tags": ["world-models", "end-to-end-autonomous-driving", "autonomous-driving-testing"],
   "title": "World Engine: Towards the Era of Post-Training for Autonomous Driving",
-  "source": "arXiv:2606.19836 / https://arxiv.org/abs/2606.19836",
+  "source": "Technical Report / arXiv:2606.19836 / https://arxiv.org/abs/2606.19836 / https://opendrivelab.com/WorldEngine/",
   "authors": ["Tianyu Li", "Li Chen", "Caojun Wang", "Haochen Liu", "Kashyap Chitta", "Zhenjie Yang", "Yuhang Lu", "Naisheng Ye", "Yihang Qiu", "Yufei Wang", "Luoxi Zou", "Jiaxin Peng", "Jin Pan", "Zhaoyu Su", "Andrei Bursuc", "Shengbo Eben Li", "Andreas Geiger", "Peng Su", "Hongyang Li"],
-  "affiliations": ["OpenDriveLab, Shanghai AI Laboratory", "Huawei Noah's Ark Lab", "University of Tuebingen", "Tsinghua University", "Valeo.ai"],
+  "affiliations": ["The University of Hong Kong", "Huawei", "Shanghai Innovation Institute", "Archon Robotics", "KE:SAI", "NVIDIA Research", "NTU", "valeo.ai", "Tsinghua University", "University of Tübingen and Tübingen AI Center"],
   "comment": "World Engine 把真实日志中的失败边界重建成可交互世界，再用行为世界模型生成长尾变体进行强化后训练，是本期最值得关注的闭环安全训练框架。"
 }
 ---

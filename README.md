@@ -312,7 +312,7 @@ cat > config/email-recipients.local.json <<'JSON'
 JSON
 ```
 
-该文件缺失、为空或包含非法地址时，发送命令会直接失败，避免意外回退到其他收件人。
+该文件缺失、为空或包含非法地址时，发送命令会直接失败，避免意外回退到其他收件人。群发使用密送，订阅者不会看到其他人的邮箱地址。
 
 如果你用的是 **Google 邮箱（Gmail）**，推荐用「应用专用密码」，避免账号主密码外泄。
 
@@ -377,6 +377,22 @@ npm run email:preview -- 2026-05-30
 ```bash
 npm run email:publish -- 2026-05-30
 ```
+
+只向尚未完成介绍的新订阅者发送系统说明和最新一期简报：
+
+```bash
+npm run email:welcome:preview -- 2026-05-30
+npm run email:welcome -- 2026-05-30
+```
+
+综述中心完成新一轮复核并部署后，可预览并向全部订阅者发送更新通知：
+
+```bash
+npm run email:review-update:preview
+npm run email:review-update
+```
+
+正式发送前，脚本会要求所有方向通过独立复核，并核对线上综述中心的内容指纹；日期或方向数量相同但正文仍是旧版本时也会拒绝发信。批量收件人仅放在 BCC 中，错误日志不会回显服务器返回的收件人地址。
 
 ## References
 

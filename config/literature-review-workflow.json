@@ -1,0 +1,198 @@
+{
+  "version": 3,
+  "name": "aris-dynamic-literature-review",
+  "upstream": {
+    "repository": "https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep",
+    "commit": "53562a7c64cc1d55946cba1fb8a8416137143d14",
+    "syncedAt": "2026-07-28"
+  },
+  "requiredSkills": [
+    {
+      "name": "research-lit",
+      "scope": "all"
+    },
+    {
+      "name": "comm-lit-review",
+      "scope": "communications"
+    },
+    {
+      "name": "citation-audit",
+      "scope": "all"
+    }
+  ],
+  "requiredReferences": [
+    "fan-out-pattern.md",
+    "evidence-precheck.md",
+    "acceptance-gate.md"
+  ],
+  "requiredHelpers": [
+    "arxiv_fetch.py",
+    "semantic_scholar_fetch.py",
+    "openalex_fetch.py"
+  ],
+  "stages": [
+    "scope",
+    "retrieve",
+    "deduplicate",
+    "verify",
+    "synthesize",
+    "independent-review",
+    "publish"
+  ],
+  "sourceFamilies": [
+    "local-corpus",
+    "arxiv",
+    "publisher-and-venue",
+    "semantic-scholar",
+    "openalex",
+    "official-project"
+  ],
+  "requirements": {
+    "minQueryFamilies": 5,
+    "minSourceFamilies": 4,
+    "minReferences": 10,
+    "minRecentReferences": 5,
+    "recentSinceYear": 2024,
+    "minFoundationalReferences": 2,
+    "foundationalBeforeYear": 2024,
+    "minFormalReferences": 3,
+    "minSurveyOrTutorialReferences": 1,
+    "minLocalReferences": 1,
+    "minExternalReferences": 3,
+    "minExcludedCandidates": 3,
+    "minQueryResultSamples": 3,
+    "maxReviewAgeDays": 45,
+    "candidateLedgerRequiredFrom": "2026-07-29"
+  },
+  "qualityChecks": [
+    {
+      "code": "query-family-alignment",
+      "automated": false,
+      "instruction": "逐条确认查询串、候选样本和查询族语义一致；不得只改 family 标签掩盖错位。"
+    },
+    {
+      "code": "source-fanout-trace",
+      "automated": true,
+      "instruction": "本库、arXiv、正式出版源、Semantic Scholar、OpenAlex 和官方项目页都要记录成功或受限的真实尝试；acceptedCount 必须与最终引用的 sourceFamily 逐源一致，聚合器只用于发现和交叉核对。"
+    },
+    {
+      "code": "raw-hit-candidate-separation",
+      "automated": true,
+      "instruction": "本库宽泛检索必须分开记录原始命中文件数和经过范围复核后进入去重池的候选数，并说明筛除口径；不得把 rg 命中数直接当成论文候选数。"
+    },
+    {
+      "code": "local-candidate-closure",
+      "automated": true,
+      "instruction": "本库命中且带当前方向标签的规范化论文必须完整列入 candidateLocalPaperIds，并逐篇落到最终引用或有理由的 deferredGroups；不得静默漏筛。"
+    },
+    {
+      "code": "canonical-id-casefold",
+      "automated": true,
+      "instruction": "DOI、arXiv 和 venue ID 在去重与集合比较前统一做 Unicode 规范化、去空白和大小写折叠。"
+    },
+    {
+      "code": "single-count-schema",
+      "automated": true,
+      "instruction": "检索计数只允许 searchAudit.counts；不得保留 candidateCount 等冲突的旧字段。自 candidateLedgerRequiredFrom 起，每个去重后候选必须进入 canonical-ID 台账，先归并 DOI/arXiv/venue 别名，再用 queryFamilies 和 occurrences 重算逐族及总计数。"
+    },
+    {
+      "code": "publication-status-primary-source",
+      "automated": false,
+      "instruction": "以正式会议、期刊、OpenReview 或标准页面核对 peer-reviewed、workshop、preprint 与 standard，不按论文自述猜测；仅确认录用但正式页尚未发布时使用 accepted 或 workshop-accepted。"
+    },
+    {
+      "code": "formal-arxiv-link-retention",
+      "automated": false,
+      "instruction": "已录用论文若同时存在正式出版页和 arXiv，保留两个可点击入口；正式版作为主 URL，有 DOI 时以 DOI 去重并在 links 显式保留 arXiv。"
+    },
+    {
+      "code": "physical-evidence-boundary",
+      "automated": false,
+      "instruction": "涉及实物或实车时必须写明平台尺度、攻击或系统访问权限、环境、样本/重复次数、控制接口和能否外推到开放道路。"
+    },
+    {
+      "code": "independent-review-current-snapshot",
+      "automated": true,
+      "instruction": "独立审阅者必须读取修订后的当前快照；通过后记录排除 independentReview 元数据计算的 SHA-256 snapshotFingerprint，正文、引用或审计变化必须使旧通过记录失效；pending 本身不是内容问题。"
+    }
+  ],
+  "directions": {
+    "cooperative-autonomous-driving": {
+      "profile": "communications",
+      "queryFamilies": [
+        "协同感知与 V2X 基准",
+        "通信调度、带宽与信息新鲜度",
+        "异步、位姿误差与鲁棒融合",
+        "协同预测、规划与多主体协商",
+        "真实通信、闭环验证与安全回退",
+        "恶意或故障节点与信任校准"
+      ]
+    },
+    "end-to-end-autonomous-driving": {
+      "profile": "general",
+      "queryFamilies": [
+        "模仿学习与规划导向端到端驾驶",
+        "BEV、占用与结构化中间表征",
+        "概率、生成式与多模态轨迹规划",
+        "VLA、语言推理与世界动作模型",
+        "闭环训练、反事实评测与部署",
+        "模型更新、可维护性与安全约束"
+      ]
+    },
+    "agentic-driving": {
+      "profile": "general",
+      "queryFamilies": [
+        "语言和视觉语言驾驶智能体",
+        "视觉思维链与双过程规划",
+        "记忆、工具使用与知识检索",
+        "多智能体协商与意图通信",
+        "推理动作一致性与闭环评测",
+        "提示攻击、幻觉与安全回退"
+      ]
+    },
+    "autonomous-driving-testing": {
+      "profile": "general",
+      "queryFamilies": [
+        "场景式测试与 SOTIF 安全论证",
+        "搜索式与重要性采样失效发现",
+        "生成式场景和世界模型测试",
+        "覆盖率、风险度量与责任归因",
+        "仿真真实性与 sim-to-real",
+        "真实系统、闭环与回归测试"
+      ]
+    },
+    "world-models": {
+      "profile": "general",
+      "queryFamilies": [
+        "驾驶视频生成与可控未来预测",
+        "几何、占用和对象级结构世界模型",
+        "动作条件与世界动作联合模型",
+        "可交互实时闭环仿真器",
+        "规划学习与反事实 rollout",
+        "保真度、因果有效性与安全准入"
+      ]
+    },
+    "3d-reconstruction": {
+      "profile": "general",
+      "queryFamilies": [
+        "NeRF 与 3D Gaussian Splatting 基础",
+        "静态动态分解和驾驶 4D 重建",
+        "相机、LiDAR 与多传感器渲染",
+        "前馈重建、压缩与实时渲染",
+        "可编辑 Real2Sim 和场景生成",
+        "闭环仿真资产的物理与任务验证"
+      ]
+    },
+    "autonomous-driving-security": {
+      "profile": "general",
+      "queryFamilies": [
+        "本库安全候选宽检索",
+        "相机、LiDAR、GNSS 与融合攻击",
+        "端到端和 VLA 推理攻击",
+        "数据、模型与软件供应链风险",
+        "部署扰动、鲁棒性与失效回退",
+        "闭环攻击评测和安全论证"
+      ]
+    }
+  }
+}

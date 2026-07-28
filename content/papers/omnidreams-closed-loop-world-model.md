@@ -5,7 +5,7 @@
   "tags": ["world-models", "autonomous-driving-testing", "end-to-end-autonomous-driving"],
   "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
   "source": "arXiv:2606.03159 / https://arxiv.org/abs/2606.03159",
-  "authors": ["NVIDIA"],
+  "authors": ["Aarti Basant", "Amlan Kar", "Despoina Paschalidou", "Fangyin Wei", "Francesco Ferroni", "Guillermo Garcia Cobo", "Haithem Turki", "Huan Ling", "Jaewoo Seo", "James Lucas", "Jay Zhangjie Wu", "Jialiang Wang", "Jonathan Lorraine", "Jun Gao", "Kai He", "Katarina Tothova", "Kevin Xie", "Michał Tyszkiewicz", "Qi Wu", "Riccardo de Lutio", "Ruilong Li", "Sanja Fidler", "Seung Wook Kim", "Tianchang Shen", "Tianshi Cao", "Tobias Pfaff", "William Lew", "Xindi Wu", "Xuanchi Ren", "Yifan Lu", "Yuxuan Zhang", "Zan Gojcic", "Zian Wang"],
   "affiliations": ["NVIDIA"],
   "comment": "OmniDreams 是 NVIDIA 面向闭环 AV 仿真的实时生成式世界模型，基于 Cosmos diffusion 后训练，能在 policy action 条件下合成多视角传感器视频并接入 AlpaSim。"
 }

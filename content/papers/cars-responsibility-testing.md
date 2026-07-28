@@ -6,7 +6,7 @@
   "title": "Learning Responsibility-Attributed Adversarial Scenarios for Testing Autonomous Vehicles",
   "source": "arXiv:2605.13751 / https://arxiv.org/abs/2605.13751",
   "authors": ["Yizhuo Xiao", "Haotian Yan", "Ying Wang", "Zhongpan Zhu", "Yuxin Zhang", "Xintao Yan", "Mustafa Suphi Erden", "Cheng Wang"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Heriot-Watt University", "Tongji University", "Jilin University", "University of Shanghai for Science and Technology", "National Key Laboratory of Automotive Chassis Integration and Bionics", "The University of Hong Kong"],
   "comment": "CARS 把自动驾驶测试从发现碰撞推进到责任归因：测试用例不仅要危险，还要能判断失败是否来自 ADS 可避免缺陷。"
 }
 ---

@@ -101,7 +101,14 @@ npm run validate
 
 This runs `node scripts/validate-content.mjs` and checks Markdown frontmatter, IDs, tags, digest references, duplicate arXiv IDs/titles, and `content/reported-papers.md` consistency.
 
-Unit tests: not confirmed.
+Unit tests:
+
+```bash
+npm test
+```
+
+This runs the Node test suite for content projection, review-center contracts,
+idea-center data, and email publishing helpers.
 
 End-to-end tests: not confirmed.
 
@@ -117,6 +124,7 @@ GitHub Pages deployment uses:
 
 ```bash
 npm ci
+npm test
 npm run build
 ```
 
@@ -134,6 +142,67 @@ Do not commit `dist/`; it is an ignored build artifact uploaded by GitHub Action
 - Every new paper report must include at least one official figure image, preferably two. Use arXiv HTML/project-page URLs when available; otherwise extract a figure from the official PDF/source into `public/assets/papers/` and reference it from paper detail Markdown as `../../assets/papers/<file>.png`.
 - Prefer existing helper functions in `src/lib/content.js` for content parsing and HTML escaping.
 - `markdownToHtml` supports only a limited Markdown subset: headings, paragraphs, bullet lists, images, links, and `**strong**`. Do not assume tables, raw HTML, fenced code blocks, or arbitrary Markdown extensions will render.
+
+## Dynamic Literature Review Workflow
+
+Every update to `content/reviews/` must use the repository workflow in
+`config/literature-review-workflow.json`. This contract is derived from the
+installed ARIS `research-lit`, `comm-lit-review`, and `citation-audit` skills.
+It is mandatory for Codex, Claude, and human-assisted maintenance.
+
+Before searching, verify both local skill installations:
+
+```bash
+npm run review:preflight
+```
+
+Generate the direction-specific prompt instead of composing a new search prompt
+from scratch:
+
+```bash
+npm run review:prompt -- <direction-id>
+```
+
+The generated prompt requires source fan-out, canonical-ID deduplication,
+primary-source verification, paper-level limitation extraction, structured
+synthesis, and an independent final review. Retrieval agents may collect
+evidence but must not rank or accept their own output. Each configured query
+family must have one `searchAudit.queryRuns` record with the actual query,
+scope rationale, source, execution date, result count, canonical-ID sample, and
+reproducible retrieval metadata. `searchAudit.sourceAttempts` must cover every
+configured source family, even when a source is limited or contributes no
+accepted record. Its `acceptedCount` is the number of included references
+verified through that exact source family and must match `references[].sourceFamily`;
+it is not a retrieval-hit or deduplication-candidate count. Retained IDs must exactly match references, and excluded
+candidates need primary URLs and explicit reasons. Run
+`content/templates/review-quality-checklist.md` before independent review;
+`reviewedAt` changes only after references and claims have been reopened and
+checked. A passed review must store the SHA-256 `snapshotFingerprint` for the
+review content excluding the mutable `independentReview` metadata; any later
+content, reference, or audit change invalidates that approval.
+
+For `local-corpus` runs, `resultCount` means the papers that survived scope
+screening and entered cross-source deduplication. Record the broader `rg` file
+matches separately as `rawHitCount`, plus `screenedOutCount` and a concrete
+`screeningNote`; never use raw keyword-hit counts as paper-candidate counts.
+Every canonical tagged hit must appear in
+`localCandidateDisposition.candidateLocalPaperIds` and then be accounted for
+by an included local reference or one explicit `deferredGroups` entry.
+
+For searches on or after `requirements.candidateLedgerRequiredFrom`, maintain
+`searchAudit.candidateLedger` with one canonical-ID row per deduplicated
+candidate, its final disposition, contributing `queryFamilies`, and occurrence
+count. The validator resolves DOI/arXiv/venue aliases to the primary record,
+recomputes every family `resultCount` plus candidate and deduplicated totals,
+and requires duplicates to be visible in at least two query samples.
+
+For an accepted paper that has both a publisher/venue page and an arXiv record,
+keep both. Use the formal page as `url`. Prefer a formal DOI for `canonicalId`
+when available and then add the arXiv destination to `links`; otherwise retain
+the arXiv canonical ID so the page derives that link automatically. Use
+`links` for code and official project pages as well. Reserve `peer-reviewed`
+and `workshop` for records with a verifiable formal destination. Use `accepted`
+or `workshop-accepted` while the formal page is still unavailable.
 
 ## Architecture Notes
 

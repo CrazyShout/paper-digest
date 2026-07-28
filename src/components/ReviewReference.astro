@@ -9,7 +9,8 @@ const badge = reference.badge || (isExternal ? "外部文献" : "本库已报告
 const meta = [
   reference.venue,
   reference.year,
-  reference.publicationTypeLabel || reference.publicationType
+  reference.publicationTypeLabel || reference.publicationType,
+  reference.publicationStatusLabel || reference.publicationStatus
 ].filter(Boolean);
 ---
 
@@ -37,16 +38,39 @@ const meta = [
     {reference.title}
     {isExternal && <span class="sr-only">（站外链接，在新窗口打开）</span>}
   </a>
+  {reference.authors && <p class="review-reference-authors">{reference.authors}</p>}
 
-  {!compact && !isExternal && reference.sourceHref && (
-    <a
-      class="review-reference-source"
-      href={reference.sourceHref}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      查看论文原文 <span aria-hidden="true">↗</span>
-      <span class="sr-only">（在新窗口打开）</span>
-    </a>
+  {!compact && (
+    <>
+      <dl class="review-reference-evidence">
+        <div>
+          <dt>用于支撑</dt>
+          <dd>{reference.supports}</dd>
+        </div>
+        <div>
+          <dt>证据边界</dt>
+          <dd>{reference.limitation}</dd>
+        </div>
+      </dl>
+      {reference.sourceLinks?.length > 0 && (
+        <nav
+          class="review-reference-sources"
+          aria-label={`${reference.title} 的论文链接`}
+        >
+          <span>论文链接</span>
+          {reference.sourceLinks.map((link) => (
+            <a
+              class="review-reference-source"
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {link.label} <span aria-hidden="true">↗</span>
+              <span class="sr-only">（在新窗口打开）</span>
+            </a>
+          ))}
+        </nav>
+      )}
+    </>
   )}
 </article>

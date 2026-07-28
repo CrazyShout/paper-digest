@@ -5,7 +5,7 @@
   "tag": "end-to-end-autonomous-driving",
   "tags": ["end-to-end-autonomous-driving", "world-models"],
   "title": "OpenDriveVLA: Towards End-to-end Autonomous Driving with Large Vision Language Action Model",
-  "source": "arXiv:2503.23463 / https://arxiv.org/abs/2503.23463",
+  "source": "AAAI 2026 / https://doi.org/10.1609/aaai.v40i16.38386 / arXiv:2503.23463 / https://arxiv.org/abs/2503.23463",
   "authors": ["Xingcheng Zhou", "Xuyuan Han", "Feng Yang", "Yunpu Ma", "Volker Tresp", "Alois C. Knoll"],
   "affiliations": ["Technical University of Munich (TUM)", "LMU Munich / Siemens AG"],
   "comment": "[GPT改] 修正原版“无 arXiv HTML 图片”的判断，并补入训练阶段图、planning action 可视化和更具体的证据边界。"

@@ -232,10 +232,21 @@ content/reviews/<direction-id>.json
 - 本库论文填写 `localPaperId`，标题必须与对应论文报告完全一致；页面会派生“本库已报告”标记并跳转本站详情。
 - 站外论文不填写 `localPaperId`，使用 DOI、会议、期刊或 arXiv 的 HTTPS 一手链接；页面会派生“外部文献”标记并直达原文。
 - 不要手填来源布尔值。本库状态以 `localPaperId` 为唯一依据；论文日后入库时补上该字段即可自动切换状态。
-- 每方向至少 6 篇参考文献，并同时包含本库论文、外部论文和至少一篇 `survey` 或 `tutorial`。
+- 每方向至少 10 篇参考文献，并同时包含本库论文、外部论文、基础工作、近期工作、正式发表成果和至少一篇 `survey` 或 `tutorial`；具体阈值以 `config/literature-review-workflow.json` 为准。
 - `publicationType` 只使用 `survey`、`tutorial`、`method`、`benchmark`、`dataset`、`standard`、`position`。
+- `publicationStatus` 只使用 `peer-reviewed`、`accepted`、`workshop`、`workshop-accepted`、`preprint`、`technical-report`、`standard` 或 `dataset`。`peer-reviewed` 与 `workshop` 必须已有可核验的正式出版页；仅确认录用但正式页尚未发布时分别使用 `accepted` 或 `workshop-accepted`，并保留预印本证据边界。
+- 已录用论文若同时存在正式出版页与 arXiv，`url` 应指向正式出版页。有正式 DOI 时优先使用 `doi:<id>` 作为 `canonicalId`，并在 `links` 显式加入 arXiv；没有正式 DOI 时可保留 `arxiv:<id>`，页面会自动派生 arXiv 入口。代码、项目页或其他一手入口也放入 `links: [{ "label": "...", "url": "https://..." }]`。
+- `sourceFamily` 必须来自工作流允许的来源族，并记录实际用于核验的主来源，不要把搜索引擎摘要当作来源。
 - 外部引用若与本库论文的规范化标题或 arXiv ID 重合会校验失败，防止同一论文被错误标成两种来源。
 - `reviewedAt` 和 `searchWindow` 必须记录真实复核时间与检索范围；综述不应为了追平简报日期而虚假刷新。
+- 更新前必须运行 `npm run review:preflight`，并用 `npm run review:prompt -- <direction-id>` 生成该方向的统一检索提示。提示会强制读取本机已安装的 ARIS `research-lit`、`comm-lit-review`（通信方向）和 `citation-audit` 技能。
+- 每个方向必须维护可重算的 `searchAudit`：每个配置查询族恰好对应一条 `queryRuns`，保存实际查询串、族对应说明、来源、执行日期、筛入去重池的候选数、规范化 ID 样本以及 `retrieval` 中的端点、参数、排序和上限；本库宽泛检索还要分开保存 `rawHitCount`、`screenedOutCount` 和 `screeningNote`，不得把 `rg` 命中文件数当成候选数。命中且带当前方向标签的规范化论文必须完整写入 `localCandidateDisposition.candidateLocalPaperIds`，并落到最终引用或有理由的 `deferredGroups`；`retainedCanonicalIds` 必须与参考文献完全一致，站外 `excludedCandidates` 必须逐条保存一手链接、排除代码和理由。
+- `sourceAttempts` 必须逐一记录本库、arXiv、正式出版源、Semantic Scholar、OpenAlex 和官方项目页的真实检索状态与采纳数。`acceptedCount` 只统计最终纳入且以该来源族核验的引用，必须与 `references[].sourceFamily` 逐源一致；聚合器只用于发现和元数据交叉核对，来源不可用时标为 `limited`，不能虚报覆盖。
+- 去重键固定为 DOI、arXiv ID、正式 venue ID 和规范化标题，并在比较前统一做 Unicode 规范化、去空白和大小写折叠。计数只保留 `searchAudit.counts`；不得同时维护 `candidateCount` 等旧字段。自工作流配置的 `candidateLedgerRequiredFrom` 起，还必须逐篇保存主 canonical ID、`included` / `excluded` / `deferred` 去向、所属 `queryFamilies` 和跨查询族 `occurrences`；DOI、arXiv 与 venue 别名先归并到同一主记录，使每族 `resultCount`、候选总数和去重总数都能由台账重算。
+- 检索分片只负责扩大覆盖，最终结论必须经过未参与撰写的独立复核；复核完成前保持 `independentReview.status: "pending"`，不得机械改为通过。通过后必须记录当前综述内容的 `snapshotFingerprint`，之后任何正文、引用或检索审计修改都会使旧通过记录失效。
+- 每条参考文献必须记录 `authors`、`publicationStatus`、`canonicalId`、`supports` 和 `limitation`；不得把搜索结果摘要或二手解读当作论文证据。
+- 每次终审必须逐项执行 `content/templates/review-quality-checklist.md`，尤其核对查询族错位、Workshop 状态和实物/实车实验的访问权限、平台尺度、环境及重复次数。
+- `config/literature-review-workflow.json` 定义最低覆盖与动态更新期限，构建校验会阻止来源过窄、基础/近期文献失衡或证据元数据不完整的综述发布。
 
 ## 本地检查
 

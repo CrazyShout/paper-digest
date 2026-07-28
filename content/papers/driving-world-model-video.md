@@ -6,7 +6,7 @@
   "title": "DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT",
   "source": "arXiv:2412.19505 / https://arxiv.org/abs/2412.19505",
   "authors": ["Xiaotao Hu", "Wei Yin", "Mingkai Jia", "Junyuan Deng", "Xiaoyang Guo", "Qian Zhang", "Xiaoxiao Long", "Ping Tan"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["The Hong Kong University of Science and Technology", "Horizon Robotics"],
   "comment": "DrivingWorld 提出基于 GPT 风格视频生成的驾驶世界模型，引入时空融合机制实现高保真长时视频生成（40 秒+），为自动驾驶仿真提供了新的范式。"
 }
 ---

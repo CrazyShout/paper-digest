@@ -4,9 +4,9 @@
   "tag": "world-models",
   "tags": ["world-models", "autonomous-driving-testing"],
   "title": "Vista: A Generalizable Driving World Model with High Fidelity and Versatile Controllability",
-  "source": "NeurIPS 2024 / arXiv:2405.17398 / https://papers.nips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html",
+  "source": "NeurIPS 2024 / https://proceedings.neurips.cc/paper_files/paper/2024/hash/a6a066fb44f2fe0d36cf740c873b8890-Abstract-Conference.html / arXiv:2405.17398 / https://arxiv.org/abs/2405.17398",
   "authors": ["Shenyuan Gao", "Jiazhi Yang", "Li Chen", "Kashyap Chitta", "Yihang Qiu", "Andreas Geiger", "Jun Zhang", "Hongyang Li"],
-  "affiliations": ["Shanghai AI Laboratory", "University of Tübingen", "The University of Hong Kong and collaborators"],
+  "affiliations": ["The Hong Kong University of Science and Technology", "OpenDriveLab at Shanghai AI Laboratory", "University of Tübingen", "Tübingen AI Center", "The University of Hong Kong"],
   "comment": "Vista 把驾驶世界模型的评价重点放在泛化、高保真、长时一致性和动作可控性上。它适合用来判断世界模型是否能从视频生成展示走向规划动作评估和闭环仿真。"
 }
 ---

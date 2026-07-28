@@ -3,10 +3,10 @@
   "id": "revisiting-adversarial-attacks",
   "tag": "autonomous-driving-security",
   "tags": ["autonomous-driving-security", "end-to-end-autonomous-driving"],
-  "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving",
-  "source": "arXiv:2505.11532 / https://arxiv.org/abs/2505.11532",
+  "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems",
+  "source": "DSN-W 2025 / https://doi.org/10.1109/DSN-W65791.2025.00071 / arXiv:2505.11532 / https://arxiv.org/abs/2505.11532",
   "authors": ["Cheng Chen", "Yuhong Wang", "Nafis S Munir", "Xiangwei Zhou", "Xugui Zhou"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Louisiana State University"],
   "comment": "这篇论文系统性地重新评估了自动驾驶感知系统的对抗攻击和防御方法，发现许多经典攻击在现实约束下失效，为自动驾驶安全评估提供了更务实的基线。"
 }
 ---

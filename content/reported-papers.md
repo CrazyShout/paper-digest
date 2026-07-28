@@ -22,10 +22,10 @@
 | pointforward-driving-reconstruction | PointForward: Feedforward Driving Reconstruction through Point-Aligned Representations | 2605.11594 | 2026-05-16 |
 | real2sim-physics-4dgs | Real2Sim: A Physics-driven and Editable Gaussian Splatting Framework for Autonomous Driving | 2605.13591 | 2026-05-14 |
 | realtime-adversarial-autonomous-systems | Real-Time Evaluation of Autonomous Systems under Adversarial Attacks | 2605.03491 | 2026-05-16 |
-| revisiting-adversarial-attacks | Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving | 2505.11532 | 2026-05-12 |
+| revisiting-adversarial-attacks | Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems | 2505.11532 | 2026-05-12 |
 | safer-safety-scenario | SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling | 2603.04071 | 2026-05-12 |
 | select2drive-pragmatic-communications | Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications | 2501.12040 | 2026-05-13 |
-| splatad-realtime-3dgs | SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting | 2411.16816 | 2026-05-12 |
+| splatad-realtime-3dgs | SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving | 2411.16816 | 2026-05-12 |
 | swarmdrive-v2v-coordination | SwarmDrive: Semantic V2V Coordination for Latency-Constrained Cooperative Autonomous Driving | 2604.22852 | 2026-05-14 |
 | temporal-sampling-e2e-trajectory | Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction | 2605.10388 | 2026-05-16 |
 | urbanv2x-cooperative-navigation | UrbanV2X: A Multisensory Vehicle-Infrastructure Dataset for Cooperative Navigation | 2512.20224 | 2026-05-14 |

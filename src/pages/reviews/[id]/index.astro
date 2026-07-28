@@ -24,7 +24,8 @@ const nextDirection = center.directions[directionIndex + 1];
 const reviewedLabel = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
   month: "2-digit",
-  day: "2-digit"
+  day: "2-digit",
+  timeZone: "Asia/Shanghai"
 }).format(new Date(`${direction.reviewedAt}T00:00:00+08:00`));
 const localReferenceCount = direction.references.filter((reference) => reference.origin === "local").length;
 const externalReferenceCount = direction.references.length - localReferenceCount;
@@ -95,6 +96,7 @@ const kindLabels = {
             <strong>本文目录</strong>
             <ol>
               <li><a href="#research-questions">核心问题</a></li>
+              <li><a href="#search-audit">检索记录</a></li>
               {direction.sections.map((section) => (
                 <li><a href={`#${section.id}`}>{section.title}</a></li>
               ))}
@@ -117,6 +119,56 @@ const kindLabels = {
             <ol>
               {direction.researchQuestions.map((question) => <li>{question}</li>)}
             </ol>
+          </section>
+
+          <section class="review-search-audit" id="search-audit" aria-labelledby="searchAuditTitle">
+            <header>
+              <div>
+                <p class="eyebrow">Search & Evidence</p>
+                <h2 id="searchAuditTitle">检索记录与证据边界</h2>
+              </div>
+              <p>{direction.searchAudit.evidenceBoundary}</p>
+            </header>
+            <dl class="review-search-stats">
+              <div>
+                <dt>检索截止</dt>
+                <dd>{direction.searchAudit.cutoffDate}</dd>
+              </div>
+              <div>
+                <dt>来源覆盖</dt>
+                <dd>{direction.searchAudit.sourceFamilies.length} 类</dd>
+              </div>
+              <div>
+                <dt>候选去重</dt>
+                <dd>{direction.searchAudit.counts.candidates} → {direction.searchAudit.counts.deduplicated}</dd>
+              </div>
+              <div>
+                <dt>纳入文献</dt>
+                <dd>{direction.searchAudit.counts.included}</dd>
+              </div>
+            </dl>
+            <div class="review-search-columns">
+              <div>
+                <h3>实际覆盖的查询族</h3>
+                <ol>
+                  {direction.searchAudit.queryFamilies.map((query) => <li>{query}</li>)}
+                </ol>
+              </div>
+              <div>
+                <h3>仍需持续追踪</h3>
+                <ul>
+                  {direction.searchAudit.openSearchGaps.map((gap) => <li>{gap}</li>)}
+                </ul>
+              </div>
+            </div>
+            {direction.searchAudit.independentReview.status === "passed" ? (
+              <p class="review-search-review-note">
+                本轮由未参与最终撰写的审阅分片完成 {direction.searchAudit.independentReview.reviewers} 路复核，
+                共迭代 {direction.searchAudit.independentReview.rounds} 轮；后续新论文、正式发表版本和反例证据会继续并入。
+              </p>
+            ) : (
+              <p class="review-search-review-note">本轮独立复核仍在进行，当前内容不会进入正式发布。</p>
+            )}
           </section>
 
           {direction.sections.map((section, index) => (

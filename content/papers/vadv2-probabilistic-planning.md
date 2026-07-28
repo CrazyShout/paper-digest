@@ -3,7 +3,7 @@
   "id": "vadv2-probabilistic-planning",
   "tag": "end-to-end-autonomous-driving",
   "title": "VADv2: End-to-End Vectorized Autonomous Driving via Probabilistic Planning",
-  "source": "ICLR 2026 / arXiv:2402.13243 / https://hgao-cv.github.io/VADv2/",
+  "source": "ICLR 2026 / https://openreview.net/forum?id=0a4dA6eUHN / arXiv:2402.13243 / https://arxiv.org/abs/2402.13243 / https://hgao-cv.github.io/VADv2/",
   "authors": ["Bo Jiang", "Shaoyu Chen", "Hao Gao", "Bencheng Liao", "Qian Zhang", "Wenyu Liu", "Xinggang Wang"],
   "affiliations": ["Huazhong University of Science and Technology", "Horizon Robotics"],
   "comment": "VADv2 把端到端驾驶规划从确定性轨迹回归改成动作概率分布学习，用 planning vocabulary 表达多种合理驾驶动作。它适合作为闭环端到端驾驶和不确定性规划的核心阅读样本。"

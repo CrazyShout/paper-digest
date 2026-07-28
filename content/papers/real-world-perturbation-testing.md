@@ -4,7 +4,7 @@
   "tag": "autonomous-driving-testing",
   "tags": ["autonomous-driving-testing", "autonomous-driving-security", "end-to-end-autonomous-driving"],
   "title": "Real-World Perturbation Testing of Autonomous Driving Systems",
-  "source": "ASE 2026 / arXiv:2607.04953 / https://arxiv.org/abs/2607.04953",
+  "source": "arXiv:2607.04953（作者报告已被 ASE 2026 接收，正式记录待核验） / https://arxiv.org/abs/2607.04953",
   "authors": ["Stefano Carlo Lambertenghi", "Matthias Weil", "Andrea Stocco"],
   "affiliations": ["Technical University of Munich", "fortiss GmbH"],
   "comment": "在离线模型、车载硬件和真实闭环车辆三个层级执行大规模相机/LiDAR 扰动，直接证明模型指标的轻微退化既不能预测实车失败，也不能替代系统级测试。"
@@ -13,7 +13,7 @@
 
 ## 一句话定位
 
-这篇 ASE 2026 论文把扰动测试从静态数据集一路推到全尺寸自动驾驶车辆：72 类相机与 LiDAR 扰动先做离线模型测试，再在真实车载计算平台验证实时性，最后注入在线传感器流观察闭环驾驶。它进入本期的原因是证据链非常完整，并且得出了对当前鲁棒性论文很不舒服但重要的结论——模型层指标和真实系统失败之间只有很弱的对应关系。
+这篇作者报告已被 ASE 2026 接收、但正式记录仍待核验的预印本，把扰动测试从静态数据集一路推到全尺寸自动驾驶车辆：72 类相机与 LiDAR 扰动先做离线模型测试，再在真实车载计算平台验证实时性，最后注入在线传感器流观察闭环驾驶。它进入本期的原因是证据链跨越三个系统层级，并且得出了对当前鲁棒性论文很不舒服但重要的结论——模型层指标和真实系统失败之间只有很弱的对应关系。
 
 ## 论文要解决的问题
 

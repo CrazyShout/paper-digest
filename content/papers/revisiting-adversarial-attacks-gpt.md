@@ -4,10 +4,10 @@
   "revisionOf": "revisiting-adversarial-attacks",
   "tag": "autonomous-driving-security",
   "tags": ["autonomous-driving-security", "end-to-end-autonomous-driving"],
-  "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving",
-  "source": "arXiv:2505.11532 / https://arxiv.org/abs/2505.11532",
+  "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems",
+  "source": "DSN-W 2025 / https://doi.org/10.1109/DSN-W65791.2025.00071 / arXiv:2505.11532 / https://arxiv.org/abs/2505.11532",
   "authors": ["Cheng Chen", "Yuhong Wang", "Nafis S Munir", "Xiangwei Zhou", "Xugui Zhou"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Louisiana State University"],
   "comment": "[GPT改] 修正原版“无 arXiv HTML 图片”的判断，并把结论限定在 OpenPilot/Supercombo、YOLOv8、路牌识别和前车距离回归这两个任务内。"
 }
 ---

@@ -1,5 +1,10 @@
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { reviewSnapshotFingerprint } from "./review-fingerprint.js";
+import {
+  canonicalUrlHostname,
+  urlMatchesHostname
+} from "./source-url.js";
 
 const ROOT = path.resolve(process.cwd());
 const CONFIG = path.join(ROOT, "config");
@@ -202,6 +207,141 @@ function normalizePaperTags(data) {
   return tags;
 }
 
+export function sourceLinkLabel(url) {
+  const matchesHost = (domain) => urlMatchesHostname(url, domain);
+  if (matchesHost("arxiv.org")) return "arXiv";
+  if (matchesHost("doi.org")) return "正式版";
+  if (matchesHost("github.com")) return "代码";
+  if ([
+    "openaccess.thecvf.com",
+    "proceedings.neurips.cc",
+    "papers.nips.cc",
+    "openreview.net",
+    "aclanthology.org",
+    "proceedings.mlr.press",
+    "ieeexplore.ieee.org",
+    "dl.acm.org",
+    "ecva.net",
+    "iclr.cc",
+    "icml.cc",
+    "link.springer.com",
+    "aaai.org",
+    "usenix.org",
+    "conf.researchr.org"
+  ].some(matchesHost)) {
+    return "正式版";
+  }
+  return "项目页";
+}
+
+export function formalPrimaryLinkIsCanonical(reference) {
+  if (!["peer-reviewed", "workshop"].includes(reference?.publicationStatus)) {
+    return true;
+  }
+
+  const urls = [
+    reference?.url,
+    ...(Array.isArray(reference?.links)
+      ? reference.links.map((link) => link?.url)
+      : [])
+  ].filter(Boolean);
+
+  try {
+    const hasFormalDestination = urls.some(
+      (url) => sourceLinkLabel(url) === "正式版"
+    );
+    return hasFormalDestination
+      && sourceLinkLabel(reference.url) === "正式版";
+  } catch {
+    return false;
+  }
+}
+
+export function sourceLinkIdentity(value) {
+  const url = new URL(value);
+  const hostname = canonicalUrlHostname(value);
+  if (hostname === "arxiv.org" || hostname.endsWith(".arxiv.org")) {
+    const match = decodeURIComponent(url.pathname).match(
+      /^\/(?:abs|pdf|html)\/(.+?)(?:\.pdf)?\/?$/i
+    );
+    if (match) {
+      return `arxiv:${match[1].replace(/v\d+$/i, "").toLowerCase()}`;
+    }
+  }
+  if (hostname === "doi.org" || hostname.endsWith(".doi.org")) {
+    return `doi:${decodeURIComponent(url.pathname).replace(/^\/+/, "").toLowerCase()}`;
+  }
+  url.hostname = hostname;
+  url.hash = "";
+  if (url.pathname !== "/") {
+    url.pathname = url.pathname.replace(/\/+$/, "");
+  }
+  return url.toString();
+}
+
+function uniqueSourceLinks(links) {
+  const seen = new Set();
+  return links.filter((link) => {
+    if (!link?.url) return false;
+    const identity = sourceLinkIdentity(link.url);
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
+}
+
+export function buildPaperSourceLinks(source) {
+  const sourceText = String(source || "");
+  const urls = sourceText
+    .match(/https:\/\/[^\s;]+/g)
+    ?.map((url) => url.replace(/[),.\]]+$/, "")) || [];
+  const arxivIds = [
+    ...sourceText.matchAll(/arXiv:?\s*(\d{4}\.\d{4,5})(?:v\d+)?/gi)
+  ].map((match) => match[1]);
+
+  return uniqueSourceLinks(
+    [
+      ...urls.map((url) => ({
+        label: sourceLinkLabel(url),
+        url
+      })),
+      ...arxivIds.map((arxivId) => ({
+        label: "arXiv",
+        url: `https://arxiv.org/abs/${arxivId}`
+      }))
+    ]
+  );
+}
+
+export function buildReviewSourceLinks(reference) {
+  const links = [];
+
+  if (reference.url) {
+    links.push({
+      label: sourceLinkLabel(reference.url),
+      url: reference.url
+    });
+  }
+
+  const arxivId = String(reference.canonicalId || "").match(/^arxiv:(\d{4}\.\d{4,5})$/i)?.[1];
+  if (arxivId) {
+    links.push({
+      label: "arXiv",
+      url: `https://arxiv.org/abs/${arxivId}`
+    });
+  }
+
+  if (Array.isArray(reference.links)) {
+    for (const link of reference.links) {
+      if (link && typeof link.url === "string") {
+        links.push({ label: sourceLinkLabel(link.url), url: link.url });
+      }
+    }
+  }
+
+  return uniqueSourceLinks(links);
+}
+
 export async function getPapers() {
   const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
   return paperDocs.map((doc) => {
@@ -210,6 +350,7 @@ export async function getPapers() {
       ...doc.data,
       tag: tags[0],
       tags,
+      sourceLinks: buildPaperSourceLinks(doc.data.source),
       body: doc.body,
       link: `papers/${doc.data.id}/`
     };
@@ -358,6 +499,17 @@ const REVIEW_TYPE_LABELS = {
   position: "观点"
 };
 
+const REVIEW_STATUS_LABELS = {
+  "peer-reviewed": "已同行评审",
+  accepted: "已录用，正式页待发布",
+  workshop: "正式 Workshop",
+  "workshop-accepted": "Workshop 已录用，正式页待发布",
+  preprint: "预印本",
+  "technical-report": "技术报告",
+  standard: "标准",
+  dataset: "数据集发布"
+};
+
 export async function getReviewCenter() {
   const [center, tags, papers, reviewDocs] = await Promise.all([
     readFile(path.join(CONTENT, "review-center.json"), "utf8").then(JSON.parse),
@@ -382,6 +534,7 @@ export async function getReviewCenter() {
         );
       }
       const origin = reference.localPaperId ? "local" : "external";
+      const sourceLinks = buildReviewSourceLinks(reference);
 
       return {
         ...reference,
@@ -391,8 +544,11 @@ export async function getReviewCenter() {
         href: origin === "local"
           ? `../../papers/${localPaper.id}/`
           : reference.url,
-        sourceHref: reference.url,
-        publicationTypeLabel: REVIEW_TYPE_LABELS[reference.publicationType] || reference.publicationType
+        sourceHref: sourceLinks[0]?.url || reference.url,
+        sourceLinks,
+        publicationTypeLabel: REVIEW_TYPE_LABELS[reference.publicationType] || reference.publicationType,
+        publicationStatusLabel:
+          REVIEW_STATUS_LABELS[reference.publicationStatus] || reference.publicationStatus
       };
     });
     const referenceMap = new Map(references.map((reference) => [reference.id, reference]));
@@ -400,6 +556,7 @@ export async function getReviewCenter() {
     return {
       ...tag,
       ...review,
+      currentSnapshotFingerprint: reviewSnapshotFingerprint(review),
       sections: review.sections.map((section) => ({
         ...section,
         bodyHtml: markdownToHtml(section.body),

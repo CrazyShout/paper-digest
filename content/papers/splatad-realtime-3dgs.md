@@ -3,8 +3,8 @@
   "id": "splatad-realtime-3dgs",
   "tag": "3d-reconstruction",
   "tags": ["3d-reconstruction", "end-to-end-autonomous-driving"],
-  "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting",
-  "source": "arXiv:2411.16816 / https://arxiv.org/abs/2411.16816",
+  "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving",
+  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Hess_SplatAD_Real-Time_Lidar_and_Camera_Rendering_with_3D_Gaussian_Splatting_CVPR_2025_paper.html / arXiv:2411.16816 / https://arxiv.org/abs/2411.16816",
   "authors": ["Georg Hess", "Carl Lindström", "Maryam Fatemi", "Christoffer Petersson", "Lennart Svensson"],
   "affiliations": ["Zenseact / Chalmers University of Technology"],
   "comment": "SplatAD 首次将 3D Gaussian Splatting 应用于自动驾驶场景的多模态传感器渲染，实现了相机和 LiDAR 的实时联合渲染，为闭环仿真和多模态标注提供了新范式。"

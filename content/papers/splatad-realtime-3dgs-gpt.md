@@ -4,8 +4,8 @@
   "revisionOf": "splatad-realtime-3dgs",
   "tag": "3d-reconstruction",
   "tags": ["3d-reconstruction", "end-to-end-autonomous-driving"],
-  "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting",
-  "source": "arXiv:2411.16816 / https://arxiv.org/abs/2411.16816",
+  "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving",
+  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Hess_SplatAD_Real-Time_Lidar_and_Camera_Rendering_with_3D_Gaussian_Splatting_CVPR_2025_paper.html / arXiv:2411.16816 / https://arxiv.org/abs/2411.16816",
   "authors": ["Georg Hess", "Carl Lindström", "Maryam Fatemi", "Christoffer Petersson", "Lennart Svensson"],
   "affiliations": ["Zenseact / Chalmers University of Technology"],
   "comment": "[GPT改] 修正原版中的 KITTI/Waymo 和图注错配问题：论文实验数据集是 PandaSet、Argoverse2、nuScenes，核心是 3DGS 的相机与 LiDAR 联合渲染。"

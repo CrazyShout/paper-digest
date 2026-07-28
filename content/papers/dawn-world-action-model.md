@@ -6,7 +6,7 @@
   "title": "The DAWN of World-Action Interactive Models",
   "source": "arXiv:2605.11550 / https://arxiv.org/abs/2605.11550",
   "authors": ["Hongbo Lu", "Liang Yao", "Chenghao He", "Haoyu Wang", "Xiang Gu", "Xianfei Li", "Wenlong Liao", "Tao He", "Pai Peng"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["COWARobot Co., Ltd.", "Shanghai Jiao Tong University", "Hohai University"],
   "comment": "DAWN 把驾驶世界模型从单向预测推进到 world-action 交互生成：世界假设条件动作，动作假设再反过来更新世界预测。"
 }
 ---
