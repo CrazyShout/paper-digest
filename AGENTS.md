@@ -10,9 +10,10 @@ The main data source is Markdown content under `content/`, with JSON frontmatter
 
 ## Tech Stack
 
-- Runtime/tooling: Node.js, npm, ES modules (`"type": "module"`).
+- Runtime/tooling: Node.js, npm, ripgrep (`rg`), ES modules (`"type": "module"`).
 - CI Node version: Node 22, configured in `.github/workflows/deploy-pages.yml`.
-- Local required Node version: not confirmed; `package.json` does not declare `engines`.
+- Local required Node version: `>=22 <25`, declared in `package.json`.
+- Literature-review validation executes `rg` against raw Markdown; CI installs ripgrep explicitly.
 - Site framework: Astro `^5.16.2`, static output.
 - Frontend: Astro components plus vanilla JavaScript and CSS in `public/assets/`.
 - Content format: Markdown files with JSON frontmatter, parsed by local code in `src/lib/content.js`.
@@ -108,7 +109,7 @@ npm test
 ```
 
 This runs the Node test suite for content projection, review-center contracts,
-idea-center data, and email publishing helpers.
+raw-corpus ripgrep audits, idea-center data, and email publishing helpers.
 
 End-to-end tests: not confirmed.
 
