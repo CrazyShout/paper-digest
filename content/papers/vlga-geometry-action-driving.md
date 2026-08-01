@@ -43,7 +43,7 @@ VLA 驾驶模型善于生成语言解释和理解场景语义，但规划本质�
 ## 应用场景与启发
 
 - 应用场景：需要 VLA reasoning 但又不能牺牲几何精度的端到端驾驶 policy。
-- 方法启发：如果组内做 VLA driving，可以把“几何是否真正进入 action expert”作为架构审查点，而不是只看是否接入 BEV feature。
+- 方法启发：评估 VLA driving 时，可以把“几何是否真正进入 action expert”作为架构审查点，而不是只看是否接入 BEV feature。
 - 讨论问题：dense pointmap supervision 是否可以替换为更便宜的 depth/occupancy/world-model latent，还是必须依赖 LiDAR 监督。
 
 ## 局限与阅读风险

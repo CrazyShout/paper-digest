@@ -1,0 +1,42 @@
+{
+  "candidateId": "deadline-safety-attribution-free-admission",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbdd0-0c76-7802-9753-05afa3b7f9b8",
+  "reviewedAt": "2026-08-01T14:57:35Z",
+  "dossierSnapshotFingerprint": "c3a0f17cc9c6348c6ac99bcf18273c190e01d30b5f27e855dec5fce0a3bdf850",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 3,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 3
+  },
+  "rationales": {
+    "novelty": "直接证据是 EI-Drive 公开为带通信延迟和错误的协同感知端到端平台，OpenCOOD 公开为 OPV2V 等数据、协同检测模型和 log replay 框架；它们都没有公开本候选的认证租户资源影响上界、last-safe-decision 准入或配对车辆 hazard 合同。最大工程缺口是候选仍把主体保留、队列调度、在线安全证书和 MRM 组装成联合协议，尚未证明该联合对象超出 token bucket、strict partition、TURBO/EnergyShield 类回退的功能等价组合。必须补做固定同前缀、同 GPU 预算的完整方法与逐一去除组件、token bucket、strict partition、状态相关回退的车辆级比较实验。",
+    "feasibility": "直接证据是 EI-Drive README 明示实验使用 CARLA 0.9.14，而 dossier 锁定 CARLA 0.9.15；OpenCOOD 的固定提交存在，但其公开功能是协同检测、数据接口和 log replay，不提供共享 GPU 多租户队列、last-safe-decision monitor 或 MRM。EnergyShield 和 TURBO 的指定仓库及固定提交在官方源页面未取得可核验内容，不能计为可复用实现。最大工程缺口是两人需同时解决版本适配、自建非抢占队列和攻击 trace、自建 reachable-set/braking 证书、统一 MRM、七类策略和至少 2,100 个闭环 episode；这不是现有模块拼装可覆盖的工作量。必须先做四个固定提交的可重放 smoke test，再用一类场景和每类 2 个种子完成端到端切片，测量单 episode 吞吐、证书 p99 和 GPU 队列稳定性，不能按时完成就缩小主张。",
+    "success-probability": "直接证据是 EI-Drive 提供可运行的协同感知与通信延迟场景，OpenCOOD 提供可复用的感知入口，但两者公开边界都没有证明 250 ms 慢路径 deadline、共享 GPU service trace 与车辆控制闭环可以无缝合并；EnergyShield/TURBO 的固定版本也缺少可复核模块证据。最大工程缺口是 last-safe-decision 覆盖率和 MRM 可执行性没有实测先验，且 2,100 episode 规模会放大任何 CARLA、传感器、控制或日志不稳定问题。必须先冻结阈值并完成 Gate A/B：100 条队列 trace 复现跨租户 miss，再在三类场景各 20 个无攻击种子验证证书不晚于安全动作、p99 在 tick 预算内，否则不进入大规模攻击实验。",
+    "impact": "直接证据是 EI-Drive 明确把通信延迟和错误连接到整体自动驾驶表现，而候选进一步要求记录 GPU-ms、deadline miss、TTC、MRM 和路线后果；OpenCOOD 的 log replay 也能支持固定输入重放，但不提供安全合同本身。最大工程缺口是如果闭环 hazard 与 HOTA/p99 不一致，当前协议的系统设计含义会依赖新造的 monitor、控制器和场景假设，难以外推到真实云边栈。必须补做跨负载的 paired excess-hazard、后车 TTC、不必要 MRM、路线完成和资源效用 Pareto，并公开失败运行、阈值、episode 清单及 ODD/service-time 小幅变化实验。",
+    "comparison-readiness": "直接证据是 OpenCOOD 公开列出多种协同感知模型、数据 API 和 replay 工具，EI-Drive 公开列出场景配置和通信延迟开关；这支持感知/场景载体，却没有提供 FCFS、EDF、主体 token bucket、strict partition、共享 GPU service-time trace 或统一 MRM 的可复现实验基线。最大工程缺口是 dossier 所列 TURBO/EnergyShield 只能作为未核验的类比参考，且 EI-Drive 的 0.9.14 前提与固定 0.9.15 不一致，导致同前缀和公平算力比较尚未可执行。必须为每个基线提交可运行 commit、环境锁定和容量匹配报告，先完成小规模 attack/no-attack 配对回放，再扩展至 2,100 episode 并报告分层 bootstrap 区间。"
+  },
+  "strongestObjection": "核心风险不是缺少某个现成仓库，而是四个公开栈没有形成候选所需的闭环合同：EI-Drive 与 OpenCOOD 只覆盖仿真、通信或协同感知，且存在 CARLA 版本不匹配；EnergyShield 与 TURBO 的固定提交无法由官方页面核验。两人八周内自建安全证书、统一 MRM、调齐强基线并稳定跑完 2,100 个闭环 episode，最可能导致先用简化 monitor 或替换版本取得结果，从而破坏 dossier 的固定前缀和因果识别。",
+  "requiredExperiment": "在不改 dossier 的条件下先做可执行性闸门：对 EI-Drive 0.9.15 与 OpenCOOD 固定提交建立干净环境，逐项验证四个指定 commit；随后用一类 CARLA 场景、2 个配对种子、16 租户/4 攻击身份/4,000 请求上限，运行 FCFS、token bucket、候选和固定 MRM，记录从请求 arrival 到控制 tick 的完整日志。只有队列 miss、last-safe-decision 证书、MRM 状态机和同前缀 attack/no-attack 分支都可重放，且单机吞吐能在 8-12 周内外推到 2,100 episode，才值得实现其余基线与场景；同时必须用可核验代码或明确自建替代物取代 EnergyShield/TURBO 的未验证复用假设。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ucd-dare/EI-Drive",
+      "finding": "官方 README 提供端到端环境、感知、规划、控制和通信延迟/错误配置，但明确要求 CARLA 0.9.14；未提供本候选的多租户 GPU 队列、last-safe-decision 或 MRM 安全准入模块。"
+    },
+    {
+      "url": "https://github.com/DerrickXuNu/OpenCOOD",
+      "finding": "官方仓库提供 OPV2V/V2XSet/DAIR-V2X/V2V4Real 数据 API、协同检测模型和 log replay；固定提交 31ba160 存在，但其提交内容是 README 更新，未提供共享队列、车辆控制安全证书或统一 MRM。"
+    },
+    {
+      "url": "https://github.com/scope-lab-vu/energyshield",
+      "finding": "按指定官方仓库和固定 commit 重开时未取得可核验页面或代码内容，因此不能确认 15dcd641 是否存在，也不能把状态相关等待或 fail-safe 接口当作可复用事实；必须补做提交与最小运行验证。"
+    },
+    {
+      "url": "https://github.com/TUM-AAS/TURBO",
+      "finding": "按指定官方仓库和固定 commit 重开时未取得可核验页面或代码内容，因此不能确认 6e81bb8 是否存在，也不能确认云边效用路由、并行本地回退或其 API 可接入固定 CARLA 栈；必须补做提交与最小运行验证。"
+    }
+  ],
+  "overall": 4
+}

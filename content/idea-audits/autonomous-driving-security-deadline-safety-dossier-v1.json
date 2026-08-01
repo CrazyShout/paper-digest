@@ -1,0 +1,337 @@
+{
+  "candidateId": "deadline-safety-attribution-free-admission",
+  "directionId": "autonomous-driving-security",
+  "title": "DeadlineSafety：面向共享慢路径突发的无归因安全准入合同",
+  "hook": "不猜谁是攻击者，而是把每个认证租户可施加的跨租户队列影响限制住，并在云端结果来不及安全使用之前让车辆有序退回 ego-only、限速或 MRM。",
+  "output": "安全准入方法、同前缀闭环评测协议与攻击增量风险数据",
+  "effort": "2 名研究人员，1 套 CARLA/EI-Drive 闭环环境，1 台可复现多租户排队的 GPU 服务器",
+  "timeline": "8 周完成主 go/no-go，资产适配或统计补跑最多延长到 12 周",
+  "whyNow": "Denial of Deadline 已用合法突发请求证明共享慢路径会出现网络驱动的 deadline collapse，但只量到时延与 HOTA；与此同时，通用 serving、过载控制、资源隔离、云边回退和 MRM 已分别成熟。当前可测但未闭合的余量不是再造一个调度器，而是检验有界认证租户的资源攻击能否通过无归因影响上界、车辆 last-safe-decision 准入和分级降级被转化为可量化的车辆级安全合同。",
+  "createdAt": "2026-08-01T14:17:30Z",
+  "frozenAt": "2026-08-01T14:23:46Z",
+  "reviewMode": "blind-input-frozen",
+  "candidatePoolPath": "content/idea-audits/autonomous-driving-security-deadline-candidate-pool-v2.json",
+  "selectionReviewPath": "content/idea-audits/autonomous-driving-security-deadline-candidate-pool-v2-selection-review-v1.json",
+  "candidatePoolSnapshotFingerprint": "aaea5eb0a360e12fd9897a704104f1750f3e645c17b755166113da0d3f2878af",
+  "scope": {
+    "includedAttackSurface": "攻击者是共享边缘或云慢路径的认证普通租户，只能提交与良性租户使用同一 API、同一 schema 且通过正常校验的请求，并控制自身合法请求的内容与到达时序来制造共享队列突发。",
+    "excludedAttackSurfaces": [
+      "不修改相机像素、LiDAR 点云、BEV 或 V2V 特征，也不训练、攻击或检测视觉/点云 detector；感知模型及其 checkpoint 在所有方法间冻结。",
+      "不允许伪造受害车辆输入、修改模型权重或返回结果、控制网络设备、调度控制面或云基础设施管理员权限。",
+      "不允许无限 Sybil 身份；身份由实验控制面预注册并认证，任何结果都不得外推到无界身份发行。",
+      "不把自然拥塞、设备故障、随机延迟或良性 flash crowd 直接标成攻击，必须保留等资源的良性突发对照。"
+    ],
+    "identityAndBudgetFreeze": {
+      "principals": "每个 episode 固定 16 个认证租户，其中攻击者最多控制 4 个身份，其余身份与受害车辆保持良性；实验期间不能新增或轮换身份。",
+      "requestBudget": "每个 60 秒攻击 episode 的 4 个攻击身份合计最多提交 4,000 个通过正常校验的慢路径请求，单身份最多 1,000 个。",
+      "computeBudget": "除请求数上限外，攻击请求的累计实测 GPU 服务量不得超过 4,000 倍校准集良性请求的中位服务时间；两项预算任一先耗尽即停止注入。",
+      "knowledge": "自适应攻击者知道公开的队列、准入阈值、deadline 和降级规则，可优化突发相位，但看不到受害车辆传感器、未来轨迹、在线 last-safe-decision 证书或其他租户私有状态。"
+    },
+    "queueAndPathFreeze": {
+      "fastPath": "车端快路径以 10 Hz 连续运行，模型、输入处理和控制接口在全部方法间一致；它不经过被攻击的共享队列，并始终保留为 ego-only 输入。",
+      "slowPath": "云端高计算慢路径使用一个共享、可记录每请求 service time 的非抢占队列；只有 scheduler、配额与准入策略可以变化，模型和推理结果不能因方法而变化。",
+      "deadline": "每个慢路径请求从产生到合并的端到端 deadline 固定为 250 ms；迟到结果一律丢弃，不能使用未来真值或事后标签决定是否合并。",
+      "capacity": "所有方法使用同一 GPU、同一并发度和同一服务时间 trace；禁止给候选增加 worker、显存、带宽或预计算预算。"
+    },
+    "closedLoopFreeze": {
+      "runtime": "CARLA 固定为 0.9.15，EI-Drive 固定为提交 9b7f58d04092ad9656d0d36902b187dc141f9745；若该提交不能在 CARLA 0.9.15 复现，先记录资产失败，不静默换版本。",
+      "perception": "用于执行载体的 OpenCOOD 固定为提交 31ba16025da27ffe4e336f011290dfbc66f9a1f1；它只提供冻结的协同/感知入口，不构成 detector 防御，也不允许按方法重新训练。",
+      "pairedPrefix": "每个种子序列化相同初态、交通灯程序、天气和非 ego actor 脚本；attack 与 no-attack 分支共享前 5 秒无攻击前缀，攻击从第 5 秒开始，ego 控制随后闭环分化。",
+      "scenarioFamilies": "冻结三类决定性场景：信号交叉口横向冲突、无保护左转或遮挡横穿、高速汇入或 cut-in；每类至少 20 个配对种子。"
+    },
+    "lastSafeDecisionFreeze": {
+      "certificate": "每个 10 Hz 控制 tick 由冻结的 reachable-set/braking monitor 计算 last-safe-decision 时间戳：在最坏可接受参与者运动包络下，最迟何时启动共享 MRM 动作库仍可保持道路边界并避免预测碰撞。",
+      "admission": "仅当 last-safe-decision 剩余时间减去慢路径队列、服务和网络 p99 预测后仍有至少 50 ms guard band 时准入慢路径；预测器只能使用截至当前 tick 的队列观测。",
+      "degradation": "慢路径不再可准入时，原始安全余量大于等于 500 ms 切到 ego-only；余量在 250 至 500 ms 时切到 ego-only 并把目标速度上限设为 30 km/h；余量低于 250 ms 时在下一个控制 tick 内启动 MRM。",
+      "mrmLibrary": "全部方法共享同一 MRM 动作库：优先在当前车道受控减速至安全停靠，只有冻结路线规划器已标记可达安全区域时才允许靠边；不得让候选拥有更强控制器。"
+    },
+    "causalEstimand": "主 estimand 是同初态、同前缀、同攻击资源预算下，攻击分支相对 no-attack 分支的配对 excess hazard；身份标签只用于预算执行和离线审计，候选在线决策不得分类或归因攻击者。"
+  },
+  "keyProblem": "当少量认证普通租户用合法请求和有界突发占用共享云慢路径时，车辆仍会及时得到快路径输出，却可能在最需要高质量结果的交互时刻错过 250 ms 合并期限。系统需要在不知道请求是否恶意的条件下限制跨租户伤害，并在慢路径结果已不值得等待时，把剩余安全决策时间显式转换为 ego-only、限速或 MRM，而不是只优化 p99 或事后 HOTA。",
+  "currentLimitations": "现有证据把问题拆成了互不闭合的组件：Denial of Deadline 证明合法突发能令慢路径 accuracy collapse，却没有规划、控制、防御或官方代码；CP-FREEZER 证明计算时延可被主动放大，但其权限是篡改协同特征且同样没有已核验官方代码。Clockwork、REEF、RAJOMON 与 EDF/token bucket/strict partition 类方法解决可预测 serving、抢占或过载，TURBO 与 EnergyShield 类方法解决云边效用和状态相关回退，ISO 23793-1 给出 MRM 执行语境；这些工作都没有在固定身份和攻击预算下，用同前缀闭环比较来约束跨租户影响、last-safe-decision 准入、攻击增量车辆风险和不必要 MRM。",
+  "hypothesis": "在固定 16 个认证租户、最多 4 个攻击身份、4,000 请求与等 GPU 服务量预算下，无需攻击归因的最小主体资源保留加 last-safe-decision 准入和分级降级，能在相同良性算力与效用下，相比调优后的 FCFS/EDF、token bucket、严格分区以及 TURBO/EnergyShield 类回退，显著降低 Yo-Yo 与自适应突发造成的配对 excess hazard，且不会把收益转化为更多不必要 MRM、后车风险或路线失败。",
+  "noveltyClaims": [
+    {
+      "claim": "研究对象是有界认证主体对其他租户车辆安全余量的最大可施加影响，而不是恶意流量分类、一般尾时延或 detector 鲁棒性。",
+      "nearestBoundary": "RAJOMON、Clockwork、REEF、EDF、token bucket 和 strict partition 已覆盖准入、调度与隔离；本候选只有在车辆级跨租户影响界优于这些同成本强基线时才成立。",
+      "falsifier": "若普通 token bucket 或严格分区在相同良性效用和算力下给出相同或更低的配对 excess hazard，则联合合同只是组件拼接。"
+    },
+    {
+      "claim": "把 last-safe-decision 作为慢路径准入证书，使资源决策直接回答云端结果是否还能被车辆安全使用，而不是把固定 deadline miss 等同于危险。",
+      "nearestBoundary": "EnergyShield、D3、Zhuyi、TURBO、Task-Aware Risk 与 SPARQ 已覆盖安全等待、任务风险和回退；本候选不主张这些组件首次出现，只检验其与主动共享队列影响上界的联合约束。",
+      "falsifier": "若固定 250 ms timeout 加本地回退与状态相关回退在三类场景中达到等价车辆结果，则 last-safe-decision 准入没有不可替代价值。"
+    },
+    {
+      "claim": "以同前缀 attack/no-attack 分支定义单位攻击资源的配对 excess hazard，并同时计入不必要 MRM、后车 TTC 和路线失败，避免只从 p99 或 HOTA 推断安全。",
+      "nearestBoundary": "Denial of Deadline 的 HOTA 回放和通用系统 SLO 无法识别车辆动作后果，ISO 23793-1 也不规定攻击检测或 MRM 触发；该评测对象必须由闭环配对实验单独验证。",
+      "falsifier": "若攻击只改变 p99/HOTA 而碰撞、TTC、违规、路线完成和 MRM 后果均无稳定配对差异，则车辆级研究主张不成立。"
+    }
+  ],
+  "method": [
+    {
+      "step": "建立无归因主体影响屏障",
+      "mechanism": "为 16 个认证主体维护 deficit-based 最小服务保留，每个主体的保底份额为总容量的 1/16；空闲份额可借用，但借用请求不能挤占其他主体在其最近 deadline 窗口内的保底额度。",
+      "cost": "只使用认证 principal ID、请求到达、历史 service time 和队列状态，不训练攻击分类器，也不读取受害者输入。"
+    },
+    {
+      "step": "生成在线 last-safe-decision 证书",
+      "mechanism": "冻结 reachable-set/braking monitor，在 10 Hz 根据 ego 状态、道路边界、可观测参与者包络和共享 MRM 库输出最迟安全降级时间；只在干净校准集检查覆盖率，不按攻击测试结果调阈值。",
+      "cost": "证书计算必须在车端单 tick 预算内完成，并报告其 p50/p99 CPU 时间；证书失败默认拒绝慢路径而非继续等待。"
+    },
+    {
+      "step": "执行安全余量驱动的慢路径准入",
+      "mechanism": "用因果可用的队列、服务与网络历史估计完成时间 p99；只有完成时间加 50 ms guard band 早于 last-safe-decision 时才向共享慢路径发请求或保留等待。",
+      "cost": "估计器在所有方法间共享同一观测，不使用未来 service time、攻击标签或场景结局；估计误差单独报告。"
+    },
+    {
+      "step": "共享一套分级降级动作",
+      "mechanism": "慢路径不再可安全准入后按冻结阈值依次使用 ego-only、30 km/h 限速和 MRM；候选与全部 fallback 基线使用完全相同的快路径、速度控制器和 MRM 库。",
+      "cost": "额外代价通过不必要 MRM、后车最小 TTC、路线完成率和到达时间量化，不能只报告避免碰撞。"
+    },
+    {
+      "step": "对抗性与良性负载分离验证",
+      "mechanism": "在相同请求数和 GPU 服务量下交叉 no-load、良性 flash crowd、恒定攻击、Yo-Yo 相位攻击和了解规则的自适应攻击，攻击只能改变合法请求内容与到达时序。",
+      "cost": "攻击预算、身份上限和随机种子在方法间共享；若良性突发同样触发保护，必须把效用损失计入结论。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "phase": "第 1-2 周：队列与攻击 trace",
+      "reuse": "复用 Denial of Deadline 一手论文中的快路径/慢路径/merger 抽象与约 4,000 请求量级，但截至冻结日未核验到其官方代码，因此共享队列、合法请求生成器、Yo-Yo 和自适应突发全部自行实现。",
+      "deliverable": "单机可重复的 16 主体队列 harness，输出逐请求 arrival、service、deadline、drop、principal 和 GPU-ms 账本，并能重放同一 trace 到全部 scheduler。"
+    },
+    {
+      "phase": "第 2-4 周：冻结闭环与同前缀分支",
+      "reuse": "复用 CARLA 0.9.15、EI-Drive 提交 9b7f58d04092ad9656d0d36902b187dc141f9745 与 OpenCOOD 提交 31ba16025da27ffe4e336f011290dfbc66f9a1f1；不修改或训练 detector。",
+      "deliverable": "三类场景可序列化同初态并生成 5 秒共享前缀，随后并行得到 no-attack 与 attack 闭环分支；所有方法读取相同模型、交通脚本和队列 trace。"
+    },
+    {
+      "phase": "第 3-5 周：安全证书与降级库",
+      "reuse": "EnergyShield 官方仓库冻结到提交 15dcd641de860834d8c12d056fdc8e5d43c1d67f，TURBO 官方仓库冻结到提交 6e81bb88b6da48fe6b244a8725ac3b6b552bd537，作为状态相关等待和云边回退接口参考。",
+      "deliverable": "自建 last-safe-decision monitor、50 ms 准入 guard、ego-only/30 km/h/MRM 状态机，并通过无攻击场景的覆盖率与故障注入测试。"
+    },
+    {
+      "phase": "第 4-6 周：强基线公平适配",
+      "reuse": "实现 FCFS、EDF、per-principal token bucket、1/16 strict partition、REEF 类高优先级抢占以及 TURBO/EnergyShield 类回退；REEF artifact 的冻结 commit 尚未由本 dossier 核验，因此不把仓库存在写成精确复现。",
+      "deliverable": "在无攻击校准集把所有方法的 GPU 容量差限制为 5% 以内、路线完成差限制为 2 个百分点以内；无法精确匹配时报告完整安全-效用 Pareto。"
+    },
+    {
+      "phase": "第 6-8 周：配对实验与止损判定",
+      "reuse": "复用固定场景、攻击预算、服务 trace、模型 checkpoint 和 MRM 库，不增加候选专属计算资源。",
+      "deliverable": "至少 2,100 个自动化 episode 的逐种子配对账本、95% paired bootstrap 区间、关键消融与明确 go/no-go；只有统计功效不足时扩展到第 12 周。"
+    },
+    {
+      "phase": "不可复用资产边界",
+      "reuse": "截至 2026-08-01，Denial of Deadline 与 CP-FREEZER 均无已核验作者官方可执行代码；CP-FREEZER 只作为不同攻击权限的边界证据，绝不把其视觉、点云或协同特征攻击混入本实现。",
+      "deliverable": "资产清单区分已冻结提交、自建模块和未核验依赖；任何后续发现的仓库都必须另行固定 commit 并重冻 dossier 后才能进入盲评。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "gate": "Gate A，周 1-2：队列可识别性",
+      "protocol": "对五种负载各生成至少 100 条固定 trace，证明在不改模型输入和结果的条件下，有界突发可把良性租户慢路径 deadline-miss rate 提高至少 20 个百分点；同时验证良性 flash crowd 不能被标签化为攻击。",
+      "decision": "若固定预算无法稳定造成跨租户 deadline miss，或效果只来自未受约束的重请求，立即 no-go，不进入闭环。"
+    },
+    {
+      "gate": "Gate B，周 3-5：证书与动作闭环",
+      "protocol": "在三类场景的无攻击分支中检验 last-safe-decision 证书覆盖率、估计延迟和 MRM 可执行性；每类至少 20 个种子，阈值在攻击测试前冻结。",
+      "decision": "若证书在超过 5% 的无攻击关键时刻晚于实际最迟安全动作，或 p99 计算时间超过一个 100 ms control tick，停止候选。"
+    },
+    {
+      "gate": "Gate C，周 5-7：决定性同前缀比较",
+      "protocol": "三类场景乘 20 个种子、五种负载、七类候选/基线策略，至少形成 2,100 个 episode；attack 与 no-attack 分支共享前缀、初态、天气、交通脚本、模型与随机种子。",
+      "decision": "以配对 excess hazard 为主结果，p99 与 HOTA 仅作机制指标；第一轮若车辆指标无重复差异，不增加场景或调方法。"
+    },
+    {
+      "gate": "Gate D，周 7-8：自适应与消融",
+      "protocol": "攻击者知道公开策略并搜索突发相位；分别移除主体保留、last-safe-decision 准入和分级降级，另做队列 service-time 与 ODD 小幅变化。",
+      "decision": "只有完整方法在自适应攻击下仍优于最强基线且至少两个关键部件有独立车辆级贡献，才建议继续扩大实验。"
+    },
+    {
+      "gate": "统计与复现审计",
+      "protocol": "以场景种子为配对单位，报告每场景和汇总风险差、风险比及 95% paired bootstrap 区间；预先发布 episode 清单、预算计算、失败运行和全部阈值。",
+      "decision": "若区间宽到无法区分 10% 相对风险差，只允许补到每类 40 个种子且总周期不超过 12 周；仍不确定则 no-go。"
+    }
+  ],
+  "strongBaselines": [
+    {
+      "name": "FCFS 与 EDF",
+      "protocol": "共享队列分别按到达顺序和 250 ms 绝对 deadline 排序；使用同一 service trace、GPU 容量、迟到丢弃和固定 timeout-local fallback。",
+      "denialRole": "检验收益是否只是常规 deadline scheduling；两者均不得使用攻击身份或未来完成时间。"
+    },
+    {
+      "name": "Per-principal token bucket",
+      "protocol": "16 个认证主体分别使用令牌桶，桶深和补充率在无攻击校准集调到与候选相同的接受率、GPU-ms 与路线完成。",
+      "denialRole": "这是最直接的有界主体限流否决基线；等价安全结果将推翻联合合同的新颖性。"
+    },
+    {
+      "name": "Strict partition",
+      "protocol": "每个主体固定获得 1/16 服务容量且禁止借用，和候选可借用但受影响屏障约束的版本比较；同时报告低负载浪费。",
+      "denialRole": "若严格分区在良性效用差不超过 2 个百分点时安全更好，则无需更复杂合同。"
+    },
+    {
+      "name": "REEF 类优先级与抢占",
+      "protocol": "快路径和安全关键请求拥有高优先级，慢路径普通请求可被抢占；算法参数按公开系统目标适配，但不宣称已精确复现未冻结 artifact。",
+      "denialRole": "检验通用多租户 GPU 隔离是否已经足以消除跨租户 deadline 风险。"
+    },
+    {
+      "name": "TURBO 类本地推测回退",
+      "protocol": "车端快路径持续运行，云调用按效用选择，250 ms 超时即使用本地结果；代码参考固定提交 6e81bb88b6da48fe6b244a8725ac3b6b552bd537。",
+      "denialRole": "检验云边路由与 timeout-local fallback 是否已提供等价车辆级保护。"
+    },
+    {
+      "name": "EnergyShield 类状态相关回退",
+      "protocol": "按状态相关安全等待时间决定远端等待与 fail-safe，使用同一 MRM 动作库；代码参考固定提交 15dcd641de860834d8c12d056fdc8e5d43c1d67f。",
+      "denialRole": "检验 last-safe-decision 与资源影响屏障的联合是否超出已有状态相关安全 offloading。"
+    },
+    {
+      "name": "非部署 oracle 上界",
+      "protocol": "离线知道真实 service time 和未来 actor trace，仅用于估计可达到的风险下界，绝不作为可部署对手或主比较对象。",
+      "denialRole": "判断失败来自在线估计误差还是威胁模型本身不可控，并给出剩余改进空间。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "配对 excess hazard",
+      "definition": "同一种子 attack 分支减 no-attack 分支的碰撞、TTC 小于 1.5 秒事件、越界或闯灯事件；主报告给出风险差、风险比和单位 1,000 攻击请求的增量风险。",
+      "unit": "场景种子为统计单位，三类场景分别报告并用 paired bootstrap 给出 95% 区间。"
+    },
+    {
+      "name": "闭环任务结果",
+      "definition": "碰撞率、最小 TTC、交通违规、路线完成率、到达时间和控制 jerk，禁止用 HOTA 单独替代车辆后果。",
+      "unit": "每 episode 及每场景分层汇总，失败运行保留在分母中。"
+    },
+    {
+      "name": "降级副作用",
+      "definition": "不必要 MRM 率、MRM 后方车辆最小 TTC 或追尾、限速持续时间、路线失败和停车阻塞；不必要 MRM 定义为配对 no-attack 分支在同一前缀下无安全事件且无需 MRM。",
+      "unit": "每 100 个 episode 的事件率与持续时间，并报告候选相对每个 fallback 基线的差值。"
+    },
+    {
+      "name": "系统机制指标",
+      "definition": "良性租户 p50/p95/p99 时延、deadline-miss rate、吞吐、goodput、每主体服务份额、GPU-ms、借用率和 last-safe-decision 完成时间估计误差。",
+      "unit": "逐请求日志和逐主体 1 秒窗口；HOTA 只作为迟到丢弃如何影响感知的辅助指标。"
+    },
+    {
+      "name": "公平性与鲁棒性",
+      "definition": "无攻击路线完成、接受率和 GPU 使用匹配误差，以及恒定、Yo-Yo、自适应攻击和良性 flash crowd 间的最坏场景风险。",
+      "unit": "以 GPU 容量差不超过 5%、无攻击路线完成差不超过 2 个百分点为公平比较门槛。"
+    }
+  ],
+  "successCriteria": [
+    {
+      "criterion": "车辆级安全收益",
+      "threshold": "在 Yo-Yo 和自适应攻击下，至少 2/3 场景家族相对最强调优基线降低至少 30% 配对 excess hazard，且汇总风险比 95% 区间上界不高于 0.90。",
+      "measurement": "按预注册的场景种子做 attack/no-attack 成对 bootstrap，并同时报告风险差与风险比，不能用跨场景平均掩盖失败家族。"
+    },
+    {
+      "criterion": "良性效用与副作用",
+      "threshold": "无攻击 GPU-ms 差不超过 5%、路线完成下降不超过 2 个百分点，不必要 MRM 不超过 5%，且后车碰撞或 TTC<1.5 秒事件增加不超过 1 个百分点。",
+      "measurement": "以同一无攻击种子和共享 MRM 库核对资源、任务与第三方风险，任一副作用超限都不能由低碰撞率抵消。"
+    },
+    {
+      "criterion": "自适应与分布变化",
+      "threshold": "在攻击相位自适应以及队列 service-time 或 ODD 小幅变化时，相对最强基线的 excess hazard 降幅仍至少 15%，不能只在固定高负载成立。",
+      "measurement": "攻击者只利用公开规则搜索相位，分布变化预先冻结；所有结果按最坏攻击和最坏场景分别呈现。"
+    },
+    {
+      "criterion": "机制不可替代性",
+      "threshold": "移除主体保留或 last-safe-decision 准入后，至少一项车辆级主指标相对完整方法恶化 10% 以上；分级降级消融必须解释 MRM 与路线成本的变化。",
+      "measurement": "消融共享相同预算、模型、前缀和攻击 trace，逐组件报告变化，不允许只比较完整方法与无防御系统。"
+    }
+  ],
+  "killCriteria": [
+    {
+      "condition": "功能等价基线否决",
+      "trigger": "调优后的 token bucket、strict partition、EDF 或 TURBO/EnergyShield 类回退在同等算力与良性效用下达到统计等价或更低的配对 excess hazard。",
+      "decisionRule": "立即判定联合合同没有不可替代收益，保留负结果并停止扩大候选方法。"
+    },
+    {
+      "condition": "车辆后果不可识别",
+      "trigger": "候选只改善 p99、deadline miss 或 HOTA，而碰撞、TTC、违规、路线完成和 MRM 后果在配对区间内均无稳定变化。",
+      "decisionRule": "把结果限定为系统性能观察，不再主张自动驾驶安全 Idea，也不追加感知代理指标包装。"
+    },
+    {
+      "condition": "攻击边界失效",
+      "trigger": "收益依赖超过 4 个身份、超过 4,000 请求或超出 GPU 服务量预算，或必须读取攻击标签、未来轨迹、受害者输入或 detector 特征。",
+      "decisionRule": "视为超出冻结威胁模型或产生评价泄漏，本轮证据无效，只有重开检索和重冻 dossier 才能继续。"
+    },
+    {
+      "condition": "自适应或良性负载失败",
+      "trigger": "了解规则的自适应突发恢复最强基线风险，或等资源良性 flash crowd 造成超过 5% 不必要 MRM、超过 2 个百分点路线完成损失。",
+      "decisionRule": "判定策略不能区分需要保护的资源压力与可接受良性负载，停止安全防御主张。"
+    },
+    {
+      "condition": "证书或周期不可执行",
+      "trigger": "last-safe-decision monitor 的无攻击关键时刻漏保率超过 5%、p99 超过 100 ms，或到第 12 周仍不能形成能区分 10% 相对风险差的配对结论。",
+      "decisionRule": "判定最小实验不可执行或统计不可识别，不以继续堆场景、增加算力或延长期限规避 no-go。"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "last-safe-decision 代理可能把模拟器可见真值误当作部署可用状态，导致评价泄漏。",
+      "mitigation": "只允许当前传感器/规划器可用状态和保守参与者包络进入证书；另做 privileged oracle 上界，二者结果不得混报。"
+    },
+    {
+      "risk": "CARLA/EI-Drive 的共享队列和云服务是自建适配器，可能高估真实网络、GPU 争用或租户认证的可控性。",
+      "mitigation": "先用实测 service-time trace 驱动队列，记录全部网络与 GPU-ms 假设；正结果仅声称模拟闭环合同，不外推为道路部署证明。"
+    },
+    {
+      "risk": "Denial of Deadline 与 CP-FREEZER 没有已核验官方代码，攻击复现可能偏离原论文。",
+      "mitigation": "只复用其一手论文明确的攻击能力和结果边界；本研究公开自身合法请求生成器、预算账本与 trace，不声称复制原作者实现。"
+    },
+    {
+      "risk": "MRM 可能把 ego 风险转移给后车，或以过多停车和路线失败换取低碰撞率。",
+      "mitigation": "共享同一 MRM 库，并把后车 TTC、追尾、不必要 MRM、停车阻塞和路线完成设为共同成功与止损条件。"
+    },
+    {
+      "risk": "严格分区或简单 token bucket 可能已经足够，联合合同缺乏不可替代性。",
+      "mitigation": "把二者设为同成本首要否决基线，预注册功能等价 kill criterion，不用均分或额外场景掩盖负结果。"
+    }
+  ],
+  "impact": "正结果将给出一种不依赖攻击分类器、可审计且能从主体攻击预算一路追到车辆后果的共享慢路径安全接口，并提供同前缀 excess-hazard 评测协议，直接影响云辅助驾驶的准入、资源隔离和 MRM 触发设计。负结果同样有价值：若 token bucket、严格分区或状态相关本地回退已足够，它会阻止把复杂联合合同投入真实系统；若 p99/HOTA 改善不对应车辆风险，它会推动后续论文把闭环后果而非感知或系统代理指标作为时限攻击的必要证据。",
+  "evidence": [
+    {
+      "title": "Denial of Deadline: Network-Driven Accuracy Collapse in Distributed Inference Pipelines",
+      "url": "https://arxiv.org/abs/2607.24692",
+      "localPaperId": "denial-of-deadline-inference",
+      "localLink": "papers/denial-of-deadline-inference/",
+      "role": "本库直接证据：约 4,000 个合法突发请求令良性慢路径 p99 从约 92 ms 升至 2 s，并带来平均 7.0 HOTA 损失；只建立攻击起点，没有规划、控制、防御或已核验官方代码。"
+    },
+    {
+      "title": "CP-FREEZER: Computation-Latency Amplification against Cooperative Perception",
+      "url": "https://doi.org/10.1609/aaai.v40i2.37082",
+      "sourceOrigin": "external",
+      "role": "外部边界证据：证明自动驾驶计算时延可被主动放大，但攻击依赖篡改 V2V 协作特征，权限不同于普通认证租户队列突发；截至检索日没有已核验官方代码。"
+    },
+    {
+      "title": "REEF: Fast and Efficient Inference for Deep Neural Networks in Multi-Tenant GPUs",
+      "url": "https://www.usenix.org/conference/osdi22/presentation/han",
+      "sourceOrigin": "external",
+      "role": "外部系统基线：覆盖多租户 GPU 的优先级与抢占，要求候选证明车辆风险合同带来的收益超出一般资源隔离。"
+    },
+    {
+      "title": "RAJOMON: Overload Protection for Microservice Applications",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/xing",
+      "sourceOrigin": "external",
+      "role": "外部过载基线：覆盖准入、限流与负载保护，约束本候选必须在同等 goodput、算力和良性效用下胜过通用 token bucket 或自适应 admission。"
+    },
+    {
+      "title": "EnergyShield: Provably-Safe Offloading of Neural Network Controllers",
+      "url": "https://arxiv.org/abs/2302.06572",
+      "sourceOrigin": "external",
+      "role": "外部安全回退基线：提供状态相关安全等待时间与车端 fail-safe，要求候选把新意限制在主动共享队列影响屏障及其车辆级联合验证。"
+    },
+    {
+      "title": "TURBO: Utility-Aware Cloud-Assisted Autonomous Driving",
+      "url": "https://drops.dagstuhl.de/entities/document/10.4230/OASIcs.NINeS.2026.18",
+      "sourceOrigin": "external",
+      "role": "外部云边基线：覆盖车端持续回退和云端效用选择，但公开评估不含攻击者与车辆碰撞闭环；用于否决普通 timeout-local fallback 的重复包装。"
+    },
+    {
+      "title": "ISO 23793-1:2024 Intelligent transport systems - Minimal risk manoeuvre - Part 1",
+      "url": "https://www.iso.org/standard/81711.html",
+      "sourceOrigin": "external",
+      "role": "外部标准边界：提供 MRM 执行与测试语境，但不规定 ADS 故障检测或何时启动 MRM，因此不能替代本候选的攻击触发和闭环证据。"
+    }
+  ]
+}

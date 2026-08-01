@@ -37,7 +37,7 @@ V2X 论文常见评测缺口是开环指标和真实闭环驾驶之间脱节。�
 
 ## 实验结论与证据
 
-摘要给出的主要结论是 multi-agent 系统一般优于 single-agent counterpart，但收益并不单调。Perception sharing 会增强感知，却不总能转化为更好的 planning；negotiation 能提升部分规划表现，但在复杂密集交通中可能伤害性能。这组发现对组内很重要，因为它直接提醒协同驾驶不能只用感知指标证明系统收益。
+摘要给出的主要结论是 multi-agent 系统一般优于 single-agent counterpart，但收益并不单调。Perception sharing 会增强感知，却不总能转化为更好的 planning；negotiation 能提升部分规划表现，但在复杂密集交通中可能伤害性能。这组发现直接提醒协同驾驶不能只用感知指标证明系统收益。
 
 ## 应用场景与启发
 

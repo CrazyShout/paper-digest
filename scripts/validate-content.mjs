@@ -5,9 +5,11 @@ import { fileURLToPath } from "node:url";
 import {
   buildPaperSourceLinks,
   formalPrimaryLinkIsCanonical,
+  isAffiliationPlaceholder,
   isValidIsoDate,
   sourceLinkIdentity,
-  sourceLinkLabel
+  sourceLinkLabel,
+  sourceLinkLabelMatches
 } from "../src/lib/content.js";
 import {
   extractArxivIds,
@@ -29,23 +31,6 @@ const CONFIG = path.join(ROOT, "config");
 const PUBLIC = path.join(ROOT, "public");
 
 const errors = [];
-const LEGACY_AFFILIATION_PLACEHOLDER_FILES = new Set([
-  "caad-causality-aware-driving.md",
-  "copad-v2x-trajectory-prediction.md",
-  "dawn-world-action-model.md",
-  "driving-world-model-video-gpt.md",
-  "driving-world-model-video.md",
-  "safer-safety-scenario-gpt.md",
-  "safer-safety-scenario.md",
-  "swarmdrive-v2v-coordination.md",
-  "v2x-cooperative-planning-gpt.md",
-  "v2x-cooperative-planning.md",
-  "view-induced-trajectory-manipulation.md"
-]);
-const LEGACY_IMAGELESS_FILES = new Set([
-  "revisiting-adversarial-attacks.md",
-  "vla-end-to-end-driving.md"
-]);
 
 function addError(message) {
   errors.push(message);
@@ -192,9 +177,7 @@ function validateStringArrayField(data, field, file) {
 function validateAffiliations(data, file) {
   validateStringArrayField(data, "affiliations", file);
 
-  if (LEGACY_AFFILIATION_PLACEHOLDER_FILES.has(file)) return;
-
-  const placeholders = data.affiliations.filter((item) => /作者单位|见论文|PDF/.test(item));
+  const placeholders = data.affiliations.filter(isAffiliationPlaceholder);
   if (placeholders.length) {
     addError(`${file} must use verified affiliations, not placeholders: ${placeholders.join(", ")}`);
   }
@@ -305,7 +288,7 @@ function validateImageUrls(markdown, file) {
     }
   }
 
-  if (!count && !LEGACY_IMAGELESS_FILES.has(file)) {
+  if (!count) {
     addError(`${file} must include at least one official figure image`);
   }
 }
@@ -1020,7 +1003,7 @@ function validateReviewCenter(
               addError(`${linkLabel}.url must be an HTTPS primary-source URL`);
               continue;
             }
-            if (link?.label !== sourceLinkLabel(link.url)) {
+            if (!sourceLinkLabelMatches(link?.label, link.url)) {
               addError(`${linkLabel}.label must match its destination`);
             }
             const linkIdentity = sourceLinkIdentity(link.url);
@@ -1085,9 +1068,6 @@ function validateReviewCenter(
 
       if (reference?.localPaperId) {
         localCount += 1;
-        if (reference.sourceFamily !== "local-corpus") {
-          addError(`${referenceLabel} local references must use sourceFamily local-corpus`);
-        }
         const paper = paperById.get(reference.localPaperId);
         if (!paper) {
           addError(`${referenceLabel} references missing local paper: ${reference.localPaperId}`);

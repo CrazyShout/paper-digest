@@ -43,7 +43,7 @@ VLADriveBench 是一篇面向自动驾驶 VLA 的 reasoning/action 关系评测�
 ## 应用场景与启发
 
 - 应用场景：驾驶 VLA 的解释一致性评测、reasoning safety audit、CoT 注入攻击或防御的基线。
-- 方法启发：组内如果训练 VLA，不应只展示语言推理样例；至少要加入 selfsplice、contradiction、hallucination 和语义注入实验。
+- 方法启发：训练 VLA 时不应只展示语言推理样例；至少要加入 selfsplice、contradiction、hallucination 和语义注入实验。
 - 讨论问题：如果 CoT 不影响动作，它应该被视为解释模块、训练辅助，还是潜在的安全风险界面。
 
 ## 局限与阅读风险

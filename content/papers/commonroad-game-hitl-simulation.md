@@ -38,7 +38,7 @@ CommonRoad-Game 是一篇测试基础设施论文。它关心的问题不是训�
 
 ## 实验结论与证据
 
-论文报告 CommonRoad-Game 能稳定同步仿真时间，支持多 agent 交互，并能和 CommonRoad-compatible motion planners 集成生成 interactive driving scenarios。它更像一个研究工具而非单篇算法 SOTA，但对组内自动驾驶测试方向有实际价值：可以把人类干预、激进 cut-in、让行博弈等固定数据集难覆盖的交互变成可保存测试样本。
+论文报告 CommonRoad-Game 能稳定同步仿真时间，支持多 agent 交互，并能和 CommonRoad-compatible motion planners 集成生成 interactive driving scenarios。它更像一个研究工具而非单篇算法 SOTA，但对自动驾驶测试有实际价值：可以把人类干预、激进 cut-in、让行博弈等固定数据集难覆盖的交互变成可保存测试样本。
 
 ## 应用场景与启发
 
@@ -52,6 +52,6 @@ Human-in-the-loop 测试的代表性依赖参与者行为、输入设备和实�
 
 ## 后续跟进
 
-- 跑通开源代码，确认是否能接入组内已有 planner 或 CommonRoad 场景。
+- 跑通开源代码，确认是否能接入既有 planner 或 CommonRoad 场景。
 - 与 TrafficAlign、D-V2S、RiskFlow 对比，区分人机生成、LLM 生成和视频转场景三类测试入口。
 - 后续可记录少量人类 cut-in/merge 交互，作为 planner 行为回归集。

@@ -3,9 +3,9 @@
   "id": "cooperative-autonomous-driving",
   "title": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动",
   "subtitle": "协同的价值不由消息数量决定，而由证据是否新鲜可信、是否改变当前风险，以及失败后能否安全退出决定。",
-  "abstract": "协同自动驾驶已经从多车共享点云或中间特征，推进到通信选择、异构融合、轨迹预测、规划和多主体协商。基础工作证明额外视角能够缓解遮挡和远距感知，真实数据与通信系统研究则表明，时延、丢包、位姿误差、模型异构和恶意节点会改变这种收益。近期闭环证据进一步纠正了三个常见叙事：感知增益不保证规划收益；更多消息、更多主体或更多协商并非单调有益；张量元素、压缩率或 KB 等通信代理量也不等于真实空口代价，更不等于安全收益。因此，本综述把协同系统组织为观测、消息价值、传输、可信融合、预测规划和执行回退六层链路，并提出一种可拒绝、可回退、可归因的协同栈：每条远端证据都保留来源、时间、位姿和置信信息，接收端可以拒绝过期或冲突消息，在协同失效时回退到经过验证的 ego-only 策略，并通过反事实消息消融解释一次通信为何改变了动作。",
-  "reviewedAt": "2026-07-28",
-  "searchWindow": "2019-01-01 至 2026-07-28；覆盖基础融合、真实 V2V/V2I 数据、通信系统、异步与位姿鲁棒性、恶意节点、异构协同、规划耦合与闭环反例",
+  "abstract": "协同自动驾驶已经从共享点云或中间特征，推进到通信选择、异构融合、轨迹预测、规划和多主体协商。2026-08-01 增量带来两类重要但边界清晰的证据：SimBEV2X 用公开生成工具把 CARLA 多主体、多模态、多任务数据扩展到 258 个场景、102,200 帧和最多 8 车 4 RSU；HeteroPROMPT 用低秩提示与冻结主干减少异构代理适配参数，并以特征分类路由适配模块。它们分别改善数据规模与模型异构接口，却都没有真实无线链路、反应式规划闭环或开放道路安全证据。因此，本综述仍以观测、消息价值、传输、可信融合、预测规划和执行回退六层链路组织证据：感知增益不保证规划收益，更多消息或主体并非单调有益，张量元素或 KB 也不等于真实空口代价。可信协同必须让每条远端证据可追踪、可校准、可拒绝，并在协同失效时回退到独立验证的 ego-only 策略。",
+  "reviewedAt": "2026-08-01",
+  "searchWindow": "2019-01-01 至 2026-08-01；覆盖基础融合、真实 V2V/V2I 数据、通信系统、异步与位姿鲁棒性、恶意节点、异构适配、规划耦合、合成规模化基准与闭环反例",
   "researchQuestions": [
     "协同消息的边际价值应如何联合刻画可观测性、信息新鲜度、任务风险和规划影响？",
     "感知、通信、位姿、时间和信任不确定性如何保留来源并跨预测与规划传播？",
@@ -19,7 +19,7 @@
       "kind": "scope",
       "title": "定义与边界：协同对象是完整决策链",
       "thesis": "协同自动驾驶是远端证据对预测、规划和动作产生可追踪边际影响的系统问题，而不只是多主体特征融合。",
-      "body": "早期 Cooper、V2VNet 和 OPV2V 证明，多视角原始点云或中间特征能够扩大视野并缓解遮挡；DAIR-V2X 又把这一问题带入真实车路采集。它们建立了协同感知的必要基础，但“额外视角提高检测指标”只说明观测更丰富，尚未说明规划器会采用这些信息，也没有说明采用后是否更安全。\n\n本综述将协同自动驾驶限定为一条可观察链路：主体生成带来源和时间语义的消息，经真实或建模的 V2X 链路传输，被接收端对齐、校准和融合，继而改变预测、规划或控制。Coopernaut 与 CoDriving 开始直接评价动作和闭环结果；UniV2X 在 DAIR-V2X 的真实采集日志上把协同感知、地图、占据和规划联合训练。前两者的闭环发生在模拟器，后者的真实传感器数据仍是离线日志，没有交通参与者对测试策略的交互响应，三类证据都不能替代真实道路部署。\n\n边界上，多车各自独立运行不构成协同；无法追踪消息来源、无法拒绝远端证据或无法比较 ego-only 反事实的系统，也不足以说明收益来自协同机制。协同研究应同时回答消息为何发送、为何可信、为何改变动作，以及远端证据失效时如何退出。",
+      "body": "早期 Cooper、V2VNet 和 OPV2V 证明，多视角原始点云或中间特征能够扩大视野并缓解遮挡；DAIR-V2X 又把这一问题带入真实车路采集。它们建立了协同感知的必要基础，但“额外视角提高检测指标”只说明观测更丰富，尚未说明规划器会采用这些信息，也没有说明采用后是否更安全。\n\n本综述将协同自动驾驶限定为一条可观察链路：主体生成带来源和时间语义的消息，经真实或建模的 V2X 链路传输，被接收端对齐、校准和融合，继而改变预测、规划或控制。Coopernaut 与 CoDriving 开始直接评价动作和闭环结果；UniV2X 在 DAIR-V2X 的真实采集日志上把协同感知、地图、占据和规划联合训练。前两者的闭环发生在模拟器，后者的真实传感器数据仍是离线日志，没有交通参与者对测试策略的交互响应，三类证据都不能替代真实道路部署。\n\n边界上，多车各自独立运行不构成协同；无法追踪消息来源、无法拒绝远端证据或无法比较 ego-only 反事实的系统，也不足以说明收益来自协同机制。协同研究应同时回答消息为何发送、为何可信、为何改变动作，以及远端证据失效时如何退出。\n\nSimBEV2X 与 HeteroPROMPT 补充了两个此前较弱的工程层：前者把多车、多 RSU、多模态和多任务标注做成可扩展合成资源，后者把新传感器/编码器接入问题转化为冻结主干后的轻量适配与模块路由。但两者仍停在感知数据和离线检测层；纯 CARLA 数据与无元数据路由都不能替代真实空口、反应式交通和回退结局，所以本综述不据此提升“现实协同驾驶已验证”的结论。",
       "referenceIds": [
         "cooper-2019",
         "v2vnet-2020",
@@ -28,7 +28,9 @@
         "coopernaut-2022",
         "univ2x-2025",
         "survey-collaborative-perception-2023",
-        "codriving-2025"
+        "codriving-2025",
+        "simbev2x-2026",
+        "heteroprompt-2026"
       ]
     },
     {
@@ -36,7 +38,7 @@
       "kind": "evolution",
       "title": "技术演进：从融合更多信息到约束消息价值",
       "thesis": "领域演进的核心不是融合网络持续变大，而是优化目标逐步从感知互补转向通信约束、可信度和闭环行动价值。",
-      "body": "2019 至 2022 年的主线是建立协同可行性与可复现基准。Cooper 和 V2VNet 分别探索原始点云与压缩特征，OPV2V、DAIR-V2X 建立模拟 V2V 和真实 V2I 数据，V2X-ViT 则把异步、位姿误差和车辆—路侧异构性纳入融合。此阶段主要回答“怎样把已经到达的信息融合起来”。\n\n随后问题转向“什么值得发送、链路失败后怎么办”。Where2comm 用空间置信度选择区域；AutoCast 依据位置、轨迹和接收方盲区调度消息，其事故规避收益来自 AutoCastSim，真实 radio testbed 只验证分布式调度和传输可行性，不能把两者合并成真实道路碰撞证据。EdgeCooper 联合建模感知与网络拓扑，V2X-INCOP 恢复通信中断下的时序特征。这些工作说明带宽和时延是决定消息价值的模型变量，但模拟安全结果与真实链路证据必须分栏。[where2comm-2022, autocast-2022, edgecooper-2024, v2x-incop-2024]\n\nUniV2X、CoDriving、MDrive、Defer to Plan 和 Update the Unseen Only 将目标推进到规划与接收端状态。UniV2X 在真实 DAIR-V2X 日志联合优化规划，CoDriving 和 Defer to Plan 在 V2Xverse/CARLA 评价闭环，MDrive 又提供负面证据：感知共享不一定改善规划，多主体协商在复杂密集交通中甚至可能降低表现。消息是否新鲜取决于接收者已看见什么，是否有用则取决于它在明确证据协议下改善什么动作。",
+      "body": "2019 至 2022 年的主线是建立协同可行性与可复现基准。Cooper 和 V2VNet 分别探索原始点云与压缩特征，OPV2V、DAIR-V2X 建立模拟 V2V 和真实 V2I 数据，V2X-ViT 则把异步、位姿误差和车辆—路侧异构性纳入融合。此阶段主要回答“怎样把已经到达的信息融合起来”。\n\n随后问题转向“什么值得发送、链路失败后怎么办”。Where2comm 用空间置信度选择区域；AutoCast 依据位置、轨迹和接收方盲区调度消息，其事故规避收益来自 AutoCastSim，真实 radio testbed 只验证分布式调度和传输可行性，不能把两者合并成真实道路碰撞证据。EdgeCooper 联合建模感知与网络拓扑，V2X-INCOP 恢复通信中断下的时序特征。这些工作说明带宽和时延是决定消息价值的模型变量，但模拟安全结果与真实链路证据必须分栏。[where2comm-2022, autocast-2022, edgecooper-2024, v2x-incop-2024]\n\nUniV2X、CoDriving、MDrive、Defer to Plan 和 Update the Unseen Only 将目标推进到规划与接收端状态。UniV2X 在真实 DAIR-V2X 日志联合优化规划，CoDriving 和 Defer to Plan 在 V2Xverse/CARLA 评价闭环，MDrive 又提供负面证据：感知共享不一定改善规划，多主体协商在复杂密集交通中甚至可能降低表现。消息是否新鲜取决于接收者已看见什么，是否有用则取决于它在明确证据协议下改善什么动作。\n\n本次更新又出现了规模化与异构化两条并行支线。SimBEV2X 用公开生成器扩展多主体 BEV、检测、地图和占用数据；HeteroPROMPT 用低秩提示把新代理适配成本从重训主干降到少量模块。前者扩大训练与基准供给，后者改善接口演进，但二者都尚未把通信扰动、预测规划和执行回退接入同一实验，说明“感知栈更容易扩展”仍不等于“联合行动更可靠”。",
       "referenceIds": [
         "cooper-2019",
         "v2vnet-2020",
@@ -51,7 +53,9 @@
         "codriving-2025",
         "mdrive-2026",
         "defer-to-plan-2026",
-        "update-unseen-2026"
+        "update-unseen-2026",
+        "simbev2x-2026",
+        "heteroprompt-2026"
       ]
     },
     {
@@ -59,7 +63,7 @@
       "kind": "taxonomy",
       "title": "方法谱系：表示、价值、拓扑与退出机制",
       "thesis": "有效分类必须同时描述发送什么、为何发送、谁与谁协作，以及接收端何时拒绝或退出，而不能只停留在早期/中期/晚期融合。",
-      "body": "消息表示包括原始传感器数据、稀疏点云、中间特征、对象或轨迹、占据和意图；融合位置相应分为 early、intermediate、late 与 hybrid。V2VNet、V2X-ViT 和 HEAL 说明，中间特征有较强表达能力，但模型与模态异构会破坏接口一致性。UniV2X 的 sparse-dense hybrid 同时传输代理查询和稠密道路结构，展示了表示可按任务分层；不过通信成本仍是特征代理量。[v2vnet-2020, v2x-vit-2022, heal-2024, univ2x-2025]\n\n消息价值可按空间置信度、接收端已有观测、区域信息年龄、链路状态或当前规划需要计算。Where2comm 代表发送端置信选择，Update the Unseen Only 把本地重新观测纳入 AoI，Defer to Plan 则让规划上下文影响融合。三者不能互相替代：高置信不等于真实，信息新鲜不等于与动作相关，规划注意力也不构成证据真实性证明。\n\n拓扑上还应区分动态 V2V、较稳定但受覆盖限制的 V2I，以及多车多站系统；信任上区分已知可信、部分可信和全不可信参与者。Among Us/ROBOSAC 依赖能形成可信一致子的采样；All Vehicles Can Lie 的 PRBI 改用前一帧和伪随机分组处理全不可信车辆；MVIG 则反过来学习防御暴露的跨视角脆弱信息，优化攻击位置、时机和持续性。信任不是静态节点标签，而是带时间、相关性和攻击面的可拒绝假设。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]",
+      "body": "消息表示包括原始传感器数据、稀疏点云、中间特征、对象或轨迹、占据和意图；融合位置相应分为 early、intermediate、late 与 hybrid。V2VNet、V2X-ViT 和 HEAL 说明，中间特征有较强表达能力，但模型与模态异构会破坏接口一致性。UniV2X 的 sparse-dense hybrid 同时传输代理查询和稠密道路结构，展示了表示可按任务分层；不过通信成本仍是特征代理量。[v2vnet-2020, v2x-vit-2022, heal-2024, univ2x-2025]\n\n消息价值可按空间置信度、接收端已有观测、区域信息年龄、链路状态或当前规划需要计算。Where2comm 代表发送端置信选择，Update the Unseen Only 把本地重新观测纳入 AoI，Defer to Plan 则让规划上下文影响融合。三者不能互相替代：高置信不等于真实，信息新鲜不等于与动作相关，规划注意力也不构成证据真实性证明。\n\n拓扑上还应区分动态 V2V、较稳定但受覆盖限制的 V2I，以及多车多站系统；信任上区分已知可信、部分可信和全不可信参与者。Among Us/ROBOSAC 依赖能形成可信一致子的采样；All Vehicles Can Lie 的 PRBI 改用前一帧和伪随机分组处理全不可信车辆；MVIG 则反过来学习防御暴露的跨视角脆弱信息，优化攻击位置、时机和持续性。信任不是静态节点标签，而是带时间、相关性和攻击面的可拒绝假设。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]\n\n异构协同还需要单独区分接口适配与证据可信。HEAL 统一特征空间，HeteroPROMPT 冻结主干并为已知模态路由提示模块；它们处理的是表示兼容和训练成本，不直接回答邻车是否诚实、消息是否新鲜或未知模态是否应被拒绝。SimBEV2X 则属于数据/工具层，不应与真实链路或策略层方法放在同一证据等级比较。",
       "referenceIds": [
         "v2vnet-2020",
         "v2x-vit-2022",
@@ -72,7 +76,9 @@
         "update-unseen-2026",
         "among-us-2023",
         "all-vehicles-can-lie-2026",
-        "mvig-2026"
+        "mvig-2026",
+        "heteroprompt-2026",
+        "simbev2x-2026"
       ]
     },
     {
@@ -80,7 +86,7 @@
       "kind": "evidence",
       "title": "证据与评测：从离线互补到真实链路和闭环反事实",
       "thesis": "协同证据必须分别通过观测、通信和闭环三道检验；通信代理量与离线感知增益都不能直接换算为道路安全收益。",
-      "body": "OPV2V 适合可重复的融合比较，DAIR-V2X 和 CooperScene 增加真实车辆、路侧与传感器证据；AutoCast 和 EdgeCooper 则把调度、信道与网络拓扑带入系统评价。AutoCast 的无线 testbed 支持调度协议能运行，AutoCastSim 才支持事故场景收益；CooperScene 提供商用 C-V2X trace，但紧同步和厘米级定位缩小了失效范围。特征元素数量、压缩率、log2 通信量或 KB 仍只是通信代理量，没有 PHY/MAC、排队、重传、加密和拥塞信息时，不能等价为空口时延、可靠性或能耗。[autocast-2022, edgecooper-2024, cooperscene-2026]\n\n规划与闭环需要单独评价。UniV2X 在 DAIR-V2X 真实日志上同时改善感知、地图、占据与规划，支持联合训练价值，但未来交通是记录结果，不是策略诱发的互动。Coopernaut、CoDriving 和 Defer to Plan 在模拟闭环中让协同信息进入动作；Defer to Plan 相对 CoDriving 的 Driving Score 由 77.15 升至 79.72、Infraction Score 由 0.82 升至 0.88，却让 Route Completion 从 92.34 降至 91.05，证据是安全—效率权衡而非所有指标单调提高。MDrive 又说明协商在复杂密集交通中可能伤害性能。[univ2x-2025, coopernaut-2022, codriving-2025, defer-to-plan-2026, mdrive-2026]\n\n最低评测集应包含感知/预测质量、碰撞与违规、路线完成与效率、舒适性、实际字节和空口时间、端到端时延、丢包、位姿与时钟误差，以及协同失败后的回退质量。反事实评测应固定自车输入，逐条移除、延迟、替换或污染远端消息，测量动作和结局变化；真实日志、无线 testbed、网络仿真和交通闭环的证据不得相互替代。",
+      "body": "OPV2V 适合可重复的融合比较，DAIR-V2X 和 CooperScene 增加真实车辆、路侧与传感器证据；AutoCast 和 EdgeCooper 则把调度、信道与网络拓扑带入系统评价。AutoCast 的无线 testbed 支持调度协议能运行，AutoCastSim 才支持事故场景收益；CooperScene 提供商用 C-V2X trace，但紧同步和厘米级定位缩小了失效范围。特征元素数量、压缩率、log2 通信量或 KB 仍只是通信代理量，没有 PHY/MAC、排队、重传、加密和拥塞信息时，不能等价为空口时延、可靠性或能耗。[autocast-2022, edgecooper-2024, cooperscene-2026]\n\n规划与闭环需要单独评价。UniV2X 在 DAIR-V2X 真实日志上同时改善感知、地图、占据与规划，支持联合训练价值，但未来交通是记录结果，不是策略诱发的互动。Coopernaut、CoDriving 和 Defer to Plan 在模拟闭环中让协同信息进入动作；Defer to Plan 相对 CoDriving 的 Driving Score 由 77.15 升至 79.72、Infraction Score 由 0.82 升至 0.88，却让 Route Completion 从 92.34 降至 91.05，证据是安全—效率权衡而非所有指标单调提高。MDrive 又说明协商在复杂密集交通中可能伤害性能。[univ2x-2025, coopernaut-2022, codriving-2025, defer-to-plan-2026, mdrive-2026]\n\n最低评测集应包含感知/预测质量、碰撞与违规、路线完成与效率、舒适性、实际字节和空口时间、端到端时延、丢包、位姿与时钟误差，以及协同失败后的回退质量。反事实评测应固定自车输入，逐条移除、延迟、替换或污染远端消息，测量动作和结局变化；真实日志、无线 testbed、网络仿真和交通闭环的证据不得相互替代。\n\n最新增量再次说明规模、效率与部署证据必须分栏。SimBEV2X 的 258 个场景、102,200 帧、588,520 份点云和 27,337,066 个 3D 框证明公开工具可以扩大合成训练供给；HeteroPROMPT 的 0.064M 训练参数、AP50 增益和已测模态上的高分类准确率支持轻量异构适配。前者没有真实无线或 sim-to-real 结果，后者没有真实链路、未知模态和闭环动作，因此这些数字只能支撑数据规模与感知接口结论，不能换算为道路安全收益。",
       "referenceIds": [
         "opv2v-2022",
         "dair-v2x-2022",
@@ -91,7 +97,9 @@
         "codriving-2025",
         "mdrive-2026",
         "cooperscene-2026",
-        "defer-to-plan-2026"
+        "defer-to-plan-2026",
+        "simbev2x-2026",
+        "heteroprompt-2026"
       ]
     },
     {
@@ -99,7 +107,7 @@
       "kind": "challenges",
       "title": "失败边界：相关误差、伪共识与非单调协作",
       "thesis": "协同系统的主要风险来自跨层误差耦合和错误证据被放大；增加协作者并不会自动增加独立证据。",
-      "body": "异步、位姿漂移、通信中断、模型与模态异构会相互作用。CoAlign 处理位姿误差，V2X-INCOP 处理消息中断，HEAL 处理开放异构代理，但分别通过单变量实验不能证明组合故障下仍可靠。过期而高置信的特征一旦在错误位姿下被融合，可能比缺少远端信息更危险。\n\n信任问题不能简化为多数一致。Among Us/ROBOSAC 通过一致性采样隔离攻击者，但依赖 ego 或可形成可信一致子的子集；共享训练数据、同源传感器故障和多攻击者伪共识会破坏该假设。All Vehicles Can Lie 用前一帧动态参考、伪随机分组和 Bayesian 更新处理完全不可信车辆，在 V2X-Sim 报告平均约 2.5 次验证/帧并恢复到攻击前检测精度的 79.4%–86.9%；它仍依赖上一帧足够可靠、时间连续和检测任务。MVIG 进一步表明防御输出会泄露脆弱性线索：自适应攻击在 OPV2V/Adv-OPV2V 可让防御成功率最多下降 62%，但也尚未覆盖真实链路与规划闭环。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]\n\nMDrive 对“协作越多越好”给出直接反例；Defer to Plan 的 RC/IS 权衡也说明规划导向融合可能更保守而非全面占优。研究应寻找协作停止条件，明确何时只使用自车证据、何时采用单个相关来源，以及何时值得等待协商。",
+      "body": "异步、位姿漂移、通信中断、模型与模态异构会相互作用。CoAlign 处理位姿误差，V2X-INCOP 处理消息中断，HEAL 处理开放异构代理，但分别通过单变量实验不能证明组合故障下仍可靠。过期而高置信的特征一旦在错误位姿下被融合，可能比缺少远端信息更危险。\n\n信任问题不能简化为多数一致。Among Us/ROBOSAC 通过一致性采样隔离攻击者，但依赖 ego 或可形成可信一致子的子集；共享训练数据、同源传感器故障和多攻击者伪共识会破坏该假设。All Vehicles Can Lie 用前一帧动态参考、伪随机分组和 Bayesian 更新处理完全不可信车辆，在 V2X-Sim 报告平均约 2.5 次验证/帧并恢复到攻击前检测精度的 79.4%–86.9%；它仍依赖上一帧足够可靠、时间连续和检测任务。MVIG 进一步表明防御输出会泄露脆弱性线索：自适应攻击在 OPV2V/Adv-OPV2V 可让防御成功率最多下降 62%，但也尚未覆盖真实链路与规划闭环。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]\n\nMDrive 对“协作越多越好”给出直接反例；Defer to Plan 的 RC/IS 权衡也说明规划导向融合可能更保守而非全面占优。研究应寻找协作停止条件，明确何时只使用自车证据、何时采用单个相关来源，以及何时值得等待协商。\n\n新增工作暴露了两种容易被高估的工程承诺。合成数据规模不能覆盖真实 RF、拥塞、标定漂移和跨域传感器统计；无需交换显式元数据也不等于没有隐私泄漏，因为特征本身仍可能暴露模型或场景信息。HeteroPROMPT 的路由器还只识别训练中定义的模态，未知传感器、恶意特征和错误路由下是否拒绝或回退仍未验证。",
       "referenceIds": [
         "coalign-2023",
         "among-us-2023",
@@ -107,7 +115,9 @@
         "mvig-2026",
         "v2x-incop-2024",
         "heal-2024",
-        "mdrive-2026"
+        "mdrive-2026",
+        "simbev2x-2026",
+        "heteroprompt-2026"
       ]
     },
     {
@@ -115,7 +125,7 @@
       "kind": "outlook",
       "title": "研究议程：以可证伪门控构建可拒绝协同栈",
       "thesis": "下一阶段应把协同从默认开启的融合功能改造成具有证据契约、拒绝门控、独立回退和预注册失败条件的安全栈。",
-      "body": "**消息边际价值实验。**每条消息携带来源、采样时间、有效区域、位姿协方差、模型版本、校准置信度和空口年龄；固定 ego 输入，对消息做保留、移除、延迟、替换和污染。预注册规划风险下降、实际字节、空口时间和 99 分位时延阈值，并与 ego-only、随机发送和同带宽置信发送比较；若风险收益置信区间跨零或时延超预算，就拒绝该消息策略。[where2comm-2022, autocast-2022, defer-to-plan-2026, update-unseen-2026]\n\n**跨证据转移实验。**同一策略先在 DAIR-V2X 日志检验 UniV2X 式规划，再在 V2Xverse 反应式交通和回放真实 C-V2X trace 中运行，预注册场景级风险排序相关性与增量预测力。若日志改进不能预测闭环碰撞/违规，或网络仿真收益在真实 trace 下消失，就把结论限制在原协议；不允许用真实传感器、真实 radio testbed 和模拟闭环各自最强的一项拼成“真实闭环”。[univ2x-2025, codriving-2025, cooperscene-2026]\n\n**信任与回退实验。**同时注入恶意节点、相关传感器故障、位姿漂移、丢包和时钟偏差；比较 Among Us、PRBI 与可学习攻击，报告攻击识别、良性误杀、碰撞/违规上界和恢复时间。若前一帧参考失真、伪共识或 MVIG 式自适应攻击使风险超过 ego-only 上界，接收端必须拒绝融合并回退；若回退策略自身未在相同故障下验证，则协同栈不准入。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026, v2x-incop-2024]\n\n一个可审计系统最终应能回答为什么发送、为什么相信、为何采用、采用后改变了什么，以及判断错误时如何恢复；任何单一 AP、Driving Score 或通信代理量都不能覆盖这五个问题。",
+      "body": "**消息边际价值实验。**每条消息携带来源、采样时间、有效区域、位姿协方差、模型版本、校准置信度和空口年龄；固定 ego 输入，对消息做保留、移除、延迟、替换和污染。预注册规划风险下降、实际字节、空口时间和 99 分位时延阈值，并与 ego-only、随机发送和同带宽置信发送比较；若风险收益置信区间跨零或时延超预算，就拒绝该消息策略。[where2comm-2022, autocast-2022, defer-to-plan-2026, update-unseen-2026]\n\n**跨证据转移实验。**同一策略先在 DAIR-V2X 日志检验 UniV2X 式规划，再在 V2Xverse 反应式交通和回放真实 C-V2X trace 中运行，预注册场景级风险排序相关性与增量预测力。若日志改进不能预测闭环碰撞/违规，或网络仿真收益在真实 trace 下消失，就把结论限制在原协议；不允许用真实传感器、真实 radio testbed 和模拟闭环各自最强的一项拼成“真实闭环”。[univ2x-2025, codriving-2025, cooperscene-2026]\n\n**信任与回退实验。**同时注入恶意节点、相关传感器故障、位姿漂移、丢包和时钟偏差；比较 Among Us、PRBI 与可学习攻击，报告攻击识别、良性误杀、碰撞/违规上界和恢复时间。若前一帧参考失真、伪共识或 MVIG 式自适应攻击使风险超过 ego-only 上界，接收端必须拒绝融合并回退；若回退策略自身未在相同故障下验证，则协同栈不准入。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026, v2x-incop-2024]\n\n一个可审计系统最终应能回答为什么发送、为什么相信、为何采用、采用后改变了什么，以及判断错误时如何恢复；任何单一 AP、Driving Score 或通信代理量都不能覆盖这五个问题。\n\n**数据到链路到动作的成对验收实验。**用 SimBEV2X 生成器固定场景和多代理传感器真值，在网络仿真与真实 C-V2X trace 中注入同一组时延、丢包、位姿偏差和消息篡改；比较同构基线、HEAL/HeteroPROMPT 异构适配、ego-only 与带拒绝门控的系统。主要终点应是风险、路线完成、实际空口字节和 99 分位端到端时延，而不是 AP 或参数量。若合成感知增益不能预测回放 trace 下的闭环收益，未知模态误路由率超过预注册阈值，或回退风险高于 ego-only 上界，则限制资产用途并拒绝协同。",
       "referenceIds": [
         "among-us-2023",
         "all-vehicles-can-lie-2026",
@@ -129,17 +139,20 @@
         "defer-to-plan-2026",
         "update-unseen-2026",
         "where2comm-2022",
-        "autocast-2022"
+        "autocast-2022",
+        "simbev2x-2026",
+        "heteroprompt-2026"
       ]
     }
   ],
   "takeaways": [
-    "感知增益不保证规划收益；真实传感器日志、真实 radio testbed、网络仿真和交通闭环必须分栏，不能拼接成一条部署证据。",
-    "更多消息、更多主体和更多协商并非单调有益；Defer to Plan 的安全分提高但路线完成率下降，说明协同栈需要显式权衡与停止条件。",
-    "特征元素、压缩率、log2 通信量或 KB 是通信代理量，不等于真实空口时延、可靠性、能耗或安全收益。",
-    "可信协同应保留消息来源、时间、位姿不确定性和模型版本，使远端证据可校准、可追踪且可被拒绝。",
-    "协同失效后必须回退到经过验证的 ego-only、单来源或保守策略，并独立评价回退期间的安全与效率。",
-    "协同贡献应通过消息级反事实实验归因，避免把更强骨干、额外传感器或更宽带宽造成的收益误记为协同机制收益。"
+    "感知增益不保证规划收益；真实传感器日志、真实 radio testbed、网络仿真、纯 CARLA 数据和交通闭环必须分栏。",
+    "SimBEV2X 显著扩大多主体多任务合成数据供给，但没有真实无线与 sim-to-real/规划证据，数据量不能替代部署验证。",
+    "HeteroPROMPT 降低已知异构模态的适配参数并避免显式元数据路由，但未知模态、特征泄漏、恶意节点和错误路由回退仍未解决。",
+    "更多消息、更多主体和更多协商并非单调有益；系统需要显式收益阈值、协作停止条件和 ego-only 上界。",
+    "特征元素、压缩率、KB 或参数量是工程代理量，不等于真实空口时延、可靠性、能耗或安全收益。",
+    "可信协同必须保留来源、时间、位姿不确定性和模型版本，使远端证据可校准、可追踪且可拒绝。",
+    "协同贡献应通过消息级反事实和链路级干预归因；失败后必须回退到独立验证的 ego-only、单来源或保守策略。"
   ],
   "references": [
     {
@@ -313,7 +326,7 @@
       "canonicalId": "arxiv:2308.16714",
       "sourceFamily": "arxiv",
       "supports": "系统覆盖融合阶段、协同位置、带宽、时延、攻击、位姿误差和 sim-to-real，为领域边界与术语提供基础 taxonomy。",
-      "limitation": "截至 2026-07-28 未确认正式同行评审版本，且不能单独支撑 2024 至 2026 的最新趋势。",
+      "limitation": "截至 2026-08-01 未确认正式同行评审版本，且不能单独支撑 2024 至 2026 的最新趋势。",
       "url": "https://arxiv.org/abs/2308.16714"
     },
     {
@@ -501,7 +514,7 @@
       "canonicalId": "arxiv:2605.10904",
       "sourceFamily": "local-corpus",
       "supports": "225 个闭环场景提供关键负面证据：感知共享不总能改善规划，协商在复杂密集交通中可能降低表现。",
-      "limitation": "截至 2026-07-28 未确认正式同行评审 venue，结论依赖模拟、场景生成和具体多智能体实现。",
+      "limitation": "截至 2026-08-01 未确认正式同行评审 venue，结论依赖模拟、场景生成和具体多智能体实现。",
       "url": "https://arxiv.org/abs/2605.10904",
       "localPaperId": "mdrive-closed-loop-cooperative-driving"
     },
@@ -512,7 +525,7 @@
       "year": 2026,
       "venue": "ECCV 2026 (accepted; proceedings pending)",
       "publicationType": "benchmark",
-      "publicationStatus": "preprint",
+      "publicationStatus": "accepted",
       "canonicalId": "arxiv:2606.31219",
       "sourceFamily": "local-corpus",
       "supports": "三辆 CAV、一个 RSU、商用 C-V2X、多模态传感与链路表征共同提供接近部署的数据证据。",
@@ -527,7 +540,7 @@
       "year": 2026,
       "venue": "IEEE ICME 2026 (accepted; proceedings pending)",
       "publicationType": "method",
-      "publicationStatus": "preprint",
+      "publicationStatus": "accepted",
       "canonicalId": "arxiv:2607.19774",
       "sourceFamily": "local-corpus",
       "supports": "在 V2Xverse 闭环中相对 CoDriving 将 Driving Score 77.15→79.72、Infraction Score 0.82→0.88，同时 Route Completion 92.34→91.05。",
@@ -549,12 +562,52 @@
       "limitation": "截至截止日未确认正式同行评审版本；证据以在线调度仿真和检测任务为主，没有规划闭环。",
       "url": "https://arxiv.org/abs/2607.20967",
       "localPaperId": "update-unseen-aoi-collaborative-perception"
+    },
+    {
+      "id": "simbev2x-2026",
+      "title": "SimBEV2X: A Large-Scale Dataset and Data Generation Tool for Multi-Task Vehicle-to-Everything Cooperative Perception",
+      "authors": "Goodarz Mehr, Sepideh Gohari, Montasir Abbas, Azim Eskandarian",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "dataset",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.23910",
+      "sourceFamily": "official-project",
+      "supports": "公开 CARLA 生成工具、数据与 CoBEVFusion 基线；258 个场景覆盖最多 8 辆连接车辆和 4 个 RSU，共 102,200 帧、588,520 份点云、超过 300 万张图像和 27,337,066 个 3D 框，为多任务 V2X 感知提供大规模合成资源。",
+      "limitation": "全部证据来自 CARLA 0.9.16；没有真实无线 trace、丢包、排队、时延或开放道路部署，数据规模不能替代 sim-to-real、规划收益和安全回退验证。独立项目域名在本轮 DNS 失败，但官方 GitHub 仓库可访问。",
+      "url": "https://arxiv.org/abs/2607.23910",
+      "links": [
+        {
+          "label": "代码",
+          "url": "https://github.com/GoodarzMehr/SimBEV2X"
+        }
+      ]
+    },
+    {
+      "id": "heteroprompt-2026",
+      "title": "HeteroPROPMT: A Real-time and Privacy-Preserving Heterogeneous Collaborative Perception Framework",
+      "authors": "Armin Maleki, Hayder Radha",
+      "year": 2026,
+      "venue": "IEEE/RSJ IROS 2026 (accepted; proceedings pending)",
+      "publicationType": "method",
+      "publicationStatus": "accepted",
+      "canonicalId": "arxiv:2607.26283",
+      "sourceFamily": "arxiv",
+      "supports": "论文题名按 arXiv 规范记录为 HeteroPROPMT；正文方法名与作者仓库使用 HeteroPROMPT。该方法以低秩视觉提示和 FiLM 模块对齐异构 BEV 特征，同时冻结代理编码器、融合与检测主干；在 OPV2V-H 和 V2XSet 上相对 HEAL 提高 AP50，训练参数降至 0.064M，并在已测模态集合上报告超过 99.99% 的路由分类准确率。",
+      "limitation": "arXiv 规范题名 HeteroPROPMT 与正文、方法名及仓库中的 HeteroPROMPT 存在拼写差异；实验仍是 OPV2V-H/V2XSet 感知评测，没有真实无线、未知模态、规划闭环或安全回退。“隐私”主要指无需公开传感器/模型元数据，并非形式化泄漏或攻击证明；arXiv 一手记录确认 IROS 2026 录用，但截至截止日尚无正式 proceedings 页面。",
+      "url": "https://arxiv.org/abs/2607.26283",
+      "links": [
+        {
+          "label": "代码",
+          "url": "https://github.com/arminmaleki007/HeteroPROMPT"
+        }
+      ]
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-07-28",
-    "cutoffDate": "2026-07-28",
+    "searchedAt": "2026-08-01",
+    "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
       "comm-lit-review",
@@ -575,46 +628,71 @@
       "official-project"
     ],
     "counts": {
-      "candidates": 57,
-      "deduplicated": 47,
-      "included": 22,
-      "excluded": 25
+      "candidates": 64,
+      "deduplicated": 53,
+      "included": 24,
+      "excluded": 29
     },
-    "evidenceBoundary": "6 个查询族分别保存了可复核的查询串、来源、执行日期、候选数与规范化 ID 样本。本库真实检索命中 41 个文件，按方向标签和 revisionOf 归并为 26 篇候选；其中 4 篇纳入、22 篇逐组记录暂缓理由，未静默漏筛。各查询族共有 57 条结构化候选记录，允许同一论文跨查询族重复出现；去重后为 47 篇，其中纳入 22 篇、排除或暂缓 25 篇。所有纳入引用均回到可打开的一手记录核对书目、出版状态、支撑论断和限制；本轮没有复现实验、访问私有数据或获得同初态真实道路反事实，因此不把模拟、开环或生成质量结果外推为现实安全结论。",
+    "evidenceBoundary": "2026-08-01 综合复核逐条重开 24 条纳入引用、11 条站外排除和当前本库候选的一手记录，并纳入 SimBEV2X 预印本与已获 IROS 2026 录用但正式页尚未发布的 HeteroPROPMT。本库语义 rg 得到 36 个原始文件命中，按方向标签与 revisionOf 归并为 22 篇候选，其中 4 篇纳入、18 篇暂缓；外部清单含 20 篇纳入和 11 篇排除。六个真实语义查询保留跨族重叠：10 个候选出现在多个查询族，共产生 11 次额外 occurrence，因此 64 次候选出现归并为 53 篇唯一记录，最终为 24 篇纳入、11 篇排除和 18 篇暂缓。所有现实性结论都限定到论文直接提供的日志、模拟器、无线 testbed 或正式页面，不把纯 CARLA、离线感知或参数效率外推为真实闭环安全。",
     "openSearchGaps": [
       "缺少真实道路闭环中对协同消息进行随机化或反事实干预的公开研究。",
-      "不同论文的通信量口径无法统一换算为包含排队、重传、调度和加密的空口代价。",
-      "多厂商模型、传感器和 C-V2X 栈之间的互操作、版本治理与责任归因证据不足。",
+      "不同论文的通信量口径仍无法统一换算为包含排队、重传、调度、认证和加密的空口代价。",
+      "SimBEV2X 式大规模合成训练对真实 C-V2X、跨地域和跨传感器栈的增益尚无同协议验证。",
+      "HeteroPROMPT 式异构路由对未知模态、特征隐私泄漏、恶意输入和错误路由回退的证据不足。",
       "超过少量车辆和 RSU、同时包含相关故障与多攻击者的真实规模化评测仍不足。"
     ],
     "independentReview": {
-      "completedAt": "2026-07-29",
+      "completedAt": "2026-08-01",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 5,
-      "snapshotFingerprint": "5e0ab76fd507d188f86d2462b1158bb02b2325e832bb4cf80f98d744b46470da"
+      "rounds": 2,
+      "snapshotFingerprint": "de602028c9c78d795363ce1eb3bcab5f70e15055b268a7be86fa965c15e3b081"
     },
     "queryRuns": [
       {
         "family": "协同感知与 V2X 基准",
-        "sourceFamily": "local-corpus",
-        "query": "协同|V2X|cooperative|collaborative",
-        "executedAt": "2026-07-28",
-        "resultCount": 26,
-        "rawHitCount": 41,
-        "screenedOutCount": 15,
-        "screeningNote": "真实正则检索命中 41 个文件；按当前方向 tags 筛选并用 revisionOf 归并后得到 26 篇规范化候选。全部候选已写入 candidateLocalPaperIds，其中 4 篇进入引用，22 篇在 deferredGroups 中说明暂缓原因；其余 15 个命中文件是其他方向记录或同文修订。",
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs cooperative perception V2X benchmark dataset autonomous driving",
+        "executedAt": "2026-08-01",
+        "resultCount": 12,
         "resultIdSample": [
-          "arxiv:2605.10904",
-          "arxiv:2606.31219",
-          "arxiv:2607.19774"
+          "doi:10.1007/978-3-030-58536-5_36",
+          "doi:10.1007/978-3-031-19842-7_7",
+          "arxiv:2503.10034"
         ],
-        "scopeRationale": "用真实本库全文正则检索“协同感知与 V2X 基准”相关中英文术语，再从命中文件中筛选规范化候选 ID。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "retrieval": {
+          "provider": "web-search-primary-arxiv",
+          "endpoint": "https://www.google.com/search",
+          "parameters": {
+            "query": "site:arxiv.org/abs cooperative perception V2X benchmark dataset autonomous driving"
+          },
+          "sort": "relevance",
+          "limit": 20
+        }
+      },
+      {
+        "family": "通信调度、带宽与信息新鲜度",
+        "sourceFamily": "local-corpus",
+        "query": "通信|communication|bandwidth|带宽|AoI|freshness|latency|时延|调度|scheduling",
+        "executedAt": "2026-08-01",
+        "resultCount": 22,
+        "rawHitCount": 36,
+        "screenedOutCount": 14,
+        "screeningNote": "实际执行 rg -l -i -- \"通信|communication|bandwidth|带宽|AoI|freshness|latency|时延|调度|scheduling\" content/papers；36 个原始文件命中经方向标签、文档类型与 revisionOf 规范化筛选后，22 篇进入跨源去重池，其余 14 篇记录为范围外或非规范条目。全部方向内候选均进入引用或暂缓组。",
+        "resultIdSample": [
+          "arxiv:2607.01827",
+          "arxiv:2501.12040",
+          "arxiv:2607.19774",
+          "arxiv:2605.10904",
+          "arxiv:2606.31219"
+        ],
+        "scopeRationale": "对本库 Markdown 全文执行与本查询族语义对齐的可复现宽正则，再按方向标签、文档类型与 revisionOf 做范围筛选；原始文件命中和进入去重池的论文候选分别计数。",
         "retrieval": {
           "provider": "ripgrep-local-corpus",
           "endpoint": "content/papers",
           "parameters": {
-            "query": "协同|V2X|cooperative|collaborative",
+            "query": "通信|communication|bandwidth|带宽|AoI|freshness|latency|时延|调度|scheduling",
             "path": "content/papers",
             "flags": [
               "-l",
@@ -629,9 +707,7 @@
             "c2e-co-perception-distillation",
             "cable-v2x-lmm-encoding",
             "camasa-v2x-trajectory-dataset",
-            "clap-v2x-prompt-optimization",
             "co-mtp-v2x-trajectory-prediction",
-            "commonroad-game-hitl-simulation",
             "cooperscene-cv2x-benchmark",
             "copad-v2x-trajectory-prediction",
             "defer-to-plan-v2x-driving",
@@ -642,7 +718,6 @@
             "intact-collaborative-perception",
             "mdrive-closed-loop-cooperative-driving",
             "morph-u-resilient-v2x-planning",
-            "rs2ad-lidar-roadside-to-vehicle-generation",
             "select2drive-pragmatic-communications",
             "sind2-sotif-validation",
             "swarmdrive-v2v-coordination",
@@ -650,13 +725,12 @@
             "update-unseen-aoi-collaborative-perception",
             "urbanv2x-cooperative-navigation",
             "v2x-cooperative-planning",
-            "v2x-vlm-cooperative-driving",
-            "vrs-roadside-lidar-synthesis"
+            "v2x-vlm-cooperative-driving"
           ],
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "与本方向直接相关，但本轮未进入核心证据集：其问题或方法与已纳入代表工作高度重叠，或当前仍缺少更强的正式出版、独立复现或用途级证据；后续证据升级时优先复核。",
+              "reason": "截至 2026-08-01 与本方向直接相关，但与核心代表工作高度重叠，或仍缺正式出版、独立复现及用途级证据；保留为后续证据升级候选。",
               "localPaperIds": [
                 "c2e-co-perception-distillation",
                 "cable-v2x-lmm-encoding",
@@ -667,21 +741,17 @@
                 "evaluating-roadside-perception",
                 "intact-collaborative-perception",
                 "morph-u-resilient-v2x-planning",
-                "rs2ad-lidar-roadside-to-vehicle-generation",
                 "select2drive-pragmatic-communications",
                 "swarmdrive-v2v-coordination",
                 "urbanv2x-cooperative-navigation",
                 "v2x-cooperative-planning",
-                "v2x-vlm-cooperative-driving",
-                "vrs-roadside-lidar-synthesis"
+                "v2x-vlm-cooperative-driving"
               ]
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "对本方向提供补充证据，但主要贡献和完整讨论归入另一研究方向；本综述暂不重复纳入，以避免同一方法跨方向过度加权，后续若形成独立证据链再提升。",
+              "reason": "截至 2026-08-01 可提供跨方向补充证据，但主要贡献归入另一研究方向；本综述不重复加权，形成独立证据链后再提升为核心引用。",
               "localPaperIds": [
-                "clap-v2x-prompt-optimization",
-                "commonroad-game-hitl-simulation",
                 "driveteach-vla-trajectory-guided-prompts",
                 "dust-cooperative-4d-reconstruction",
                 "sind2-sotif-validation",
@@ -692,113 +762,95 @@
         }
       },
       {
-        "family": "通信调度、带宽与信息新鲜度",
-        "sourceFamily": "arxiv",
-        "query": "cooperative perception communication scheduling bandwidth age of information V2X",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
-        "resultIdSample": [
-          "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
-          "doi:10.1109/jsac.2023.3322764",
-          "arxiv:2607.20967"
-        ],
-        "scopeRationale": "查询串直接覆盖“通信调度、带宽与信息新鲜度”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
-        "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
-          "parameters": {
-            "query": "cooperative perception communication scheduling bandwidth age of information V2X"
-          }
-        }
-      },
-      {
         "family": "异步、位姿误差与鲁棒融合",
-        "sourceFamily": "publisher-and-venue",
-        "query": "cooperative perception asynchronous latency pose error robust fusion heterogeneous V2X",
-        "executedAt": "2026-07-28",
-        "resultCount": 6,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs V2X cooperative perception pose errors asynchronous heterogeneous robust fusion",
+        "executedAt": "2026-08-01",
+        "resultCount": 11,
         "resultIdSample": [
-          "doi:10.1109/icra48891.2023.10160546",
-          "doi:10.1109/tiv.2024.3371974",
-          "iclr:2024:c247c31884eda37a48330b9df5adb174"
+          "doi:10.1007/978-3-031-19842-7_7",
+          "arxiv:2607.01827",
+          "arxiv:2501.12040",
+          "arxiv:2607.26283"
         ],
-        "scopeRationale": "查询串直接覆盖“异步、位姿误差与鲁棒融合”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-primary-domains",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "cooperative perception asynchronous latency pose error robust fusion heterogeneous V2X"
-          }
+            "query": "site:arxiv.org/abs V2X cooperative perception pose errors asynchronous heterogeneous robust fusion"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "协同预测、规划与多主体协商",
         "sourceFamily": "arxiv",
-        "query": "cooperative autonomous driving prediction planning negotiation adaptive multi-agent fusion",
-        "executedAt": "2026-07-28",
-        "resultCount": 6,
+        "query": "site:arxiv.org/abs cooperative autonomous driving V2X prediction planning negotiation multi-agent fusion",
+        "executedAt": "2026-08-01",
+        "resultCount": 8,
         "resultIdSample": [
           "doi:10.1007/978-3-030-58536-5_36",
-          "cvf:cvpr2022:cui-coopernaut",
-          "arxiv:2607.19774"
+          "arxiv:2607.19774",
+          "doi:10.1609/aaai.v39i9.33040",
+          "arxiv:2507.21610"
         ],
-        "scopeRationale": "查询串直接覆盖“协同预测、规划与多主体协商”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
+          "provider": "web-search-primary-arxiv",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "cooperative autonomous driving prediction planning negotiation adaptive multi-agent fusion"
-          }
+            "query": "site:arxiv.org/abs cooperative autonomous driving V2X prediction planning negotiation multi-agent fusion"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "真实通信、闭环验证与安全回退",
-        "sourceFamily": "official-project",
-        "query": "real V2X communication closed-loop cooperative driving benchmark fallback",
-        "executedAt": "2026-07-28",
-        "resultCount": 5,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs V2X cooperative driving real communication closed-loop benchmark latency fallback",
+        "executedAt": "2026-08-01",
+        "resultCount": 6,
         "resultIdSample": [
-          "doi:10.1145/3498361.3538925",
           "doi:10.1609/aaai.v39i9.33040",
-          "arxiv:2606.31219"
+          "arxiv:2605.10904",
+          "arxiv:2606.31219",
+          "arxiv:2503.10034",
+          "arxiv:2507.21610"
         ],
-        "scopeRationale": "查询串直接覆盖“真实通信、闭环验证与安全回退”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-official-projects",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "real V2X communication closed-loop cooperative driving benchmark fallback"
-          }
+            "query": "site:arxiv.org/abs V2X cooperative driving real communication closed-loop benchmark latency fallback"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "恶意或故障节点与信任校准",
-        "sourceFamily": "publisher-and-venue",
-        "query": "adversarial robust collaborative perception untrusted vehicles consensus",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs adversarial robust collaborative perception untrusted vehicles faulty agents consensus V2X",
+        "executedAt": "2026-08-01",
+        "resultCount": 5,
         "resultIdSample": [
+          "doi:10.1007/978-3-031-19842-7_7",
           "cvf:iccv2023:li-among-us",
-          "cvf:cvpr2026:yu-all-vehicles-can-lie",
-          "cvf:cvpr2026:tao-learning-mutual-view-information-graph"
+          "cvf:cvpr2026:yu-all-vehicles-can-lie"
         ],
-        "scopeRationale": "查询串直接覆盖“恶意或故障节点与信任校准”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-primary-domains",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "adversarial robust collaborative perception untrusted vehicles consensus"
-          }
+            "query": "site:arxiv.org/abs adversarial robust collaborative perception untrusted vehicles faulty agents consensus V2X"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       }
     ],
@@ -830,7 +882,9 @@
       "arxiv:2605.10904",
       "arxiv:2606.31219",
       "arxiv:2607.19774",
-      "arxiv:2607.20967"
+      "arxiv:2607.20967",
+      "arxiv:2607.23910",
+      "arxiv:2607.26283"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -843,26 +897,539 @@
         "title": "V2X-Sim: Multi-Agent Collaborative Perception Dataset and Benchmark for Autonomous Driving",
         "url": "https://arxiv.org/abs/2202.08449",
         "reasonCode": "redundant-perception-benchmark",
-        "reason": "提供模拟多主体感知基准，但本轮数据集层已由 OPV2V 与 DAIR-V2X 代表；它不提供通信栈或协同规划的闭环安全结果。"
+        "reason": "提供模拟多主体感知基准，但数据集层已由 OPV2V 与 DAIR-V2X 代表；不提供通信栈或协同规划闭环安全结果。"
       },
       {
         "canonicalId": "arxiv:2303.07601",
         "title": "V2V4Real: A Real-world Large-scale Dataset for Vehicle-to-Vehicle Cooperative Perception",
         "url": "https://arxiv.org/abs/2303.07601",
         "reasonCode": "perception-only-evidence",
-        "reason": "真实双车数据对感知很有价值，但任务仍是检测、跟踪和域适应，不能回答消息干预对规划、控制和风险的因果影响。"
+        "reason": "真实双车数据对感知有价值，但任务仍是检测、跟踪和域适应，不能回答消息干预对规划、控制与风险的因果影响。"
       },
       {
         "canonicalId": "arxiv:2403.16034",
         "title": "V2X-Real: a Large-Scale Dataset for Vehicle-to-Everything Cooperative Perception",
         "url": "https://arxiv.org/abs/2403.16034",
         "reasonCode": "perception-only-evidence",
-        "reason": "扩展了真实 V2X 多模态数据覆盖，但没有反应式协同驾驶、空口干预或系统级安全回退证据；留作感知专题更新候选。"
+        "reason": "扩展真实 V2X 多模态数据覆盖，但没有反应式协同驾驶、空口干预或系统级安全回退证据。"
+      },
+      {
+        "canonicalId": "arxiv:2503.10034",
+        "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+        "url": "https://arxiv.org/abs/2503.10034",
+        "reasonCode": "perception-only-online-system",
+        "reason": "提供真实在线 ROS 与时延证据，但任务仍停留在协同感知；没有规划控制、安全回退或通信干预的闭环结论。"
+      },
+      {
+        "canonicalId": "arxiv:2501.02363",
+        "title": "V2X-DGPE: Domain Generalization and Pose Error Correction for Cooperative Perception",
+        "url": "https://arxiv.org/abs/2501.02363",
+        "reasonCode": "redundant-robust-perception",
+        "reason": "覆盖域泛化与位姿误差，但证据仍是 DAIR-V2X 感知指标；没有规划闭环或真实无线链路。"
+      },
+      {
+        "canonicalId": "arxiv:2402.15272",
+        "title": "EMIFF: Enhanced Multi-scale Image Feature Fusion for Vehicle-Infrastructure Cooperative Perception",
+        "url": "https://arxiv.org/abs/2402.15272",
+        "reasonCode": "perception-only-fusion",
+        "reason": "研究相机协同感知中的位姿与带宽约束，但没有跨任务、规划控制或现实闭环证据。"
+      },
+      {
+        "canonicalId": "arxiv:2403.16635",
+        "title": "V2X-PC: Vehicle-to-Everything Cooperative Perception via Point Cluster Fusion",
+        "url": "https://arxiv.org/abs/2403.16635",
+        "reasonCode": "redundant-perception-fusion",
+        "reason": "贡献集中在点簇融合和离线感知基准，未补足真实通信、协同规划或安全回退证据。"
+      },
+      {
+        "canonicalId": "arxiv:2511.09013",
+        "title": "UniMM-V2X: Unified Multi-Modal End-to-End V2X Cooperative Driving",
+        "url": "https://arxiv.org/abs/2511.09013",
+        "reasonCode": "offline-multitask-evidence",
+        "reason": "虽统一感知、预测与规划，但证据主要来自 DAIR-V2X 离线指标；没有反应式闭环或真实空口验证。"
+      },
+      {
+        "canonicalId": "arxiv:2507.21610",
+        "title": "V2X Cooperative Driving Challenge 2025: Technical Report",
+        "url": "https://arxiv.org/abs/2507.21610",
+        "reasonCode": "challenge-report",
+        "reason": "属于竞赛技术报告与任务汇总，不构成独立系统方法或现实闭环安全证据。"
+      },
+      {
+        "canonicalId": "arxiv:2405.03971",
+        "title": "Unified End-to-End V2X Cooperative Autonomous Driving",
+        "url": "https://arxiv.org/abs/2405.03971",
+        "reasonCode": "simulation-only-evidence",
+        "reason": "在 DeepAccident 仿真中统一协同驾驶任务，但未提供真实通信、部署回退或现实闭环验证。"
+      },
+      {
+        "canonicalId": "arxiv:2605.22122",
+        "title": "TrustFlip: Adversarial Trust Manipulation in Collaborative Perception",
+        "url": "https://arxiv.org/abs/2605.22122",
+        "reasonCode": "attack-only-preprint",
+        "reason": "揭示信任翻转攻击但当前仍是感知层预印本证据；没有下游安全控制、恢复或真实部署验证，暂不进入核心表。"
+      }
+    ],
+    "candidateLedger": [
+      {
+        "canonicalId": "doi:10.1109/icdcs.2019.00058",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-030-58536-5_36",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准",
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/icra46639.2022.9812038",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52688.2022.02067",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-19842-7_7",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准",
+          "异步、位姿误差与鲁棒融合",
+          "恶意或故障节点与信任校准"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3498361.3538925",
+        "disposition": "included",
+        "queryFamilies": [
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2022:cui-coopernaut",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2308.16714",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icra48891.2023.10160546",
+        "disposition": "included",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:iccv2023:li-among-us",
+        "disposition": "included",
+        "queryFamilies": [
+          "恶意或故障节点与信任校准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2026:yu-all-vehicles-can-lie",
+        "disposition": "included",
+        "queryFamilies": [
+          "恶意或故障节点与信任校准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2026:tao-learning-mutual-view-information-graph",
+        "disposition": "included",
+        "queryFamilies": [
+          "恶意或故障节点与信任校准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/jsac.2023.3322764",
+        "disposition": "included",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3371974",
+        "disposition": "included",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "iclr:2024:c247c31884eda37a48330b9df5adb174",
+        "disposition": "included",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2025.3560327",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v39i9.33040",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商",
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2605.10904",
+        "disposition": "included",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度",
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.31219",
+        "disposition": "included",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度",
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.19774",
+        "disposition": "included",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度",
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.20967",
+        "disposition": "included",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.23910",
+        "disposition": "included",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.26283",
+        "disposition": "included",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2202.08449",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2303.07601",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2403.16034",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同感知与 V2X 基准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.10034",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同感知与 V2X 基准",
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2501.02363",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2402.15272",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2403.16635",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2511.09013",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2507.21610",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商",
+          "真实通信、闭环验证与安全回退"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2405.03971",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "协同预测、规划与多主体协商"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.22122",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "恶意或故障节点与信任校准"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.01827",
+        "disposition": "deferred",
+        "localPaperId": "c2e-co-perception-distillation",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度",
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.19258",
+        "disposition": "deferred",
+        "localPaperId": "cable-v2x-lmm-encoding",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.10641",
+        "disposition": "deferred",
+        "localPaperId": "camasa-v2x-trajectory-dataset",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2502.16589",
+        "disposition": "deferred",
+        "localPaperId": "co-mtp-v2x-trajectory-prediction",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2509.15984",
+        "disposition": "deferred",
+        "localPaperId": "copad-v2x-trajectory-prediction",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.13806",
+        "disposition": "deferred",
+        "localPaperId": "deployed-vil-cooperative-perception",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.01658",
+        "disposition": "deferred",
+        "localPaperId": "driveteach-vla-trajectory-guided-prompts",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07910",
+        "disposition": "deferred",
+        "localPaperId": "dust-cooperative-4d-reconstruction",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2401.12392",
+        "disposition": "deferred",
+        "localPaperId": "evaluating-roadside-perception",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.04437",
+        "disposition": "deferred",
+        "localPaperId": "intact-collaborative-perception",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07370",
+        "disposition": "deferred",
+        "localPaperId": "morph-u-resilient-v2x-planning",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2501.12040",
+        "disposition": "deferred",
+        "localPaperId": "select2drive-pragmatic-communications",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度",
+          "异步、位姿误差与鲁棒融合"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.16943",
+        "disposition": "deferred",
+        "localPaperId": "sind2-sotif-validation",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2604.22852",
+        "disposition": "deferred",
+        "localPaperId": "swarmdrive-v2v-coordination",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10388",
+        "disposition": "deferred",
+        "localPaperId": "temporal-sampling-e2e-trajectory",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.20224",
+        "disposition": "deferred",
+        "localPaperId": "urbanv2x-cooperative-navigation",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2401.09032",
+        "disposition": "deferred",
+        "localPaperId": "v2x-cooperative-planning",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2408.09251",
+        "disposition": "deferred",
+        "localPaperId": "v2x-vlm-cooperative-driving",
+        "queryFamilies": [
+          "通信调度、带宽与信息新鲜度"
+        ],
+        "occurrences": 1
       }
     ],
     "sourceLimitations": [
-      "Semantic Scholar API 存在匿名限流；发生 HTTP 429 时使用其网页索引继续发现，不把聚合器摘要当作论据。",
-      "OpenAlex 搜索返回面较宽，只用于发现与出版元数据交叉核对；作者机构或出版状态仍以论文和正式页面为准。"
+      "Semantic Scholar Graph API 在两次方向查询中返回 HTTP 429，本轮将其记为 limited 且不直接采纳聚合器记录。",
+      "OpenAlex API 返回 HTTP 200，但只用于元数据交叉核对；作者、状态、方法与实验结论仍来自论文、正式页面或官方代码。",
+      "SimBEV2X 独立项目域名本轮 DNS 解析失败；官方 GitHub 与 arXiv 可访问，因此仅保留可复核入口并记录项目域名限制。",
+      "ACM 页面拒绝自动访问时保留可解析 DOI 与既有正式记录，不把 HTTP 403 误判为论文不存在。"
     ],
     "qualityChecksApplied": [
       "query-family-alignment",
@@ -880,62 +1447,62 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同|V2X|cooperative|collaborative",
+        "executedAt": "2026-08-01",
+        "query": "通信|communication|bandwidth|带宽|AoI|freshness|latency|时延|调度|scheduling",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 4,
-        "note": "实际执行 rg -l -i <pattern> content/papers，共原始命中 41 个文件；按方向标签及 revisionOf 归并为 26 篇规范化候选，全部进入引用或带理由的暂缓组。"
+        "note": "实际执行 rg -l -i：36 个原始文件命中，22 篇方向内规范候选；4 篇纳入，18 篇逐篇闭合到暂缓组。"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动 协同感知与 V2X 基准 通信调度、带宽与信息新鲜度 异步、位姿误差与鲁棒融合 协同预测、规划与多主体协商 真实通信、闭环验证与安全回退 恶意或故障节点与信任校准",
-        "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 10,
-        "acceptedCount": 1,
-        "note": "通过已安装 ARIS arxiv_fetch.py 获取结构化元数据；候选仍逐篇打开一手页面复核。"
+        "executedAt": "2026-08-01",
+        "query": "六个协同驾驶语义查询族及候选 arXiv 主页面复核",
+        "endpoint": "https://arxiv.org/",
+        "limit": 80,
+        "acceptedCount": 2,
+        "note": "语义查询用于发现，逐篇打开 arXiv 主页面核对标题、版本、评论和方法边界；2 条最终引用以 arXiv 为直接核验源。"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动 official proceedings journal standard",
-        "endpoint": "https://www.google.com/search",
-        "limit": 10,
+        "executedAt": "2026-08-01",
+        "query": "retained cooperative-driving DOI, CVF, ECVA, OpenReview, NeurIPS and AAAI records",
+        "endpoint": "https://doi.org/ and official proceedings pages",
+        "limit": 50,
         "acceptedCount": 17,
-        "note": "限定正式会议、期刊、OpenReview 和标准机构页面核对出版状态与书目信息。"
+        "note": "逐篇复核正式出版入口；17 条最终引用以出版方或会议页面为直接核验源。"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动",
-        "endpoint": "https://www.semanticscholar.org/search",
+        "status": "limited",
+        "executedAt": "2026-08-01",
+        "query": "cooperative autonomous driving V2X collaborative perception",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
         "limit": 3,
         "acceptedCount": 0,
-        "note": "ARIS API受HTTP 429限流后改用Semantic Scholar网页索引完成发现；最终未直接采纳聚合器记录。"
+        "note": "Graph API 返回 HTTP 429；未把聚合器结果直接纳入引用或虚构命中。"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动",
+        "executedAt": "2026-08-01",
+        "query": "cooperative autonomous driving V2X collaborative perception",
         "endpoint": "https://api.openalex.org/works",
         "limit": 3,
         "acceptedCount": 0,
-        "note": "官方API返回HTTP 200；仅用于发现和出版元数据交叉核对，最终论断均回到一手来源。"
+        "note": "API 返回 HTTP 200，仅用于书目交叉核对；最终结论回到一手页面。"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "协同自动驾驶：从共享视野到可拒绝、可回退、可归因的联合行动 official project code benchmark",
-        "endpoint": "https://www.google.com/search",
-        "limit": 10,
-        "acceptedCount": 0,
-        "note": "核对官方项目页、代码仓库和基准协议；项目自述不用于升级出版状态或现实安全等级。"
+        "executedAt": "2026-08-01",
+        "query": "SimBEV2X and HeteroPROMPT official code/project verification",
+        "endpoint": "https://github.com/ and official project pages",
+        "limit": 20,
+        "acceptedCount": 1,
+        "note": "SimBEV2X 官方仓库直接核验公开数据与生成工具，计入 1 条最终引用；HeteroPROMPT 仓库只核对方法拼写，不用于升级录用状态。"
       }
     ]
   }

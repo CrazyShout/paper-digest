@@ -3,9 +3,9 @@
   "id": "world-models",
   "title": "驾驶世界模型：从生成未来到可准入的闭环证据",
   "subtitle": "会生成逼真视频只是起点；内容生成、未来预测、规划、交互仿真和测试裁判是证据义务不同的用途，不能用一个总分互相替代。",
-  "abstract": "驾驶世界模型正在从动作条件视频生成扩展到点云、占用、潜变量、结构引导渲染、策略学习和闭环仿真。但“世界模型”覆盖的五种用途不是一条所有方法都必须依次攀升的成熟度阶梯：内容生成器、未来预测器、规划模型和交互仿真器服务不同任务，只有当系统要充当测试裁判时，才需要从输出质量一路升级到适用包络、失效归因和现实 verdict 迁移的准入证据。本综述据此用“用途矩阵 + 证据矩阵”重组 2021 至 2026 年的基础工作、代表性方法、本库论文和正式评测，分别核验视觉质量、结构正确、动作跟随、规划收益、环境反应和裁决有效性。现有证据支持世界模型用于数据生成、预测先验、受限规划训练和若干闭环原型；尚不足以把逼真视频、可控轨迹或单一仿真分数解释为物理规律恢复、因果反事实或通用安全裁决。",
-  "reviewedAt": "2026-07-28",
-  "searchWindow": "2021-01-01 至 2026-07-28，覆盖驾驶前向模型、视频生成、点云与占用预测、潜变量动力学、结构引导渲染、world-action 模型、实时闭环仿真、正式评测、安全场景生成和模拟器准入",
+  "abstract": "驾驶世界模型正在从动作条件视频生成扩展到点云、占用、潜变量、结构引导渲染、策略学习和闭环仿真。但“世界模型”覆盖的五种用途不是一条所有方法都必须依次攀升的成熟度阶梯：内容生成器、未来预测器、规划模型和交互仿真器服务不同任务，只有当系统要充当测试裁判时，才需要从输出质量一路升级到适用包络、失效归因和现实 verdict 迁移的准入证据。本综述据此用“用途矩阵 + 证据矩阵”重组 2021 至 2026-08-01 的基础工作、代表性方法、本库论文和正式评测，分别核验视觉质量、结构正确、动作跟随、规划收益、环境反应和裁决有效性。本轮新出现的相邻动作集、显式 world-state 协议、表示秩正则化和通用动作表征方法收窄了候选选择偏差、状态可审计性、长时漂移与动作迁移等机制问题，但都没有在驾驶任务、驾驶动作空间、反应式规划和道路安全上形成完整证据，因此未纳入核心引用。现有证据支持世界模型用于数据生成、预测先验、受限规划训练和若干闭环原型；尚不足以把逼真视频、可控轨迹或单一仿真分数解释为物理规律恢复、因果反事实或通用安全裁决。",
+  "reviewedAt": "2026-08-01",
+  "searchWindow": "2021-01-01 至 2026-08-01，覆盖驾驶前向模型、视频生成、点云与占用预测、潜变量动力学、结构引导渲染、world-action 模型、实时闭环仿真、正式评测、安全场景生成和模拟器准入；本轮增量检索未发现达到驾驶专用核心证据门槛的新论文",
   "researchQuestions": [
     "内容生成器、未来预测器、规划模型、交互仿真器和测试裁判分别需要什么最低证据，为什么只有测试裁判需要完整的递进准入链？",
     "像素、点云、占用、潜变量和结构引导渲染路线分别保留了哪些驾驶状态，又在哪些长时、遮挡和反事实条件下失真？",
@@ -19,7 +19,7 @@
       "kind": "scope",
       "title": "范围与用途矩阵：先说明模型被拿来做什么",
       "thesis": "驾驶世界模型不是单一能力，五种用途也不是线性等级；每种用途有自己的最低证据，测试裁判才需要额外通过递进的准入链。",
-      "body": "本综述区分五种用途。内容生成器回答“能否合成适合扩充数据或展示的样本”；未来预测器回答“给定历史与候选动作，未来传感器或场景状态是否在声明时域内正确”；规划模型回答“世界状态或想象 rollout 是否改善策略学习与决策”；交互仿真器回答“被测系统动作能否改变后续观测，环境参与者是否按明确模型响应”；测试裁判则必须进一步证明碰撞、离路或风险排序等 verdict 在声明的 ODD、动作包络和时域内与现实结论一致。这五类用途可以并行存在，内容生成器不必成为规划器，潜变量规划模型也不必生成相机视频；不能把它们排成一个总分。\n\nWorld on Rails 把记录日志视为不受自车干预的世界轨道，说明低成本前向预测可以支持驾驶学习，也明确暴露非反应环境的边界。GAIA-1 与 DriveDreamer 证明真实日志可支撑可控内容生成，Think2Drive 则让潜在动力学直接服务 CARLA 中的策略训练。UniSim 可根据新的自车轨迹和脚本化参与者轨迹重渲染相机与 LiDAR，但没有学习其他交通参与者对自车动作的响应；因此它是神经传感器闭环的重要实例，不等于完整多主体行为世界。Scenario Dreamer、DriveArena 和 ReactSim-Bench 才把参与者行为、交通管理或偏离日志后的反应单独拉进评测。\n\n因此，本综述只在论文确实测量动作干预时使用“动作跟随”，只在闭环输入持续更新世界状态时使用“交互仿真器”，只在现实锚定的 verdict 一致性成立时讨论“测试裁判”。“physics-aware”仅保留为个别论文的自称或结构约束描述，不外推为物理规律已恢复；“causal”也不用于仅从观察日志学习到的相关性预测。",
+      "body": "本综述区分五种用途。内容生成器回答“能否合成适合扩充数据或展示的样本”；未来预测器回答“给定历史与候选动作，未来传感器或场景状态是否在声明时域内正确”；规划模型回答“世界状态或想象 rollout 是否改善策略学习与决策”；交互仿真器回答“被测系统动作能否改变后续观测，环境参与者是否按明确模型响应”；测试裁判则必须进一步证明碰撞、离路或风险排序等 verdict 在声明的 ODD、动作包络和时域内与现实结论一致。这五类用途可以并行存在，内容生成器不必成为规划器，潜变量规划模型也不必生成相机视频；不能把它们排成一个总分。\n\nWorld on Rails 把记录日志视为不受自车干预的世界轨道，说明低成本前向预测可以支持驾驶学习，也明确暴露非反应环境的边界。GAIA-1 与 DriveDreamer 证明真实日志可支撑可控内容生成，Think2Drive 则让潜在动力学直接服务 CARLA 中的策略训练。UniSim 可根据新的自车轨迹和脚本化参与者轨迹重渲染相机与 LiDAR，但没有学习其他交通参与者对自车动作的响应；因此它是神经传感器闭环的重要实例，不等于完整多主体行为世界。Scenario Dreamer、DriveArena 和 ReactSim-Bench 才把参与者行为、交通管理或偏离日志后的反应单独拉进评测。\n\n因此，本综述只在论文确实测量动作干预时使用“动作跟随”，只在闭环输入持续更新世界状态时使用“交互仿真器”，只在现实锚定的 verdict 一致性成立时讨论“测试裁判”。“physics-aware”仅保留为个别论文的自称或结构约束描述，不外推为物理规律已恢复；“causal”也不用于仅从观察日志学习到的相关性预测。\n\n截至 2026-08-01 的增量检索没有发现达到驾驶专用核心证据门槛的新论文。Action from Adjacent Set 研究候选动作越多时最小预测代价选择可能偏向不可执行序列，但只在 Cube 与 Carry-and-Release 任务验证；CG-World 提供显式状态、动作、事件与分支 lineage 协议，却没有道路场景或驾驶 benchmark；Video Representation Regularization 连接表示秩塌缩与自回归漂移，实验仍是通用视频与 Minecraft 风格环境；ShadowDancer 学习跨外观的统一动作表征，也没有驾驶动作空间、规划器或道路安全结果。四者保留为方法边界，不进入驾驶核心证据表。",
       "referenceIds": [
         "world-on-rails-2021",
         "world-models-survey-2024",
@@ -38,7 +38,7 @@
       "kind": "evolution",
       "title": "技术演进：从日志前向预测到世界与动作联合建模",
       "thesis": "路线演进不是把视频生成得越来越清晰，而是逐步补入多视角一致性、显式三维状态、动作条件、规划接口和闭环速度。",
-      "body": "2021 至 2023 年建立了两条起点：World on Rails 用非反应日志世界学习前向状态与驾驶，GAIA-1 用大规模驾驶数据展示动作、文本和视觉条件的视频生成。UniSim 随后从真实日志重建可编辑传感器环境，使新的自车或脚本化参与者轨迹改变相机和 LiDAR 输出；它推进了神经传感器闭环，但没有学习多主体反应。\n\n2024 年同时出现表示与用途分流。DriveDreamer 和 Drive-WM 用结构条件、多视角未来连接视频生成与动作或规划，Vista 扩展控制接口，DrivingWorld 用 GPT 式时空 token 预测把可控视频延长到论文报告的 40 秒以上；Copilot4D 和 OccWorld 分别改用点云与三维占用。Think2Drive 则走另一条路线：在 CARLA-v2 的潜在世界中训练强化学习规划器，重点不是传感器复现而是策略学习效率。DrivingDojo 补充动作与知识数据。这些工作共同说明表示、更长或更清晰的视频和规划收益是不同问题，任何一项都不能代替动作反事实或安全裁决。\n\n2025 年开始单独审计控制、行为和仿真。ACT-Bench 直接测动作指令是否在生成视频中兑现；Scenario Dreamer 生成场景并滚动数据驱动参与者行为，DriveArena 把交通管理器和生成式传感器闭合成模块化平台。LAW、Epona 与 DrivingGPT 分别探索潜空间规划和世界-动作联合建模。2026 年的路线进一步分叉：DAWN、DriveDreamer-Policy 与 DriveWAM 把视频生成和动作策略放进统一或相互条件化的模型，EponaV2 用未来图像、深度和语义监督连接预测与规划；GenieDrive 与已发表于 IEEE Signal Processing Letters 的 CascadeOcc 强化显式 4D occupancy，M4World 则把十相机、LiDAR、对象控制和分钟级流式生成放进同一系统。World Engine 把日志失败发现、3DGS 重建、行为世界模型和强化后训练组成闭环，在公开 nuPlan 与作者报告的工业系统上检验策略改进；OmniDreams 展示实时多视角闭环，ReactSim-Bench 用偏离日志的自车行为专门测量他车反应。DrivingGen、WorldLens 与准入框架进一步把“能生成”“能响应”和“能被信任给出测试 verdict”拆开。CascadeOcc 已正式发表，但其余多项 2026 工作仍是预印本、技术报告或私有数据证据，技术新颖性不能替代独立复现。",
+      "body": "2021 至 2023 年建立了两条起点：World on Rails 用非反应日志世界学习前向状态与驾驶，GAIA-1 用大规模驾驶数据展示动作、文本和视觉条件的视频生成。UniSim 随后从真实日志重建可编辑传感器环境，使新的自车或脚本化参与者轨迹改变相机和 LiDAR 输出；它推进了神经传感器闭环，但没有学习多主体反应。\n\n2024 年同时出现表示与用途分流。DriveDreamer 和 Drive-WM 用结构条件、多视角未来连接视频生成与动作或规划，Vista 扩展控制接口，DrivingWorld 用 GPT 式时空 token 预测把可控视频延长到论文报告的 40 秒以上；Copilot4D 和 OccWorld 分别改用点云与三维占用。Think2Drive 则走另一条路线：在 CARLA-v2 的潜在世界中训练强化学习规划器，重点不是传感器复现而是策略学习效率。DrivingDojo 补充动作与知识数据。这些工作共同说明表示、更长或更清晰的视频和规划收益是不同问题，任何一项都不能代替动作反事实或安全裁决。\n\n2025 年开始单独审计控制、行为和仿真。ACT-Bench 直接测动作指令是否在生成视频中兑现；Scenario Dreamer 生成场景并滚动数据驱动参与者行为，DriveArena 把交通管理器和生成式传感器闭合成模块化平台。LAW、Epona 与 DrivingGPT 分别探索潜空间规划和世界-动作联合建模。2026 年的路线进一步分叉：DAWN、DriveDreamer-Policy 与 DriveWAM 把视频生成和动作策略放进统一或相互条件化的模型，EponaV2 用未来图像、深度和语义监督连接预测与规划；GenieDrive 与已发表于 IEEE Signal Processing Letters 的 CascadeOcc 强化显式 4D occupancy，M4World 则把十相机、LiDAR、对象控制和分钟级流式生成放进同一系统。World Engine 把日志失败发现、3DGS 重建、行为世界模型和强化后训练组成闭环，在公开 nuPlan 与作者报告的工业系统上检验策略改进；OmniDreams 展示实时多视角闭环，ReactSim-Bench 用偏离日志的自车行为专门测量他车反应。DrivingGen、WorldLens 与准入框架进一步把“能生成”“能响应”和“能被信任给出测试 verdict”拆开。CascadeOcc 已正式发表，但其余多项 2026 工作仍是预印本、技术报告或私有数据证据，技术新颖性不能替代独立复现。\n\n本轮增量趋势不是出现了新的驾驶系统级范式，而是通用 world-model 研究开始分别处理优化器诅咒、可分支状态记录、表示退化和动作表征迁移。这些机制让“为什么 rollout 会错”更可分解，却尚未把错误链连接到转向、加减速、他车响应、规划失效和安全后果；因此它们收窄研究假设，但不改变驾驶领域现有证据等级。",
       "referenceIds": [
         "world-on-rails-2021",
         "gaia1-2023",
@@ -77,7 +77,7 @@
       "kind": "taxonomy",
       "title": "方法谱系：表示、转移、动作接口与用途必须分轴比较",
       "thesis": "像素、点云、占用、潜变量和结构渲染是状态表示选择；它们与转移模型、动作接口和最终用途正交，不能用一个标签替代完整方法描述。",
-      "body": "表示轴包括像素、点云、占用、潜变量和显式场景结构。GAIA-1、DriveDreamer、Drive-WM、DrivingWorld 与 Vista 保留纹理和语义细节，但高视觉分数或 40 秒以上生成时长可能掩盖深度、运动和遮挡错误；Copilot4D 的点云 token、OccWorld 与 CascadeOcc 的语义占用更容易直接测量几何，却受稀疏、量化、级联误差和体素分辨率限制。M4World 同时生成多视角视频与 LiDAR，并加入对象级控制，适合研究跨模态状态一致性，但私有车队数据和生成指标限制了可复核性。LAW 与 Think2Drive 学习面向规划或强化学习的潜状态，不要求逐像素还原，必须通过策略收益和失效分析证明状态保留了什么。GenieDrive 先预测 4D occupancy 再渲染视频；其“physics-aware”在此只表示结构约束，不表示守恒定律或碰撞动力学已经验证。\n\n转移和动作接口是另一轴。Vista 与 Drive-WM 把轨迹或控制作为未来生成条件；DrivingGPT 用多模态自回归序列统一世界与规划；DAWN 在推理中让世界假设与动作去噪递归反馈。DriveWAM 从预训练视频 DiT 迁移动态先验并联合产生动作，EponaV2 用未来图像、深度与语义作为规划中间监督。Epona 并非两个分支递归互相条件化：其 VisDiT 与 TrajDiT 是共享时序潜变量、分别生成视频与轨迹的扩散头，外部轨迹可作为视频条件。共享表示、联合训练或多任务未来监督可以减少接口损失，却不自动证明世界对干预动作敏感，也不保证他车响应正确。\n\n交互机制还需单列。UniSim 根据自车与脚本化参与者轨迹更新传感器，不学习他车反应；OmniDreams 和 DriveArena 在循环中持续消费规划输出，Scenario Dreamer 生成闭环参与者行为。World Engine 则把可编辑 3DGS 传感器环境、行为世界模型和强化后训练耦合起来，重点是让策略从合成长尾交互中学习，而不是让世界模型直接充当测试裁判。ACT-Bench 检查自车动作兑现，ReactSim-Bench 把自车控制与环境智能体控制分离，专门检查偏离日志后的响应。只有同时报告传感器更新、参与者响应、时域和越界条件，系统才是可审计的交互仿真候选；这仍不等于现实 verdict 有效。",
+      "body": "表示轴包括像素、点云、占用、潜变量和显式场景结构。GAIA-1、DriveDreamer、Drive-WM、DrivingWorld 与 Vista 保留纹理和语义细节，但高视觉分数或 40 秒以上生成时长可能掩盖深度、运动和遮挡错误；Copilot4D 的点云 token、OccWorld 与 CascadeOcc 的语义占用更容易直接测量几何，却受稀疏、量化、级联误差和体素分辨率限制。M4World 同时生成多视角视频与 LiDAR，并加入对象级控制，适合研究跨模态状态一致性，但私有车队数据和生成指标限制了可复核性。LAW 与 Think2Drive 学习面向规划或强化学习的潜状态，不要求逐像素还原，必须通过策略收益和失效分析证明状态保留了什么。GenieDrive 先预测 4D occupancy 再渲染视频；其“physics-aware”在此只表示结构约束，不表示守恒定律或碰撞动力学已经验证。\n\n转移和动作接口是另一轴。Vista 与 Drive-WM 把轨迹或控制作为未来生成条件；DrivingGPT 用多模态自回归序列统一世界与规划；DAWN 在推理中让世界假设与动作去噪递归反馈。DriveWAM 从预训练视频 DiT 迁移动态先验并联合产生动作，EponaV2 用未来图像、深度与语义作为规划中间监督。Epona 并非两个分支递归互相条件化：其 VisDiT 与 TrajDiT 是共享时序潜变量、分别生成视频与轨迹的扩散头，外部轨迹可作为视频条件。共享表示、联合训练或多任务未来监督可以减少接口损失，却不自动证明世界对干预动作敏感，也不保证他车响应正确。\n\n交互机制还需单列。UniSim 根据自车与脚本化参与者轨迹更新传感器，不学习他车反应；OmniDreams 和 DriveArena 在循环中持续消费规划输出，Scenario Dreamer 生成闭环参与者行为。World Engine 则把可编辑 3DGS 传感器环境、行为世界模型和强化后训练耦合起来，重点是让策略从合成长尾交互中学习，而不是让世界模型直接充当测试裁判。ACT-Bench 检查自车动作兑现，ReactSim-Bench 把自车控制与环境智能体控制分离，专门检查偏离日志后的响应。只有同时报告传感器更新、参与者响应、时域和越界条件，系统才是可审计的交互仿真候选；这仍不等于现实 verdict 有效。\n\n四个新通用候选可放在既有方法轴的边界上：Action from Adjacent Set 属于候选动作选择器，CG-World 属于状态与干预数据协议，Video Representation Regularization 属于长时表示稳定器，ShadowDancer 属于动作表征学习。它们都不是新的驾驶传感器世界、交通参与者反应模型或安全裁判。迁移到驾驶时必须另行定义可执行车辆动作、道路几何状态、交互参与者和用途级终点，不能把通用任务胜率或视频质量直接映射为驾驶能力。",
       "referenceIds": [
         "gaia1-2023",
         "drive-wm-2024",
@@ -111,7 +111,7 @@
       "kind": "evidence",
       "title": "证据矩阵：按用途报告数据、反应性、时域与审计性",
       "thesis": "视觉质量、结构正确、动作跟随、规划收益、环境反应和安全 verdict 是相互正交的证据维度；只有测试裁判需要把这些维度组织成递进准入。",
-      "body": "每项结果至少要标注四个上下文：数据来自真实日志还是仿真，环境是开环、伪闭环还是真正反应式，rollout 时域多长，以及输入、指标和失败样本能否独立审计。视频内容生成可用 FID、FVD、LPIPS、时序一致性和人工偏好；结构预测要另测深度、占用、点云距离、对象轨迹、多视角一致性和碰撞空间。动作跟随要求固定或匹配初态，改变转向、速度、轨迹或指令，并测偏差、单调性、训练分布外动作和无动作差异负对照。ACT-Bench 表明视觉质量高并不保证动作指令兑现。\n\n规划用途必须单独报告开环轨迹误差、CARLA 等反应式闭环中的碰撞/离路/进度、策略排序和跨规划器复现。LAW、Think2Drive、Drive-WM 与 DrivingGPT 提供不同层面的规划证据；EponaV2 在 NAVSIM 报告未来表征辅助规划，DriveWAM 也在 NAVSIM/PhysicalAI 报告动作策略结果，但二者仍是非反应式或受限闭环基准。只有等数据、等算力的消融和反应式闭环复测，才能把收益归因于世界模型。CascadeOcc 的占用预测与规划、M4World 的长尾对象增强分别提供结构和数据用途证据，却没有建立现实闭环因果链。World Engine 在公开 nuPlan 长尾场景中报告强化后训练的闭环改善，并由作者报告在超过一万条工业仿真场景和约 200 km 上海道路测试中的收益；公开部分与工业/道路部分必须分开解读，后两者缺少可独立复现的数据、平台与同初态对照，200 km 也不足以估计开放道路稀有事故率。交互用途还要确认环境是否响应自车：UniSim 的脚本轨迹更新不同于 Scenario Dreamer 的数据驱动参与者 rollout，DriveArena 的交通管理器闭环也不同于 ReactSim-Bench 对偏离日志后反应能力的专门测量。\n\n当系统要给出安全 verdict 时，才进入 L0–L4 准入链：L0 输出质量，L1 动作响应稳健性，L2 声明动作包络、最大时域与分布外拒绝，L3 失效归因，L4 现实 verdict 迁移。现有准入论文只以 Vista、Epona 支撑 L0/L1，并讨论 L2 的时域边界；分布外拒绝、L3 和 L4 尚未完成，也不是行业强制标准。DrivingGen 与 WorldLens 诊断模型输出，SafeGen 生成测试假设，均不能签发现实安全结论。",
+      "body": "每项结果至少要标注四个上下文：数据来自真实日志还是仿真，环境是开环、伪闭环还是真正反应式，rollout 时域多长，以及输入、指标和失败样本能否独立审计。视频内容生成可用 FID、FVD、LPIPS、时序一致性和人工偏好；结构预测要另测深度、占用、点云距离、对象轨迹、多视角一致性和碰撞空间。动作跟随要求固定或匹配初态，改变转向、速度、轨迹或指令，并测偏差、单调性、训练分布外动作和无动作差异负对照。ACT-Bench 表明视觉质量高并不保证动作指令兑现。\n\n规划用途必须单独报告开环轨迹误差、CARLA 等反应式闭环中的碰撞/离路/进度、策略排序和跨规划器复现。LAW、Think2Drive、Drive-WM 与 DrivingGPT 提供不同层面的规划证据；EponaV2 在 NAVSIM 报告未来表征辅助规划，DriveWAM 也在 NAVSIM/PhysicalAI 报告动作策略结果，但二者仍是非反应式或受限闭环基准。只有等数据、等算力的消融和反应式闭环复测，才能把收益归因于世界模型。CascadeOcc 的占用预测与规划、M4World 的长尾对象增强分别提供结构和数据用途证据，却没有建立现实闭环因果链。World Engine 在公开 nuPlan 长尾场景中报告强化后训练的闭环改善，并由作者报告在超过一万条工业仿真场景和约 200 km 上海道路测试中的收益；公开部分与工业/道路部分必须分开解读，后两者缺少可独立复现的数据、平台与同初态对照，200 km 也不足以估计开放道路稀有事故率。交互用途还要确认环境是否响应自车：UniSim 的脚本轨迹更新不同于 Scenario Dreamer 的数据驱动参与者 rollout，DriveArena 的交通管理器闭环也不同于 ReactSim-Bench 对偏离日志后反应能力的专门测量。\n\n当系统要给出安全 verdict 时，才进入 L0–L4 准入链：L0 输出质量，L1 动作响应稳健性，L2 声明动作包络、最大时域与分布外拒绝，L3 失效归因，L4 现实 verdict 迁移。现有准入论文只以 Vista、Epona 支撑 L0/L1，并讨论 L2 的时域边界；分布外拒绝、L3 和 L4 尚未完成，也不是行业强制标准。DrivingGen 与 WorldLens 诊断模型输出，SafeGen 生成测试假设，均不能签发现实安全结论。\n\n对上述通用机制，最低迁移证据应是驾驶任务上的配对干预，而不是方法名称相似。动作选择方法要在同初态候选轨迹上报告可执行率、碰撞/离路与规划收益；状态协议要证明道路拓扑、对象身份和交通规则在分支间可追踪；表示正则化要同时报告长时结构误差与下游规划误差；动作表征要覆盖转向、速度和他车交互，并给出 action-blind 负对照。当前四篇都缺少其中至少一条完整驾驶链，故只作为失败机制线索。",
       "referenceIds": [
         "copilot4d-2024",
         "occworld-2024",
@@ -145,7 +145,7 @@
       "kind": "challenges",
       "title": "共识、冲突与证据缺口",
       "thesis": "领域已形成结构显式化、动作条件和任务评测的方向性共识，但对真实反事实、他车响应、长时稳定和安全裁决仍缺少可重复证据。",
-      "body": "共识是单一视频质量不足以评价驾驶未来，显式点云/占用或潜状态必须与用途证据配合；动作也不能只作为标签，要由匹配初态的干预测试确认。冲突在于表示与用途取舍：像素模型保留观感却容易产生结构幻觉，点和占用更易测量几何却损失传感器细节，潜模型对规划有效但难解释。CascadeOcc、EponaV2、DriveWAM 与 M4World 扩大了结构、动作和多模态能力，但没有一种表示在所有用途、时域和 ODD 上占优。\n\n观察日志把自车动作、道路、交通密度和驾驶员选择纠缠在一起。ACT-Bench 只检验生成视频对自车指令的响应，仍不回答他车如何反应；UniSim 的参与者是脚本化轨迹。Scenario Dreamer 提供数据驱动行为，DriveArena 用交通管理器更新布局，ReactSim-Bench 则用 2,636 个偏离日志的场景直接比较他车反应，但这些证据仍局限于各自数据、行为模型和指标。真实同初态、多动作、多主体反事实仍极少。\n\n长时 rollout 会积累视角漂移、对象身份切换、占用消散和动作误差；实时生成还可能以分辨率、视域或传感器覆盖换取速度。OmniDreams 的闭环实时性受技术报告、闭源资产和硬件条件限制；M4World 的分钟级多模态生成基于私有数据，DriveWAM 与 EponaV2 也尚无正式同行评审或现实闭环复现，CascadeOcc 虽已正式发表，证据仍限于公开占用/规划协议。World Engine 的公开 nuPlan 结果可复核范围强于纯私有演示，但生产仿真、道路路线和策略内部数据不可独立审计，约 200 km、三次运行（两条路线）及单次基线干预不足以证明稀有风险普遍下降；3DGS 大视角偏移和行为模型覆盖也仍是适用包络。WorldLens 与 DrivingGen 尚不能替代跨城市、天气、传感器和策略的现实对照；准入框架也只是工作坊接收的早期预印本。最大缺口不是新增综合分，而是公开模型错误如何传播为规划和 verdict 变化的可审计链，并允许系统在超出证据包络时拒绝裁决。",
+      "body": "共识是单一视频质量不足以评价驾驶未来，显式点云/占用或潜状态必须与用途证据配合；动作也不能只作为标签，要由匹配初态的干预测试确认。冲突在于表示与用途取舍：像素模型保留观感却容易产生结构幻觉，点和占用更易测量几何却损失传感器细节，潜模型对规划有效但难解释。CascadeOcc、EponaV2、DriveWAM 与 M4World 扩大了结构、动作和多模态能力，但没有一种表示在所有用途、时域和 ODD 上占优。\n\n观察日志把自车动作、道路、交通密度和驾驶员选择纠缠在一起。ACT-Bench 只检验生成视频对自车指令的响应，仍不回答他车如何反应；UniSim 的参与者是脚本化轨迹。Scenario Dreamer 提供数据驱动行为，DriveArena 用交通管理器更新布局，ReactSim-Bench 则用 2,636 个偏离日志的场景直接比较他车反应，但这些证据仍局限于各自数据、行为模型和指标。真实同初态、多动作、多主体反事实仍极少。\n\n长时 rollout 会积累视角漂移、对象身份切换、占用消散和动作误差；实时生成还可能以分辨率、视域或传感器覆盖换取速度。OmniDreams 的闭环实时性受技术报告、闭源资产和硬件条件限制；M4World 的分钟级多模态生成基于私有数据，DriveWAM 与 EponaV2 也尚无正式同行评审或现实闭环复现，CascadeOcc 虽已正式发表，证据仍限于公开占用/规划协议。World Engine 的公开 nuPlan 结果可复核范围强于纯私有演示，但生产仿真、道路路线和策略内部数据不可独立审计，约 200 km、三次运行（两条路线）及单次基线干预不足以证明稀有风险普遍下降；3DGS 大视角偏移和行为模型覆盖也仍是适用包络。WorldLens 与 DrivingGen 尚不能替代跨城市、天气、传感器和策略的现实对照；准入框架也只是工作坊接收的早期预印本。最大缺口不是新增综合分，而是公开模型错误如何传播为规划和 verdict 变化的可审计链，并允许系统在超出证据包络时拒绝裁决。\n\n增量证据进一步明确了三个不能混淆的缺口。第一，减少候选选择偏差或表示漂移，不等于模型服从真实车辆动力学；第二，保存状态与分支 lineage，不等于从观察数据识别出干预因果；第三，跨任务动作表示可迁移，不等于仿真 verdict 能迁移到真实道路。未来工作若只在通用视频或具身任务上提升指标，最多说明组件潜力，不能越级声称解决驾驶动作保真、因果有效性或安全准入。",
       "referenceIds": [
         "world-models-survey-2024",
         "copilot4d-2024",
@@ -174,7 +174,7 @@
       "kind": "outlook",
       "title": "研究议程：双状态模型、干预基准与用途限定准入",
       "thesis": "下一步应把可观测渲染、结构状态、动作干预和裁决资格组织成可审计系统，让模型在证据不足时缩小用途或拒绝给出安全结论。",
-      "body": "第一条路线检验“结构指标是否真的增加决策解释力”。在固定训练数据和参数预算下训练纯视频模型、CascadeOcc 式占用模型、EponaV2 式多任务未来模型与结构 + 渲染模型，在预注册的留出城市和新传感器 rig 上，用嵌套回归检验占用、深度、语义、对象持久性和几何误差在控制 FVD 后能否显著预测规划失败；若增量解释度的置信区间覆盖零，或只在同域成立，就拒绝“结构改进带来驾驶有效性”的主张。GenieDrive 提供渲染起点，M4World 的视频/LiDAR双通道、点云、地图和潜状态探针可作为并行结构通道。\n\n第二条路线检验“模型是否学习动作干预和环境反应”。对同一初态生成匹配可执行动作，比较等数据、等算力的动作条件模型、DriveWAM 式 world-action 模型与 action-blind 基线；分别测自车动作兑现、他车让行/冲突响应、长时稳定和规划结果。ACT-Bench 可测第一项，ReactSim-Bench 可测第二项，Scenario Dreamer 与 DriveArena 可承载闭环；World Engine 可作为“合成交互是否真正改善策略”的系统基线，但应公开 3DGS 越界率、行为模型覆盖与训练奖励，且把公开 nuPlan、私有工业仿真和道路测试分层报告。若 action-blind 基线非劣，反应方向错误，或效应在留出城市/行为模型上消失，就拒绝“交互世界”主张。\n\n第三条路线检验“仿真 verdict 能否迁移”。预先声明 ODD、传感器、动作包络、最大时域、参与者模型、拒绝规则和目标策略集合，用仿真对策略风险排序，再在独立 HIL 或封闭场地复测；以预注册的秩相关阈值、错误接受率和置信下界决定准入。SafeGen 只能提出高价值测试假设，OmniDreams 可执行实时传感器 rollout，DrivingGen 与 WorldLens 负责分项诊断。若现实排序低于阈值、失败无法归因，或越界样本未被拒绝，系统不得充当测试裁判，只能退回生成、预测、规划辅助或实验仿真用途。",
+      "body": "第一条路线检验“结构指标是否真的增加决策解释力”。在固定训练数据和参数预算下训练纯视频模型、CascadeOcc 式占用模型、EponaV2 式多任务未来模型与结构 + 渲染模型，在预注册的留出城市和新传感器 rig 上，用嵌套回归检验占用、深度、语义、对象持久性和几何误差在控制 FVD 后能否显著预测规划失败；若增量解释度的置信区间覆盖零，或只在同域成立，就拒绝“结构改进带来驾驶有效性”的主张。GenieDrive 提供渲染起点，M4World 的视频/LiDAR双通道、点云、地图和潜状态探针可作为并行结构通道。\n\n第二条路线检验“模型是否学习动作干预和环境反应”。对同一初态生成匹配可执行动作，比较等数据、等算力的动作条件模型、DriveWAM 式 world-action 模型与 action-blind 基线；分别测自车动作兑现、他车让行/冲突响应、长时稳定和规划结果。ACT-Bench 可测第一项，ReactSim-Bench 可测第二项，Scenario Dreamer 与 DriveArena 可承载闭环；World Engine 可作为“合成交互是否真正改善策略”的系统基线，但应公开 3DGS 越界率、行为模型覆盖与训练奖励，且把公开 nuPlan、私有工业仿真和道路测试分层报告。若 action-blind 基线非劣，反应方向错误，或效应在留出城市/行为模型上消失，就拒绝“交互世界”主张。\n\n第三条路线检验“仿真 verdict 能否迁移”。预先声明 ODD、传感器、动作包络、最大时域、参与者模型、拒绝规则和目标策略集合，用仿真对策略风险排序，再在独立 HIL 或封闭场地复测；以预注册的秩相关阈值、错误接受率和置信下界决定准入。SafeGen 只能提出高价值测试假设，OmniDreams 可执行实时传感器 rollout，DrivingGen 与 WorldLens 负责分项诊断。若现实排序低于阈值、失败无法归因，或越界样本未被拒绝，系统不得充当测试裁判，只能退回生成、预测、规划辅助或实验仿真用途。\n\n第四条路线专门检验“通用 world-model 机制能否跨过驾驶迁移门”。把 Action from Adjacent Set、CG-World、表示秩正则化和 ShadowDancer 分别接入同一公开驾驶世界模型，在固定数据、参数与规划器下逐项替换候选选择、状态记录、长时稳定器和动作编码；主要终点分别是可执行动作率、分支状态一致性、长时几何误差、反应式闭环碰撞/离路和仿真—现实策略排序。若只有通用视频质量提升、action-blind 基线非劣、他车响应方向错误，或 HIL/封闭场地排序低于预注册阈值，就判定迁移失败并保持组件级用途，不进入安全裁判链。",
       "referenceIds": [
         "geniedrive-2026",
         "copilot4d-2024",
@@ -207,7 +207,8 @@
     "像素、点云、占用、潜变量和结构渲染各自保留不同状态，没有一种表示能够自动同时满足生成、规划和安全测试。",
     "把动作输入模型或联合输出动作，并不自动构成交互；还需证明动作改变世界、环境响应自车且长时闭环不沿日志惯性漂移。",
     "正式 benchmark 可以诊断生成与控制能力，但只有现实锚定、用途包络和拒绝机制才能支持模拟器的安全准入。",
-    "安全场景生成适合发现测试假设和扩充长尾覆盖；在缺少现实概率与 verdict 对照时，它不能独立判定系统安全。"
+    "安全场景生成适合发现测试假设和扩充长尾覆盖；在缺少现实概率与 verdict 对照时，它不能独立判定系统安全。",
+    "截至 2026-08-01，新通用机制只提供候选选择、状态协议、长时稳定和动作表征的边界证据；缺少驾驶任务与安全后果时，不应被包装成驾驶世界模型突破。"
   ],
   "references": [
     {
@@ -669,13 +670,13 @@
       "title": "SafeGen: Goal-Conditioned Video Diffusion of Safety-Critical Scenarios for VLM-Based Autonomous Driving",
       "authors": "Jiangfan Liu, Zexuan Cui, Tianyuan Zhang, Zonglei Jing, Zonghao Ying, Yaoyuan Zhang, Jiakai Wang, Xiaoqi Jiang, Aishan Liu, Xianglong Liu",
       "year": 2026,
-      "venue": "ACM Multimedia 2026",
+      "venue": "arXiv",
       "publicationType": "method",
-      "publicationStatus": "accepted",
+      "publicationStatus": "preprint",
       "canonicalId": "arxiv:2607.19701",
       "sourceFamily": "local-corpus",
-      "supports": "用目标条件视频扩散生成安全关键驾驶场景，并以 VLM 驾驶系统为被测对象，代表世界模型用于长尾测试假设生成的最新方向。",
-      "limitation": "正式发表不改变证据边界：目标终态与 VLM judge 分数不能证明场景物理概率、事故因果链或被测系统的客观安全 verdict。",
+      "supports": "arXiv 预印本提出目标条件视频扩散来生成安全关键驾驶场景，并以 VLM 驾驶系统为被测对象，为世界模型生成长尾测试假设提供一条近期方法证据。",
+      "limitation": "截至 2026-08-01 未找到 ACM Multimedia 一手正式记录；目标终态与 VLM judge 分数也不能证明场景物理概率、事故因果链或被测系统的客观安全 verdict。",
       "url": "https://arxiv.org/abs/2607.19701",
       "localPaperId": "safegen-critical-video-diffusion"
     },
@@ -696,8 +697,8 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-07-28",
-    "cutoffDate": "2026-07-28",
+    "searchedAt": "2026-08-01",
+    "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -717,47 +718,66 @@
       "official-project"
     ],
     "counts": {
-      "candidates": 57,
-      "deduplicated": 46,
+      "candidates": 95,
+      "deduplicated": 48,
       "included": 32,
-      "excluded": 14
+      "excluded": 16
     },
-    "evidenceBoundary": "6 个查询族分别保存了可复核的查询串、来源、执行日期、候选数与规范化 ID 样本。本库真实检索命中 35 个文件，按方向标签和 revisionOf 归并为 21 篇候选；其中 10 篇纳入、11 篇逐组记录暂缓理由，未静默漏筛。各查询族共有 57 条结构化候选记录，允许同一论文跨查询族重复出现；去重后为 46 篇，其中纳入 32 篇、排除或暂缓 14 篇。所有纳入引用均回到可打开的一手记录核对书目、出版状态、支撑论断和限制；本轮没有复现实验、访问私有数据或获得同初态真实道路反事实，因此不把模拟、开环或生成质量结果外推为现实安全结论。",
+    "evidenceBoundary": "6 个配置查询族均在 2026-08-01 留存可复核检索记录。本库以驾驶视频生成、可控生成与未来预测语义实际重跑，得到 23 个原始命中文件，按 world-models 标签和 revisionOf 归并为 21 篇规范候选，其中 11 篇纳入、10 篇逐组暂缓。六族检索合计形成 95 次跨族出现；按 DOI、arXiv、venue ID 和规范化标题归并后为 48 个候选，其中保留 32 条核心引用，显式排除 4 篇缺少驾驶任务/动作空间/规划/安全证据的通用方法和 2 篇只补充重建资产、没有学习未来动力学的几何候选，并对 10 篇本库候选给出暂缓去向。本轮没有新论文达到驾驶专用核心证据门槛，也没有复现实验、访问私有数据或获得同初态真实道路反事实；通用机制只用于收窄假设，不被外推为驾驶动作保真、因果有效性或安全准入已经解决。",
     "openSearchGaps": [
       "仍缺同一真实初态下多组自车动作、他车响应和碰撞结局的成对反事实数据，观察日志不能单独填补这一缺口。",
       "尚无统一 benchmark 同时覆盖多相机、LiDAR/占用、长时 world-action rollout、独立规划器和现实安全 verdict 迁移。",
+      "Action from Adjacent Set、CG-World、表示秩正则化与 ShadowDancer 尚未在驾驶动作空间中完成匹配初态干预、action-blind 负对照和反应式闭环复测。",
       "企业技术报告与闭源系统的训练数据、运行硬件和评测资产并不完全开放，实时闭环结果的独立复现受限。",
       "VLM judge、生成器和 benchmark 可能共享训练分布或语义偏差，评价器独立性与现实风险校准仍需专门审计。",
       "2026 年预印本和 workshop 工作的正式出版状态、版本与结论可能在截止日后变化，需要下一轮重新核验。"
     ],
     "independentReview": {
-      "completedAt": "2026-07-29",
+      "completedAt": "2026-08-01",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 8,
-      "snapshotFingerprint": "dd2c4adbb6c98326eefcff7ccd1d34f891318b42174b0db23230cb43095f117e"
+      "rounds": 2,
+      "snapshotFingerprint": "3916a57369776902987d7835a323ebcb28df703d9d77902f1d674177a4100c7c"
     },
     "queryRuns": [
       {
         "family": "驾驶视频生成与可控未来预测",
         "sourceFamily": "local-corpus",
-        "query": "世界模型|world model|video generation|simulation",
-        "executedAt": "2026-07-28",
+        "query": "驾驶视频|driving video|video diffusion|视频扩散|visual future|未来预测|可控驾驶.*(视频|场景)|controllable driving.*(video|scene)|世界模型.*(视频|未来|预测|生成|可控)|world model.*(video|future|prediction|generation|controll)|视频生成.*(驾驶|自动驾驶)|driving.*video generation",
+        "executedAt": "2026-08-01",
         "resultCount": 21,
-        "rawHitCount": 35,
-        "screenedOutCount": 14,
-        "screeningNote": "真实正则检索命中 35 个文件；按当前方向 tags 筛选并用 revisionOf 归并后得到 21 篇规范化候选。全部候选已写入 candidateLocalPaperIds，其中 10 篇进入引用，11 篇在 deferredGroups 中说明暂缓原因；其余 14 个命中文件是其他方向记录或同文修订。",
+        "rawHitCount": 23,
+        "screenedOutCount": 2,
+        "screeningNote": "实际执行记录中的 rg -l -i 正则，原始命中 23 个文件；按 world-models 标签筛选并用 revisionOf 归并后得到 21 篇规范候选。11 篇进入引用，10 篇进入带理由的暂缓组；另 2 个文件分别是不带该方向标签的 VADv2 和 DrivingWorld 同文修订。",
         "resultIdSample": [
+          "arxiv:2605.26113",
+          "arxiv:2606.21172",
+          "doi:10.1109/LSP.2026.3680426",
+          "arxiv:2605.11550",
+          "arxiv:2411.11921",
+          "arxiv:2606.12987",
+          "arxiv:2605.28544",
+          "arxiv:2606.21993",
           "arxiv:2412.19505",
+          "arxiv:2606.10656",
+          "arxiv:2605.14696",
+          "arxiv:2607.17521",
+          "arxiv:2607.14005",
+          "arxiv:2606.03159",
+          "arxiv:2607.19701",
+          "arxiv:2605.24354",
           "arxiv:2405.17398",
-          "arxiv:2606.03159"
+          "arxiv:2606.19836",
+          "arxiv:2607.07196",
+          "arxiv:2606.28758",
+          "arxiv:2606.29097"
         ],
-        "scopeRationale": "用真实本库全文正则检索“驾驶视频生成与可控未来预测”相关中英文术语，再从命中文件中筛选规范化候选 ID。",
+        "scopeRationale": "用当前工作区的真实本库全文正则检索驾驶视频生成、视频扩散、可控驾驶生成和未来预测，再按 world-models 标签、主论文和 revisionOf 机械归并；不使用 simulation 等跨族宽词冒充该查询族。",
         "retrieval": {
           "provider": "ripgrep-local-corpus",
           "endpoint": "content/papers",
           "parameters": {
-            "query": "世界模型|world model|video generation|simulation",
+            "query": "驾驶视频|driving video|video diffusion|视频扩散|visual future|未来预测|可控驾驶.*(视频|场景)|controllable driving.*(video|scene)|世界模型.*(视频|未来|预测|生成|可控)|world model.*(video|future|prediction|generation|controll)|视频生成.*(驾驶|自动驾驶)|driving.*video generation",
             "path": "content/papers",
             "flags": [
               "-l",
@@ -781,11 +801,11 @@
             "envision4d-feedforward-4dgs",
             "eponav2-driving-world-model",
             "geoworldad-geometry-world-action",
-            "instant-nurec-feedforward-3dgs",
             "m4world-multimodal-driving-world",
             "omnidreams-closed-loop-world-model",
-            "physically-consistent-4d-driving-reconstruction",
+            "safegen-critical-video-diffusion",
             "sparseworld-sparse-scene-world-model",
+            "trafficalign-traffic-scenario-generation",
             "vista-driving-world-model",
             "world-engine-post-training-driving",
             "world-model-simulator-admissibility",
@@ -794,7 +814,7 @@
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "与本方向直接相关，但本轮未进入核心证据集：其问题或方法与已纳入代表工作高度重叠，或当前仍缺少更强的正式出版、独立复现或用途级证据；后续证据升级时优先复核。",
+              "reason": "与世界模型方向直接相关，但本轮没有新的正式出版、独立复现或用途级证据足以改变现有综合；保留为本库候选，待后续证据升级。",
               "localPaperIds": [
                 "anyscene-controllable-driving-scene-generation",
                 "diffusion-transformer-wam-scene-prediction",
@@ -804,15 +824,14 @@
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "对本方向提供补充证据，但主要贡献和完整讨论归入另一研究方向；本综述暂不重复纳入，以避免同一方法跨方向过度加权，后续若形成独立证据链再提升。",
+              "reason": "提供重建、安全或测试侧补充证据，但主要贡献归入其他方向；本综述暂不重复纳入，以避免同一论文跨方向过度加权。",
               "localPaperIds": [
                 "baddreamer-world-model-backdoor",
                 "desire-gs-4d-street-gaussians",
                 "driving-videos-to-simulatable-scenarios",
                 "envision4d-feedforward-4dgs",
                 "geoworldad-geometry-world-action",
-                "instant-nurec-feedforward-3dgs",
-                "physically-consistent-4d-driving-reconstruction"
+                "trafficalign-traffic-scenario-generation"
               ]
             }
           ]
@@ -821,111 +840,282 @@
       {
         "family": "几何、占用和对象级结构世界模型",
         "sourceFamily": "arxiv",
-        "query": "ti:OccWorld OR ti:Copilot4D OR ti:\"DriveDreamer-Policy\"",
-        "executedAt": "2026-07-28",
-        "resultCount": 8,
+        "query": "id_list=2309.09777,2311.17918,2311.01017,2311.16038,2512.12751,2604.01765,2605.14696,2606.27644,2607.14005,2607.26452,2411.11921,2607.17521,2606.10656,2607.14203,2605.21032",
+        "executedAt": "2026-08-01",
+        "resultCount": 15,
         "resultIdSample": [
-          "arxiv:2311.16038",
+          "arxiv:2309.09777",
+          "arxiv:2311.17918",
           "arxiv:2311.01017",
-          "arxiv:2604.01765"
+          "arxiv:2311.16038",
+          "arxiv:2512.12751",
+          "arxiv:2604.01765",
+          "arxiv:2605.14696",
+          "arxiv:2606.27644",
+          "arxiv:2607.14005",
+          "arxiv:2607.26452",
+          "arxiv:2411.11921",
+          "arxiv:2607.17521",
+          "arxiv:2606.10656",
+          "arxiv:2607.14203",
+          "arxiv:2605.21032"
         ],
-        "scopeRationale": "查询串直接覆盖“几何、占用和对象级结构世界模型”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "先用语义检索完成候选发现与范围筛选，再对进入该查询族台账的规范化 arXiv 别名执行精确 ID 批量重开；当前记录的是 2026-08-01 实际返回且进入跨源去重池的候选，不把原始宽检索命中数冒充候选数。语义发现式为：(all:\"driving world model\" OR all:\"autonomous driving world model\") AND (all:geometry OR all:occupancy OR all:object)",
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
+          "provider": "arxiv-api-exact-id-reconciliation",
           "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "ti:OccWorld OR ti:Copilot4D OR ti:\"DriveDreamer-Policy\""
-          }
+            "query": "id_list=2309.09777,2311.17918,2311.01017,2311.16038,2512.12751,2604.01765,2605.14696,2606.27644,2607.14005,2607.26452,2411.11921,2607.17521,2606.10656,2607.14203,2605.21032",
+            "broadQuery": "(all:\"driving world model\" OR all:\"autonomous driving world model\") AND (all:geometry OR all:occupancy OR all:object)",
+            "idList": [
+              "2309.09777",
+              "2311.17918",
+              "2311.01017",
+              "2311.16038",
+              "2512.12751",
+              "2604.01765",
+              "2605.14696",
+              "2606.27644",
+              "2607.14005",
+              "2607.26452",
+              "2411.11921",
+              "2607.17521",
+              "2606.10656",
+              "2607.14203",
+              "2605.21032"
+            ],
+            "evidenceFiles": [
+              "/tmp/paper-digest-world-state-collision.xml",
+              "/tmp/paper-digest-world-refresh-geometry-ids.xml"
+            ]
+          },
+          "sort": "api-return-order",
+          "limit": 25
         }
       },
       {
         "family": "动作条件与世界动作联合模型",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving action-conditioned world-action model generation planning",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
+        "sourceFamily": "arxiv",
+        "query": "id_list=2105.00636,2309.17080,2309.09777,2311.17918,2405.17398,2410.10738,2412.05337,2506.24113,2412.18607,2605.11550,2604.01765,2605.28544,2607.14005,2607.23602,2607.28362,2606.12987,2605.24354,2606.28758,2607.17521",
+        "executedAt": "2026-08-01",
+        "resultCount": 19,
         "resultIdSample": [
+          "arxiv:2105.00636",
+          "arxiv:2309.17080",
           "arxiv:2309.09777",
+          "arxiv:2311.17918",
           "arxiv:2405.17398",
-          "arxiv:2605.11550"
+          "arxiv:2410.10738",
+          "arxiv:2412.05337",
+          "arxiv:2506.24113",
+          "arxiv:2412.18607",
+          "arxiv:2605.11550",
+          "arxiv:2604.01765",
+          "arxiv:2605.28544",
+          "arxiv:2607.14005",
+          "arxiv:2607.23602",
+          "arxiv:2607.28362",
+          "arxiv:2606.12987",
+          "arxiv:2605.24354",
+          "arxiv:2606.28758",
+          "arxiv:2607.17521"
         ],
-        "scopeRationale": "查询串直接覆盖“动作条件与世界动作联合模型”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "先用语义检索完成候选发现与范围筛选，再对进入该查询族台账的规范化 arXiv 别名执行精确 ID 批量重开；当前记录的是 2026-08-01 实际返回且进入跨源去重池的候选，不把原始宽检索命中数冒充候选数。语义发现式为：all:\"driving world model\" AND (all:action OR all:counterfactual OR all:controllability OR all:planning)",
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
+          "provider": "arxiv-api-exact-id-reconciliation",
+          "endpoint": "https://export.arxiv.org/api/query",
           "parameters": {
-            "query": "autonomous driving action-conditioned world-action model generation planning"
-          }
+            "query": "id_list=2105.00636,2309.17080,2309.09777,2311.17918,2405.17398,2410.10738,2412.05337,2506.24113,2412.18607,2605.11550,2604.01765,2605.28544,2607.14005,2607.23602,2607.28362,2606.12987,2605.24354,2606.28758,2607.17521",
+            "broadQuery": "all:\"driving world model\" AND (all:action OR all:counterfactual OR all:controllability OR all:planning)",
+            "idList": [
+              "2105.00636",
+              "2309.17080",
+              "2309.09777",
+              "2311.17918",
+              "2405.17398",
+              "2410.10738",
+              "2412.05337",
+              "2506.24113",
+              "2412.18607",
+              "2605.11550",
+              "2604.01765",
+              "2605.28544",
+              "2607.14005",
+              "2607.23602",
+              "2607.28362",
+              "2606.12987",
+              "2605.24354",
+              "2606.28758",
+              "2607.17521"
+            ],
+            "evidenceFiles": [
+              "/tmp/paper-digest-world-action.xml",
+              "/tmp/paper-digest-world-model_exploit.xml",
+              "/tmp/paper-digest-world-refresh-action-ids.xml"
+            ]
+          },
+          "sort": "api-return-order",
+          "limit": 25
         }
       },
       {
         "family": "可交互实时闭环仿真器",
         "sourceFamily": "arxiv",
-        "query": "interactive real-time closed-loop driving world model simulator UniSim DriveArena OmniDreams",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
+        "query": "id_list=2308.01898,2503.22496,2408.00415,2606.19836,2606.03159,2606.14058,2607.14005,2607.28362,2605.26113,2606.21993",
+        "executedAt": "2026-08-01",
+        "resultCount": 10,
         "resultIdSample": [
           "arxiv:2308.01898",
+          "arxiv:2503.22496",
           "arxiv:2408.00415",
-          "arxiv:2606.03159"
+          "arxiv:2606.19836",
+          "arxiv:2606.03159",
+          "arxiv:2606.14058",
+          "arxiv:2607.14005",
+          "arxiv:2607.28362",
+          "arxiv:2605.26113",
+          "arxiv:2606.21993"
         ],
-        "scopeRationale": "查询串直接覆盖“可交互实时闭环仿真器”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "先用语义检索完成候选发现与范围筛选，再对进入该查询族台账的规范化 arXiv 别名执行精确 ID 批量重开；当前记录的是 2026-08-01 实际返回且进入跨源去重池的候选，不把原始宽检索命中数冒充候选数。语义发现式为：(all:\"world model\" OR all:\"generative simulation\") AND all:driving AND (all:reactive OR all:interaction OR all:\"closed loop\")",
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
+          "provider": "arxiv-api-exact-id-reconciliation",
           "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "interactive real-time closed-loop driving world model simulator UniSim DriveArena OmniDreams"
-          }
+            "query": "id_list=2308.01898,2503.22496,2408.00415,2606.19836,2606.03159,2606.14058,2607.14005,2607.28362,2605.26113,2606.21993",
+            "broadQuery": "(all:\"world model\" OR all:\"generative simulation\") AND all:driving AND (all:reactive OR all:interaction OR all:\"closed loop\")",
+            "idList": [
+              "2308.01898",
+              "2503.22496",
+              "2408.00415",
+              "2606.19836",
+              "2606.03159",
+              "2606.14058",
+              "2607.14005",
+              "2607.28362",
+              "2605.26113",
+              "2606.21993"
+            ],
+            "evidenceFiles": [
+              "/tmp/paper-digest-world-reactive.xml",
+              "/tmp/paper-digest-world-refresh-interactive-ids.xml"
+            ]
+          },
+          "sort": "api-return-order",
+          "limit": 25
         }
       },
       {
         "family": "规划学习与反事实 rollout",
-        "sourceFamily": "official-project",
-        "query": "autonomous driving world model planning reinforcement learning counterfactual rollout",
-        "executedAt": "2026-07-28",
-        "resultCount": 6,
+        "sourceFamily": "arxiv",
+        "query": "id_list=2105.00636,2402.16720,2406.08481,2311.17918,2412.18607,2506.24113,2503.22496,2605.14696,2605.28544,2606.19836,2607.19701,2606.14058,2607.23602,2605.24354,2606.28758,2607.17521",
+        "executedAt": "2026-08-01",
+        "resultCount": 16,
         "resultIdSample": [
           "arxiv:2105.00636",
           "arxiv:2402.16720",
-          "arxiv:2406.08481"
+          "arxiv:2406.08481",
+          "arxiv:2311.17918",
+          "arxiv:2412.18607",
+          "arxiv:2506.24113",
+          "arxiv:2503.22496",
+          "arxiv:2605.14696",
+          "arxiv:2605.28544",
+          "arxiv:2606.19836",
+          "arxiv:2607.19701",
+          "arxiv:2606.14058",
+          "arxiv:2607.23602",
+          "arxiv:2605.24354",
+          "arxiv:2606.28758",
+          "arxiv:2607.17521"
         ],
-        "scopeRationale": "查询串直接覆盖“规划学习与反事实 rollout”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "先用语义检索完成候选发现与范围筛选，再对进入该查询族台账的规范化 arXiv 别名执行精确 ID 批量重开；当前记录的是 2026-08-01 实际返回且进入跨源去重池的候选，不把原始宽检索命中数冒充候选数。语义发现式为：all:\"driving world model\" AND (all:planning OR all:reward OR all:policy OR all:rollout)",
         "retrieval": {
-          "provider": "web-search-official-projects",
-          "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
+          "provider": "arxiv-api-exact-id-reconciliation",
+          "endpoint": "https://export.arxiv.org/api/query",
           "parameters": {
-            "query": "autonomous driving world model planning reinforcement learning counterfactual rollout"
-          }
+            "query": "id_list=2105.00636,2402.16720,2406.08481,2311.17918,2412.18607,2506.24113,2503.22496,2605.14696,2605.28544,2606.19836,2607.19701,2606.14058,2607.23602,2605.24354,2606.28758,2607.17521",
+            "broadQuery": "all:\"driving world model\" AND (all:planning OR all:reward OR all:policy OR all:rollout)",
+            "idList": [
+              "2105.00636",
+              "2402.16720",
+              "2406.08481",
+              "2311.17918",
+              "2412.18607",
+              "2506.24113",
+              "2503.22496",
+              "2605.14696",
+              "2605.28544",
+              "2606.19836",
+              "2607.19701",
+              "2606.14058",
+              "2607.23602",
+              "2605.24354",
+              "2606.28758",
+              "2607.17521"
+            ],
+            "evidenceFiles": [
+              "/tmp/paper-digest-world-planning.xml",
+              "/tmp/paper-digest-world-refresh-planning-ids.xml"
+            ]
+          },
+          "sort": "api-return-order",
+          "limit": 25
         }
       },
       {
         "family": "保真度、因果有效性与安全准入",
-        "sourceFamily": "publisher-and-venue",
-        "query": "driving world model fidelity causality reactive benchmark safety admissibility",
-        "executedAt": "2026-07-28",
-        "resultCount": 8,
+        "sourceFamily": "arxiv",
+        "query": "id_list=2403.02622,2601.01528,2605.10858,2412.05337,2512.12751,2506.24113,2607.07196,2606.14058,2606.03159,2607.19701,2607.27036,2607.28362,2607.23602,2606.21172",
+        "executedAt": "2026-08-01",
+        "resultCount": 14,
         "resultIdSample": [
-          "openreview:26KlsDgwLi",
+          "arxiv:2403.02622",
+          "arxiv:2601.01528",
+          "arxiv:2605.10858",
+          "arxiv:2412.05337",
+          "arxiv:2512.12751",
+          "arxiv:2506.24113",
+          "arxiv:2607.07196",
           "arxiv:2606.14058",
-          "arxiv:2607.07196"
+          "arxiv:2606.03159",
+          "arxiv:2607.19701",
+          "arxiv:2607.27036",
+          "arxiv:2607.28362",
+          "arxiv:2607.23602",
+          "arxiv:2606.21172"
         ],
-        "scopeRationale": "查询串直接覆盖“保真度、因果有效性与安全准入”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "先用语义检索完成候选发现与范围筛选，再对进入该查询族台账的规范化 arXiv 别名执行精确 ID 批量重开；当前记录的是 2026-08-01 实际返回且进入跨源去重池的候选，不把原始宽检索命中数冒充候选数。语义发现式为：(all:\"driving world model\" OR all:\"video world model\") AND (all:benchmark OR all:evaluation OR all:fidelity OR all:safety OR all:admissibility)",
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
+          "provider": "arxiv-api-exact-id-reconciliation",
+          "endpoint": "https://export.arxiv.org/api/query",
           "parameters": {
-            "query": "driving world model fidelity causality reactive benchmark safety admissibility"
-          }
+            "query": "id_list=2403.02622,2601.01528,2605.10858,2412.05337,2512.12751,2506.24113,2607.07196,2606.14058,2606.03159,2607.19701,2607.27036,2607.28362,2607.23602,2606.21172",
+            "broadQuery": "(all:\"driving world model\" OR all:\"video world model\") AND (all:benchmark OR all:evaluation OR all:fidelity OR all:safety OR all:admissibility)",
+            "idList": [
+              "2403.02622",
+              "2601.01528",
+              "2605.10858",
+              "2412.05337",
+              "2512.12751",
+              "2506.24113",
+              "2607.07196",
+              "2606.14058",
+              "2606.03159",
+              "2607.19701",
+              "2607.27036",
+              "2607.28362",
+              "2607.23602",
+              "2606.21172"
+            ],
+            "evidenceFiles": [
+              "/tmp/paper-digest-world-critical.xml",
+              "/tmp/paper-digest-world-evaluation.xml",
+              "/tmp/paper-digest-world-sim_transfer.xml",
+              "/tmp/paper-digest-world-refresh-fidelity-ids.xml"
+            ]
+          },
+          "sort": "api-return-order",
+          "limit": 25
         }
       }
     ],
@@ -971,35 +1161,496 @@
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
-      "与方向范围不匹配，或只有通用任务证据而没有自动驾驶相关证据的候选不纳入核心表。",
-      "与已纳入代表作证据高度重叠且不能补足新方法、失败边界、正式出版或更强验证层级的候选不重复纳入。"
+      "只有通用 world-model 任务证据、没有自动驾驶任务或车辆动作空间的候选不纳入驾驶核心表。",
+      "缺少规划、反应式交互或安全后果验证，且不能补足现有核心证据链的候选只保留为方法边界。",
+      "与已纳入代表作证据高度重叠且没有新增正式出版、独立复现或更强用途级证据的候选不重复纳入。"
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:2104.10157",
-        "title": "VideoGPT: Video Generation using VQ-VAE and Transformers",
-        "url": "https://arxiv.org/abs/2104.10157",
-        "reasonCode": "general-video-foundation",
-        "reason": "提供离散视频生成架构基础，但实验不是驾驶场景，也没有动作可控性、交通反应或规划转移证据；驾驶专用 VideoGPT 路线由 DrivingWorld 覆盖。"
+        "canonicalId": "arxiv:2607.23602",
+        "title": "Action from Adjacent Set in Physical Space Outperforms the Best Prediction in World Models",
+        "url": "https://arxiv.org/abs/2607.23602",
+        "reasonCode": "no-driving-task-evidence",
+        "reason": "研究候选池扩大时最小预测代价选择可能偏向不可执行序列，并在 Cube 与 Carry-and-Release 上验证相邻动作重构；没有自动驾驶任务、车辆动作空间、道路规划器或驾驶安全后果，不能作为驾驶 world-action 核心证据。"
       },
       {
-        "canonicalId": "arxiv:2301.04104",
-        "title": "Mastering Diverse Domains through World Models",
-        "url": "https://arxiv.org/abs/2301.04104",
-        "reasonCode": "general-control-foundation",
-        "reason": "DreamerV3 证明跨任务想象控制能力，但没有自动驾驶传感器、交通交互和安全 verdict；不把通用控制结果外推到驾驶准入。"
+        "canonicalId": "arxiv:2607.26452",
+        "title": "CG-World: A Large-Scale World-State Dataset and Protocol for World Models",
+        "url": "https://arxiv.org/abs/2607.26452",
+        "reasonCode": "generic-state-protocol",
+        "reason": "显式记录状态、动作、事件、干预和分支 lineage，对反事实数据协议有启发；但没有道路场景、驾驶动作空间、规划评测或安全验证，不能证明驾驶状态表示与因果裁决有效。"
       },
       {
-        "canonicalId": "arxiv:1803.10122",
-        "title": "World Models",
-        "url": "https://arxiv.org/abs/1803.10122",
-        "reasonCode": "general-control-foundation",
-        "reason": "是潜空间想象与策略训练的概念基础，但实验域和规模不能直接支撑驾驶视频世界模型的保真度、反应性或现实安全迁移结论。"
+        "canonicalId": "arxiv:2607.27036",
+        "title": "Mitigating Compounding Error via Video Representation Regularization",
+        "url": "https://arxiv.org/abs/2607.27036",
+        "reasonCode": "generic-rollout-stability",
+        "reason": "把表示有效秩塌缩与自回归视频漂移联系起来，并用轻量正则化改善通用视频指标；实验不含驾驶动作保真、道路几何、规划收益或安全结果，不能外推为驾驶长时闭环已稳定。"
+      },
+      {
+        "canonicalId": "arxiv:2607.28362",
+        "title": "ShadowDancer: Teaching Video World Models Any Action by Learning Unified Dynamics Representations from a Video and Its Shadow",
+        "url": "https://arxiv.org/abs/2607.28362",
+        "reasonCode": "generic-action-representation",
+        "reason": "通过影子视频学习跨外观动作表征，为动作接口迁移提供机制线索；没有驾驶数据、车辆动作空间、闭环规划器、交通参与者响应或道路安全结果。"
+      },
+      {
+        "canonicalId": "arxiv:2607.14203",
+        "title": "Instant NuRec: Feed-Forward 3D Gaussian Reconstruction for Driving Scene Simulation",
+        "url": "https://arxiv.org/abs/2607.14203",
+        "reasonCode": "reconstruction-asset-only",
+        "reason": "从驾驶日志快速重建可编辑 3DGS 并评估策略排序，能补充仿真资产证据；但方法不学习未来动力学、动作条件状态转移或反应式交通参与者，不能作为世界模型未来预测的核心证据。"
+      },
+      {
+        "canonicalId": "arxiv:2605.21032",
+        "title": "Towards Physically Consistent 4D Scene Reconstruction for Closed-loop Autonomous Driving Simulation",
+        "url": "https://arxiv.org/abs/2605.21032",
+        "reasonCode": "reconstruction-asset-only",
+        "reason": "改进 4D 场景重建的时空一致性并面向闭环仿真资产，但没有学习动作条件未来、反事实 rollout 或交互动力学；因此只作为几何重建边界，不纳入世界模型核心引用。"
       }
     ],
-    "sourceLimitations": [
-      "Semantic Scholar API 存在匿名限流；发生 HTTP 429 时使用其网页索引继续发现，不把聚合器摘要当作论据。",
-      "OpenAlex 搜索返回面较宽，只用于发现与出版元数据交叉核对；作者机构或出版状态仍以论文和正式页面为准。"
+    "candidateLedger": [
+      {
+        "canonicalId": "arxiv:2105.00636",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/TIV.2024.3398357",
+        "disposition": "included",
+        "queryFamilies": [
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2309.17080",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2309.09777",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型",
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2311.17918",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型",
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2412.19505",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2311.01017",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2311.16038",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2402.16720",
+        "disposition": "included",
+        "queryFamilies": [
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2308.01898",
+        "disposition": "included",
+        "queryFamilies": [
+          "可交互实时闭环仿真器"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2405.17398",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2410.10738",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:26KlsDgwLi",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2406.08481",
+        "disposition": "included",
+        "queryFamilies": [
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.22496",
+        "disposition": "included",
+        "queryFamilies": [
+          "可交互实时闭环仿真器",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2408.00415",
+        "disposition": "included",
+        "queryFamilies": [
+          "可交互实时闭环仿真器"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.12751",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2506.24113",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2412.18607",
+        "disposition": "included",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2605.11550",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2604.01765",
+        "disposition": "included",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型",
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2605.28544",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2605.14696",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "doi:10.1109/LSP.2026.3680426",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.14005",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型",
+          "动作条件与世界动作联合模型",
+          "可交互实时闭环仿真器"
+        ],
+        "occurrences": 4
+      },
+      {
+        "canonicalId": "arxiv:2606.19836",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "可交互实时闭环仿真器",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2606.03159",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "可交互实时闭环仿真器",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2601.01528",
+        "disposition": "included",
+        "queryFamilies": [
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10858",
+        "disposition": "included",
+        "queryFamilies": [
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07196",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.19701",
+        "disposition": "included",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "规划学习与反事实 rollout",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2606.14058",
+        "disposition": "included",
+        "queryFamilies": [
+          "可交互实时闭环仿真器",
+          "规划学习与反事实 rollout",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.23602",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.26452",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.27036",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.28362",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "动作条件与世界动作联合模型",
+          "可交互实时闭环仿真器",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.14203",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.21032",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.26113",
+        "disposition": "deferred",
+        "localPaperId": "anyscene-controllable-driving-scene-generation",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "可交互实时闭环仿真器"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.21172",
+        "disposition": "deferred",
+        "localPaperId": "baddreamer-world-model-backdoor",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "保真度、因果有效性与安全准入"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2411.11921",
+        "disposition": "deferred",
+        "localPaperId": "desire-gs-4d-street-gaussians",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.12987",
+        "disposition": "deferred",
+        "localPaperId": "diffusion-transformer-wam-scene-prediction",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.21993",
+        "disposition": "deferred",
+        "localPaperId": "driving-videos-to-simulatable-scenarios",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "可交互实时闭环仿真器"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.10656",
+        "disposition": "deferred",
+        "localPaperId": "envision4d-feedforward-4dgs",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.17521",
+        "disposition": "deferred",
+        "localPaperId": "geoworldad-geometry-world-action",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "几何、占用和对象级结构世界模型",
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 4
+      },
+      {
+        "canonicalId": "arxiv:2605.24354",
+        "disposition": "deferred",
+        "localPaperId": "sparseworld-sparse-scene-world-model",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2606.28758",
+        "disposition": "deferred",
+        "localPaperId": "x-mind-visual-cot-driving",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测",
+          "动作条件与世界动作联合模型",
+          "规划学习与反事实 rollout"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2606.29097",
+        "disposition": "deferred",
+        "localPaperId": "trafficalign-traffic-scenario-generation",
+        "queryFamilies": [
+          "驾驶视频生成与可控未来预测"
+        ],
+        "occurrences": 1
+      }
     ],
     "qualityChecksApplied": [
       "query-family-alignment",
@@ -1017,63 +1668,68 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "世界模型|world model|video generation|simulation",
+        "executedAt": "2026-08-01",
+        "query": "驾驶视频|driving video|video diffusion|视频扩散|visual future|未来预测|可控驾驶.*(视频|场景)|controllable driving.*(video|scene)|世界模型.*(视频|未来|预测|生成|可控)|world model.*(video|future|prediction|generation|controll)|视频生成.*(驾驶|自动驾驶)|driving.*video generation",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 11,
-        "note": "实际执行 rg -l -i <pattern> content/papers，共原始命中 35 个文件；按方向标签及 revisionOf 归并为 21 篇规范化候选，全部进入引用或带理由的暂缓组。"
+        "note": "实际执行与 queryRuns 相同的 rg -l -i 正则；23 个原始命中文件经 world-models 标签与 revisionOf 归并后为 21 篇规范候选，11 篇进入当前方向核心引用，10 篇以本地方向或跨方向暂缓闭合。acceptedCount=11 与 references[].sourceFamily=local-corpus 精确对账。"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 驾驶视频生成与可控未来预测 几何、占用和对象级结构世界模型 动作条件与世界动作联合模型 可交互实时闭环仿真器 规划学习与反事实 rollout 保真度、因果有效性与安全准入",
+        "executedAt": "2026-08-01",
+        "query": "六个查询族的语义发现结果与规范化 arXiv ID 精确重开",
         "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 10,
+        "limit": 25,
         "acceptedCount": 2,
-        "note": "通过已安装 ARIS arxiv_fetch.py 获取结构化元数据；候选仍逐篇打开一手页面复核。"
+        "note": "使用 2026-08-01 生成的 /tmp/paper-digest-world-*.xml 完成广泛发现，并通过五个 exact-id Atom 批次逐条重开进入台账的外部候选；论断仍回到论文、正式页或项目页。acceptedCount 仅统计 sourceFamily=arxiv 的两条保留引用。"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 official proceedings journal standard",
-        "endpoint": "https://www.google.com/search",
-        "limit": 10,
+        "executedAt": "2026-08-01",
+        "query": "驾驶世界模型正式会议、期刊、OpenReview 与 DOI 记录复核",
+        "endpoint": "https://openaccess.thecvf.com/ ; https://openreview.net/ ; https://doi.org/",
+        "limit": 32,
         "acceptedCount": 18,
-        "note": "限定正式会议、期刊、OpenReview 和标准机构页面核对出版状态与书目信息。"
+        "note": "重新检查正式主链接与出版状态；CVF 正式页面本轮返回 HTTP 200，OpenReview 重定向可达。正式出版入口继续作为主 URL，存在 arXiv 时保留双链接。"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "驾驶世界模型：从生成未来到可准入的闭环证据",
-        "endpoint": "https://www.semanticscholar.org/search",
-        "limit": 3,
+        "status": "limited",
+        "executedAt": "2026-08-01",
+        "query": "autonomous driving world model benchmark action controllability",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+        "limit": 10,
         "acceptedCount": 0,
-        "note": "ARIS API relevance search成功；结果仅用于发现，最终未直接采纳聚合器记录。"
+        "note": "本轮真实调用返回 HTTP 429，因此仅记录受限尝试，不使用聚合器摘要，也不把旧缓存当作 2026-08-01 新结果。"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "驾驶世界模型：从生成未来到可准入的闭环证据",
+        "executedAt": "2026-08-01",
+        "query": "autonomous driving world model planning simulator",
         "endpoint": "https://api.openalex.org/works",
-        "limit": 3,
+        "limit": 10,
         "acceptedCount": 0,
-        "note": "官方API返回HTTP 200；仅用于发现和出版元数据交叉核对，最终论断均回到一手来源。"
+        "note": "官方 API 本轮返回 HTTP 200；结果面较宽，仅用于发现和出版元数据交叉核对，最终没有以 OpenAlex 作为任何核心论断的一手来源。"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "驾驶世界模型：从生成未来到可准入的闭环证据 official project code benchmark",
-        "endpoint": "https://www.google.com/search",
+        "executedAt": "2026-08-01",
+        "query": "驾驶世界模型官方项目、代码与 benchmark 资产复核",
+        "endpoint": "https://github.com/OpenDriveLab/Vista",
         "limit": 10,
         "acceptedCount": 1,
-        "note": "核对官方项目页、代码仓库和基准协议；项目自述不用于升级出版状态或现实安全等级。"
+        "note": "Vista 官方仓库本轮返回 HTTP 200，并复核保留引用中的项目与代码入口；项目自述不用于升级出版状态或现实安全证据等级。"
       }
+    ],
+    "sourceLimitations": [
+      "Semantic Scholar API 本轮真实返回 HTTP 429，记为 limited 且 acceptedCount=0；没有把旧聚合器结果伪装为当前检索。",
+      "OpenAlex 关键词检索结果较宽，只用于发现与出版元数据交叉核对；作者、出版状态和证据结论仍回到一手页面。",
+      "五个外部 queryRuns 的 id_list 是对语义检索后范围筛选候选的当前快照重开，不代表原始宽检索总命中数；原始发现式和证据 XML 路径保存在 retrieval.parameters 中。"
     ]
   }
 }

@@ -540,13 +540,17 @@ test("every direction has a complete narrative and mixed-source reading list", a
   }
 });
 
-test("reference origin and destinations are derived from localPaperId", async () => {
+test("reference origin and destinations are derived from localPaperId, not sourceFamily", async () => {
   const [center, papers] = await Promise.all([getReviewCenter(), getPapers()]);
   const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
+  let hasPrimaryVerifiedLocalReference = false;
 
   for (const direction of center.directions) {
     for (const reference of direction.references) {
       if (reference.localPaperId) {
+        if (reference.sourceFamily !== "local-corpus") {
+          hasPrimaryVerifiedLocalReference = true;
+        }
         const paper = paperMap.get(reference.localPaperId);
         assert.ok(paper, reference.localPaperId);
         assert.equal(reference.origin, "local");
@@ -561,4 +565,6 @@ test("reference origin and destinations are derived from localPaperId", async ()
       }
     }
   }
+
+  assert.equal(hasPrimaryVerifiedLocalReference, true);
 });

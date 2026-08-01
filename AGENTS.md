@@ -303,7 +303,7 @@ Use the URL printed by Astro. Check the homepage, search, digest switching, pape
 - `revisionOf` must point to an original paper, not another revision. Revision papers should not be listed in `content/reported-papers.md`.
 - Duplicate arXiv IDs and normalized duplicate titles are rejected unless handled as a revision.
 - Every tag in `tag` or `tags` must exist in `config/research-interests.json`.
-- New paper reports fail validation if they omit official images or use affiliation placeholders. A small legacy allowlist exists only to avoid rewriting older archived reports.
+- Every paper report, including archived reports and revisions, fails validation if it omits an official image or uses an affiliation placeholder; there is no legacy exception list.
 - Do not place drafts or explanatory Markdown files inside `content/digests/` or `content/papers/`; every `.md` file there is parsed as production content.
 - The Worker accepts `digestId` values in `YYYY-MM-DD` form, with optional lowercase suffixes such as `YYYY-MM-DD-gpt`, and checks that the referenced `content/digests/<digestId>.md` file exists before reading or writing comments.
 - Files like `src/pages/assets/data.js.js` have double extensions because they are Astro endpoint source files that output asset routes. Renaming them can break script paths in `src/pages/index.astro`.

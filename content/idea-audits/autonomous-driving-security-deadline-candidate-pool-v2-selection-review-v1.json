@@ -1,0 +1,58 @@
+{
+  "selectionAgentId": "019fbd9e-b9db-75e2-885c-47def0483fd6",
+  "selectedAt": "2026-08-01T14:04:28Z",
+  "directionId": "autonomous-driving-security",
+  "candidatePoolPath": "content/idea-audits/autonomous-driving-security-deadline-candidate-pool-v2.json",
+  "selectedCandidateIds": [
+    "deadline-safety-attribution-free-admission"
+  ],
+  "candidateDecisions": [
+    {
+      "candidateId": "deadline-safety-attribution-free-admission",
+      "decision": "shortlist",
+      "reason": "Denial of Deadline 已证明有界普通租户可用合法请求突发拖垮共享慢路径，但只追到时延与 HOTA；RAJOMON、Clockwork 和 REEF 覆盖通用过载、调度与隔离，EnergyShield、TURBO 和 ISO 23793-1 分别覆盖状态相关安全等待、云边效用回退与 MRM 执行。该候选不以这些组件本身主张新意，而把认证主体攻击预算、跨租户影响上界、last-safe-decision 准入和配对车辆 excess hazard 定义为同一安全合同。固定身份数、算力与良性效用后，用同前缀闭环交叉比较严格分区、token bucket、EDF、timeout-local fallback 与分级 MRM，并加入良性突发和自适应攻击，可识别安全合同是否提供超出组件拼接的车辆级收益；若强基线等价，候选可被直接推翻。"
+    },
+    {
+      "candidateId": "deadline-aware-edf-driving-scheduler",
+      "decision": "reject",
+      "reason": "Clockwork、REEF、EdgeServing、D3 和 SMEC 已直接覆盖 deadline、优先级、抢占与 SLO 调度。给 EDF 增加车辆状态权重仍是成熟调度器的应用变体，既不约束攻击主体对共享资源的最大贡献，也不建立攻击预算到车辆风险的独立对象。即使实验显示 p99 或 HOTA 改善，也无法排除收益只是普通优先级调度，因此该方案应作为主候选的强基线，而不是独立安全候选。"
+    },
+    {
+      "candidateId": "per-tenant-token-bucket-cloud-defense",
+      "decision": "reject",
+      "reason": "RAJOMON、SMEC、REEF 与严格资源分区已经覆盖按主体准入、限流、load shedding 和隔离；在身份可认证且主体数有界时，token bucket 正是最直接的功能等价防线。只比较 goodput、p99 或公平性属于系统过载控制，即使加入车辆回放也不能产生新的威胁模型。它必须在相同良性资源成本下作为主候选的否决基线，用来检验 last-safe-decision 与分级降级是否真正增加车辆级价值。"
+    },
+    {
+      "candidateId": "attack-origin-classifier-before-admission",
+      "decision": "reject",
+      "reason": "Denial of Deadline 的攻击者使用合法请求内容与时序，复杂良性请求可呈现同样的负载形状，部署时没有独立可观测的恶意来源真值。若分类器只看速率、计算量和突发形状，它在功能上退化为限流；若依赖未来碰撞、攻击身份标签或受害者结果，则最小实验使用了部署不可见信息。无法把收益归因于攻击识别而非一般流量整形，威胁模型与实验识别性均不成立。"
+    },
+    {
+      "candidateId": "cooperative-feature-latency-defense-transfer",
+      "decision": "reject",
+      "reason": "CP-FREEZER 的攻击权限是篡改 V2V 协作特征以放大计算，LRCP 的对象是异步 BEV 特征补偿；二者都不同于认证普通租户仅操纵共享云队列中的合法请求。直接迁移会同时改变特征鲁棒性、融合机制和资源隔离，无法识别车辆风险下降来自哪一项干预，也命中成熟方法迁移而非新问题的硬停止条件。其决定性变量属于 cooperative-autonomous-driving，最多作为跨方向压力测试，不应进入安全方向 shortlist。"
+    },
+    {
+      "candidateId": "timeout-local-fallback-utility-router",
+      "decision": "reject",
+      "reason": "TURBO 已联合优化云端模型、带宽和控制效用，并持续并行运行车端模型作为 fallback；EnergyShield 还给出了状态相关的安全等待时间和 just-in-time fail-safe。超时即切本地、按车辆效用决定云调用与这些机制功能等价，而且不限制攻击租户对其他车辆共享队列的影响。该方案适合作为云边部署和主候选的比较组，单独研究只会重复既有路由与回退。"
+    },
+    {
+      "candidateId": "deadline-only-mrm-trigger",
+      "decision": "reject",
+      "reason": "EnergyShield、D3、Zhuyi、Task-Aware Risk 与 SPARQ 已覆盖安全 deadline、任务相关风险和恢复触发，ISO 23793-1 已规范基础 MRM 类型与执行测试。固定 deadline miss 直接触发 MRM 无法区分车端路径仍安全与已经越过最后安全决策点，也可能把风险转化为后车冲突、不必要停车和路线失败。缺少主体影响约束与攻击增量 estimand 后，它只是已有安全回退组件的拼接。"
+    },
+    {
+      "candidateId": "hota-to-collision-risk-calibration",
+      "decision": "reject",
+      "reason": "Denial of Deadline 的 Argoverse-HD 回放提供 HOTA 退化，却没有 planner state、车辆动作、交互响应和同初态无攻击分支；因此 HOTA 到碰撞的映射不能从该数据中识别。Task-Aware Risk 已说明相同感知误差对不同运动计划具有不同风险，单一平均感知指标不足以替代规划状态。迁移到 CARLA 会同时改变场景、感知和控制分布，所得工作属于 autonomous-driving-testing 的 oracle 校准，而不是安全防御候选。"
+    },
+    {
+      "candidateId": "sybil-robust-unbounded-principal-isolation",
+      "decision": "reject",
+      "reason": "按认证主体保留资源和分配配额只有在主体数受限时才能给出跨租户影响界；允许攻击者无限创建 Sybil 身份会直接破坏该机制前提。有限数量身份的 CARLA 或云队列实验不可能验证对无限身份的安全上界，而加入身份成本、发行控制或硬主体上限后又退化为主候选的 bounded-principal 威胁模型。该主张不是工程资产不足，而是威胁模型本身不可证伪且自相矛盾。"
+    }
+  ],
+  "crossDirectionFinding": "cooperative-feature-latency-defense-transfer 的决定性干预是协作特征及异步融合，应归 cooperative-autonomous-driving；hota-to-collision-risk-calibration 的决定性产物是感知指标到车辆后果的评测 oracle，应归 autonomous-driving-testing；deadline-aware EDF、token bucket 和 timeout-local fallback 分别属于系统调度或 agentic 部署机制，只作为安全主候选基线。保留项的唯一归属依据是主动认证租户、共享资源攻击预算与车辆安全准入屏障的交互，而非协同感知、一般云边路由或 MRM 单组件。",
+  "candidatePoolSnapshotFingerprint": "aaea5eb0a360e12fd9897a704104f1750f3e645c17b755166113da0d3f2878af"
+}

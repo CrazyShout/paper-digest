@@ -1,0 +1,834 @@
+{
+  "reviewerAgentId": "019fbd90-9c6a-7d33-a571-e3e032eb204b",
+  "reviewerRole": "pool-reviewer/candidate-generation",
+  "searchedAt": "2026-08-01T13:49:19Z",
+  "reviewMode": "unscored-candidate-generation-and-mechanical-partition",
+  "scope": {
+    "direction": "autonomous-driving-security",
+    "cutoffDate": "2026-08-01",
+    "baselineReview": "content/reviews/autonomous-driving-security.json",
+    "triggerEvidence": "content/papers/denial-of-deadline-inference.md",
+    "workflowContract": "config/idea-exploration-workflow.json",
+    "routingContract": "content/idea-audits/cross-direction-candidate-routing-v1.json",
+    "retrievalAgent": "019fbd76-ae5b-7350-b825-ec191e7ff0ae",
+    "candidateGenerationAgent": "019fbd90-9c6a-7d33-a571-e3e032eb204b",
+    "reviewedLocalPaperReports": [
+      "denial-of-deadline-inference",
+      "bench2drive-robust-deployment-perturbations"
+    ],
+    "blindReviewConsumed": false,
+    "scoreProduced": false,
+    "taskBoundary": "本文件只把 Godel 已完成的一手检索证据归并为候选，并按用户指定的功能等价、直接竞品、跨方向、威胁模型和实验可识别性规则机械分区；不执行独立筛选，不读取盲评，不产生评分，不写 dossier 或 blind review。",
+    "threatModel": "攻击者是可认证的普通共享边缘或云慢路径租户，只控制自身合法请求的内容与到达时序，在固定身份数和计算或请求预算内制造突发；攻击者不能篡改受害车辆输入、模型、结果、网络设备或基础设施控制面。",
+    "excludedThreatModels": [
+      "像素、LiDAR 点云、BEV 特征或 detector confidence 操纵",
+      "未经认证且可无限扩张的 Sybil 身份",
+      "基础设施管理员或云控制面被攻陷",
+      "把自然拥塞、设备故障或随机延迟直接称为攻击"
+    ],
+    "requiredCausalBoundary": "攻击预算与主体身份 -> 共享队列和慢路径完成时间 -> 受害车辆 last-safe-decision margin -> 快慢路径准入 -> ego-only、限速或 MRM -> 碰撞、TTC、违规、路线完成和不必要 MRM。",
+    "claimBoundary": "不得声称首次自动驾驶时延攻击、首次协同感知计算放大、首次 deadline scheduler、首次安全回退、首次闭环碰撞后果或首次 MRM；允许检验的窄差异是主动共享资源攻击预算到车辆风险约束的无归因安全合同。"
+  },
+  "searchAudit": {
+    "cutoffDate": "2026-08-01",
+    "queryRuns": [
+      {
+        "familyId": "local-deadline-and-deployment-evidence",
+        "query": "rg -l -i 'deadline|latency|时延|截止时间|cloud|edge|queue|overload|fallback|MRM' content/papers，并按 paper id、arXiv/DOI 与 revisionOf 归并",
+        "source": "local-corpus",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 2,
+        "rawHitCount": 16,
+        "scopeRationale": "以本库定位已详细核验且直接约束主动时限攻击或非恶意部署时延的报告；只保留 Denial of Deadline 和 Bench2Drive-Robust 进入本候选池，其余命中用于背景筛除。",
+        "screeningNote": "16 个文件命中宽泛词，14 个因没有共享资源主动攻击、车辆时限边界或可用部署扰动对照而筛出；resultCount 只记进入跨源证据归并的两篇本地报告。",
+        "canonicalIdSample": [
+          "arxiv:2607.24692",
+          "arxiv:2605.18059"
+        ],
+        "retrievalMetadata": {
+          "provider": "ripgrep local corpus",
+          "root": "content/papers",
+          "deduplication": "paper id, canonical arXiv or DOI, revisionOf",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "active-resource-and-deadline-attacks",
+        "query": "autonomous driving active resource exhaustion inference deadline attack ordinary requests burst shared cloud queue CP-FREEZER denial of deadline vehicular DoS",
+        "source": "arxiv-and-publisher",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 3,
+        "scopeRationale": "确认主动对手是否能通过普通请求、协同特征或验证工作量放大计算时延，并区分共享云队列、V2V 特征和签名验证三种不同攻击面。",
+        "canonicalIdSample": [
+          "arxiv:2607.24692",
+          "doi:10.1609/aaai.v40i2.37082",
+          "doi:10.1016/j.cose.2025.104469"
+        ],
+        "retrievalMetadata": {
+          "provider": "primary arXiv and publisher pages",
+          "screeningUnit": "paper with explicit attacker access, resource target and measured latency or availability effect",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "predictable-inference-and-gpu-isolation",
+        "query": "predictable DNN inference serving deadline GPU preemption multi-tenant isolation Clockwork REEF EdgeServing",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 3,
+        "scopeRationale": "核验通用推理可预测性、GPU 抢占和 deadline-aware serving 是否已经占据调度与隔离机制，防止把成熟 serving 组件包装成驾驶安全新意。",
+        "canonicalIdSample": [
+          "usenix:osdi20:clockwork",
+          "usenix:osdi22:reef",
+          "arxiv:2605.05527"
+        ],
+        "retrievalMetadata": {
+          "provider": "official USENIX proceedings and arXiv",
+          "screeningUnit": "system with a reproducible scheduling or isolation mechanism",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "overload-admission-and-load-shedding",
+        "query": "microservice overload control admission rate limiting load shedding SLO RAJOMON SMEC adaptive burst",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 2,
+        "scopeRationale": "检查通用过载保护、准入、限流和 load shedding 的直接功能覆盖；这些方法可作为强基线，但若只优化 goodput、p99 或 SLO，不能替代车辆风险合同。",
+        "canonicalIdSample": [
+          "usenix:nsdi25:rajomon",
+          "usenix:nsdi26:smec"
+        ],
+        "retrievalMetadata": {
+          "provider": "official USENIX proceedings",
+          "screeningUnit": "overload-control system with explicit admission or shedding policy",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "vehicle-deadline-fallback-and-mrm",
+        "query": "autonomous vehicle perception deadline safety fallback minimum risk manoeuvre EnergyShield D3 Zhuyi ISO 23793-1",
+        "source": "arxiv-and-publisher",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 4,
+        "scopeRationale": "核验状态相关安全期限、任务优先级、处理速率估计和 MRM 的已有边界；候选不能把安全 deadline 或 MRM 本身作为新贡献。",
+        "canonicalIdSample": [
+          "arxiv:2302.06572",
+          "doi:10.1145/3492321.3519576",
+          "nvidia:zhuyi:2022",
+          "iso:23793-1:2024"
+        ],
+        "retrievalMetadata": {
+          "provider": "arXiv, ACM DOI, official NVIDIA research page and ISO catalogue",
+          "screeningUnit": "primary source defining a vehicle deadline, fail-safe policy, processing-rate safety link or MRM boundary",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "cloud-assisted-driving-utility-and-fallback",
+        "query": "cloud assisted autonomous driving speculative execution model bandwidth utility scheduling local fallback TURBO",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 2,
+        "scopeRationale": "确认云辅助驾驶中的推测执行、模型与带宽联合效用以及车端并行回退已被覆盖；本池只保留主动共享资源攻击到车辆风险约束的残差。",
+        "canonicalIdSample": [
+          "doi:10.1109/iros55552.2023.10341821",
+          "doi:10.4230/oasics.nines.2026.18"
+        ],
+        "retrievalMetadata": {
+          "provider": "IEEE and Dagstuhl official proceedings",
+          "screeningUnit": "cloud-assisted driving system with explicit scheduling, utility or local fallback",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "planning-risk-and-safety-recovery",
+        "query": "autonomous driving perception failure planning risk safety recovery task-aware risk SPARQ minimum risk",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 2,
+        "scopeRationale": "核验感知失败到规划风险和恢复计划的直接先例；候选不能把 task-aware risk monitor 或安全恢复直接拼接成新意。",
+        "canonicalIdSample": [
+          "doi:10.15607/rss.2023.xix.100",
+          "doi:10.1109/icra55743.2025.11128400"
+        ],
+        "retrievalMetadata": {
+          "provider": "RSS and IEEE official proceedings",
+          "screeningUnit": "primary work linking perception failure to planning consequence or recovery",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      },
+      {
+        "familyId": "cooperative-latency-and-real-closed-loop",
+        "query": "cooperative perception active computation delay asynchronous feature fusion real closed loop LRCP CooperDrive CP-FREEZER",
+        "source": "arxiv-and-publisher",
+        "executedAt": "2026-08-01T12:40:00Z",
+        "resultCount": 3,
+        "scopeRationale": "区分主动协同特征计算放大、静态异步补偿与真实闭环协同收益；多车通信和融合机制归协同方向，本安全池只把它们作为碰撞边界。",
+        "canonicalIdSample": [
+          "doi:10.1609/aaai.v40i2.37082",
+          "cvf:wacv2025:lrcp",
+          "arxiv:2604.14454"
+        ],
+        "retrievalMetadata": {
+          "provider": "AAAI, CVF and arXiv primary pages",
+          "screeningUnit": "cooperative perception work with explicit attack, latency compensation or closed-loop driving evidence",
+          "retrievalAgentId": "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+        }
+      }
+    ],
+    "deduplication": {
+      "key": "优先正式 DOI 或 proceedings ID，其次 arXiv ID，再次标准号；正式版与 arXiv 合并为一条引用并在 links 中同时保留。",
+      "localExternalSeparation": "本库报告以 sourceFamily=local-corpus 和 localPaperId 标记；外部记录只使用一手 arXiv、正式出版页、标准页或作者官方项目。",
+      "candidatePolicy": "先按攻击权限、保护结果、决定性实验和 primaryDirection 去除功能等价项；同一 scheduler、fallback 或 risk monitor 的换名组合不得成为独立候选。"
+    },
+    "referenceCounts": {
+      "total": 19,
+      "localCorpus": 2,
+      "externalPrimary": 17,
+      "recentSince2024": 12,
+      "formalOrStandardPrimary": 13
+    },
+    "latestDelta": "Denial of Deadline 把普通租户突发请求造成的共享云慢路径失效提升为主动攻击面，CP-FREEZER 又证明协同感知计算时延可被放大；但现有 serving、隔离、过载控制、云辅助驾驶、车辆 deadline、规划风险与 MRM 工作分别覆盖各组件，尚未形成主动共享资源攻击预算到配对车辆风险、无归因隔离和分级 MRM 的统一可证伪合同。",
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "success",
+        "acceptedCount": 2,
+        "result": "宽泛 rg 命中 16 个文件，按标签、paper id、canonical ID 和 revisionOf 筛成 2 篇直接本地证据。"
+      },
+      {
+        "sourceFamily": "arxiv",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "success",
+        "acceptedCount": 3,
+        "result": "用于核验仍无正式页面的 EdgeServing、EnergyShield 与 CooperDrive；有正式版的记录不计入本来源。"
+      },
+      {
+        "sourceFamily": "publisher-and-venue",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "success",
+        "acceptedCount": 13,
+        "result": "核验 AAAI、USENIX、ACM、IEEE、Dagstuhl、RSS、CVF、Computer and Security 及 ISO 一手页面；正式版作为主链接并保留可用 arXiv。"
+      },
+      {
+        "sourceFamily": "semantic-scholar",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "discovery-only",
+        "acceptedCount": 0,
+        "result": "只作候选发现与别名交叉检查，不作为最终一手证据来源。"
+      },
+      {
+        "sourceFamily": "openalex",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "discovery-only",
+        "acceptedCount": 0,
+        "result": "只作 DOI、venue 与 arXiv 别名发现，不承担主张核验。"
+      },
+      {
+        "sourceFamily": "official-project",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "success",
+        "acceptedCount": 1,
+        "result": "核验 Zhuyi 的 NVIDIA 官方研究页，并检查 TURBO、CooperDrive 等作者项目的能力边界。"
+      },
+      {
+        "sourceFamily": "official-code-and-data",
+        "attempted": true,
+        "attemptedAt": "2026-08-01T12:40:00Z",
+        "status": "success-with-gaps",
+        "acceptedCount": 0,
+        "result": "固定 CARLA 0.9.15 与 OpenCOOD commit，并检查 EI-Drive、REEF、TURBO、EnergyShield；截至检索日未发现 Denial of Deadline 或 CP-FREEZER 官方代码，故不宣称其可执行。"
+      }
+    ]
+  },
+  "verifiedReferences": [
+    {
+      "canonicalId": "arxiv:2607.24692",
+      "title": "Denial of Deadline: Network-Driven Accuracy Collapse in Distributed Inference Pipelines",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "denial-of-deadline-inference",
+      "url": "https://arxiv.org/abs/2607.24692",
+      "queryFamilyIds": [
+        "local-deadline-and-deployment-evidence",
+        "active-resource-and-deadline-attacks"
+      ],
+      "verifiedUse": "约 4,000 个普通突发请求把良性慢路径 p99 从约 92 ms 推到 2 s，并在 250 ms 合并截止时间下造成平均 7.0 HOTA 损失，直接建立共享云慢路径主动时限攻击起点。",
+      "claimBoundary": "网络与推理部分是仿真，应用部分是 Argoverse-HD 视频重放；没有规划、控制、MRM 或防御，且未发现官方代码仓库。"
+    },
+    {
+      "canonicalId": "arxiv:2605.18059",
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "bench2drive-robust-deployment-perturbations",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "queryFamilyIds": [
+        "local-deadline-and-deployment-evidence"
+      ],
+      "verifiedUse": "提供动作延迟、状态误差、帧丢失等无主动对手的 CARLA 闭环对照，可用于区分攻击增量风险与一般部署扰动。",
+      "claimBoundary": "注入接口只证明可测试性，不证明共享云攻击自然发生。"
+    },
+    {
+      "canonicalId": "doi:10.1609/aaai.v40i2.37082",
+      "title": "CP-FREEZER: Computation-Latency Amplification against Cooperative Perception",
+      "year": 2026,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1609/aaai.v40i2.37082",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2508.01062"
+        }
+      ],
+      "queryFamilyIds": [
+        "active-resource-and-deadline-attacks",
+        "cooperative-latency-and-real-closed-loop"
+      ],
+      "verifiedUse": "通过被篡改的 V2V 特征把协同感知计算时延放大 90 倍以上，证明自动驾驶计算时延攻击并非只存在于云队列。",
+      "claimBoundary": "攻击需要操纵协同特征，威胁面不同于普通认证租户请求；没有共享云隔离到 MRM 的闭环防御，且未发现官方代码。"
+    },
+    {
+      "canonicalId": "usenix:osdi20:clockwork",
+      "title": "Clockwork: Predictable and Efficient Deep Learning Serving",
+      "year": 2020,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://www.usenix.org/conference/osdi20/presentation/gujarati",
+      "queryFamilyIds": [
+        "predictable-inference-and-gpu-isolation"
+      ],
+      "verifiedUse": "直接覆盖可预测推理和 deadline 调度，禁止把一般可预测 serving 当作本候选的新意。",
+      "claimBoundary": "目标是系统可预测性，不建模主动驾驶攻击预算、车辆风险或 MRM。"
+    },
+    {
+      "canonicalId": "usenix:osdi22:reef",
+      "title": "REEF: Fast and Efficient Inference for Deep Neural Networks in Multi-Tenant GPUs",
+      "year": 2022,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://www.usenix.org/conference/osdi22/presentation/han",
+      "queryFamilyIds": [
+        "predictable-inference-and-gpu-isolation"
+      ],
+      "verifiedUse": "提供多租户 GPU 抢占与优先级的直接系统基线，覆盖通用资源隔离组件。",
+      "claimBoundary": "不含主动攻击预算、车辆 last-safe-decision 或安全降级代价。"
+    },
+    {
+      "canonicalId": "arxiv:2605.05527",
+      "title": "EdgeServing: Deadline-Aware Inference Serving at the Edge",
+      "year": 2026,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2605.05527",
+      "queryFamilyIds": [
+        "predictable-inference-and-gpu-isolation"
+      ],
+      "verifiedUse": "说明 deadline-aware edge serving 已是直接拥挤的系统空间。",
+      "claimBoundary": "优化服务目标，不把 deadline miss 映射到车辆风险或主动攻击。"
+    },
+    {
+      "canonicalId": "usenix:nsdi25:rajomon",
+      "title": "RAJOMON: Overload Protection for Microservice Applications",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/xing",
+      "queryFamilyIds": [
+        "overload-admission-and-load-shedding"
+      ],
+      "verifiedUse": "覆盖通用过载准入、限流和负载保护，应作为普通 token bucket 与自适应 admission 的强系统竞品。",
+      "claimBoundary": "优化 goodput、尾时延或 SLO，不约束受害车辆的配对增量风险。"
+    },
+    {
+      "canonicalId": "usenix:nsdi26:smec",
+      "title": "SMEC: SLO-Aware Scheduling for Mobile Edge Computing",
+      "year": 2026,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://www.usenix.org/conference/nsdi26/presentation/zhang-xiao",
+      "queryFamilyIds": [
+        "overload-admission-and-load-shedding"
+      ],
+      "verifiedUse": "覆盖 RAN-edge SLO 调度和 load shedding，直接限制把跨层资源调度作为候选新意。",
+      "claimBoundary": "没有主动攻击者、车辆风险账本或分级 MRM。"
+    },
+    {
+      "canonicalId": "doi:10.1016/j.cose.2025.104469",
+      "title": "DoS-Resilient Vehicular Communication",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1016/j.cose.2025.104469",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2505.22162"
+        }
+      ],
+      "queryFamilyIds": [
+        "active-resource-and-deadline-attacks"
+      ],
+      "verifiedUse": "覆盖车辆通信中的验证资源耗尽和优先验证，证明主动资源 DoS 与主体优先级并非空白。",
+      "claimBoundary": "资源对象是消息签名验证，不是云端 DNN 慢路径或车辆降级决策。"
+    },
+    {
+      "canonicalId": "arxiv:2302.06572",
+      "title": "EnergyShield: Provably-Safe Offloading of Neural Network Controllers",
+      "year": 2023,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2302.06572",
+      "queryFamilyIds": [
+        "vehicle-deadline-fallback-and-mrm"
+      ],
+      "verifiedUse": "提供状态相关安全期限与车端 fail-safe 基线，覆盖 timeout 后安全回退的重要组件。",
+      "claimBoundary": "没有恶意共享租户、跨租户隔离或自适应攻击。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3492321.3519576",
+      "title": "D3: Deadline-Driven Scheduling for Autonomous Driving Systems",
+      "year": 2022,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1145/3492321.3519576",
+      "queryFamilyIds": [
+        "vehicle-deadline-fallback-and-mrm"
+      ],
+      "verifiedUse": "覆盖驾驶任务优先级与 deadline 驱动调度，禁止把安全任务排程本身作为贡献。",
+      "claimBoundary": "不处理主动共享资源攻击或攻击增量车辆风险。"
+    },
+    {
+      "canonicalId": "nvidia:zhuyi:2022",
+      "title": "Zhuyi: Perception Processing Rate Estimation for Safety in Autonomous Vehicles",
+      "year": 2022,
+      "sourceFamily": "official-project",
+      "url": "https://research.nvidia.com/publication/2022-07_zhuyi-perception-processing-rate-estimation-safety-autonomous-vehicles",
+      "queryFamilyIds": [
+        "vehicle-deadline-fallback-and-mrm"
+      ],
+      "verifiedUse": "把车辆状态与安全感知处理速率联系起来，是 last-safe-decision margin 的直接安全背景。",
+      "claimBoundary": "没有攻击者、共享资源隔离或 MRM 触发合同。"
+    },
+    {
+      "canonicalId": "doi:10.1109/iros55552.2023.10341821",
+      "title": "Cloud-Assisted Autonomous Driving with Speculative Execution and Utility-Aware Scheduling",
+      "year": 2023,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1109/IROS55552.2023.10341821",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2308.03204"
+        }
+      ],
+      "queryFamilyIds": [
+        "cloud-assisted-driving-utility-and-fallback"
+      ],
+      "verifiedUse": "覆盖云辅助驾驶的推测执行、模型与带宽联合效用，直接限制一般效用调度主张。",
+      "claimBoundary": "没有主动共享资源攻击和车辆级配对风险合同。"
+    },
+    {
+      "canonicalId": "doi:10.4230/oasics.nines.2026.18",
+      "title": "TURBO: Utility-Aware Cloud-Assisted Autonomous Driving",
+      "year": 2026,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://drops.dagstuhl.de/entities/document/10.4230/OASIcs.NINeS.2026.18",
+      "queryFamilyIds": [
+        "cloud-assisted-driving-utility-and-fallback"
+      ],
+      "verifiedUse": "覆盖车端并行回退与云端效用选择，是 timeout-local fallback 的直接竞品。",
+      "claimBoundary": "公开评估无法在回放中测量动作、碰撞或失接管，也没有攻击者模型。"
+    },
+    {
+      "canonicalId": "doi:10.15607/rss.2023.xix.100",
+      "title": "Task-Aware Risk Estimation of Perception Failures for Autonomous Vehicles",
+      "year": 2023,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.15607/RSS.2023.XIX.100",
+      "queryFamilyIds": [
+        "planning-risk-and-safety-recovery"
+      ],
+      "verifiedUse": "覆盖感知失败到 motion-plan risk 和安全动作的通用路由，不能被重新包装成攻击特异贡献。",
+      "claimBoundary": "输入是感知失败，不处理共享资源攻击预算和跨租户隔离。"
+    },
+    {
+      "canonicalId": "doi:10.1109/icra55743.2025.11128400",
+      "title": "SPARQ: Planning-Aware Safety Recovery after Perception Failures",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1109/ICRA55743.2025.11128400",
+      "queryFamilyIds": [
+        "planning-risk-and-safety-recovery"
+      ],
+      "verifiedUse": "覆盖规划风险监控和安全恢复计划，应作为分级降级控制的直接基线。",
+      "claimBoundary": "不处理恶意共享租户、攻击影响上界或资源隔离。"
+    },
+    {
+      "canonicalId": "cvf:wacv2025:lrcp",
+      "title": "Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+      "links": [
+        {
+          "label": "Official code",
+          "url": "https://github.com/JesseWong333/LRCP"
+        }
+      ],
+      "queryFamilyIds": [
+        "cooperative-latency-and-real-closed-loop"
+      ],
+      "verifiedUse": "用历史 BEV 与运动补偿处理最高 500 ms 的异步协同特征，直接覆盖静态 latency compensation。",
+      "claimBoundary": "不处理主动突发、共享云资源争夺或自适应攻击。"
+    },
+    {
+      "canonicalId": "arxiv:2604.14454",
+      "title": "CooperDrive: Enhancing Driving Decisions Through Cooperative Perception",
+      "year": 2026,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2604.14454",
+      "links": [
+        {
+          "label": "Official project",
+          "url": "https://darrenqu.github.io/CooperDrive/"
+        }
+      ],
+      "queryFamilyIds": [
+        "cooperative-latency-and-real-closed-loop"
+      ],
+      "verifiedUse": "提供及时协同感知对真实闭环驾驶 TTC 和决策的现实锚点，说明车辆后果必须超越感知精度。",
+      "claimBoundary": "不研究主动共享资源攻击、云队列隔离或 MRM。"
+    },
+    {
+      "canonicalId": "iso:23793-1:2024",
+      "title": "ISO 23793-1:2024 Intelligent transport systems - Minimal risk manoeuvre - Part 1",
+      "year": 2024,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://www.iso.org/standard/81711.html",
+      "queryFamilyIds": [
+        "vehicle-deadline-fallback-and-mrm"
+      ],
+      "verifiedUse": "规范 MRM 执行边界，为 ego-only、限速和 MRM 的分级降级提供标准语境。",
+      "claimBoundary": "标准明确不覆盖 ADS 故障检测以及何时启动 MRM，不能替代攻击触发逻辑和闭环证据。"
+    }
+  ],
+  "assetChecks": [
+    {
+      "assetId": "carla-0.9.15",
+      "type": "official-simulator-code",
+      "url": "https://github.com/carla-simulator/carla/tree/0.9.15",
+      "version": "0.9.15",
+      "availability": "官方固定 release tag，可作为同前缀闭环、攻击与无攻击分支、ego-only 和分级 MRM 的基础执行层。",
+      "boundary": "本资产不提供共享云慢路径、租户身份、攻击流量或 last-safe-decision 证书，均需独立实现。"
+    },
+    {
+      "assetId": "opencood-fixed-commit",
+      "type": "official-cooperative-perception-code",
+      "url": "https://github.com/DerrickXuNu/OpenCOOD/tree/31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+      "fixedCommit": "31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+      "availability": "官方固定 commit，提供 OpenCOOD 协同感知数据与模型入口，可连接 OPV2V、V2X-Sim 等资产。",
+      "boundary": "不提供主动云队列攻击、跨租户隔离或车辆 MRM；存在仓库不等于候选端到端可执行。"
+    },
+    {
+      "assetId": "ei-drive-current-main",
+      "type": "official-closed-loop-framework",
+      "url": "https://github.com/ucd-dare/EI-Drive",
+      "availability": "官方仓库可用于 CARLA 中的协同驾驶和闭环接口探索；本轮未固定 commit，因此不能作为冻结实验版本。",
+      "boundary": "进入 dossier 前必须锁定 commit、许可证、场景和可重放入口。"
+    },
+    {
+      "assetId": "reef-osdi22-artifact",
+      "type": "official-systems-artifact",
+      "url": "https://github.com/SJTU-IPADS/reef-artifacts/tree/osdi22-ae",
+      "availability": "官方 OSDI artifact 分支提供多租户 GPU 抢占和调度基线入口。",
+      "boundary": "分支名不是不可变 commit；后续 dossier 必须固定对象哈希，且该资产没有车辆安全逻辑。"
+    },
+    {
+      "assetId": "turbo-official-code",
+      "type": "official-cloud-driving-code",
+      "url": "https://github.com/NetSys/turbo",
+      "availability": "作者官方仓库提供 TURBO 云辅助驾驶基线入口。",
+      "boundary": "本轮未固定 commit；其公开评估不提供碰撞或车辆动作闭环。"
+    },
+    {
+      "assetId": "energyshield-official-code",
+      "type": "official-safety-fallback-code",
+      "url": "https://github.com/MohanadOdema/EnergyShield",
+      "availability": "作者官方仓库提供状态相关 deadline 与安全回退基线。",
+      "boundary": "本轮未固定 commit；不包含主动共享资源攻击或跨租户隔离。"
+    },
+    {
+      "assetId": "denial-of-deadline-code-status",
+      "type": "primary-paper-code-status",
+      "url": "https://arxiv.org/abs/2607.24692",
+      "availability": "截至检索日，Godel 未发现作者官方可执行代码或数据仓库。",
+      "boundary": "不得把论文机制图和实验描述写成已有代码；候选需自行实现队列与攻击流量。"
+    },
+    {
+      "assetId": "cp-freezer-code-status",
+      "type": "primary-paper-code-status",
+      "url": "https://doi.org/10.1609/aaai.v40i2.37082",
+      "availability": "截至检索日，Godel 未发现作者官方可执行代码仓库。",
+      "boundary": "只能作为威胁模型与结果边界，不能声称可直接复现其攻击。"
+    }
+  ],
+  "candidateLedger": [
+    {
+      "candidateId": "deadline-safety-attribution-free-admission",
+      "canonicalClaim": "在不分类或归因攻击者的条件下，以受认证主体的最小资源保留限制跨租户影响，再依据受害车辆 last-safe-decision margin 决定慢路径准入，并在证书失效前执行 ego-only、限速和 MRM 分级降级，可在相同算力、攻击预算和良性效用下，比通用 EDF、限流、严格隔离和超时本地回退更低地控制攻击增量车辆风险与不必要 MRM。",
+      "sourceShard": "active-resource-and-deadline-attacks",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "shortlist",
+      "checks": {
+        "threatModelRealizability": "Denial of Deadline 已实例化普通租户合法突发与共享慢路径；候选进一步要求固定认证主体数、请求或计算预算，并排除像素、点云和特征操纵。",
+        "closestWork": "Denial of Deadline、CP-FREEZER、Clockwork、REEF、RAJOMON、SMEC、EnergyShield、TURBO、Task-Aware Risk、SPARQ 与 ISO 23793-1 分别覆盖攻击起点或组件，但未覆盖同一主动共享资源攻击到车辆风险合同。",
+        "functionalEquivalence": "新意不在 scheduler、token bucket、fallback 或 MRM 单组件，而在攻击预算、主体隔离、车辆最后安全决策余量和配对增量风险的联合约束；后续独立筛选仍需判断该组合是否只是系统拼接。",
+        "attackSpecificity": "必须比较主动突发、相同资源的良性过载、随机到达与 no-attack 同前缀分支，主 estimand 为固定预算下的配对 excess hazard。",
+        "identifiableMinimumExperiment": "在 CARLA/EI-Drive 固定一个快路径和一个共享慢路径，只攻击队列而不改输入；交叉 FCFS/EDF、token bucket、严格分区、timeout-local fallback 与候选合同，报告碰撞、TTC、违规、路线完成、不必要 MRM、后车风险及 p99/HOTA 辅助指标。",
+        "adaptiveAttack": "攻击者应了解准入、deadline 和 MRM 规则并优化突发相位；若只用固定高负载，不能支持对抗性防御主张。",
+        "assetBoundary": "CARLA 0.9.15 与 OpenCOOD 有固定资产；共享云服务、主体配额、last-safe-decision 证书、分级 MRM 和配对风险账本必须自行实现。",
+        "crossDirectionOwnership": "决定性变量是主动攻击者与安全准入屏障的交互，primaryDirection 为 security；协同融合细节只作为执行载体。",
+        "hardFailure": "若严格分区或普通 token bucket 在同等良性成本下达到相同或更低车辆风险，或改进只存在于 p99/HOTA 而车辆指标不变，则候选被功能等价基线否决。"
+      }
+    },
+    {
+      "candidateId": "deadline-aware-edf-driving-scheduler",
+      "canonicalClaim": "给云辅助驾驶慢路径增加车辆状态权重的 EDF 调度即可抵抗突发时限攻击。",
+      "sourceShard": "predictable-inference-and-gpu-isolation",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "普通突发可实现，但该方法不限制攻击主体贡献，也不处理自适应相位。",
+        "closestWork": "Clockwork、REEF、EdgeServing、D3 与 SMEC 已直接覆盖 deadline、优先级、抢占或 SLO 调度。",
+        "functionalEquivalence": "车辆状态加权 EDF 是成熟 deadline scheduler 的应用变体，没有新的安全对象或影响界。",
+        "crossDirectionOwnership": "若只比较时延与吞吐，应归系统或测试，不构成独立安全候选。",
+        "identifiableMinimumExperiment": "可以执行，但无法区分收益来自普通优先级还是攻击特异防御。",
+        "assetBoundary": "REEF 等基线可复用；缺口不是代码，而是不可替代的新主张。"
+      }
+    },
+    {
+      "candidateId": "per-tenant-token-bucket-cloud-defense",
+      "canonicalClaim": "按租户 token bucket 和固定云配额即可构成新的自动驾驶时限攻击防御。",
+      "sourceShard": "overload-admission-and-load-shedding",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "只有身份可认证且 Sybil 数受限时成立。",
+        "closestWork": "RAJOMON、SMEC、REEF 与通用严格资源分区已覆盖准入、限流、load shedding 和隔离。",
+        "functionalEquivalence": "这是主候选必须超过的基线，不是独立候选。",
+        "crossDirectionOwnership": "单独研究 goodput、p99 或公平性属于系统调度。",
+        "identifiableMinimumExperiment": "车辆风险改善可测，但若不加入 last-safe-decision 和 MRM 代价，只能证明通用隔离有效。",
+        "assetBoundary": "不缺公开系统基线；缺少新的攻击到车辆安全合同。"
+      }
+    },
+    {
+      "candidateId": "attack-origin-classifier-before-admission",
+      "canonicalClaim": "先分类请求是否恶意，再只限流被识别的攻击租户，可以优于无归因隔离。",
+      "sourceShard": "active-resource-and-deadline-attacks",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "攻击者使用合法请求并可模仿良性复杂场景，来源标签在部署时通常不可观测。",
+        "closestWork": "Denial of Deadline 的攻击正利用合法输入与时序；RAJOMON 类过载控制不依赖可靠恶意分类。",
+        "functionalEquivalence": "若分类器只使用速率和突发特征，它退化为限流；若使用未来危害标签，则不可部署。",
+        "crossDirectionOwnership": "仍属 security，但不能因方向正确跳过可识别性硬门。",
+        "identifiableMinimumExperiment": "没有独立攻击身份真值时，无法把收益归因于攻击识别而非一般负载整形。",
+        "assetBoundary": "需要真实多租户攻击和良性复杂请求分布；当前论文回放不提供该自然标签。"
+      }
+    },
+    {
+      "candidateId": "cooperative-feature-latency-defense-transfer",
+      "canonicalClaim": "把异步协同融合或 CP-FREEZER 防御迁移到共享云队列即可成为 DeadlineSafety。",
+      "sourceShard": "cooperative-latency-and-real-closed-loop",
+      "primaryDirection": "cooperative-autonomous-driving",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "CP-FREEZER 操纵 V2V 特征，LRCP 处理异步特征；二者与普通租户共享云队列的攻击权限不同。",
+        "closestWork": "CP-FREEZER、LRCP 和 CooperDrive 已分别覆盖计算放大、异步补偿和协同感知到驾驶后果。",
+        "functionalEquivalence": "直接迁移会混淆特征鲁棒性、队列隔离和 MRM 的收益，命中 method-transfer-is-not-novelty。",
+        "crossDirectionOwnership": "决定性对象是跨车特征与协同融合，应归 cooperative-autonomous-driving。",
+        "identifiableMinimumExperiment": "若同时改变 feature attack 与云队列，无法识别哪个干预降低车辆风险。",
+        "assetBoundary": "OpenCOOD 固定资产可做基线，但 CP-FREEZER 没有已核验官方代码。"
+      }
+    },
+    {
+      "candidateId": "timeout-local-fallback-utility-router",
+      "canonicalClaim": "云结果超时就切换本地模型，并按车辆效用决定云调用，即可作为新的防御。",
+      "sourceShard": "cloud-assisted-driving-utility-and-fallback",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "可在 Denial of Deadline 架构实现，但没有限制攻击租户对共享队列的影响。",
+        "closestWork": "云辅助驾驶工作、TURBO 与 EnergyShield 已直接覆盖效用调度、车端并行回退和安全 timeout。",
+        "functionalEquivalence": "它是主候选的强 baseline，不是独立新意。",
+        "crossDirectionOwnership": "若没有主动攻击与 excess hazard，应归 agentic/系统部署或 testing。",
+        "identifiableMinimumExperiment": "只比较平均效用会遗漏攻击增量风险与不必要 MRM；无法支撑安全主张。",
+        "assetBoundary": "TURBO 和 EnergyShield 有作者仓库，但本轮未固定 commit，且 TURBO 回放不测车辆动作。"
+      }
+    },
+    {
+      "candidateId": "deadline-only-mrm-trigger",
+      "canonicalClaim": "一旦云结果超过固定 deadline 就直接触发 MRM，可构成新的主动时限攻击防御。",
+      "sourceShard": "vehicle-deadline-fallback-and-mrm",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "deadline miss 可发生，但固定触发无法区分车辆仍有安全本地路径和确已跨过最后安全决策点。",
+        "closestWork": "EnergyShield、D3、Zhuyi、Task-Aware Risk、SPARQ 与 ISO 23793-1 已覆盖安全 deadline、风险路由、恢复和 MRM 语境。",
+        "functionalEquivalence": "把成熟安全回退绑定固定 timeout 是方法拼接；缺少攻击影响界与主体隔离。",
+        "crossDirectionOwnership": "没有攻击特异变量时属于一般安全控制或测试。",
+        "identifiableMinimumExperiment": "直接 MRM 可能把碰撞风险换成后车风险、路线失败和不必要停车，固定 deadline 无法识别净收益。",
+        "assetBoundary": "CARLA 可执行 MRM，但需要独立控制器和周围交通风险 oracle。"
+      }
+    },
+    {
+      "candidateId": "hota-to-collision-risk-calibration",
+      "canonicalClaim": "用 Denial of Deadline 的 HOTA 损失拟合碰撞风险映射，即可量化主动时限攻击的车辆后果。",
+      "sourceShard": "planning-risk-and-safety-recovery",
+      "primaryDirection": "autonomous-driving-testing",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "攻击与 HOTA 损失存在，但原论文没有车辆动作或同初态闭环后果。",
+        "closestWork": "Task-Aware Risk 与 SPARQ 已说明感知失败到规划风险需要任务状态和恢复路径，不能由单一平均感知指标替代。",
+        "functionalEquivalence": "若只是学习 HOTA 到 hazard 的相关映射，属于指标校准而非安全防御。",
+        "crossDirectionOwnership": "决定性对象是 oracle 与评测映射，应归 autonomous-driving-testing。",
+        "identifiableMinimumExperiment": "视频回放同时缺少 planner state、动作响应和无攻击同前缀分支，映射不可识别；必须重建闭环才可研究。",
+        "assetBoundary": "Argoverse-HD 回放不能提供反应式车辆后果，CARLA 迁移又改变数据与感知分布。"
+      }
+    },
+    {
+      "candidateId": "sybil-robust-unbounded-principal-isolation",
+      "canonicalClaim": "即使攻击者能无限创建新身份，也可以靠无归因租户隔离给出固定的车辆安全上界。",
+      "sourceShard": "overload-admission-and-load-shedding",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "无限 Sybil 会使任何按认证主体分配的最小资源保留和配额失效。",
+        "closestWork": "DoS-resilient vehicular communication 和通用 overload control 都依赖可执行的身份、优先级或流量约束。",
+        "functionalEquivalence": "若加入身份成本或硬主体上限，就回到主候选的 bounded-principal threat model；不加则主张不可成立。",
+        "crossDirectionOwnership": "属于 security，但威胁模型硬失败。",
+        "identifiableMinimumExperiment": "有限模拟身份数不能验证无限 Sybil 上界，实验结论无法外推到所声称威胁模型。",
+        "assetBoundary": "现有 CARLA、OpenCOOD 和云调度资产均不提供真实身份发行与抗 Sybil 基础设施。"
+      }
+    }
+  ],
+  "shortlist": [
+    {
+      "candidateId": "deadline-safety-attribution-free-admission",
+      "canonicalClaim": "以受认证主体最小资源保留限制跨租户影响，以车辆 last-safe-decision margin 决定慢路径准入，并在证书失效前执行 ego-only、限速和 MRM 分级降级，从而约束固定攻击预算下的配对增量车辆风险。",
+      "closestWorkDelta": "Denial of Deadline 和 CP-FREEZER 已覆盖主动时限攻击，Clockwork/REEF/RAJOMON/SMEC 覆盖调度、隔离和过载控制，EnergyShield/D3/Zhuyi/TURBO 覆盖 deadline 与回退，Task-Aware Risk/SPARQ/ISO 23793-1 覆盖规划风险与 MRM。保留的窄差异是无攻击归因条件下，把认证主体影响上界、车辆最后安全决策余量、分级降级与配对 excess hazard 写成同一可证伪合同。",
+      "decisiveExperiment": "在固定 CARLA/EI-Drive 前缀、快慢路径模型和攻击资源预算下，比较 FCFS/EDF、token bucket、严格分区、timeout-local fallback 与候选合同；使用恒定高负载、Yo-Yo 相位突发和了解防御规则的自适应突发，报告碰撞、最小 TTC、违规、路线完成、不必要 MRM、后车风险、单位攻击资源增量风险，以及 p99/HOTA 辅助指标。",
+      "feasibilityBoundary": "CARLA 0.9.15 与 OpenCOOD 已固定，EI-Drive、REEF、TURBO 和 EnergyShield 可作接口或基线线索；必须自行实现共享云慢路径、认证主体配额、last-safe-decision 证书、分级 MRM 和配对风险账本。Denial of Deadline 与 CP-FREEZER 没有已核验官方代码，不能计入可执行资产。",
+      "primaryDirection": "autonomous-driving-security",
+      "hardGateEvidence": {
+        "threatModel": "认证普通租户在固定身份和请求或计算预算内操纵合法请求的内容与时序；不操纵传感器、特征、模型或基础设施控制面。",
+        "irreducibleResidual": "截至 2026-08-01 的上游检索未发现同时完成主动共享资源攻击预算、无归因主体隔离、车辆 last-safe-decision 准入与分级 MRM 闭环比较的一手工作。",
+        "killCondition": "严格分区或普通 token bucket 在同等良性效用下达到相同车辆风险；收益只存在于 p99/HOTA；自适应攻击、ODD 或队列参数变化后效果消失；或 MRM 的后车风险和路线失败抵消收益。"
+      },
+      "dossierNeeds": [
+        "冻结主体身份上限、攻击预算、共享队列、快慢路径、合并 deadline、ODD 和 last-safe-decision 计算。",
+        "建立 no-attack 同前缀、良性过载、恒定攻击、相位突发与自适应攻击五组，不能用未来真值或部署不可见标签。",
+        "让所有方法共享相同良性资源成本和 MRM 动作库，并对 strict partition、token bucket、EDF、TURBO/EnergyShield 风格回退做公平比较。",
+        "首个可证伪 Gate 只需三类场景、每类至少 20 个配对种子；若车辆指标无可重复差异，不扩大实验。"
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "candidateId": "deadline-aware-edf-driving-scheduler",
+      "category": "functional-equivalence-and-direct-competition",
+      "reasons": [
+        "Clockwork、REEF、EdgeServing、D3 与 SMEC 已直接覆盖 deadline、优先级、抢占和 SLO 调度。",
+        "增加车辆状态权重仍是成熟 scheduler 的应用变体，无法隔离攻击特异收益。"
+      ],
+      "primaryUrl": "https://www.usenix.org/conference/osdi20/presentation/gujarati"
+    },
+    {
+      "candidateId": "per-tenant-token-bucket-cloud-defense",
+      "category": "functional-equivalent-baseline",
+      "reasons": [
+        "RAJOMON、SMEC 和通用严格分区已占据准入、限流、load shedding 与隔离机制。",
+        "它是主候选必须超过的强基线；只报告 p99、goodput 或公平性不能形成新的车辆安全对象。"
+      ],
+      "primaryUrl": "https://www.usenix.org/conference/nsdi25/presentation/xing"
+    },
+    {
+      "candidateId": "attack-origin-classifier-before-admission",
+      "category": "threat-model-and-identifiability-hard-stop",
+      "reasons": [
+        "合法复杂请求与攻击请求可在内容和速率上重叠，部署时没有独立攻击来源真值。",
+        "只用流量特征时方法退化为限流；使用未来危害或攻击标签时不可部署，无法识别分类本身贡献。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2607.24692"
+    },
+    {
+      "candidateId": "cooperative-feature-latency-defense-transfer",
+      "category": "cross-direction-and-method-transfer",
+      "reasons": [
+        "CP-FREEZER 操纵 V2V 特征，LRCP 处理异步特征，与普通认证租户共享云队列不是同一威胁面。",
+        "协同特征与融合机制应路由 cooperative-autonomous-driving；直接迁移会混淆特征鲁棒性、队列隔离和 MRM。"
+      ],
+      "primaryUrl": "https://doi.org/10.1609/aaai.v40i2.37082"
+    },
+    {
+      "candidateId": "timeout-local-fallback-utility-router",
+      "category": "directly-covered",
+      "reasons": [
+        "云辅助驾驶、TURBO 与 EnergyShield 已覆盖效用调度、车端并行回退和安全 timeout。",
+        "不限制攻击租户影响、不计算配对 excess hazard 时，它只能作为基线而不是独立防御。"
+      ],
+      "primaryUrl": "https://drops.dagstuhl.de/entities/document/10.4230/OASIcs.NINeS.2026.18"
+    },
+    {
+      "candidateId": "deadline-only-mrm-trigger",
+      "category": "direct-competition-and-method-transfer",
+      "reasons": [
+        "EnergyShield、D3、Zhuyi、Task-Aware Risk、SPARQ 和 ISO 23793-1 已覆盖安全 deadline、风险路由、恢复与 MRM。",
+        "固定 timeout 触发无法区分仍有安全本地路径与已跨最后安全决策点，也可能把风险转移给后车。"
+      ],
+      "primaryUrl": "https://www.iso.org/standard/81711.html"
+    },
+    {
+      "candidateId": "hota-to-collision-risk-calibration",
+      "category": "cross-direction-and-unidentifiable-experiment",
+      "reasons": [
+        "Denial of Deadline 只有视频回放 HOTA，没有 planner state、动作响应或同初态车辆分支。",
+        "从 HOTA 直接拟合碰撞既不可识别又属于 testing oracle；Task-Aware Risk 和 SPARQ 已表明必须显式建模规划后果。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2607.24692"
+    },
+    {
+      "candidateId": "sybil-robust-unbounded-principal-isolation",
+      "category": "threat-model-hard-stop",
+      "reasons": [
+        "无限 Sybil 直接破坏按认证主体保留资源和配额的前提，有限实验不能验证无限身份上界。",
+        "加入身份成本或主体上限后即回到主候选的 bounded-principal 威胁模型，不再是独立候选。"
+      ],
+      "primaryUrl": "https://doi.org/10.1016/j.cose.2025.104469"
+    }
+  ],
+  "conclusion": {
+    "status": "completed-unscored-candidate-generation",
+    "summary": "基于 Godel 截至 2026-08-01 的主动资源攻击、推理调度、过载控制、资源隔离、云辅助驾驶、协同时延、规划风险和 MRM 一手证据，本池机械生成 9 个真正不同的候选，只保留 deadline-safety-attribution-free-admission 进入未评分 shortlist；其余 8 个因功能等价、直接竞品、跨方向、威胁模型或实验不可识别明确拒绝。",
+    "queryFamilyCount": 8,
+    "verifiedReferenceCount": 19,
+    "localReferenceCount": 2,
+    "externalReferenceCount": 17,
+    "recentReferenceCount": 12,
+    "fixedAssetCount": 2,
+    "generatedCandidateCount": 9,
+    "shortlistedCount": 1,
+    "rejectedCount": 8,
+    "shortlistedCandidateIds": [
+      "deadline-safety-attribution-free-admission"
+    ],
+    "partitionCheck": "shortlist 与 rejected 无交集，且二者并集严格等于 candidateLedger。",
+    "roleSeparation": "retrievalAgentIds 只包含 Godel；reviewerAgentId 只承担 pool-reviewer/candidate-generation，不做后续 selection、dossier 或 blind review。",
+    "scoreBoundary": "blindReviewConsumed=false，scoreProduced=false；本文件没有 1-10 分、通过结论或发布决定。",
+    "nextStep": "由未参与检索和候选生成的独立 selection agent 绑定本文件快照后决定是否进入 dossier；若进入，需先固定队列、身份、资产、同前缀闭环、攻击预算和强基线。"
+  },
+  "retrievalAgentIds": [
+    "019fbd76-ae5b-7350-b825-ec191e7ff0ae"
+  ]
+}

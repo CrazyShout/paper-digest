@@ -54,4 +54,4 @@ TrafficAlign 的质量依赖视频解析、LLM 描述、DSL 表达能力和仿�
 
 - 检查 GitHub 是否开放视频到 DSL、校验器和场景生成代码。
 - 与 CommonRoad-Game 和 D-V2S 对比，整理从真实数据到可执行测试场景的三条路线。
-- 后续可用组内关注地区或采集数据做小规模 TrafficAlign 复现实验。
+- 后续可用目标地区或既有采集数据做小规模 TrafficAlign 复现实验。

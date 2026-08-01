@@ -345,6 +345,11 @@ export function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, 
     lines.push(`飞书：${feishuUrl}`);
   }
   lines.push("");
+  if (normalizeString(digest.body)) {
+    lines.push("本期内容与更新：");
+    lines.push(String(digest.body).trim());
+    lines.push("");
+  }
   lines.push("本期方向：");
   for (const { tag, papers } of sections) {
     lines.push(`- ${tag.label}（${papers.length} 篇）`);

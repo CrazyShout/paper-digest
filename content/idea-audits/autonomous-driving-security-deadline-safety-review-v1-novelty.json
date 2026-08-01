@@ -1,0 +1,59 @@
+{
+  "candidateId": "deadline-safety-attribution-free-admission",
+  "directionId": "autonomous-driving-security",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbdb7-6e0b-7ed3-b5e7-41c1089fdaa4",
+  "reviewedAt": "2026-08-01T14:34:22Z",
+  "dossierSnapshotFingerprint": "c3a0f17cc9c6348c6ac99bcf18273c190e01d30b5f27e855dec5fce0a3bdf850",
+  "scores": {
+    "novelty": 4,
+    "feasibility": 5,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "证据：Denial of Deadline 一手论文确立了合法突发导致共享慢路径 deadline collapse 的新攻击起点，但 2023 年 SEO 已把形式化安全状态写成动态处理 deadline 并用于 CARLA 中的 offloading/gating，EnergyShield 已给出状态相关可容忍边缘响应时间与 just-in-time fail-safe，D3 已覆盖环境依赖动态 deadline、miss 后处置和闭环碰撞，2026 年 RSS-offloading 并发工作更直接地按当前交通安全与端到端响应时间决定是否 offload 并受控回退本地；HiveD 又已证明可借用空闲容量的租户保留式 sharing safety。最强反例或缺口：把工作保持型每主体保留或令牌桶与 RSS/SEO/EnergyShield 的状态安全准入及同一 MRM 拼接，可能在冻结威胁模型下功能等价，因此当前贡献可能主要是攻击语境和配对评测协议，而不是新机制；dossier 未列出 SEO 和 2026 RSS-offloading，也未设置这个最强组合基线。必须补做的实验：在相同 principal、GPU-ms、快路径、证书和 MRM 下，直接比较完整方法与“工作保持型每主体隔离 + RSS/SEO 类状态安全 offloading/fallback”，并分别消融影响屏障与 last-safe-decision；若完整方法对配对 excess hazard、良性效用和不必要 MRM 没有预注册的独立增益，则新颖性主张被证伪。",
+    "feasibility": "证据：TURBO 公开了端云 QUIC、SLO timeout、本地并行 fallback 和模型资产，D3/ERDOS/Pylot 公开了动态 deadline 与 CARLA 闭环资产，EnergyShield、SEO、SOFOF 也各自展示了 CARLA 或实车 offloading/fallback 的可实现性，所以队列 harness、调度器和基本回退并非不可做。最强反例或缺口：这些资产来自不同栈、任务和安全模型，仓库存在不等于它们能在固定 EI-Drive、OpenCOOD 与 CARLA 0.9.15 中端到端复用；Denial of Deadline 未提供已核验官方实现，而候选还需自建非特权 last-safe-decision monitor、七类公平基线、攻击器和至少 2,100 个闭环 episode，2 人 8 周偏紧。必须补做的实验：前两周完成冻结提交的可启动性、同前缀重放、真实 service-time 记录和证书输入审计，并在每类 20 个无攻击种子上证明 monitor 不读模拟器特权真值、关键时刻漏保不超过 dossier 预注册界且 p99 小于一个 100 ms tick；任一资产无法复现或监控器超预算即按计划停止。",
+    "success-probability": "证据：Denial of Deadline 已直接观察到约 4,000 个合法突发把良性 p99 从约 92 ms 推至 2 s 并损失 7.0 HOTA，说明 Gate A 的跨租户 deadline miss 很可能可复现；D3 报告动态 deadline 执行可改变闭环碰撞，SEO、EnergyShield 和 2026 RSS-offloading 表明状态安全约束能够驱动可执行回退，因此最小研究有机会得到明确负结论或边界结论。最强反例或缺口：从 HOTA collapse 到碰撞、TTC 或违规的因果链尚无直接证据，且简单隔离加状态回退可能已经消除大部分风险；稀有碰撞会使 20 个种子每场景难以区分候选设定的效应，正结果概率明显低于系统延迟改善概率。必须补做的实验：先锁定同前缀 Gate A/B，再对完整方法和最强组合基线运行预注册配对功效分析与顺序无关的固定种子 Gate C，保留所有零事件、失败运行和良性 flash crowd；若风险区间无法区分预注册最小效应或车辆指标不随 deadline miss 改变，则输出明确 no-go。",
+    "impact": "证据：Denial of Deadline 明确指出路由、合并、调度和资源隔离是新攻击面，而 TURBO、SOFOF 与 2026 RSS-offloading 都显示云辅助感知或规划正在进入公开系统和实车评估；把尾时延攻击转成同前缀车辆级 excess hazard，并同时计入后车风险与不必要 MRM，会比 HOTA 或 p99 单指标更能约束真实设计。最强反例或缺口：结果被固定 16 身份、单 GPU 非抢占队列、CARLA 三类场景和自建证书限制，不能直接外推到开放身份、真实运营云、不同 ODD 或道路部署；若组合基线同样有效，方法影响将主要收缩为评测协议和负结果。必须补做的实验：在主实验外冻结一个未用于调参的 service-time/网络条件与一个场景家族，检查同一安全-效用结论是否保持，并公开单位攻击 GPU-ms 的风险、第三方 TTC 和路线代价；若排序在留出条件翻转，则把影响主张限定为该模拟器合同。",
+    "comparison-readiness": "证据：D3 有公开代码与闭环碰撞指标，TURBO 有官方端云代码和 SLO/fallback，EnergyShield/SEO 给出 CARLA 安全 offloading 对照，REEF、HiveD 与 RAJOMON 提供资源隔离或过载控制的一手算法边界，候选也冻结了算力、前缀、攻击预算和多项车辆指标。最强反例或缺口：没有一个直接竞品同时覆盖有界认证租户攻击、每主体影响隔离、状态安全准入和闭环 excess hazard；现有工作分别报告 HOTA、能耗、mAP、延迟或碰撞，Denial of Deadline 又无已核验代码，因此跨论文数值不能直接比较，dossier 中“分别比较隔离基线和 fallback 基线”也不足以否决功能等价组合。必须补做的实验：在同一 harness 内实现并发布 FCFS/EDF、工作保持型每主体隔离、RSS/SEO/EnergyShield 类状态回退及其组合，统一 GPU-ms、无攻击路线完成、证书和 MRM 后再报告逐种子 Pareto 与适配偏差；若组合基线无法达到预注册资源匹配范围，就不能据此声称候选优于最近直接方案。"
+  },
+  "strongestObjection": "最强可证伪异议是：候选的 deficit-based 1/16 保留与可借用容量本质上是既有工作保持型租户隔离，而 last-safe-decision 准入和本地/MRM 回退已分别被 SEO、EnergyShield、D3 及 2026 RSS-offloading 覆盖；若把这两类既有机制在同一冻结栈中组合后，其配对 excess hazard、良性路线完成和不必要 MRM 与完整方法统计等价，则所谓无归因安全准入合同只是领域化组件拼接。",
+  "requiredExperiment": "构建并冻结一个最强组合对手：使用与候选相同的 16 个 principal、工作保持型每主体最小服务保留、同一完成时间估计器、RSS/SEO 类状态安全 offloading 判定以及完全相同的 ego-only、限速和 MRM 库；在三类场景、良性 flash crowd、Yo-Yo 和自适应突发上做同前缀配对比较，并做“只换影响屏障”和“只换安全准入”两项交换消融。预先固定等价界与功效；若 95% 配对区间不能支持完整方法相对该组合对手至少 10% 的 excess-hazard 独立改善，或改善由更多不必要 MRM、后车 TTC 恶化、路线失败或额外 GPU-ms 换取，则机制新颖性被证伪。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2606.07067",
+      "finding": "该 2026 并发一手论文把 RSS 扩展到本地与远端服务的不同响应时间，仅在当前交通状态对相应端到端响应仍安全时允许 offloading，违反条件时受控回退本地，并报告仿真与实车集成；它直接覆盖候选 last-safe-decision 准入与 fallback 的大部分功能。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2302.12493",
+      "finding": "SEO 将系统安全状态形式化为动态处理 deadline，并据此调节 offloading 和 gating；其 CARLA 实验声明在保持安全属性的同时获得能效收益，说明安全余量驱动的计算准入并非首次提出。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2302.06572",
+      "finding": "EnergyShield 的 controller shield 给出形式化、状态相关的可容忍边缘响应时间，并由车端提供 just-in-time fail-safe；论文在 CARLA 中实现验证，但没有认证多租户资源攻击或跨租户影响界。"
+    },
+    {
+      "url": "https://pschafhalter.com/d3/",
+      "finding": "D3 的官方项目页说明其集中管理环境依赖 deadline、对 missed deadline 执行反应措施，并以开放 ERDOS/Pylot 在 50 km CARLA 场景中报告相对既有执行模型 68% 的碰撞下降；它削弱动态安全 deadline 与闭环验证本身的新颖性。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2602.08799",
+      "finding": "SOFOF 已提供服务端接受或拒绝 offloading 请求、按最大延迟或更新频率执行 QoS 检查并在违反时切回车端规划的框架，也在多 CAV 仿真和 15 次实车驾驶中评估；论文明确把安全、schedulability 与 fault tolerance 留作未来工作。"
+    },
+    {
+      "url": "https://drops.dagstuhl.de/entities/document/10.4230/OASIcs.NINeS.2026.18",
+      "finding": "TURBO 正式论文公开端云联合带宽与模型配置、严格运行 SLO 和并行车端 fallback，并给出官方代码链接及仿真/实车结果；其主结果是准确率和网络效用，实车系统未控制车辆，也未评估攻击或闭环碰撞。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.24692",
+      "finding": "Denial of Deadline 直接证明约 4,000 个合法突发请求可把良性慢路径 p99 从约 92 ms 提至 2 s，并造成平均 7.0 HOTA 损失；一手页面只提出路由、调度和隔离防御方向，没有车辆规划控制、防御结果或闭环 hazard。"
+    },
+    {
+      "url": "https://www.usenix.org/conference/osdi20/presentation/zhao-hanyu",
+      "finding": "HiveD 一手页面提出租户虚拟私有集群保留以消除 sharing anomaly，并允许低优先级任务借用未使用 GPU 资源；虽然对象是训练集群而非请求级驾驶推理，但它直接构成“保留保证加空闲借用”机制的新颖性反例。"
+    }
+  ],
+  "overall": 5
+}

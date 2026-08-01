@@ -5,7 +5,7 @@
   "title": "SwarmDrive: Semantic V2V Coordination for Latency-Constrained Cooperative Autonomous Driving",
   "source": "arXiv:2604.22852 / https://arxiv.org/abs/2604.22852",
   "authors": ["Anjie Qiu", "Donglin Wang", "Zexin Fang", "Sanket Partani", "Hans D. Schotten"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Institute for Wireless Communication and Navigation, RPTU University Kaiserslautern-Landau"],
   "comment": "SwarmDrive 把协同自动驾驶的共享对象从大特征图转成不确定性触发的语义意图分布，关注 V2V 协同在遮挡路口和低延迟约束下是否真正改变决策。"
 }
 ---
@@ -30,9 +30,9 @@ SwarmDrive 是一篇面向低时延协同驾驶的 V2V 语义协调论文。它�
 
 这张图说明论文的核心不是把更多原始感知发给其他车辆，而是把通信接口压缩成决策相关的语义意图。它适合用来讨论协同驾驶中“共享表征”从 feature map 向 intent distribution 的转移。
 
-![图 2：遮挡路口场景和不同通信设置下的协同效果对比](https://arxiv.org/html/2604.22852v1/x2.png)
+![图 2：两辆车交换语义意图分布并形成事件触发共识的示例](https://arxiv.org/html/2604.22852v1/x2.png)
 
-这张结果图支撑了论文的主要应用场景：遮挡路口里，单车模型视野不足，邻车意图能改变通行决策。但它也提醒读者，实验仍集中在一个可执行遮挡场景，不等于真实 6G 车联网部署已经验证。
+图 2 是消息交互示例而不是不同通信设置的结果曲线。它展示本地 SLM 输出如何压缩成意图分布、何时发送以及邻车如何融合；真正的成功率、时延和丢包结论仍要由实验表格支撑，不能从示意图直接推出真实 6G 部署有效。
 
 ## 实验结论与证据
 

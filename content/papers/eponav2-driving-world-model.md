@@ -53,4 +53,4 @@ EponaV2 的强结论主要基于 NAVSIM，需要核对 closed-loop 或真实车�
 
 - 检查是否开放代码、模型和未来深度/语义监督生成流程。
 - 与 DAWN、DriveFuture、CoWorld-VLA 和 DeepSight 对照，区分 world-action interaction、future-latent conditioning、多专家世界表征和综合未来监督。
-- 如果做组内复现，优先记录 NAVSIM 指标、监督成本和对 closed-loop safety 的外推风险。
+- 如果做复现，优先记录 NAVSIM 指标、监督成本和对 closed-loop safety 的外推风险。

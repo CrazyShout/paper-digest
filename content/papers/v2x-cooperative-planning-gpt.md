@@ -5,9 +5,9 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
   "title": "Improved Consensus ADMM for Cooperative Motion Planning of Large-Scale Connected Autonomous Vehicles with Limited Communication",
-  "source": "arXiv:2401.09032 / https://arxiv.org/abs/2401.09032",
+  "source": "IEEE Transactions on Intelligent Vehicles / https://doi.org/10.1109/TIV.2024.3395479 ; arXiv:2401.09032 / https://arxiv.org/abs/2401.09032",
   "authors": ["Haichao Liu", "Zhenmin Huang", "Zicheng Zhu", "Yulin Li", "Shaojie Shen", "Jun Ma"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["The Hong Kong University of Science and Technology (HKUST)", "National University of Singapore"],
   "comment": "[GPT改] 修正原版图注错配：Figure 1 才是协同规划框架，Figure 6 才展示 80 CAV 轨迹；x4 是最小车距曲线。"
 }
 ---

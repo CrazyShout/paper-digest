@@ -6,7 +6,7 @@
   "title": "SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling",
   "source": "arXiv:2603.04071 / https://arxiv.org/abs/2603.04071",
   "authors": ["Jinlong Cui", "Fenghua Liang", "Guo Yang", "Chengcheng Tang", "Jianxun Cui"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["School of Traffic and Transportation, Harbin Institute of Technology", "Chongqing Research Institute of Harbin Institute of Technology", "Chongqing Changan Automobile Co., Ltd."],
   "comment": "SaFeR 提出用 token resampling 方法生成符合物理约束的安全关键场景，解决了现有方法生成的场景不可执行的问题，是场景生成领域的约束满足型方法代表作。"
 }
 ---

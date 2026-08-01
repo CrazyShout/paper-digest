@@ -4,9 +4,9 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
   "title": "Improved Consensus ADMM for Cooperative Motion Planning of Large-Scale Connected Autonomous Vehicles with Limited Communication",
-  "source": "arXiv:2401.09032 / https://arxiv.org/abs/2401.09032",
+  "source": "IEEE Transactions on Intelligent Vehicles / https://doi.org/10.1109/TIV.2024.3395479 ; arXiv:2401.09032 / https://arxiv.org/abs/2401.09032",
   "authors": ["Haichao Liu", "Zhenmin Huang", "Zicheng Zhu", "Yulin Li", "Shaojie Shen", "Jun Ma"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["The Hong Kong University of Science and Technology (HKUST)", "National University of Singapore"],
   "comment": "本文研究大规模网联自动驾驶车辆在有限通信条件下的协同运动规划问题，提出基于改进一致性 ADMM 的分布式并行优化算法，实现 O(N) 时间复杂度，并在 CARLA 中验证了 80 辆车的协同驾驶。"
 }
 ---
@@ -29,13 +29,13 @@
 
 ## 关键图与可视化结果
 
-![图 1：局部连通拓扑下分布式 ADMM 协同规划的算法框架](https://arxiv.org/html/2401.09032v1/x2.png)
+![图 1：双圆与椭圆包络下的车辆间避碰几何关系与坐标变换](https://arxiv.org/html/2401.09032v1/x2.png)
 
-该图展示了改进一致性 ADMM 在局部连通拓扑网络中的工作原理，说明了如何通过稀疏性利用实现高效的分布式求解。
+这张图并不是 ADMM 总体框架，而是车辆间碰撞约束的几何构造：两车分别用双圆与椭圆包络，经坐标变换后把碰撞判定化为点是否落入单位圆。它支持的是约束建模方式，不能单独证明分布式求解效率。
 
-![图 2：CARLA 仿真中 80 辆车大规模协同驾驶场景](https://arxiv.org/html/2401.09032v1/x4.png)
+![图 2：不同方法下所有 CAV 随时间变化的最小车间距](https://arxiv.org/html/2401.09032v1/x4.png)
 
-该图展示了在高保真 CARLA 仿真器中 80 辆车协同驾驶的大规模验证场景，体现了算法在真实交通环境模拟中的有效性和可扩展性。
+曲线显示各方法的最小车间距均高于论文设定的 2.5 m 安全边界，因此它支撑的是所测仿真中的避碰约束满足情况。80 辆车的轨迹场景实际出现在论文 Figure 6，不能由这张曲线替代。
 
 ## 实验结论与证据
 

@@ -84,6 +84,13 @@
 | sind2-sotif-validation | SinD 2.0: A Multi-City UAV Dataset with Semantic Risk Annotations for SOTIF-Oriented Safety Validation at Signalized Intersections | 2607.16943 | 2026-07-25 |
 | cvaa-driving-interpretability | What Do They See? Interpreting Complex Road Scenarios Through the Eyes of Vision-Language-Action Models for Safe and Trustworthy Autonomous Vehicle Learning | 2607.16938 | 2026-07-25 |
 | safegen-critical-video-diffusion | SafeGen: Goal-Conditioned Video Diffusion of Safety-Critical Scenarios for VLM-Based Autonomous Driving | 2607.19701 | 2026-07-25 |
+| mojito-modal-joint-driving | MOJITO: Modal Joint Learning for Unified End-to-End Autonomous Driving | 2607.23511 | 2026-08-01 |
+| pictura-perspective-self-play | Pictura: Perspective-View Self-Play at Scale for Driving | 2607.26005 | 2026-08-01 |
+| vlm-gnss-spoofing-detection | Development of Vision-Language Model-based GNSS Spoofing Detection for Autonomous Vehicle Navigation | 2607.23962 | 2026-08-01 |
+| iedd-interactive-driving-dataset | An interactive enhanced driving dataset for autonomous driving | 2602.20575 | 2026-08-01 |
+| obsdrivebench-adverse-weather | ObsDriveBench: Benchmarking Multimodal Understanding under Adverse Weather with Observability Awareness | 2607.23537 | 2026-08-01 |
+| denial-of-deadline-inference | Denial of Deadline: Network-Driven Accuracy Collapse in Distributed Inference Pipelines | 2607.24692 | 2026-08-01 |
+| rl-fuzz-testing-agents | Evaluating Fuzz Testing for Reinforcement Learning Agents | 2607.24577 | 2026-08-01 |
 
 ## 使用说明
 

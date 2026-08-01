@@ -53,4 +53,4 @@ From Driving Videos to Simulatable Scenarios 提出 D-V2S，目标是把真实�
 
 - 检查是否开放代码和示例场景，以及输出是否兼容 CARLA、SUMO、OpenSCENARIO 或自定义仿真器。
 - 与 World Engine 区分：D-V2S 强调视频到仿真场景转换，World Engine 强调真实日志重建后的策略后训练。
-- 后续可把 D-V2S 作为组内测试场景生产工具的候选入口。
+- 后续可把 D-V2S 作为测试场景生产工具的候选入口。

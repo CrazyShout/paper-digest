@@ -3,9 +3,9 @@
   "id": "3d-reconstruction",
   "title": "自动驾驶三维重建：从可视化场景到可验收的闭环资产",
   "subtitle": "驾驶重建的终点不是更高的 PSNR，而是一个几何可信、传感器一致、可受控外推且不会悄然改变策略结论的世界。",
-  "abstract": "NeRF 与 3D Gaussian Splatting 已把驾驶日志重建从离线新视角合成推进到实时相机、LiDAR 和雷达渲染、静动态分解、前馈 4D 重建、对象编辑与物理交互。但这些能力处在不同证据等级：NVS 指标只描述已观测分布附近的外观近似，不能单独证明未见轨迹上的几何、传感器统计、感知输出或闭环策略结论可靠。本综述以“资产能否准入某一具体用途”为主线，综合基础表示、最新前馈方法、本库 Real2Sim 工作和外部闭环评测，提出从视觉诊断、外推几何、传感器/感知一致性到现实锚定闭环 verdict 的分层证据链，并把现实中无法直接观测的反事实结果列为必须显式管理的不确定性，而不是用渲染分数替代。",
-  "reviewedAt": "2026-07-28",
-  "searchWindow": "2020-01-01 至 2026-07-28，覆盖 NeRF、3DGS、动态/4D 驾驶场景、多传感器渲染、前馈重建、可编辑 Real2Sim、轨迹外推和闭环资产验证",
+  "abstract": "NeRF 与 3D Gaussian Splatting 已把驾驶日志重建从离线新视角合成推进到实时相机、LiDAR 和雷达渲染、静动态分解、前馈 4D 重建、对象编辑与物理交互。2026-08-01 增量 RoadVGGT 又把前馈化收窄到一个实用但边界明确的资产：在给定 pose 与 depth 的前提下重建紧凑静态路面，并在 Waymo 与 nuScenes 零样本协议上同时报告图像、语义和高程指标。它证明道路结构先验可减少逐场景优化与存储，却没有动态参与者、代码或规划闭环，因此不能与完整驾驶世界重建等同。本综述继续以“资产能否准入某一具体用途”为主线，把视觉、几何、传感器/感知一致性和现实锚定闭环 verdict 分层；任何 NVS、mIoU 或高程分数都只支撑对应协议，不替代未见轨迹上的物理、动作与安全证据。",
+  "reviewedAt": "2026-08-01",
+  "searchWindow": "2020-01-01 至 2026-08-01；覆盖 NeRF、3DGS、动态/4D 驾驶场景、多传感器渲染、前馈与道路表面重建、可编辑 Real2Sim、轨迹外推和闭环资产验证",
   "researchQuestions": [
     "视觉、几何、传感器、感知和闭环 verdict 五类证据应如何分层，才能防止把 NVS 指标误写成闭环证明？",
     "单车日志中视角与时间耦合、未见表面和动态遮挡造成的不可辨识性，能否被可靠检测并转化为资产拒绝条件？",
@@ -19,12 +19,13 @@
       "kind": "scope",
       "title": "定义与边界：从重建结果到仿真资产",
       "thesis": "重建、传感器渲染和闭环仿真是逐级增加约束的不同任务；前一级的高分不能自动证明后一级成立。",
-      "body": "NeRF 用连续隐式辐射场和可微体渲染奠定了稀疏多视图 NVS 范式，3DGS 则用显式各向异性高斯和栅格化把训练、渲染与编辑推进到更实用的速度。它们首先回答“从附近新视角能否复现外观”，而不是“场景是否恢复了可供车辆交互的真实世界状态”。驾驶场景还包含开放道路、快速自车运动、动态参与者、滚动快门、稀疏 LiDAR、雷达多径和长期遮挡，这些因素不会被单一图像相似度充分约束。\n\n本综述把资产能力分为四级：日志附近的视觉重放；可改变传感器位姿的相机、LiDAR 或雷达渲染；可编辑参与者与环境的反事实生成；由被测系统动作驱动、并保留安全 verdict 的闭环仿真。UniSim 展示了从日志构建可编辑多传感器闭环模拟器的完整方向，但其下游任务和闭环演示仍属于特定数据、传感器和系统条件下的证据。因而，PSNR、SSIM、LPIPS 等 NVS 指标在本综述中只作为第一层诊断，绝不单独视为闭环有效性证明。",
+      "body": "NeRF 用连续隐式辐射场和可微体渲染奠定了稀疏多视图 NVS 范式，3DGS 则用显式各向异性高斯和栅格化把训练、渲染与编辑推进到更实用的速度。它们首先回答“从附近新视角能否复现外观”，而不是“场景是否恢复了可供车辆交互的真实世界状态”。驾驶场景还包含开放道路、快速自车运动、动态参与者、滚动快门、稀疏 LiDAR、雷达多径和长期遮挡，这些因素不会被单一图像相似度充分约束。\n\n本综述把资产能力分为四级：日志附近的视觉重放；可改变传感器位姿的相机、LiDAR 或雷达渲染；可编辑参与者与环境的反事实生成；由被测系统动作驱动、并保留安全 verdict 的闭环仿真。UniSim 展示了从日志构建可编辑多传感器闭环模拟器的完整方向，但其下游任务和闭环演示仍属于特定数据、传感器和系统条件下的证据。因而，PSNR、SSIM、LPIPS 等 NVS 指标在本综述中只作为第一层诊断，绝不单独视为闭环有效性证明。\n\nRoadVGGT 进一步说明“重建对象”本身也必须进入能力声明：它只恢复静态道路表面的外观、语义与高程，在给定 pose/depth 下服务 HD map、标注和 BEV 产品；动态参与者、遮挡后交互与传感器闭环不在资产内。将这种专用路面资产与完整 4D 场景分开，反而能更准确地定义可验收用途。",
       "referenceIds": [
         "nerf-2020",
         "gaussian-splatting-2023",
         "driving-3dgs-review-2025",
-        "unisim-2023"
+        "unisim-2023",
+        "roadvggt-2026"
       ]
     },
     {
@@ -32,7 +33,7 @@
       "kind": "evolution",
       "title": "技术演进：显式化、4D 分解与前馈资产化",
       "thesis": "领域演进由渲染效率、动态可辨识性和车队规模化三组瓶颈共同推动，而不是简单从 NeRF 线性替换为 3DGS。",
-      "body": "NeRF 的连续表示提供了高质量视图合成，但逐射线体渲染和逐场景优化限制了实时使用；3DGS 以显式基元和可微栅格化显著提高效率，却继承了训练视角附近过拟合、几何表面不稳定和漂浮基元等风险。动态驾驶场景的关键演进不是简单更换表示，而是逐步建立可组合的对象结构。2021 年 Neural Scene Graphs 先用静态背景、动态对象和跟踪变换构成可重排场景图；2024 年 DrivingGaussian 与 Street Gaussians 分别以复合动态高斯图、背景与车辆对象高斯把这一结构推进到实时显式表示；2025 年 OmniRe 又把对象覆盖扩展到车辆、行人、骑行者等多类参与者。DeSiRe-GS 随后用自监督运动先验推进静动态分解并加强表面约束，物理一致 4D 重建则把单车轨迹中的时间-视角耦合解释为空间与时间参数之间的 credit assignment 问题。每一步都扩大了可编辑范围，但主要证据仍是重建与 NVS，不能据此直接宣告闭环有效。\n\n2025 年已经出现明确的前馈化转折。DrivingForward 面向稀疏、低重叠环视输入联合学习位姿、深度与高斯预测，STORM 则用一次前馈推断恢复带速度的动态 3D Gaussians，并在动态区域和场景流上单独评估；二者说明前馈化并非到 2026 年才开始。2026 年 DGGT 进一步从无位姿图像一次预测相机参数、动态高斯和 3D 运动，展示跨数据集迁移与亚秒级重建；Instant NuRec 则把多相机短日志在约 1.5 秒内转换为分层高斯资产，并在限定的 140 个场景和五种策略配置中检查相对论文内部逐场景 NuRec 基线的策略排序。前馈结果证明了规模化可能性，但训练分布、相机配置和长尾细节仍构成适用边界。更稳妥的系统形态是前馈初始化、显式不确定性估计和按需局部优化，而不是以速度替代资产验收。",
+      "body": "NeRF 的连续表示提供了高质量视图合成，但逐射线体渲染和逐场景优化限制了实时使用；3DGS 以显式基元和可微栅格化显著提高效率，却继承了训练视角附近过拟合、几何表面不稳定和漂浮基元等风险。动态驾驶场景的关键演进不是简单更换表示，而是逐步建立可组合的对象结构。2021 年 Neural Scene Graphs 先用静态背景、动态对象和跟踪变换构成可重排场景图；2024 年 DrivingGaussian 与 Street Gaussians 分别以复合动态高斯图、背景与车辆对象高斯把这一结构推进到实时显式表示；2025 年 OmniRe 又把对象覆盖扩展到车辆、行人、骑行者等多类参与者。DeSiRe-GS 随后用自监督运动先验推进静动态分解并加强表面约束，物理一致 4D 重建则把单车轨迹中的时间-视角耦合解释为空间与时间参数之间的 credit assignment 问题。每一步都扩大了可编辑范围，但主要证据仍是重建与 NVS，不能据此直接宣告闭环有效。\n\n2025 年已经出现明确的前馈化转折。DrivingForward 面向稀疏、低重叠环视输入联合学习位姿、深度与高斯预测，STORM 则用一次前馈推断恢复带速度的动态 3D Gaussians，并在动态区域和场景流上单独评估；二者说明前馈化并非到 2026 年才开始。2026 年 DGGT 进一步从无位姿图像一次预测相机参数、动态高斯和 3D 运动，展示跨数据集迁移与亚秒级重建；Instant NuRec 则把多相机短日志在约 1.5 秒内转换为分层高斯资产，并在限定的 140 个场景和五种策略配置中检查相对论文内部逐场景 NuRec 基线的策略排序。前馈结果证明了规模化可能性，但训练分布、相机配置和长尾细节仍构成适用边界。更稳妥的系统形态是前馈初始化、显式不确定性估计和按需局部优化，而不是以速度替代资产验收。\n\n本轮 RoadVGGT 展示了另一种前馈化路径：不追求完整动态世界，而是利用提供的 pose/depth、道路类别和 XY 结构融合，直接生成紧凑静态路面。Waymo 到 nuScenes 的零样本结果支持道路先验具有跨数据集价值，但该路径把动态、交互和未知表面排除在目标之外，也未公开代码。它应与 DGGT/Instant NuRec 的完整动态资产路线并列，而不是被误读为更快的全场景替代。",
       "referenceIds": [
         "nerf-2020",
         "gaussian-splatting-2023",
@@ -45,7 +46,8 @@
         "dggt-2026",
         "instant-nurec-2026",
         "drivingforward-2025",
-        "storm-2025"
+        "storm-2025",
+        "roadvggt-2026"
       ]
     },
     {
@@ -53,14 +55,15 @@
       "kind": "taxonomy",
       "title": "方法谱系：表示、时间、优化、传感器与可编辑性",
       "thesis": "驾驶重建应沿五个正交轴比较；只按 NeRF 与 3DGS 二分会掩盖真正决定用途的传感器和交互约束。",
-      "body": "第一轴是表示：隐式场连续且便于编码复杂外观，显式高斯便于高速渲染、分层和对象操作。第二轴是时间：静态背景、刚体对象、非刚体参与者和时变光照需要不同的状态与可见性模型。第三轴是优化方式：逐场景方法通常能利用完整标定与传感器监督精修，前馈方法则以训练分布换取吞吐和跨日志复用；DGGT 还把相机位姿从前提改为输出。第四轴是资产组织：统一时空场紧凑，但对象级场景图更适合插入、删除、轨迹改变和责任追踪。\n\n第五轴是传感器。NeuRAD 显式建模相机与 LiDAR 的滚动快门、光束发散和 ray dropping；本库 SplatAD 用统一 3DGS 表示实时渲染相机和 LiDAR；RadarSplat 又把雷达回波、接收饱和、谱泄漏和多径噪声纳入高斯表示。三者共同说明“几何相同”不等于“传感器输出相同”，每个模态都需要独立统计与时序模型。Real2Sim 在另一条轴上把 4DGS、实例编辑与可微 MPM 物理求解连接起来，为碰撞后轨迹和安全关键场景生成提供接口；但物理求解器产生可运行反事实，并不自动保证该反事实与现实同条件结果一致。",
+      "body": "第一轴是表示：隐式场连续且便于编码复杂外观，显式高斯便于高速渲染、分层和对象操作。第二轴是时间：静态背景、刚体对象、非刚体参与者和时变光照需要不同的状态与可见性模型。第三轴是优化方式：逐场景方法通常能利用完整标定与传感器监督精修，前馈方法则以训练分布换取吞吐和跨日志复用；DGGT 还把相机位姿从前提改为输出。第四轴是资产组织：统一时空场紧凑，但对象级场景图更适合插入、删除、轨迹改变和责任追踪。\n\n第五轴是传感器。NeuRAD 显式建模相机与 LiDAR 的滚动快门、光束发散和 ray dropping；本库 SplatAD 用统一 3DGS 表示实时渲染相机和 LiDAR；RadarSplat 又把雷达回波、接收饱和、谱泄漏和多径噪声纳入高斯表示。三者共同说明“几何相同”不等于“传感器输出相同”，每个模态都需要独立统计与时序模型。Real2Sim 在另一条轴上把 4DGS、实例编辑与可微 MPM 物理求解连接起来，为碰撞后轨迹和安全关键场景生成提供接口；但物理求解器产生可运行反事实，并不自动保证该反事实与现实同条件结果一致。\n\n还应新增第六轴：重建对象与用途范围。RoadVGGT 属于静态道路表面资产，适合 HD map、道路语义、高程和局部视图合成；完整 4D 驾驶重建则必须表示动态参与者、时间与交互。前者依赖 pose/depth 与语义先验，后者承担更强的可辨识性和闭环义务，不能用同一个“3D 重建”标签直接比较。",
       "referenceIds": [
         "driving-3dgs-review-2025",
         "dggt-2026",
         "neurad-2024",
         "splatad-2025",
         "radarsplat-2025",
-        "real2sim-2026"
+        "real2sim-2026",
+        "roadvggt-2026"
       ]
     },
     {
@@ -68,7 +71,7 @@
       "kind": "evidence",
       "title": "证据与评测：外推、感知和闭环必须分层验收",
       "thesis": "资产能力按四级准入；验收证据则把视觉、几何、传感器统计、感知一致性和闭环 verdict 五个维度分别报告，并以现实数据锚定各自适用包络。",
-      "body": "视觉维度先检查日志附近的 NVS，可用 PSNR、SSIM、LPIPS 和动态区域指标发现外观退化，但不能证明表面、遮挡后内容或任务行为正确。几何维度检查深度、表面、点云和动态轨迹误差，并在偏离采集轨迹的视角上单独评测。FlexDrive 用模拟器生成 out-of-path 真值，SafeComp 2026 的工业评测工作关注车辆和行人在横向、纵向新视角下的保真退化；这些结果能暴露外推边界，但模拟器真值和受控对象采集仍不是开放道路上全部反事实的现实真值。\n\n传感器统计与感知一致性必须拆开报告。相机、LiDAR、雷达应分别比较强度、深度、回波、dropout、扫描时序和跨模态标定，再检查检测、跟踪、地图或占用输出是否在真实与重建输入间保持。CVPRW 2024 的 Are NeRFs Ready for Autonomous Driving? 用大规模真实/渲染输入比较目标检测与在线建图，说明感知域差需要专门测量并可通过针对性微调缓解；ICLR 2026 的感知对齐工作进一步表明，高整体视觉相似度仍可能对应不一致的对象感知结果。即使加入感知损失，也只支撑所测感知器、对象区域和数据条件下的一致性，不能替代规划或闭环验证。\n\n闭环 verdict 才是最高用途的准入证据。UniSim 和 NeuroNCAP 展示了动作驱动的传感器回放与安全关键场景测试，Instant NuRec 报告了限定策略集合相对其逐场景 NuRec 基线的排序保持；这些是比 NVS 更直接的系统证据，但仍未给出同一反事实在现实道路中的成对结局。现实反事实通常不可同时观测，因而需要用真实日志回放、保留地域/rig、可控试验场、硬件在环、跨模拟器一致性和失败复现实验组成证据三角，并报告碰撞/离路逐场景一致性、排名置信区间和拒绝率。没有这些现实锚点时，只能声明“在给定测试包络内未改变所测结论”，不能写成“闭环已被证明”。",
+      "body": "视觉维度先检查日志附近的 NVS，可用 PSNR、SSIM、LPIPS 和动态区域指标发现外观退化，但不能证明表面、遮挡后内容或任务行为正确。几何维度检查深度、表面、点云和动态轨迹误差，并在偏离采集轨迹的视角上单独评测。FlexDrive 用模拟器生成 out-of-path 真值，SafeComp 2026 的工业评测工作关注车辆和行人在横向、纵向新视角下的保真退化；这些结果能暴露外推边界，但模拟器真值和受控对象采集仍不是开放道路上全部反事实的现实真值。\n\n传感器统计与感知一致性必须拆开报告。相机、LiDAR、雷达应分别比较强度、深度、回波、dropout、扫描时序和跨模态标定，再检查检测、跟踪、地图或占用输出是否在真实与重建输入间保持。CVPRW 2024 的 Are NeRFs Ready for Autonomous Driving? 用大规模真实/渲染输入比较目标检测与在线建图，说明感知域差需要专门测量并可通过针对性微调缓解；ICLR 2026 的感知对齐工作进一步表明，高整体视觉相似度仍可能对应不一致的对象感知结果。即使加入感知损失，也只支撑所测感知器、对象区域和数据条件下的一致性，不能替代规划或闭环验证。\n\n闭环 verdict 才是最高用途的准入证据。UniSim 和 NeuroNCAP 展示了动作驱动的传感器回放与安全关键场景测试，Instant NuRec 报告了限定策略集合相对其逐场景 NuRec 基线的排序保持；这些是比 NVS 更直接的系统证据，但仍未给出同一反事实在现实道路中的成对结局。现实反事实通常不可同时观测，因而需要用真实日志回放、保留地域/rig、可控试验场、硬件在环、跨模拟器一致性和失败复现实验组成证据三角，并报告碰撞/离路逐场景一致性、排名置信区间和拒绝率。没有这些现实锚点时，只能声明“在给定测试包络内未改变所测结论”，不能写成“闭环已被证明”。\n\nRoadVGGT 提供了一个分层报告的正例，也暴露了协议依赖：Waymo 上同时报告 25.71 PSNR、0.4692 mIoU、0.2312 m Z-RMSE 与 112.81 MB，nuScenes 零样本报告 23.80、0.4722 和 0.2241 m。数字分别约束外观、BEV 语义、高程和存储，不能合并成单一质量结论；而且指标只在比较方法共同有效区域计算，语义图来自微调 Mask2Former，输入还包含 pose/depth。没有动态对象、代码和下游规划实验时，它只通过静态路面资产层验收。",
       "referenceIds": [
         "flexdrive-2025",
         "safecomp-capability-2026",
@@ -76,7 +79,8 @@
         "perception-aware-3dgs-2026",
         "unisim-2023",
         "neuroncap-2024",
-        "instant-nurec-2026"
+        "instant-nurec-2026",
+        "roadvggt-2026"
       ]
     },
     {
@@ -84,7 +88,7 @@
       "kind": "challenges",
       "title": "共识、争议与失败边界",
       "thesis": "静动态分解和传感器建模已形成方向性共识，但可观测性、跨分布外推和统一资产准入仍是未解决的核心问题。",
-      "body": "共识是动态区域必须单独建模与评测，纯逐场景优化难以承受车队规模，多传感器约束比 RGB 单模态更接近驾驶用途。争议集中在统一形变场与对象场景图、标注辅助与自监督、逐场景质量与前馈吞吐之间。DeSiRe-GS 降低了对 3D 框的依赖，但自监督运动线索在低纹理、夜间、雨雾、缓慢目标和严重遮挡下仍可能失败；物理一致 4D 方法揭示时空 credit assignment，却依赖较好的基础几何，且未覆盖复杂非刚体和长时外推。\n\n最根本的边界来自观测不可辨识。单车轨迹把时间与视角绑定，训练视锥外表面、遮挡后对象和干预后的互动没有直接监督；FlexDrive 的 out-of-path benchmark 证明轨迹偏移应被单独测量，却也凸显真实外推真值稀缺。传感器侧还存在相机曝光与滚动快门、LiDAR 扫描模式与 ray dropping、雷达多径和饱和等模态特有误差。NeuRAD 与 RadarSplat 分别推进了这些建模，但尚未覆盖任意硬件配置、恶劣天气和跨地域迁移。\n\n闭环风险来自误把局部逼真当作系统可信。对象感知一致性、受控视角保真和少量策略排序都可能在新的感知器、规划器、速度、交通密度或 rollout 时长上失效。当前缺少统一的资产准入标准、现实反事实基准和不确定性到下游风险的传播模型；如果资产不能声明支持范围并在范围外拒绝输出，它就可能在最需要长尾验证的场景中提供虚假确定性。",
+      "body": "共识是动态区域必须单独建模与评测，纯逐场景优化难以承受车队规模，多传感器约束比 RGB 单模态更接近驾驶用途。争议集中在统一形变场与对象场景图、标注辅助与自监督、逐场景质量与前馈吞吐之间。DeSiRe-GS 降低了对 3D 框的依赖，但自监督运动线索在低纹理、夜间、雨雾、缓慢目标和严重遮挡下仍可能失败；物理一致 4D 方法揭示时空 credit assignment，却依赖较好的基础几何，且未覆盖复杂非刚体和长时外推。\n\n最根本的边界来自观测不可辨识。单车轨迹把时间与视角绑定，训练视锥外表面、遮挡后对象和干预后的互动没有直接监督；FlexDrive 的 out-of-path benchmark 证明轨迹偏移应被单独测量，却也凸显真实外推真值稀缺。传感器侧还存在相机曝光与滚动快门、LiDAR 扫描模式与 ray dropping、雷达多径和饱和等模态特有误差。NeuRAD 与 RadarSplat 分别推进了这些建模，但尚未覆盖任意硬件配置、恶劣天气和跨地域迁移。\n\n闭环风险来自误把局部逼真当作系统可信。对象感知一致性、受控视角保真和少量策略排序都可能在新的感知器、规划器、速度、交通密度或 rollout 时长上失效。当前缺少统一的资产准入标准、现实反事实基准和不确定性到下游风险的传播模型；如果资产不能声明支持范围并在范围外拒绝输出，它就可能在最需要长尾验证的场景中提供虚假确定性。\n\nRoadVGGT 把前馈方法的一组隐藏依赖显式化：高质量 pose/depth、语义过滤和道路平面结构共同缩小了问题。跨数据集零样本结果仍可能受标定、语义伪标签、共同有效区域和静态路面筛选影响；若换到雨夜、施工、破损路面、坡道或动态遮挡，错误如何传播到地图与规划尚未回答。无代码也使其跨 rig、跨城市和失败样例难以独立复核。",
       "referenceIds": [
         "desire-gs-2025",
         "physical-4d-2026",
@@ -92,7 +96,8 @@
         "neurad-2024",
         "radarsplat-2025",
         "safecomp-capability-2026",
-        "perception-aware-3dgs-2026"
+        "perception-aware-3dgs-2026",
+        "roadvggt-2026"
       ]
     },
     {
@@ -100,7 +105,7 @@
       "kind": "outlook",
       "title": "研究议程：可拒绝的混合重建与闭环资产准入",
       "thesis": "下一代系统应把重建器视为需要逐用途验收、持续监测并能拒绝服务的软件组件，而不是天然可信的数据生成器。",
-      "body": "第一条路线是建立机器可执行的资产准入协议。每个资产应记录采集覆盖、标定、天气、速度、动态密度和训练来源，依次通过 NVS 诊断、轨迹外几何、模态特有传感器统计、感知一致性、动作响应和闭环 verdict 检查。任一维度失败都应缩小其 ODD 或拒绝用于更高等级任务。NeuroNCAP 式安全关键闭环测试、SafeComp 式对象保真退化和感知对齐评测可以成为不同组件，但不能由其中任何一个单独签发通用闭环通行证。\n\n第二条路线是前馈初始化加不确定性驱动的选择性细化。一个可证伪实验应预先留出从未进入训练与调参的城市和相机 rig，在固定采集覆盖、训练预算和下游策略集合下，对比前馈-only、逐场景优化、前馈加选择性细化三种系统；主要终点不是平均 PSNR，而是资产在真实输入与重建输入上给出相反闭环 verdict 的假接受率。研究应预注册可接受上界和置信区间估计方法：若假接受率的置信区间上界超过阈值，或跨城市/rig 后拒绝机制未能覆盖失效，就不能继承闭环证据。几何不确定性、跨传感器残差、外推距离和下游敏感度只在能够降低该终点且保持固定覆盖率时才算有效。\n\n第三条路线是把可编辑物理与现实反事实证据连接起来。Real2Sim 和物理一致 4D 重建提供了对象编辑、碰撞和时间演化的机制，但验证应选择可在封闭试验场或硬件在环重复执行的干预，预先固定车辆初态、参与者轨迹、接触参数和传感器配置，再比较碰撞时刻、碰后轨迹、传感器返回与闭环动作的预测区间。若现实观测落在预测区间外的比例超过预注册阈值，资产必须拒绝该类干预，而不是用视觉分数补偿。最终目标不是声称生成了“真实反事实”，而是对每类干预给出可证伪假设、误差上界、证据来源和拒绝条件。",
+      "body": "第一条路线是建立机器可执行的资产准入协议。每个资产应记录采集覆盖、标定、天气、速度、动态密度和训练来源，依次通过 NVS 诊断、轨迹外几何、模态特有传感器统计、感知一致性、动作响应和闭环 verdict 检查。任一维度失败都应缩小其 ODD 或拒绝用于更高等级任务。NeuroNCAP 式安全关键闭环测试、SafeComp 式对象保真退化和感知对齐评测可以成为不同组件，但不能由其中任何一个单独签发通用闭环通行证。\n\n第二条路线是前馈初始化加不确定性驱动的选择性细化。一个可证伪实验应预先留出从未进入训练与调参的城市和相机 rig，在固定采集覆盖、训练预算和下游策略集合下，对比前馈-only、逐场景优化、前馈加选择性细化三种系统；主要终点不是平均 PSNR，而是资产在真实输入与重建输入上给出相反闭环 verdict 的假接受率。研究应预注册可接受上界和置信区间估计方法：若假接受率的置信区间上界超过阈值，或跨城市/rig 后拒绝机制未能覆盖失效，就不能继承闭环证据。几何不确定性、跨传感器残差、外推距离和下游敏感度只在能够降低该终点且保持固定覆盖率时才算有效。\n\n第三条路线是把可编辑物理与现实反事实证据连接起来。Real2Sim 和物理一致 4D 重建提供了对象编辑、碰撞和时间演化的机制，但验证应选择可在封闭试验场或硬件在环重复执行的干预，预先固定车辆初态、参与者轨迹、接触参数和传感器配置，再比较碰撞时刻、碰后轨迹、传感器返回与闭环动作的预测区间。若现实观测落在预测区间外的比例超过预注册阈值，资产必须拒绝该类干预，而不是用视觉分数补偿。最终目标不是声称生成了“真实反事实”，而是对每类干预给出可证伪假设、误差上界、证据来源和拒绝条件。\n\n**静态路面资产的下游准入实验。**在未参与训练的城市与相机 rig 上，对比 RoadVGGT、逐场景 RoGS 和通用前馈基线；固定 pose/depth 质量梯度，并分别扰动标定、语义伪标签、坡度和施工区域。主要终点应是道路拓扑/车道边界错误、地图定位偏差和规划可行域变化，而不只是 PSNR。若几何或语义误差使规划可行域相对真实地图发生超过预注册阈值的翻转，或不确定性不能覆盖该失败，资产必须拒绝地图/规划用途，只保留可视化或标注辅助资格。",
       "referenceIds": [
         "dggt-2026",
         "instant-nurec-2026",
@@ -108,15 +113,18 @@
         "physical-4d-2026",
         "neuroncap-2024",
         "safecomp-capability-2026",
-        "perception-aware-3dgs-2026"
+        "perception-aware-3dgs-2026",
+        "roadvggt-2026"
       ]
     }
   ],
   "takeaways": [
     "NVS 是必要的视觉诊断，不是几何、传感器、感知或闭环有效性的替代证明。",
-    "驾驶资产应按用途逐级准入：日志重放、轨迹外传感器渲染、可编辑反事实和闭环测试需要不同证据。",
+    "重建对象必须写进能力声明：RoadVGGT 的静态路面资产不能被包装为包含动态参与者的完整驾驶世界。",
+    "RoadVGGT 证明道路结构先验可带来紧凑前馈重建与跨数据集零样本表现，但结论依赖 pose/depth、语义伪标签和共同有效区域协议。",
+    "驾驶资产应按用途逐级准入：日志重放、静态地图、轨迹外传感器渲染、可编辑反事实和闭环测试需要不同证据。",
     "相机、LiDAR 与雷达各有独立成像和噪声机制；统一几何表示不能免除模态特有验证。",
-    "前馈重建最适合作为规模化初始化，随后由不确定性和下游敏感度触发局部精修、重新采集或拒绝。",
+    "前馈重建最适合作为规模化初始化或专用资产生成器，随后由不确定性和下游敏感度触发精修、重新采集或拒绝。",
     "现实反事实通常不可直接成对观测，必须通过多源现实锚点和明确适用包络约束结论强度。"
   ],
   "references": [
@@ -222,7 +230,7 @@
       "year": 2024,
       "venue": "CVPR 2024 Workshops",
       "publicationType": "method",
-      "publicationStatus": "peer-reviewed",
+      "publicationStatus": "workshop",
       "canonicalId": "cvf:cvprw2024:lindstrom-nerfs-driving",
       "sourceFamily": "publisher-and-venue",
       "supports": "直接比较真实与神经渲染输入上的目标检测和在线建图，并检验微调对 real-to-simulation 感知差距的缓解作用。",
@@ -504,12 +512,26 @@
           "url": "https://arxiv.org/abs/2409.12753"
         }
       ]
+    },
+    {
+      "id": "roadvggt-2026",
+      "title": "RoadVGGT: Road-Structure-Aware Feed-Forward Road Surface Reconstruction",
+      "authors": "Han Jiao, Chen Liu, Jiakai Sun, Zhanjie Zhang, Mengyuan Yang, Yimeng Li, Mofan Zhou, Kun Zhan, Lei Zhao",
+      "year": 2026,
+      "venue": "arXiv; AAAI 2027 preprint template, acceptance not verified",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2607.23758",
+      "sourceFamily": "arxiv",
+      "supports": "在给定多视图图像、相机 pose 与 depth 的条件下，用几何基础模型预测像素对齐高斯并在道路 XY 平面做置信加权融合；Waymo 报告 25.71 PSNR、0.4692 mIoU、0.2312 m Z-RMSE 和 112.81 MB，nuScenes 零样本报告 23.80 PSNR、0.4722 mIoU 与 0.2241 m Z-RMSE。",
+      "limitation": "对象是静态道路表面，不包含动态交通参与者；依赖提供的 pose/depth 和外部语义分割，质量指标只在各方法共同有效区域统计。没有代码、规划任务或反应式闭环验证，AAAI 2027 模板也不构成正式录用证据。",
+      "url": "https://arxiv.org/abs/2607.23758"
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-07-28",
-    "cutoffDate": "2026-07-28",
+    "searchedAt": "2026-08-01",
+    "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -529,45 +551,70 @@
       "official-project"
     ],
     "counts": {
-      "candidates": 46,
-      "deduplicated": 36,
-      "included": 23,
-      "excluded": 13
+      "candidates": 50,
+      "deduplicated": 39,
+      "included": 24,
+      "excluded": 15
     },
-    "evidenceBoundary": "6 个查询族分别保存了可复核的查询串、来源、执行日期、候选数与规范化 ID 样本。本库真实检索命中 26 个文件，按方向标签和 revisionOf 归并为 15 篇候选；其中 5 篇纳入、10 篇逐组记录暂缓理由，未静默漏筛。各查询族共有 46 条结构化候选记录，允许同一论文跨查询族重复出现；去重后为 36 篇，其中纳入 23 篇、排除或暂缓 13 篇。所有纳入引用均回到可打开的一手记录核对书目、出版状态、支撑论断和限制；本轮没有复现实验、访问私有数据或获得同初态真实道路反事实，因此不把模拟、开环或生成质量结果外推为现实安全结论。",
+    "evidenceBoundary": "2026-08-01 综合复核逐条重开 24 条纳入引用、11 条站外排除和当前本库候选的一手记录，并纳入 RoadVGGT 这一外部预印本。本库语义 rg 得到 13 个原始文件命中，按方向标签与 revisionOf 归并为 9 篇候选，其中 5 篇纳入、4 篇暂缓；外部清单含 19 篇纳入和 11 篇排除。六个真实语义查询保留跨族重叠：9 个候选出现在多个查询族，共产生 11 次额外 occurrence，因此 50 次候选出现归并为 39 篇唯一记录，最终为 24 篇纳入、11 篇排除和 4 篇暂缓。RoadVGGT 的结论严格限定在给定 pose/depth、静态路面、共同有效区域和视觉/语义/高程协议；没有动态参与者、代码或闭环验证，不能外推为完整驾驶仿真资产。",
     "openSearchGaps": [
-      "Real2Sim 与物理一致 4D 重建截至 2026-07-28 仍为预印本，其方法与限制已按 arXiv 当前版本核验，后续版本、正式 venue 和新增实验尚未确认。",
-      "Instant NuRec 的闭环排序来自内部数据、AlpaSim、140 个场景和五种策略配置；跨城市、跨 rig、跨策略族及与现实同条件反事实结局的一致性尚未确认。",
-      "轨迹外真实真值和碰撞后现实反事实难以成对采集，目前没有覆盖相机、LiDAR、雷达、感知、规划全链路的公开统一资产准入基准。"
+      "缺少现实道路上可成对观测的反事实真值，闭环 verdict 仍需多源现实锚定而非单一模拟器证明。",
+      "跨相机 rig、跨城市、恶劣天气和训练视锥外表面的几何不确定性与拒绝机制仍缺统一基准。",
+      "RoadVGGT 式静态路面重建尚未证明地图/车道误差如何传播到定位、规划可行域和闭环安全。",
+      "相机、LiDAR、雷达的时序、噪声、dropout 与跨模态标定仍难在同一资产中联合验收。",
+      "前馈重建的代码、长尾失败样例、存储/吞吐口径与逐场景优化基线仍缺统一复现实验。"
     ],
     "independentReview": {
-      "completedAt": "2026-07-29",
+      "completedAt": "2026-08-01",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 4,
-      "snapshotFingerprint": "c474caa29743a8af88401535698c302bb6e0c21dfc0ff52feacd9fabdd42de62"
+      "rounds": 2,
+      "snapshotFingerprint": "6e01d6fc2ba72c6c4fbf46980d41623ff9c3c75624489909e1eb595f7554cb82"
     },
     "queryRuns": [
       {
         "family": "NeRF 与 3D Gaussian Splatting 基础",
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation",
+        "executedAt": "2026-08-01",
+        "resultCount": 6,
+        "resultIdSample": [
+          "arxiv:2003.08934",
+          "doi:10.1145/3592433",
+          "arxiv:2310.08528"
+        ],
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "retrieval": {
+          "provider": "web-search-primary-arxiv",
+          "endpoint": "https://www.google.com/search",
+          "parameters": {
+            "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation"
+          },
+          "sort": "relevance",
+          "limit": 20
+        }
+      },
+      {
+        "family": "静态动态分解和驾驶 4D 重建",
         "sourceFamily": "local-corpus",
-        "query": "3DGS|Gaussian Splatting|NeRF|重建",
-        "executedAt": "2026-07-28",
-        "resultCount": 15,
-        "rawHitCount": 26,
-        "screenedOutCount": 11,
-        "screeningNote": "真实正则检索命中 26 个文件；按当前方向 tags 筛选并用 revisionOf 归并后得到 15 篇规范化候选。全部候选已写入 candidateLocalPaperIds，其中 5 篇进入引用，10 篇在 deferredGroups 中说明暂缓原因；其余 11 个命中文件是其他方向记录或同文修订。",
+        "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
+        "executedAt": "2026-08-01",
+        "resultCount": 9,
+        "rawHitCount": 13,
+        "screenedOutCount": 4,
+        "screeningNote": "实际执行 rg -l -i -- \"4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图\" content/papers；13 个原始文件命中经方向标签、文档类型与 revisionOf 规范化筛选后，9 篇进入跨源去重池，其余 4 篇记录为范围外或非规范条目。全部方向内候选均进入引用或暂缓组。",
         "resultIdSample": [
           "arxiv:2411.16816",
           "arxiv:2605.21032",
+          "arxiv:2607.14203",
           "arxiv:2605.13591"
         ],
-        "scopeRationale": "用真实本库全文正则检索“NeRF 与 3D Gaussian Splatting 基础”相关中英文术语，再从命中文件中筛选规范化候选 ID。",
+        "scopeRationale": "对本库 Markdown 全文执行与本查询族语义对齐的可复现宽正则，再按方向标签、文档类型与 revisionOf 做范围筛选；原始文件命中和进入去重池的论文候选分别计数。",
         "retrieval": {
           "provider": "ripgrep-local-corpus",
           "endpoint": "content/papers",
           "parameters": {
-            "query": "3DGS|Gaussian Splatting|NeRF|重建",
+            "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
             "path": "content/papers",
             "flags": [
               "-l",
@@ -579,26 +626,20 @@
         },
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
-            "anyscene-controllable-driving-scene-generation",
-            "cascadeocc-occupancy-world-model",
             "desire-gs-4d-street-gaussians",
-            "driving-videos-to-simulatable-scenarios",
             "dust-cooperative-4d-reconstruction",
             "envision4d-feedforward-4dgs",
-            "geoworldad-geometry-world-action",
             "instant-nurec-feedforward-3dgs",
             "physically-consistent-4d-driving-reconstruction",
             "pointforward-driving-reconstruction",
             "real2sim-physics-4dgs",
-            "rs2ad-lidar-roadside-to-vehicle-generation",
             "splatad-realtime-3dgs",
-            "vlga-geometry-action-driving",
             "vrs-roadside-lidar-synthesis"
           ],
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "与本方向直接相关，但本轮未进入核心证据集：其问题或方法与已纳入代表工作高度重叠，或当前仍缺少更强的正式出版、独立复现或用途级证据；后续证据升级时优先复核。",
+              "reason": "截至 2026-08-01 与本方向直接相关，但与核心代表工作高度重叠，或仍缺正式出版、独立复现及用途级证据；保留为后续证据升级候选。",
               "localPaperIds": [
                 "dust-cooperative-4d-reconstruction",
                 "envision4d-feedforward-4dgs",
@@ -607,14 +648,8 @@
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "对本方向提供补充证据，但主要贡献和完整讨论归入另一研究方向；本综述暂不重复纳入，以避免同一方法跨方向过度加权，后续若形成独立证据链再提升。",
+              "reason": "截至 2026-08-01 可提供跨方向补充证据，但主要贡献归入另一研究方向；本综述不重复加权，形成独立证据链后再提升为核心引用。",
               "localPaperIds": [
-                "anyscene-controllable-driving-scene-generation",
-                "cascadeocc-occupancy-world-model",
-                "driving-videos-to-simulatable-scenarios",
-                "geoworldad-geometry-world-action",
-                "rs2ad-lidar-roadside-to-vehicle-generation",
-                "vlga-geometry-action-driving",
                 "vrs-roadside-lidar-synthesis"
               ]
             }
@@ -622,113 +657,96 @@
         }
       },
       {
-        "family": "静态动态分解和驾驶 4D 重建",
-        "sourceFamily": "arxiv",
-        "query": "driving dynamic 4D reconstruction Gaussian Splatting static dynamic decomposition",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
-        "resultIdSample": [
-          "arxiv:2411.11921",
-          "arxiv:2308.01898",
-          "arxiv:2310.08528"
-        ],
-        "scopeRationale": "查询串直接覆盖“静态动态分解和驾驶 4D 重建”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
-        "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
-          "parameters": {
-            "query": "driving dynamic 4D reconstruction Gaussian Splatting static dynamic decomposition"
-          }
-        }
-      },
-      {
         "family": "相机、LiDAR 与多传感器渲染",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving camera LiDAR radar neural rendering Gaussian splatting",
-        "executedAt": "2026-07-28",
-        "resultCount": 6,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation",
+        "executedAt": "2026-08-01",
+        "resultCount": 10,
         "resultIdSample": [
-          "cvf:iccv2025:kung-radarsplat",
-          "doi:10.1145/3592433",
-          "cvf:cvprw2024:lindstrom-nerfs-driving"
+          "arxiv:2411.16816",
+          "openreview:9cwxZxJixB",
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
+          "arxiv:2308.01898"
         ],
-        "scopeRationale": "查询串直接覆盖“相机、LiDAR 与多传感器渲染”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-primary-domains",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "autonomous driving camera LiDAR radar neural rendering Gaussian splatting"
-          }
+            "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "前馈重建、压缩与实时渲染",
         "sourceFamily": "arxiv",
-        "query": "feed-forward driving reconstruction STORM DrivingForward DGGT real-time Gaussian splatting",
-        "executedAt": "2026-07-28",
-        "resultCount": 6,
+        "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene",
+        "executedAt": "2026-08-01",
+        "resultCount": 7,
         "resultIdSample": [
-          "arxiv:2501.00602",
-          "doi:10.1609/aaai.v39i7.32793",
-          "arxiv:2512.03004"
+          "arxiv:2607.14203",
+          "arxiv:2603.07552",
+          "doi:10.1609/aaai.v39i7.32793"
         ],
-        "scopeRationale": "查询串直接覆盖“前馈重建、压缩与实时渲染”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
-          "sort": "relevance",
-          "limit": 10,
+          "provider": "web-search-primary-arxiv",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "feed-forward driving reconstruction STORM DrivingForward DGGT real-time Gaussian splatting"
-          }
+            "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "可编辑 Real2Sim 和场景生成",
-        "sourceFamily": "official-project",
-        "query": "editable Real2Sim driving Gaussian scene generation project",
-        "executedAt": "2026-07-28",
-        "resultCount": 5,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction",
+        "executedAt": "2026-08-01",
+        "resultCount": 7,
         "resultIdSample": [
+          "openreview:9cwxZxJixB",
           "arxiv:2605.13591",
-          "cvf:cvpr2025:zhou-flexdrive",
-          "arxiv:2202.05263"
+          "arxiv:2605.01995"
         ],
-        "scopeRationale": "查询串直接覆盖“可编辑 Real2Sim 和场景生成”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-official-projects",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "editable Real2Sim driving Gaussian scene generation project"
-          }
+            "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       },
       {
         "family": "闭环仿真资产的物理与任务验证",
-        "sourceFamily": "publisher-and-venue",
-        "query": "closed-loop driving neural reconstruction perception task validation",
-        "executedAt": "2026-07-28",
-        "resultCount": 7,
+        "sourceFamily": "arxiv",
+        "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator",
+        "executedAt": "2026-08-01",
+        "resultCount": 11,
         "resultIdSample": [
-          "openreview:PmQlMTBmpa",
-          "arxiv:2404.07762",
-          "arxiv:2605.01995"
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
+          "arxiv:2605.21032",
+          "arxiv:2607.14203",
+          "arxiv:2605.13591",
+          "arxiv:2308.01898",
+          "arxiv:2605.01995",
+          "arxiv:2603.07552"
         ],
-        "scopeRationale": "查询串直接覆盖“闭环仿真资产的物理与任务验证”的对象、方法或验证边界；候选样本均按该查询族复核，而不是仅重命名标签。",
+        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
         "retrieval": {
-          "provider": "web-search-primary-domains",
+          "provider": "web-search-primary-arxiv",
           "endpoint": "https://www.google.com/search",
-          "sort": "relevance",
-          "limit": 10,
           "parameters": {
-            "query": "closed-loop driving neural reconstruction perception task validation"
-          }
+            "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator"
+          },
+          "sort": "relevance",
+          "limit": 20
         }
       }
     ],
@@ -761,7 +779,8 @@
       "arxiv:2512.03004",
       "cvf:iccv2025:kung-radarsplat",
       "arxiv:2501.00602",
-      "doi:10.1609/aaai.v39i7.32793"
+      "doi:10.1609/aaai.v39i7.32793",
+      "arxiv:2607.23758"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -774,26 +793,414 @@
         "title": "Block-NeRF: Scalable Large Scene Neural View Synthesis",
         "url": "https://arxiv.org/abs/2202.05263",
         "reasonCode": "redundant-static-evidence",
-        "reason": "提供大规模静态街景新视角合成证据，但不建模动态交通参与者，也没有闭环驾驶任务验证；静态基础由已纳入的 NeRF、3DGS 与驾驶重建文献覆盖。"
+        "reason": "提供大规模静态街景新视角合成，但不建模动态交通参与者，也没有闭环驾驶任务验证。"
       },
       {
         "canonicalId": "arxiv:2111.14643",
         "title": "Urban Radiance Fields",
         "url": "https://arxiv.org/abs/2111.14643",
         "reasonCode": "out-of-scope-static-mapping",
-        "reason": "聚焦城市级辐射场与地图重建，不能补足动态分解、传感器物理或策略闭环证据，因此未进入核心证据表。"
+        "reason": "聚焦城市级辐射场与地图重建，不能补足动态分解、传感器物理或策略闭环证据。"
       },
       {
         "canonicalId": "arxiv:2310.08528",
         "title": "4D Gaussian Splatting for Real-Time Dynamic Scene Rendering",
         "url": "https://arxiv.org/abs/2310.08528",
         "reasonCode": "domain-evidence-gap",
-        "reason": "证明通用动态场景实时渲染能力，但没有驾驶数据、传感器任务或闭环安全结论；其方法背景由驾驶专用 4DGS 文献承接。"
+        "reason": "证明通用动态场景实时渲染，但没有驾驶数据、传感器任务或闭环安全结论。"
+      },
+      {
+        "canonicalId": "arxiv:2503.08317",
+        "title": "Uni-Gaussians: Unifying Camera and LiDAR Simulation with Gaussian Splatting",
+        "url": "https://arxiv.org/abs/2503.08317",
+        "reasonCode": "redundant-sensor-simulation",
+        "reason": "覆盖相机与 LiDAR 合成，但仍是预印本且没有规划任务、闭环策略或现实反事实验证；核心多传感器证据已有 SplatAD 等代表。"
+      },
+      {
+        "canonicalId": "arxiv:2410.05111",
+        "title": "LiDAR-GS: Real-time LiDAR Re-Simulation using Gaussian Splatting",
+        "url": "https://arxiv.org/abs/2410.05111",
+        "reasonCode": "single-sensor-evidence",
+        "reason": "聚焦 LiDAR 再仿真，没有下游任务、闭环策略或现实反事实有效性证据。"
+      },
+      {
+        "canonicalId": "arxiv:2510.24734",
+        "title": "DrivingScene: Feed-Forward Reconstruction of Dynamic Driving Scenes",
+        "url": "https://arxiv.org/abs/2510.24734",
+        "reasonCode": "reconstruction-only-evidence",
+        "reason": "提供前馈动态重建，但证据集中在重建与新视角合成，没有闭环或任务级验证。"
+      },
+      {
+        "canonicalId": "arxiv:2603.07552",
+        "title": "ReconDrive: Feed-Forward 4D Gaussian Reconstruction for Autonomous Driving",
+        "url": "https://arxiv.org/abs/2603.07552",
+        "reasonCode": "insufficient-closed-loop-evidence",
+        "reason": "快速前馈 4D 重建有实现价值，但当前证据仍以重建、新视角和有限感知指标为主，缺少公开实现、现实反事实与闭环 verdict。"
+      },
+      {
+        "canonicalId": "arxiv:2407.02598",
+        "title": "AutoSplat: Constrained Gaussian Splatting for Autonomous Driving Scene Reconstruction",
+        "url": "https://arxiv.org/abs/2407.02598",
+        "reasonCode": "visual-editing-only",
+        "reason": "贡献集中在视觉重建与编辑，未证明物理、任务或闭环有效性。"
+      },
+      {
+        "canonicalId": "arxiv:2606.16278",
+        "title": "RealityBridge: Restoring Realism in Edited 3D Gaussian Driving Scenes",
+        "url": "https://arxiv.org/abs/2606.16278",
+        "reasonCode": "postprocessing-only",
+        "reason": "主要修复编辑后视频的视觉真实感，不能建立几何、物理或闭环结论保持证据。"
+      },
+      {
+        "canonicalId": "arxiv:2607.04770",
+        "title": "Cam2Sim: A Camera-Only Real-to-Sim Pipeline for Autonomous Driving",
+        "url": "https://arxiv.org/abs/2607.04770",
+        "reasonCode": "limited-validation-scope",
+        "reason": "方向与闭环准入高度相关，但当前验证范围有限，尚不足以支撑跨场景、跨系统的稳定 verdict。"
+      },
+      {
+        "canonicalId": "arxiv:2412.01718",
+        "title": "HUGSIM: A Real-Time, Photo-Realistic and Closed-Loop Simulator for Autonomous Driving",
+        "url": "https://arxiv.org/abs/2412.01718",
+        "reasonCode": "redundant-closed-loop-simulator",
+        "reason": "提供闭环神经仿真，但与 UniSim、NeuroNCAP 的核心证据重叠，且未补足现实锚定反事实的独立验证。"
+      }
+    ],
+    "candidateLedger": [
+      {
+        "canonicalId": "arxiv:2411.16816",
+        "disposition": "included",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "cvf:cvpr2021:ost-neural-scene-graphs",
+        "disposition": "included",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2024:zhou-drivinggaussian",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "ecva:eccv2024:yan-street-gaussians",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:9cwxZxJixB",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染",
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "cvf:cvprw2024:lindstrom-nerfs-driving",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2411.11921",
+        "disposition": "included",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.21032",
+        "disposition": "included",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.14203",
+        "disposition": "included",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "前馈重建、压缩与实时渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2605.13591",
+        "disposition": "included",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "可编辑 Real2Sim 和场景生成",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2003.08934",
+        "disposition": "included",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3592433",
+        "disposition": "included",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-024-10955-4",
+        "disposition": "included",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2308.01898",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2311.15260",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2025:zhou-flexdrive",
+        "disposition": "included",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2404.07762",
+        "disposition": "included",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:PmQlMTBmpa",
+        "disposition": "included",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.01995",
+        "disposition": "included",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2512.03004",
+        "disposition": "included",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:iccv2025:kung-radarsplat",
+        "disposition": "included",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2501.00602",
+        "disposition": "included",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v39i7.32793",
+        "disposition": "included",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.23758",
+        "disposition": "included",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2202.05263",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2111.14643",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2310.08528",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.08317",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2410.05111",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2510.24734",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2603.07552",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2407.02598",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.16278",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.04770",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2412.01718",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07910",
+        "disposition": "deferred",
+        "localPaperId": "dust-cooperative-4d-reconstruction",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.10656",
+        "disposition": "deferred",
+        "localPaperId": "envision4d-feedforward-4dgs",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.11594",
+        "disposition": "deferred",
+        "localPaperId": "pointforward-driving-reconstruction",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.05897",
+        "disposition": "deferred",
+        "localPaperId": "vrs-roadside-lidar-synthesis",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1
       }
     ],
     "sourceLimitations": [
-      "Semantic Scholar API 存在匿名限流；发生 HTTP 429 时使用其网页索引继续发现，不把聚合器摘要当作论据。",
-      "OpenAlex 搜索返回面较宽，只用于发现与出版元数据交叉核对；作者机构或出版状态仍以论文和正式页面为准。"
+      "Semantic Scholar Graph API 在两次方向查询中返回 HTTP 429，本轮将其记为 limited 且不直接采纳聚合器记录。",
+      "OpenAlex API 返回 HTTP 200，但仅用于元数据交叉核对；出版状态和方法结论仍以论文、正式页面和官方项目页为准。",
+      "RoadVGGT 截至截止日无官方代码或项目页，AAAI 2027 模板不构成正式录用证据。",
+      "ACM 页面拒绝自动访问时保留可解析 DOI 与可访问官方项目页，不把 HTTP 403 误判为论文不存在。",
+      "Real2Sim 与物理一致 4D 重建截至 2026-08-01 仍为预印本，后续版本、正式 venue 和新增实验尚未确认。"
     ],
     "qualityChecksApplied": [
       "query-family-alignment",
@@ -811,62 +1218,62 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "3DGS|Gaussian Splatting|NeRF|重建",
+        "executedAt": "2026-08-01",
+        "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 5,
-        "note": "实际执行 rg -l -i <pattern> content/papers，共原始命中 26 个文件；按方向标签及 revisionOf 归并为 15 篇规范化候选，全部进入引用或带理由的暂缓组。"
+        "note": "实际执行 rg -l -i：13 个原始文件命中，9 篇方向内规范候选；5 篇纳入，4 篇逐篇闭合到暂缓组。"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "自动驾驶三维重建：从可视化场景到可验收的闭环资产 NeRF 与 3D Gaussian Splatting 基础 静态动态分解和驾驶 4D 重建 相机、LiDAR 与多传感器渲染 前馈重建、压缩与实时渲染 可编辑 Real2Sim 和场景生成 闭环仿真资产的物理与任务验证",
-        "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 10,
-        "acceptedCount": 1,
-        "note": "通过已安装 ARIS arxiv_fetch.py 获取结构化元数据；候选仍逐篇打开一手页面复核。"
+        "executedAt": "2026-08-01",
+        "query": "六个驾驶三维重建语义查询族及候选 arXiv 主页面复核",
+        "endpoint": "https://arxiv.org/",
+        "limit": 80,
+        "acceptedCount": 2,
+        "note": "语义查询用于发现，逐篇打开 arXiv 主页面核对标题、版本与方法边界；2 条最终引用以 arXiv 为直接核验源。"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "自动驾驶三维重建：从可视化场景到可验收的闭环资产 official proceedings journal standard",
-        "endpoint": "https://www.google.com/search",
-        "limit": 10,
+        "executedAt": "2026-08-01",
+        "query": "retained reconstruction DOI, CVF, ECVA, OpenReview, ICLR and AAAI records",
+        "endpoint": "https://doi.org/ and official proceedings pages",
+        "limit": 50,
         "acceptedCount": 16,
-        "note": "限定正式会议、期刊、OpenReview 和标准机构页面核对出版状态与书目信息。"
+        "note": "逐篇复核正式出版入口；确认 Are NeRFs Ready for Autonomous Driving 位于 CVPR 2024 Workshops。16 条最终引用以出版方或会议页面为直接核验源。"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "自动驾驶三维重建：从可视化场景到可验收的闭环资产",
-        "endpoint": "https://www.semanticscholar.org/search",
+        "status": "limited",
+        "executedAt": "2026-08-01",
+        "query": "autonomous driving neural reconstruction Gaussian splatting closed loop",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
         "limit": 3,
         "acceptedCount": 0,
-        "note": "ARIS API受HTTP 429限流后改用Semantic Scholar网页索引完成发现；最终未直接采纳聚合器记录。"
+        "note": "Graph API 限流；未把聚合器结果直接纳入引用或虚构命中。"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "自动驾驶三维重建：从可视化场景到可验收的闭环资产",
+        "executedAt": "2026-08-01",
+        "query": "autonomous driving neural reconstruction Gaussian splatting",
         "endpoint": "https://api.openalex.org/works",
         "limit": 3,
         "acceptedCount": 0,
-        "note": "官方API返回HTTP 200；仅用于发现和出版元数据交叉核对，最终论断均回到一手来源。"
+        "note": "API 仅用于书目交叉核对；最终结论回到一手页面。"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-07-28",
-        "query": "自动驾驶三维重建：从可视化场景到可验收的闭环资产 official project code benchmark",
-        "endpoint": "https://www.google.com/search",
-        "limit": 10,
+        "executedAt": "2026-08-01",
+        "query": "official NeRF 3DGS driving reconstruction projects and code",
+        "endpoint": "https://github.com/ and official project pages",
+        "limit": 20,
         "acceptedCount": 1,
-        "note": "核对官方项目页、代码仓库和基准协议；项目自述不用于升级出版状态或现实安全等级。"
+        "note": "官方 3DGS 项目页作为一条基础表示引用的直接核验源；其他项目页只用于核对资产，不升级出版或闭环证据等级。"
       }
     ]
   }

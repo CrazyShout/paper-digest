@@ -238,7 +238,14 @@ function normalizePaperTags(data) {
 export function sourceLinkLabel(url) {
   const matchesHost = (domain) => urlMatchesHostname(url, domain);
   if (matchesHost("arxiv.org")) return "arXiv";
-  if (matchesHost("doi.org")) return "正式版";
+  if (matchesHost("huggingface.co") && new URL(url).pathname.startsWith("/datasets/")) {
+    return "数据集";
+  }
+  if (matchesHost("zenodo.org")) return "数据归档";
+  if (matchesHost("doi.org")) {
+    const doi = decodeURIComponent(new URL(url).pathname).replace(/^\/+/, "");
+    return /^10\.5281\/zenodo\./i.test(doi) ? "数据归档" : "正式版";
+  }
   if (matchesHost("github.com")) return "代码";
   if ([
     "openaccess.thecvf.com",
@@ -260,6 +267,18 @@ export function sourceLinkLabel(url) {
     return "正式版";
   }
   return "项目页";
+}
+
+export function sourceLinkLabelMatches(label, url) {
+  if (label === sourceLinkLabel(url)) return true;
+  if (label === "作者仓库（待发布）" && urlMatchesHostname(url, "github.com")) {
+    return true;
+  }
+  if (label !== "数据归档") return false;
+  if (urlMatchesHostname(url, "zenodo.org")) return true;
+  if (!urlMatchesHostname(url, "doi.org")) return false;
+  const doi = decodeURIComponent(new URL(url).pathname).replace(/^\/+/, "");
+  return /^10\.5281\/zenodo\./i.test(doi);
 }
 
 export function formalPrimaryLinkIsCanonical(reference) {
@@ -341,6 +360,11 @@ export function buildPaperSourceLinks(source) {
   );
 }
 
+export function isAffiliationPlaceholder(value) {
+  const normalized = String(value || "").trim();
+  return /作者单位|见论文|\b(?:unknown|unconfirmed|not\s+confirmed)\b|^\s*pdf\s*$|\b(?:see|refer\s+to|in)\s+(?:the\s+)?(?:paper\s+)?pdf\b|\baffiliations?\s+(?:are\s+)?in\s+(?:the\s+)?pdf\b/i.test(normalized);
+}
+
 export function buildReviewSourceLinks(reference) {
   const links = [];
 
@@ -362,7 +386,12 @@ export function buildReviewSourceLinks(reference) {
   if (Array.isArray(reference.links)) {
     for (const link of reference.links) {
       if (link && typeof link.url === "string") {
-        links.push({ label: sourceLinkLabel(link.url), url: link.url });
+        links.push({
+          label: typeof link.label === "string" && link.label.trim()
+            ? link.label.trim()
+            : sourceLinkLabel(link.url),
+          url: link.url
+        });
       }
     }
   }

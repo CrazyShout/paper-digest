@@ -6,7 +6,7 @@
   "title": "Still Camouflage, Moving Illusion: View-Induced Trajectory Manipulation in Autonomous Driving",
   "source": "arXiv:2605.12743 / https://arxiv.org/abs/2605.12743",
   "authors": ["Shuo Ju", "Qingzhao Zhang", "Huashan Chen", "Xuheng Wang", "Haotang Li", "Wanqian Zhang", "Feng Liu", "Kebin Peng", "Sen He"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Institute of Information Engineering, Chinese Academy of Sciences", "The University of Arizona", "Beijing Jiaotong University", "East Carolina University"],
   "comment": "这篇论文把视角变化从物理攻击的难点变成攻击机制本身，展示静态伪装如何诱导轨迹漂移并触发下游急刹。"
 }
 ---

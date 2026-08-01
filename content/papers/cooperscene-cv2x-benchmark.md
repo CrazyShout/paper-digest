@@ -38,7 +38,7 @@ CooperScene 不是只给协同感知增加一套离线数据，而是把真实 C
 
 ## 实验结论与证据
 
-论文报告 CooperScene 共包含 59K frames 和 344K annotated objects，使用厘米级定位、跨模态标定和 3GPP 标准兼容的 C-V2X 通信记录作为数据基础。它的实验重点不是推出一个新模型，而是提供 benchmark protocol，让现有 cooperative perception 方法在真实多 agent、真实通信吞吐和异构感知配置下重新比较。对组内方向来说，这类数据比只在合成 V2X 数据集上做模块提升更有价值，因为它能直接暴露通信动态和节点扩展带来的系统瓶颈。
+论文报告 CooperScene 共包含 59K frames 和 344K annotated objects，使用厘米级定位、跨模态标定和 3GPP 标准兼容的 C-V2X 通信记录作为数据基础。它的实验重点不是推出一个新模型，而是提供 benchmark protocol，让现有 cooperative perception 方法在真实多 agent、真实通信吞吐和异构感知配置下重新比较。对于协同驾驶研究，这类数据比只在合成 V2X 数据集上做模块提升更有价值，因为它能直接暴露通信动态和节点扩展带来的系统瓶颈。
 
 ## 应用场景与启发
 

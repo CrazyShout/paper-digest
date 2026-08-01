@@ -4,9 +4,9 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
   "title": "CoPAD: Multi-source Trajectory Fusion and Cooperative Trajectory Prediction with Anchor-oriented Decoder in V2X Scenarios",
-  "source": "IROS 2025 / arXiv:2509.15984 / https://arxiv.org/abs/2509.15984",
+  "source": "IEEE/RSJ IROS 2025 / https://doi.org/10.1109/IROS60139.2025.11247038 ; arXiv:2509.15984 / https://arxiv.org/abs/2509.15984",
   "authors": ["Kangyu Wu", "Jiaqi Qiao", "Ya Zhang"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["School of Automation, Southeast University", "Key Laboratory of Measurement and Control of Complex Systems of Engineering, Ministry of Education"],
   "comment": "CoPAD 是近期协同轨迹预测里较直接的一篇 V2X 工作，用多源轨迹融合、历史交互注意力和 anchor-oriented decoder 处理单车感知轨迹不稳定的问题。"
 }
 ---
@@ -27,13 +27,13 @@ CoPAD 是一篇 V2X 场景下的协同轨迹预测论文。它把车端和路侧
 
 ## 关键图与可视化结果
 
-![图 1：CoPAD 总体框架，包含多源轨迹融合、历史时间注意力、模式注意力和 anchor-oriented decoder](https://arxiv.org/html/2509.15984v1/1.png)
+![图 1：路侧视角补充黄色车辆遮挡区域的典型 V2X 场景](https://arxiv.org/html/2509.15984v1/1.png)
 
-这张图展示了 CoPAD 的信息流：协同不发生在最终预测结果之后，而是从历史轨迹质量控制开始。对组内复现来说，最值得关注的是融合模块和预测模块是否可以拆开评估。
+图 1 只是问题场景示意：黄色车辆视野受限时，路侧基础设施提供另一视角。它说明多源轨迹为什么可能补足单车历史，但不展示 CoPAD 的模块结构，也不能证明融合后的关联一定正确。
 
-![图 2：CoPAD 在 V2X 场景中的多源轨迹输入与预测输出示意](https://arxiv.org/html/2509.15984v1/2.png)
+![图 2：CoPAD 总体框架，包含多源轨迹融合、PTA、模式注意力与 anchor-oriented decoder](https://arxiv.org/html/2509.15984v1/2.png)
 
-这张图支撑论文对“多源轨迹更完整”的主张。它能帮助读者检查模型收益到底来自 V2X 视野补全，还是来自 decoder 对多模态轨迹的更好表达。
+图 2 才展示完整信息流：车辆轨迹、路侧轨迹和 HD map 先进入多源融合，再由 PTA 与 anchor-oriented decoder 输出多模态未来。读者应据此把融合增益与预测器增益分开做消融，而不能把两者合并解释为单一的 V2X 收益。
 
 ## 实验结论与证据
 

@@ -5,7 +5,7 @@
   "title": "Causality-Aware End-to-End Autonomous Driving via Ego-Centric Joint Scene Modeling",
   "source": "arXiv:2605.13646 / https://arxiv.org/abs/2605.13646",
   "authors": ["Seokha Moon", "Minseung Lee", "Joon Seo", "Jinkyu Kim", "Jungbeom Lee"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["Korea University", "Kakao Mobility"],
   "comment": "CaAD 把端到端驾驶中的自车规划和周围交通参与者响应放进同一个因果场景建模框架，重点看交互场景下闭环规划是否更一致。"
 }
 ---
@@ -26,13 +26,13 @@ CaAD 是一篇因果感知端到端自动驾驶论文。它认为现有 E2E 模�
 
 ## 关键图与可视化结果
 
-![图 1：CaAD 框架，展示 ego-centric joint scene modeling 和 causality-aware policy alignment](https://arxiv.org/html/2605.13646v1/x1.png)
+![图 1：既有端到端方法与 CaAD 因果联合建模路径的对照](https://arxiv.org/html/2605.13646v1/x1.png)
 
-这张图展示了 CaAD 把因果依赖放在场景潜表示里的方式。值得关注的是它不是后处理规则，而是在策略学习阶段就让自车动作和周围 agent 反应共同进入表示。
+图 1 是动机对照而不是完整框架：既有方法在 marginal representation 上做策略优化，CaAD 则先学习 ego-centric joint-causal scene modes，再在 joint-mode embedding 上评估自车 rollout。它解释了论文为什么改变训练路径，但没有展示模块实现细节。
 
-![图 2：CaAD 的交互建模和规划结果可视化](https://arxiv.org/html/2605.13646v1/x2.png)
+![图 2：CaAD 的联合预测分支、策略对齐与 Agent-Mode Attention 总体框架](https://arxiv.org/html/2605.13646v1/x2.png)
 
-这张可视化结果用于检查论文主张是否落到交互场景：如果因果建模有效，收益应该集中在并线、路口、跟车和避让等 reciprocal interaction 明显的片段。
+图 2 才是方法总览：训练期联合预测分支、规划奖励驱动的 policy alignment 和 Agent-Mode Attention 如何连接都在这里。它支持结构与信息流的解释，不是交互规划结果可视化；定性行为仍需回到论文后续连续帧案例核对。
 
 ## 实验结论与证据
 

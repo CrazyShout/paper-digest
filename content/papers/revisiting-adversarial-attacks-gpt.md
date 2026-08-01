@@ -29,11 +29,13 @@
 
 ## 关键图与可视化结果
 
-![图 1：论文使用的数据集样例](https://arxiv.org/html/2505.11532v2/extracted/6472569/figure/dataset_example.png)
+![图 1：论文用于路牌检测与前车距离回归的两类数据样例](../../assets/papers/revisiting-adversarial-attacks-figure-1.png)
 
-原版写“无 arXiv HTML 页面图片可用”是不准确的。arXiv HTML 至少抽取出了 Figure 1 的数据样例；Figure 2 是 stop sign detection 在不同攻击下的曲线图，在 HTML 中以内联 SVG 形式呈现，建议直接看 HTML 或 PDF。
+图 1 来自官方 arXiv 源码。左图是 stop sign 检测输入，右图是 Comma2k19 前车距离回归输入；它提醒读者，论文把分类/检测与回归拆成两套协议，不能用同一个攻击成功率概括。
 
-[论文 HTML（含 Figure 2 和表格）](https://arxiv.org/html/2505.11532v2)
+![图 2：不同攻击下 stop sign 检测的 mAP50、Precision 与 Recall](../../assets/papers/revisiting-adversarial-attacks-figure-2.png)
+
+图 2 从官方 PDF 的矢量图提取。FGSM 和 Gaussian noise 对 Recall 与 mAP50 的破坏最明显，Auto-PGD 在这个单类别设置中反而较弱；这直接否定了不看任务接口就给攻击方法排统一强弱的做法。
 
 ## 实验结论与证据
 

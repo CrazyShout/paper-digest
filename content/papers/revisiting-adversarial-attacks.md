@@ -28,13 +28,19 @@
 
 ## 关键图与可视化结果
 
-论文共 2 张图，展示了对抗扰动对感知系统的影响以及防御方法的效果对比。本文无 arXiv HTML 页面图片可用，请直接查看 PDF：
+![图 1：论文用于路牌检测与前车距离回归的两类数据样例](../../assets/papers/revisiting-adversarial-attacks-figure-1.png)
 
-[论文 PDF（含图表）](https://arxiv.org/pdf/2505.11532)
+图 1 来自官方 arXiv 源码，左侧是 Traffic Signs Detection 中的 stop sign，右侧是 Comma2k19 行车视频。它说明论文并非在同一个任务上汇总攻击成功率，而是分别检查 YOLOv8 单类检测与 OpenPilot Supercombo 前车距离回归；两套协议的输入、指标和安全后果不能混为一个“鲁棒性分数”。
+
+![图 2：不同攻击下 stop sign 检测的 mAP50、Precision 与 Recall](../../assets/papers/revisiting-adversarial-attacks-figure-2.png)
+
+图 2 从官方 PDF 的矢量图提取。FGSM 与 Gaussian noise 使 mAP50 和 Recall 明显下降，而 Auto-PGD 在这个单类别检测设置里没有成为最强攻击。该结果支持“攻击强弱依赖任务和模型接口”，但不能证明这些数字能直接外推到多类别检测、BEV 融合或规划闭环。
 
 ## 实验结论与证据
 
-作为一篇 8 页的 DSML 2025 workshop 论文，本文提供了聚焦范围内的实证分析。实验同时揭示了各类防御方法的优势和不足：不同防御策略在缓解对抗攻击时表现出差异性，某些方法在特定攻击类型下有效，但在更复杂的攻击场景中仍有局限。由于论文篇幅有限，实验覆盖的场景和攻击类型具有明确边界，读者应注意不应将结论过度外推到所有自动驾驶感知任务。
+两类任务给出的结论并不相同。Supercombo 距离回归中，Auto-PGD 在 0–20 m 区间造成 34.45 m 的平均误差，明显高于 FGSM 的 18.34 m；到了 60–80 m，二者分别为 8.49 m 和 4.65 m。近距离目标占据更大视觉区域，因此扰动后果更严重，但实验使用的是离线视频帧和相对干净预测作参照，不是道路真值距离。
+
+stop sign 检测中，无攻击时 mAP50 为 0.9949；FGSM 与 Gaussian noise 分别降到 0.7265 和 0.7050，而 Auto-PGD 仍有 0.9509。防御实验显示 median blur、混合对抗训练和 diffusion restoration 只在部分攻击/任务组合上有效，有时还会损伤正常或弱攻击样本。论文真正支持的判断是“防御必须按任务、距离和攻击机制分层评估”，不是某一种防御已经解决了 ADS 对抗安全。
 
 ## 应用场景与启发
 

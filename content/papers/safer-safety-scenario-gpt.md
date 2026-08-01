@@ -7,7 +7,7 @@
   "title": "SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling",
   "source": "arXiv:2603.04071 / https://arxiv.org/abs/2603.04071",
   "authors": ["Jinlong Cui", "Fenghua Liang", "Guo Yang", "Chengcheng Tang", "Jianxun Cui"],
-  "affiliations": ["作者单位见论文 PDF"],
+  "affiliations": ["School of Traffic and Transportation, Harbin Institute of Technology", "Chongqing Research Institute of Harbin Institute of Technology", "Chongqing Changan Automobile Co., Ltd."],
   "comment": "[GPT改] 原版整体可信，本版主要补强证据边界，并保留 LFR、MDA、token resampling 三条主线。"
 }
 ---

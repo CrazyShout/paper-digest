@@ -82,6 +82,21 @@ test("email HTML uses the already-rendered digest body without double escaping",
   assert.doesNotMatch(html, /&amp;amp;/);
 });
 
+test("plain-text digest email includes the issue body and release notes", () => {
+  const text = buildTextBody({
+    title: "Test digest",
+    date: "2026-08-01",
+    displayDate: "2026-08-01",
+    keywords: [],
+    summary: "Summary",
+    body: "## 本次系统更新\n\n- 更新动态综述与历史报告。"
+  }, "2026-08-01", "https://example.com/#2026-08-01", "", [], "https://example.com");
+
+  assert.match(text, /本期内容与更新/);
+  assert.match(text, /本次系统更新/);
+  assert.match(text, /更新动态综述与历史报告/);
+});
+
 test("welcome email introduces the system before the latest digest", () => {
   const digest = {
     title: "Latest digest",

@@ -42,7 +42,7 @@ Bench2Drive-Robust 是一篇面向闭环 E2E 自动驾驶部署鲁棒性的 benc
 ## 应用场景与启发
 
 - 应用场景：端到端驾驶上车前鲁棒性回归测试、部署故障注入、系统级闭环 benchmark。
-- 方法启发：组内 E2E 实验不能只报告开环轨迹误差或 perception corruption，需要把延迟、帧丢失和定位误差作为标准变量。
+- 方法启发：E2E 实验不能只报告开环轨迹误差或 perception corruption，需要把延迟、帧丢失和定位误差作为标准变量。
 - 讨论问题：一个模型在 nominal Bench2Drive 上高分，是否仍能在固定 delay 和 ego-state noise 下保持安全边界。
 
 ## 局限与阅读风险

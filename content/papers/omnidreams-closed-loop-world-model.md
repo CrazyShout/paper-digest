@@ -55,4 +55,4 @@ OmniDreams 是本期世界模型方向最重的系统论文。它不是离线视
 
 - 重点跟踪 FlashDreams、Cosmos 后训练配置和是否释放可复现实验子集。
 - 与 Diffusion Transformer WAM 对照：一个是工业级实时闭环生成系统，一个是小规模 latent WAM 设计诊断。
-- 组内讨论可围绕“生成式 world model 的认证指标”展开，而不是只比较 FVD 或视觉样例。
+- 后续讨论可围绕“生成式 world model 的认证指标”展开，而不是只比较 FVD 或视觉样例。
