@@ -1,0 +1,38 @@
+{
+  "candidateId": "autovla-fail-open-action-token-alias-v2",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb9a-72bc-7db0-8803-7d066c608a96",
+  "reviewedAt": "2026-08-01T05:21:31.568Z",
+  "scores": {
+    "novelty": 4,
+    "feasibility": 5,
+    "success-probability": 2,
+    "impact": 5,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "动作 token 合同、严格解析和 fail-closed 处理属于成熟安全工程；该候选只有在公开 agent 确实把非法或不足输出静默映射为 index 0 并执行时，才形成 AutoVLA 特有的新攻击面。固定代码核验没有支持这一执行路径。",
+    "feasibility": "路径审计本身可在 1-2 周完成：公开 checkpoint、agent、predict、decoder 和 NAVSIM evaluator 都可定位并可加 hook。若 Gate 0 通过，后续 300-scene 基率、240-block 64-query 攻击和 CARLA MRM 桥接仍很重；若按当前代码预期 Gate 0 失败，则可快速、清楚地形成负结果。",
+    "success-probability": "公开 `AutoVLA.predict` 在调用 decoder 前过滤低于 action token 起点的 ID；GRPO 中把短 action 序列补零的逻辑属于训练采样路径，不被公开 agent 的 `compute_trajectory -> predict` 调用。空 action 或合法短 action 更可能触发 decoder/Trajectory 长度异常并在 evaluator 中记为 invalid，而不是静默执行 action 0，因此部署 alias 主张成功概率很低。",
+    "impact": "若真存在静默 fail-open，会影响 VLA parser、防御和回退；但当前最可能的结论是组件级训练辅助行为未进入部署路径，实际影响收缩为增加 parser invariant 和异常测试。",
+    "comparison-readiness": "dossier 正确把自然、随机文本、目标语言和 direct-token fault 分开，并设置 constrained decoding、retry、strict reject、allowlist、fail-stop 与 MRM 基线；Gate 0 的 kill 条件也足够明确。"
+  },
+  "strongestObjection": "候选的核心机制不在固定公开执行路径：低 ID 在 `predict` 中先被过滤，零填充只存在于 GRPO 训练采样，公开 agent 对空或不足轨迹更可能抛出异常并被 NAVSIM evaluator 标为 invalid。没有证据表明任何非法 completion 会静默别名到 action 0 后进入车辆控制，因此不能继续以部署攻击命名。",
+  "requiredExperiment": "在固定公开 checkpoint 上对官方 `AutoVLAAgent.compute_trajectory -> AutoVLA.predict -> ActionTokenizer.decode_token_ids_to_trajectory -> NAVSIM Trajectory` 全链路加只读 hook，分别强制 early EOS、全低 ID、一个合法 action token、短合法序列和完整合法序列。必须记录原始 token、过滤后 token、decoder 输入、返回长度、异常和 evaluator 状态；只有非法或不足输出在无异常、无 invalid 标记的情况下稳定生成并执行以 codebook index 0 为主的轨迹，且自由字符串确实能经官方 command 接口到达模型，才允许进入语言攻击阶段，否则按 kill 条件结束。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/models/autovla.py",
+      "finding": "公开 `predict` 先移除 EOS，再仅保留大于等于 action token 起点的 token，之后才调用 action decoder；低 ID 不会沿该路径直接成为 decoder 的 index 0 输入。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/navsim/navsim/agents/autovla_agent.py",
+      "finding": "公开 agent 的 `compute_trajectory` 调用 `self.autovla.predict(features)`，未调用 GRPO 的短序列补零 helper；返回值随后构造固定 horizon 的 NAVSIM Trajectory。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/models/action_tokenizer.py",
+      "finding": "decoder 对低于 action 起点的 token 会映射到 codebook index 0，但该 helper 的局部容错不能证明公开 agent 会把低 ID 传入；空或短输出仍需由运行时确认其异常语义。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "7a24fb422f25e793fac8987be258a40f31f0a09560e16524f875215fa631b03f"
+}

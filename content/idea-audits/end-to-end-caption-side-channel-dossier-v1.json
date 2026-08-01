@@ -1,0 +1,219 @@
+{
+  "candidateId": "covla-caption-side-channel-future-motion",
+  "title": "端到端驾驶 Caption 的未来动作侧信道审计",
+  "hook": "先追溯每个动作词来自哪个时间窗，再判断语言究竟提供可部署语义，还是把未来轨迹标签绕路送回模型。",
+  "output": "caption 字段 provenance graph、时间窗审计工具、七分支因果消融协议与语言监督可部署性报告。",
+  "effort": "1 名研究者，1-2 张 24-48GB 显存 GPU，并需要获准访问 CoVLA 学术数据 payload 与字段生成元数据。",
+  "timeline": "总周期 5-8 周；两日 Gate 0 数据前检、1 周 Gate 1 测量链，训练与锁定消融 4-7 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未证明 CoVLA caption 使用预测时刻之后的轨迹、CAN 状态或未来规则；未来标签泄漏只是由数据结构触发的待审计假设。",
+    "尚未取得或运行 CoVLA 全量 payload、caption 生成脚本、CaptionQA、AutoVLA 或本 dossier 的 provenance parser 与 trajectory head。",
+    "不从公开样本中的动作词、ground-truth caption 优于 predicted caption 或 caption-only 可预测轨迹，直接推断数据泄漏已经发生。"
+  ],
+  "whyNow": "CoVLA 已公开大规模视觉、语言、轨迹数据及自动 caption 生成流程，论文又报告 ground-truth caption 与 predicted caption 的性能差异；CaptionQA 将 caption 的下游效用变成可测对象，LinkVLA、LatentVLA 和 ICR-Drive 分别推进语言-动作耦合、无语言 latent action 与指令反事实鲁棒性。当前缺口不是再次证明 caption 有用，而是把每个 caption 子句的最晚信息时间戳与轨迹增量相连，区分 future-derived target side channel 和部署时可获得语义。",
+  "keyProblem": "若 maneuver caption 的动作词由预测时刻之后的轨迹、车辆状态或规则生成，模型可通过语言读到本应预测的目标；drive/frame 随机划分还可能让相邻片段跨 split。这样得到的轨迹改善可能是标签侧信道，而不是部署时由当前视觉和历史状态可生成的语义增量。",
+  "problemEvidence": [
+    "CoVLA 公开样本同时包含 frame、未来轨迹、车辆状态和详细 maneuver caption，并采用自动 caption 流程；这要求追踪字段来源，但并不自动证明未来泄漏。",
+    "CoVLA 报告 ground-truth caption 与 predicted caption 的差异，说明 caption 可用性和生成来源可能改变轨迹结果，需要拆分语义、动作 token 与可用时间窗。",
+    "CaptionQA、LinkVLA、LatentVLA 和 ICR-Drive 分别覆盖 caption utility、language-action codebook、latent action 和部署指令扰动，但未把驾驶训练 caption 的未来来源与 trajectory gain 做因果分解。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "CoVLA",
+      "overlap": "提供视觉、车辆状态、轨迹、ground-truth/predicted caption 与自动生成流程，并研究 caption 对驾驶任务的作用。",
+      "unreplacedResidual": "未逐子句记录最晚数据时间戳，也未联合比较 motion-only、motion-masked、strict past-lagged 与 caption-only 来识别 future-derived 增量。"
+    },
+    {
+      "work": "CaptionQA",
+      "overlap": "以真实下游任务效用评估 caption，并开放 parser 与扩展管线。",
+      "unreplacedResidual": "关注 caption 是否保留图像效用，不追踪 caption 是否包含本应预测的未来动作标签。"
+    },
+    {
+      "work": "LinkVLA",
+      "overlap": "通过共享 language-action codebook 和 trajectory-to-caption 辅助目标强化语言动作一致性。",
+      "unreplacedResidual": "没有把辅助 caption 的字段时间来源、future-motion token 和可部署语义分开。"
+    },
+    {
+      "work": "LatentVLA 与 ICR-Drive",
+      "overlap": "分别提出无语言标注的 latent action 与部署指令反事实鲁棒性，说明语言偏差和鲁棒性已被关注。",
+      "unreplacedResidual": "前者不审计已有 caption，后者扰动部署指令而非训练标签的时间 provenance。"
+    }
+  ],
+  "currentLimitations": "最近工作已覆盖 caption utility、ground-truth/predicted caption、language-action 统一、latent action 和指令反事实，因此本候选不能以遮盖动作词、改写 caption 或使用 caption-only 模型本身作为新颖性。唯一 residual 是先获得真实字段生成链，逐子句标注最晚可用时间，再在 drive-level split 和同一模型容量下识别 future-derived motion token 对轨迹增益及方法排序的贡献。",
+  "residualClaim": "只审计驾驶监督 caption 的时间来源与目标侧信道；不声称所有语言监督都有泄漏，不把数据访问失败当正面发现，也不把部署指令鲁棒性与训练 caption provenance 混为一谈。",
+  "estimand": {
+    "targetPopulation": "取得合法访问且具有 frame/drive/session 标识、未来轨迹、车辆状态、caption 字段及可追溯生成规则的 CoVLA 学术样本。",
+    "statisticalUnit": "独立 drive/session 是推断单位；同一 drive 中的 frame、caption 分支和多个时间 lag 是配对重复测量。",
+    "outcome": "固定视觉 backbone 与 trajectory head 下的 ADE/FDE、碰撞/可行性代理，以及不同 caption 分支对 vision+ego-state baseline 的增量。",
+    "primaryEstimand": "Delta_future=(Y_original-Y_vision)-(Y_strict-past-or-motion-masked-Y_vision)，并检验 motion-token-only 是否重现 original caption 的主要增量。",
+    "secondaryEstimands": "predicted caption、caption-only、不同 lag、动作词类别和场景类型下的增量，以及方法排序是否因去除 future-derived 字段而改变。"
+  },
+  "hypothesis": "若 CoVLA ground-truth caption 的部分动作词依赖预测时刻之后的信息，则 motion-token-only 会重现 original caption 的主要 ADE/FDE 或规划增量，而 strict past-lagged、motion-masked 或部署时 predicted caption 的增量显著收缩并改变方法结论；若字段均为 past-only 且控制后增益稳定，则未来侧信道假设被推翻。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 数据访问与字段时间来源",
+      "state": "not-run",
+      "pass": "两日内依法取得足以审计的 CoVLA payload、字段说明或生成脚本，能够为每个 caption 子句记录 source field、最晚时间戳和生成规则，并确认至少 1,000 个样本可按 drive/session 分割。",
+      "fail": "全量 payload 或字段 provenance 不可得、时间窗无法从作者资料和数据重建，或只能依靠少量公开样本猜测时停止，不训练模型也不宣称泄漏。"
+    },
+    {
+      "gate": "Gate 1 - 固定解析器与无泄漏测量链",
+      "state": "not-run",
+      "pass": "固定数据版本、caption parser、动作/时间标签器、drive-level split 和轻量 trajectory head，证明相邻 frame/drive 不跨 split，七个 caption 分支只改变预注册文本内容或时间窗。",
+      "fail": "无法排除 split 泄漏、parser 需要查看测试轨迹才能标注、字段无法与预测时刻对齐，或只有手工 mock caption 能运行时停止。"
+    }
+  ],
+  "dataPreflight": [
+    "打开 CoVLA 官方 dataset card 与访问流程，记录 dataset-card-checked-2026-08-01 版本、payload 许可、研究用途限制、再分发边界和字段 schema；未获访问前不从样本外推。",
+    "获取 caption 生成说明或脚本，为每个子句建立 source field、source timestamp、prediction cutoff、规则/模型版本和人工后处理 provenance graph。",
+    "枚举 drive/session/frame ID，按 drive 或 session 锁定 train/validation/test split，并检查相邻帧、重复 caption、相同轨迹片段和模板是否跨 split。",
+    "在 1,000-5,000 个样本上固定 parser，输出 original、caption-only、motion-only、motion-masked、strict past-lagged、predicted caption 与 vision-only 七分支；逐 token 保存遮盖理由。",
+    "Gate 0/1 通过前不训练 trajectory head，不把公开样本中的 future trajectory 与动作词共现写成泄漏结果。"
+  ],
+  "noveltyClaims": [
+    "新对象是 caption 子句的最晚信息时间戳到 trajectory gain 的因果链，而不是一般 caption 质量、语言偏差或 instruction robustness。",
+    "以 motion-only、motion-masked、strict past-lagged 和 predicted caption 联合拆分未来动作侧信道、可部署语义与文本正则化效应。",
+    "以 drive/session 为统计和分割单位，检查移除 future-derived 字段是否改变方法排序，而不仅是平均 ADE/FDE 的小幅波动。"
+  ],
+  "method": [
+    "构建 caption provenance graph：每个 token/span 对应生成字段、最晚时间戳、prediction cutoff、生成规则与置信级别，未知来源保持 unknown 而不强行归类。",
+    "用冻结 parser 产生 original、motion-only、motion-masked、strict past-lagged、predicted caption、caption-only 和 vision+ego-state 七个配对分支。",
+    "固定视觉 backbone、trajectory head、训练步数、数据量和 drive-level split，只改变 caption 内容或其允许信息时间窗。",
+    "用 caption-only 与 motion-only 测目标可恢复性，用 strict past-lagged 与 predicted caption 测部署可得语义，用 motion-masked 测非动作语义增量。",
+    "按 drive cluster 估计每个分支相对 vision+ego-state 的轨迹增量，并检验 original 优势是否由 future-derived spans 中介及是否改变方法排序。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1-2 天）：完成 CoVLA 访问、许可和字段来源前检；Gate 0 失败即结束候选。",
+    "阶段 B（第 1 周）：固定数据版本、drive split、provenance schema 和 caption parser，完成 Gate 1。",
+    "阶段 C（第 2-3 周）：实现 motion/time-window tagger、七分支数据导出器、split leakage 审计和小样本可执行测试。",
+    "阶段 D（第 4-6 周）：训练同一轻量 trajectory head 的预注册分支，锁定后运行 drive-cluster 统计和方法排序分析。",
+    "阶段 E（第 7-8 周，仅主假设可识别）：加入第二个轻量 head 或 predicted-caption generator 敏感性，不扩展为通用 VLA 训练。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "CoVLA Dataset",
+        "revision": "dataset-card-checked-2026-08-01",
+        "reuse": "官方学术数据、公开样本与 frame、未来轨迹、车辆状态和 caption 字段。",
+        "licenseBoundary": "metadata 公开但 payload 可能需学术访问；Gate 0 必须记录许可、字段来源和再分发边界，缺失时停止。"
+      },
+      {
+        "asset": "CaptionQA",
+        "revision": "f7294897f724c35b95e5f8ea179d2c54a279c91e",
+        "reuse": "caption 下游效用评测思想、parser 与扩展管线。",
+        "licenseBoundary": "不是驾驶轨迹数据；代码许可需复核，只能复用评测方法，不能替代 CoVLA provenance。"
+      },
+      {
+        "asset": "AutoVLA",
+        "revision": "ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+        "reuse": "可选开放 VLA/trajectory 接口、nuPlan/nuScenes preprocessing 与动作 codebook，用于第二模型敏感性。",
+        "licenseBoundary": "代码、模型权重和数据条款分别核验；不是最小研究的必要依赖，避免其训练成本阻塞 Gate 0。"
+      }
+    ],
+    "selfBuiltModules": [
+      "caption span provenance graph 与 source-timestamp ledger",
+      "motion/time-window tagger、unknown provenance 保留逻辑和人工复核界面",
+      "drive-level splitter、相邻帧/模板重复泄漏审计器",
+      "七分支 caption ablation exporter 与统一轻量 trajectory head harness",
+      "drive-cluster effect decomposition 与方法排序报告器"
+    ],
+    "compute": "Gate 0/1 主要为数据审计；主实验 1-2 张 24-48GB GPU、约 1-2 GPU-weeks，优先轻量 head，不训练基础 VLA。",
+    "interfaces": "输入接口固定为当前视觉、ego state、prediction cutoff 与 caption 文本；provenance 只由训练前元数据生成，测试轨迹不可回流 parser。",
+    "cycle": "5-8 周上限；需要自行实现 parser 与 ablation harness 是可信研究路径，但关键 payload/provenance 不可得则立即停止。"
+  },
+  "minimumStudy": [
+    "完成 Gate 0：取得合法 CoVLA payload 与字段生成依据，为至少 1,000 个样本建立可复核的 span-level 时间 provenance；否则没有可识别实验。",
+    "完成 Gate 1：锁定数据版本、prediction cutoff、parser、drive/session split、重复检测、模型配置与随机 seed，确认相邻 frame 不跨 split。",
+    "用相同视觉 backbone、trajectory head、训练步数和样本量运行 vision+ego、original、caption-only、motion-only、motion-masked、strict past-lagged 与 predicted caption。",
+    "先测 caption-only/motion-only 对未来轨迹的可恢复性，再比较各语言分支相对 vision+ego 的 ADE/FDE 和可行性增量。",
+    "按独立 drive/session 聚合并做 cluster bootstrap，检验 original 优势是否被 future-derived spans 中介以及去除后方法排序是否改变。",
+    "报告 unknown provenance 占比、parser 人工复核误差、不同 lag 与动作词类别敏感性；unknown 不默认视为 past-only。"
+  ],
+  "strongBaselines": [
+    "vision plus ego state，不提供 caption，定义部署可得的非语言基线。",
+    "original ground-truth caption，复现待解释的语言增益上界。",
+    "predicted caption，只允许部署时当前/历史观测生成，比较 ground-truth 与可部署文本差距。",
+    "caption only 与 motion-token-only，检查文本或动作词是否直接编码未来轨迹目标。",
+    "motion-masked caption，保留场景和关系语义但移除可疑 maneuver/trajectory spans。",
+    "strict past-lagged caption，仅保留 prediction cutoff 前可证明存在的信息，并扫描至少两个 lag。",
+    "LatentVLA-style no-language latent action 或等容量 latent control，检查收益是否需要显式文本监督。"
+  ],
+  "metrics": [
+    "主任务指标：按 drive 聚合的 ADE、FDE、miss rate 与预注册动力学/碰撞可行性代理。",
+    "侧信道指标：caption-only 与 motion-only 对 future trajectory/action bucket 的可预测性，以及 original 优势被可疑 spans 重现的比例。",
+    "部署语义指标：strict past-lagged、predicted 和 motion-masked caption 相对 vision+ego 的条件增量与 95% drive-cluster 区间。",
+    "结论稳定性：移除 future-derived spans 前后方法排序、场景 strata 排序和 effect direction 的变化。",
+    "数据质量指标：known-past、future-derived、ambiguous、unknown span 占比，parser precision/recall 和跨 split 重复率。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "drive/session 是独立推断单位；frame、caption 分支和 lag 为配对重复测量，按 drive cluster bootstrap。",
+    "comparison": "预注册 original 对 vision+ego、motion-only 对 original、strict past/motion-masked 对 original 的层级比较；先检验侧信道，再检验可部署语义，使用 Holm 校正。",
+    "missingness": "provenance unknown 的 span 不默认 past-only；主分析屏蔽并单列 unknown，另报告最乐观/最保守边界。数据或 caption 缺失保留在 ledger。",
+    "powerGate": "以独立 drive 数而非 frame 数估算功效；若可访问 drives 太少，无法排除预注册 ADE/FDE 实际等价界，则停止而不把相邻帧当独立样本。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，能够从一手字段链证明一部分 caption spans 使用 prediction cutoff 之后的信息，并在 drive-level split 下完成七分支公平比较。",
+    "motion-only 重现 original caption 的主要轨迹增量，且 strict past-lagged 或 motion-masked 分支的增量显著收缩并超过预注册实际等价界。",
+    "移除 future-derived spans 改变至少一个核心方法结论或排序，结果在独立 drives、至少两个 seed 和主要场景 strata 上方向一致。"
+  ],
+  "killCriteria": [
+    "CoVLA payload、生成脚本或字段时间来源在两日内不可得，无法合法重建 span provenance，或只能从少量公开样本猜测。",
+    "生成链证明所有 caption 字段严格使用 prediction cutoff 及之前信息，且没有 unknown provenance 足以改变结论。",
+    "motion masking、strict lagging 和 caption-only 控制后 original 的增量与方法排序保持在预注册实际等价界内。",
+    "drive/session split 无法建立、测试轨迹必须进入 parser，或最小研究因数据和接口问题超过 8 周。"
+  ],
+  "risks": [
+    "caption 生成规则可能不可公开，使核心时间 provenance 不可观测；这是硬停止条件，不能以模型消融猜测来源。",
+    "动作词遮盖会破坏语法或语义，造成非特异性能下降；motion-only、模板保持的替换和 predicted caption 共同区分这一风险。",
+    "frame 数很大但独立 drives 很少，容易虚增显著性；所有 split、bootstrap 和功效计算均以 drive/session 为单位。",
+    "轻量 trajectory head 可能低估强 VLA 的交互；先保证识别清晰，再用第二 head 做敏感性，不用昂贵模型掩盖数据问题。",
+    "future-derived 字段可能是合法训练标签而非部署输入；报告将区分监督设计风险与在线输入泄漏，不使用夸大措辞。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若未来 spans 驱动主要增益，驾驶 caption 数据集应发布字段时间 provenance，并用 strict past-only 与 motion-masked 结果重新界定可部署语言收益。",
+    "negative": "若全部字段为 past-only 或控制后增益稳定，将否决该数据版本中的 future-motion side-channel 主张，并加强语言语义增量的可信度。",
+    "boundary": "结果只适用于被审计的数据版本、caption 生成链和轻量任务头；不证明所有 VLA 数据有或没有标签泄漏。"
+  },
+  "impact": "正结果会改变驾驶语言数据的发布规范、split 和 VLA 增益解释，防止目标侧信道被误当语义推理；负结果同样提供可复核的 provenance 证据和严格负控，为后续语言动作研究建立更高质量基线。",
+  "evidence": [
+    {
+      "title": "CoVLA: Comprehensive Vision-Language-Action Dataset for Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Arai_CoVLA_Comprehensive_Vision-Language-Action_Dataset_for_Autonomous_Driving_WACV_2025_paper.html",
+      "role": "核心数据与最近直接工作：公开视觉、轨迹、车辆状态和自动 caption 流程，但未量化 future-derived spans 对轨迹增益的贡献。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "CaptionQA: Is Your Caption as Useful as the Image Itself?",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yang_CaptionQA_Is_Your_Caption_as_Useful_as_the_Image_Itself_CVPR_2026_paper.html",
+      "role": "提供下游效用式 caption 评价思想和公开管线，但不追踪驾驶 caption 的未来标签来源。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Unifying Language-Action Understanding and Generation for Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_Unifying_Language-Action_Understanding_and_Generation_for_Autonomous_Driving_CVPR_2026_paper.html",
+      "role": "共享 language-action codebook 与 trajectory-to-caption 的直接近邻，突出必须审计辅助 caption 的时间来源。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "LatentVLA: Efficient Vision-Language Models for Autonomous Driving via Latent Action Prediction",
+      "url": "https://arxiv.org/abs/2601.05611",
+      "role": "提供无语言标注的 latent action 强基线并指出 linguistic bias，但未审计既有 caption 的目标侧信道。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ICR-Drive: Instruction Counterfactual Robustness for End-to-End Language-Driven Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026W/WDFM-EAI/html/Hamid_ICR-Drive_Instruction_Counterfactual_Robustness_for_End-to-End_Language-Driven_Autonomous_Driving_CVPRW_2026_paper.html",
+      "role": "提供同 route/seed 的部署指令反事实近邻，用于区分 instruction robustness 与训练 caption provenance。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "OpenDriveVLA: Towards End-to-end Autonomous Driving with Large Vision Language Action Model",
+      "url": "https://doi.org/10.1609/aaai.v40i16.38386",
+      "role": "本库 VLA 近邻用于界定视觉、语言与动作统一建模背景，但不支持 future-motion leakage 结论。",
+      "localPaperId": "vla-end-to-end-driving",
+      "localLink": "papers/vla-end-to-end-driving/"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:08:08.999Z"
+}

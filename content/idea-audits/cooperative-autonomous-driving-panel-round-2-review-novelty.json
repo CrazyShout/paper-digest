@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "round": 2,
+  "lens": "novelty-reviewer",
+  "reviewedAt": "2026-07-31T13:35:54+08:00",
+  "independenceStatement": "本评审仅依据 cooperative-autonomous-driving-panel-dossier-v2.json、其引用的关键本地审计，以及独立重新打开的论文官方页面、arXiv、正式 proceedings、官方代码和官方数据入口完成。未读取任何 cooperative-autonomous-driving-panel-round-2-review-*.json，未询问或参考其他评审者结果，也未推测主流程的接受规则。检索在足以改变评分的 2024-2026 功能等价工作和一项明确错引被确认后收敛。",
+  "evidenceChecked": [
+    {
+      "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "type": "primary-paper",
+      "finding": "官方 arXiv 记录确认论文于 2026-06-30 提交、已被 ECCV 2026 接收，贡献对象是带真实 C-V2X 通信表征的多模态协同自治数据集与 benchmark；它本身不是本文两个候选所称的嵌套抽象证书或显式运输可用性合同。"
+    },
+    {
+      "title": "CooperScene official scalar-delay and fallback implementation",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/datasets/coop_dataset.py",
+      "type": "official-code-immutable",
+      "finding": "代码把 share_size_mb 乘 8 后除以一个 cv2x_throughput 标量并按 100 ms 取整；_lookup_delayed 把越界历史夹到首帧，delayed lookup 返回 None 时保留当前协作者数据。代码没有读取定向 MCAP 吞吐序列，也没有显式未完成或右删失状态。"
+    },
+    {
+      "title": "CooperScene official Table 2 runner",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/tools/run_table2.sh",
+      "type": "official-code-immutable",
+      "finding": "脚本对全部 agent setting 默认使用 1.6 Mbps，并要求用户自行编辑实测值；这支持把固定标量作为直接基线，但不能证明其等价于公开逐链路、逐时刻吞吐。"
+    },
+    {
+      "title": "CooperScene all-takes MCAP summary audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "type": "local-primary-artifact-audit",
+      "finding": "14/14 个官方 take 的 Range summary 审计完成；每个 take 都有 25 个 topic、12 条定向吞吐链路、4 条 LiDAR 链路和相同的 5 个 schema 签名，但未发现独立 latency、loss 或 jitter channel。该审计只证明结构和覆盖，不证明吞吐值或负载可迁移性。"
+    },
+    {
+      "title": "CooperScene payload replay gap audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+      "type": "local-code-and-paper-audit",
+      "finding": "公开代码使用静态载荷计算和单一吞吐标量；论文的 trace collection workload 是 5 Mbps Iperf2 UDP 与 100 ms report，而 Table 2 物理发送使用 2100-byte chunk 和 1 ms 间隔。把 trace 积分用于任意模型载荷只能先称 benchmark abstraction，除非通过匹配 workload 的校准。"
+    },
+    {
+      "title": "CooperScene take-9 completion pilot",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json",
+      "type": "local-executable-audit",
+      "finding": "单 take、12 链路、1,932 个 start-link 组合和 35,451 行校验通过。精确顺序下 0.338 MB、0.423 MB、0.500 MB 的完成率约为 75.36%、69.00%、63.82%，固定 1.6 Mbps 分别高估约 14.08、17.34、20.65 个百分点；但独立 acquisition unit 只有 1，不能外推或支持等价证书。"
+    },
+    {
+      "title": "CooperScene take-9 frame alignment audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json",
+      "type": "local-primary-artifact-audit",
+      "finding": "12 个 pose anchor 支持 ordinal candidate，但严格映射仍被判为 none；在剩余帧未逐一锚定并生成 644 行 sidecar 前，任何感知指标和方法排名结论都不成立。"
+    },
+    {
+      "title": "CellReplay: Towards accurate record-and-replay for cellular networks",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+      "type": "official-proceedings",
+      "finding": "NSDI 2025 已证明单工作负载采集的网络 trace 在回放其他工作负载时会产生评测偏差，并通过双预设 workload 记录和插值改善 fidelity。它直接占据了“trace replay 必须验证 workload sensitivity”的一般方法论，但未提供 CooperScene 的嵌套结构充分性证书。"
+    },
+    {
+      "title": "CascadeNet: Generating Network Traffic with High-Fidelity Temporal Patterns",
+      "url": "https://www.usenix.org/conference/nsdi26/presentation/lu-runwei",
+      "type": "official-proceedings",
+      "finding": "NSDI 2026 已把保留网络 trace 的 temporal dynamics、复杂 flow dependencies 和 downstream-task fidelity 作为核心贡献。候选 1 因此不能把“时间结构重要”或“边际统计不够”作为新方法，只能主张 CooperScene 上的受限评测对象与等价合同。"
+    },
+    {
+      "title": "CADET: A Modular Platform for Evaluating Distributed Cooperative Autonomy in Connected Autonomous Vehicles",
+      "url": "https://arxiv.org/abs/2606.04072",
+      "type": "primary-paper-and-official-record",
+      "finding": "官方记录列出 ICRA 2026，并确认 CADET 提供 trace-driven network/workload emulation 与 model/system/task 三级 instrumentation。它占据了协同自治的通用 trace-driven systems evaluation，但未在官方摘要或已核页面中给出 CooperScene 特定的 global/per-link/shuffle/block/cross-link 等价阶梯。"
+    },
+    {
+      "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+      "url": "https://ry4nzhu.github.io/publication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication.pdf",
+      "type": "author-hosted-formal-proceedings-paper",
+      "finding": "SenSys 2024 Harbor 已实现 server-side deadline-aware view merging、迟到结果丢弃、remote deadline miss 后的 local detection fallback，以及缺失本车 view 时的 local merging。这是候选 2 的直接功能先例，而不只是宽泛的系统背景。"
+    },
+    {
+      "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+      "url": "https://arxiv.org/abs/2503.10034",
+      "type": "primary-paper",
+      "finding": "论文提供实时 ROS-bag replay、异步消息到达、message buffer、通信时延测量和 online/offline 感知比较。已核文本没有建立 throughput-derived message completion、right censoring 或 explicit latest-completed policy，因此它是在线评测先例，不足以替代候选 2 的精确定义合同。"
+    },
+    {
+      "title": "Bridging the latency gap with a continuous stream evaluation framework in event-driven perception",
+      "url": "https://www.nature.com/articles/s41467-026-70240-6",
+      "type": "publisher-primary-paper",
+      "finding": "STARE 在 2026 年已经用 latest available prediction 对齐实时 query，量化 latency-induced accuracy，并报告传统评测与 latency-aware 评测之间的方法排名反转。它不处理 V2X 运输完成或 CooperScene，但显著压缩了候选 2 对“可用性语义会改写排名”的一般新颖性空间。"
+    },
+    {
+      "title": "AgentComm-Bench: Stress-Testing Cooperative Embodied AI Under Latency, Packet Loss, and Bandwidth Collapse",
+      "url": "https://arxiv.org/abs/2603.20285",
+      "type": "primary-preprint",
+      "finding": "该 2026 preprint 已系统评测 latency、packet loss、bandwidth collapse、asynchronous updates、stale memory 和 conflicting evidence，并覆盖 cooperative perception。未核验到可执行官方 artifact，且它不使用 CooperScene 的实测定向吞吐或删失合同，但它是 dossier 检索中遗漏的近邻 benchmark。"
+    },
+    {
+      "title": "CoInfra official arXiv record",
+      "url": "https://arxiv.org/abs/2507.02245",
+      "type": "primary-paper-record",
+      "finding": "该标识从 v1 到当前 v3 对应的是恶劣天气下的大规模 cooperative infrastructure perception system and dataset，不是 dossier 所写的 Communication-Aware Cooperative Perception System for CAVs；官方摘要与仓库页面也未支持 dossier 对 latest-history fallback 的归因。"
+    },
+    {
+      "title": "NingMingHao/CoInfra official repository",
+      "url": "https://github.com/NingMingHao/CoInfra",
+      "type": "official-code",
+      "finding": "仓库说明的是 14 个基础设施节点、恶劣天气数据、delay-aware synchronization 和 cooperative BEV detection baseline；已核页面没有给出 dossier 所称的 latest-history/EKF fallback 基线。"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "trace-structure-sufficiency-certificate",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 7,
+        "success-probability": 6,
+        "impact": 6,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "直接功能等价工作未被找到：CellReplay 处理跨 workload replay fidelity，CascadeNet 处理 temporal-pattern generation 与 downstream fidelity，CADET 处理协同自治的通用 trace-driven evaluation，但三者都没有在 CooperScene 上逐级移除 direction、time order、block 和 cross-link synchronization，并用预注册等价界选出最小充分抽象。因此剩余新意成立于“新评测对象 + 新系统合同”，不是新网络方法。反例是“时间结构重要”“边际统计不足”“trace replay 要做 workload calibration”均已被 2025-2026 一手工作覆盖；若最终只是解析 MCAP、比较 1.6 Mbps 与均值，贡献会退化为工程审计。",
+        "feasibility": "14/14 take 的 schema 与通道覆盖已审计，take 9 积分器通过独立实现核对，主研究可在 CPU 上运行，且不依赖未通过的 LiDAR 帧映射。反例是四个模型的 exact runtime serialized payload 尚未采集，Vector3 schema 不自带 Mbps 单位，queue/interpolation/workload-transfer 都是建模选择；可执行性是有条件的而非已经闭环。",
+        "success-probability": "take 9 已给出强 go signal：固定 1.6 Mbps 对多个中等载荷的完成率高估 14-21 个百分点，说明至少 A0 很可能被否定；无论较简单层级通过还是失败，都能形成受限 failure map。反例是 14 个 take 只支持较大效应，等价检验尤其容易因区间过宽而无法出证书；Iperf2 采集 workload 对模型消息的迁移也可能使所有 absolute completion 结论只能停留在 benchmark abstraction。",
+        "impact": "如果能给出随 payload/deadline 变化的最小结构证书，可直接修正 CooperScene 的默认评测，并为后续用户提供便宜且有边界的 replay contract。反例是对象只有一个刚发布 benchmark、14 个 take、只含 throughput，不能支持 packet、radio 或道路安全外推；若最优答案只是 per-link mean，影响更接近高质量 benchmark note 而非广义 C-V2X 方法突破。",
+        "comparison-readiness": "A0-A6 阶梯、exact directed trace reference、per-link mean、独立/同步 permutation、block permutation、direction swap、单位和 payload controls 均已明确，且提出 take-level inference、leave-one-take-out、negative controls 与 equivalence 而非 NHST。反例是等价 margin 尚无数值，四个 runtime payload 分布尚未冻结，Table 2 校准缺少可确认的 take/workload 对应；在这些值预注册前不能称 certificate-ready。"
+      },
+      "strongestObjection": "在 CellReplay 与 CascadeNet 之后，这项工作最容易被判为把标准的 shuffle/ablation/equivalence 工具应用到 CooperScene 的工程审计。更严重的是，公开 trace 来自 5 Mbps Iperf2 workload，而目标是不同 packetization、并发与 deadline 的模型消息；若没有独立 workload-transfer 校准，所谓“充分性”只对自定义 fluid-service replay 成立。再加上仅 14 个独立 take，研究可能既不能证明物理有效性，也不能以足够窄的区间证明等价。",
+      "requiredExperiment": "先冻结至少四个官方模型在真实发送边界的 serialized-byte 分布、payload/deadline support、四类 estimand 的数值等价 margin、单位/插值/queue contract；随后在全部 14 take 上一次性运行 A0-A6，按 take 报告 paired effect 与 leave-one-take-out，并要求候选最小层级对所有更结构化层级同时满足全部 margin。另用论文 Table 2 的匹配 payload 和 2100-byte/1 ms workload 做留一载荷校准；若无法建立匹配关系或校准失败，标题与结论必须降为“released benchmark abstraction audit”，若 14 take 区间过宽则不得发 equivalence certificate。",
+      "factualCorrections": [
+        "CADET 的官方 arXiv 记录已列出 Journal reference: ICRA 2026；把它描述成 formal venue not verified 或仅 arXiv preprint 已过时。",
+        "候选可以声称的不是新的 temporal-fidelity 方法。NSDI 2026 CascadeNet 已明确把网络 trace 的 temporal dynamics、dependencies 和 downstream fidelity 作为主要问题；本候选的差异必须限定为 CooperScene 特定的嵌套等价合同。",
+        "CooperScene 的 1.6 Mbps 路径是公开代码中的默认标量模型，不是已核实的逐 take、逐定向链路物理 replay；候选目前对此边界的限定是正确的，后续不得弱化。"
+      ],
+      "overall": 7
+    },
+    {
+      "candidateId": "transport-availability-state-contract",
+      "scores": {
+        "novelty": 5,
+        "feasibility": 4,
+        "success-probability": 4,
+        "impact": 6,
+        "comparison-readiness": 5
+      },
+      "rationales": {
+        "novelty": "精确组合仍未被找到：CooperScene 定向吞吐积分、runtime payload、incomplete/right-censored/trace-missing 分型、冻结 fallback-only 反事实和 verdict/rank equivalence 共同构成一个新的 benchmark contract。可是核心功能已高度拥挤：Harbor 直接实现 deadline-aware merge、late-result discard 和 local fallback；V2X-ReaLO 已做在线异步 buffer 评测；STARE 已用 latest available output 重算 accuracy 并展示 ranking reversal；AgentComm-Bench 已覆盖 stale memory、bandwidth collapse 和 cooperative perception。故新意主要是“新系统合同”，不是新 fallback、新异步方法或首次排名审计；CoInfra 错引还削弱了现有 novelty map。",
+        "feasibility": "dossier 给出了明确 G1-G4 stop gate、冻结 checkpoint/tensor lineage、actual/equalized payload 和 common ledger，理论上可执行。反例是当前 644 行 take-9 映射未通过，其他 take 更未建立 sidecar；四模型 runtime payload 未采集，冻结输入身份未验证，全发布非 current state prevalence 未知，公开 PKL/当前 converter 还有不一致。10-12 周同时完成多环境 GPU 推理、全 take 映射和多政策矩阵的预算偏乐观。",
+        "success-probability": "take 9 的运输 pilot 表明中大载荷存在显著 noncompletion，说明状态合同不是纯空想；Harbor 和 STARE 也证明 deadline/freshness 语义在别的系统中能改变有效性能。反例是 take 9 把每个 start-link 作为调度敏感性样本，并没有证明真实模型在稳定阶段持续发同样载荷，更没有感知输出；效应可能只出现在 warmup/trace end，或被 equalized-payload control 消除。四个硬门中没有一个已有完整端到端通过证据。",
+        "impact": "若在同一 completion ledger 下只改 fallback 就能稳定翻转模型胜负，结果会直接改变 CooperScene 使用方式，并给其他在线 cooperative-perception benchmark 一个可复用的 observability contract。即使等价，足够状态覆盖下的负结果也能支持简化。反例是影响高度依赖一个 benchmark 的代码缺陷和有限 take；若状态稀少、只发生于边界或没有 ranking change，最终只能是 evaluator bug/contract note。",
+        "comparison-readiness": "silent clamp、synchronized retention、drop/local-only、latest-completed、model-native age-aware、ego-only、actual/equalized payload 和 public-scalar/exact-trace controls 已列出，paired frozen-policy estimand 与 rank metrics 也较完整。反例是 CoInfra 不是所称 latest-history 系统，V2X-ReaLO 也未核实为 explicit latest-completed；age-aware-native 的具体 CooperScene 模型和接口未冻结，等价 margin 无数值，且 G1-G4 未通过使比较数据尚不可生成。Harbor 应从 broad policy class 提升为直接功能基线。"
+      },
+      "strongestObjection": "这项工作目前很可能只是给 CooperScene 的 silent clamp/fallback bug 加一套 taxonomy。Harbor 已经提供 deadline-aware merge、丢弃迟到结果与 local fallback，STARE 已展示 latest-output latency-aware 评测导致排名反转，AgentComm-Bench 已系统测试 stale memory 等通信退化；而 dossier 用来支撑 latest-history precedent 的 CoInfra 引用是明确错文。更关键的是，frame sidecar、runtime payload、frozen tensor identity 和 full-release state prevalence 全部未通过，因此当前没有可识别的感知政策效应，只有单 take 的运输敏感性。",
+      "requiredExperiment": "实行严格两阶段 go/no-go。阶段一不得打开 task metric：先完成并发布 take 9 的 644 行全锚定 sidecar，再扩展到全部拟评估 take；对四个模型记录真实 serialized bytes 与 tensor hashes，用同一 completion ledger 报告每个 take 的 current-complete、historical-complete、incomplete-at-deadline、right-censored、take-start-unknown 和 trace-invalid prevalence，并分 warmup/steady-state。若稳定阶段 non-current exposure 不足，立即并入候选 1。只有通过后，阶段二才在完全冻结输入上比较 public silent fallback、Harbor-equivalent deadline/drop-local、内部明确定义但不再归因于 CoInfra 的 latest-completed、以及确有原生 age input 的模型；报告 take-wise paired metric、winner sign、rank inversion 与预注册等价区间，并用 equalized payload 证明结果不是消息大小效应。",
+      "factualCorrections": [
+        "arXiv:2507.02245 对应 CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset for Vehicle-Infrastructure Cooperation in Adverse Weather；它不是 dossier 所写的 CoInfra: A Communication-Aware Cooperative Perception System for CAVs。",
+        "CoInfra 官方论文记录和仓库未支持 latest-history/EKF fallback 归因。应从 baselines、noveltyBoundary、Week 9 和 reviewerChecks 中删除该归因，除非找到另一个正确的一手来源。",
+        "V2X-ReaLO 已核实的是在线 ROS replay、异步到达、message buffer 和平均通信时延注入；未核实 explicit latest-completed、throughput-derived completion 或 right-censoring contract，不能把它写成等价实现。",
+        "Harbor 不只是 broad policy class：正式 SenSys 2024 论文明确给出 server-side deadline、迟到结果丢弃、local detection fallback 和缺 view 时 local merging，应作为直接功能先例和必做基线。",
+        "AgentComm-Bench arXiv:2603.20285 是 dossier 冻结检索中遗漏的 2026 近邻；它覆盖 cooperative perception、bandwidth collapse、asynchronous updates 和 stale memory。其公开可执行 artifact 未核实，所以只能作为方法/评测先例，不能当作可复现实验基线。"
+      ],
+      "overall": 5
+    }
+  ]
+}

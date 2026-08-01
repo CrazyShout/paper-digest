@@ -1,0 +1,386 @@
+{
+  "candidateId": "precommitment-intent-identifiability-bound",
+  "directionId": "cooperative-autonomous-driving",
+  "dossierVersion": 12,
+  "createdAt": "2026-08-01",
+  "reviewMode": "evidence-dossier-no-scoring",
+  "readiness": {
+    "status": "phase-zero-ready-not-empirically-passed",
+    "blindReviewEligibility": "hold-until-phase-zero-occurrence-gate-passes",
+    "reason": "公开资产支持执行严格的自然轨迹 Phase-0，但目前没有证据证明自然事件中已经存在 t_identifiable 晚于 t_last_safe 的稳健尾部。"
+  },
+  "title": "当可靠意图来得太晚：自然驾驶中的可辨识性与安全可行动窗口联合审计",
+  "hook": "协同驾驶的失败不一定是意图预测器还不够强，也可能是对方的实现响应直到物理安全窗口关闭后才可靠可辨；这个候选不预设该现象存在，而是用两个彼此独立的时钟先把它证实或推翻。",
+  "output": "自然交互 actionability-gap 审计基准、因果前缀数据管线与可复现实验协议",
+  "effort": "中高",
+  "timeline": "6-10 周",
+  "whyNow": "InterHub 已把多来源自然驾驶日志整理为可追溯的密集交互事件，并公开统一工具、关键车辆、交互时间、地图关系与实现路径标签，因而可以第一次在较大自然 cohort 上构造严格的 causal prefix。与此同时，Safety Shell 已正式覆盖 Last Safe Intervention Time，早期机动预测也已覆盖提前识别，Self-Driving Negotiator 则覆盖了程序化 delayed reveal。现在真正剩余、且必须被实证检验的窄问题，是把自然观测上的最早可靠识别时刻与独立动力学安全截止时刻联合起来，而不是再次提出其中任一组件。IEDD 虽提供更大规模候选，但其 archive schema、原始场景回溯与跨库去重尚未通过本项目的执行门，因此只能作为条件复现源。",
+  "keyProblem": "对自然合流、无保护交叉等交互事件，系统通常默认只要意图预测器继续变强，就能及时改善规划；但这个默认没有区分两件事：部署时可见的历史前缀何时首次足以可靠区分对方将先行、让行或退出，以及 ego 在冻结车辆动力学、安全约束和地图冲突区下何时仍保留可行逃逸动作。研究对象是事件级 latenessGap = t_identifiable - t_last_safe 的分布与删失结构。只有当 t_identifiable 由 causal-prefix 预测与独立校准得到、t_last_safe 由不读取响应标签和预测概率的动力学路径得到，二者的符号才具有诊断意义。",
+  "currentLimitations": "组成这个问题的单项技术都已有直接先例。Safety Shell 已定义并使用 Last Safe Intervention Time，TTR、TTB、TTS 等最后动作时间指标也属于成熟安全度量；早期 lane-change 与 TTLC 研究已经估计机动何时能够被预测；Self-Driving Negotiator 明确构造了隐藏状态晚揭示和 wait-for-commitment 行为；reachability safety controller 还能在不先识别他车意图的情况下持续保留逃逸动作。因此不能把新的 intent model、新的 LSIT 符号、delayed-reveal sweep 或通用 survival analysis 当作创新。自然轨迹也只提供实现响应，不提供驾驶员心理意图，并且未来路径标签可能泄漏到在线特征。当前尚未执行正式 Phase-0，故不能声称自然负 gap 存在、不能报告发生率，也不能把有限模型的晚预测解释为 Bayes 不可辨识。",
+  "hypothesis": "在严格按原始场景隔离、禁止未来特征、采用强地图感知校准预测器，并用与响应标签完全分离的 Safety-Shell-compatible 动力学 evaluator 计算 t_last_safe 后，至少一部分自然 merge 和 unprotected-cross 事件仍会出现稳健的正 latenessGap 尾部；若该尾部在强模型、合理动力学参数网格和跨来源复现下消失，则应停止该候选，并把瓶颈归回可学习的预测或规划，而不是继续包装为信息可行动性盲点。",
+  "claimBoundary": [
+    "Phase-0 只测量给定公开观测类、强模型集合和冻结校准规则下的经验 t_identifiable，不声称 Bayes 或信息论不可辨识上界。",
+    "响应真值是 target-goes-first、target-yields-after 或 unresolved/abort 等事后实现结果，不等于驾驶员心理意图、偏好或 disposition。",
+    "t_last_safe 直接采用或对齐 Safety Shell 的 LSIT 与成熟 TTB/TTS/TTR 家族；最后安全时刻本身不是候选贡献。",
+    "自然日志不能回答 ego 采取反事实动作后 target 如何反应；Phase-0 只给开环诊断，任何闭环因果价值必须在通过自然发生门后另行验证。",
+    "IEDD 在 archive 可打开、轨迹 schema 可执行、原始 scene/track/time 可追溯且与 InterHub 去重前，不计为独立复现证据。"
+  ],
+  "noveltyClaims": [
+    "提出一个驾驶特定的联合诊断对象：在同一自然交互事件上，将只读部署可见前缀的最早可靠响应识别时刻，与不读取响应标签、预测概率或未来轨迹的独立 LSIT 对齐；贡献不来自重新定义任何单个时刻。",
+    "把自然发生率、删失和参数不确定性纳入 actionability gap：按底层来源与场景族报告 eligible N、未触发/左删失 N、保守 late-event 比例和 specification curve，而不是挑选 delayed-reveal 个例。",
+    "把联合诊断绑定到方法选择的止损规则：若稳健晚尾部存在，后续应比较早期显式通信与 intent-agnostic hedge；若不存在，则停止投入 actionability 叙事并回到 predictor/planner 改进。",
+    "用 InterHub 的原始来源标识建立事件级 overlap ledger，明确阻止把 InterHub 与 IEDD 中共享的 Waymo、nuPlan、Lyft 或 INTERACTION 场景重复计作跨数据集复现。"
+  ],
+  "method": [
+    "预注册有向 ego-target 事件、共享冲突区与三类实现响应标签；未来轨迹只进入离线 target table，所有在线输入、轨迹差分、平滑、map matching 与冲突区假设都在每个 prefix 内重新计算。",
+    "在 original log/scene/site 级划分 train、calibration 与 test，并至少保留一个完全 held-out underlying source；镜像 pair、同一物理事件的相邻 prefix 和多车子对保持在同一 split 与 bootstrap cluster。",
+    "用 route/priority prior、常速度/加速度、HMM、TCN/LSTM、地图感知 probabilistic Transformer 与 calibrated ensemble 形成强模型包络；在独立 calibration 集冻结 class-conditional conformal 或 selective-risk 阈值。",
+    "定义 t_identifiable 为 predictor 首次给出 singleton response set、预注册 class-conditional error 上界不超过 0.10，且连续保持至少 0.5 秒的时刻；未触发事件记为 right-censored，不用终点常数回填。",
+    "用单独代码路径按当前车辆状态、prefix-only 地图冲突区、车辆物理包络、执行延迟和 bounded target occupancy 计算 comfortable 与 emergency t_last_safe；该路径冻结后才能读取 t_identifiable 输出。",
+    "计算 latenessGap = t_identifiable - t_last_safe，并把只有在 t_identifiable 下界仍晚于 emergency t_last_safe 上界至少 0.5 秒、且 singleton 事后正确的事件计为 conservative late event。",
+    "按 underlying source、merge/cross 场景族、优先权、交互强度、速度、历史长度与多车数量报告 cluster-bootstrap 区间和阈值/动力学参数 specification curve；任何结论都以物理事件而非 prefix 数为样本量。"
+  ],
+  "implementationPath": [
+    {
+      "type": "reusable",
+      "asset": "InterHub paper, official repository and public release",
+      "work": "以 Scientific Data 正式论文、固定提交 1d8a764554017618447247e5c55eff4b4ab50de4 的官方仓库和 Figshare release 为主路径，复用轨迹统一、交互提取、关键车辆、时间窗、冲突关系与来源索引。",
+      "boundary": "turn_label、path_relation 或交互提取若读取完整未来，只能用于离线标签与分层；必须自建 causal-prefix 特征和在线冲突区路径。"
+    },
+    {
+      "type": "conditional-reusable",
+      "asset": "IEDD official paper, code and Hugging Face release",
+      "work": "仅在下载并打开至少一个非 Waymo archive、核验完整轨迹 schema、dt、地图、许可证和原始 scene/track/time 回溯后，用作条件复现。",
+      "boundary": "当前 viewer 失败且 archive 尚未 smoke-test；在 provenance 和 overlap ledger 通过前，IEDD 不进入主结果，也不计作独立来源。"
+    },
+    {
+      "type": "self-built",
+      "asset": "EventProvenanceLedger",
+      "work": "以 underlying dataset、original scene/log、ordered track IDs 和 conflict time window 生成稳定事件键，合并镜像 pair 并检测 InterHub/IEDD 重叠。",
+      "acceptanceCheck": "随机抽查事件能够回到原始轨迹与地图；无法追溯的记录必须被排除或只列作不可复现统计。"
+    },
+    {
+      "type": "self-built",
+      "asset": "CausalPrefixBuilder",
+      "work": "从每个截止时刻单独重算位置、速度、单侧差分加速度/jerk、相对状态、优先权、prefix-only lane association 和 route-hypothesis union，并把未来标签物理隔离。",
+      "acceptanceCheck": "自动 provenance test 必须证明 feature table 不含 realized future、full-clip smoothing、crossing order、turn label 或 IEDD full-clip action semantics。"
+    },
+    {
+      "type": "self-built",
+      "asset": "CalibratedIdentifiabilityEvaluator",
+      "work": "统一训练与评估多类 causal predictor，按时间校准 singleton prediction set，处理未触发右删失，并输出每事件 t_identifiable 区间。",
+      "acceptanceCheck": "阈值只在 calibration split 冻结；测试集必须报告 class-conditional calibration、coverage、selective risk 和 prediction-set size。"
+    },
+    {
+      "type": "self-built",
+      "asset": "IndependentLastSafeEvaluator",
+      "work": "实现 jerk-limited braking、受约束转向或采样 reachable-set escape，使用 prefix-only 冲突区与 bounded target occupancy，输出 comfortable/emergency t_last_safe 区间。",
+      "acceptanceCheck": "同一 prefix 与参数可重复；t_last_safe 前一离散时刻存在有效 escape，后一时刻在相同模型内不可行，并与 Safety Shell LSIT/TTB/TTS 数值趋势一致。"
+    },
+    {
+      "type": "self-built",
+      "asset": "CensoredGapAndPowerAnalyzer",
+      "work": "实现 interval/right/left censoring、物理 scene 聚类 bootstrap、分层发生率、动力学与校准 specification curve 及预注册停止判定。",
+      "acceptanceCheck": "输出必须完整对账 eligible、resolved、censored、late 与 excluded 事件，且不把相邻 prefix 当独立样本。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Data, maps and compute",
+      "work": "主实验需要合法取得 InterHub 对应的 nuPlan/Lyft cache 与地图；标签和 reachability 主要使用 CPU，地图感知序列模型可用单卡 GPU 训练或推理。",
+      "boundary": "若两个不重叠底层来源无法合法取得，最小实验不能支持跨来源主张，候选必须降为单库描述性 pilot。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "stage": "asset-and-schema-gate",
+      "duration": "第 1 周",
+      "protocol": "在 InterHub mini cache 重现事件键、dt、轨迹字段、地图和冲突区接口，并在 Figshare 的 nuPlan 与 Lyft cache 各抽取至少 200 个候选事件检查来源回溯、标签可解析率和许可证。",
+      "decision": "若无法形成两个不重叠底层来源的可追溯事件，停止跨来源主张；若核心轨迹或地图不可用，直接终止候选。"
+    },
+    {
+      "stage": "label-and-leakage-freeze",
+      "duration": "第 1-2 周",
+      "protocol": "冻结 target-goes-first、target-yields-after 与 unresolved/abort 规则；两名审计者分层复核至少 100 个事件，并用自动测试证明所有在线特征只读当前及历史前缀。",
+      "decision": "若实现响应无法稳定标注，或负 gap 只能在 future-smoothed/realized-route 特征下出现，立即终止。"
+    },
+    {
+      "stage": "independent-last-safe-validation",
+      "duration": "第 2-3 周",
+      "protocol": "在不加载响应标签和 predictor 输出的进程中实现 comfortable/emergency t_last_safe，完成 deterministic replay、前后一步 escape 可行性检查与 Safety Shell LSIT/TTB/TTS 数值 sanity comparison。",
+      "decision": "若符号在合理 latency、deceleration、jerk、friction 网格中大面积翻转，或 evaluator 依赖未来路线，停止。"
+    },
+    {
+      "stage": "calibrated-identifiability-envelope",
+      "duration": "第 3-6 周",
+      "protocol": "按 source-held-out 方案训练简单规则、HMM、早期机动网络、地图感知 Transformer 与 calibrated ensemble；冻结 error target 0.10 和 persistence 0.5 秒，并预注册 0.05/0.20 与 0.3/1.0 秒敏感性。",
+      "decision": "若测试 source 校准失效或模型排序高度不稳定，只能报告模型区间，不得选择最好模型宣称自然上界。"
+    },
+    {
+      "stage": "frozen-natural-occurrence-test",
+      "duration": "第 6-8 周",
+      "protocol": "merge 与 unprotected-cross 各使用至少 600 个有效物理测试事件，每个结论覆盖至少两个不重叠底层来源；报告删失、late proportion、cluster-bootstrap 区间和完整 specification curve。",
+      "decision": "若两个场景族的 conservative late-event proportion 95% 上界均低于 5%，或任何稳健晚尾部不能跨两个底层来源复现，则停止，不进入闭环 reveal 实验或盲评。"
+    },
+    {
+      "stage": "phase-zero-decision-note",
+      "duration": "第 8-10 周",
+      "protocol": "冻结后一次性生成正、负或不可判定报告；正结果必须列出最小后续 decision-consequence 实验，负结果必须明确建议继续提升 predictor/planner，不通过调阈值追逐 late tail。",
+      "decision": "只有自然发生门、反泄漏门和跨来源门同时通过，才允许将该候选送入五视角盲评。"
+    }
+  ],
+  "phaseZeroRegistration": {
+    "primaryEstimand": "P(t_identifiable > t_last_safe_emergency + 0.5 seconds | eligible natural interaction, underlying source, scene family)",
+    "primarySceneFamilies": [
+      "merge-point interactions",
+      "unprotected cross-point interactions"
+    ],
+    "exploratorySceneFamily": "head-on interactions only after class-support and label audit pass",
+    "responseClasses": [
+      "target-goes-first",
+      "target-yields-after",
+      "unresolved-or-abort"
+    ],
+    "tIdentifiableRule": "首次输出 singleton calibrated response set、class-conditional error bound <= 0.10 且持续 >= 0.5 seconds；未触发为 right-censored。",
+    "tLastSafeRule": "继续 nominal motion 到该时刻后仍存在满足车辆动力学、道路边界、执行延迟和安全缓冲的 escape control 的最后时刻；只读当前状态、prefix-only 地图和 bounded target occupancy。",
+    "minimumMaterialGap": "0.5 seconds, with 0, 0.25 and 1.0 seconds sensitivity analyses",
+    "sampleFloor": "每个主要场景族至少 600 个有效物理测试事件，每个底层来源至少 200 个事件和 30 个原始 logs/scenes。",
+    "occurrenceStatus": "not measured; no natural negative-gap prevalence claim is permitted before the frozen Phase-0 run"
+  },
+  "strongBaselines": [
+    {
+      "name": "route/priority majority prior",
+      "role": "检验未来响应是否已由道路拓扑、法定优先权或类别比例近乎直接决定。"
+    },
+    {
+      "name": "constant velocity, constant acceleration, IDM/MOBIL and TTC rules",
+      "role": "提供无需深度模型的 causal observability 与冲突时间基线。"
+    },
+    {
+      "name": "HMM or Bayesian intent filter",
+      "role": "与经典在线序列信念更新比较最早可靠识别时间。"
+    },
+    {
+      "name": "TCN/LSTM early-maneuver and TTLC predictors",
+      "role": "防止把成熟的提前机动预测重新包装为联合诊断创新。"
+    },
+    {
+      "name": "map-aware probabilistic trajectory Transformer with calibrated ensemble",
+      "role": "作为强 predictor envelope，避免弱模型人为制造晚识别。"
+    },
+    {
+      "name": "Safety Shell LSIT plus TTB/TTS/TTR",
+      "role": "作为 t_last_safe 的直接先例和数值对照；本候选不重新发明该指标。"
+    },
+    {
+      "name": "intent-agnostic reachability safety controller",
+      "role": "关键 kill baseline：检验不先识别意图的保守控制是否已经以很小效率代价覆盖所谓 late subgroup。"
+    },
+    {
+      "name": "wait-or-hedge-until-commitment policy",
+      "role": "量化晚信息场景中用早期保守动作换取安全的效率代价。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "calibrated t_identifiable",
+      "definition": "按事件报告首次可靠 singleton response set 的时刻、区间和右删失状态，同时报告 class-conditional risk、coverage 与 persistence。"
+    },
+    {
+      "name": "independent t_last_safe interval",
+      "definition": "分别报告 comfortable/emergency 边界及 latency、deceleration、jerk、friction 网格产生的区间，不读取响应标签或 predictor。"
+    },
+    {
+      "name": "conservative late-event proportion",
+      "definition": "t_identifiable 下界仍晚于 emergency t_last_safe 上界至少 0.5 秒且事后分类正确的物理事件比例，带 scene-cluster bootstrap 95% 区间。"
+    },
+    {
+      "name": "censoring and eligibility ledger",
+      "definition": "每个 source x scene-family 的原始候选、eligible、标签不可解析、right/left-censored、late 和 excluded 数量完整对账。"
+    },
+    {
+      "name": "predictor quality and calibration",
+      "definition": "Brier、ECE、AUROC、balanced accuracy、selective risk、coverage 与 prediction-set size，按响应类别和 held-out source 分层。"
+    },
+    {
+      "name": "specification stability",
+      "definition": "对可靠度阈值、持续时间、route-known/unknown 输入和动力学参数网格报告 gap 符号保持率与发生率曲线。"
+    },
+    {
+      "name": "decision consequence gate",
+      "definition": "仅在 Phase-0 通过后，比较 late subgroup 中早期消息、robust hedge 与继续扩大 predictor 的 collision-free progress、安全、舒适和等待代价。"
+    }
+  ],
+  "successCriteria": [
+    "InterHub 的 merge 与 unprotected-cross 两个主要场景族均达到预注册有效样本量，响应标签人工审计可重复，且 online feature provenance test 未发现未来泄漏。",
+    "至少两个不重叠底层来源中，conservative late-event proportion 的 scene-cluster bootstrap 95% 下界超过 10%，并且不是由同一地点、同一规则或重复事件驱动。",
+    "晚尾部在 map-aware calibrated predictor envelope、class-conditional calibration、prefix-only 差分重算和完整合理动力学参数网格下保持方向一致。",
+    "正结果能够预先指定一个会改变方法选择的后续实验：late subgroup 优先测试早期显式通信或 intent-agnostic hedge，而不是只继续扩大 predictor。",
+    "若发生率门未通过，冻结报告仍能明确排除 actionability-gap 叙事并给出 predictor/planner 继续研究的适用边界；这种负结果只在确实改变研究投入时有价值。"
+  ],
+  "killCriteria": [
+    "在强 map-aware calibrated envelope 下，merge 与 cross 两个主要场景族的 conservative late-event proportion 95% 上界均低于 5%。",
+    "任何负 gap 只在使用 future-smoothed acceleration、realized route、turn/path label、完整 clip action semantics 或随机 prefix split 时出现。",
+    "t_last_safe 的符号在合理 latency、deceleration、jerk、friction 参数网格中频繁翻转，或 evaluator 必须读取未来响应才能形成冲突区。",
+    "target-goes-first、target-yields-after 与 abort 标签无法被独立审计者稳定复核，或最终只能被误称为驾驶员心理意图。",
+    "所谓跨来源复现来自 InterHub 与 IEDD 中相同 Waymo、nuPlan、Lyft 或 INTERACTION 场景，事件级去重后证据消失。",
+    "intent-agnostic reachability hedge 在相同安全、最低进度和舒适约束下达到 oracle 水平，说明提前识别响应不是必要瓶颈。",
+    "最近一手工作已经在自然多车日志上联合报告 calibrated earliest-identification time、独立 LSIT 和相同发生率对象，而本候选没有额外识别对象或系统后果。",
+    "late gap 只能在 Self-Driving Negotiator 等程序化 delayed-reveal 环境出现，任何可追溯自然 cohort 都不能确认。"
+  ],
+  "risks": [
+    {
+      "risk": "实现响应被误写成心理意图",
+      "detail": "自然轨迹只能事后观察车辆先行、让行或退出，不能读取驾驶员内部偏好。",
+      "mitigation": "标题之外的技术主张统一使用 realized response 或 maneuver，心理意图只作为不可观测解释边界。"
+    },
+    {
+      "risk": "future-oracle leakage",
+      "detail": "turn label、path relation、未来平滑和 crossing order 可能把最终结果泄漏进早期前缀。",
+      "mitigation": "label 与 feature 物理分表、每个 prefix 内重算差分和 map matching，并用字段级 provenance test 阻断完整 clip 特征。"
+    },
+    {
+      "risk": "联合对象退化为两个已知指标的拼接",
+      "detail": "t_identifiable 与 LSIT 分别已有大量先例，简单画两条曲线没有足够新颖性。",
+      "mitigation": "贡献必须包含自然发生率、严格独立性、删失/不确定性、跨来源稳健性和会改变方法选择的预注册后果。"
+    },
+    {
+      "risk": "InterHub 与 IEDD 底层数据重复",
+      "detail": "两者共享多个公开原始数据集，表面跨库结果可能来自相同物理 scene。",
+      "mitigation": "以原始 scene、track 和时间窗建立 overlap ledger；无法追溯的 IEDD 记录不作为独立复现。"
+    },
+    {
+      "risk": "t_last_safe 对物理假设敏感",
+      "detail": "未知制动能力、摩擦、执行延迟和对方占用包络可能改变安全截止时刻。",
+      "mitigation": "同时报告 comfortable/emergency interval 与预注册参数网格，只把全合理网格中仍为 late 的事件计入保守发生率。"
+    },
+    {
+      "risk": "强 predictor 不足被误作经验边界",
+      "detail": "有限模型晚识别可能只是建模或训练失败，不是观测本身信息不足。",
+      "mitigation": "使用规则、经典过滤器、深度序列模型、地图感知 Transformer 与 calibrated ensemble 的验证包络，并把结论限制在该模型集合。"
+    },
+    {
+      "risk": "IEDD 资产不可执行",
+      "detail": "当前 Hugging Face viewer 报生成错误，archive 轨迹 schema 和 provenance 尚未通过 smoke test。",
+      "mitigation": "主 Phase-0 不依赖 IEDD；未完成 archive/provenance 核验时改用 InterHub 内完全 held-out 的底层来源复现。"
+    }
+  ],
+  "impact": "若 Phase-0 证实自然 late tail，这项工作会给协同驾驶一个具体的研究分流规则：哪些场景继续投入更强行为预测仍有意义，哪些场景必须转向更早显式通信、可达集 hedge 或安全降级；它也会要求公开交互数据按事件来源、删失和安全截止时刻提供可审计账本。若 Phase-0 推翻假设，价值在于尽早终止一个看似吸引人但没有自然发生支撑的方向，并把问题归回可学习的预测与规划。两种结果都严格限于所用自然轨迹、观测类和动力学假设，不外推视觉遮挡、V2X 丢包或真实道路认证。",
+  "evidence": [
+    {
+      "title": "A Naturalistic Trajectory Dataset with Dense Interaction for Autonomous Driving",
+      "year": 2025,
+      "venue": "Scientific Data",
+      "url": "https://doi.org/10.1038/s41597-025-05344-7",
+      "links": [
+        "https://arxiv.org/abs/2411.18302"
+      ],
+      "sourceOrigin": "external",
+      "role": "Phase-0 的主要自然交互数据与事件定义依据。",
+      "verifiedFinding": "论文从多个公开自然驾驶数据源统一并提取密集多车交互，提供交互实体、冲突类型、强度、地图与可扩展工具，支持按底层来源和场景族构造 cohort。",
+      "boundary": "数据提供实现轨迹和交互标签，不提供驾驶员心理意图，也不直接证明 t_identifiable 晚于 t_last_safe。"
+    },
+    {
+      "title": "InterHub Official Repository at Inspected Commit",
+      "year": 2026,
+      "venue": "Official code and mini-data release",
+      "url": "https://github.com/zxc-tju/InterHub/tree/1d8a764554017618447247e5c55eff4b4ab50de4",
+      "links": [
+        "https://doi.org/10.6084/m9.figshare.27899754"
+      ],
+      "sourceOrigin": "external",
+      "role": "固定版本的交互提取、轨迹统一、可视化和来源索引实现资产。",
+      "verifiedFinding": "仓库提供数据统一、interaction extraction、visualization、关键车辆、path relation、turn label、priority 与更新后的来源 traceability；代码采用 MIT 许可证。",
+      "boundary": "完整未来构造的标签不得进入 causal-prefix 特征；Figshare 中每个底层数据源仍受其原始许可约束。"
+    },
+    {
+      "title": "The Safety Shell: An Architecture to Handle Functional Insufficiencies in Automated Driving",
+      "year": 2024,
+      "venue": "IEEE Transactions on Intelligent Transportation Systems",
+      "url": "https://doi.org/10.1109/TITS.2024.3352829",
+      "links": [
+        "https://arxiv.org/abs/2311.08413"
+      ],
+      "sourceOrigin": "external",
+      "role": "t_last_safe 的直接功能先例和独立安全时间基线。",
+      "verifiedFinding": "该工作已提出 Safety Shell，并正式覆盖 Last Safe Intervention Time：继续当前轨迹后仍可切换到安全逃逸轨迹的最晚干预时刻。",
+      "boundary": "LSIT 本身已经被覆盖；本候选只能研究它与自然 causal-prefix t_identifiable 的联合分布及后果。"
+    },
+    {
+      "title": "Self-Driving Negotiator: An Interactive, Verifiable Benchmark for Social Negotiation and Theory of Mind under Hidden Intent",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.15139",
+      "sourceOrigin": "external",
+      "role": "隐藏状态晚揭示和 wait-for-commitment 的最接近机制先例。",
+      "verifiedFinding": "程序化多轮环境让不同隐藏 disposition 的早期公开观测相同、接近冲突点后才分叉，并用特权模拟器状态计算奖励与反作弊诊断。",
+      "boundary": "它是文本化、程序生成的受控环境，不提供自然发生率、真实车辆动力学或独立 LSIT。"
+    },
+    {
+      "title": "Early Lane Change Prediction for Automated Driving Systems Using Multi-Task Attention-based Convolutional Neural Networks",
+      "year": 2022,
+      "venue": "Primary paper",
+      "url": "https://arxiv.org/abs/2109.10742",
+      "sourceOrigin": "external",
+      "role": "最早可靠机动识别与 time-to-lane-change 的组件级先例。",
+      "verifiedFinding": "工作联合估计 lane-change likelihood 与 TTLC，并按预测提前量分析性能，说明提前机动识别并非空白对象。",
+      "boundary": "它没有把 calibrated earliest-identification time 与独立 LSIT 在自然多车交互上联合成发生率诊断。"
+    },
+    {
+      "title": "On Infusing Reachability-Based Safety Assurance within Planning Frameworks for Human-Robot Vehicle Interactions",
+      "year": 2020,
+      "venue": "International Journal of Robotics Research",
+      "url": "https://arxiv.org/abs/2012.03390",
+      "sourceOrigin": "external",
+      "role": "无需先识别他车意图的 reachability 安全强基线。",
+      "verifiedFinding": "工作以 100 Hz reachability controller 持续保持 collision-free escape maneuver，并在全尺寸车辆交互实验中处理他车偏离 planner 预期的行为。",
+      "boundary": "若该类 intent-agnostic controller 在相同进度与舒适约束下覆盖 late subgroup，则本候选的系统意义被推翻。"
+    },
+    {
+      "title": "Egikk IEDD Official Dataset Release",
+      "year": 2026,
+      "venue": "Official data release",
+      "url": "https://huggingface.co/datasets/Egikk/IEDD",
+      "links": [
+        "https://doi.org/10.1038/s41597-026-07929-2",
+        "https://arxiv.org/abs/2602.20575"
+      ],
+      "sourceOrigin": "external",
+      "role": "仅在 archive 与 provenance 验证通过后的条件复现来源。",
+      "verifiedFinding": "官方页面列出 IEDD release、Apache-2.0 标识和交互预览，但完整 dataset viewer 当前报告 DatasetGenerationError/ArrowInvalid。",
+      "boundary": "在 archive schema、底层许可证、scene 回溯和与 InterHub 的事件级去重完成前，不得把 IEDD 计作已执行或独立复现。"
+    }
+  ],
+  "closestWorkMatrix": [
+    {
+      "work": "Safety Shell and mature criticality-time metrics",
+      "alreadyCovers": "LSIT 以及最后可制动、转向、机动或响应的安全时间对象。",
+      "residual": "不覆盖自然响应何时首次达到预注册可靠度，也不报告该时刻与 LSIT 的联合发生率。",
+      "consequence": "t_last_safe 必须复用和对齐这些定义，不能作为新指标贡献。"
+    },
+    {
+      "work": "Early maneuver and TTLC prediction",
+      "alreadyCovers": "从历史观测提前预测 lane change 或机动，并报告不同提前量的性能。",
+      "residual": "不把 class-calibrated earliest-identification time 与独立物理截止时刻联合审计。",
+      "consequence": "新 predictor 架构不属于候选核心贡献，强早期预测器只作为包络基线。"
+    },
+    {
+      "work": "Self-Driving Negotiator",
+      "alreadyCovers": "隐藏 disposition 的 delayed reveal、部分可观测互动和 wait-for-commitment 机制。",
+      "residual": "不提供自然驾驶发生率、车辆动力学 LSIT 或跨来源轨迹 cohort。",
+      "consequence": "程序化 reveal sweep 只能作机制控制，不能替代自然 occurrence gate。"
+    },
+    {
+      "work": "Reachability-based safety assurance",
+      "alreadyCovers": "无需可靠预测他车未来动作即可持续保持 escape maneuver 的安全控制。",
+      "residual": "不测量自然日志中信息是否在安全窗口关闭后才出现。",
+      "consequence": "它是系统价值的 kill baseline；若同等效率下已足够，联合诊断不支持继续做意图干预。"
+    },
+    {
+      "work": "InterHub and conditional IEDD",
+      "alreadyCovers": "大规模自然多车交互的统一提取、分类、轨迹和来源基础。",
+      "residual": "数据发布没有给出无泄漏 t_identifiable、独立 t_last_safe 或二者的删失联合分布。",
+      "consequence": "它们是测量底座而非问题发生证据；没有实际 Phase-0 结果就不得声称盲点存在。"
+    }
+  ],
+  "frozenAt": "2026-08-01T02:49:27.324Z"
+}

@@ -1,0 +1,80 @@
+{
+  "selectionAgentId": "019fbbe7-eb0c-7931-95b6-6553d39073da",
+  "selectedAt": "2026-08-01T06:09:16Z",
+  "directionId": "end-to-end-autonomous-driving",
+  "candidatePoolPath": "content/idea-audits/end-to-end-autonomous-driving-final-candidate-pool-v1.json",
+  "selectedCandidateIds": [
+    "geolocation-controlled-retrieval-surplus",
+    "verifier-selection-winners-curse",
+    "covla-caption-side-channel-future-motion"
+  ],
+  "candidateDecisions": [
+    {
+      "candidateId": "geolocation-controlled-retrieval-surplus",
+      "decision": "shortlist",
+      "reason": "Spatial Retrieval AD 的检索键和 reliability gate 都依赖 ego 位置，原有 image drop 与随机错图同时改变像素和位置一致性，无法识别像素增量。冻结 VAD+Geo checkpoint、当前观测、GPS、路线和 evaluator，配对 real image、zero、同地点错时、等距离错地及轻量 GPS/route-only，并按地理 tile 留出，可公平检验图像是否在未见地点仍提供规划 surplus。"
+    },
+    {
+      "candidateId": "verifier-selection-winners-curse",
+      "decision": "shortlist",
+      "reason": "TOAD 把 learned scorer 当 reward 连续搜索，DriveVer 则直接选择和修正轨迹；通用研究已证明 best-of-N 会放大代理误差，但驾驶闭环边界尚未测量。冻结 proposal generator 与 verifier，按相同 verifier calls 和初态扫 N 或 CEM 次数，并用未参与选择的几何与 HUGSIM/Bench2Drive 后果裁决，可识别代理分数上升而真实安全先降的反转。"
+    },
+    {
+      "candidateId": "covla-caption-side-channel-future-motion",
+      "decision": "shortlist",
+      "reason": "CoVLA 同时公开未来轨迹、车辆状态和 detailed maneuver caption，且 ground-truth caption 明显优于 predicted caption；CaptionQA 与 LinkVLA 都未追溯动作词使用的最晚时间。先建立字段来源图，再以 drive-level split 比较 original、motion-only、motion-masked、strict past-lagged、caption-only 和视觉基线，可把可部署语言语义与未来目标侧信道严格分离。"
+    },
+    {
+      "candidateId": "minddrive-cross-head-hybrid-actuation-v2",
+      "decision": "reject",
+      "reason": "MindDrive 固定代码可追踪路径头、速度头和控制器，但 AlignDrive 已直接研究 path-speed coordination，Waypoint-Action Gap 也覆盖路径输出到实际控制的差异。剩余问题只是该实现是否自然出现某个混合动作 bug；没有跨模型机制或独立 estimand，单栈探针不足以构成新研究。"
+    },
+    {
+      "candidateId": "autovla-reasoning-tail-horizon-starvation-v2",
+      "decision": "reject",
+      "reason": "AutoVLA 接口允许共享生成预算和尾裁剪，但输入没有证明公开 checkpoint 在自然推理中会触达长度边界并丢失物理轨迹时域。adaptive reasoning、推理加速、共享 codebook 与非自回归动作解码已是直接近邻；人为缩小 max length 只能测试可注入性，不能证明结构问题发生。"
+    },
+    {
+      "candidateId": "reasoning-observation-age-budget",
+      "decision": "reject",
+      "reason": "长推理使观测变旧是合理系统风险，但 Reasoning-aware speculative decoding 已直接优化推理延迟，Bench2Drive-Robust 又覆盖控制和部署时延，双过程工作处理推理路由。候选没有区别于一般端到端 latency 的新状态变量或因果后果，若研究何时调用慢思考则更属于 agentic routing。"
+    },
+    {
+      "candidateId": "generic-perception-update-policy-compatibility",
+      "decision": "reject",
+      "reason": "A Stitch in Time Saves Nine 已形式化感知升级后的冻结策略兼容，并用线性或卷积 stitcher 直接解决 encoder 与策略接口变化。更换传感器、模型或域仍落在同一输入输出和训练目标内；没有新的失效机制、版本证据或车辆级识别对象。"
+    },
+    {
+      "candidateId": "generic-post-training-safety-refinement",
+      "decision": "reject",
+      "reason": "后训练综述、自博弈端到端驾驶和 DAWN 世界-动作训练已经覆盖 RL、偏好、世界模型与闭环安全增强。当前主张没有指出新的反馈偏差、可证伪机制、数据选择问题或独立安全 oracle，只是组合成熟方法家族，难以与更大训练预算公平区分。"
+    },
+    {
+      "candidateId": "generic-constrained-multimodal-trajectory-generator",
+      "decision": "reject",
+      "reason": "GuideFlow、DiffusionDrive、GenAD 与 VADv2 已直接覆盖 diffusion/flow、多模态候选及安全约束。替换 backbone、denoising steps 或约束项仍产生相同轨迹生成能力和评价指标；没有新的自然失败边界或独立 estimand，无法形成不可替代差异。"
+    },
+    {
+      "candidateId": "cross-benchmark-policy-rank-transfer",
+      "decision": "reject",
+      "reason": "同一策略在 NAVSIM、Bench2Drive 与 HUGSIM 的排名变化值得测量，但核心被解释变量是 benchmark verdict 的迁移有效性，属于 autonomous-driving-testing。现有输入还没有同版本、同抽象场景的完整跨平台身份映射；在本方向保留会与 paired-execution-layer 候选重复。"
+    },
+    {
+      "candidateId": "neural-simulator-verdict-transfer",
+      "decision": "reject",
+      "reason": "HUGSIM 提供反应式神经渲染闭环，却没有同初态真实道路反事实；NAVSIM 和其他 benchmark 也只是代理层。仅用 HUGSIM 结果预测现实策略安全无法识别 transfer，若补做跨层配对，研究对象就转为 testing 的 false-safe 与 abstain，而非端到端策略本身。"
+    },
+    {
+      "candidateId": "generic-intermediate-expert-utilization",
+      "decision": "reject",
+      "reason": "OMEGA、DAWN 和因果联合建模工作已经直接研究感知、世界模型或专家 token 的利用与交互。让 planner 更充分使用中间模块只是融合结构优化，当前没有定义某种自然发生的利用失败、可干预残差或独立下游 estimand，提升也容易由额外参数和训练量解释。"
+    },
+    {
+      "candidateId": "generic-action-token-efficiency",
+      "decision": "reject",
+      "reason": "LinkVLA、两步动作解码、LatentVLA 和 adaptive reasoning 已分别覆盖共享 codebook、并行 query、latent action 与生成加速。减少 token 数或更换 codebook 在功能上已拥挤；只有具体 fail-open 接口或自然时域损失才可能形成新对象，而前者已路由 security，后者尚无发生证据。"
+    }
+  ],
+  "crossDirectionFinding": "geolocation-controlled-retrieval-surplus、verifier-selection-winners-curse、covla-caption-side-channel-future-motion、MindDrive hybrid 和 AutoVLA horizon 也出现在 agentic 汇总池；本文件是前三项的唯一保留位置，后二项在两处均拒绝。verifier winner's curse 与 testing 的 episode risk、world-models 的 judge rank survival 共享选择放大机制，但分别产出 planner 搜索压力曲线、episode 安全核算和生成器跨评价器有效性，统计单位与干预对象不相同。",
+  "candidatePoolSnapshotFingerprint": "b00d1056c32384d077c480392a2f355d43ca7e0576708db23221a5930ca8e1bd"
+}

@@ -1,17 +1,27 @@
 ---
 const { score, scoring } = Astro.props;
 
+const rawValues = Object.values(score.dimensions || {}).map(Number);
+const inferredMax = Number(score.overall) <= 10 && rawValues.every((value) => value <= 10)
+  ? 10
+  : 100;
+const maxScore = Number(scoring.maxScore || inferredMax);
+
 const dimensions = scoring.dimensions.map((dimension) => ({
   ...dimension,
-  value: score.dimensions[dimension.id]
+  value: score.dimensions[dimension.id],
+  percentage: Math.max(
+    0,
+    Math.min(100, (Number(score.dimensions[dimension.id]) / maxScore) * 100)
+  )
 }));
 ---
 
-<section class="idea-score" aria-label={`${scoring.label} ${score.overall} 分`}>
+<section class="idea-score" aria-label={`${scoring.label} ${score.overall}/${maxScore}`}>
   <div class="idea-score-summary">
     <span class="idea-score-number">{score.overall}</span>
-    <span class="idea-score-total">/ 100</span>
-    <strong>{score.band}</strong>
+    <span class="idea-score-total">/ {maxScore}</span>
+    {score.band && <strong>{score.band}</strong>}
   </div>
 
   <dl class="idea-score-dimensions">
@@ -22,7 +32,7 @@ const dimensions = scoring.dimensions.map((dimension) => ({
           <strong>{dimension.value}</strong>
         </dt>
         <dd>
-          <span style={`--idea-score-value: ${dimension.value}%`}></span>
+          <span style={`--idea-score-value: ${dimension.percentage}%`}></span>
         </dd>
       </div>
     ))}

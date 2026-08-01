@@ -1,0 +1,482 @@
+{
+  "reviewerAgentId": "codex-main-agentic-driving-two-shard-jury-v4-20260801",
+  "reviewedAt": "2026-08-01T01:45:10Z",
+  "reviewScope": {
+    "candidateShards": [
+      "content/idea-audits/agentic-driving-rescue-frontier-shard-v3.json",
+      "content/idea-audits/agentic-driving-rescue-assets-shard-v3.json"
+    ],
+    "dedupSources": [
+      "content/idea-audits/agentic-driving-memory-tool-candidate-pool-v1.json",
+      "content/idea-audits/agentic-driving-reasoning-action-candidate-pool-v1.json",
+      "content/idea-audits/agentic-driving-safety-runtime-candidate-pool-v1.json",
+      "content/idea-audits/agentic-driving-multi-agent-candidate-pool-v1.json",
+      "content/idea-audits/agentic-driving-memory-candidate-decisive-audit-v2.json",
+      "content/idea-audits/agentic-driving-reasoning-candidate-decisive-audit-v2.json",
+      "content/idea-audits/agentic-driving-multi-agent-candidate-decisive-audit-v2.json"
+    ],
+    "workflow": "config/idea-exploration-workflow.json",
+    "policyApplied": "需要自建适配器、模块、评测器或实验闭环本身不构成淘汰理由；候选仍须证明自然问题或不可避免的结构性风险、相对直接竞品的不可替代残差，以及能够识别核心主张的最小实验。代码分支可达或故障可注入只计为可测试性。",
+    "scoresProduced": false,
+    "otherAgentResultsViewed": false
+  },
+  "candidateDisposition": [
+    {
+      "candidateId": "geolocation-controlled-retrieval-surplus",
+      "sourceShard": "frontier",
+      "disposition": "shortlist",
+      "reason": "GPS 触发的空间检索把位置、道路身份与检索图像天然绑定，未控制这些先验时，检索增益确实存在不可由普通端到端消融排除的混杂。候选把问题限定为检索像素在 GPS、路线和道路身份之外的条件增量，并要求地域隔离后重新比较方法排序，明显超出通用 RAG 过滤和地图缓存问题。",
+      "naturalProblemEvidence": "结构性证据成立：Spatial Retrieval AD 的实际检索链由 GPS 索引，地理先验与检索内容共变不是人工注入；但当前证据尚未证明已发表增益主要来自泄漏，因此结论必须保持为待检验混杂而非已确认缺陷。",
+      "directCompetitorResidual": "直接竞品覆盖 GPS 检索和结构化驾驶检索，但没有报告 GPS-only、同位置跨时图像、距离匹配错误位置与未见地理 tile 的联合对照；该条件增量及其方法排序后果是可辨认残差。",
+      "minimumExperimentIdentifiability": "可识别，前提是固定当前传感器、路线、GPS/道路身份和模型权重，只交换检索图像，并把地理 tile 作为独立统计单元。GPS-only、真实检索、同位置时间错配和距离匹配错误位置必须共享同一候选样本与预算。",
+      "functionalDedup": [
+        "generic-rag-distractor-filter",
+        "map-cache-version-ttl",
+        "action-opposite-semantic-retrieval-twins"
+      ],
+      "requiredNextEvidence": "先核验 devkit 中位置字段、检索图像和规划标签的实际接口，再冻结 tile split 与五分支反事实协议；不得把随机图像替换单独当作地理泄漏证据。"
+    },
+    {
+      "candidateId": "retrieval-selector-interaction-estimand",
+      "sourceShard": "frontier",
+      "disposition": "reject",
+      "reason": "当前贡献主体是对检索模块与选择器做 2x2 因子消融和候选交换，属于成熟的组件交互归因方法。候选没有给出自然非加性交互实例，也不准备复现 KnowVal 的实际系统，而是自行搭建一个相同结构的代理系统；代理系统中的交互可能由自建候选生成器和评分器定义，不能说明直接竞品的贡献归因有误。",
+      "naturalProblemEvidence": "只有检索可能改变候选难度这一合理机制，没有已观察的自然交互、选择错误或排序反转。",
+      "directCompetitorResidual": "相对 KnowVal、DriveVer 和 Pre-VLA 的残差目前只是更完整的消融协议，未形成新识别假设、反例或算法机制，触发 method-transfer-is-not-novelty。",
+      "minimumExperimentIdentifiability": "在真实目标系统上候选交换可以分离供给与排序；在自建代理系统上则不能识别已发表系统的模块贡献，当前执行路径与主张不一致。",
+      "functionalDedup": [
+        "minimal-retrieval-action-support-set",
+        "independently-certified-action-repair",
+        "planner-verifier-cross-support-contract"
+      ],
+      "requiredNextEvidence": "只有取得一个实际知识增强驾驶系统的冻结候选日志与选择器接口，并先观察到非加性交互足以改变组件排序，才应以更窄的新候选重开。"
+    },
+    {
+      "candidateId": "reasoning-monitor-causal-regime-reversal",
+      "sourceShard": "frontier",
+      "disposition": "shortlist",
+      "reason": "VLADriveBench 已给出观察理由-动作一致性与因果作用在不同 VLA 上背离的直接信号；候选不重复测量 CoT 忠实度，而是检验同一运行时监测器跨因果耦合机制时是否失准并反转安全排序。这一对象会直接决定理由一致性指标能否用作运行时安全信号。",
+      "naturalProblemEvidence": "已有自然模型间矛盾证据，而非仅靠理由替换注入：ORION 与 Alpamayo 类模型呈现不同的观察一致性和干预响应关系。",
+      "directCompetitorResidual": "既有工作测忠实度、扰动脆弱性或单模型一致性；尚未把因果耦合机制作为监测器迁移与校准的分层变量，也未检验观察指标排序是否跨机制反转。",
+      "minimumExperimentIdentifiability": "可识别，但不能只用一个人为 reason-detached adapter 定义两种制度。应先用独立干预指标标定至少两个自然模型的因果制度，固定同一监测器和样本，再用权重共享脱钩分支作机制复核；观察分数匹配必须先于伤害比较。",
+      "functionalDedup": [
+        "cot-action-faithfulness-probe",
+        "safety-bounded-reasoning-influence",
+        "reasoning-action-provenance-score",
+        "language-trajectory-consistency-verifier"
+      ],
+      "requiredNextEvidence": "冻结监测器、伤害标签和因果制度判定规则，证明结果不是语言质量、视觉显著性或架构规模差异造成，并至少包含一个自然模型对与一个同模型机制干预。"
+    },
+    {
+      "candidateId": "failure-diagnosis-intervention-consistency",
+      "sourceShard": "frontier",
+      "disposition": "revise-probe-first",
+      "reason": "ELF-VLA 的结构化失败标签确实被用于学习，但候选把某类局部修复收益最高直接当成反事实根因代理，当前并不成立：修复能力、搜索预算和模块耦合都会改变所谓最佳位置。问题有价值，现有最小实验却只能检验标签的行动建议价值，不能证明标签具有机制诊断语义。",
+      "naturalProblemEvidence": "教师标签的存在和训练用途已确认；标签与真实可修复位置不一致尚未被观察，不能从多个根因可产生相似轨迹这一可能性直接推出。",
+      "directCompetitorResidual": "相对 ELF-VLA、Counterfactual VLA 和普通自反思，标签到干预收益的映射是残差；但若主张继续使用根因或机制诊断，需额外识别假设。",
+      "minimumExperimentIdentifiability": "当前不足。应把主张先收窄为‘标签能否预测哪类预算匹配修复更有效’，每个位置至少使用两种强度匹配、覆盖率匹配的独立修复器，并报告 repairability 而非 root-cause accuracy。",
+      "functionalDedup": [
+        "intrinsic-self-reflection-loop",
+        "independently-certified-action-repair",
+        "same-model-critic-ensemble"
+      ],
+      "requiredNextEvidence": "先在 30 至 50 个自然失败上完成多修复器交叉实验；若标签只预测表面错误或通用轨迹投影始终占优，则停止，不进入完整盲评。"
+    },
+    {
+      "candidateId": "selective-router-counterfactual-missingness",
+      "sourceShard": "frontier",
+      "disposition": "shortlist",
+      "reason": "选择性路由日志只观测被选快/慢分支的回报，反事实结果按策略非随机缺失是部署机制直接造成的事实。候选研究的是这种缺失如何让路由器把场景复杂度误当慢思考个体收益，而非再次提出复杂度路由或墙钟 deadline 策略。",
+      "naturalProblemEvidence": "结构性证据成立：任何只执行所选分支的 router 都缺失另一分支回报；Cognitive Dual-Process 已报告过度推理与长尾漏路由，说明复杂度标签并非显然等价于处理收益。",
+      "directCompetitorResidual": "旧 deadline-censored-value-of-thought 和 counterfactual-value-of-deliberation 优化何时调用慢分支，本候选识别训练/评测日志的 MNAR 偏差，并允许校正后路由区域和方法排序改变。通用 IPW/DR 只是基线，贡献必须来自驾驶路由反例和排序后果。",
+      "minimumExperimentIdentifiability": "随机选择一部分场景强制双执行可直接观测快慢潜在结果；训练集探索概率、同一初态、相同世界演化和独立测试集必须冻结。不能把不同 prompt 产生的快慢输出冒充原架构两分支。",
+      "functionalDedup": [
+        "complexity-only-slow-router",
+        "deadline-censored-value-of-thought",
+        "counterfactual-value-of-deliberation"
+      ],
+      "requiredNextEvidence": "先确认一个公开 VLA 的原生快慢分支或定义等价且固定的双分支接口，发布随机探索 ledger，并比较 direct、IPW、DR 与复杂度路由的策略价值和长尾 regret。"
+    },
+    {
+      "candidateId": "implicit-action-channel-substitution",
+      "sourceShard": "frontier",
+      "disposition": "reject",
+      "reason": "显式消息与车辆微动作共同传递意图是合理现象，但候选无法在当前协议中独立关闭‘微动作可见性’而不同时改变伙伴的物理状态和 ego 的风险。允许策略适应又同时更换策略分布，因此冻结与适应差异不能唯一归因于通信通道替代。该问题更接近协同驾驶通信归因，且与旧 MDrive 消息-动作归因候选高度重合。",
+      "naturalProblemEvidence": "真实驾驶确有隐式行为信号，但没有证据表明已发表语言协商收益被冻结消息消融系统性高估。",
+      "directCompetitorResidual": "残差是适应后通道替代效应，但当前 intervention 会改变物理观测和策略，未形成独立可识别的新对象。",
+      "minimumExperimentIdentifiability": "现有 2x2 不可识别；需要能够重放完全相同物理轨迹、只改变伙伴是否获得该轨迹的意图语义，或建立明确的信道编码模型。",
+      "functionalDedup": [
+        "mdrive-language-message-action-attribution",
+        "action-acknowledgement-binding",
+        "language-maneuver-commitment-contract"
+      ],
+      "requiredNextEvidence": "若能在 cooperative-autonomous-driving 方向构造固定物理轨迹的观察/语义分离实验，可作为新候选重新定义；当前版本不保留。"
+    },
+    {
+      "candidateId": "shared-backbone-cooperation-error-correlation",
+      "sourceShard": "frontier",
+      "disposition": "reject",
+      "reason": "协同收益受错误相关性影响是 ensemble diversity 和 common-mode failure 的成熟结论。共享 backbone、训练集、提示与错误相关性同时变化，候选又计划通过模型配对、温度校准和分层抽样配平边际误差，仍无法把相关性从模型能力、时延和表示差异中独立出来。",
+      "naturalProblemEvidence": "MDrive 的感知增益未传到规划不能证明原因是共享 backbone 的相关错误；当前没有同边际性能下的自然相关性反例。",
+      "directCompetitorResidual": "固定边际误差后测规划排序是有用协议，但尚未超出通用 ensemble diversity、异构协作和 common-mode failure 方法迁移。",
+      "minimumExperimentIdentifiability": "仅观察不同模型对不识别相关性的因果效应；必须有保持单车错误集合与时延不变、只重排联合错误耦合的可实现干预，而当前没有。",
+      "functionalDedup": [
+        "cross-model-role-crossplay",
+        "dissensus-factorized-control",
+        "world-model-alignment-driving-score"
+      ],
+      "requiredNextEvidence": "只有先发现一种现有融合器在固定单车预测和通信预算下因错误耦合发生可重复排序反转，且不能由普通 diversity baseline 解释，才值得重开。"
+    },
+    {
+      "candidateId": "precommitment-intent-identifiability-bound",
+      "sourceShard": "frontier",
+      "disposition": "reject",
+      "reason": "Self-Driving Negotiator 已直接研究隐藏意图、行为线索和等待承诺。当前方案在 MDrive 场景生成器中自行加入隐藏意图和揭示时刻，随后用 oracle 信息提高成功率，容易由构造方式预定结论；一条揭示时间曲线也不是可识别性上界，除非同时限定观测类、策略类并证明接近最优。",
+      "naturalProblemEvidence": "多模型在争议合流上停滞只说明任务困难，不能区分信息不足、训练不足、策略保守或奖励问题。",
+      "directCompetitorResidual": "‘不可逆点前的信息上界’是潜在残差，但当前与隐藏意图/承诺直接竞品高度重合，也没有新的定理、自然反例或可迁移 bound。",
+      "minimumExperimentIdentifiability": "oracle 提前揭示只给可实现性能差，不给无信息条件下的最优上界；自建隐藏变量还会定义任务本身。",
+      "functionalDedup": [
+        "language-maneuver-commitment-contract",
+        "action-acknowledgement-binding",
+        "dissensus-factorized-control"
+      ],
+      "requiredNextEvidence": "若能基于现有自然日志证明两个潜在意图在不可逆点前具有相同可观测分布，并给出策略无关下界，可用全新候选重开。"
+    },
+    {
+      "candidateId": "verifier-selection-winners-curse",
+      "sourceShard": "frontier",
+      "disposition": "shortlist",
+      "reason": "DriveVer 和 Pre-VLA 等系统把学习验证器用于候选筛选或重采样；在固定但有误差的验证器上增大 best-of-N 会主动搜索其误差尾部，这是测试时扩展本身引入的结构性风险。候选把新对象限定为 N 依赖的预测安全-真实安全分离及 planner 排名反转，不是再造双验证器或普通最终动作 shield。",
+      "naturalProblemEvidence": "选择压力与验证误差共存由实际系统结构直接成立，开放环与闭环排名反转提供外部后果信号；但具体系统是否已经进入退化区仍须实验确认。",
+      "directCompetitorResidual": "直接竞品报告验证器筛选收益，没有系统刻画候选预算增加时的 winner's curse、有效候选相关性和方法排序边界。通用 optimizer's curse 是理论基线，驾驶贡献必须落在真实候选生成与安全指标上。",
+      "minimumExperimentIdentifiability": "可识别：冻结生成器、验证器、候选嵌套序列和完全独立的 oracle/闭环测试集，只改变 N；必须按场景聚类并估计有效 N，避免重新训练验证器或更换候选分布。",
+      "functionalDedup": [
+        "same-model-critic-ensemble",
+        "dual-verifier-disagreement-to-fallback",
+        "independently-certified-action-repair"
+      ],
+      "requiredNextEvidence": "先在 NAVSIM 或同等公开栈上完成嵌套 N 曲线，并只对出现预测-真实分离或排序反转的设置做闭环复核；若真实安全始终单调且校准稳定则按 kill 条件关闭。"
+    },
+    {
+      "candidateId": "episodewise-risk-budget-for-sequential-verification",
+      "sourceShard": "frontier",
+      "disposition": "reject",
+      "reason": "从单步错误率到 episode 至少一次错误接受的累积，以及 Bonferroni/alpha-spending 风险分配，属于成熟的序贯风险控制。Mission-Level Runtime Assurance 已直接区分即时安全和任务级保证；候选目前只增加驾驶验证器场景和 episode false-accept 指标，没有新的依赖结构、保证或自然反例。",
+      "naturalProblemEvidence": "时延和状态误差会闭环累积，但这不证明逐动作验证器的错误接受以候选所设机制累积，也没有任务级失效记录。",
+      "directCompetitorResidual": "相同逐步 AUROC 下任务风险不同是合理评测问题，但现有版本仍是通用 multiple-testing/alpha-spending 的领域迁移，且与 mission-level RTA 直接碰撞。",
+      "minimumExperimentIdentifiability": "50 个 route/seed 对罕见错误接受明显不足；配平平均拒绝率和完成度也不能保证条件风险暴露相同。当前实验很可能得到宽区间或由阈值保守度直接推出的结果。",
+      "functionalDedup": [
+        "dual-verifier-disagreement-to-fallback",
+        "proof-carrying-cognitive-action",
+        "clean-state-readmission-after-fallback"
+      ],
+      "requiredNextEvidence": "只有发现真实验证调用依赖结构使经典序贯控制失效，或提出可证明利用状态相关性的非平凡保证并改变系统排序，才应以新候选重开。"
+    },
+    {
+      "candidateId": "autovla-fail-open-action-token-alias-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "固定代码中的低 token 到动作码 0 映射和缺失动作零填充证明了 fail-open 路径可达，但没有证明公开 checkpoint 在真实生成中会输出非法 token、短动作序列或触发补齐。ActionCodec 和 constrained decoding 已覆盖一般动作序列有效性，若没有自然事件，该候选只是一项实现缺陷。",
+      "naturalProblemEvidence": "未建立；代码分支和人工 token 注入只证明可测试性。",
+      "directCompetitorResidual": "潜在残差是非法语言 token 被静默赋予一个具体驾驶动作语义并到达官方轨迹，而非一般格式错误；该残差只有自然生成事件存在时才成立。",
+      "minimumExperimentIdentifiability": "先做只读 token trace 即可识别发生率与到达路径；后续严格拒绝、保持安全轨迹和 constrained decoding 必须在完全相同生成前缀上比较。",
+      "functionalDedup": [
+        "typed-tool-output-capability-contract",
+        "minimum-risk-state-after-language-refusal",
+        "proof-carrying-cognitive-action"
+      ],
+      "requiredNextEvidence": "扫描固定 checkpoint 的 navmini 自然生成及合理的真实截断/EOS 边界；至少出现一例非人工非法或缺失动作 token 被解释为动作 0 并改变轨迹，才进入正式候选。"
+    },
+    {
+      "candidateId": "autovla-reasoning-tail-horizon-starvation-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "共享 max_length 和尾 token 删除是具体代码结构，且与旧墙钟 deadline 候选不同：即使零推理延迟也可能侵占物理预测时域。但默认 checkpoint 是否接近长度边界、尾删是否只移除 EOS、动作点是否实际减少均未核验，不能把配置可能性当自然失败。",
+      "naturalProblemEvidence": "未建立；当前仅有代码级容量竞争机制。",
+      "directCompetitorResidual": "相对 deadline-censored-value-of-thought 的残差是语言 token 预算直接压缩动作 horizon；相对 ActionCodec 的残差是同一混合序列中的跨模态预算竞争。",
+      "minimumExperimentIdentifiability": "固定图像、导航目标和采样种子，记录原始理由长度、动作 token 数、尾 token 类型与轨迹时域；语义等价提示只作压力复核，必须先报告默认自然分布。",
+      "functionalDedup": [
+        "deadline-censored-value-of-thought",
+        "fixed-longer-reasoning-budget",
+        "counterfactual-value-of-deliberation"
+      ],
+      "requiredNextEvidence": "两天 phase-0 先证明自然输出接近边界或尾删会移除动作 token，并产生 checker 可见的 horizon 差异；否则关闭为配置审计。"
+    },
+    {
+      "candidateId": "minddrive-cross-head-hybrid-actuation-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "官方控制链分别消费两个预测输出这一事实值得检查，但当前将其解释为‘两个完整动作被拼成第三个动作’可能误读模型设计：一个头可能本来只定义路径，另一个只定义速度，两者即被训练为互补控制量。必须先核验张量语义、坐标系、时域和训练目标，再证明自然组合越出联合可行域。",
+      "naturalProblemEvidence": "代码级组合已确认，自然头间冲突和安全后果未确认；随机交换预测头不能补足。",
+      "directCompetitorResidual": "若两个头各自隐含完整且相互冲突的机动，残差是多头到控制器的组合完整性；若它们只是正交输出，则直接落入普通 integrated planning-control 和 waypoint-action gap。",
+      "minimumExperimentIdentifiability": "需从同一帧构造每个头可支持的完整控制反事实，并用相同动力学投影比较原始组合；只比较‘用一个头’而不给其缺失控制量，会形成不公平基线。",
+      "functionalDedup": [
+        "semantic-advice-to-physical-envelope-compiler",
+        "planner-verifier-cross-support-contract",
+        "language-trajectory-consistency-verifier"
+      ],
+      "requiredNextEvidence": "先完成源码语义审计和 30 至 50 条自然路线 trace，证明存在可重复的曲率-速度或停止距离冲突且不是设计预期，再决定是否建立完整 dossier。"
+    },
+    {
+      "candidateId": "simlingo-interpolation-induced-safety-gap-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "PCHIP 位于正式控制路径并且离散点安全不蕴含车辆 footprint 的连续扫掠安全，这是可检验接口；但任意 waypoint 的数学反例不证明自然模型输出会越界，且轨迹插值、限曲率和平滑可行性已有密集直接工作。单一代码库中的一个插值 bug 不足以自动形成研究贡献。",
+      "naturalProblemEvidence": "未建立；只有插值器调用和理论可发生性。",
+      "directCompetitorResidual": "潜在残差是官方 VLA 后解码器把通过离散检查的自然输出转换为失败的连续占用走廊；必须证明该语义反转在真实输出中存在，并最好跨至少两个后处理栈。",
+      "minimumExperimentIdentifiability": "固定原始 waypoint，分别运行官方 PCHIP、线性、限曲率和走廊约束插值，用同一地图、车辆 footprint 与时间参数检查 between-waypoint 新增违规，可直接归因后处理。",
+      "functionalDedup": [
+        "language-trajectory-consistency-verifier",
+        "world-model-verdict-gate-before-action-verifier",
+        "cbf-projection-for-vla-actions"
+      ],
+      "requiredNextEvidence": "先扫描自然 SimLingo 输出并人工复核至少一例离散通过、连续失败；若只在手工 waypoint 上出现则停止，若只是一处实现 bug则降为工程报告。"
+    },
+    {
+      "candidateId": "simlingo-force-move-brake-priority-inversion-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "force_move 确实在官方执行链中提高油门并清除 brake，构成明确的控制优先级边界；但 stuck 分支被执行不等于它在仍有停车义务时自然执行。只有记录到上游 brake 语义仍有效、前向走廊被占用且 override 改变后果，才能从通用 recovery heuristic 提升为研究问题。",
+      "naturalProblemEvidence": "危险上下文中的自然发生未建立；代码逻辑只证明 override 可达。",
+      "directCompetitorResidual": "相对 recoverability fallback 和 minimum-risk policy，残差是语言动作模型的停车义务与脱困活性逻辑发生可达 priority inversion，而非再加一个 TTC gate。",
+      "minimumExperimentIdentifiability": "先只记录 force_move 前后的 brake、触发原因、occupancy/TTC 与原始控制；随后从同一模拟器状态重放原始、禁用、固定蠕行和义务证明四分支，同时报告安全与路线完成度。",
+      "functionalDedup": [
+        "recoverability-aware-fallback-selection",
+        "minimum-risk-state-after-language-refusal",
+        "deadline-refusal-action-lease"
+      ],
+      "requiredNextEvidence": "在原生 Bench2Drive 路线中找到至少一个非初始化卡顿、非纯机械阻塞的危险触发；若所有触发走廊均为空，则按 kill 条件关闭。"
+    },
+    {
+      "candidateId": "bench2drive-vl-control-reachable-oracle-provenance-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "官方图中存在 USE_GT、basic_info 与 GT-derived state 接口是重要审计入口，但配置出现特权信息不等于正式报告成绩泄漏，更不等于该信息到达 q50 控制。若默认报告配置确有 control-reachable oracle，影响很高；在此之前只能作为优先探针。",
+      "naturalProblemEvidence": "代码和配置入口成立，正式评测启用状态与动作因果贡献未建立。",
+      "directCompetitorResidual": "相对通用 benchmark leakage，残差是多节点推理图中逐源 control-reachability provenance，而不是静态输入清单；相对旧 provenance 候选，输出必须到达实际方向/速度命令和闭环指标。",
+      "minimumExperimentIdentifiability": "冻结论文对应配置、模型/API 响应和解码随机性，逐源删除及结构保持反事实替换，并追踪到最终命令；调试配置和正式配置必须分开报告。",
+      "functionalDedup": [
+        "reasoning-action-provenance-score",
+        "tool-result-withdrawal-debt",
+        "planner-verifier-cross-support-contract"
+      ],
+      "requiredNextEvidence": "先证明论文或公开 leaderboard 的默认路径启用了至少一个特权源，并且在视觉输入不变时该源稳定改变最终控制；否则结论只能是配置风险。"
+    },
+    {
+      "candidateId": "bench2drive-vl-nonatomic-command-transaction-v2",
+      "sourceShard": "assets",
+      "disposition": "reject",
+      "reason": "字段级解析与跨帧回退可能合成未显式表达的方向-速度对，但原子 structured output、完整字段校验和失败不提交是成熟接口工程。当前没有自然多命令、截断或缺字段样本；即使发现少量事件，现有贡献也更像 parser 缺陷修复，而非新的驾驶研究对象。",
+      "naturalProblemEvidence": "未建立；恶意字符串或人工截断只能证明解析器可注入。",
+      "directCompetitorResidual": "驾驶横纵向联合命令是领域语义，但机制与 typed-tool contract、transactional state 和 structured output validation 功能等价，没有新保证或反例族。",
+      "minimumExperimentIdentifiability": "真实响应回放可识别发生率和控制可达性，但不能单独建立研究新颖性。",
+      "functionalDedup": [
+        "typed-tool-output-capability-contract",
+        "transactional-cognitive-state-after-action-acceptance",
+        "proof-carrying-cognitive-action"
+      ],
+      "requiredNextEvidence": "作为工程 QA 可继续记录自然解析异常；只有跨多个 VLA 栈出现同一半提交机制并改变 benchmark 排名，才值得以全新候选重审。"
+    },
+    {
+      "candidateId": "bench2drive-vl-reasoning-snapshot-freshness-v2",
+      "sourceShard": "assets",
+      "disposition": "reject",
+      "reason": "多节点结果携带 capture time 与动作租约是旧 deadline-refusal-action-lease 和 deadline-censored-value-of-thought 的直接延伸，Bench2Drive-Robust 也已覆盖计算时延的闭环伤害。per-edge hazard TTL 是更细的实现粒度，但没有自然迟到结果到控制的证据，也没有说明 CARLA 同步执行是否在推理时冻结世界。",
+      "naturalProblemEvidence": "API 可重试和顺序节点调用只证明潜在延迟；迟到结果被执行及其危险后果未建立。",
+      "directCompetitorResidual": "不同证据边寿命可能是工程优化，但当前未越过统一 deadline、action lease 和 compute-delay robustness 的功能等价边界。",
+      "minimumExperimentIdentifiability": "若模拟器冻结世界，注入节点延迟不会模拟部署时陈旧性；若世界继续运行，则必须分离推理延迟、控制线程旧命令保持和结果提交三个机制，当前最小实验尚未做到。",
+      "functionalDedup": [
+        "deadline-refusal-action-lease",
+        "deadline-censored-value-of-thought",
+        "counterfactual-value-of-deliberation"
+      ],
+      "requiredNextEvidence": "只有先证明正式执行语义下旧证据自然跨帧到达控制，并且统一 deadline 无法解释或修复，才以更窄的 DAG temporal-consistency 候选重开。"
+    },
+    {
+      "candidateId": "simlingo-obligation-opposite-retrieval-twins-v2",
+      "sourceShard": "assets",
+      "disposition": "revise-probe-first",
+      "reason": "该候选与旧 action-opposite-semantic-retrieval-twins 在问题、处理和动作后果上功能等价。新版可行性口径允许自行实现 SimLingo retrieval adapter，因此‘没有现成 retrieval 栈’不再是淘汰理由；但旧 decisive audit 的更关键失败仍在：没有一对已核验自然 twin，也没有证明新增上下文能在同一模型中到达动作。公开字段只提供挖掘条件，不是发生证据。",
+      "naturalProblemEvidence": "未建立；commentary、cause_object、allowed 和 safe_to_execute 字段不能替代实际高相似、相反义务的自然样本对。",
+      "directCompetitorResidual": "若能从自然数据定义由可见性、路权和 cause_object 共同决定的 obligation equivalence class，残差可能比普通 hard-negative retrieval 更强；当前仍是旧候选的重开版本。",
+      "minimumExperimentIdentifiability": "第一阶段只应挖掘并盲标自然 twin，不能先建 RAG。通过后再固定 SimLingo 模型，从同一当前观测只替换检索项，并从同一初态重放动作与结果。",
+      "functionalDedup": [
+        "action-opposite-semantic-retrieval-twins",
+        "minimal-retrieval-action-support-set",
+        "generic-rag-distractor-filter",
+        "misleading-language-as-retrieved-evidence"
+      ],
+      "requiredNextEvidence": "先发布去重、盲标的自然 twin mini set 和发生率；若不足则立即关闭。只有自然总体成立且检索项可到达同一模型动作，才可覆盖旧候选并进入盲评。"
+    },
+    {
+      "candidateId": "minddrive-nonfinite-to-valid-action-laundering-v2",
+      "sourceShard": "assets",
+      "disposition": "reject",
+      "reason": "nan_to_num 将非有限值转换成有限值是确定代码路径，但默认模型产生 NaN 的自然频率完全未知。显式 validity bit、拒绝、单头降级和最小风险停车均是成熟 numerical robustness 与 fail-closed 接口措施；即便找到单例，当前贡献更接近实现缺陷而非不可替代研究机制。",
+      "naturalProblemEvidence": "未建立；人工 NaN 注入只证明错误传播路径。",
+      "directCompetitorResidual": "‘数值故障被赋予停车或直行语义’是清晰描述，但没有超出 typed capability、malformed-output refusal 和通用 NaN sanitization 的功能边界。",
+      "minimumExperimentIdentifiability": "转换前后 trace 能识别自然事件和动作别名，但不能弥补新颖性；混合精度或极端输入必须保持在官方支持范围内，不能用脱离部署条件的压力替代发生证据。",
+      "functionalDedup": [
+        "typed-tool-output-capability-contract",
+        "minimum-risk-state-after-language-refusal",
+        "proof-carrying-cognitive-action"
+      ],
+      "requiredNextEvidence": "可作为工程监测加入正常评测；只有跨模型或跨数值后端出现系统性、自然的 semantic laundering 并导致方法排序变化，才应以新候选重开。"
+    }
+  ],
+  "shortlist": [
+    {
+      "candidateId": "geolocation-controlled-retrieval-surplus",
+      "whyAdvanced": "自然检索链存在不可避免的位置混杂，残差明确，固定位置先验后交换检索图像可以直接识别，正负结果都会改变空间检索方法的解释与排序。"
+    },
+    {
+      "candidateId": "reasoning-monitor-causal-regime-reversal",
+      "whyAdvanced": "已有自然模型间观察一致性与因果作用背离证据，候选进一步检验运行时监测器是否跨因果制度失准，区别于再次做 CoT 忠实度测量。"
+    },
+    {
+      "candidateId": "selective-router-counterfactual-missingness",
+      "whyAdvanced": "选择性执行天然造成 MNAR 反事实回报，随机双执行能识别偏差；若校正改变路由区域或排序，会直接修正自适应推理的训练和评测。"
+    },
+    {
+      "candidateId": "verifier-selection-winners-curse",
+      "whyAdvanced": "best-of-N 会结构性放大学习验证器的误差尾部，冻结候选生成和验证器后只改变 N 可形成干净实验，并可能为测试时扩展给出安全边界。"
+    }
+  ],
+  "overlapMap": [
+    {
+      "cluster": "retrieval-value-and-evidence",
+      "candidates": [
+        "geolocation-controlled-retrieval-surplus",
+        "retrieval-selector-interaction-estimand",
+        "simlingo-obligation-opposite-retrieval-twins-v2"
+      ],
+      "historicalCandidates": [
+        "action-opposite-semantic-retrieval-twins",
+        "minimal-retrieval-action-support-set",
+        "generic-rag-distractor-filter"
+      ],
+      "overlap": "三者都对检索做受控替换并观察动作或选择结果。地理候选保留为位置先验之外的条件增量；selector 候选退化为普通因子消融；SimLingo twins 是旧 action-opposite 候选的重开，只能先做自然样本探针。"
+    },
+    {
+      "cluster": "reasoning-causality-and-diagnosis",
+      "candidates": [
+        "reasoning-monitor-causal-regime-reversal",
+        "failure-diagnosis-intervention-consistency"
+      ],
+      "historicalCandidates": [
+        "cot-action-faithfulness-probe",
+        "safety-bounded-reasoning-influence",
+        "independently-certified-action-repair"
+      ],
+      "overlap": "都通过理由或标签干预观察动作。监测器候选保留的是跨自然因果制度的校准反转；诊断候选目前只能证明标签对修复选择是否有用，不能把最佳修复当真实根因。"
+    },
+    {
+      "cluster": "adaptive-compute-and-temporal-budget",
+      "candidates": [
+        "selective-router-counterfactual-missingness",
+        "autovla-reasoning-tail-horizon-starvation-v2",
+        "bench2drive-vl-reasoning-snapshot-freshness-v2"
+      ],
+      "historicalCandidates": [
+        "deadline-censored-value-of-thought",
+        "counterfactual-value-of-deliberation",
+        "deadline-refusal-action-lease"
+      ],
+      "overlap": "都研究慢推理或迟到结果。router 候选保留的是选择性日志的反事实缺失；AutoVLA 候选仅可能保留零时延下 token 预算侵占物理 horizon；snapshot freshness 与旧 deadline/action lease 功能等价。"
+    },
+    {
+      "cluster": "verification-selection-and-accumulation",
+      "candidates": [
+        "verifier-selection-winners-curse",
+        "episodewise-risk-budget-for-sequential-verification"
+      ],
+      "historicalCandidates": [
+        "dual-verifier-disagreement-to-fallback",
+        "proof-carrying-cognitive-action",
+        "independently-certified-action-repair"
+      ],
+      "overlap": "都挑战逐候选验证分数。winner's curse 保留的是候选数 N 对误差放大和排序的影响；episode 风险预算主要是成熟序贯风险控制迁移，未形成独立残差。"
+    },
+    {
+      "cluster": "command-validity-and-fail-closed-interfaces",
+      "candidates": [
+        "autovla-fail-open-action-token-alias-v2",
+        "bench2drive-vl-nonatomic-command-transaction-v2",
+        "minddrive-nonfinite-to-valid-action-laundering-v2"
+      ],
+      "historicalCandidates": [
+        "typed-tool-output-capability-contract",
+        "minimum-risk-state-after-language-refusal",
+        "transactional-cognitive-state-after-action-acceptance"
+      ],
+      "overlap": "三者都把无效中间表示静默变为可执行动作。只有 token alias 还可能凭自然生成事件形成驾驶动作码本特有反例；字段事务和 NaN 洗白当前仍是通用接口或数值防御。"
+    },
+    {
+      "cluster": "planner-to-controller-composition",
+      "candidates": [
+        "minddrive-cross-head-hybrid-actuation-v2",
+        "simlingo-interpolation-induced-safety-gap-v2",
+        "simlingo-force-move-brake-priority-inversion-v2"
+      ],
+      "historicalCandidates": [
+        "semantic-advice-to-physical-envelope-compiler",
+        "language-trajectory-consistency-verifier",
+        "recoverability-aware-fallback-selection"
+      ],
+      "overlap": "三者都关注模型输出经后处理后产生未被原输出明确支持的控制。分别需要先证明自然多头冲突、自然插值语义反转和危险上下文中的脱困 override，不能以构造反例代替。"
+    },
+    {
+      "cluster": "multi-agent-information-and-intent",
+      "candidates": [
+        "implicit-action-channel-substitution",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "historicalCandidates": [
+        "mdrive-language-message-action-attribution",
+        "language-maneuver-commitment-contract",
+        "action-acknowledgement-binding"
+      ],
+      "overlap": "二者都试图区分显式消息、行为线索和隐藏意图；前者的动作可见性干预改变物理状态，后者用自建隐藏变量和 oracle 揭示定义结果，均未越过旧多智能体候选的识别边界。"
+    },
+    {
+      "cluster": "model-diversity-and-common-mode-error",
+      "candidates": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "historicalCandidates": [
+        "cross-model-role-crossplay",
+        "dissensus-factorized-control",
+        "world-model-alignment-driving-score"
+      ],
+      "overlap": "候选把模型异构性重新表述为固定边际误差下的相关结构，但仍与 ensemble diversity 和 common-mode failure 等价；当前没有只改变联合错误耦合的干净干预。"
+    },
+    {
+      "cluster": "provenance-and-control-reachability",
+      "candidates": [
+        "bench2drive-vl-control-reachable-oracle-provenance-v2"
+      ],
+      "historicalCandidates": [
+        "reasoning-action-provenance-score",
+        "tool-result-withdrawal-debt",
+        "planner-verifier-cross-support-contract"
+      ],
+      "overlap": "旧候选多停留在理由、证据或模块 provenance；本候选只有在论文对应默认配置中的特权源能因果到达最终控制时，才形成 benchmark leakage 的更窄残差。"
+    }
+  ],
+  "conclusion": {
+    "status": "jury-complete",
+    "candidateCount": 20,
+    "shortlistCount": 4,
+    "reviseProbeFirstCount": 8,
+    "rejectCount": 8,
+    "shortlistCandidateIds": [
+      "geolocation-controlled-retrieval-surplus",
+      "reasoning-monitor-causal-regime-reversal",
+      "selective-router-counterfactual-missingness",
+      "verifier-selection-winners-curse"
+    ],
+    "decisionSummary": "四个候选同时保留了真实或结构性问题来源、相对直接竞品的新识别对象和可控制的最小实验。八个候选有具体代码或数据入口，但自然发生、张量语义、正式配置或动作到达链尚未成立，只允许先做不会训练新方法的 phase-0 探针。其余八个候选被通用因果归因、结构化输出、序贯风险控制、ensemble diversity、deadline/action lease 或既有多智能体意图工作功能覆盖，或其干预会自行定义待证明现象。",
+    "publicationBoundary": "shortlist 仅表示可进入完整 dossier 和独立盲评，不表示通过任何评分门。revise-probe-first 候选在列明的自然证据探针完成前不得包装为已证实问题；reject 候选不得仅通过更换模型、数据集或术语重新提交。",
+    "nextStep": "为四个 shortlist 分别建立完整问题、机制、实现、强基线、成功/证伪条件 dossier；先执行 phase-0 资产与接口核验，再交给互相隔离的 novelty、implementation、empirical、impact 和 benchmark reviewers。"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "candidateId": "episodewise-risk-budget-for-sequential-verification",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:12:39.636Z",
+  "scores": {
+    "novelty": 4,
+    "feasibility": 5,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "DriveVer 与 TOAD 已建立 learned verifier 和 test-time best-candidate/search 场景，问题来源真实；但 Conformal Prediction in the Loop 已对 shrinking-horizon trajectory optimization 给出整段 mission joint risk constraint、根据已实现轨迹更新剩余风险并向未来分配，Conformal Decision Theory 与 action-conditional conformal 又覆盖自主决策风险保证，SafePath 已对多候选路径做 conformal 安全集合。剩余增量主要是 verifier selection missingness 与 adaptive best-of-N 的经验审计，alpha spending 方法本身已被直接覆盖。",
+    "feasibility": "CARLA 闭环、N 随机化、proposal logging 和简单 union-bound controller 可实现；200 episodes 与两个 verifier 也在合理范围。难点是为未选候选获得可信反事实安全标签：短 horizon rollout 会进入不同后续状态，分层抽样只能校正观察概率，不能恢复完整闭环反事实。",
+    "success-probability": "候选需要先观察 episode 风险随 N 或 horizon 膨胀，再击败固定 episode threshold 和 union bound 的任务效率。危险事件可能过稀，或风险膨胀只是弱 scorer 的 winner's curse；更强 verifier 下效应可能消失，直接近邻的反馈风险分配也可能已是充分基线。",
+    "impact": "test-time scaling 正在进入驾驶规划，保存全部 proposals 并报告 episode any-unsafe-accept 是有价值的评测规范。若只得到一般 multiple-comparisons 现象，影响有限；若在 DriveVer/TOAD 类真实 verifier 上跨生成器复现，能直接改变部署阈值与 benchmark 日志。",
+    "comparison-readiness": "per-step、fixed episode、union bound、online conformal 和 no-verifier 基线齐全，但必须把 NeurIPS 2025 Feedback-Based CP、SafePath 和 action-conditional conformal 加为直接方法基线。还需定义 best-of-N 选择后标签的可识别假设；仅随机审计未选候选不足以支持完整 episode 保证。"
+  },
+  "strongestObjection": "整段任务联合风险约束、在线剩余风险更新和未来风险再分配已被 Feedback-Based Conformal Prediction 直接完成；把同一 alpha-spending 思路放到 ADS verifier 上不构成新方法，而未选候选的反事实标签又无法从分叉后的短 rollout 无偏识别完整闭环风险。",
+  "requiredExperiment": "先做纯审计而不开发新预算器：在两个 verifier、两个 generator、随机 N=1/2/4/8 和长短 episode 上保存全部 proposals，以可复核 safety oracle 比较 per-step calibration、fixed episode、union bound、Feedback-Based CP 和 SafePath-style conformal selection。必须跨 verifier 观察风险随 N/horizon 的可重复膨胀，并证明现有 joint-risk 基线在同任务完成率下失效，才保留新算法主张。",
+  "evidenceReopened": [
+    {
+      "title": "DriveVer: Lightweight Trajectory Evaluator as Test-Time Verifier for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2607.00399",
+      "finding": "直接实例化轻量安全置信 verifier 和轨迹修正，但只报告 NAVSIM 规划性能，没有 episode 级风险保证。"
+    },
+    {
+      "title": "Test-Time Trajectory Optimization for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.07170",
+      "finding": "用 learned scorer 与 CEM 主动搜索高分轨迹，形成 adaptive best-of-N/winner's-curse 的直接应用背景。"
+    },
+    {
+      "title": "Conformal Prediction in The Loop: A Feedback-Based Uncertainty Model for Trajectory Optimization",
+      "url": "https://arxiv.org/abs/2510.16376",
+      "finding": "NeurIPS 2025 已对 shrinking-horizon trajectory optimization 建立 mission-wide joint risk、在线 posterior risk 更新和未来风险分配，直接碰撞核心机制。"
+    },
+    {
+      "title": "Conformal Risk-Averse Decision Making with Action Conditional Guarantee",
+      "url": "https://arxiv.org/abs/2606.05551",
+      "finding": "已提供按采取 action 条件化的有限样本安全保证，削弱仅以选择后动作风险作为新颖性的空间。"
+    },
+    {
+      "title": "SafePath: Conformal Prediction for Safe LLM-Based Autonomous Navigation",
+      "url": "https://arxiv.org/abs/2505.09427",
+      "finding": "已从多个候选路径中用 conformal 集合保证至少包含安全选项，并在不确定时转交控制。"
+    },
+    {
+      "title": "Conformal Decision Theory: Safe Autonomous Decisions from Imperfect Predictions",
+      "url": "https://arxiv.org/abs/2310.05921",
+      "finding": "已直接校准自主决策风险且允许非 i.i.d. 甚至对抗序列，是必须击败的通用统计基线。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "676c226fd52c9468037661f657b70fa30cd4777553e9244ee36a5cdc6b23d230"
+}

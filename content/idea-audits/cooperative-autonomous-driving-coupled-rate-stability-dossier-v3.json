@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-coupled-rate-stability-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "coupled-adaptive-rate-controller-stability",
+  "workingTitle": "语义码率与共享拥塞控制的耦合稳定域",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb73e-6fb1-7762-953f-88ac2ac4e963",
+    "role": "standards-control-literature-and-simulator-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "researchBoundary": "Analyze the coupled dynamics created when multiple cooperative-perception senders adapt semantic content or period from marginal perception value while a shared congestion controller adapts the resource limit from channel load.",
+  "nearestWorkBoundary": [
+    {
+      "work": "ETSI TS 103 324 CPS and TS 103 141 BME",
+      "urls": [
+        "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+        "https://www.etsi.org/deliver/etsi_ts/103100_103199/103141/02.02.01_60/ts_103141v020201p.pdf"
+      ],
+      "occupiedSpace": "CPS can choose CPM frequency, object count, and area count for value of information under a BME resource limit; BME updates that limit from channel load.",
+      "openBoundary": "The BME policy is outside the standard scope and no coupled semantic-controller stability result is specified."
+    },
+    {
+      "work": "Quality over Quantity",
+      "url": "https://arxiv.org/html/2607.18495v1#S6",
+      "occupiedSpace": "A shared A-DCC-like BME and local value thresholds form part of the same system.",
+      "openBoundary": "CPM period remains fixed, thresholds do not feed back into BME, and the authors explicitly leave BME convergence and threshold-period interaction for future work."
+    },
+    {
+      "work": "ETSI TR 104 073, LIMERIC, and FABRIC",
+      "urls": [
+        "https://www.etsi.org/deliver/etsi_tr/104000_104099/104073/02.02.01_60/tr_104073v020201p.pdf",
+        "https://ieeexplore.ieee.org/document/6570522",
+        "https://arxiv.org/abs/1407.6965"
+      ],
+      "occupiedSpace": "Discrete congestion-control stability, synchronized updates, linear feedback, and utility-fair convergence without perception-semantic feedback."
+    },
+    {
+      "work": "Demand- and Priority-Aware DCC",
+      "url": "https://arxiv.org/abs/2603.01134",
+      "occupiedSpace": "Stable resource shares for heterogeneous service demand and priority rather than instantaneous marginal perception value."
+    }
+  ],
+  "noveltyBoundary": [
+    "Measure the cross-sender coupling produced by shared channel load and redundant semantic utility rather than treating every sender controller independently.",
+    "Derive and validate a gain, delay, update-period, and node-count stability boundary.",
+    "Define semantic starvation only when a sender retains positive marginal utility but receives persistently negligible normalized service.",
+    "Separate protocol-level stability from any later claim about neural perception quality."
+  ],
+  "publicStack": {
+    "name": "Artery, Vanetza, OMNeT++, and SUMO",
+    "commit": "e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+    "url": "https://github.com/riebl/artery/tree/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+    "verifiedEntrypoints": [
+      "src/artery/envmod/service/CpService.cc implements CPM generation and object-utility ordering with DCC period constraints.",
+      "src/artery/networking/LimericDccEntity.ned exposes a configurable LIMERIC controller.",
+      ".devcontainer/debian/Dockerfile pins OMNeT++ 5.6.2 and SUMO 1.21.",
+      "cmake --build build --target run_example is the documented smoke entry."
+    ],
+    "executionBoundary": "Source and documentation were inspected, but this audit did not compile the stack."
+  },
+  "twoWeekMinimum": [
+    "Compile the pinned Artery environment and reproduce an official example before adding the candidate controller.",
+    "Create 2, 5, 10, and 15 sender scenarios and log per-node CPM size, period, channel-busy ratio, queue, and send and receive events.",
+    "Implement a bounded local update from marginal semantic utility and congestion error with configurable feedback delay and minimum service.",
+    "Sweep synchronized and asynchronous updates, 50 to 500 ms control periods, 0 to 500 ms feedback delay, load steps, and heterogeneous value profiles.",
+    "Report paired stability maps, trajectories, Jain fairness, starvation duration, and controller-component ablations."
+  ],
+  "preregisteredOperationalDefinitions": {
+    "persistentOscillation": "During the final 20 seconds, peak-to-peak rate exceeds 20 percent of the usable range and does not decay.",
+    "semanticStarvation": "A sender with positive marginal utility remains below 10 percent of its normalized fair share for five continuous seconds."
+  },
+  "baselines": [
+    "Fixed equal rate",
+    "ETSI quantity selector plus LIMERIC",
+    "Quality over Quantity-style fixed-period threshold control",
+    "Weighted LIMERIC",
+    "FABRIC-style utility-fair control"
+  ],
+  "sixWeekStudy": [
+    "Freeze one OpenCOOD or OPV2V model and export payload size and receiver marginal task utility over compression and object-threshold settings.",
+    "Replay those utility and payload traces through the completed Artery controller matrix instead of coupling live neural inference.",
+    "Estimate the equilibrium Jacobian spectral radius and compare the predicted boundary with observed oscillation and starvation.",
+    "Use multiple seeds and report a stable null envelope when no instability is found."
+  ],
+  "falsifiableClaims": [
+    "Semantic and congestion feedback produce a measurable off-diagonal utility coupling between senders.",
+    "A gain-delay-node-count boundary predicts persistent oscillation better than network load alone.",
+    "A minimum-service or passivity-inspired stabilizer reduces semantic starvation without hiding congestion in another queue.",
+    "When semantic feedback is disabled, any remaining oscillation is classified as a network-control or numeric effect."
+  ],
+  "killCriteria": [
+    "The pinned Artery example cannot be reproduced in three working days.",
+    "No cross-sender marginal utility derivative is measurable after freezing other senders.",
+    "Oscillation persists with semantic control disabled.",
+    "The observed boundary changes with simulation step size and fails a finer-step check.",
+    "The OpenCOOD checkpoint cannot be reproduced by week three; remove perception-quality claims and retain only the protocol study."
+  ],
+  "implementationRisks": [
+    "No public Artery-to-OpenCOOD adapter exists.",
+    "The direct Quality over Quantity implementation is unavailable.",
+    "Receiver marginal semantic utility and redundant-information accounting require a frozen definition.",
+    "The primary Artery path is ITS-G5 and cannot be generalized to C-V2X sidelink without a separate transport replication.",
+    "OpenCOOD's older environment and storage requirements can dominate the six-week schedule."
+  ]
+}

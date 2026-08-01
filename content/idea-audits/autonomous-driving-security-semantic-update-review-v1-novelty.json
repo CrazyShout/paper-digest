@@ -1,0 +1,42 @@
+{
+  "candidateId": "signed-semantic-update-differential-admission",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb8d-1ebc-7382-8a02-fd58dc793777",
+  "reviewedAt": "2026-08-01T04:33:23.214Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 4,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "把授权制品的密码完整性与车辆行为完整性分开，并用 old/new 同场景差分做驾驶更新准入，作为应用命题有价值；但 deployment compatibility gates、风险定向回归、行为漂移检测、模型后门扫描与供应链逻辑审计都已存在。候选目前更像把这些成熟思路移植到 AutoVLA 更新治理，尚未给出一个能在未知 trigger 下成立的新识别量或理论条件。",
+    "feasibility": "本地签名、paired NAVSIM/CARLA ledger 和普通回归基线可实现，但主研究要求 benign、malicious、fault、random 每类至少 12 个独立 update lineages，并对每个 lineage 跑至少 120 个 scenes，还要训练 adaptive attacker 与 held-out trigger families。48 个独立 AutoVLA 更新加闭环复跑在 12 周内风险很高，且训练 seed 才是有效独立单位，不能用场景数弥补 lineage 不足。",
+    "success-probability": "有限行为测试无法无条件识别任意 dormant backdoor；知道 admission score 的攻击者可把 trigger 支持放到测试分布外。若不预先限定 trigger mechanism、可访问表示或覆盖分布，held-out trigger-family 泛化缺少可识别保证，semantic gate 很可能退化为普通回归、已知 trigger 检测或高误拒的异常检测。",
+    "impact": "若在严格 benign false-rejection 约束下，对通过签名和全面普通回归的危险更新仍有可复现增量拒绝能力，这会直接影响学习型驾驶更新的 accept、rollback 与 ODD restriction。反之，结果只适用于一个学术 checkpoint 和本地 signer，无法支持 R156 合规或真实 OEM 供应链保证。",
+    "comparison-readiness": "dossier 已把 signature-only、ordinary paired regression、static artifact diff、unpaired trigger test、random/fault differential 和 policy baselines 列出，决策边界清晰。但仍缺少可执行的 trigger-agnostic model scanner/后门检测基线、现有 compatibility-gate 方法，以及针对 architectural backdoor 的逻辑审计作为同等强度对照；只比较自建 regression 与自建 semantic gate 会高估增量。"
+  },
+  "strongestObjection": "核心 claimed gap 在当前表述下不可识别：对任意未知且自适应的 trigger family，不存在靠有限 old/new 行为样本就保证发现 dormant behavior 的通用语义准入器。若方法依赖开发 trigger families 学到的表示差分，它可能只是后门检测器；若不依赖 trigger 假设，它又没有说明从何获得足够覆盖。",
+  "requiredExperiment": "先限定两个互不重叠的机制族，而不是只按视觉外观划分 trigger：例如参数内隐式行为后门与可执行架构 steering。用至少 8 个独立 malicious/benign lineages 做 leave-one-mechanism-out 评估，让攻击者知道 gate 并保持 ordinary regression non-inferiority；同时比较全面普通回归、静态逻辑审计和至少一个 trigger-agnostic model scanner。只有 semantic gate 在未见机制上降低 malicious acceptance，且 benign false rejection 增量不超过 0.10，才值得扩展到 48 lineages 和 CARLA。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2604.27789",
+      "finding": "Test Before You Deploy 已提出 production contracts、risk-category testing suites 与阻断更新的 compatibility gates，并用跨模型版本实验展示定向测试能发现总体指标遗漏的回归；因此 update gate 与风险定向行为测试不是本候选独有。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.25479",
+      "finding": "Architectural Backdoors 证明 VLM 供应链中的可执行架构可在保持 clean utility 时携带 dormant steering，并提出检查分发制品可执行逻辑的审计方向；这既支持问题意义，也提供了比纯行为差分更直接的强基线。"
+    },
+    {
+      "url": "https://www.usenix.org/conference/usenixsecurity26/presentation/burbano",
+      "finding": "BADControl 已在低层控制器中实现供应链投毒、物理 trigger、车辆后果与两类防御，说明驾驶供应链后门的攻击与缓解已被正式覆盖，候选只能在版本准入和未知机制泛化上贡献增量。"
+    },
+    {
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-156-software-update-and-software-update",
+      "finding": "UN R156 的一手页面确立软件更新管理、版本识别、验证与恢复语境，但并未提供学习模型未知 trigger 的统计识别机制，不能被用作 semantic gate 有效性的证据。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "b00919edc6372fe0fa7581a9093312de427d95d90adc859ebb045b7ec0ad175c"
+}

@@ -1,0 +1,51 @@
+{
+  "candidateId": "trajectory-support-task-admission-certificate",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:12:39.210Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "GAVIS、Predictive Photometric Uncertainty、ExtraGS 与 FlexDrive 已分别覆盖视角支持、不确定性、选择性先验注入和出轨迹外推，ParkGaussian 也已把重建质量连接到下游感知一致性。尚未看到它们直接估计固定 coverage 下逐轨迹的下游任务假接受风险，因此 estimand 有残余新意；但方法主体是已有支持特征加标准风险校准，若没有新的任务风险反转现象，容易被评价为成熟 UQ/选择性预测的领域迁移。",
+    "feasibility": "特征、统一校准器和冻结任务头都可实现，但主估计量需要出轨迹真值、足量独立 scene clusters 和非稀疏的假接受事件。Cam2Sim 的公开验证只覆盖单个真实城市场景，且 dossier 自己尚未确认关键资产许可和事件发生性，因此十周内完成跨 city/rig 的可信推断并不稳妥。",
+    "success-probability": "最近相机距离、GAVIS-style 可见性和像素不确定性很可能已吸收大部分支持外风险；专用证书还必须在相同 coverage 下对每个强基线取得稳定增量。更大的风险是 Gate 0 没有足量自然任务不一致，或结果由合成轨迹模板和单一冻结任务头制造。",
+    "impact": "若能在多个独立场景域证明画质/像素不确定性会放行任务错误，而证书能在固定 coverage 下控制该风险，会实质改变驾驶重建资产的准入与 benchmark 报告方式。若只在 CARLA 单包络成立，影响将退化为一个有用但局部的评测协议。",
+    "comparison-readiness": "dossier 已规定共同 calibration split、共同 coverage、等容量逻辑回归、距离、GAVIS、像素不确定性和 oracle 上界，且有明确等价 kill 条件。仍需加入 ExtraGS 的 uncertainty-guided extrapolation 与 ParkGaussian/对象感知型任务一致性作为直接近邻，并提前锁定任务标签不从证书特征泄漏。"
+  },
+  "strongestObjection": "所谓 trajectory certificate 可能只是把相机距离、可见性和像素不确定性重新校准到一个冻结任务标签；在没有跨 renderer、跨任务头且自然发生的风险排序反转前，它不是新机制，而是标准 selective risk control 的驾驶重建应用。",
+  "requiredExperiment": "在任何组合模型训练前，用至少两个城市或 rig、两个冻结任务消费者和相同 c=0.80 coverage 做预注册 Gate 0：先比较距离、GAVIS、Predictive Photometric Uncertainty、ExtraGS-style uncertainty 与等容量特征组合，证明至少两个独立 scene strata 中存在可重复的 baseline false-safe 事件和风险排序反转；若简单组合落入 5 个百分点等价界，立即否决专用证书。",
+  "evidenceReopened": [
+    {
+      "title": "Uncertainty-driven 3D Gaussian Splatting Active Mapping via Anisotropic Visibility Field",
+      "url": "https://arxiv.org/abs/2605.30342",
+      "finding": "直接覆盖训练视角支持与实时视角不确定性，但不报告轨迹级下游任务假接受风险。"
+    },
+    {
+      "title": "Predictive Photometric Uncertainty in Gaussian Splatting for Novel View Synthesis",
+      "url": "https://arxiv.org/abs/2603.22786",
+      "finding": "已将像素级预测不确定性用于变化和异常检测等下游任务，显著压缩仅靠不确定性加任务头的新增空间。"
+    },
+    {
+      "title": "ExtraGS: Geometric-Aware Trajectory Extrapolation with Uncertainty-Guided Generative Priors",
+      "url": "https://arxiv.org/abs/2508.15529",
+      "finding": "直接覆盖驾驶轨迹外推和 uncertainty-guided selective integration，但终点仍是视觉与几何一致性。"
+    },
+    {
+      "title": "ParkGaussian: Surround-view 3D Gaussian Splatting for Autonomous Parking",
+      "url": "https://arxiv.org/abs/2601.01386",
+      "finding": "已明确优化并评价下游停车位感知一致性，说明 task-aware reconstruction 不是空白。"
+    },
+    {
+      "title": "Cam2Sim: Neural Scenario Reconstruction for Closed-Loop Autonomous Driving Simulation",
+      "url": "https://arxiv.org/abs/2607.04770",
+      "finding": "提供真实记录到 CARLA/3DGS 的闭环接口，但正式验证规模为单一真实城市场景，不能支撑跨域事件率。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "1e00ba39f71acd3d1860fa17c9672df77c1b39ef48e0fcced64eef27a5f2288e"
+}

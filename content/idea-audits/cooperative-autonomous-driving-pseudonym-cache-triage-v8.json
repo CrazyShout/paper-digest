@@ -1,0 +1,1366 @@
+{
+  "schemaVersion": "idea-triage-v8",
+  "reviewerAgentId": "codex-independent-pseudonym-cache-triage-v8",
+  "reviewedAt": "2026-07-31T22:19:16+08:00",
+  "candidateId": "pseudonym-rotation-perception-cache-continuity",
+  "auditIndependence": {
+    "scope": "仅审计该备选候选的意义、新颖性与公开资产可执行性，不进行数值评分。",
+    "excludedScope": "未读取、比较或评审当前 coupled-rate 候选的技术主张与优先级。",
+    "decisionRule": "若找不到真实接收端缓存路径、最近工作已覆盖全部功能要素，或最小实验无法在 6 至 12 周内执行，则 verdict 只能为 revise 或 reject。"
+  },
+  "evidenceSemantics": {
+    "verified-fact": "由列出的标准固定版本、论文固定版本或官方代码固定提交直接支持。",
+    "inference": "由已验证事实推导出的审计判断，不等同于来源原文主张。",
+    "hypothesis": "必须通过拟议实验或进一步检索才能确认的可证伪假设。"
+  },
+  "significance": {
+    "assessment": "material-system-problem-but-not-a-new-problem-statement",
+    "verifiedFacts": [
+      {
+        "statement": "ETSI 已明确记录：接收端按不同身份更新邻域缓存会把同一物理 ITS-S 当成多个实体，频繁伪名变化会损害安全应用的邻域感知，并要求在安全与隐私之间取舍。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "title": "ETSI TR 103 415 V2.1.1",
+          "version": "V2.1.1 (2025-03)",
+          "clauses": [
+            "4.4.2",
+            "4.4.3",
+            "5.1",
+            "5.2"
+          ],
+          "url": "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf"
+        }
+      },
+      {
+        "statement": "ETSI CPM 规范要求伪名变化后把检测对象作为新对象报告并更换 objectId；sensorId 也可随机更换。这说明跨伪名可链接性是被规范主动压低的，而不是单纯实现遗漏。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "title": "ETSI TS 103 324 V2.1.1",
+          "version": "V2.1.1 (2023-06)",
+          "clauses": [
+            "5.3.7",
+            "7.1.6",
+            "7.1.8.2"
+          ],
+          "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+        }
+      },
+      {
+        "statement": "ETSI 已提供跨层同步 ID change 以及 Lock/Unlock ID Change 服务，因此在危险情形延迟伪名变化是既有合规机制，不是候选的新机制。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "title": "ETSI TS 102 940 V2.1.1",
+          "version": "V2.1.1 (2021-07)",
+          "clauses": [
+            "Table 4b",
+            "6.5"
+          ],
+          "url": "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf"
+        }
+      }
+    ],
+    "auditInference": {
+      "statement": "该问题对安全感知有真实意义，但‘缓存连续性与不可链接性的冲突’已被标准和论文明确识别；意义不能自动转化为新颖性。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "https://arxiv.org/abs/2111.03461"
+      ]
+    }
+  },
+  "exactClaimUnderReview": "接收端协同感知、信任或历史缓存若在伪名轮换时清空会损失连续性；若跨伪名重关联又会破坏不可链接性。研究最小必要连续性、隐私可审计的 set-valued cache handoff，以及何时 lock ID change，量化安全效用与可链接性前沿。",
+  "claimBoundary": {
+    "mustNotBeClaimed": [
+      "首次发现伪名变化导致 ghost、missing vehicle 或邻域缓存错误",
+      "首次跨伪名关联车辆或维持误行为检测状态",
+      "首次研究安全与位置隐私的权衡",
+      "首次使用 Kalman、MHT、JPDA、RFS 或集合值数据关联",
+      "把 TS 103 324 要求的 objectId 或 sensorId 轮换描述成标准合规 bug",
+      "把稳定仿真 actor ID、V2V4Real cav_id 或 oracle ground truth 当成可部署缓存交接信号"
+    ],
+    "auditableQuestion": "在不产生确定 old-new stationId 绑定、不转移发送者级信任或稳定传感器指纹、且接收器与被动观察者使用同一可见信息的条件下，匿名集合级危险状态连续性是否能相对严格重置和普通概率数据关联获得可重复的安全收益，并在有限 lock 预算下形成非支配前沿？"
+  },
+  "searchAudit": {
+    "executedAt": "2026-07-31",
+    "cutoff": "2026-07-31",
+    "resultCountDefinition": "每个 queryRuns.resultCount 是经范围筛选、规范化 ID 去重并进入 candidateLedger 的一手记录数；检索界面未稳定提供原始总命中数，因此 rawHitCount 为 null。",
+    "queryRuns": [
+      {
+        "queryFamily": "pseudonym-change-management",
+        "actualQuery": "site:etsi.org/deliver pseudonym change management safety privacy cache lock ITS-S",
+        "source": "ETSI Deliver",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "核验问题是否已被标准直接定义，以及 lock 是否已有接口。",
+        "rawHitCount": null,
+        "resultCount": 3,
+        "retainedCanonicalIds": [
+          "etsi-tr-103415-v2.1.1",
+          "etsi-ts-102940-v2.1.1",
+          "etsi-ts-101539-3-v1.1.1"
+        ],
+        "retrievalMetadata": "搜索后逐一重开 ETSI 固定版本 PDF，并在文内检索 cache、trade-off、Lock ID Change、SN-ID-LOCK。"
+      },
+      {
+        "queryFamily": "cpm-identifier-continuity",
+        "actualQuery": "site:etsi.org/deliver TS 103 324 pseudonym change stationId objectId sensorId newly detected",
+        "source": "ETSI Deliver and ETSI Forge",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "核验 CPM station、sensor、object 标识符在伪名变化时的规范语义。",
+        "rawHitCount": null,
+        "resultCount": 2,
+        "retainedCanonicalIds": [
+          "etsi-ts-103324-v2.1.1",
+          "etsi-cpm-asn1-v2.1.1"
+        ],
+        "retrievalMetadata": "重开规范 PDF 和 ETSI 官方 ASN.1 v2.1.1 标签。"
+      },
+      {
+        "queryFamily": "receiver-ldm-cache-code",
+        "actualQuery": "official source CPM receive stationId objectId local dynamic map m_recvCPMmap pseudonym",
+        "source": "official GitHub repositories",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "寻找真实接收端 CPM 到 LDM/cache 数据路径，而非只看论文框图。",
+        "rawHitCount": null,
+        "resultCount": 2,
+        "retainedCanonicalIds": [
+          "github-van3twin-e722a8d",
+          "github-artery-e0ddd8c"
+        ],
+        "retrievalMetadata": "克隆官方仓库，固定提交后用 rg 搜索 receiveCPM、stationID、m_recvCPMmap、LocalDynamicMap 和 pseudonym。"
+      },
+      {
+        "queryFamily": "pseudonym-aware-collective-perception",
+        "actualQuery": "\"Misbehavior Detection Using Collective Perception under Privacy Considerations\" pseudonym Kalman LDM",
+        "source": "arXiv primary manuscript",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "核验已知最直接碰撞是否真的实现接收端跨伪名关联。",
+        "rawHitCount": null,
+        "resultCount": 1,
+        "retainedCanonicalIds": [
+          "arxiv-2111.03461"
+        ],
+        "retrievalMetadata": "重开完整 HTML 主文，检查方法、伪名分类、Kalman 列表、CPM 处理和实验参数。"
+      },
+      {
+        "queryFamily": "persistent-misbehavior-tracking",
+        "actualQuery": "vehicle pseudonym change persistent tracking misbehavior trust memory primary paper",
+        "source": "publisher primary pages",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "检查信任或误行为历史跨伪名延续是否已有直接方案。",
+        "rawHitCount": null,
+        "resultCount": 4,
+        "retainedCanonicalIds": [
+          "doi-10.3745-JIPS.03.0210",
+          "doi-10.1016-j.vehcom.2018.04.006",
+          "doi-10.1007-s11276-018-1681-8",
+          "arxiv-2111.03461"
+        ],
+        "retrievalMetadata": "按标题和 DOI 去重，保留期刊或作者主文页面。"
+      },
+      {
+        "queryFamily": "location-privacy-linkability",
+        "actualQuery": "vehicular pseudonym trajectory reconstruction linkability CAM BSM primary study",
+        "source": "IEEE DOI pages and arXiv",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "确定可链接性攻击、指标和观察者能力基线。",
+        "rawHitCount": null,
+        "resultCount": 4,
+        "retainedCanonicalIds": [
+          "doi-10.1109-PST62714.2024.10788069",
+          "doi-10.1109-WoWMoM.2013.6583473",
+          "arxiv-2012.06666",
+          "arxiv-2507.07732"
+        ],
+        "retrievalMetadata": "保留能从公开无线消息或无线侧信号重建轨迹/关联伪名的一手研究。"
+      },
+      {
+        "queryFamily": "privacy-safety-tradeoff",
+        "actualQuery": "VANET pseudonym change privacy safety tradeoff tracker forward collision warning QoS",
+        "source": "IEEE DOI pages and arXiv",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "排除把通用 privacy-utility frontier 重新命名为贡献。",
+        "rawHitCount": null,
+        "resultCount": 3,
+        "retainedCanonicalIds": [
+          "doi-10.1109-TVT.2017.2736885",
+          "arxiv-1607.07656",
+          "etsi-tr-103415-v2.1.1"
+        ],
+        "retrievalMetadata": "检查 tracker-based privacy、FCW/LCW 安全 QoS 和标准评价指标。"
+      },
+      {
+        "queryFamily": "cache-cleanup-and-deactivation",
+        "actualQuery": "pseudonym change old identifier local dynamic map cache ghost vehicle deactivation notification",
+        "source": "publisher and institutional primary pages",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "检查缓存清理、旧身份删除和 ghost/missing 缓解是否已有。",
+        "rawHitCount": null,
+        "resultCount": 3,
+        "retainedCanonicalIds": [
+          "doi-10.1504-IJVICS.2017.086478",
+          "arxiv-2203.10673",
+          "etsi-tr-103415-v2.1.1"
+        ],
+        "retrievalMetadata": "保留明确讨论接收端 LDM/cache 旧条目或伪名切换通知的记录。"
+      },
+      {
+        "queryFamily": "collective-perception-tracking",
+        "actualQuery": "collective perception CPM receiver tracking track-to-track fusion local dynamic map object association",
+        "source": "arXiv, MDPI publisher and IEEE DOI pages",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "确定常规协同跟踪与 CPM 融合基线，防止将 MOT 重新包装为新意。",
+        "rawHitCount": null,
+        "resultCount": 4,
+        "retainedCanonicalIds": [
+          "arxiv-2209.14122",
+          "doi-10.3390-s26062003",
+          "arxiv-2309.14655",
+          "doi-10.1109-TVT.2022.3211852"
+        ],
+        "retrievalMetadata": "按功能筛选接收端跟踪、track-to-track fusion、协同 MOT 和通信/感知实体匹配。"
+      },
+      {
+        "queryFamily": "set-valued-association",
+        "actualQuery": "\"set-valued\" pseudonym vehicle tracking privacy; privacy-preserving multi-target tracking set-valued association",
+        "source": "cross-domain primary paper search",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "检查 set-valued handoff 这一措辞是否已有完全同构实现。",
+        "rawHitCount": null,
+        "resultCount": 2,
+        "retainedCanonicalIds": [
+          "arxiv-2303.01786",
+          "cvf-iccv2023-u2mot"
+        ],
+        "retrievalMetadata": "检索只返回一般不确定性数据关联/MOT；未找到同时满足 C-ITS 伪名、CPM 接收缓存、观察者对称和 lock 决策的直接记录。该未命中不是不存在证明。"
+      },
+      {
+        "queryFamily": "public-dataset-and-code-assets",
+        "actualQuery": "V2V4Real official code cooperative tracking cav_id; VaN3Twin CPM LDM official source",
+        "source": "official GitHub and CVF primary pages",
+        "executionDate": "2026-07-31",
+        "scopeRationale": "核验 6 至 12 周内可执行的真实公开路径和数据限制。",
+        "rawHitCount": null,
+        "resultCount": 3,
+        "retainedCanonicalIds": [
+          "github-v2v4real-5a821e1",
+          "cvpr-2023-v2v4real",
+          "github-van3twin-e722a8d"
+        ],
+        "retrievalMetadata": "固定官方提交并检查 README 任务清单、dataset loader 身份字段及接收端 CPM 代码。"
+      }
+    ],
+    "sourceAttempts": [
+      {
+        "sourceFamily": "ETSI Deliver fixed-version PDFs",
+        "status": "succeeded",
+        "acceptedCount": 4,
+        "acceptedCanonicalIds": [
+          "etsi-tr-103415-v2.1.1",
+          "etsi-ts-102940-v2.1.1",
+          "etsi-ts-103324-v2.1.1",
+          "etsi-ts-101539-3-v1.1.1"
+        ],
+        "limitation": "TR 103 415 是 pre-standardization study；规范性要求以相应 TS 为准。"
+      },
+      {
+        "sourceFamily": "ETSI Forge official ASN.1",
+        "status": "succeeded",
+        "acceptedCount": 1,
+        "acceptedCanonicalIds": [
+          "etsi-cpm-asn1-v2.1.1"
+        ],
+        "limitation": "ASN.1 只固定消息结构，不提供接收端缓存策略。"
+      },
+      {
+        "sourceFamily": "official GitHub repositories at fixed commits",
+        "status": "succeeded",
+        "acceptedCount": 3,
+        "acceptedCanonicalIds": [
+          "github-artery-e0ddd8c",
+          "github-van3twin-e722a8d",
+          "github-v2v4real-5a821e1"
+        ],
+        "limitation": "完成静态源码审计，未在本次审计中编译或运行这些仓库。"
+      },
+      {
+        "sourceFamily": "arXiv primary manuscripts",
+        "status": "succeeded",
+        "acceptedCount": 8,
+        "acceptedCanonicalIds": [
+          "arxiv-2111.03461",
+          "arxiv-1607.07656",
+          "arxiv-2203.10673",
+          "arxiv-2507.07732",
+          "arxiv-2012.06666",
+          "arxiv-2209.14122",
+          "arxiv-2309.14655",
+          "arxiv-2303.01786"
+        ],
+        "limitation": "预印本记录不自动等同于同行评审状态；用途是核验方法和公开资产。"
+      },
+      {
+        "sourceFamily": "IEEE/CVF primary proceedings and DOI records",
+        "status": "succeeded-with-access-limits",
+        "acceptedCount": 7,
+        "acceptedCanonicalIds": [
+          "doi-10.1109-PST62714.2024.10788069",
+          "doi-10.1109-WoWMoM.2013.6583473",
+          "doi-10.1109-TVT.2017.2736885",
+          "doi-10.1109-TVT.2022.3211852",
+          "cvpr-2023-v2v4real",
+          "cvf-iccv2023-u2mot",
+          "arxiv-2111.03461"
+        ],
+        "limitation": "部分 IEEE 正文受访问限制；只记录由 DOI 页面、开放作者稿或对应公开主文可核验的事实。"
+      },
+      {
+        "sourceFamily": "journal publisher and institutional primary pages",
+        "status": "succeeded",
+        "acceptedCount": 6,
+        "acceptedCanonicalIds": [
+          "doi-10.3745-JIPS.03.0210",
+          "doi-10.1016-j.vehcom.2018.04.006",
+          "doi-10.1007-s11276-018-1681-8",
+          "doi-10.1504-IJVICS.2017.086478",
+          "doi-10.3390-s26062003",
+          "arxiv-2203.10673"
+        ],
+        "limitation": "未将二手综述或聚合摘要作为关键事实的唯一来源。"
+      }
+    ],
+    "candidateLedger": [
+      {
+        "canonicalId": "etsi-tr-103415-v2.1.1",
+        "title": "ETSI TR 103 415 V2.1.1: Pre-standardization study on pseudonym change management",
+        "year": 2025,
+        "sourceFamilies": [
+          "ETSI Deliver fixed-version PDFs"
+        ],
+        "queryFamilies": [
+          "pseudonym-change-management",
+          "privacy-safety-tradeoff",
+          "cache-cleanup-and-deactivation"
+        ],
+        "disposition": "direct-collision",
+        "reason": "已明确 cache、ghost/missing、linkability、safety/privacy trade-off 和 lock 风险，覆盖 broad problem claim。",
+        "primaryUrl": "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "version": "V2.1.1 (2025-03)"
+      },
+      {
+        "canonicalId": "etsi-ts-102940-v2.1.1",
+        "title": "ETSI TS 102 940 V2.1.1: ITS communications security architecture and security management",
+        "year": 2021,
+        "sourceFamilies": [
+          "ETSI Deliver fixed-version PDFs"
+        ],
+        "queryFamilies": [
+          "pseudonym-change-management"
+        ],
+        "disposition": "standards-constraint",
+        "reason": "固定跨层同步 ID change 和 Lock/Unlock ID Change 接口。",
+        "primaryUrl": "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+        "version": "V2.1.1 (2021-07)"
+      },
+      {
+        "canonicalId": "etsi-ts-103324-v2.1.1",
+        "title": "ETSI TS 103 324 V2.1.1: Collective Perception Service",
+        "year": 2023,
+        "sourceFamilies": [
+          "ETSI Deliver fixed-version PDFs"
+        ],
+        "queryFamilies": [
+          "cpm-identifier-continuity"
+        ],
+        "disposition": "standards-constraint",
+        "reason": "规定 stationId、objectId、sensorId 和伪名变化后的重置语义，排除以保留原 ID 为方案。",
+        "primaryUrl": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+        "version": "V2.1.1 (2023-06)"
+      },
+      {
+        "canonicalId": "etsi-ts-101539-3-v1.1.1",
+        "title": "ETSI TS 101 539-3 V1.1.1: Longitudinal Collision Risk Warning",
+        "year": 2013,
+        "sourceFamilies": [
+          "ETSI Deliver fixed-version PDFs"
+        ],
+        "queryFamilies": [
+          "pseudonym-change-management"
+        ],
+        "disposition": "partial-overlap",
+        "reason": "安全应用请求限制伪名变化已有标准先例，lock 本身不新。",
+        "primaryUrl": "https://www.etsi.org/deliver/etsi_ts/101500_101599/10153903/01.01.01_60/ts_10153903v010101p.pdf",
+        "version": "V1.1.1 (2013-11)"
+      },
+      {
+        "canonicalId": "etsi-cpm-asn1-v2.1.1",
+        "title": "ETSI CPM ASN.1 official schema",
+        "year": 2023,
+        "sourceFamilies": [
+          "ETSI Forge official ASN.1"
+        ],
+        "queryFamilies": [
+          "cpm-identifier-continuity"
+        ],
+        "disposition": "public-asset",
+        "reason": "可生成固定版本的合法 CPM 消息，但不实现接收端连续性。",
+        "primaryUrl": "https://forge.etsi.org/rep/ITS/asn1/cpm_ts103324/-/tree/v2.1.1",
+        "version": "tag v2.1.1"
+      },
+      {
+        "canonicalId": "arxiv-2111.03461",
+        "title": "Misbehavior Detection Using Collective Perception under Privacy Considerations",
+        "year": 2022,
+        "sourceFamilies": [
+          "arXiv primary manuscripts",
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "pseudonym-aware-collective-perception",
+          "persistent-misbehavior-tracking"
+        ],
+        "disposition": "direct-collision",
+        "reason": "接收端维护周边车辆 Kalman filter 列表，把新 CAM 与全部旧轨迹比较以识别伪名变化，并利用 CPM 初始化和校验车辆；直接覆盖 point association、LDM continuity 和 misbehavior 场景。",
+        "primaryUrl": "https://arxiv.org/abs/2111.03461",
+        "version": "arXiv:2111.03461, CCNC 2022 manuscript"
+      },
+      {
+        "canonicalId": "doi-10.3745-JIPS.03.0210",
+        "title": "V-TRACE: Persistent Tracking Misbehaving Vehicles under Pseudonym Changes in V2X Networks",
+        "year": 2025,
+        "sourceFamilies": [
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "persistent-misbehavior-tracking"
+        ],
+        "disposition": "direct-collision",
+        "reason": "以 BSM 和历史记录持续跟踪换伪名的可疑车辆，压缩 trust/misbehavior-memory 新颖空间。",
+        "primaryUrl": "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210",
+        "version": "JIPS 2025, DOI 10.3745/JIPS.03.0210"
+      },
+      {
+        "canonicalId": "doi-10.1016-j.vehcom.2018.04.006",
+        "title": "Adaptive trust and privacy management framework for vehicular networks",
+        "year": 2018,
+        "sourceFamilies": [
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "persistent-misbehavior-tracking"
+        ],
+        "disposition": "direct-collision",
+        "reason": "在伪名更新后按上下文恢复身份或信任级别，直接覆盖 trust continuity 与隐私控制的组合。",
+        "primaryUrl": "https://www.sciencedirect.com/science/article/pii/S2214209617302541",
+        "version": "Vehicular Communications 2018, DOI 10.1016/j.vehcom.2018.04.006"
+      },
+      {
+        "canonicalId": "doi-10.1007-s11276-018-1681-8",
+        "title": "A RSU-aided distributed trust framework for pseudonym-enabled privacy preservation in VANETs",
+        "year": 2019,
+        "sourceFamilies": [
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "persistent-misbehavior-tracking"
+        ],
+        "disposition": "partial-overlap",
+        "reason": "在伪名隐私下维护分布式信任，说明信任缓存与伪名的结合并非空白。",
+        "primaryUrl": "https://link.springer.com/article/10.1007/s11276-018-1681-8",
+        "version": "Wireless Networks 2019, DOI 10.1007/s11276-018-1681-8"
+      },
+      {
+        "canonicalId": "doi-10.1109-PST62714.2024.10788069",
+        "title": "Quantifying Privacy in Cooperative Awareness Services Through Trajectory Reconstruction",
+        "year": 2024,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "location-privacy-linkability"
+        ],
+        "disposition": "required-baseline",
+        "reason": "从 CAM/BSM 轨迹进行推断和数据关联并量化伪名链接，为观察者对称攻击与 linkability 指标提供直接基线。",
+        "primaryUrl": "https://ieeexplore.ieee.org/document/10788069",
+        "version": "IEEE PST 2024, DOI 10.1109/PST62714.2024.10788069"
+      },
+      {
+        "canonicalId": "doi-10.1109-WoWMoM.2013.6583473",
+        "title": "Vehicle Tracking Using Vehicular Network Beacons",
+        "year": 2013,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "location-privacy-linkability"
+        ],
+        "disposition": "required-baseline",
+        "reason": "使用 NNPDA 从匿名 beacon 跟踪车辆，说明基于运动的数据关联既是普通 tracking baseline 也是隐私攻击。",
+        "primaryUrl": "https://ieeexplore.ieee.org/document/6583473",
+        "version": "IEEE WoWMoM 2013, DOI 10.1109/WoWMoM.2013.6583473"
+      },
+      {
+        "canonicalId": "doi-10.1109-TVT.2017.2736885",
+        "title": "Safety-Aware Location Privacy in VANET: Evaluation and Comparison",
+        "year": 2017,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "privacy-safety-tradeoff"
+        ],
+        "disposition": "direct-collision",
+        "reason": "已用多目标跟踪隐私指标和 FCW/LCW 安全 QoS 比较多种方案，覆盖通用 privacy-safety frontier。",
+        "primaryUrl": "https://ieeexplore.ieee.org/document/8006285",
+        "version": "IEEE TVT 2017, DOI 10.1109/TVT.2017.2736885"
+      },
+      {
+        "canonicalId": "arxiv-1607.07656",
+        "title": "Context-based Pseudonym Changing Scheme for Vehicular Adhoc Networks",
+        "year": 2016,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "privacy-safety-tradeoff"
+        ],
+        "disposition": "partial-overlap",
+        "reason": "把自适应伪名变化、multi-target tracking 隐私和 forward-collision-warning QoS 放在同一评价内。",
+        "primaryUrl": "https://arxiv.org/abs/1607.07656",
+        "version": "arXiv:1607.07656"
+      },
+      {
+        "canonicalId": "doi-10.1504-IJVICS.2017.086478",
+        "title": "Mutual influence of certificate distribution and pseudonym change strategies in VANETs",
+        "year": 2017,
+        "sourceFamilies": [
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "cache-cleanup-and-deactivation"
+        ],
+        "disposition": "partial-overlap",
+        "reason": "讨论用显式变化信息从接收端 LDM cache 删除旧 ID，已覆盖一类 cache handoff/cleanup 机制，但显式关联信号本身泄漏 linkability。",
+        "primaryUrl": "https://publica.fraunhofer.de/entities/publication/42d088f3-85b5-47de-a23e-02859ec2084c",
+        "version": "IJVICS 2017, DOI 10.1504/IJVICS.2017.086478"
+      },
+      {
+        "canonicalId": "arxiv-2203.10673",
+        "title": "5G-Enabled Pseudonymity for C-ITS",
+        "year": 2022,
+        "sourceFamilies": [
+          "arXiv primary manuscripts",
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "cache-cleanup-and-deactivation"
+        ],
+        "disposition": "direct-collision-on-problem",
+        "reason": "明确讨论旧邻居 LDM 条目造成 ghost/missing，并提出停默前 deactivation notification；问题陈述不是空白。",
+        "primaryUrl": "https://arxiv.org/abs/2203.10673",
+        "version": "arXiv:2203.10673"
+      },
+      {
+        "canonicalId": "arxiv-2507.07732",
+        "title": "RADAR: a Radio-based Analytics for Dynamic Association and Recognition of pseudonyms in VANETs",
+        "year": 2025,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "location-privacy-linkability"
+        ],
+        "disposition": "required-adversary",
+        "reason": "以 DSRC 与 Wi-Fi 无线信号关联伪名，表明只审计消息内运动特征会低估真实链接攻击。",
+        "primaryUrl": "https://arxiv.org/abs/2507.07732",
+        "version": "arXiv:2507.07732 (2025-07-10)"
+      },
+      {
+        "canonicalId": "arxiv-2012.06666",
+        "title": "Cooperative Location Privacy in Vehicular Networks: Why Simple Mix-zones Are Not Enough",
+        "year": 2020,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "location-privacy-linkability"
+        ],
+        "disposition": "required-adversary",
+        "reason": "说明标准消息内容与道路约束足以产生高比例伪名链接，要求采用现实 linkability attacker。",
+        "primaryUrl": "https://arxiv.org/abs/2012.06666",
+        "version": "arXiv:2012.06666"
+      },
+      {
+        "canonicalId": "doi-10.1109-TVT.2022.3211852",
+        "title": "Feature-Based Vehicle Identification Framework for Optimization of CPM",
+        "year": 2023,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "collective-perception-tracking"
+        ],
+        "disposition": "partial-overlap",
+        "reason": "已把视觉感知车辆与 CAM/CPM 通信身份匹配，压缩 perception-to-communication association 的新颖空间。",
+        "primaryUrl": "https://ieeexplore.ieee.org/document/9910179",
+        "version": "IEEE TVT 2023, DOI 10.1109/TVT.2022.3211852"
+      },
+      {
+        "canonicalId": "arxiv-2209.14122",
+        "title": "Tracking Accuracy Based Generation Rules of Collective Perception Messages",
+        "year": 2022,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "collective-perception-tracking"
+        ],
+        "disposition": "required-baseline-context",
+        "reason": "把本地与 V2X 跟踪准确度用于 CPM 生成，说明 tracking-aware CP 是成熟方向，但不覆盖伪名 handoff。",
+        "primaryUrl": "https://arxiv.org/abs/2209.14122",
+        "version": "arXiv:2209.14122"
+      },
+      {
+        "canonicalId": "doi-10.3390-s26062003",
+        "title": "Track-to-Track Fusion for Cooperative Perception Using Collective Perception Messages",
+        "year": 2026,
+        "sourceFamilies": [
+          "journal publisher and institutional primary pages"
+        ],
+        "queryFamilies": [
+          "collective-perception-tracking"
+        ],
+        "disposition": "required-baseline-context",
+        "reason": "接收端将 CPM tracks 融入全局环境模型，覆盖常规 receiver track fusion；未在主文检索到伪名轮换处理。",
+        "primaryUrl": "https://www.mdpi.com/1424-8220/26/6/2003",
+        "version": "Sensors 2026, DOI 10.3390/s26062003"
+      },
+      {
+        "canonicalId": "arxiv-2309.14655",
+        "title": "Probabilistic 3D Multi-Object Cooperative Tracking",
+        "year": 2023,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "collective-perception-tracking"
+        ],
+        "disposition": "required-baseline-context",
+        "reason": "提供协同 MOT 与不确定性建模，候选不能把普通 set-valued/probabilistic tracking 当作新颖点。",
+        "primaryUrl": "https://arxiv.org/abs/2309.14655",
+        "version": "arXiv:2309.14655"
+      },
+      {
+        "canonicalId": "arxiv-2303.01786",
+        "title": "3D Multi-Object Tracking Based on Uncertainty-Guided Data Association",
+        "year": 2023,
+        "sourceFamilies": [
+          "arXiv primary manuscripts"
+        ],
+        "queryFamilies": [
+          "set-valued-association"
+        ],
+        "disposition": "ordinary-mot-baseline",
+        "reason": "不确定性数据关联已成熟；只有与伪名规范、观察者对称隐私和 cache/lock 策略的新增契约才可能留下差异。",
+        "primaryUrl": "https://arxiv.org/abs/2303.01786",
+        "version": "arXiv:2303.01786"
+      },
+      {
+        "canonicalId": "cvf-iccv2023-u2mot",
+        "title": "Uncertainty-aware Unsupervised Multi-Object Tracking",
+        "year": 2023,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "set-valued-association"
+        ],
+        "disposition": "ordinary-mot-baseline",
+        "reason": "进一步表明 association uncertainty 不是候选可独占的新机制。",
+        "primaryUrl": "https://openaccess.thecvf.com/content/ICCV2023/html/Liu_Uncertainty-aware_Unsupervised_Multi-Object_Tracking_ICCV_2023_paper.html",
+        "version": "ICCV 2023"
+      },
+      {
+        "canonicalId": "github-artery-e0ddd8c",
+        "title": "Artery official source",
+        "year": 2025,
+        "sourceFamilies": [
+          "official GitHub repositories at fixed commits"
+        ],
+        "queryFamilies": [
+          "receiver-ldm-cache-code"
+        ],
+        "disposition": "partial-public-asset",
+        "reason": "有标准相符的 CPM 发送端伪名重置和 CAM LDM，但固定提交没有对应接收端 CPM cache continuity 路径。",
+        "primaryUrl": "https://github.com/riebl/artery/tree/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+        "version": "commit e0ddd8c0414b079f28e8efa932f52f66ae5a3c73"
+      },
+      {
+        "canonicalId": "github-van3twin-e722a8d",
+        "title": "VaN3Twin official source",
+        "year": 2026,
+        "sourceFamilies": [
+          "official GitHub repositories at fixed commits"
+        ],
+        "queryFamilies": [
+          "receiver-ldm-cache-code",
+          "public-dataset-and-code-assets"
+        ],
+        "disposition": "primary-public-asset",
+        "reason": "存在真实 receiveCPM -> m_recvCPMmap[fromID][objectId] -> LDM 路径，可作为最小实验的接收端缓存主体。",
+        "primaryUrl": "https://github.com/DriveX-devs/VaN3Twin/tree/e722a8d34cb4f5003bc6972bad4b9a456f366731",
+        "version": "commit e722a8d34cb4f5003bc6972bad4b9a456f366731"
+      },
+      {
+        "canonicalId": "github-v2v4real-5a821e1",
+        "title": "V2V4Real official code",
+        "year": 2023,
+        "sourceFamilies": [
+          "official GitHub repositories at fixed commits"
+        ],
+        "queryFamilies": [
+          "public-dataset-and-code-assets"
+        ],
+        "disposition": "secondary-data-asset-only",
+        "reason": "loader 使用稳定 cav_id，README 的 cooperative tracking 未实现；不能证明现实 receiver cache handoff。",
+        "primaryUrl": "https://github.com/ucla-mobility/V2V4Real/tree/5a821e13753bafc611f95c47bc1a306acdcb0f7c",
+        "version": "commit 5a821e13753bafc611f95c47bc1a306acdcb0f7c"
+      },
+      {
+        "canonicalId": "cvpr-2023-v2v4real",
+        "title": "V2V4Real: A Real-World Large-Scale Dataset for Vehicle-to-Vehicle Cooperative Perception",
+        "year": 2023,
+        "sourceFamilies": [
+          "IEEE/CVF primary proceedings and DOI records"
+        ],
+        "queryFamilies": [
+          "public-dataset-and-code-assets"
+        ],
+        "disposition": "secondary-data-asset-only",
+        "reason": "可提供真实序列/协同感知数据背景，但固定代码不提供所需伪名协议或 cache path。",
+        "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2023/html/Xu_V2V4Real_A_Real-World_Large-Scale_Dataset_for_Vehicle-to-Vehicle_Cooperative_Perception_CVPR_2023_paper.html",
+        "version": "CVPR 2023"
+      }
+    ]
+  },
+  "standardsContract": {
+    "verifiedRequirements": [
+      {
+        "contract": "同一隐私 ITS-S 的通信标识符和凭证须跨层同步改变；已注册层参与 ID change notification 的两阶段提交。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "version": "ETSI TS 102 940 V2.1.1 (2021-07), clause 6.5",
+          "url": "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf"
+        }
+      },
+      {
+        "contract": "应用可请求有限秒数的 Lock ID Change，随后自动或手动 Unlock；连续重锁会增加可跟踪性，且请求须受凭证有效期和授权约束。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "version": "ETSI TS 102 940 V2.1.1 (2021-07), Table 4b and clause 6.5; ETSI TR 103 415 V2.1.1 (2025-03), clause 4.4.5",
+          "url": "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+          "supportingUrl": "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf"
+        }
+      },
+      {
+        "contract": "CPM stationId 随 Authorization Ticket 身份改变；伪名变化后对象须作为新检测对象报告，objectId 必须换为保留期外随机值，sensorId 也可换为保留期外随机值。",
+        "evidenceType": "verified-fact",
+        "source": {
+          "version": "ETSI TS 103 324 V2.1.1 (2023-06), clauses 5.3.7, 7.1.6 and 7.1.8.2",
+          "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+        }
+      },
+      {
+        "contract": "接收端可能把接收 CAM/CPM 写入 LDM，并因 CPM 并非每次包含所有对象而需要跟踪/预测；规范没有授权把伪名轮换前后的 stationId、objectId 或 sensorId 确定性链接。",
+        "evidenceType": "verified-fact-and-inference",
+        "source": {
+          "version": "ETSI TS 103 324 V2.1.1 (2023-06), clauses 5.1, 5.2 and 7.1.6",
+          "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+        }
+      }
+    ],
+    "designImplications": [
+      {
+        "statement": "实验注入必须同步轮换 stationId、通信层身份、objectId，并对 sensorId 轮换做显式条件；只改 stationId 会制造非合规假问题。",
+        "evidenceType": "inference",
+        "basisUrls": [
+          "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+          "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+        ]
+      },
+      {
+        "statement": "任何保留旧 objectId/sensorId 或向接收端发送显式 old-new link 的方案都不能作为默认候选；只能作为泄漏上界或非隐私对照。",
+        "evidenceType": "inference",
+        "basisUrl": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+      },
+      {
+        "statement": "候选不是标准合规修复。可研究对象是接收端在合法 ID 重置后如何保留最小危险状态，而不是恢复被标准刻意撤销的稳定身份。",
+        "evidenceType": "inference",
+        "basisUrls": [
+          "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+          "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf"
+        ]
+      }
+    ]
+  },
+  "officialCodeAudit": [
+    {
+      "asset": "Artery",
+      "fixedVersion": "commit e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+      "verifiedFacts": [
+        {
+          "statement": "CpService 检测 stationId 变化后调用 handlePseudonymChange，清空发送端 LEM-to-CPS ID 映射、perceived-object histories/snapshots/selection 和 sensor ID 映射。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/riebl/artery/blob/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73/src/artery/envmod/service/CpService.cc#L238-L245",
+          "supportingUrl": "https://github.com/riebl/artery/blob/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73/src/artery/envmod/service/CpService.cc#L713-L728"
+        },
+        {
+          "statement": "该提交的 CPM receive path 解码并发出 CpmReceived signal；未在该服务中实现接收端 CPM identity/cache continuity。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/riebl/artery/blob/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73/src/artery/envmod/service/CpService.cc#L198-L208"
+        },
+        {
+          "statement": "LocalDynamicMap 的 CAM awareness 以 message header.stationID 为 key。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/riebl/artery/blob/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73/src/artery/application/LocalDynamicMap.cc#L12-L40"
+        }
+      ],
+      "auditInference": "Artery 适合作为标准相符发送端重置参考和 Tsukada 复现背景，但该固定提交本身不能承担候选所需的真实接收端 CPM cache 主路径。",
+      "evidenceType": "inference"
+    },
+    {
+      "asset": "VaN3Twin",
+      "fixedVersion": "commit e722a8d34cb4f5003bc6972bad4b9a456f366731",
+      "verifiedFacts": [
+        {
+          "statement": "cooperativePerception::receiveCPM 从 cpm.header.stationId 取得 fromID，并维护 m_recvCPMmap[fromID][objectId] 到 ego LDM object ID 的映射。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/DriveX-devs/VaN3Twin/blob/e722a8d34cb4f5003bc6972bad4b9a456f366731/src/automotive/model/Applications/cooperativePerception.cc#L492-L554"
+        },
+        {
+          "statement": "该映射在头文件中被明确描述为按每个发送 CPM 的 connected vehicle 保存其 PO ID 到 ego LDM PO ID 的映射。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/DriveX-devs/VaN3Twin/blob/e722a8d34cb4f5003bc6972bad4b9a456f366731/src/automotive/model/Applications/cooperativePerception.h#L100-L109"
+        },
+        {
+          "statement": "LDM 以 stationID 唯一标识记录；已有条目更新时保留并追加 path-history 数据。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/DriveX-devs/VaN3Twin/blob/e722a8d34cb4f5003bc6972bad4b9a456f366731/src/automotive/model/Facilities/LDM.cc#L84-L110",
+          "supportingUrl": "https://github.com/DriveX-devs/VaN3Twin/blob/e722a8d34cb4f5003bc6972bad4b9a456f366731/src/automotive/model/Facilities/LDM.h#L48-L90"
+        },
+        {
+          "statement": "固定提交的仓库级源码搜索未发现应用层伪名轮换管理或接收端跨伪名 handoff 实现。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/DriveX-devs/VaN3Twin/tree/e722a8d34cb4f5003bc6972bad4b9a456f366731/src"
+        }
+      ],
+      "auditInference": "这是已找到的真实 receiver cache path；候选不因‘没有资产’而直接 reject。但必须新增合规 ID-change 注入器、缓存策略和攻击者评估，且本次审计未证明仓库可在本机成功构建。",
+      "evidenceType": "inference"
+    },
+    {
+      "asset": "V2V4Real official code",
+      "fixedVersion": "commit 5a821e13753bafc611f95c47bc1a306acdcb0f7c",
+      "verifiedFacts": [
+        {
+          "statement": "README 的 Cooperative tracking 仍为未勾选任务。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/ucla-mobility/V2V4Real/blob/5a821e13753bafc611f95c47bc1a306acdcb0f7c/README.md#L25-L36"
+        },
+        {
+          "statement": "dataset loader 从目录/场景结构读取并持续传递稳定 cav_id。",
+          "evidenceType": "verified-fact",
+          "url": "https://github.com/ucla-mobility/V2V4Real/blob/5a821e13753bafc611f95c47bc1a306acdcb0f7c/opencood/data_utils/datasets/basedataset.py#L142-L181",
+          "supportingUrl": "https://github.com/ucla-mobility/V2V4Real/blob/5a821e13753bafc611f95c47bc1a306acdcb0f7c/opencood/data_utils/datasets/basedataset.py#L229-L257"
+        }
+      ],
+      "auditInference": "V2V4Real 可作为次级真实序列压力测试，但稳定 cav_id 必须只用于离线真值评分，不能进入 receiver cache handoff；它不是现成协议/cache 实现。",
+      "evidenceType": "inference"
+    }
+  ],
+  "nearestPriorArt": [
+    {
+      "rank": "nearest-direct",
+      "title": "Misbehavior Detection Using Collective Perception under Privacy Considerations",
+      "fixedVersion": "arXiv:2111.03461, CCNC 2022 manuscript",
+      "verifiedOverlap": "接收端 LDM、周边车辆 Kalman filter 列表、known ID/changed pseudonym/new vehicle 三分支、跨全部旧轨迹的点关联、CPM 辅助初始化与误行为检测。",
+      "uncoveredElement": "没有把关联保持为集合值隐状态，也没有以同观察量被动攻击者量化该 handoff 的链接泄漏或联合选择 reset/handoff/lock。",
+      "collisionLevel": "direct-functional-collision",
+      "primaryUrl": "https://arxiv.org/abs/2111.03461"
+    },
+    {
+      "rank": "nearest-trust",
+      "title": "Adaptive trust and privacy management framework for vehicular networks",
+      "fixedVersion": "Vehicular Communications 2018, DOI 10.1016/j.vehcom.2018.04.006",
+      "verifiedOverlap": "允许伪名更新后按上下文恢复身份或信任级别，并在隐私与信任需求之间自适应。",
+      "uncoveredElement": "不是 CPM receiver object-cache 的集合值交接。",
+      "collisionLevel": "direct-collision-on-trust-memory",
+      "primaryUrl": "https://www.sciencedirect.com/science/article/pii/S2214209617302541"
+    },
+    {
+      "rank": "nearest-persistent-misbehavior",
+      "title": "V-TRACE: Persistent Tracking Misbehaving Vehicles under Pseudonym Changes in V2X Networks",
+      "fixedVersion": "JIPS 2025, DOI 10.3745/JIPS.03.0210",
+      "verifiedOverlap": "在伪名变化后持续跟踪可疑车辆并使用历史记录。",
+      "uncoveredElement": "不以 CPM 标识符三元组或 set-valued safety cache 为中心。",
+      "collisionLevel": "direct-collision-on-misbehavior-memory",
+      "primaryUrl": "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210"
+    },
+    {
+      "rank": "nearest-privacy-safety-evaluation",
+      "title": "Safety-Aware Location Privacy in VANET: Evaluation and Comparison",
+      "fixedVersion": "IEEE TVT 2017, DOI 10.1109/TVT.2017.2736885",
+      "verifiedOverlap": "以多目标跟踪评估隐私，并以 FCW/LCW 评估安全，已经构造 privacy-safety 权衡。",
+      "uncoveredElement": "不针对 TS 103 324 CPM receiver cache 和 set-valued handoff。",
+      "collisionLevel": "direct-collision-on-generic-frontier",
+      "primaryUrl": "https://ieeexplore.ieee.org/document/8006285"
+    },
+    {
+      "rank": "nearest-cache-cleanup",
+      "title": "Mutual influence of certificate distribution and pseudonym change strategies in VANETs",
+      "fixedVersion": "IJVICS 2017, DOI 10.1504/IJVICS.2017.086478",
+      "verifiedOverlap": "以变化信息清理接收端 LDM 的旧身份，避免同一车辆留下重复缓存实例。",
+      "uncoveredElement": "显式提示形成 old-new 语义或删除事件，不是无链接信号的集合值危险状态延续。",
+      "collisionLevel": "partial-functional-collision",
+      "primaryUrl": "https://publica.fraunhofer.de/entities/publication/42d088f3-85b5-47de-a23e-02859ec2084c"
+    },
+    {
+      "rank": "nearest-linkability-metric",
+      "title": "Quantifying Privacy in Cooperative Awareness Services Through Trajectory Reconstruction",
+      "fixedVersion": "IEEE PST 2024, DOI 10.1109/PST62714.2024.10788069",
+      "verifiedOverlap": "从公开 CAM/BSM 运动数据执行伪名关联和轨迹重建，并用 precision/recall/F1 与不确定性量化隐私。",
+      "uncoveredElement": "不提出 CPM cache handoff，但其攻击者应直接复用于隐私审计。",
+      "collisionLevel": "required-adversarial-baseline",
+      "primaryUrl": "https://ieeexplore.ieee.org/document/10788069"
+    },
+    {
+      "rank": "nearest-cpm-identity-association",
+      "title": "Feature-Based Vehicle Identification Framework for Optimization of CPM",
+      "fixedVersion": "IEEE TVT 2023, DOI 10.1109/TVT.2022.3211852",
+      "verifiedOverlap": "将传感器看到的 connected vehicle 与 CAM/CPM 通信身份匹配。",
+      "uncoveredElement": "目标是 CPM 优化，不是伪名变化下最小连续性与链接风险。",
+      "collisionLevel": "partial-functional-collision",
+      "primaryUrl": "https://ieeexplore.ieee.org/document/9910179"
+    }
+  ],
+  "elementByElementComparison": [
+    {
+      "claimElement": "伪名轮换导致接收端 cache ghost、missing 或重复实体",
+      "coverage": "fully-covered",
+      "evidenceType": "verified-fact",
+      "closestSources": [
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "https://arxiv.org/abs/2203.10673"
+      ],
+      "auditConsequence": "只能作为动机，不能作为贡献。"
+    },
+    {
+      "claimElement": "跨伪名运动关联维持接收端轨迹或误行为状态",
+      "coverage": "fully-covered-for-point-association",
+      "evidenceType": "verified-fact",
+      "closestSources": [
+        "https://arxiv.org/abs/2111.03461",
+        "https://ieeexplore.ieee.org/document/6583473"
+      ],
+      "auditConsequence": "Kalman/nearest-neighbor/MHT/JPDA 及确定性 old-new binding 不可作为新颖点。"
+    },
+    {
+      "claimElement": "信任或误行为记忆跨伪名持续",
+      "coverage": "substantially-covered",
+      "evidenceType": "verified-fact",
+      "closestSources": [
+        "https://www.sciencedirect.com/science/article/pii/S2214209617302541",
+        "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210",
+        "https://link.springer.com/article/10.1007/s11276-018-1681-8"
+      ],
+      "auditConsequence": "本候选应删除 sender-level trust handoff；否则既碰撞现有工作又直接制造持久链接。"
+    },
+    {
+      "claimElement": "安全效用与位置不可链接性的通用 Pareto/frontier",
+      "coverage": "fully-covered-as-general-question",
+      "evidenceType": "verified-fact",
+      "closestSources": [
+        "https://ieeexplore.ieee.org/document/8006285",
+        "https://arxiv.org/abs/1607.07656",
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf"
+      ],
+      "auditConsequence": "新意只能来自 CPM receiver cache 的特定状态契约和可证伪机制，不来自画一条新曲线。"
+    },
+    {
+      "claimElement": "在危险状态下 lock ID change",
+      "coverage": "fully-covered-as-interface-and-safety-action",
+      "evidenceType": "verified-fact",
+      "closestSources": [
+        "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "https://www.etsi.org/deliver/etsi_ts/101500_101599/10153903/01.01.01_60/ts_10153903v010101p.pdf"
+      ],
+      "auditConsequence": "只能研究何时在 reset、anonymous state handoff、bounded lock 间选择；Lock 本身不新。"
+    },
+    {
+      "claimElement": "CPM receiver 的 set-valued cache handoff",
+      "coverage": "no-direct-match-found-but-mechanism-components-are-mature",
+      "evidenceType": "inference",
+      "closestSources": [
+        "https://arxiv.org/abs/2111.03461",
+        "https://arxiv.org/abs/2303.01786",
+        "https://openaccess.thecvf.com/content/ICCV2023/html/Liu_Uncertainty-aware_Unsupervised_Multi-Object_Tracking_ICCV_2023_paper.html"
+      ],
+      "auditConsequence": "只有当输出是不含 stable sender identity 的匿名危险状态集合、并实证优于普通概率 tracking 时，才留下候选残差；当前尚未证明。"
+    },
+    {
+      "claimElement": "接收端算法和被动攻击者使用完全相同 observable 的隐私审计",
+      "coverage": "components-covered-combination-not-found",
+      "evidenceType": "inference",
+      "closestSources": [
+        "https://ieeexplore.ieee.org/document/10788069",
+        "https://arxiv.org/abs/2012.06666",
+        "https://arxiv.org/abs/2507.07732"
+      ],
+      "auditConsequence": "这是必要实验契约，不应单独宣称理论首创。"
+    },
+    {
+      "claimElement": "reset、set-valued anonymous handoff、bounded lock 的三路风险决策",
+      "coverage": "no-direct-end-to-end-match-found",
+      "evidenceType": "inference",
+      "closestSources": [
+        "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "https://arxiv.org/abs/2111.03461"
+      ],
+      "auditConsequence": "可作为修订后的研究对象，但必须证明三路选择不是阈值拼装，且强基线不能支配它。"
+    }
+  ],
+  "noveltyResidue": {
+    "status": "narrow-plausible-residue-not-yet-validated",
+    "revisedClaim": "在 TS 103 324 合规地同步轮换 station/object/sensor identifiers 后，接收端只交接与即时危险判断必要的匿名集合状态或 occupancy/hazard envelope，不生成持久 old-new station binding、不转移 sender-level trust；以与接收端同观察量的攻击者审计可链接性，并在严格 reset、匿名集合交接和有限安全 lock 之间作风险受限选择。",
+    "whyItMightStillBeNovel": {
+      "statement": "本次一手检索未找到同时实现 CPM 接收缓存、匿名集合级而非点身份交接、观察者对称 linkability audit、以及标准 Lock ID Change 三路决策的工作。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://arxiv.org/abs/2111.03461",
+        "https://ieeexplore.ieee.org/document/10788069",
+        "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+        "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+      ]
+    },
+    "whyItIsNotYetAContribution": [
+      {
+        "statement": "set-valued 或 probabilistic association 本身属于成熟多目标跟踪；若最终仍输出单一 old-new identity link，就退化为 Tsukada 类点关联。",
+        "evidenceType": "inference",
+        "basisUrls": [
+          "https://arxiv.org/abs/2111.03461",
+          "https://arxiv.org/abs/2303.01786"
+        ]
+      },
+      {
+        "statement": "被动攻击者能运行同一关联器，因此任何依靠公开轨迹特征获得的连续性收益也可能转化为链接收益；是否存在非支配点是待验证假设。",
+        "evidenceType": "hypothesis",
+        "basisUrls": [
+          "https://ieeexplore.ieee.org/document/10788069",
+          "https://arxiv.org/abs/2012.06666"
+        ]
+      },
+      {
+        "statement": "sender-level trust 不应被纳入最小交接状态，除非另有授权隐私机制；否则候选与既有 trust-after-pseudonym 工作碰撞且扩大链接面。",
+        "evidenceType": "inference",
+        "basisUrls": [
+          "https://www.sciencedirect.com/science/article/pii/S2214209617302541",
+          "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210"
+        ]
+      }
+    ],
+    "requiredNoveltyClosure": [
+      "用形式化状态表列出可交接、仅集合交接、必须清空的字段，至少覆盖 kinematics/covariance、object provenance、sender trust、sensor geometry/fingerprint 和 raw station/object/sensor IDs。",
+      "证明提出的集合状态不是普通 JPDA/MHT/RFS 换名：必须有 CPM/伪名规范特有的约束、决策或失败模式。",
+      "以 Tsukada 2022 点关联、严格重置、普通概率 tracking 和 bounded lock 为强基线完成配对实验。",
+      "公开 receiver-observer symmetry 检查：任何用于 handoff 的输入同时提供给 attacker，不允许隐藏的 simulator identity。",
+      "再做一次面向 2024 至 2026 安全/隐私与 cooperative tracking 文献的独立最终检索后，才可把 residue 升格为新颖贡献。"
+    ]
+  },
+  "publicAssets": [
+    {
+      "asset": "VaN3Twin receiver CPM/LDM path",
+      "role": "primary executable receiver cache",
+      "fixedVersion": "commit e722a8d34cb4f5003bc6972bad4b9a456f366731",
+      "url": "https://github.com/DriveX-devs/VaN3Twin/tree/e722a8d34cb4f5003bc6972bad4b9a456f366731",
+      "readiness": "source-path-verified-not-build-verified",
+      "licenseEvidenceUrl": "https://github.com/DriveX-devs/VaN3Twin/blob/e722a8d34cb4f5003bc6972bad4b9a456f366731/LICENSE",
+      "constraint": "需新增合规 ID-change event injector、策略模块和攻击者；完整 CARLA/OpenCDA 路径资源重，首轮应优先做固定 CPM trace/integration harness。"
+    },
+    {
+      "asset": "Artery CpService and LocalDynamicMap",
+      "role": "sender-reset reference and comparison implementation",
+      "fixedVersion": "commit e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+      "url": "https://github.com/riebl/artery/tree/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+      "readiness": "source-path-verified-no-receiver-cpm-cache",
+      "licenseEvidenceUrl": "https://github.com/riebl/artery/blob/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73/COPYING",
+      "constraint": "不能单独支撑 receiver cache 实验。"
+    },
+    {
+      "asset": "ETSI CPM ASN.1",
+      "role": "fixed message schema for standards-conformant traces",
+      "fixedVersion": "tag v2.1.1",
+      "url": "https://forge.etsi.org/rep/ITS/asn1/cpm_ts103324/-/tree/v2.1.1",
+      "readiness": "schema-available",
+      "constraint": "不包含 ID-change scheduler 或 receiver policy。"
+    },
+    {
+      "asset": "V2V4Real",
+      "role": "secondary real-sequence stress test and oracle-only labels",
+      "fixedVersion": "commit 5a821e13753bafc611f95c47bc1a306acdcb0f7c",
+      "url": "https://github.com/ucla-mobility/V2V4Real/tree/5a821e13753bafc611f95c47bc1a306acdcb0f7c",
+      "readiness": "dataset-code-available-tracking-path-not-implemented",
+      "licenseEvidenceUrl": "https://github.com/ucla-mobility/V2V4Real/blob/5a821e13753bafc611f95c47bc1a306acdcb0f7c/LICENSE",
+      "constraint": "stable cav_id 只能用于离线评价，不能进入候选算法。"
+    }
+  ],
+  "minimumExecutableStudy": {
+    "feasibilityAssessment": "conditionally-feasible-in-6-to-12-weeks-after-scope-revision",
+    "evidenceType": "inference",
+    "primaryPath": "以 VaN3Twin 固定提交的 receiveCPM -> m_recvCPMmap -> LDM 路径为被测接收器，用固定 ETSI CPM trace 或最小集成场景注入同步 station/object/sensor ID 变化；不先依赖完整 CARLA 感知栈。",
+    "workPlan": [
+      {
+        "weeks": "1-2",
+        "deliverable": "在 Ubuntu 支持环境构建固定 VaN3Twin 提交并运行至少一个官方 CPM-to-LDM 路径；冻结 TS 102 940/103 324 状态契约和字段级允许交接表。",
+        "abortCondition": "第 2 周结束仍不能执行真实 receiveCPM 到 LDM 写入，且只能用自建伪缓存替代。"
+      },
+      {
+        "weeks": "2-3",
+        "deliverable": "实现确定性 ID-change injector：同步改变 stationId 和 objectId，并对 sensorId rotation、silent period、CPM SensorInformation omission 建立条件；receiver 不得访问旧新映射。",
+        "abortCondition": "注入只能靠非标准稳定身份字段或破坏合法 CPM 结构。"
+      },
+      {
+        "weeks": "3-5",
+        "deliverable": "实现严格重置、timeout-only、Tsukada-style point association、普通概率 association、匿名 set-valued hazard-state handoff、bounded-lock-only 和三路策略。",
+        "abortCondition": "set-valued 版本的内部/输出最终等价于单一 identity assignment，或无法与普通 JPDA/MHT 基线区分。"
+      },
+      {
+        "weeks": "5-8",
+        "deliverable": "运行密度、交叉/并线、遮挡、丢包、时延、伪名时机、静默期、object/sensor ID rotation 的配对场景；记录 episode-level safety 和 privacy 指标。",
+        "abortCondition": "只有使用 oracle actor/cav_id 时才能获得稳定收益。"
+      },
+      {
+        "weeks": "8-10",
+        "deliverable": "用同一 observable 运行 trajectory-reconstruction/pseudonym-linking attacker，生成 calibration、anonymity/linkability 和 safety frontier；完成强基线及消融。",
+        "abortCondition": "安全收益完全被普通概率 tracking 或 bounded lock 支配，或攻击者链接收益同步上升且无非支配区间。"
+      },
+      {
+        "weeks": "10-12",
+        "deliverable": "在独立路线/随机种子确认集复验，完成标准合规复核、代码和配置清单、负结果报告。",
+        "abortCondition": "确认集方向反转、关键结论依赖单一路口/单一密度，或无法重放。"
+      }
+    ],
+    "minimumArtifacts": [
+      "固定提交和依赖锁定的构建清单",
+      "TS 102 940/103 324 合规 ID-change trace generator",
+      "真实 VaN3Twin receiver cache instrumentation",
+      "不含稳定身份特征的策略实现",
+      "接收器与攻击者 observable manifest",
+      "episode-level 原始结果、配置、随机种子和统计脚本",
+      "至少一个失败/否证场景而非只报最优点"
+    ],
+    "unverifiedDependency": {
+      "statement": "VaN3Twin 固定提交能否在目标机器和 12 周预算内稳定构建、以及固定 CPM trace harness 是否足以触发完整 receiver semantics，尚未执行验证。",
+      "evidenceType": "hypothesis",
+      "sourceUrl": "https://github.com/DriveX-devs/VaN3Twin/tree/e722a8d34cb4f5003bc6972bad4b9a456f366731"
+    }
+  },
+  "baselines": [
+    {
+      "id": "standards-compliant-hard-reset",
+      "description": "伪名变化后不交接 station/object/sensor identity 或 sender history，按超时清除旧项并建立新项。",
+      "role": "privacy-oriented lower-continuity baseline",
+      "sourceUrl": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+      "version": "ETSI TS 103 324 V2.1.1"
+    },
+    {
+      "id": "timeout-only-cache",
+      "description": "不做跨伪名关联，只改变旧条目保留/删除超时。",
+      "role": "separate-cache-lifetime-from-association"
+    },
+    {
+      "id": "tsukada-point-association",
+      "description": "以接收 CAM/CPM 的运动一致性选取最接近旧 Kalman state 并更新 ID。",
+      "role": "nearest-direct-prior-art",
+      "sourceUrl": "https://arxiv.org/abs/2111.03461",
+      "version": "arXiv:2111.03461, CCNC 2022 manuscript"
+    },
+    {
+      "id": "ordinary-probabilistic-association",
+      "description": "使用 NNPDA/JPDA/MHT 或等价 multi-hypothesis tracking，不加入隐私或 lock 专用逻辑。",
+      "role": "detect-renamed-mot",
+      "sourceUrl": "https://ieeexplore.ieee.org/document/6583473",
+      "version": "IEEE WoWMoM 2013, DOI 10.1109/WoWMoM.2013.6583473"
+    },
+    {
+      "id": "explicit-deactivation-or-old-entry-removal",
+      "description": "发送端变化通知/停用提示使 receiver 删除旧缓存。",
+      "role": "cache-cleanup-prior-art-and-linkage-upper-bound",
+      "sourceUrls": [
+        "https://publica.fraunhofer.de/entities/publication/42d088f3-85b5-47de-a23e-02859ec2084c",
+        "https://arxiv.org/abs/2203.10673"
+      ],
+      "versions": [
+        "DOI 10.1504/IJVICS.2017.086478",
+        "arXiv:2203.10673"
+      ]
+    },
+    {
+      "id": "bounded-lock-only",
+      "description": "危险触发时仅调用有限时长 Lock ID Change，不进行跨伪名 handoff。",
+      "role": "standards-native-control",
+      "sourceUrl": "https://www.etsi.org/deliver/etsi_ts/102900_102999/102940/02.01.01_60/ts_102940v020101p.pdf",
+      "version": "ETSI TS 102 940 V2.1.1"
+    },
+    {
+      "id": "no-pseudonym-change",
+      "description": "固定身份连续性上界，不作为可部署方案。",
+      "role": "utility-upper-bound-privacy-worst-case"
+    },
+    {
+      "id": "oracle-persistent-actor-id",
+      "description": "使用仿真稳定 actor/cav_id 完美交接，只用于离线可达上界。",
+      "role": "oracle-upper-bound-never-visible-to-policy",
+      "sourceUrl": "https://github.com/ucla-mobility/V2V4Real/blob/5a821e13753bafc611f95c47bc1a306acdcb0f7c/opencood/data_utils/datasets/basedataset.py#L229-L257",
+      "version": "V2V4Real commit 5a821e13753bafc611f95c47bc1a306acdcb0f7c"
+    }
+  ],
+  "controls": [
+    "接收器与被动攻击者获得完全相同的 CAM/CPM、时间、位置、运动、传感器描述和无线元数据；若接收器使用额外可信本地传感器，必须另设 attacker-visibility 分层并禁止混报。",
+    "receiver policy 不得读取 SUMO/CARLA actor ID、V2V4Real cav_id、仿真节点指针、旧新 pseudonym map 或随机数生成器内部状态。",
+    "每次变化同步 stationId/objectId；sensorId rotation 与 SensorInformation 暂时省略分别作为预注册条件，不允许只改一个 ID。",
+    "各策略使用同一车辆轨迹、CPM 生成、网络丢包/时延和变化时刻，以 episode 配对。",
+    "分层控制交通密度、候选关联数、交叉/并线、遮挡、相对速度、消息率、PDR、silent period 和伪名轮换间隔。",
+    "将 sender-level trust、sensor geometry/fingerprint、object kinematics/covariance 分别消融，检验哪一类状态真正提供收益和泄漏。",
+    "Lock 有有限累计预算、授权检查和凭证有效期约束；不得通过无限重锁取得连续性。",
+    "参数开发集与最终确认路线/随机种子严格分离；确认集不得按结果重新调阈值。",
+    "报告所有候选关联集合的大小、后验校准和 abstention，不只报告最终 ID switch。",
+    "privacy 指标同时报告正确链接 precision/recall/F1、轨迹重建率、posterior entropy/effective anonymity set；safety 指标同时报告 ghost/duplicate/missing、track fragmentation、hazard alert miss/false alarm 和 TTC 风险代理。"
+  ],
+  "independentUnits": {
+    "primaryUnit": "完整路线级仿真 episode（路线、交通流种子、网络种子和伪名变化计划共同定义），不是 frame、object、CPM 或单次 pseudonym event。",
+    "minimumPlan": "每个主要策略 x 场景单元在开发后至少 30 个独立 episode；关键结论在预留路线/种子上另做独立确认。",
+    "pairing": "同一 episode manifest 在全部策略下重放；以 paired episode difference 和 cluster bootstrap/随机化检验估计不确定性。",
+    "antiPseudoreplication": "同一 episode 内的对象、消息和多次变化只作为重复测量，不得扩充样本量。"
+  },
+  "successCriteria": [
+    {
+      "criterion": "在至少一个预注册的高歧义安全场景中，匿名 set-valued handoff 相对 hard reset 显著减少 ghost/duplicate/missing 或 hazard miss，且 episode-level 95% 区间排除零。",
+      "purpose": "证明问题有可观测安全收益，而非只改善 tracking proxy。"
+    },
+    {
+      "criterion": "相对普通概率 association 与 Tsukada-style point association，候选在相同 observable 和相同计算预算下形成非支配点；若只与弱 nearest-neighbor 比较不算成功。",
+      "purpose": "排除普通 MOT 重新命名。"
+    },
+    {
+      "criterion": "候选不输出或持久化单一 old-new station identity；在预注册 attacker 下，其 point-link precision/recall、轨迹重建率和有效匿名集不能被 point-association baseline 同时支配。",
+      "purpose": "证明 set-valued 表示不是隐私措辞。"
+    },
+    {
+      "criterion": "三路策略相对 bounded-lock-only 和 no-lock handoff 在至少一个确认场景形成可解释切换边界，并遵守 lock 预算与凭证有效期。",
+      "purpose": "证明何时 lock 的决策有增量价值。"
+    },
+    {
+      "criterion": "删除 sender trust handoff 后主要安全收益仍存在；若收益依赖跨伪名转移信任/信誉，则候选不满足最小必要连续性。",
+      "purpose": "限制链接面并避开已有 trust prior art。"
+    },
+    {
+      "criterion": "独立确认集复现方向、标准契约检查通过，并公开固定提交、trace、配置和 episode-level 结果。",
+      "purpose": "满足可执行性和复现性。"
+    }
+  ],
+  "killCriteria": [
+    "无法在第 2 周前运行固定 VaN3Twin 提交的真实 receiveCPM -> cache/LDM 路径，且替代方案只是新写的玩具缓存。",
+    "实现依赖稳定 actor ID、cav_id、旧新 pseudonym map、未轮换 sensor/object ID 或其他 receiver 不可见 oracle。",
+    "set-valued 方法最终必须提交单一 old-new station identity 才能获得安全收益，因而功能上退化为已有 pseudonym-aware point association。",
+    "普通 JPDA/MHT/RFS、Tsukada-style point association 或 bounded-lock-only 在安全与 linkability 两轴上支配候选。",
+    "同 observable 攻击者获得与安全收益同幅或更高的链接提升，且不存在预注册隐私约束下的非支配工作点。",
+    "收益只来自跨伪名转移 sender-level trust、稳定 sensor fingerprint 或显式 old-new notification。",
+    "同步 station/object/sensor 轮换后收益消失，说明初始结果来自非合规注入。",
+    "场景级独立确认集不复现，或统计显著性仅来自把 frame/message 当独立样本。",
+    "后续独立检索找到同时覆盖 CPM receiver set-valued anonymous handoff、observer-symmetric linkability audit 和 bounded lock triage 的直接工作。",
+    "完整最小研究的工程、仿真和确认路径在 12 周内不可执行。"
+  ],
+  "risks": [
+    {
+      "risk": "fundamental-observer-symmetry",
+      "description": "接收端依靠公开运动特征连续跟踪时，被动攻击者原则上可运行相同关联器；可用隐私空间可能非常小。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://ieeexplore.ieee.org/document/10788069",
+        "https://arxiv.org/abs/2012.06666"
+      ]
+    },
+    {
+      "risk": "standards-semantics-violation",
+      "description": "将旧 objectId/sensorId 直接延续会违背 TS 103 324 的反相似性意图；错误注入会把合规机制误判成 bug。",
+      "evidenceType": "inference",
+      "basisUrl": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf"
+    },
+    {
+      "risk": "nearest-prior-art-collapse",
+      "description": "若算法只是选最接近旧 Kalman state 并改 ID，则与 Tsukada 2022 直接碰撞。",
+      "evidenceType": "inference",
+      "basisUrl": "https://arxiv.org/abs/2111.03461"
+    },
+    {
+      "risk": "generic-tracking-repackaging",
+      "description": "若 set-valued 只等同于普通概率数据关联，而无 CPM/伪名特定契约，就不是新方法。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://ieeexplore.ieee.org/document/6583473",
+        "https://arxiv.org/abs/2303.01786"
+      ]
+    },
+    {
+      "risk": "trust-linkability-and-security",
+      "description": "跨伪名转移 sender trust 会建立持久主体状态，还可能把旧误判传播到新身份；该分支既有 prior art 又提高滥用风险。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://www.sciencedirect.com/science/article/pii/S2214209617302541",
+        "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210"
+      ]
+    },
+    {
+      "risk": "asset-build-and-scenario-cost",
+      "description": "VaN3Twin 有真实代码路径但本次未构建；完整 CARLA/OpenCDA 依赖可能挤压 12 周预算。",
+      "evidenceType": "hypothesis",
+      "basisUrl": "https://github.com/DriveX-devs/VaN3Twin/tree/e722a8d34cb4f5003bc6972bad4b9a456f366731"
+    },
+    {
+      "risk": "metric-gaming",
+      "description": "仅以 ID switch 改善或仅以点链接 F1 降低，可能隐藏 hazard degradation、集合膨胀或 calibrated uncertainty 失败。",
+      "evidenceType": "inference",
+      "basisUrls": [
+        "https://www.etsi.org/deliver/etsi_tr/103400_103499/103415/02.01.01_60/tr_103415v020101p.pdf",
+        "https://ieeexplore.ieee.org/document/10788069"
+      ]
+    },
+    {
+      "risk": "radio-side-linkage-underestimation",
+      "description": "只评消息字段会忽略 DSRC/Wi-Fi 等无线侧指纹，导致对整体位置隐私过度乐观。",
+      "evidenceType": "verified-fact-and-inference",
+      "basisUrl": "https://arxiv.org/abs/2507.07732"
+    }
+  ],
+  "verdict": "revise",
+  "verdictRationale": {
+    "summary": "候选有意义且存在真实可改造的 receiver cache 路径，但当前 broad claim 不新，尚不能进入通过状态。",
+    "reasons": [
+      "问题意义被 ETSI TR 103 415 直接确认，但这同时消除了‘首次发现缓存连续性与隐私冲突’的主张。",
+      "Tsukada 2022 已实现 CPM 辅助、Kalman-based 跨伪名接收端关联；V-TRACE 和 adaptive trust work 又覆盖 misbehavior/trust continuity；通用 privacy-safety frontier 也已有强先例。",
+      "TS 103 324 主动要求伪名变化后重置 objectId 并允许 sensorId 轮换，因此不能把原 ID 延续或标准合规修复包装成贡献。",
+      "VaN3Twin 固定提交提供真实 receiveCPM -> m_recvCPMmap -> LDM 路径，故无需因资产缺失直接 reject；但构建与 ID-change 注入尚未执行。",
+      "唯一可保留的残差是匿名集合级危险状态而非身份/信任交接，加上 observer-symmetric linkability audit 和有限 lock 三路决策；该组合仅是未命中直接先例的待验证假设，仍可能被普通概率 tracking 或基本可识别性问题击穿。"
+    ],
+    "requiredRevision": "删除 sender-level trust/history identity handoff 与 broad privacy-utility novelty；把候选收缩为 standards-conformant anonymous hazard-state continuity，并以 killCriteria 为硬门槛完成最小实验后再审。"
+  },
+  "evidenceLimitations": [
+    "本次是截至 2026-07-31 的一手公开资料审计；负检索结果不能证明不存在未索引、非英文、专利、闭源产业实现或付费标准附件。",
+    "部分 IEEE 页面有正文访问限制；关键直接碰撞 Tsukada 使用开放完整主文核验，其他受限记录只采用 DOI 页面、开放作者稿或开放出版页可支持的事实。",
+    "未在本次审计中编译或运行 Artery、VaN3Twin、V2V4Real；officialCodeAudit 是固定提交的静态源码事实，minimumExecutableStudy 的工期仍是假设。",
+    "未发现 VaN3Twin 固定提交中的原生 pseudonym rotation 或回归测试；实验必须自己注入，因而存在把注入器行为误当系统行为的风险。",
+    "set-valued 检索未发现完全同构记录，但一般 JPDA/MHT/RFS 和 uncertainty-aware MOT 体量庞大；必须通过功能比较而非关键词差异闭合新颖性。",
+    "V2V4Real 固定代码中的稳定 cav_id 与未实现 tracking 限制已核验，但数据集论文对 tracking 任务的表述不等于代码具备协议级 cache continuity。",
+    "TR 103 415 是研究报告而非全部规范性要求；任何实现结论仍需以 TS 102 940、TS 103 324 及相关安全/网络接口固定版本复核。"
+  ]
+}

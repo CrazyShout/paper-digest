@@ -1,0 +1,38 @@
+{
+  "candidateId": "trajectory-support-task-admission-certificate",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbc0-f9cd-7293-8632-441a239393a2",
+  "reviewedAt": "2026-08-01T13:24:22+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 4,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "轨迹级任务假接受准入不同于现有像素 uncertainty 或视角可见性，问题定义有清晰剩余空间；但从视角支持特征到选择性风险控制主要是已有 uncertainty 与 conformal 工具的任务级组合，方法新颖性取决于能否证明距离和像素 uncertainty 无法替代。",
+    "feasibility": "Cam2Sim 固定提交确有 ROS 数据提取、CARLA 0.9.15、Gaussian Splatting 重放和 DAVE-2 闭环入口，并提供单条 reference bag 与预计算资产；但 README 只验证单场景、RTX 4090 环境，且仓库根部未给出明确许可证。档案要求至少两个 city/rig strata、冻结 task stack 和 novel-trajectory 对齐真值，现有资产没有直接提供这些条件。",
+    "success-probability": "最可能在 Gate 0 卡住：真实录制无法给未行驶轨迹提供反事实任务真值，CARLA 能给真值却只证明仿真包络内风险；若用 Cam2Sim 的单场景锚点扩成两个 city/rig，数据、重建和标签链很难在两周内锁定。即使事件存在，最近相机距离可能已吸收大部分支持信息。",
+    "impact": "若在固定 coverage 下确实降低 task false-acceptance，并能跨 city/rig 保持校准，这会直接改善重建资产进入驾驶测试前的准入决策，应用价值较高。",
+    "comparison-readiness": "距离、GAVIS-style visibility、像素 predictive uncertainty 和组合证书的同校准比较是合理的；但 GAVIS 与像素 uncertainty 的可复用代码、checkpoint、输入适配器和冻结任务栈尚未固定，现阶段还不能开箱运行公平比较。"
+  },
+  "strongestObjection": "核心标签链尚未闭合：公开 Cam2Sim 资产只给单场景真实轨迹及其 CARLA/GS 重放，不能为同一真实场景中的未观测候选轨迹提供时间匹配任务真值；若主标签改由 CARLA 生成，研究会退化为仿真内准入而非真实重建资产的假接受风险，且 dossier 要求的两个 held-out city/rig strata 没有现成资产支撑。",
+  "requiredExperiment": "先做不超过两周的 Gate 0：固定 Cam2Sim 提交、CARLA 0.9.15、一个公开 task stack 及其 checkpoint/hash，在不少于 30 个 scene-trajectory 单元上同时生成 CARLA truth、GS render 和 task verdict；预注册距离 baseline 的放行集合，并报告其中 task mismatch 的 scene-level 事件数与精确上界。只有事件率足以估计、且至少能确认第二个合法 city/rig 资产时，才允许进入证书建模。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ast-fortiss-tum/cam2sim/tree/8268453c5c91bef06d9e05326d926133d1798649",
+      "finding": "固定提交 README 明确给出 CARLA 0.9.15、Nerfstudio/Splatfacto、5C trajectory replay、5D DAVE-2 闭环入口、约 6GB reference bag 与 RTX 4090 测试环境；公开 quick start 仍是单 reference_bag，根目录未见标准许可证声明。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.30342",
+      "finding": "GAVIS 的一手论文说明其输出是 3DGS 各向异性视角可见性 uncertainty，并用于 active mapping；没有提供轨迹级冻结驾驶任务假接受标签。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2603.22786",
+      "finding": "一手论文提供像素级、视角相关 predictive uncertainty，并评估若干下游感知任务，但没有固定 coverage 下的轨迹级驾驶 task-risk 准入。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "1e00ba39f71acd3d1860fa17c9672df77c1b39ef48e0fcced64eef27a5f2288e"
+}

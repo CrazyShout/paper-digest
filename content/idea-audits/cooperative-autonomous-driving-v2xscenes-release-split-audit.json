@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-v2xscenes-release-split-audit",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "status": "static-release-contract-confirmed-data-level-overlap-not-yet-executed",
+  "purpose": "Determine whether the current official V2XScenes release configuration implements the paper's stated 80/20 sequence split, while keeping any statement about published benchmark numbers outside the evidence boundary.",
+  "sourceClassification": {
+    "localCorpusUsedForDiscoveryOnly": [
+      "content/reviews/cooperative-autonomous-driving.json"
+    ],
+    "externalPrimarySources": [
+      {
+        "type": "formal-paper",
+        "title": "V2XScenes: A Multiple Challenging Traffic Conditions Dataset for Large-Range Vehicle-Infrastructure Collaborative Perception",
+        "venue": "ICCV 2025",
+        "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Wang_V2XScenes_A_Multiple_Challenging_Traffic_Conditions_Dataset_for_Large-Range_Vehicle-Infrastructure_ICCV_2025_paper.html",
+        "paperClaim": "The implementation-details section states that the V2XScenes sequences were split into an 80% training set and a 20% test set."
+      },
+      {
+        "type": "official-code",
+        "url": "https://github.com/ADVRC-Wangbw/V2XScenes",
+        "auditedCommit": "2f5a6840449d9d169b7d7d7ad9aed544242b6820",
+        "defaultBranch": "main",
+        "retrievedAt": "2026-07-31"
+      },
+      {
+        "type": "official-data-access-page",
+        "url": "https://advrc-wangbw.github.io/V2XScenes/access/",
+        "accessCondition": "The README requires an access request before downloading the dataset."
+      }
+    ]
+  },
+  "repositoryInventory": {
+    "v2xscenesConfigCount": 2,
+    "configPaths": [
+      "opencood/hypes_yaml/v2xscenes/v2xsences_where2comm.yaml",
+      "opencood/hypes_yaml/v2xscenes/v2xsences_v2xvit.yaml"
+    ],
+    "dataLoaderPath": "opencood/data_utils/datasets/basedataset/v2xscenes_basedataset.py",
+    "trainingEntrypointPath": "opencood/tools/train_v2xscenes.py",
+    "licensePath": "opencood/LICENSE"
+  },
+  "staticFindings": [
+    {
+      "findingId": "where2comm-identical-scenario-sets",
+      "status": "confirmed",
+      "configPath": "opencood/hypes_yaml/v2xscenes/v2xsences_where2comm.yaml",
+      "evidenceLines": {
+        "rootAndTestDir": "2-3",
+        "trainScenarioList": "5-7",
+        "testScenarioList": "9-11"
+      },
+      "trainScenarioIds": [
+        "20240709_084703_300_1720486033_to_1720486043_10_37",
+        "20240709_075541_300_1720482952_to_1720482965_13_36",
+        "20240709_172949_300_1720517416_to_1720517437_21_67"
+      ],
+      "testScenarioIds": [
+        "20240709_084703_300_1720486033_to_1720486043_10_37",
+        "20240709_075541_300_1720482952_to_1720482965_13_36",
+        "20240709_172949_300_1720517416_to_1720517437_21_67"
+      ],
+      "setEquality": true,
+      "setIntersectionCount": 3,
+      "setUnionCount": 3,
+      "jaccard": 1
+    },
+    {
+      "findingId": "v2xvit-identical-scenario-sets",
+      "status": "confirmed",
+      "configPath": "opencood/hypes_yaml/v2xscenes/v2xsences_v2xvit.yaml",
+      "evidenceLines": {
+        "rootAndTestDir": "2-3",
+        "trainScenarioList": "5-7",
+        "testScenarioList": "9-11"
+      },
+      "trainScenarioIds": [
+        "20240712_111606_300_1720754373_to_1720754381_8_24"
+      ],
+      "testScenarioIds": [
+        "20240712_111606_300_1720754373_to_1720754381_8_24"
+      ],
+      "setEquality": true,
+      "setIntersectionCount": 1,
+      "setUnionCount": 1,
+      "jaccard": 1
+    },
+    {
+      "findingId": "loader-selects-whole-configured-scenario-folders",
+      "status": "confirmed",
+      "codePath": "opencood/data_utils/datasets/basedataset/v2xscenes_basedataset.py",
+      "evidenceLines": [
+        {
+          "lines": "69-74",
+          "observation": "Vehicle-pose files are selected from train_scenario_list when train is true and test_scenario_list otherwise."
+        },
+        {
+          "lines": "107-111",
+          "observation": "scenario_folders is built directly from the selected scenario list; no sequence-level 80/20 subdivision is applied here."
+        },
+        {
+          "lines": "158-172",
+          "observation": "The loader iterates each configured scenario folder and enumerates all matching label files."
+        },
+        {
+          "lines": "175-226",
+          "observation": "For the vehicle stream, sorted label and point-cloud files from the selected folder are added to the scenario database without an internal train/test partition."
+        }
+      ],
+      "interpretation": "Under the audited loader, equal root directories plus equal scenario lists select the same scenario folders in train and evaluation modes. This is an executable release-contract mismatch with the paper's stated 80/20 protocol."
+    },
+    {
+      "findingId": "training-entrypoint-builds-both-modes-from-one-config",
+      "status": "confirmed",
+      "codePath": "opencood/tools/train_v2xscenes.py",
+      "evidenceLines": [
+        {
+          "lines": "31-37",
+          "observation": "The entrypoint loads one YAML and builds train=True and train=False datasets from it."
+        },
+        {
+          "lines": "38-52",
+          "observation": "The resulting datasets are used directly for the training and validation DataLoaders."
+        },
+        {
+          "lines": "135-165",
+          "observation": "The train=False loader controls validation loss and best-checkpoint selection."
+        }
+      ],
+      "interpretation": "If either audited YAML is run unchanged against matching data folders, the configured train and validation scenario selections are not disjoint."
+    }
+  ],
+  "dataLevelStatus": {
+    "datasetDownloaded": false,
+    "reason": "The official release requires an access request; no authorized dataset object was available in the current environment.",
+    "actualDataLoaderKeysEnumerated": false,
+    "pathIntersectionComputed": false,
+    "contentHashIntersectionComputed": false,
+    "paperCheckpointAvailable": false,
+    "reportedMetricReproductionAttempted": false
+  },
+  "claimBoundary": {
+    "supported": [
+      "Both official V2XScenes YAML files currently present in the audited commit define identical train and test scenario sets.",
+      "The audited loader selects whole configured scenario folders and does not implement an internal 80/20 sequence split in the inspected path.",
+      "The official training entrypoint constructs training and validation datasets from those two list selections.",
+      "The current release configuration does not, by itself, encode the paper's stated 80/20 sequence protocol."
+    ],
+    "notSupported": [
+      "The paper's published ICCV tables were generated with either current YAML.",
+      "Any published metric is inflated.",
+      "Every authorized dataset package has identical file contents under the listed scenario names.",
+      "The repository authors intended train/test overlap rather than shipping an example or stale configuration.",
+      "A corrected split necessarily changes AP or MOTA by a particular amount."
+    ],
+    "requiredLanguage": "Call this a confirmed current-release configuration and loader contract mismatch. Do not call it paper leakage until checkpoint provenance and data-level key/hash overlap are established."
+  },
+  "candidateHardGates": [
+    {
+      "gateId": "authorized-data-access",
+      "passCondition": "Obtain V2XScenes through the official access process and record the package version, archive hashes, and license.",
+      "currentStatus": "not-passed"
+    },
+    {
+      "gateId": "actual-key-overlap",
+      "passCondition": "Instantiate train=True and train=False datasets from each shipped YAML and export canonical sample keys before loading point tensors.",
+      "currentStatus": "not-passed"
+    },
+    {
+      "gateId": "content-hash-overlap",
+      "passCondition": "Hash the referenced label, point-cloud, and calibration files and report path and content intersections separately.",
+      "currentStatus": "not-passed"
+    },
+    {
+      "gateId": "paper-provenance",
+      "passCondition": "Link any tested checkpoint or author-provided command to the paper's reported protocol before discussing table validity.",
+      "currentStatus": "not-passed"
+    },
+    {
+      "gateId": "corrected-protocol",
+      "passCondition": "Publish a deterministic, condition-stratified 80/20 sequence split with zero clip, timestamp-neighborhood, and content-hash overlap.",
+      "currentStatus": "not-passed"
+    }
+  ],
+  "minimumExecutableStudy": {
+    "stage1CpuOnly": [
+      "Parse every official V2XScenes YAML and fail closed when canonical train and test sample identities intersect.",
+      "Emit path, inode-independent content hash, parent sequence, condition label, and time-neighborhood groups.",
+      "Construct a deterministic group split that preserves the paper's 80/20 sequence-level ratio and reports condition coverage."
+    ],
+    "stage2OneGpu": [
+      "Re-evaluate one officially supported baseline under the shipped and corrected splits with model, augmentation, and training budget frozen.",
+      "Report paired per-sequence AP, MOTA, effective sample count, and condition-stratified uncertainty.",
+      "Treat a near-zero difference as a valid negative result; the release-contract correction remains useful independently of metric direction."
+    ],
+    "stoppingRules": [
+      "Stop the paper-validity claim if no checkpoint or command can be linked to the reported tables.",
+      "Stop the leakage claim if canonical train/test keys and file hashes are disjoint after authorized data enumeration.",
+      "Publish the validator and corrected split even when the metric delta is negligible."
+    ]
+  },
+  "directCollisionSearch": {
+    "repositoryIssuesCheckedAt": "2026-07-31",
+    "issueCount": 3,
+    "splitIssueFound": false,
+    "boundary": "Absence of a GitHub issue is not proof of literature novelty; a separate multi-source novelty review is still required."
+  },
+  "decision": {
+    "problemExistsInCurrentReleaseConfig": true,
+    "dataLevelLeakageProved": false,
+    "paperResultAttributionAllowed": false,
+    "eligibleForCandidatePanel": true,
+    "panelPositioning": "Executable benchmark-protocol audit and corrected split artifact, not an accusation about published results."
+  }
+}

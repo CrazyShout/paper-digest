@@ -1,0 +1,1044 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-age-pilot-v6-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "preparedAt": "2026-07-31",
+  "purpose": "CPU pilot v6 repairing the exact affine-rate envelope and finite-population event representation identified by the independent v5 methodology audit.",
+  "lineage": {
+    "basedOn": "scripts/idea-pilots/clock-age-identifiability-v5.mjs",
+    "independentReviewSource": "content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v5.json",
+    "priorArtifactsModified": false,
+    "dgpPolicy": "All numeric DGP supports, grid cells, seeds, thresholds, and generation rules are frozen from v5; only v6 provenance labels and the two audited method/reporting repairs change."
+  },
+  "independenceAndRegistration": {
+    "executionOrder": [
+      "design-manifest-hashed-before-data",
+      "test-population-generated-and-deep-frozen",
+      "calibration-episodes-generated",
+      "calibration-fitted-after-test-freeze"
+    ],
+    "testDgpApi": "generateFrozenTestPopulation(testSeed) accepts no calibration artifact.",
+    "truthFirewall": "Non-oracle methods receive only observation and the fitted calibration artifact; truth remains evaluation-only.",
+    "registrationStatus": "not-available-for-this-run; the pilot must stop rather than claim externally timestamped preregistration",
+    "seeds": {
+      "calibration": 2026073141,
+      "test": 2026073197
+    },
+    "episodeIds": {
+      "first": "v6-test-paired-counterexample-2026073197-0",
+      "last": "v6-test-relock-control-2026073197-251",
+      "includePassedTestSeed": true
+    }
+  },
+  "finitePopulation": {
+    "definition": "A finite seeded population containing every cell of the declared clock grid; all records are evaluated and no sampling CI is reported.",
+    "gridClusters": 252,
+    "records": 3276,
+    "clusterConfidenceIntervalsReported": false,
+    "calibrationFitUncertaintyIntegrated": false,
+    "interpretation": "All event reports are integer counts plus an unrounded quotient for the exhaustively evaluated synthetic finite population. Display rounding is separate. No value is an external-population risk bound or confidence bound, and a synthetic finite population cannot be extrapolated to real-system risk."
+  },
+  "methodologyDefinitions": {
+    "intervalCoverage": "A cluster succeeds only when every record in that episode has a non-empty reported interval containing its true age.",
+    "eventErrors": "A false-fresh or false-stale cluster event occurs when any eligible record in that episode has the corresponding decision error.",
+    "finitePopulationEvents": "Finite-population event reports retain the integer numerator and denominator, use the unrounded quotient for comparisons, and round only a separate display value. The fraction describes only the exhaustively evaluated synthetic finite population; it is not a mathematical upper bound, confidence bound, or external risk bound.",
+    "endpointEnvelope": "For cross-domain mapping, evaluate anchorReferenceMs +/- mappingHalfWidthMs jointly with both rate endpoints 1 + (ratePpm +/- rateHalfWidthPpm) * 1e-6. All admissible rates must be strictly positive.",
+    "emptyIntersection": "A raw age interval wholly below zero has an empty intersection with nonnegative ages and returns inconsistent-provenance/uncertain.",
+    "truthFirewall": "Truth fields are never supplied to non-oracle methods.",
+    "wrongButPresent": "Wrong-domain, expired-validity, wrong-rate, and relock controls keep the relevant fields present.",
+    "externalBoundary": "This synthetic finite-population run does not estimate or upper-bound real deployment risk."
+  },
+  "methods": [
+    {
+      "id": "naive-direct-subtraction",
+      "kind": "point",
+      "definition": "fusion_use in the receiver clock minus sender publish timestamp, assuming the numeric clocks are directly comparable"
+    },
+    {
+      "id": "mcap-log-minus-publish",
+      "kind": "point",
+      "definition": "MCAP log_time minus sender publish timestamp without a clock-domain binding"
+    },
+    {
+      "id": "rtt-half-point",
+      "kind": "point",
+      "definition": "RTT divided by two plus receiver-local receipt-to-use lag"
+    },
+    {
+      "id": "ptp-like-point",
+      "kind": "point",
+      "definition": "the affine sender-to-reference mapping point without uncertainty, validity, or identified-set reporting"
+    },
+    {
+      "id": "provenance-interval",
+      "kind": "interval",
+      "definition": "an affine age identified set using independently fitted mapping/rate bounds plus domain, validity, and relock checks"
+    },
+    {
+      "id": "oracle",
+      "kind": "oracle-point",
+      "definition": "the test truth age, used only as an evaluation reference"
+    }
+  ],
+  "execution": {
+    "date": "2026-07-31",
+    "command": "node scripts/idea-pilots/clock-age-identifiability-v6.mjs --write-audit content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v6.json",
+    "testCommand": "node --test test/clock-age-identifiability-v6.test.mjs",
+    "runtime": {
+      "node": "v24.14.0",
+      "platform": "darwin",
+      "arch": "arm64"
+    },
+    "calibration": {
+      "calibrationSeed": 2026073141,
+      "calibrationEpisodeCount": 512,
+      "mappingHalfWidthMs": 19.993867883,
+      "rateHalfWidthPpm": 121.705907572,
+      "fitRule": "maximum absolute calibration residual plus a fixed guard",
+      "testPopulationUsed": false
+    },
+    "inputSha256": {
+      "designManifestSha256": "dda2d542b47aa51a9bedfbe0656716a54947be3a2d4d42d2ef617b9b24ffecaa",
+      "testDgpConfigSha256": "76cb2bf33367433556544e1c9f4f882f00a7315939e6cc817c9c2724ef8b5a68",
+      "calibrationEpisodesSha256": "d89f3dd7952cb24b2a477442b70989646101cebb88c60294de29af4f484e85b4",
+      "frozenTestPopulationSha256": "94541bdf153278aad36454437e79fa47ddf23f5c2446cf98e6edac53fb42cccb"
+    },
+    "outputSha256": {
+      "auditResultsSha256": "1cdebf955478d02185d1555ba1c7a412460a7594a1461aa7b30e132ea2314238"
+    },
+    "sourceSha256": {
+      "scripts/idea-pilots/clock-age-identifiability-v6.mjs": "a46225908157c7a3cae3520d6cb75371f639ca1595481175aac38267ebf30d06",
+      "test/clock-age-identifiability-v6.test.mjs": "a7f268fa7e406d24345159e1fccd1dfe7768a253549aa18c95350570c065d110"
+    }
+  },
+  "endpointRepairEvidence": {
+    "method": "Evaluate all four combinations of anchor-reference and strictly-positive rate interval endpoints, then take the mapped timestamp minimum and maximum.",
+    "senderDeltaSignsCoveredByTests": [
+      "negative",
+      "positive"
+    ],
+    "nonpositiveRateIntervalPolicy": "fail-closed-as-uncertain",
+    "boundedProvenanceMaximumFirstOrderUnderreachMs": 0.014910638,
+    "v5AuditMaximumUnderreachCounterexample": {
+      "episodeIdUsedAsBase": "v6-test-bounded-provenance-2026073197-66",
+      "exactEndpointAgeMs": 25,
+      "v5FirstOrderRawLowerMs": 25.014910638,
+      "v6ExactRawLowerMs": 25,
+      "v5UnderreachMs": 0.014910638,
+      "coveredByV5FirstOrder": false,
+      "coveredByV6": true
+    },
+    "v5AuditCounterexample": {
+      "episodeIdUsedAsBase": "v6-test-bounded-provenance-2026073197-66",
+      "v5FirstOrderRawUpperMs": 63.919433057,
+      "exactRawUpperMs": 63.929007292,
+      "missAtValidUpperBoundMs": 0.009574234,
+      "exactEndpointAgeMs": 63.929007292,
+      "coveredByV6": true
+    }
+  },
+  "pointMethodResults": {
+    "naive-direct-subtraction": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 157.849611,
+      "absoluteErrorQuantilesMs": {
+        "p50": 79.8,
+        "p90": 501.8,
+        "p95": 518,
+        "p99": 600.2,
+        "maximum": 602
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 669,
+        "falseStaleRecords": 480,
+        "totalDecisionErrorRecords": 1149,
+        "totalRecords": 3276
+      }
+    },
+    "mcap-log-minus-publish": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 158.14652,
+      "absoluteErrorQuantilesMs": {
+        "p50": 80,
+        "p90": 502.0458,
+        "p95": 520,
+        "p99": 602.2,
+        "maximum": 604
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 546,
+        "rate": 0.166667
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 678,
+        "falseStaleRecords": 468,
+        "totalDecisionErrorRecords": 1146,
+        "totalRecords": 3276
+      }
+    },
+    "rtt-half-point": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 4.530786,
+      "absoluteErrorQuantilesMs": {
+        "p50": 3.795374,
+        "p90": 12,
+        "p95": 12,
+        "p99": 12,
+        "maximum": 12
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 252,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 252,
+        "totalRecords": 3276
+      }
+    },
+    "ptp-like-point": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 16.673317,
+      "absoluteErrorQuantilesMs": {
+        "p50": 10.350405,
+        "p90": 44.938785,
+        "p95": 71.142387,
+        "p99": 99.432058,
+        "maximum": 113.305805
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 451,
+        "falseStaleRecords": 199,
+        "totalDecisionErrorRecords": 650,
+        "totalRecords": 3276
+      }
+    },
+    "oracle": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 0,
+      "absoluteErrorQuantilesMs": {
+        "p50": 0,
+        "p90": 0,
+        "p95": 0,
+        "p99": 0,
+        "maximum": 0
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 3276,
+        "rate": 1
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 3276
+      }
+    }
+  },
+  "intervalMethodResults": {
+    "overall": {
+      "coverageEveryRecord": {
+        "successClusters": 1418,
+        "failedClusters": 94,
+        "totalClusters": 1512,
+        "estimate": 0.937831
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 1,
+        "noEventClusters": 1511,
+        "eligibleClusters": 1512,
+        "observedFinitePopulationFraction": {
+          "numerator": 1,
+          "denominator": 1512,
+          "comparisonValue": 0.0006613756613756613,
+          "displayValue": 0.000661
+        }
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 4,
+        "noEventClusters": 1508,
+        "eligibleClusters": 1512,
+        "observedFinitePopulationFraction": {
+          "numerator": 4,
+          "denominator": 1512,
+          "comparisonValue": 0.0026455026455026454,
+          "displayValue": 0.002646
+        }
+      },
+      "uncertainty": {
+        "records": 2311,
+        "totalRecords": 3276,
+        "rate": 0.705433
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 2520,
+        "meanMs": 73.802201,
+        "p95Ms": 186.025759
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 1,
+        "falseStaleRecords": 4,
+        "totalDecisionErrorRecords": 5,
+        "totalRecords": 3276
+      }
+    },
+    "byRegime": {
+      "paired-counterexample": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 504,
+          "totalRecords": 504,
+          "rate": 1
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 83.801863,
+          "p95Ms": 83.801863
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 504
+        }
+      },
+      "bounded-provenance": {
+        "coverageEveryRecord": {
+          "successClusters": 219,
+          "failedClusters": 33,
+          "totalClusters": 252,
+          "estimate": 0.869048
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 1,
+          "noEventClusters": 251,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 1,
+            "denominator": 252,
+            "comparisonValue": 0.003968253968253968,
+            "displayValue": 0.003968
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 1,
+          "noEventClusters": 251,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 1,
+            "denominator": 252,
+            "comparisonValue": 0.003968253968253968,
+            "displayValue": 0.003968
+          }
+        },
+        "uncertainty": {
+          "records": 379,
+          "totalRecords": 504,
+          "rate": 0.751984
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 80.27072,
+          "p95Ms": 83.815265
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 1,
+          "falseStaleRecords": 1,
+          "totalDecisionErrorRecords": 2,
+          "totalRecords": 504
+        }
+      },
+      "common-clock": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 0,
+          "totalRecords": 504,
+          "rate": 0
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 0,
+          "p95Ms": 0
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 504
+        }
+      },
+      "unknown-domain": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 504,
+          "totalRecords": 504,
+          "rate": 1
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 0,
+          "meanMs": null,
+          "p95Ms": null
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 504
+        }
+      },
+      "rate-stress": {
+        "coverageEveryRecord": {
+          "successClusters": 191,
+          "failedClusters": 61,
+          "totalClusters": 252,
+          "estimate": 0.757937
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 3,
+          "noEventClusters": 249,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 3,
+            "denominator": 252,
+            "comparisonValue": 0.011904761904761904,
+            "displayValue": 0.011905
+          }
+        },
+        "uncertainty": {
+          "records": 414,
+          "totalRecords": 504,
+          "rate": 0.821429
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 160.642032,
+          "p95Ms": 186.065976
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 3,
+          "totalDecisionErrorRecords": 3,
+          "totalRecords": 504
+        }
+      },
+      "relock-control": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 510,
+          "totalRecords": 756,
+          "rate": 0.674603
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 44.296392,
+          "p95Ms": 44.856628
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 756
+        }
+      }
+    }
+  },
+  "negativeControls": {
+    "pairedObservationalEquivalence": {
+      "episodePairs": 252,
+      "identicalObservableOppositeTruthPairs": 252,
+      "identicalQueueSerializationProcessingPairs": 252,
+      "directionalPropagationVariesBetweenWorlds": true,
+      "intervalUncertainRecords": 504,
+      "totalIntervalRecords": 504
+    },
+    "unknownDomain": {
+      "episodeClusters": 252,
+      "uncertainRecords": 504,
+      "totalRecords": 504
+    },
+    "verifiedCommonClock": {
+      "episodeClusters": 252,
+      "decisionErrors": 0,
+      "totalRecords": 504
+    }
+  },
+  "missingFieldBranchControls": {
+    "clock-domain": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "clock-domain-unbound-or-mismatched"
+    },
+    "validity": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "outside-or-missing-validity"
+    },
+    "rate": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "rate-unavailable"
+    },
+    "relock": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "relock-generation-mismatch"
+    }
+  },
+  "wrongButPresentEmpiricalAblations": {
+    "wrongDomainPresent": {
+      "coverageEveryRecord": {
+        "successClusters": 252,
+        "failedClusters": 0,
+        "totalClusters": 252,
+        "estimate": 1
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "observedFinitePopulationFraction": {
+          "numerator": 0,
+          "denominator": 252,
+          "comparisonValue": 0,
+          "displayValue": 0
+        }
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "observedFinitePopulationFraction": {
+          "numerator": 0,
+          "denominator": 252,
+          "comparisonValue": 0,
+          "displayValue": 0
+        }
+      },
+      "uncertainty": {
+        "records": 504,
+        "totalRecords": 504,
+        "rate": 1
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 0,
+        "meanMs": null,
+        "p95Ms": null
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 504
+      }
+    },
+    "expiredValidityPresent": {
+      "coverageEveryRecord": {
+        "successClusters": 252,
+        "failedClusters": 0,
+        "totalClusters": 252,
+        "estimate": 1
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "observedFinitePopulationFraction": {
+          "numerator": 0,
+          "denominator": 252,
+          "comparisonValue": 0,
+          "displayValue": 0
+        }
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "observedFinitePopulationFraction": {
+          "numerator": 0,
+          "denominator": 252,
+          "comparisonValue": 0,
+          "displayValue": 0
+        }
+      },
+      "uncertainty": {
+        "records": 504,
+        "totalRecords": 504,
+        "rate": 1
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 0,
+        "meanMs": null,
+        "p95Ms": null
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 504
+      }
+    },
+    "wrongRateLongLookback": {
+      "lookbackReferenceMs": 600000,
+      "injectedRateDeltaPpm": 240,
+      "mappedTimestampShiftMs": {
+        "nonzeroRecords": 504,
+        "totalRecords": 504,
+        "minimumAbsolute": 143.903417,
+        "p50Absolute": 143.998939,
+        "maximumAbsolute": 144.099875
+      },
+      "nominalUncertainty": {
+        "coverageEveryRecord": {
+          "successClusters": 17,
+          "failedClusters": 235,
+          "totalClusters": 252,
+          "estimate": 0.06746
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 120,
+          "noEventClusters": 132,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 120,
+            "denominator": 252,
+            "comparisonValue": 0.47619047619047616,
+            "displayValue": 0.47619
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 161,
+          "noEventClusters": 91,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 161,
+            "denominator": 252,
+            "comparisonValue": 0.6388888888888888,
+            "displayValue": 0.638889
+          }
+        },
+        "uncertainty": {
+          "records": 223,
+          "totalRecords": 504,
+          "rate": 0.44246
+        },
+        "inconsistentProvenance": {
+          "records": 41,
+          "rate": 0.081349
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 463,
+          "meanMs": 149.722244,
+          "p95Ms": 186.065272
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 120,
+          "falseStaleRecords": 161,
+          "totalDecisionErrorRecords": 281,
+          "totalRecords": 504
+        }
+      },
+      "widenedRateUncertainty": {
+        "coverageEveryRecord": {
+          "successClusters": 220,
+          "failedClusters": 32,
+          "totalClusters": 252,
+          "estimate": 0.873016
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 252,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 3,
+          "noEventClusters": 249,
+          "eligibleClusters": 252,
+          "observedFinitePopulationFraction": {
+            "numerator": 3,
+            "denominator": 252,
+            "comparisonValue": 0.011904761904761904,
+            "displayValue": 0.011905
+          }
+        },
+        "uncertainty": {
+          "records": 501,
+          "totalRecords": 504,
+          "rate": 0.994048
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 336.581751,
+          "p95Ms": 473.850469
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 3,
+          "totalDecisionErrorRecords": 3,
+          "totalRecords": 504
+        }
+      },
+      "widthErrorTradeoff": "The widened variant changes only the declared rate uncertainty bound; compare coverage/error counts with finite interval width."
+    },
+    "relockMismatchAndRecovery": {
+      "mismatch": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 126,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 126,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 252,
+          "totalRecords": 252,
+          "rate": 1
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 0,
+          "meanMs": null,
+          "p95Ms": null
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 252
+        }
+      },
+      "recovery": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 126,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "observedFinitePopulationFraction": {
+            "numerator": 0,
+            "denominator": 126,
+            "comparisonValue": 0,
+            "displayValue": 0
+          }
+        },
+        "uncertainty": {
+          "records": 129,
+          "totalRecords": 252,
+          "rate": 0.511905
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 252,
+          "meanMs": 44.367954,
+          "p95Ms": 44.856663
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 252
+        }
+      }
+    }
+  },
+  "finitePopulationEventExample": {
+    "numerator": 1,
+    "denominator": 252,
+    "comparisonValue": 0.003968253968253968,
+    "displayValue": 0.003968
+  },
+  "stopCondition": {
+    "checks": {
+      "testDgpFrozenBeforeCalibrationFit": true,
+      "testDgpIndependentOfFittedBounds": true,
+      "completeFiniteGrid": true,
+      "everyRecordIntervalCoverage": false,
+      "falseFreshGate": false,
+      "boundedUncertainRecordRate": false,
+      "allPairedWitnesses": true,
+      "missingFieldBranchesFailClosed": true,
+      "wrongPresentDomainAndValidityFailClosed": true,
+      "rateErrorActuallyPropagates": true,
+      "relockMismatchAndRecovery": true,
+      "externalRegistrationEvidence": false
+    },
+    "observedAction": "stop-at-finite-population-methodology-audit",
+    "ifAnyCheckFails": "Stop. Do not claim a usable bounded-age gate or proceed on the basis of this run.",
+    "ifAllChecksPass": "A synthetic pass would permit only a separately calibrated trace phase and would still not establish real-system risk."
+  },
+  "failures": [
+    "everyRecordIntervalCoverage",
+    "falseFreshGate",
+    "boundedUncertainRecordRate",
+    "externalRegistrationEvidence"
+  ],
+  "failureDetails": [
+    {
+      "id": "everyRecordIntervalCoverage",
+      "observed": "219 of 252 bounded-provenance clusters covered every record.",
+      "boundary": "This is an exact count for the frozen synthetic finite population, not external coverage evidence."
+    },
+    {
+      "id": "falseFreshGate",
+      "observed": {
+        "numerator": 1,
+        "denominator": 252,
+        "comparisonValue": 0.003968253968253968,
+        "displayValue": 0.003968
+      },
+      "boundary": "The unrounded finite-population quotient is used only for this gate; it is not called an upper bound or external risk."
+    },
+    {
+      "id": "boundedUncertainRecordRate",
+      "observed": {
+        "records": 379,
+        "totalRecords": 504,
+        "rate": 0.751984
+      },
+      "boundary": "The grid weights and threshold have no demonstrated deployment-population interpretation."
+    },
+    {
+      "id": "externalRegistrationEvidence",
+      "observed": {
+        "externalTimestamp": null,
+        "immutableCommit": null,
+        "status": "not-available-for-this-run; the pilot must stop rather than claim externally timestamped preregistration"
+      },
+      "boundary": "Hashes establish reproducibility of current bytes, not immutable externally timestamped preregistration."
+    }
+  ],
+  "remainingBlockers": [
+    {
+      "id": "externalRegistrationEvidence",
+      "active": true,
+      "consequence": "External registration is absent, so the required action remains stop regardless of synthetic finite-population results."
+    },
+    {
+      "id": "externalRiskGeneralization",
+      "active": true,
+      "consequence": "No target deployment population, external trace distribution, repeated calibration-fit distribution, or real-system validation supports risk extrapolation."
+    }
+  ],
+  "claimBoundary": "This synthetic finite population CPU pilot establishes only executable behavior under the frozen v6-labelled generator, including exact affine endpoint containment, paired observational-equivalence witnesses, guard/recovery behavior, and finite-grid diagnostics. It does not establish a real vulnerability, timestamp misuse, safety defect, frequency, risk bound, or performance effect in any deployed cooperative-perception, ROS 2, MCAP, PTP, V2X, or autonomous-driving system. External registration evidence is absent, the observed action remains stop, and no candidate, paper, asset, or system is scored."
+}

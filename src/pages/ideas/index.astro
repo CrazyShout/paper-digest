@@ -1,337 +1,436 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../components/NotebookDocs.jsx";
 import IdeaCard from "../../components/IdeaCard.astro";
-import { getIdeaCenter } from "../../lib/content.js";
+import { ideaArtifactSnapshotFingerprint } from "../../lib/idea-fingerprint.js";
+import { getNotebookData } from "../../lib/navigation.js";
 
-const center = await getIdeaCenter();
-const readyDirection = center.directions.find((direction) => direction.status === "ready");
-const activeDirectionId = readyDirection?.id || center.directions[0]?.id;
-const readyIdeas = center.directions.flatMap((direction) => direction.ideas || []);
-const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit"
-}).format(new Date(`${center.updatedAt}T00:00:00+08:00`));
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const center = notebook.ideaCenter || {};
+
+function list(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function record(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function records(value) {
+  return list(value).filter(
+    (item) => item && typeof item === "object" && !Array.isArray(item)
+  );
+}
+
+function formatDate(value) {
+  if (!value) return "未记录";
+  const input = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ? `${value}T00:00:00+08:00`
+    : value;
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return "未记录";
+  return new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+const directions = records(center.directions);
+const workflow = record(center.workflow);
+const workflowSteps = records(workflow.steps);
+const stopRules = list(workflow.stopRules);
+const reviewRules = list(workflow.reviewRules);
+const releaseRules = reviewRules.length ? reviewRules : stopRules;
+const searchPolicy = record(workflow.searchPolicy);
+const scoring = record(center.scoring);
+const scoringDimensions = records(scoring.dimensions);
+const exploredStatuses = new Set(["ready", "reviewed"]);
+const activeDirectionId = directions.find(
+  (direction) => exploredStatuses.has(direction.status)
+)?.id || directions[0]?.id;
+const completedDirections = directions.filter(
+  (direction) => exploredStatuses.has(direction.status)
+);
+const reviewedIdeas = completedDirections.flatMap((direction) => records(direction.ideas));
+const passedIdeas = reviewedIdeas.filter((idea) => idea.reviewStatus === "passed");
+const finalReviewReport = record(center.finalReview).report;
+const globalReview = finalReviewReport
+  && typeof finalReviewReport === "object"
+  && !Array.isArray(finalReviewReport)
+  ? finalReviewReport
+  : null;
+const globalReviewScores = record(globalReview?.scores);
+const ideaCenterFingerprint = ideaArtifactSnapshotFingerprint(center);
+const updatedLabel = formatDate(center.updatedAt);
+const toc = [
+  { depth: 2, title: "探索工作流", url: "#workflowTitle" },
+  ...(globalReview ? [{ depth: 2, title: "全局终审", url: "#globalReviewTitle" }] : []),
+  { depth: 2, title: "方向审计", url: "#workspaceTitle" }
+];
+const dimensionLabels = new Map(
+  scoringDimensions.map((dimension) => [dimension.id, dimension.label])
+);
+
+function auditDate(value) {
+  return formatDate(value);
+}
+
+function resultLabel(status) {
+  return status === "passed" ? "全项通过" : "未通过终审";
+}
+
+function auditMetric(pool, key) {
+  const value = record(pool?.counts)[key];
+  return Number.isFinite(Number(value)) ? value : 0;
+}
 ---
 
 <BaseLayout
   title="Idea 中心 · Paper Digest"
-  description={center.summary}
-  stylesheet="../assets/styles.css"
+  description={center.summary || "研究方向、候选证据与独立评审记录。"}
   canonicalPath="ideas/"
 >
-  <div class="idea-site">
-    <header class="idea-site-header">
-      <a class="idea-home-link" href="../" aria-label="返回 Paper Digest 首页">
-        <span>PD</span>
-        <strong>Paper Digest</strong>
-      </a>
-      <nav aria-label="Idea 中心页面导航">
-        <a href="#workflow">探索工作流</a>
-        <a href="#workspace">方向工作台</a>
-        <a href="../">返回简报</a>
-      </nav>
-    </header>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={center.title || "Idea 中心"}
+    description={center.summary || "研究方向、候选证据与独立评审记录。"}
+    eyebrow={`Idea Center · 更新于 ${updatedLabel}`}
+    toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <dl
+      class="idea-hero-stats"
+      aria-label="Idea 中心统计"
+      data-idea-version={center.version}
+      data-idea-updated={center.updatedAt}
+      data-idea-directions={directions.length}
+      data-idea-fingerprint={ideaCenterFingerprint}
+    >
+      <div>
+        <dt>完成检索方向</dt>
+        <dd>{completedDirections.length}</dd>
+      </div>
+      <div>
+        <dt>进入独立盲评</dt>
+        <dd>{reviewedIdeas.length}</dd>
+      </div>
+      <div>
+        <dt>全维度 10 分</dt>
+        <dd>{passedIdeas.length}</dd>
+      </div>
+    </dl>
 
-    <main class="idea-main">
-      <section class="idea-hero" aria-labelledby="ideaCenterTitle">
-        <div class="idea-hero-copy">
-          <p class="eyebrow">Idea Center · 更新于 {updatedLabel}</p>
-          <h1 id="ideaCenterTitle">{center.title}</h1>
-          <p>{center.summary}</p>
+    <section class="idea-workflow" id="workflow" aria-labelledby="workflowTitle">
+      <header class="idea-section-head">
+        <div>
+          <p class="eyebrow">Research Funnel</p>
+          <h2 id="workflowTitle">从问题证据到可证伪课题</h2>
         </div>
-        <dl class="idea-hero-stats" aria-label="Idea 中心统计">
-          <div>
-            <dt>已深挖方向</dt>
-            <dd>{center.directions.filter((direction) => direction.status === "ready").length}</dd>
-          </div>
-          <div>
-            <dt>候选 Idea</dt>
-            <dd>{readyIdeas.length}</dd>
-          </div>
-          <div>
-            <dt>核心一手证据</dt>
-            <dd>{readyDirection?.explorationRun?.coreEvidenceCount || 0}</dd>
-          </div>
-        </dl>
-      </section>
+        <p>{workflow.principle}</p>
+      </header>
 
-      <section class="idea-workflow" id="workflow" aria-labelledby="workflowTitle">
+      <ol class="workflow-steps">
+        {workflowSteps.map((step) => (
+          <li>
+            <span class="workflow-number">{step.number}</span>
+            <div>
+              <h3>{step.title}</h3>
+              <p>{step.question}</p>
+            </div>
+            <div class="workflow-output">
+              <strong>产出</strong>
+              <p>{step.deliverable}</p>
+            </div>
+            <div class="workflow-stop">
+              <strong>停止条件</strong>
+              <p>{step.failAction}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div class="workflow-gates">
+        <div class="workflow-gates-copy">
+          <p class="eyebrow">Release Rule</p>
+          <h3>评审与生成严格分离</h3>
+          <p>{workflow.releaseRule || "检索者不评分；每位盲评者独立复核一手证据，任何实质性缺口都会阻止候选进入通过列表。"}</p>
+        </div>
+        <ul class="workflow-rule-list">
+          {releaseRules.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+
+      <details class="workflow-policy">
+        <summary>查看检索政策与全局停止规则</summary>
+        <div>
+          <section>
+            <h3>检索边界</h3>
+            <p><strong>本站角色：</strong>{searchPolicy.localCorpusRole || "未记录"}</p>
+            <p><strong>时间窗口：</strong>{searchPolicy.dateWindow || "未记录"}</p>
+            <ul>{list(searchPolicy.sourcePriority).map((item) => <li>{item}</li>)}</ul>
+          </section>
+          <section>
+            <h3>查询扩展</h3>
+            <ul>{list(searchPolicy.queryExpansion).map((item) => <li>{item}</li>)}</ul>
+          </section>
+          <section>
+            <h3>全局停止规则</h3>
+            <ul>{stopRules.map((item) => <li>{item}</li>)}</ul>
+          </section>
+        </div>
+      </details>
+    </section>
+
+    {globalReview && (
+      <section class="idea-global-review" id="global-review" aria-labelledby="globalReviewTitle">
         <header class="idea-section-head">
           <div>
-            <p class="eyebrow">Research Funnel</p>
-            <h2 id="workflowTitle">先判断值不值得做，再探索怎么做</h2>
+            <p class="eyebrow">Independent Final Review</p>
+            <h2 id="globalReviewTitle">全局终审 · {resultLabel(globalReview.status)}</h2>
           </div>
-          <p>{center.workflow.principle}</p>
+          <strong class={`idea-global-score is-${globalReview.status}`}>
+            {globalReview.overall}<span>/10</span>
+          </strong>
         </header>
-
-        <ol class="workflow-steps">
-          {center.workflow.steps.map((step) => (
-            <li>
-              <span class="workflow-number">{step.number}</span>
-              <div>
-                <h3>{step.title}</h3>
-                <p>{step.question}</p>
-              </div>
-              <div class="workflow-output">
-                <strong>产出</strong>
-                <p>{step.deliverable}</p>
-              </div>
-              <div class="workflow-stop">
-                <strong>不过关</strong>
-                <p>{step.failAction}</p>
-              </div>
-            </li>
+        <p>{globalReview.summary}</p>
+        <dl class="idea-global-dimensions">
+          {Object.entries(globalReviewScores).map(([id, score]) => (
+            <div>
+              <dt>{dimensionLabels.get(id) || id}</dt>
+              <dd>{score}/10</dd>
+            </div>
           ))}
-        </ol>
-
-        <div class="workflow-gates">
-          <div class="workflow-gates-copy">
-            <p class="eyebrow">Hard Gates</p>
-            <h3>四道硬门槛</h3>
-            <p>阈值用于阻止“看起来有趣但没有研究闭环”的题目进入榜单。任何一项未过线，都只记录原因，不包装成 Idea。</p>
-          </div>
-          <dl>
-            {center.workflow.gates.map((gate) => (
-              <div>
-                <dt>{gate.label}</dt>
-                <dd><strong>≥ {gate.threshold}</strong><span>{gate.description}</span></dd>
-              </div>
-            ))}
-          </dl>
+        </dl>
+        <div class="idea-global-decision">
+          <section>
+            <h3>最强反对意见</h3>
+            <p>{globalReview.strongestObjection}</p>
+          </section>
+          <section>
+            <h3>下一轮必须补齐</h3>
+            <p>{globalReview.requiredAction}</p>
+          </section>
         </div>
-
-        <details class="workflow-policy">
-          <summary>查看检索政策与全局停止规则</summary>
-          <div>
-            <section>
-              <h3>检索不是只翻本站论文</h3>
-              <p><strong>本站角色：</strong>{center.workflow.searchPolicy.localCorpusRole}</p>
-              <p><strong>时间窗口：</strong>{center.workflow.searchPolicy.dateWindow}</p>
-              <ul>{center.workflow.searchPolicy.sourcePriority.map((item) => <li>{item}</li>)}</ul>
-            </section>
-            <section>
-              <h3>查询扩展</h3>
-              <ul>{center.workflow.searchPolicy.queryExpansion.map((item) => <li>{item}</li>)}</ul>
-            </section>
-            <section>
-              <h3>全局停止规则</h3>
-              <ul>{center.workflow.stopRules.map((item) => <li>{item}</li>)}</ul>
-            </section>
-          </div>
-        </details>
       </section>
+    )}
 
-      <section class="idea-workspace" id="workspace" aria-labelledby="workspaceTitle">
-        <aside class="idea-direction-rail">
-          <div>
-            <p class="eyebrow">Directions</p>
-            <h2 id="workspaceTitle">选择方向</h2>
-          </div>
-          <div class="idea-direction-tabs" role="tablist" aria-label="研究方向">
-            {center.directions.map((direction) => (
-              <button
-                type="button"
-                role="tab"
-                id={`direction-tab-${direction.id}`}
-                aria-controls={`direction-panel-${direction.id}`}
-                aria-selected={direction.id === activeDirectionId ? "true" : "false"}
-                tabindex={direction.id === activeDirectionId ? "0" : "-1"}
-                data-direction-target={direction.id}
-                style={`--direction-color: ${direction.color}`}
-              >
-                <span>{direction.label}</span>
-                <small>{direction.status === "ready" ? `${direction.ideas.length} 个 Idea` : "待深挖"}</small>
-              </button>
-            ))}
-          </div>
-          <p class="idea-direction-note">方向切换不代表已经得出 Idea。只有完成检索并通过四道门槛的方向才会发布候选方案。</p>
-        </aside>
-
-        <div class="idea-direction-panels">
-          {center.directions.map((direction) => (
-            <section
-              class="idea-direction-panel"
-              id={`direction-panel-${direction.id}`}
-              role="tabpanel"
-              aria-labelledby={`direction-tab-${direction.id}`}
-              data-direction-panel={direction.id}
-              hidden={direction.id !== activeDirectionId}
+    <section class="idea-workspace" id="workspace" aria-labelledby="workspaceTitle">
+      <aside class="idea-direction-rail">
+        <div>
+          <p class="eyebrow">Directions</p>
+          <h2 id="workspaceTitle">方向审计</h2>
+        </div>
+        <div class="idea-direction-tabs" role="tablist" aria-label="研究方向">
+          {directions.map((direction) => (
+            <button
+              type="button"
+              role="tab"
+              id={`direction-tab-${direction.id}`}
+              aria-controls={`direction-panel-${direction.id}`}
+              aria-selected={direction.id === activeDirectionId ? "true" : "false"}
+              tabindex={direction.id === activeDirectionId ? "0" : "-1"}
+              data-direction-target={direction.id}
+              style={`--direction-color: ${direction.color}`}
             >
-              {direction.status === "ready" ? (
-                <>
-                  <header class="idea-direction-head" style={`--direction-color: ${direction.color}`}>
-                    <p class="eyebrow">Exploration Run · {direction.explorationRun.runId}</p>
-                    <h2>{direction.label}</h2>
-                    <p class="idea-direction-subtitle">{direction.subtitle}</p>
-                    <p>{direction.scope}</p>
-                  </header>
+              <span>{direction.label}</span>
+              <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待深挖"}</small>
+            </button>
+          ))}
+        </div>
+        <p class="idea-direction-note">“进入盲评”不等于推荐立项。候选的真实最低分、反对意见和淘汰记录均保留在下方。</p>
+      </aside>
 
-                  <section class="exploration-verdict" aria-labelledby={`${direction.id}-verdict`}>
-                    <div>
-                      <p class="eyebrow">Decision</p>
-                      <h3 id={`${direction.id}-verdict`}>本轮判断</h3>
-                    </div>
-                    <p>{direction.explorationRun.verdict}</p>
-                  </section>
-
-                  <section class="exploration-audit" aria-labelledby={`${direction.id}-audit`}>
-                    <header class="idea-subsection-head">
-                      <div>
-                        <p class="eyebrow">Gate Review</p>
-                        <h3 id={`${direction.id}-audit`}>方向准入审计</h3>
-                      </div>
-                      <p>{direction.explorationRun.searchWindow}</p>
-                    </header>
-                    <div class="exploration-gates">
-                      {direction.explorationRun.gates.map((gate) => (
-                        <article>
-                          <div>
-                            <span>{gate.result}</span>
-                            <strong>{gate.score}</strong>
-                          </div>
-                          <h4>{gate.label}</h4>
-                          <p>{gate.judgement}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section class="saturation-audit" aria-labelledby={`${direction.id}-saturation`}>
-                    <header class="idea-subsection-head">
-                      <div>
-                        <p class="eyebrow">Saturation Audit</p>
-                        <h3 id={`${direction.id}-saturation`}>是不是已经做到极限</h3>
-                      </div>
-                      <p>{direction.explorationRun.saturation.verdict}</p>
-                    </header>
-                    <div class="saturation-columns">
-                      <section>
-                        <h4>高竞争区</h4>
-                        <ol>
-                          {direction.explorationRun.saturation.crowdedZones.map((zone) => (
-                            <li>
-                              <strong>{zone.title}</strong>
-                              <p>{zone.evidence}</p>
-                              <span>{zone.decision}</span>
-                            </li>
-                          ))}
-                        </ol>
-                      </section>
-                      <section>
-                        <h4>仍有余量</h4>
-                        <ol>
-                          {direction.explorationRun.saturation.openZones.map((zone) => (
-                            <li>
-                              <strong>{zone.title}</strong>
-                              <p>{zone.whyOpen}</p>
-                            </li>
-                          ))}
-                        </ol>
-                      </section>
-                    </div>
-                  </section>
-
-                  <section class="solution-families" aria-labelledby={`${direction.id}-solutions`}>
-                    <header class="idea-subsection-head">
-                      <div>
-                        <p class="eyebrow">Solution Space</p>
-                        <h3 id={`${direction.id}-solutions`}>通过门槛后，展开解法空间</h3>
-                      </div>
-                      <p>优先迁移能改变决策目标的机制，不局限于协同感知已有模块。</p>
-                    </header>
-                    <ol>
-                      {direction.explorationRun.solutionFamilies.map((family) => (
-                        <li>
-                          <span>{family.borrowedFrom}</span>
-                          <strong>{family.title}</strong>
-                          <p>{family.use}</p>
-                        </li>
-                      ))}
-                    </ol>
-                  </section>
-
-                  <section class="problem-signals" aria-labelledby={`${direction.id}-signals`}>
-                    <header class="idea-subsection-head">
-                      <div>
-                        <p class="eyebrow">Problem Map</p>
-                        <h3 id={`${direction.id}-signals`}>尚未解决的问题地图</h3>
-                      </div>
-                      <p>{direction.problemSignals.length} 条信号来自真实系统、前沿论文和相邻研究线的交叉核对。</p>
-                    </header>
-                    <ol>
-                      {direction.problemSignals.map((signal, index) => (
-                        <li>
-                          <span>{String(index + 1).padStart(2, "0")}</span>
-                          <div>
-                            <h4>{signal.title}</h4>
-                            <p>{signal.detail}</p>
-                          </div>
-                          <strong>{signal.status}</strong>
-                        </li>
-                      ))}
-                    </ol>
-                  </section>
-
-                  <details class="frontier-evidence">
-                    <summary>查看本轮前沿检索与关键一手证据</summary>
-                    <div class="frontier-evidence-body">
-                      <div class="frontier-search-meta">
-                        <p><strong>来源口径：</strong>{direction.explorationRun.sourcePolicy}</p>
-                        <p><strong>覆盖 venue：</strong>{direction.explorationRun.venueScope.join(" / ")}</p>
-                        <p><strong>查询族：</strong>{direction.explorationRun.queryFamilies.join("；")}</p>
-                      </div>
-                      <ol>
-                        {direction.explorationRun.frontierEvidence.map((source) => (
-                          <li>
-                            <div>
-                              <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>
-                              <span>{source.venue} · {source.year}</span>
-                            </div>
-                            <p>{source.finding}</p>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  </details>
-
-                  <section class="idea-ranked-list" aria-labelledby={`${direction.id}-ideas`}>
-                    <header class="idea-subsection-head">
-                      <div>
-                        <p class="eyebrow">Ranked Ideas</p>
-                        <h3 id={`${direction.id}-ideas`}>通过审计的候选 Idea</h3>
-                      </div>
-                      <p>{center.scoring.disclaimer}</p>
-                    </header>
-                    {direction.ideas.map((idea) => (
-                      <IdeaCard idea={idea} scoring={center.scoring} />
-                    ))}
-                  </section>
-                </>
-              ) : (
-                <section class="idea-direction-pending" style={`--direction-color: ${direction.color}`}>
-                  <p class="eyebrow">Queued Direction</p>
+      <div class="idea-direction-panels">
+        {directions.map((direction) => (
+          <section
+            class="idea-direction-panel"
+            id={`direction-panel-${direction.id}`}
+            role="tabpanel"
+            aria-labelledby={`direction-tab-${direction.id}`}
+            data-direction-panel={direction.id}
+            hidden={direction.id !== activeDirectionId}
+          >
+            {exploredStatuses.has(direction.status) ? (
+              <>
+                <header class="idea-direction-head" style={`--direction-color: ${direction.color}`}>
+                  <p class="eyebrow">Direction Audit · {auditDate(direction.candidatePool?.searchedAt)}</p>
                   <h2>{direction.label}</h2>
                   <p class="idea-direction-subtitle">{direction.subtitle}</p>
-                  <p>该方向尚未完成意义、前沿、饱和度、新颖性和可行性审计，因此暂不展示未经验证的 Idea。</p>
-                  <ol>
-                    {center.workflow.gates.map((gate) => (
-                      <li><span>{gate.label}</span><strong>待检索评分</strong></li>
-                    ))}
-                  </ol>
-                </section>
-              )}
-            </section>
-          ))}
-        </div>
-      </section>
-    </main>
+                  <p>{direction.scope}</p>
+                </header>
 
-    <footer class="idea-footer">
-      <p>Paper Digest · Idea Center</p>
-      <p>研究判断会随新论文、复现实验和真实数据更新。</p>
-    </footer>
-  </div>
+                <section class="exploration-verdict" aria-labelledby={`${direction.id}-verdict`}>
+                  <div>
+                    <p class="eyebrow">Outcome</p>
+                    <h3 id={`${direction.id}-verdict`}>本轮结论</h3>
+                  </div>
+                  <p>{direction.outcome?.summary || direction.explorationRun?.verdict}</p>
+                  {direction.outcome?.noPassedReason && <small>{direction.outcome.noPassedReason}</small>}
+                </section>
+
+                {direction.candidatePool && (
+                  <dl class="idea-audit-metrics" aria-label={`${direction.label} 检索统计`}>
+                    <div><dt>查询族</dt><dd>{auditMetric(direction.candidatePool, "queries")}</dd></div>
+                    <div><dt>一手证据</dt><dd>{auditMetric(direction.candidatePool, "references")}</dd></div>
+                    <div><dt>固定资产</dt><dd>{auditMetric(direction.candidatePool, "assets")}</dd></div>
+                    <div><dt>生成候选</dt><dd>{auditMetric(direction.candidatePool, "candidates")}</dd></div>
+                    <div><dt>进入盲评</dt><dd>{auditMetric(direction.candidatePool, "shortlisted")}</dd></div>
+                    <div><dt>全 10 通过</dt><dd>{direction.outcome?.passedCount || 0}</dd></div>
+                  </dl>
+                )}
+
+                {direction.selectionAudit && (
+                  <details class="idea-selection-audit idea-legacy-audit">
+                    <summary>
+                      查看独立筛选 · {direction.selectionAudit.rounds} 轮 / {direction.selectionAudit.decisionCount} 个候选逐项裁决
+                    </summary>
+                    <p>
+                      由 {direction.selectionAudit.reviewerCount} 名未参与检索与写作的筛选者完成，
+                      共保留 {direction.selectionAudit.selectedCount} 个进入 dossier 与盲评。
+                    </p>
+                    <ol>
+                      {records(direction.selectionAudit.reports).map((report) => (
+                        <li>
+                          <header>
+                            <strong>筛选于 {auditDate(report.selectedAt)}</strong>
+                            <span>{report.selectedCount}/{report.decisionCount} 保留</span>
+                          </header>
+                          <p>{report.crossDirectionFinding}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+
+                {records(direction.legacyAudit?.ideas).length > 0 && (
+                  <details class="idea-legacy-audit">
+                    <summary>查看旧版 {records(direction.legacyAudit?.ideas).length} 个 Idea 的逐项重审</summary>
+                    <p>{direction.legacyAudit.summary}</p>
+                    <ol>
+                      {records(direction.legacyAudit?.ideas).map((idea) => (
+                        <li>
+                          <header>
+                            <strong>{idea.title}</strong>
+                            <span class={`is-${idea.decision}`}>{idea.decision === "reject" ? "淘汰" : idea.decision === "revise" ? "收窄后重探" : "保留"}</span>
+                          </header>
+                          <p>{idea.rationale}</p>
+                          <p><strong>残余边界：</strong>{idea.residualBoundary}</p>
+                          <p><strong>处理：</strong>{idea.requiredNextAction}</p>
+                          <div>
+                            {records(idea.nearestWorks).filter((work) => work.url).slice(0, 4).map((work) => (
+                              <a href={work.url} target="_blank" rel="noopener noreferrer">{work.title}</a>
+                            ))}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+
+                <section class="idea-ranked-list" aria-labelledby={`${direction.id}-ideas`}>
+                  <header class="idea-subsection-head">
+                    <div>
+                      <p class="eyebrow">Reviewed Candidates</p>
+                      <h3 id={`${direction.id}-ideas`}>进入独立盲评的研究档案</h3>
+                    </div>
+                    <p>{scoring.disclaimer}</p>
+                  </header>
+                  {records(direction.ideas).map((idea) => (
+                    <IdeaCard idea={idea} scoring={scoring} />
+                  ))}
+                </section>
+
+                {records(direction.candidatePool?.rejected).length > 0 && (
+                  <details class="idea-rejection-ledger">
+                    <summary>查看检索阶段淘汰的 {records(direction.candidatePool?.rejected).length} 个候选</summary>
+                    <ol>
+                      {records(direction.candidatePool?.rejected).map((candidate) => (
+                        <li>
+                          <div>
+                            <strong>{candidate.title}</strong>
+                            <span>{candidate.category}</span>
+                          </div>
+                          <ul>{list(candidate.reasons).map((reason) => <li>{reason}</li>)}</ul>
+                          {candidate.primaryUrl && (
+                            <a href={candidate.primaryUrl} target="_blank" rel="noopener noreferrer">核验最近工作</a>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+
+                {direction.candidatePool && (
+                  <details class="frontier-evidence">
+                    <summary>查看查询记录、固定资产与全部一手证据</summary>
+                    <div class="frontier-evidence-body idea-audit-evidence">
+                      {(direction.candidatePool.latestDelta || direction.candidatePool.conclusion) && (
+                        <section class="idea-audit-conclusion">
+                          <h3>检索结论</h3>
+                          {direction.candidatePool.latestDelta && <p>{direction.candidatePool.latestDelta}</p>}
+                          {direction.candidatePool.conclusion && <p>{direction.candidatePool.conclusion}</p>}
+                        </section>
+                      )}
+                      <section>
+                        <h3>查询记录</h3>
+                        <ol>
+                          {records(direction.candidatePool.queryRuns).map((run) => (
+                            <li>
+                              <strong>{run.id}</strong>
+                              <p>{run.query}</p>
+                              <span>{run.source} · {run.resultCount ?? "未记录"} 条候选</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                      <section>
+                        <h3>固定公开资产</h3>
+                        <ol>
+                          {records(direction.candidatePool.assets).map((asset) => (
+                            <li>
+                              {asset.url ? (
+                                <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.name}</a>
+                              ) : <strong>{asset.name}</strong>}
+                              <p>{asset.type} · {asset.version || "版本边界见审计记录"}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                      <section>
+                        <h3>去重后的一手证据</h3>
+                        <ol>
+                          {records(direction.candidatePool.references).map((source) => (
+                            <li>
+                              {source.url ? (
+                                <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>
+                              ) : <strong>{source.title || source.id || "未命名证据"}</strong>}
+                              <p>{[source.venue, source.year, source.provenance].filter(Boolean).join(" · ")}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      </section>
+                    </div>
+                  </details>
+                )}
+              </>
+            ) : (
+              <section class="idea-direction-pending" style={`--direction-color: ${direction.color}`}>
+                <p class="eyebrow">Queued Direction</p>
+                <h2>{direction.label}</h2>
+                <p class="idea-direction-subtitle">{direction.subtitle}</p>
+                <p>该方向尚未完成外部检索、候选碰撞和独立盲评，因此不展示未经验证的 Idea。</p>
+              </section>
+            )}
+          </section>
+        ))}
+      </div>
+    </section>
+  </NotebookDocs>
 
   <script is:inline src="../assets/ideas.js"></script>
 </BaseLayout>

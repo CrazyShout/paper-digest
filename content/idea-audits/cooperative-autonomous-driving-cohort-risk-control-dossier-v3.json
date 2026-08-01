@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-cohort-risk-control-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "cooperative-benchmark-cohort-missingness",
+  "workingTitle": "按角色与可用性分层的有害协作风险控制",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb740-9fb3-7ae3-95ee-56f9a2905427",
+    "role": "primary-source-contract-and-statistical-design-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "falsifiableQuestion": "Using only deployment-visible ego role, collaborator type and count, modality state, message age, and model confidence, can a policy choose among cooperative output, ego-only fallback, and a safer degraded action so that every sufficiently supported cohort respects a preregistered harmful-cooperation risk bound while retaining more useful cooperation than a global selector?",
+  "verifiedTaskContracts": [
+    {
+      "benchmark": "CooperScene",
+      "urls": [
+        "https://cisl.ucr.edu/CooperScene/",
+        "https://arxiv.org/abs/2606.31219",
+        "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/datasets/coop_dataset.py"
+      ],
+      "finding": "The formal vehicle-ego protocol evaluates three vehicle egos, while public settings explicitly distinguish vehicle-only, infrastructure-only, and mixed collaborator compositions and apply distance filtering.",
+      "boundary": "The released mini four-ego artifact is a separate contract audit and is not generalized to the full dataset."
+    },
+    {
+      "benchmark": "V2X-Real",
+      "urls": [
+        "https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/06926.pdf",
+        "https://github.com/ucla-mobility/V2X-Real",
+        "https://mobility-lab.seas.ucla.edu/v2x-real/"
+      ],
+      "finding": "The public task contract separates vehicle-centric, infrastructure-centric, V2V, and I2I modes, making ego role and cooperation topology explicit.",
+      "boundary": "Task mode is not a natural packet-loss or collaborator-missingness label."
+    },
+    {
+      "benchmark": "V2XSet",
+      "urls": [
+        "https://www.ecva.net/papers/eccv_2022/papers_ECCV/papers/136990106.pdf",
+        "https://github.com/DerrickXuNu/v2x-vit",
+        "https://github.com/DerrickXuNu/OpenCOOD/blob/main/docs/md_files/data_intro.md"
+      ],
+      "finding": "Training chooses a vehicle ego, testing fixes a vehicle ego, infrastructure uses a distinct agent convention, and agents beyond a configured range are ignored.",
+      "boundary": "Injected latency and localization error do not identify natural collaborator dropout."
+    },
+    {
+      "benchmark": "DAIR-V2X-C and V2X-Seq",
+      "urls": [
+        "https://openaccess.thecvf.com/content/CVPR2022/html/Yu_DAIR-V2X_A_Large-Scale_Dataset_for_Vehicle-Infrastructure_Cooperative_3D_Object_Detection_CVPR_2022_paper.html",
+        "https://openaccess.thecvf.com/content/CVPR2023/html/Yu_V2X-Seq_A_Large-Scale_Sequential_Dataset_for_Vehicle-Infrastructure_Cooperative_Perception_and_CVPR_2023_paper.html",
+        "https://github.com/AIR-THU/DAIR-V2X-Seq"
+      ],
+      "finding": "The cooperative target is vehicle-centric, and V2X-Seq exposes sequential scenes and delayed infrastructure-frame settings.",
+      "boundary": "Continuous frames are dependent and must be split and resampled by sequence or scenario."
+    }
+  ],
+  "nearestWorkBoundary": [
+    {
+      "work": "RCP-Bench",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+      "occupiedSpace": "Average robustness under fourteen corruption classes, including temporal misalignment."
+    },
+    {
+      "work": "V2X-INCOP",
+      "url": "https://arxiv.org/abs/2304.11821",
+      "occupiedSpace": "Feature recovery under random communication interruption."
+    },
+    {
+      "work": "BM2CP and SiMO",
+      "url": "https://proceedings.mlr.press/v229/zhao23a.html",
+      "occupiedSpace": "Model robustness under unavailable sensors or arbitrary missing modalities."
+    },
+    {
+      "work": "SRA-CP",
+      "url": "https://arxiv.org/abs/2511.17461",
+      "occupiedSpace": "Risk-aware decisions about when and with whom to cooperate."
+    },
+    {
+      "work": "Conformal Risk Control",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/f3549ef9b5ff520a7e41ff3cc306ab2b-Abstract-Conference.html",
+      "occupiedSpace": "Finite-sample control of bounded monotone losses under its exchangeability assumptions."
+    },
+    {
+      "work": "Conditional guarantees for predictive inference",
+      "url": "https://academic.oup.com/jrsssb/article/87/4/1100/8058684",
+      "occupiedSpace": "Group-conditional predictive guarantees and their support assumptions."
+    }
+  ],
+  "noveltyBoundary": [
+    "The contribution is a deployable three-way fallback decision, not an additional grouped AP table.",
+    "Cohorts are derived from benchmark-native task and availability contracts rather than only synthetic corruption severity.",
+    "Calibration and testing use physical-event, take, sequence, or scenario clusters; multiple ego projections and adjacent frames do not count as independent evidence.",
+    "The target is group-conditional harmful-cooperation risk relative to ego-only, with explicit support refusal and mixture-shift analysis."
+  ],
+  "cohortHierarchy": [
+    "benchmark and task",
+    "receiver ego role",
+    "collaborator composition: none, vehicle-only, infrastructure-only, or mixed",
+    "collaborator count and modality state",
+    "availability cause: range-filtered, absent in data, communication-masked, modality-masked, stale, or unknown"
+  ],
+  "estimands": {
+    "decisionUnit": "physical_event x receiver_ego x availability_state x frozen_model",
+    "independentUnit": "take, sequence, scenario, or simulation episode",
+    "primaryLoss": "Frame-level missed-object rate inside the official region of interest; zero-ground-truth frames enter a separate false-alarm estimand.",
+    "harmIndicator": "H_i(delta)=1{MOR_coop,i - MOR_ego,i > delta}, with delta fixed before outcome inspection.",
+    "cohortRisk": "R_g=E[H_i | A_i=1,G_i=g]",
+    "coverage": "C_g=P(A_i=1 | G_i=g), where A_i=0 invokes ego-only fallback.",
+    "weighting": "Take or sequence equal-weighted primary analysis, with frame-weighted sensitivity only.",
+    "secondary": [
+      "False positives and localization error",
+      "Final-policy AP",
+      "Risk under preregistered cohort-mixture reweighting"
+    ]
+  },
+  "statisticalProtocol": [
+    "Split calibration and test by complete independent sequences or takes and compare policies on matched physical events.",
+    "Apply group-conditional or Mondrian calibration only to a bounded cluster-level loss under stated exchangeability conditions.",
+    "Use cluster bootstrap, leave-one-sequence-out sensitivity, and simultaneous one-sided cohort bounds.",
+    "Refuse a conditional guarantee when independent support is insufficient and publish the interval instead.",
+    "Choose sample size from the target risk bound rather than frame count; adjacent mini frames never substitute for independent clusters."
+  ],
+  "baselines": [
+    "Always cooperate",
+    "Always ego-only",
+    "Official aggregate AP",
+    "Grouped reporting without a selector",
+    "Global-confidence selector",
+    "Independent threshold per ego role",
+    "Independent threshold per leaf cohort",
+    "Hierarchical fallback selector",
+    "Random agent or modality-drop robust model",
+    "Undeployable oracle upper bound"
+  ],
+  "twoWeekMinimum": [
+    "Freeze the official CooperScene commit, mini archive, advertised model asset path, and configuration; build a read-only physical-event, ego, topology, and availability ledger.",
+    "Replay always-cooperate, ego-only, and deployment-visible collaborator masks while keeping natural topology and injected masks separate.",
+    "Audit event isolation between calibration and test, the interpretation of infrastructure-ego release rows, and all selector features for label or post-outcome leakage.",
+    "Compare global, per-role, and hierarchical fallback policies with clustered intervals and preregistered cohort-mixture reweighting.",
+    "Limit the outcome to contract reconstruction, runnable-method feasibility, and interval informativeness; label every mini result as a smoke test."
+  ],
+  "sixWeekStudy": [
+    "Verify a full-release manifest and use only official directly accessible data and model assets.",
+    "Freeze at least two model families and generate paired outputs under natural topology, controlled agent and modality masks, and stale-message conditions.",
+    "Calibrate global, role-specific, leaf-specific, and hierarchical selectors with cluster-aware inference.",
+    "Reproduce on a second public benchmark; if infrastructure-ego data are unavailable, restrict the claim to vehicle-ego availability cohorts.",
+    "Release manifests, cohort definitions, support counts, paired outputs, equivalence margins, and negative results."
+  ],
+  "successSignal": "A global selector appears acceptable in aggregate but violates the preregistered risk bound in at least one sufficiently supported cohort, while the hierarchical selector restores the bound or improves the minimum cohort coverage at equal risk and replicates across a second model family or benchmark.",
+  "negativeResult": "Global, role-specific, and hierarchical policies are equivalent within a preregistered margin, or cooperation has no identifiable harm over ego-only in the evaluated support; report the bounded null result without claiming hidden failure.",
+  "killCriteria": [
+    "Physical-event and ego identities cannot be reconstructed reliably.",
+    "Calibration and test cannot be isolated by independent sequence, take, or scenario.",
+    "An ego-only counterfactual cannot be generated on matched inputs.",
+    "All selector features require ground truth, future, or post-decision information.",
+    "Cohort risk bounds remain wider than the preregistered informativeness limit.",
+    "No second accessible benchmark or model family supports the stated ego-role scope."
+  ],
+  "assetBoundary": [
+    "The public, non-gated CooperScene model repository exposes a 111,360,914-byte CoSDH checkpoint with LFS SHA-256 89a0cd3b6c52d013f6cc336c940fc4ca918fda7333f508eee9031d3852e995cf and a config bound to the mini test index. Files and commands are verified, but one end-to-end run remains required.",
+    "V2X-Real data links are publicly downloadable, but no official checkpoint is released; it cannot serve as the short-cycle checkpoint replication.",
+    "Natural collaborator absence and injected communication or modality masks are stored and analyzed as distinct causes."
+  ]
+}

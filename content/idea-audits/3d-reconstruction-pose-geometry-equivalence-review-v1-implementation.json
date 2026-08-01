@@ -1,0 +1,38 @@
+{
+  "candidateId": "unposed-pose-geometry-task-equivalence-break",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbc0-f9cd-7293-8632-441a239393a2",
+  "reviewedAt": "2026-08-01T13:24:22+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "审计自然产生的 matched-photometric 联合解，并要求 geometry 与任务输出同时分裂，比人工 pose noise 或单解质量评测更具体；但 bootstrap、顺序和窗口扰动是否属于同一可比输入语义仍需实验证明。",
+    "feasibility": "DGGT 固定提交可访问，Apache-2.0，提供 inference.py、Waymo/nuScenes/Argoverse2 数据处理、Waymo checkpoint、diffusion checkpoint 及 depth/image/metrics 输出，足以建立推理与配对流水线。缺口是官方入口没有自然解族采样器、metric-offset renderer 或冻结感知栈，且输入顺序变化是否为受支持等价变换没有接口契约。",
+    "success-probability": "确定性 checkpoint 对相同输入很可能只给数值噪声；能产生不同解的 bootstrap/window 变体也会改变可见证据，而非暴露同一观测的等价解。25% clip 产率和两个数据域可能偏高，Gate 0 失败概率显著。",
+    "impact": "如果证明视觉拟合相同却造成显著 metric geometry 与任务差异，会改变无位姿前馈重建的评价方式；但当前冻结 task stack 只代表单一消费者，影响范围仍受限。",
+    "comparison-readiness": "官方 checkpoint、三套数据支持、GT pose/depth 评估与 repeat control 使基本审计可落地；但 detector checkpoint、类别映射、metric-offset render adapter 和 diffusion on/off 协议仍待锁定，尚不能直接复现实验主表。"
+  },
+  "strongestObjection": "所谓自然 ambiguity pair 可能不可识别：bootstrap、删帧和窗口平移改变了输入信息集，order 变化又可能违反模型的时序语义，因此找到的 pair 可能只是不同观测导致的不同估计，而不是同一无位姿问题的联合 pose-geometry 等价解；官方 DGGT 入口没有提供多解采样或等价类接口。",
+  "requiredExperiment": "固定 DGGT 提交与 Waymo checkpoint，在 20 个 development clips 上分别执行 identical-input repeats、官方允许的 camera ordering、view bootstrap 和相邻 window；先冻结 observed-view overlap 与 PSNR/LPIPS 容差，不使用 GT 选 pair。报告每种机制的有效 pair 率、输入信息差异和 repeat-control 底噪；只有至少两种不改变目标时刻观测语义的机制能在不少于 25% clips 产生 pair，才继续 metric/task 分歧评估。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/xiaomi-research/dggt/tree/a3276d2bbe4cbb03bcc117830b1836110a27adeb",
+      "finding": "固定提交提供 Apache-2.0 代码、inference.py、训练入口、Waymo/nuScenes/Argoverse2 数据处理说明及多个公开 checkpoint；推理参数覆盖 input views、sequence length、images、depth、diffusion 和 metrics，但未提供多解或 metric-offset task renderer 接口。"
+    },
+    {
+      "url": "https://xiaomi-research.github.io/dggt/",
+      "finding": "官方项目页确认模型联合预测 camera、3D Gaussian、depth 与动态 motion，并以单次前馈方式工作；其公开结果聚焦重建、深度和场景编辑，不包含自然 matched-solution pair 审计。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2512.03004",
+      "finding": "一手论文确认 pose 作为模型输出、支持稀疏无位姿图像及跨数据集评估，但没有声明同一观测存在可采样的多解分布。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "87c6fe2f6f24c1acc961ebac03d9626adc92ba1ad1ab825a52647ed6f9c2855b"
+}

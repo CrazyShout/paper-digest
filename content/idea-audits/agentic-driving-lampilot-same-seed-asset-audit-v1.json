@@ -1,0 +1,85 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "auditedAt": "2026-08-01",
+  "auditType": "official-code-path-check",
+  "claimBoundary": "The released human-feedback evaluation path can reuse policies learned from an exact demo when evaluating another command attached to the same simulator sample. This is an evaluation-identifiability issue: it does not establish misconduct, and policy reuse is an intended system capability.",
+  "officialAsset": {
+    "name": "LaMPilot",
+    "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+    "fixedCommit": "ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+    "verifiedFiles": [
+      "projects/lampilot/dt/dbl.py",
+      "projects/lampilot/test_hf.py",
+      "projects/lampilot/utils/run.py",
+      "projects/lampilot/dt/policy_repo.py",
+      "projects/lampilot/dt/hf_agent.py",
+      "projects/lampilot/configs/DbLv1/config_list.txt"
+    ]
+  },
+  "verifiedObservations": [
+    {
+      "id": "sample-command-cartesian-product",
+      "evidence": "DbLv1Dataset creates one item for every sample-command pair and assigns IDs of the form scenario_s{sample}_c{command}. Different command IDs can therefore share the same complete simulator sample and random seed."
+    },
+    {
+      "id": "exact-id-demo-list",
+      "evidence": "DbLv1DemoDataset selects a fixed list of exact IDs such as left_overtake_s0_c0 rather than reserving all commands that share the same sample or seed."
+    },
+    {
+      "id": "demo-before-test",
+      "evidence": "test_hf.py executes the demo set first, repeatedly refines each policy until success, and then evaluates non-demo dataset items. Only exact IDs already present in results are skipped."
+    },
+    {
+      "id": "persistent-policy-repository",
+      "evidence": "Successful demo policies are added to a Chroma-backed repository. Test workers instantiate HumanFeedbackCGAgent with resume=true and retrieve semantically similar policies before generating the evaluated policy."
+    },
+    {
+      "id": "intended-reuse",
+      "evidence": "The project explicitly describes policy storage and retrieval for reuse as a core feature. The scientific question is therefore attribution of measured performance, not whether retrieval should exist."
+    },
+    {
+      "id": "protocol-scope",
+      "evidence": "The repository also exposes zero-shot/few-shot test_icl paths that do not use the human-feedback policy repository. Any finding must name the exact human-feedback protocol and must not be generalized to every LaMPilot result."
+    }
+  ],
+  "identificationProblem": {
+    "currentProtocolCanMix": [
+      "language paraphrase generalization",
+      "policy retrieval for a semantically similar instruction",
+      "reuse of a policy learned on the same simulator initial state and seed",
+      "new code generation from the current context"
+    ],
+    "missingSeparations": [
+      "exact-ID exclusion versus sample-group exclusion",
+      "sample-group exclusion versus seed-group exclusion",
+      "persistent repository versus repository reset before every test item",
+      "policy retrieved but hidden from generation versus stateless generation"
+    ]
+  },
+  "credibleBuildPath": [
+    "Construct canonical group keys from scenario config, sample index, and simulator seed before running any model.",
+    "Add retrieval traces that record policy IDs and similarity scores consumed by each test item without changing generated control code.",
+    "Run the same fixed model under exact-ID exclusion, repository-reset, sample-group holdout, seed-group holdout, and stateless ICL conditions.",
+    "Keep the command text and evaluation scenario fixed within paired comparisons, and bootstrap at the sample or seed group rather than at the command row.",
+    "Report policy-retrieval rate, success, collision, TTC, efficiency, and rank stability separately for instruction, sample, and seed generalization."
+  ],
+  "minimumFalsification": {
+    "scope": "At least three scenario families with demo IDs and multiple command paraphrases, including one lane-change or overtake task and one longitudinal-control task.",
+    "success": "The released exact-ID protocol materially overstates performance relative to sample/seed group holdout, and the difference is mediated by retrieval of a policy learned from the same simulator state.",
+    "kill": "Same-state non-demo commands do not retrieve or benefit from the demo policy, or strict sample/seed holdout leaves performance and method ranking unchanged."
+  },
+  "strongBaselines": [
+    "Released exact-ID exclusion with persistent repository",
+    "Repository reset before every evaluated command",
+    "Sample-group holdout",
+    "Seed-group holdout",
+    "Stateless zero-shot or few-shot code generation"
+  ],
+  "remainingRisks": [
+    "A performance drop under group holdout is not automatically leakage; it may quantify the intended value of policy reuse and should be reported as attribution rather than a defect.",
+    "The default README full-benchmark example uses test_icl rather than test_hf, so claims must remain protocol-specific.",
+    "Repository retrieval depends on external embeddings and LLM services; exact model revisions, temperature, prompts, and persisted repository bytes must be fixed.",
+    "The first items under a truncated, unshuffled test set may not include every demo scenario, so the complete benchmark or a preregistered scenario subset is required."
+  ],
+  "verdict": "credible-build-path"
+}

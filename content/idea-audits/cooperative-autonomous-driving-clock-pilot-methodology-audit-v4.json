@@ -1,0 +1,425 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-pilot-methodology-audit-v4-2026-07-31",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "auditedAt": "2026-07-31T18:07:45+08:00",
+  "auditScope": {
+    "independenceStatement": "本审计未采用任何候选评分、评审分数、排序结果或外部接受规则。结论仅来自指定源码、测试、pilot JSON、provenance dossier、原样重跑和独立复算。",
+    "auditedFiles": [
+      "scripts/idea-pilots/clock-age-identifiability.mjs",
+      "test/clock-age-identifiability.test.mjs",
+      "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json",
+      "content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json"
+    ],
+    "sourceHashesSha256": {
+      "scripts/idea-pilots/clock-age-identifiability.mjs": "bc8581adcb0000c1db107bccfc958bf206fda8680b042951f30062955f0715e6",
+      "test/clock-age-identifiability.test.mjs": "1e153c2ee54871d705d5118e7d84c59e57cd59276ffecf91265efa0ab6efdfc9",
+      "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json": "c7481b542f548dd9b93100706813fda5151363ca8cf471a7de8af9419b1402c9",
+      "content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json": "6c801b9c509906394f1e7734b1820a66a85cb6cfc253310a3d0f3b10959beb9a"
+    }
+  },
+  "commands": [
+    {
+      "command": "node scripts/idea-pilots/clock-age-identifiability.mjs",
+      "exitCode": 0,
+      "result": "成功重跑；Node v24.14.0；生成 512 个 calibration episodes、4400 个 test records、每个 regime 400 个 clusters；报告的 action 为 continue-to-calibrated-trace-phase。"
+    },
+    {
+      "command": "node --test test/clock-age-identifiability.test.mjs",
+      "exitCode": 0,
+      "result": "6 tests passed, 0 failed。"
+    },
+    {
+      "command": "node /private/tmp/clock-methodology-recompute.mjs",
+      "exitCode": 0,
+      "result": "独立复算成对物理一致性、calibration-test 耦合、point exact-hit/MAE、coverage any/all、空交集、Wilson/zero-event 数值和 adversarial stop condition。临时脚本不在仓库内。"
+    },
+    {
+      "command": "git ls-files --stage -- scripts/idea-pilots/clock-age-identifiability.mjs test/clock-age-identifiability.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json",
+      "exitCode": 0,
+      "result": "无输出；四个文件在当前 index 中均未跟踪。"
+    },
+    {
+      "command": "git log --all --format=%H%x09%cI -- scripts/idea-pilots/clock-age-identifiability.mjs test/clock-age-identifiability.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json",
+      "exitCode": 0,
+      "result": "无输出；没有可用于证明 stop condition 在运行前已冻结的提交历史。"
+    },
+    {
+      "command": "shasum -a 256 scripts/idea-pilots/clock-age-identifiability.mjs test/clock-age-identifiability.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json /private/tmp/clock-methodology-recompute.mjs",
+      "exitCode": 0,
+      "result": "已记录四个被审计文件和独立复算脚本的 SHA-256。"
+    }
+  ],
+  "independentRecomputations": {
+    "pairedWorldPhysicalConsistency": {
+      "episodePairs": 400,
+      "identicalObservationPairs": 400,
+      "identicalDeclaredServiceProcessPairs": 400,
+      "oppositeDeadlineTruthPairs": 400,
+      "maximumSenderClockEquationResidualMs": 0,
+      "maximumRttConservationResidualMs": 0,
+      "minimumForwardPropagationMs": 27.5,
+      "minimumReversePropagationMs": 27.5,
+      "interpretation": "双世界不是仅靠相反标签形成：sender timestamp、age、RTT 和非负传播分量在生成器方程内一致。固定的是队列、序列化、receiver processing、RTT 和所有 observation；forward/reverse propagation 按设计在世界间重新分配，因此不能表述为整个网络路径过程完全不变。"
+    },
+    "calibrationTestSeparation": {
+      "distinctConfiguredSeeds": true,
+      "disjointEpisodeIds": true,
+      "methodInputContainsTestTruth": false,
+      "testGeneratorConsumesFittedCalibration": true,
+      "calibrationMappingHalfWidthMs": 19.99270362,
+      "maximumBoundedTestMappingErrorMs": 15.984649681,
+      "maximumBoundedTestMappingErrorAsCalibrationFraction": 0.799524166,
+      "calibrationRateHalfWidthPpm": 121.531275257,
+      "maximumBoundedTestRateResidualPpm": 97.080775931,
+      "maximumBoundedTestRateResidualAsCalibrationFraction": 0.79881311,
+      "minimumBoundedDistanceFromDeadlineMs": 40.986866516,
+      "interpretation": "随机种子和 episode ID 隔离成立，推断输入 firewall 也成立；但 bounded test 的误差上限和 deadline margin 直接由 fitted calibration 计算，因而不是独立 holdout coverage test。"
+    },
+    "rateUncertaintyStress": {
+      "boundedRecords": 800,
+      "coveredAfterSettingCalibrationRateHalfWidthToZero": 800,
+      "verdictsChangedAfterSettingCalibrationRateHalfWidthToZero": 0,
+      "interpretation": "当前 bounded generator 不支持 rate uncertainty 对 coverage 或 verdict 的实质贡献结论；删除 rate 字段的 ablation 只触发显式 fail-closed 分支。"
+    },
+    "coverageSemantics": {
+      "declaredClusterRule": "cluster 内每条 true age 都被覆盖才算 cluster success",
+      "implementedClusterRule": "cluster 内任一 true age 被覆盖就算 cluster success",
+      "currentFrozenRunAnyAllDifference": 0,
+      "adversarialOneMissCluster": {
+        "implementedCoverageEstimate": 1,
+        "implementedCoverageCi95": [
+          0.990488,
+          1
+        ],
+        "correctAllCoveredSuccesses": 399,
+        "clusters": 400
+      },
+      "interpretation": "当前对称构造掩盖了 any/all 错误；一旦 cluster 内只有部分记录失败，报告仍会把该 cluster 计为成功。"
+    },
+    "pointEstimatorDiagnostics": {
+      "meaningOfReportedPointCoverage": "点估计被编码为 [estimate, estimate]，因此 coverage 实际是浮点容差 1e-9 内的 exact-hit cluster rate，不是通常的误差、容差准确率或预测区间 coverage。",
+      "reportedOverallClusteredCoverageForEachNonOraclePointMethod": 0.2,
+      "recordLevel": {
+        "naive-direct-subtraction": {
+          "exactHitRate": 0.181818182,
+          "meanAbsoluteErrorMs": 151.402344461
+        },
+        "mcap-log-minus-publish": {
+          "exactHitRate": 0.181818182,
+          "meanAbsoluteErrorMs": 151.910874316
+        },
+        "rtt-half-point": {
+          "exactHitRate": 0.181818182,
+          "meanAbsoluteErrorMs": 6.717140905
+        },
+        "ptp-like-point": {
+          "exactHitRate": 0.181818182,
+          "meanAbsoluteErrorMs": 9.156179678
+        }
+      }
+    },
+    "emptyIntersectionCounterexample": {
+      "rawAgeIntervalMs": [
+        -966,
+        -966
+      ],
+      "mathematicalIntersectionWithNonnegativeAges": "empty",
+      "returnedIntervalMs": [
+        0,
+        0
+      ],
+      "returnedVerdict": "fresh",
+      "interpretation": "分别 clamp 两个端点会把完全位于负半轴的空交集伪造成 age=0，而不是拒绝不一致的 transform。"
+    },
+    "intervalAndZeroEventArithmetic": {
+      "clusters": 400,
+      "wilsonAllSuccess95": [
+        0.990487705666,
+        1
+      ],
+      "wilsonZero95": [
+        0,
+        0.009512294334
+      ],
+      "exactOneSidedZeroEventUpper95": 0.007461355529,
+      "reportedRoundedValuesMatch": true,
+      "interpretation": "公式和舍入本身正确；把这些区间解释为可推广的 95% 频率学保证仍要求独立同分布或明确随机化总体，而当前 deterministic grid、共享 calibration artifact 和按 fitted bounds 构造的 test 不满足这一解释。"
+    },
+    "adversarialStopCondition": {
+      "injectedFalseFreshClusters": 1,
+      "falseFreshEstimate": 0.0025,
+      "falseFreshZeroEventUpper95": null,
+      "boundedFalseFreshUpper95CheckReturned": true,
+      "reportedCoverageStillReturned": 1,
+      "reportedAction": "continue-to-calibrated-trace-phase",
+      "cause": "zeroEventUpper95 在出现事件时为 null，而 JavaScript 的 null <= 0.01 为 true；同时 coverage 的 some(Boolean) 隐藏了同一 cluster 内的 miss。"
+    },
+    "testSeedProvenance": {
+      "alternativeRequestedSeed": 123456789,
+      "firstReturnedEpisodeId": "test-paired-2026073102-0",
+      "interpretation": "RNG 接收替代 seed，但 episode ID 仍硬编码 PILOT_CONFIG.testSeed，破坏替代重跑的 seed provenance。"
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "title": "bounded test 由 fitted calibration 反向构造，不能作为独立 coverage 验证",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:435-457 使用 calibration.mappingHalfWidthMs 同时设置测试 age margin 和 mapping error 支持集。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:614-647 对 relock stable phases 采用同类构造。",
+        "独立复算中 bounded mapping/rate residual 最大仅为各 calibration bound 的 0.799524166 和 0.79881311，离 deadline 的最小 margin 为 40.986866516 ms。",
+        "将 rateHalfWidthPpm 置 0 后，800/800 bounded records 仍覆盖且 0 个 verdict 改变。"
+      ],
+      "conclusion": "distinct seeds 和 truth firewall 不等于 holdout 独立性；当前 100% bounded coverage 是构造内保证，不能验证 calibration bounds 对独立测试总体的覆盖。"
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "title": "clusteredCoverage 实现与预先声明的 every-record 定义不一致",
+      "evidence": [
+        "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json:78-82 声明 cluster 中每个 true age 都须被覆盖。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:845-885 对 coverage 调用 clusteredBinaryAny，并使用 entries.some(Boolean)。",
+        "独立 adversarial 复算令一个 2-record cluster 中一条记录 miss，coverage 仍报告 1 和 [0.990488,1]。"
+      ],
+      "conclusion": "当前 frozen run 因所有记录成组同成同败而没有数值差异，但实现是潜在的向上偏差，并直接影响 stop condition。"
+    },
+    {
+      "id": "F3",
+      "severity": "high",
+      "title": "出现 false-fresh 时 zero-event stop check 仍可返回 true",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:845-859 在 positives > 0 时把 zeroEventUpper95 设为 null。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:1027-1028 直接计算 null <= maximumZeroFalseFreshUpper95。",
+        "独立 adversarial 复算得到 falseFresh.estimate=0.0025、zeroEventUpper95=null、boundedFalseFreshUpper95Check=true，最终 action 仍为 continue-to-calibrated-trace-phase。"
+      ],
+      "conclusion": "stop condition 对其最关键的非零 false-fresh 情形不是 fail-closed。"
+    },
+    {
+      "id": "F4",
+      "severity": "high",
+      "title": "age interval 与 [0,infinity) 的空交集被错误改写为 [0,0] fresh",
+      "evidence": [
+        "content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json:113-119 要求先形成 age interval 再与非负半轴取交集。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:774-781 分别对 lower 和 upper 使用 Math.max(0, value)，未检测 raw upper < 0 的空集。",
+        "独立构造 raw interval [-966,-966] 时，方法返回 [0,0] 且 verdict=fresh。"
+      ],
+      "conclusion": "区间端点公式在非空情形正确，但空交集处理不正确，可能把不一致 provenance 变成确定 fresh。"
+    },
+    {
+      "id": "F5",
+      "severity": "medium",
+      "title": "controls 和 field ablations 主要是显式分支自检，不能证明字段贡献或必要性",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:741-760 对 missing/mismatch 字段显式返回 unknown。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:785-821 的 ablation 直接删除必需字段，再调用同一个 fail-closed 实现。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:975-982 仅统计这些删除字段后返回 uncertain 的比例。",
+        "独立复算中移除数值 rate uncertainty 而保留 rate 字段不改变任何 bounded verdict 或 coverage。"
+      ],
+      "conclusion": "这些结果可作为 missing-field branch tests，但不能支持 clock domain、validity、rate、relock 各自带来实质识别增益的 ablation claim。"
+    },
+    {
+      "id": "F6",
+      "severity": "medium",
+      "title": "点估计 coverage 是 exact-hit 指标，跨方法展示会误导",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:711-716 把点估计编码为零宽区间。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:880-885 用 true age 是否落入零宽区间计算 coverage。",
+        "四个非 oracle 点方法的 record exact-hit rate 均为 0.181818182，但 MAE 分别约为 151.40、151.91、6.72、9.16 ms，说明 exact-hit coverage 无法表达点估计质量差异。"
+      ],
+      "conclusion": "该量只能明确命名为 exact-hit rate；不能与有宽度的 interval coverage 作同语义比较。"
+    },
+    {
+      "id": "F7",
+      "severity": "medium",
+      "title": "Wilson 和 zero-event 数值正确，但统计推断适用性未建立",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:834-859 的 Wilson 和 1-0.05^(1/n) 计算与独立复算一致。",
+        "n=400 时独立结果为 Wilson all-success lower=0.990487705666、Wilson zero upper=0.009512294334、one-sided zero-event upper=0.007461355529。",
+        "测试 clusters 来自 deterministic grid、单个共享 calibration artifact，且 bounded test 支持集由 fitted calibration 决定。"
+      ],
+      "conclusion": "这些数值可描述本次生成器抽样；不能在未定义抽样总体和依赖结构时解释为外部系统或独立测试总体的 95% 保证。"
+    },
+    {
+      "id": "F8",
+      "severity": "medium",
+      "title": "stop condition 不是可验证的 preregistration，且当前规则存在实质漏洞",
+      "evidence": [
+        "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v4.json:8-15 自述在 recorded run 前冻结，但明确承认没有外部时间戳。",
+        "git ls-files 对脚本、测试和 pilot JSON 无输出，git log 也无历史，无法独立确定 thresholds、generator 和 observed results 的先后顺序。",
+        "F2、F3 证明即使注入 false-fresh，当前 all-checks action 仍可继续。"
+      ],
+      "conclusion": "if-all-pass 只允许进入后续 trace phase 的动作边界本身较保守，但其 preregistration 状态不可证，且当前 checks 不能作为可靠 go/no-go gate。"
+    },
+    {
+      "id": "F9",
+      "severity": "low",
+      "title": "替代 test seed 未写入 episode IDs",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:344-346 及其他 record factories 使用 PILOT_CONFIG.testSeed 构造 ID。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:688-703 接收独立 seed 参数并用其驱动 RNG。",
+        "调用 seed=123456789 后首个 ID 仍为 test-paired-2026073102-0。"
+      ],
+      "conclusion": "默认运行不受影响，但替代 seed 重跑的 provenance 和 disjointness 审计会被错误标记。"
+    },
+    {
+      "id": "F10",
+      "severity": "info",
+      "title": "双世界 observation 等价且在生成器方程内自洽",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:344-432 构造同一 observation、相反 deadline truth、相同声明 service process，并重分配双向传播。",
+        "test/clock-age-identifiability.test.mjs:67-104 检查 observation、trace hash、payload、order、service process 和所有非 oracle prediction 相同。",
+        "独立复算确认 400/400 observation 相同、400/400 opposite truth、sender-clock 与 RTT 最大残差均为 0，最小双向 propagation 为 27.5 ms。"
+      ],
+      "conclusion": "可保留生成器内 observational-equivalence witness；措辞必须限定为声明的队列/序列化/处理过程固定，而不是全部方向传播过程固定。"
+    },
+    {
+      "id": "F11",
+      "severity": "info",
+      "title": "非 oracle 推断输入没有直接 test-truth 泄漏",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability.mjs:707-709 只返回 observation。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:741-782 的 intervalPrediction 只读取 input 和 calibration。",
+        "scripts/idea-pilots/clock-age-identifiability.mjs:816-819 仅 oracle 显式接收 evaluation truth。",
+        "test/clock-age-identifiability.test.mjs:107-138 改写 truth 后所有非 oracle prediction 保持不变。"
+      ],
+      "conclusion": "推断期 truth firewall 通过；这不能消除 F1 的 test-distribution coupling。"
+    }
+  ],
+  "passableClaims": [
+    {
+      "claim": "在当前 deterministic CPU generator 内存在 400 对完整 observation 相同但 deadline truth 相反的双世界记录。",
+      "boundary": "仅限 frozen generator；需说明 directional propagation 在世界间改变，固定的是 observation、RTT 和声明的 queue/serialization/receiver-processing components。"
+    },
+    {
+      "claim": "所有非 oracle 方法对同一双世界 observation 产生相同输出，说明这些方法不能从该 observation 区分两个构造世界。",
+      "boundary": "这是构造内的 observational-equivalence witness，不是现实部署中的漏洞或发生率证据。"
+    },
+    {
+      "claim": "provenance-interval 推断函数本身不直接读取 test truth；oracle 是唯一显式 truth consumer。",
+      "boundary": "只覆盖推断输入 firewall，不代表 test generation 与 calibration 独立。"
+    },
+    {
+      "claim": "missing clock-domain、validity、rate 或 relock 字段会触发当前实现的 fail-closed uncertain 分支。",
+      "boundary": "只能作为分支行为声明，不能表述为字段必要性的 empirical ablation 结论。"
+    },
+    {
+      "claim": "n=400 时报告的 Wilson 和零事件公式数值与标准公式一致。",
+      "boundary": "只能作为算术复核；频率学推广解释仍被 sampling design 阻断。"
+    },
+    {
+      "claim": "原 pilot 命令和 6 项现有测试在 Node v24.14.0 上可重复执行并通过。",
+      "boundary": "现有测试没有覆盖 F1-F9 的方法学和 adversarial 情形。"
+    }
+  ],
+  "blockedClaims": [
+    {
+      "claim": "bounded-provenance 的 100% coverage 验证了 calibration interval 对独立测试的覆盖。",
+      "blockedBy": [
+        "F1",
+        "F2",
+        "F7"
+      ]
+    },
+    {
+      "claim": "provenance interval 已被验证为始终正确实现非负 age identified set。",
+      "blockedBy": [
+        "F4"
+      ]
+    },
+    {
+      "claim": "零 false-fresh 及其 upper bound 可作为可靠 stop gate。",
+      "blockedBy": [
+        "F2",
+        "F3",
+        "F7"
+      ]
+    },
+    {
+      "claim": "field ablations 证明 clock domain、validity、rate 和 relock 各自对识别性能有实质贡献。",
+      "blockedBy": [
+        "F1",
+        "F5"
+      ]
+    },
+    {
+      "claim": "点估计与 interval 方法的 clusteredCoverage 可以按同一语义直接比较。",
+      "blockedBy": [
+        "F2",
+        "F6"
+      ]
+    },
+    {
+      "claim": "stop condition 已预注册并通过一个合理、fail-closed 的继续门槛。",
+      "blockedBy": [
+        "F2",
+        "F3",
+        "F8"
+      ]
+    },
+    {
+      "claim": "双世界保持了整个 network process 不变。",
+      "blockedBy": [
+        "F10"
+      ]
+    },
+    {
+      "claim": "当前 pilot 验证了 rate uncertainty 对 bounded coverage 或 freshness verdict 的必要作用。",
+      "blockedBy": [
+        "F1",
+        "F5"
+      ]
+    }
+  ],
+  "requiredFixes": [
+    {
+      "priority": "required",
+      "fix": "为 coverage 单独实现 clusterEveryCovered；保留 clusterAnyEvent 仅用于 false-fresh/false-stale，并加入一个 cluster 内部分覆盖失败的 adversarial test。"
+    },
+    {
+      "priority": "required",
+      "fix": "将 false-fresh stop check 改为显式要求 estimate === 0、Number.isFinite(zeroEventUpper95) 且 upper bound 不超过阈值；加入至少一个非零 false-fresh 必须停止的测试。"
+    },
+    {
+      "priority": "required",
+      "fix": "先计算未截断 age interval；若 raw upper < 0，则返回 inconsistent-provenance/uncertain 或显式空集，不能返回 [0,0] fresh。"
+    },
+    {
+      "priority": "required",
+      "fix": "让 test data-generating process 在 calibration fit 之前独立冻结，不得用 fitted half-width 设置 test residual support、deadline margin 或 case difficulty；用独立 seed 或外部 trace truth 生成 test，再只把 calibration artifact 交给方法。"
+    },
+    {
+      "priority": "required",
+      "fix": "重新设计 rate stress，使 transform anchor 独立于 message point，rate residual 随 lookback 真正传播到 mapped timestamp；报告保留字段但错误、越界和边界值扰动，不以删除字段触发 unknown 代替实质 ablation。"
+    },
+    {
+      "priority": "required",
+      "fix": "把 missing-field controls 与 empirical ablations 分开命名和汇报；增加 wrong-but-present domain、expired validity、plausible rate miscalibration、relock mismatch/recovery 及宽度-错误权衡。"
+    },
+    {
+      "priority": "required",
+      "fix": "将点方法的 clusteredCoverage 改名为 exactHitRate，或从跨方法 coverage 表中移除；按预先定义的容差报告 MAE、分位绝对误差和 freshness decision errors。"
+    },
+    {
+      "priority": "required",
+      "fix": "在生成数据和运行结果之前，用不可变 commit/hash 与外部时间戳登记 generator、seeds、metric aggregation、sample-size rationale 和 stop code；修复上述逻辑后再执行一次全新 holdout。"
+    },
+    {
+      "priority": "required",
+      "fix": "所有统计区间明确对应的随机化总体、cluster 依赖和 calibration uncertainty；若仅为 exhaustive deterministic grid，则报告有限网格计数而不是可推广的 95% 风险保证。"
+    },
+    {
+      "priority": "required",
+      "fix": "record factory 使用传入的 test seed 构造 episode IDs，并增加替代 seed 的 provenance/disjointness test。"
+    },
+    {
+      "priority": "wording",
+      "fix": "把 fixed network process 限定为 fixed observable RTT plus fixed queue/serialization/receiver-processing specification，并明确 directional propagation 在 paired worlds 间变化。"
+    }
+  ],
+  "verdict": {
+    "status": "methodology-blocked",
+    "summary": "CPU pilot 可重复执行，双世界 witness 在 frozen generator 内确实 observation 等价且物理自洽，非 oracle 推断也没有直接读取 test truth。但是 calibration 参与构造 test difficulty、coverage 聚合使用 any 而非 every、空集被改写为 fresh、非零 false-fresh 可被 stop logic 放行，controls/ablations 多为显式分支自证，且 preregistration 无独立时间证据。因此当前材料只支持受限的生成器内 identifiability witness 和实现分支声明；interval coverage、zero-event 风险、字段贡献、点估计 coverage 比较以及 stop-condition 通过结论均被阻断，必须在修复后用全新独立 holdout 重跑。"
+  }
+}

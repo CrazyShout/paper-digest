@@ -1,0 +1,204 @@
+{
+  "candidateId": "unposed-pose-geometry-task-equivalence-break",
+  "title": "无位姿前馈联合解的任务等价类破裂",
+  "hook": "检验观测像素同样拟合的自然位姿-几何联合解，是否会在度量轨迹与冻结感知任务上给出不同答案。",
+  "output": "自然解族生成器、matched-photometric 配对审计、度量/任务等价类报告与资产准入条件。",
+  "effort": "1 名研究者，1-2 张 24-48GB 显存 GPU，主路径只做固定检查点推理与评测。",
+  "timeline": "总周期 4-8 周；Gate 0/1 最多 2 周，自然解族与锁定评测 2-6 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未发现任何 observed-view photometric fit 匹配但任务不等价的自然 ambiguity pair。",
+    "尚未运行 DGGT 固定检查点、数据预处理、自然解族采样或下游评测代码。",
+    "不使用人工 pose 噪声建立主张，也不把论文中的结构性空空间直接写成已观测任务反例。"
+  ],
+  "whyNow": "DGGT 已把相机参数与动态 Gaussian 一起作为无位姿前馈输出，DynamicVGGT 与 MoRe 分别加强动态点图和运动感知重建，Physical 4D 又给出时空耦合的结构性空空间；最近方法主要优化单个解，却没有审计由真实输入 bootstrap、顺序和时窗变化自然产生的 matched-photometric 解族是否任务等价。",
+  "keyProblem": "无位姿前馈系统同时估计相机与几何，观测重投影误差可能不足以唯一决定度量场景。真正需要验证的不是人工扰动后模型会不会坏，而是仅使用未修改的真实帧、通过自然 bootstrap/order/window 改变产生的解中，是否存在观测像素质量匹配但度量新轨迹或冻结感知结果分裂的解对。",
+  "problemEvidence": [
+    "DGGT 将 camera pose 改为模型输出，并联合预测动态 3DGS；这使位姿与几何误差处于同一推理链。",
+    "MoRe 明确把移动对象污染 camera pose estimation 作为问题，DynamicVGGT 在共享参考坐标系联合预测当前和未来点图；二者仍以单解重建质量为主要证据。",
+    "Physical 4D 把单源观测中的 viewpoint-time 绑定解释为空空间与 credit assignment，Beyond Visual 则表明高视觉相似度不保证对象感知一致；两者共同支持审计动机，但不证明自然 ambiguity pair 已存在。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "DGGT",
+      "overlap": "直接从 sparse unposed images 联合输出 camera、geometry、motion 和 render。",
+      "unreplacedResidual": "论文比较方法和单解质量，不配对 observed-view fit 匹配的自然联合解并测任务分歧。"
+    },
+    {
+      "work": "DynamicVGGT 与 MoRe",
+      "overlap": "分别改进动态点图、运动分离和 camera-motion 鲁棒性。",
+      "unreplacedResidual": "它们在改进求解器，而本候选估计自然解族的任务等价类是否破裂。"
+    },
+    {
+      "work": "Physical 4D 与 Beyond Visual Reconstruction Quality",
+      "overlap": "前者分析结构空空间，后者测视觉与感知的不一致。",
+      "unreplacedResidual": "尚未把两者连接为 matched-observation 自然位姿-几何解对的度量与任务审计。"
+    }
+  ],
+  "currentLimitations": "最近工作已经覆盖联合位姿-几何预测、动态 motion disentanglement、时空空空间和任务感知质量，因此不能把多次推理方差、人工 pose corruption 或 detector 波动单独作为贡献。不可替代 residual 仅是自然输入子集/顺序/时窗诱导、observed-view fit 匹配、经 GT 仅评估对齐后仍存在的联合几何与任务分歧。",
+  "residualClaim": "审计自然解族的任务等价类，不训练新基础模型、不注入人工 pose 噪声、不宣称无位姿重建普遍不可辨识。",
+  "estimand": {
+    "targetPopulation": "Gate 0 许可通过的 Waymo 或 nuScenes/Argoverse2 真实驾驶 clips，以及从每个 clip 的未修改帧产生的 bootstrap/order/window 自然解族。",
+    "statisticalUnit": "独立 scene clip 是推断单位；同一 clip 的解和解对是嵌套重复测量，pair 数不能直接充当样本量。",
+    "conditioningEvent": "一对自然解在未参与解生成的 observed-view audit frames 上满足 |Delta PSNR|<=0.2 dB、|Delta LPIPS|<=0.01，并通过预注册可见区域重合检查。",
+    "primaryEstimand": "p_break=P(D_geometry>tau_g 且 D_task>tau_t | matched-photometric natural pair)，并报告其相对 identical-input repeat-control 的 scene-level risk difference。",
+    "secondaryEstimands": "Sim(3) 对齐后的 ATE/深度差、固定度量偏移视图上的几何分歧、detector 集合分歧，以及三种自然生成机制各自的 break probability。"
+  },
+  "hypothesis": "若无位姿联合解的观测等价类包含任务相关自由度，则由真实帧 bootstrap、合法输入顺序变化和时窗移动产生的解族中，会出现稳定数量的 matched-photometric 解对；这些解对在仅用于评估的 GT Sim(3) 对齐后仍表现出超过 repeat-control 的度量几何与冻结任务分歧。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 自然解族与配对发生性",
+      "state": "not-run",
+      "pass": "至少两个数据域的真实 clips 能从 bootstrap、order 和 window 三类未修改输入生成足够 matched-photometric pairs，且 pair 率不是由单一 clip 或重复帧伪影驱动。",
+      "fail": "若无法形成足够 pair、对齐后分歧消失，或只有人工 pose 扰动才能得到反例，立即停止。"
+    },
+    {
+      "gate": "Gate 1 - 固定 checkpoint 与评测链",
+      "state": "not-run",
+      "pass": "DGGT 固定 commit/checkpoint 能对预注册 clips 输出 camera、depth、metric geometry 与 render，数据条款允许研究使用，GT pose 只在封存的评估阶段进入对齐器。",
+      "fail": "若 checkpoint、数据、metric outputs 或对齐链不可依法获得，或 GT pose 泄漏进解生成，停止主实验。"
+    }
+  ],
+  "dataPreflight": [
+    "核对 DGGT 固定提交、checkpoint 下载说明和 Apache-2.0 代码许可证；Waymo、nuScenes、Argoverse2 数据分别遵守其官方条款，不把代码许可延伸到数据。",
+    "在读取 GT pose 和任务标签前锁定至少两个数据域、clip 列表、相机集合、帧率、window 长度、bootstrap 规则和合法 order 变换。",
+    "用 identical-input 重复推理估计数值非确定性，并据此确认 0.2 dB/0.01 的 photometric matching 容差高于纯运行噪声而不宽到混入明显差解。",
+    "Gate 0 只允许原始未修改图像帧：view bootstrap、时间窗平移/删减、完整真实帧的输入顺序改变；禁止给 pose、像素或外参注入噪声。",
+    "在小型 development split 估计 matched-pair 率和 scene cluster 数；若无法把 p_break 的 95% 区间收窄到 10 个百分点等价界限，则停止。"
+  ],
+  "noveltyClaims": [
+    "研究对象是 matched-photometric 自然联合解的任务等价类，而不是单个模型平均误差或人工鲁棒性测试。",
+    "GT pose 仅用于事后 Sim(3) 对齐和测量，绝不用于生成候选解；因此反例必须来自 bootstrap/order/window 的真实观测选择。",
+    "负结果同样有决策意义：若自然解族在预注册界限内任务等价，就削弱额外资产准入审计的必要性。"
+  ],
+  "method": [
+    "冻结 DGGT fixed checkpoint，对每个真实 clip 生成三类自然解族：真实帧 view bootstrap、保持真实帧内容的输入 order 变化、以及相邻 window 平移或删减。",
+    "为每个解保留 camera、depth、Gaussian/point geometry 和 observed-view render；不修改 pose，不根据 GT 挑解。",
+    "在封存 audit frames 上挖掘满足预注册 PSNR/LPIPS 和可见区域重合条件的解对，并以 identical-input repeat pairs 估计数值噪声底。",
+    "打开评估封存后，用 GT camera trajectory 只做 Sim(3) 对齐，再计算 ATE、深度、固定 metric-offset views 和冻结 detector 输出分歧。",
+    "按 scene clip 聚类估计 p_break 与相对 repeat-control 的风险差，分别报告 bootstrap、order、window 和跨数据域结果。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1 周）：确认数据条款、DGGT checkpoint、clip split 与自然变换定义，完成 Gate 0 的小样本 pair-rate 预检。",
+    "阶段 B（第 2 周）：验证固定推理入口、输出坐标约定、identical-input 噪声底和 GT 隔离，完成 Gate 1。",
+    "阶段 C（第 3-4 周）：实现 natural solution-family sampler、解缓存、matched-fit pair miner 与 provenance manifest。",
+    "阶段 D（第 5-6 周）：实现 Sim(3) 对齐、metric-offset renderer、geometry/task divergence evaluator 与 scene-cluster bootstrap。",
+    "阶段 E（第 7-8 周，仅在 Gate 0 有自然 pair 时）：运行第二数据域和预注册敏感性；不因 pair 稀缺改用人工 pose 噪声。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "DGGT official implementation",
+        "revision": "a3276d2bbe4cbb03bcc117830b1836110a27adeb",
+        "reuse": "Apache-2.0 代码；固定 inference.py、camera/depth/metric outputs 与官方 checkpoint 说明。",
+        "licenseBoundary": "checkpoint 和每个驾驶数据集的条款需分别确认；资产尚未在本任务中执行。"
+      },
+      {
+        "asset": "Waymo 或 nuScenes/Argoverse2 official data",
+        "revision": "由 Gate 0 锁定官方 release 与 clip manifest",
+        "reuse": "真实图像、相机与仅用于评估的 GT pose/深度或 LiDAR。",
+        "licenseBoundary": "使用和再分发服从各数据集官方条款，产物只保存 ID 与派生统计，不复制受限原始数据。"
+      },
+      {
+        "asset": "frozen perception task stack",
+        "revision": "Gate 1 锁定公开 checkpoint、容器摘要和类别映射",
+        "reuse": "在固定 metric-offset renders 上产生任务集合，避免训练时适配。",
+        "licenseBoundary": "只选择允许研究评测与派生结果发布的模型；否则更换为许可明确的公开模型并重新预注册。"
+      }
+    ],
+    "selfBuiltModules": [
+      "bootstrap/order/window natural solution-family sampler",
+      "matched-photometric pair miner 与 pair provenance ledger",
+      "GT-isolated Sim(3) alignment 和 metric-offset view evaluator",
+      "scene-clustered geometry/task equivalence analysis"
+    ],
+    "compute": "固定 checkpoint 推理为主，预算 1-2 张 24-48GB GPU、约 1-2 GPU-weeks；解缓存和 pair mining 需要约 2-4TB 临时存储。",
+    "cycle": "4-8 周上限；两周内不能形成自然 matched pairs 或完成合法资产链即停止。"
+  },
+  "minimumStudy": [
+    "Gate 0 在 development split 上为每个 clip 生成至少 12 个自然解，覆盖 bootstrap、order、window 三族；未找到稳定 matched-pair 率则停止。",
+    "Gate 1 固定 DGGT commit/checkpoint、数据 release、容器和随机性设置，并验证 GT pose 对解生成进程不可见。",
+    "主 study 使用至少两个数据域、预注册的独立 scene clips；clip 及其所有变体只能出现在一个 split。",
+    "在封存 audit frames 上按固定容差配对；每个 clip 对 pair 指标先聚合，再进入跨 scene 推断，防止 pair 多的 clip 主导结果。",
+    "对 matched pairs 做 GT Sim(3) 对齐后，同时要求 geometry 与 task divergence 超过各自阈值；只出现视觉差异不算 break。",
+    "报告 identical-input repeat control、三类自然机制、两个数据域和阈值敏感性；主表中完全排除人工 pose noise。"
+  ],
+  "strongBaselines": [
+    "identical-input repeated DGGT inference，估计数值非确定性和伪 break 底噪。",
+    "DGGT 全帧、完整时窗的单次官方推理解，代表不做解族审计的当前实践。",
+    "observed-view photometric-best selector，在同一自然解族中按 PSNR/LPIPS 选解。",
+    "不使用 GT 的 geometric-consistency selector，按跨视图深度/点图一致性选解。",
+    "GT-pose posed reconstruction 或相同 renderer 的 posed 上界，只在评估阶段使用，量化联合 pose 估计造成的可避免差距。",
+    "DynamicVGGT/MoRe 的固定公开 checkpoint 条件基线；只有在 Gate 1 许可、输入和输出可比时纳入主表，否则仅保留一手竞品边界。"
+  ],
+  "metrics": [
+    "主指标 p_break：matched-photometric 自然解对中，同时超过预注册 geometry 阈值 tau_g 和 task 阈值 tau_t 的 scene-level 比例。",
+    "主对比：p_break 相对 identical-input repeat-control 的配对 scene-level risk difference 及 95% cluster bootstrap 区间。",
+    "几何指标：GT Sim(3) 对齐后的 camera ATE、尺度漂移、深度 AbsRel/点到面误差及固定 metric-offset view 的几何差。",
+    "任务指标：冻结 detector 的对象集合 Jaccard、漏检/错检和置信差；类别、距离带与遮挡层在开封前锁定。",
+    "配对诊断：matched-pair yield、各自然机制覆盖率、PSNR/LPIPS 差、可见区域重合和每 clip 有效 pair 数。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "scene clip 是独立单位。先在 clip 内对所有 matched pairs 取预注册聚合，再按数据域分层做 scene bootstrap。",
+    "primaryTest": "估计 p_break-repeat_control 的风险差；成功需要其 95% 区间下界超过 0.10，并同时满足最小 pair yield。",
+    "thresholdLock": "tau_g、tau_t 与 photometric 容差由 development split 和 repeat-control 锁定，不根据 held-out 结果调整。",
+    "multiplicity": "三类自然机制为预注册分层分析，主结论使用合并 estimand；数据域与任务类别分析报告区间，不以单一显著子组挽救主结果。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，至少两个数据域有自然 matched pairs，且不少于 25% 的独立 clips 产生至少一个有效 pair。",
+    "GT Sim(3) 对齐后，p_break 相对 identical-input repeat-control 的 scene-level 风险差至少为 0.10，95% 置信区间下界高于 0，并同时出现 geometry 与 task divergence。",
+    "bootstrap、order、window 中至少两类给出同方向结果，且结论不由单个 clip、单一类别或扩散后处理开关驱动。"
+  ],
+  "killCriteria": [
+    "只有人工 pose 噪声、像素 corruption 或 GT-guided selection 才能制造解对或任务分歧。",
+    "自然变体无法形成足够 matched-photometric pairs，或 pair yield 低于 25% clips 使 estimand 不可稳定估计。",
+    "合理 Sim(3) 对齐后 geometry/task 分歧落入 repeat-control 的 10 个百分点等价界，或只剩 photometric 差。",
+    "GT pose 泄漏到解生成、数据/模型许可不允许研究复用，或固定 checkpoint 输出不支持 metric evaluation。"
+  ],
+  "risks": [
+    "输入顺序改变可能超出模型声明接口；Gate 0 只保留官方允许的 frame/camera ordering，并把不支持的变换从主族预先删除。",
+    "bootstrap 可能因重复帧降低信息量而制造平凡差解；matched-fit、可见区域重合和每族单独报告用于排除该解释。",
+    "GT 对齐可能掩盖或夸大尺度差；报告 Sim(3)、SE(3) 与尺度项分解，但只用预注册 Sim(3) 作主分析。",
+    "冻结 detector 只代表一个任务消费者；第二任务只能作不调参敏感性，不能把一致性外推到通用闭环。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若自然解族稳定破裂，结果会要求无位姿重建资产在进入度量轨迹或任务评测前报告解族稳定性，而不能只凭 observed-view fit 准入。",
+    "negative": "若自然 matched pairs 稀缺或对齐后任务等价，结果将约束结构性 ambiguity 的实际影响，并支持在测试过的 bootstrap/order/window 包络内沿用单解流程。",
+    "boundary": "正结果不证明所有 unposed 方法不可用，负结果也不证明联合解唯一；两者只回答固定 checkpoint、自然变换族和数据域内的 estimand。"
+  },
+  "impact": "该审计能把理论上的 pose-geometry 空空间变成可证伪的任务等价类问题。正结果改变无位姿资产准入，负结果则阻止研究继续依赖人工 pose 噪声制造反例，并给出自然稳定性的经验上界。",
+  "evidence": [
+    {
+      "title": "Towards Physically Consistent 4D Scene Reconstruction for Closed-loop Autonomous Driving Simulation",
+      "url": "https://arxiv.org/abs/2605.21032",
+      "role": "本地论文报告提供 viewpoint-time 绑定与空空间的结构动机，但没有自然联合解对和任务后果证据。",
+      "localPaperId": "physically-consistent-4d-driving-reconstruction",
+      "localLink": "papers/physically-consistent-4d-driving-reconstruction/"
+    },
+    {
+      "title": "DGGT: Feedforward 4D Reconstruction of Dynamic Driving Scenes using Unposed Images",
+      "url": "https://arxiv.org/abs/2512.03004",
+      "role": "核心固定资产与最近直接竞品：联合预测 camera、dynamic geometry 和 render，但未审计 matched-fit 自然解族。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DynamicVGGT: Learning Dynamic Point Maps for 4D Scene Reconstruction in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2603.08254",
+      "role": "最近联合 geometry-motion 竞品，说明动态点图和共享参考系能力已被覆盖。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MoRe: Motion-aware Feed-forward 4D Reconstruction Transformer",
+      "url": "https://arxiv.org/abs/2603.05078",
+      "role": "最近 motion-aware 竞品，直接处理动态对象污染 camera pose estimation，但仍优化单解质量。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Beyond Visual Reconstruction Quality: Object Perception-aware 3D Gaussian Splatting for Autonomous Driving",
+      "url": "https://iclr.cc/virtual/2026/poster/10009644",
+      "role": "提供视觉质量与对象感知输出可能不一致的一手任务证据，但没有 pose-geometry 自然解对。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:24:20.658Z"
+}

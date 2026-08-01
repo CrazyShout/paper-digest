@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildClientDigestData,
-  buildPaperSearchIndex
+  buildPaperSearchIndex,
+  getMarkdownHeadings,
+  markdownToHtml
 } from "../src/lib/content.js";
 
 const digest = {
@@ -44,4 +46,21 @@ test("lazy search index retains full-report terms", () => {
   assert.equal(entry.paperId, "paper-one");
   assert.match(entry.text, /counterfactual robustness/);
   assert.match(entry.text, /evaluation/);
+});
+
+test("paper report headings receive stable unique anchors", () => {
+  const markdown = "## Method Overview\n\nBody.\n\n## Method Overview";
+  const headings = getMarkdownHeadings(markdown);
+  const html = markdownToHtml(markdown, { headingIds: true });
+
+  assert.deepEqual(headings.map(({ id }) => id), [
+    "method-overview",
+    "method-overview-2"
+  ]);
+  assert.match(html, /id="method-overview"/);
+  assert.match(html, /id="method-overview-2"/);
+});
+
+test("generic Markdown rendering does not inject heading anchors", () => {
+  assert.equal(markdownToHtml("## Digest Note"), "<h2>Digest Note</h2>");
 });

@@ -1,0 +1,312 @@
+{
+  "reviewedAt": "2026-08-01T01:32:50+08:00",
+  "reviewerAgentId": "codex-gpt5-outsider-veto-execution-auditor-v10",
+  "assetChecks": [
+    {
+      "assetId": "mdrive",
+      "officialRepository": "https://github.com/ucla-mobility/MDrive",
+      "fixedCommit": "9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "checkoutVerification": {
+        "path": "/private/tmp/paper-digest-mdrive-v9-shallow",
+        "head": "9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+        "archivePath": "/private/tmp/mdrive-9e083770.tar.gz",
+        "archiveSha256": "171506356e29e8bb8ecf7d842d38744081b1537de2e6904d2271e54c069d2390"
+      },
+      "license": {
+        "finding": "The repository-root LICENSE at the fixed commit is Apache-2.0. Bundled scenario_runner is MIT and bundled TCP and vision_encoder directories carry Apache-2.0 notices.",
+        "qualification": "The README license badge says Academic Software License, while setup.py contains an inherited TDG-Attribution-NonCommercial-NoDistrib comment and declares MIT metadata. The root code is publicly inspectable under Apache-2.0, but redistributing a packaged experiment requires a component-by-component notice and provenance review rather than relying on setup.py metadata."
+      },
+      "installationDependencies": {
+        "platform": "The published path targets Linux x86_64, Python 3.7, CARLA 0.9.12, CUDA 11.3, PyTorch 1.10.1, cuDNN, spconv 1.2.1, OpenCOOD extensions, pypcd, and other pinned legacy packages. The current Darwin arm64 host is not a supported execution host.",
+        "simulator": "ucla_v2_0.9.12-dirty.tar.gz is a Git LFS pointer in the checkout; its declared object size is 724050053 bytes. CARLA was not installed during this audit.",
+        "models": "The public README points to a Google Drive bundle containing VLM, LLM, perception, and waypoint-planner checkpoints. No checkpoint was downloaded. colmdriver_rulebase still constructs communication, VLM, and negotiation clients and loads perception/planning checkpoints; it is not a checkpoint-free rule baseline.",
+        "runtime": "The published colmdriver launch starts separate vLLM services for the VLM and LLM and then runs the CARLA evaluator. This is materially heavier than a CPU-only route loader."
+      },
+      "plannerMessageBranch": {
+        "status": "real-but-not-the-requested-paired-counterfactual",
+        "evidence": [
+          "tools/run_custom_eval.py exposes --add-no-negotiation and creates enabled and disabled variants; the disabled variant sets COLMDRIVER_DISABLE_NEGOTIATION=1.",
+          "simulation/leaderboard/team_code/colmdriver_action_rulebase.py makes COLMDRIVER_DISABLE_NEGOTIATION suppress form_comm_group, while the enabled path forms conflict groups, exchanges and summarizes messages into actions, stores comm_bank, and passes comm_info to the planner.",
+          "The two variants are separate closed-loop launches. They share a route and can share a seed, but they are not two planner calls from a restored identical simulator state after trajectories have diverged. The candidate's exact same-state counterfactual therefore has no public executable entry at this commit."
+        ]
+      },
+      "publicScenarios": {
+        "negotiationRoutes": "routes/Lane_Change_Negotiation_d1 through d5 are executable route definitions for negotiation. d1 through d4 contain no dynamic nonparticipant; d5 contains one NPC.",
+        "d5Response": "The d5 NPC has no actors_behavior.json entry and no avoid_collision flag. The parser default is false, so ScenarioRunner's WaypointFollower follows a predetermined local-plan path rather than providing a public responsive outsider policy.",
+        "otherInteractionScenarios": "Several scenarioset/interaction folders contain at least two egos and nonparticipants, but the nonparticipant behavior is generally a fixed route, a distance-triggered start_motion script, or replay. Those are useful for simulator stress tests, not evidence of a natural response to coalition communication.",
+        "replayGuard": "V2XPnP replay scenarios instantiate LogReplayFollower with intelligent_guard=True against ego actors. This is a pre-existing public kinematic safety adjustment and can support a clearly labeled replay stress test. It cannot be described as a natural, human, or real-world outsider reaction."
+      },
+      "nonparticipantTrajectoryAndReactionOutput": {
+        "available": [
+          "ScenarioManager builds pdm_world_trace with per-tick x, y, and velocity for vehicles and pedestrians.",
+          "Full-save sensor output can write actors_data/<frame>.json with actor locations and velocities.",
+          "Per-ego planning JSON contains ego speed, waypoints, control, and pose."
+        ],
+        "missing": [
+          "The standard results JSON does not serialize raw pdm_world_trace.",
+          "There is no ready episode-level nonparticipant braking, waiting, delay, or burden exporter.",
+          "Acceleration must be derived from stable-ID velocity traces, and the audit found no wired _npc_kinematics_logger implementation.",
+          "The public negotiation route with an NPC does not supply a responsive outsider, so trajectory availability alone does not establish a policy-response path."
+        ]
+      },
+      "executableEntry": {
+        "entry": "python tools/run_custom_eval.py --planner colmdriver_rulebase --routes-dir routes/Lane_Change_Negotiation_d5 --add-no-negotiation --start-carla --gpus 2 --results-tag outsider-veto-d2",
+        "status": "The entry exists and reaches dependency validation. It was not executable on the audit host because CARLA was absent, and a full run also requires the legacy CUDA environment and model services."
+      },
+      "assetConclusion": "MDrive supplies a real cooperative-message branch and public scenarios, but the fixed commit does not supply one runnable path that combines an exact same-state paired branch, a response-capable outsider on the negotiation task, and episode-level outsider outcomes."
+    },
+    {
+      "assetId": "flow",
+      "officialRepository": "https://github.com/flow-project/flow",
+      "fixedCommit": "a511c41c48e6b928bb2060de8ad1ef3c3e3d9554",
+      "checkoutVerification": {
+        "path": "/private/tmp/paper-digest-flow-a511c41",
+        "archivePath": "/private/tmp/paper-digest-flow-a511c41.tar.gz",
+        "archiveUrl": "https://codeload.github.com/flow-project/flow/tar.gz/a511c41c48e6b928bb2060de8ad1ef3c3e3d9554",
+        "archiveSha256": "d3f3e6216120a1fc17a2e074c36098b13e8ca559aa5824bf4e016847019b397e"
+      },
+      "license": {
+        "finding": "The repository-root LICENSE.md at the fixed commit is MIT.",
+        "qualification": "SUMO, RLlib, TensorFlow, Gym, and other dependencies retain their own licenses and must be inventoried for any distributed environment image."
+      },
+      "installationDependencies": {
+        "platform": "environment.yml pins Python 3.7.3. requirements.txt pins legacy packages including gym 0.14.0, numpy 1.18.4, scipy 1.1.0, ray 0.8.0, tensorflow 1.15.2, torch 1.4.0, and pandas 0.24.2.",
+        "sumo": "SUMO is required and was not present on the audit host. setup.py also attempts to download a historical sumotools wheel from a personal S3 URL.",
+        "reproducibilityRisk": "The Dockerfile references Flow 0.3, an old SUMO commit, and Ray 0.6.2, which do not match this checkout's requirements. A fresh 2026 install requires a controlled legacy x86_64 environment and may require dependency repair."
+      },
+      "plannerMessageBranch": {
+        "status": "absent",
+        "evidence": [
+          "examples/exp_configs/rl/multiagent/multiagent_merge.py defines a public SUMO merge environment with IDM human vehicles, RL vehicles, and a shared PPO policy.",
+          "flow/envs/multiagent/merge.py observations contain local vehicle, leader, and follower state and actions are accelerations. No communication, message masking, coalition, or V2X input exists at the fixed commit.",
+          "A shared RL policy is not a cooperative message branch. Adding coalition messages and masking would be a new policy/interface implementation."
+        ]
+      },
+      "publicScenarioPolicyResponsePath": {
+        "status": "response-and-logging-only",
+        "available": "The merge scenario, public IDM controller, SUMO closed-loop response, per-vehicle state access, emission files, and CSV conversion can provide a public traffic-response stress environment.",
+        "criticalDefect": "flow/envs/multiagent/merge.py iterates with 'for rl_id in enumerate(self.k.vehicle.get_rl_ids())'. rl_id is therefore a tuple, so action lookup and acceleration application do not use the vehicle ID. The multiagent merge policy path requires a source patch before it can count as executed.",
+        "checkpointBoundary": "The bundled trained ring checkpoint is a single-agent ring artifact. tests/data/rllib_data/multi_agent is a figure-eight fixture, not a trained merge coalition policy. Neither is a task-path checkpoint or a strong baseline for this candidate."
+      },
+      "nonparticipantTrajectoryAndReactionOutput": {
+        "available": "SUMO emission output records vehicle trajectories and speeds, and the kernel exposes acceleration queries. Episode-level nonparticipant braking, waiting, and delay can be derived with stable vehicle IDs.",
+        "qualification": "These are simulated IDM or SUMO responses. They become responses to the proposed coalition intervention only after a new cross-stack message/action adapter or a new Flow communication policy is written."
+      },
+      "executableEntry": {
+        "nonRlEntry": "SUMO_HOME=/opt/sumo PYTHONPATH=/opt/sumo/tools:/opt/flow conda run -p /opt/flow-env python /opt/flow/examples/simulate.py merge --no_render --num_runs 1 --gen_emission",
+        "multiagentEntry": "SUMO_HOME=/opt/sumo PYTHONPATH=/opt/sumo/tools:/opt/flow conda run -p /opt/flow-env python /opt/flow/flow/visualize/visualizer_rllib.py <result_dir> <checkpoint_num> --run PPO --num_rollouts 1 --gen_emission",
+        "status": "The entries exist, but the audit host lacked Gym and SUMO. The multiagent entry also lacks a public merge checkpoint and is affected by the merge action-loop defect."
+      },
+      "assetConclusion": "Flow supplies a public scenario, IDM response, and trajectory outputs, but it does not supply the candidate's cooperative or masked policy branches. Combining it with MDrive would require a new adapter and response semantics."
+    },
+    {
+      "assetId": "combined-public-path",
+      "finding": "No public, no-handwritten-mock scenario+policy+response path was found at the two fixed commits.",
+      "reason": "MDrive owns the real message branch but lacks a responsive outsider on its negotiation route and lacks a ready outsider outcome exporter. Flow owns public IDM response and trajectory logging but lacks a message branch, a usable merge checkpoint, and a working unmodified multiagent merge action loop.",
+      "allowedInterpretation": "MDrive's public scripted/replay guard or Flow's public IDM can support a simulator stress test after integration. Any new cross-stack kinematic adapter must be disclosed as the treatment-response model; its results cannot be called natural or real effects.",
+      "disallowedInterpretation": "A route fixture, metadata loader, compile check, replayed trajectory, or hand-written kinematic layer is not evidence that the coalition intervention caused real outsider reactions."
+    }
+  ],
+  "smokeRuns": [
+    {
+      "assetId": "mdrive",
+      "command": "python3 tools/run_custom_eval.py --planner colmdriver_rulebase --routes-dir routes/Lane_Change_Negotiation_d5 --add-no-negotiation --dry-run",
+      "workingDirectory": "/private/tmp/paper-digest-mdrive-v9-shallow",
+      "elapsedSeconds": 0.744,
+      "exitCode": 1,
+      "result": "FileNotFoundError: CARLA_ROOT '/private/tmp/paper-digest-mdrive-v9-shallow/carla912' does not exist.",
+      "classification": "entry-and-dependency-preflight-only",
+      "taskPathExecuted": false,
+      "interpretation": "Even --dry-run requires a valid CARLA_ROOT before printing the evaluation plan. No scenario, planner inference, message branch, simulator response, or outcome export ran."
+    },
+    {
+      "assetId": "mdrive",
+      "command": "PYTHONPYCACHEPREFIX=/private/tmp/mdrive-pycache python3 -m compileall -q tools/run_custom_eval.py simulation/leaderboard/team_code/colmdriver_agent.py simulation/leaderboard/team_code/colmdriver_action_rulebase.py simulation/leaderboard/leaderboard/scenarios/scenario_manager.py",
+      "workingDirectory": "/private/tmp/paper-digest-mdrive-v9-shallow",
+      "exitCode": 0,
+      "classification": "syntax-preflight-only",
+      "taskPathExecuted": false,
+      "interpretation": "Parseability is not runtime execution."
+    },
+    {
+      "assetId": "flow",
+      "command": "PYTHONPATH=. PYTHONPYCACHEPREFIX=/private/tmp/flow-pycache python3 examples/simulate.py merge --no_render --num_runs 1",
+      "workingDirectory": "/private/tmp/paper-digest-flow-a511c41",
+      "exitCode": 1,
+      "result": "ModuleNotFoundError: No module named 'gym'",
+      "classification": "entry-and-dependency-preflight-only",
+      "taskPathExecuted": false,
+      "interpretation": "No SUMO simulation, IDM response, policy action, or emission output ran."
+    },
+    {
+      "assetId": "flow",
+      "command": "PYTHONPYCACHEPREFIX=/private/tmp/flow-pycache python3 -m compileall -q flow examples",
+      "workingDirectory": "/private/tmp/paper-digest-flow-a511c41",
+      "exitCode": 0,
+      "classification": "syntax-preflight-only",
+      "taskPathExecuted": false,
+      "interpretation": "Parseability is not runtime execution."
+    },
+    {
+      "assetId": "candidate-pool-prior-evidence",
+      "reportedEvidence": "Fourteen route-discovery tests and a loader result covering 15 route files and five negotiation variants were reported in the candidate pool.",
+      "classification": "fixture-and-metadata-pre-gate-only",
+      "taskPathExecuted": false,
+      "interpretation": "This audit does not count those tests or loader results as scenario, planner, message, response, or outcome execution."
+    }
+  ],
+  "dependencyAudit": {
+    "auditHost": {
+      "os": "Darwin arm64",
+      "python": "3.9.6",
+      "available": [
+        "conda",
+        "CPU-only source inspection",
+        "temporary disk under /private/tmp"
+      ],
+      "absentOrNotUsed": [
+        "CARLA",
+        "SUMO",
+        "Docker",
+        "CUDA execution",
+        "MDrive model checkpoints"
+      ]
+    },
+    "mdriveInstallRisk": [
+      "The official path depends on legacy Python/CUDA/PyTorch/spconv/CARLA combinations and large model services.",
+      "The rulebase planner still requires VLM, LLM, perception, and planning assets.",
+      "The current host cannot validate binary compatibility; an x86_64 Linux GPU host is mandatory for the day-2 gate.",
+      "Root licensing is clear, but bundled and inherited metadata is inconsistent enough to require a dependency notice audit before redistribution."
+    ],
+    "flowInstallRisk": [
+      "The fixed commit has a 2019-era Python and ML dependency set with known incompatibility risk on modern arm64 systems.",
+      "The reproducible SUMO version and package set are not aligned across environment.yml, requirements.txt, setup.py, and Dockerfile.",
+      "The public multiagent merge action path needs a reviewed source fix, so an unmodified-checkout success claim would be false."
+    ],
+    "pathCompositionRisk": "MDrive-to-Flow composition is not a configuration task. It requires defining a state map, message/action map, temporal synchronization, outsider identity rules, response semantics, and episode outcome exporter. That is a new experimental system and is the dominant two-week risk.",
+    "heavyAssetPolicy": "This audit did not install CARLA, SUMO, legacy CUDA packages, or download any model checkpoint. The lightweight smokes and archive fetches stayed within the requested /private/tmp and time constraints."
+  },
+  "twoWeekPlan": {
+    "disposition": "This is a stop-gated salvage plan, not authorization to claim the candidate is executable. The current verdict remains reject unless every hard gate is independently reopened and passed.",
+    "resourceBudget": {
+      "auditSmokeActuallyUsed": {
+        "cpu": "CPU only",
+        "gpu": "none",
+        "disk": "less than 0.5 GB for archives, extracted Flow, and generated bytecode, excluding the pre-existing 258 MB MDrive checkout",
+        "runtime": "individual smoke commands completed in under one second; no heavy simulator or checkpoint download was performed"
+      },
+      "day2MDriveProvisioningCeiling": {
+        "host": "Ubuntu x86_64",
+        "cpu": "16 vCPU",
+        "ram": "64 GB",
+        "gpu": "three NVIDIA GPUs: two with 24 GB VRAM for the published VLM and LLM services and one with 16 GB VRAM for planner/CARLA; two 48 GB GPUs are acceptable only after measured co-location succeeds",
+        "disk": "100 GB free workspace, including CARLA, conda environments, checkpoints, logs, and paired run artifacts",
+        "qualification": "This is a provisioning ceiling for the gate, not a measured minimum. Record actual peak CPU, RAM, VRAM, and disk before day 4."
+      },
+      "flowProvisioningCeiling": {
+        "host": "Ubuntu x86_64 with the fixed commit's legacy Python environment",
+        "cpu": "8 vCPU",
+        "ram": "16 GB",
+        "gpu": "none for non-RL IDM smoke; add one compatible GPU only if a newly trained PPO baseline is authorized",
+        "disk": "20 GB free for SUMO, environment packages, emissions, and CSV output"
+      }
+    },
+    "day2HardGate": {
+      "objective": "Execute the unmodified public MDrive message-enabled and no-negotiation branches through CARLA on one official negotiation route and preserve the complete provenance trail.",
+      "exactCommands": [
+        "git clone https://github.com/ucla-mobility/MDrive.git /opt/mdrive",
+        "git -C /opt/mdrive checkout 9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+        "git -C /opt/mdrive rev-parse HEAD",
+        "git -C /opt/mdrive lfs pull --include=ucla_v2_0.9.12-dirty.tar.gz",
+        "cd /opt/mdrive && bash download_and_setup_carla.sh",
+        "conda create -n vllm python=3.10",
+        "conda run -n vllm python -m pip install vllm",
+        "conda create -n colmdriver python=3.7 cmake=3.22.1",
+        "conda install -n colmdriver pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge",
+        "conda install -n colmdriver cudnn cmake=3.22.1 ninja boost ccache -c conda-forge",
+        "conda run -n colmdriver python -m pip install -r /opt/mdrive/opencood/requirements.txt",
+        "conda run -n colmdriver python -m pip install -r /opt/mdrive/simulation/requirements.txt",
+        "conda run -n colmdriver python -m pip install openai pybind11 numpy python-lzf gdown",
+        "git clone -b v1.2.1 --recursive https://github.com/traveller59/spconv.git /opt/spconv-1.2.1",
+        "cd /opt/spconv-1.2.1 && conda run -n colmdriver python setup.py bdist_wheel",
+        "conda run -n colmdriver python -m pip install /opt/spconv-1.2.1/dist/spconv-1.2.1-*.whl",
+        "cd /opt/mdrive && conda run -n colmdriver python setup.py develop",
+        "cd /opt/mdrive && conda run -n colmdriver python opencood/utils/setup.py build_ext --inplace",
+        "git clone https://github.com/klintan/pypcd.git /opt/pypcd",
+        "cd /opt/pypcd && conda run -n colmdriver python setup.py install",
+        "cd /opt/mdrive && gdown 1z3poGdoomhujCNQtoQ80-BCO34GTOLb-",
+        "mkdir -p /opt/mdrive/ckpt",
+        "mv /opt/mdrive/colmdriver.zip /opt/mdrive/ckpt/colmdriver.zip",
+        "cd /opt/mdrive/ckpt && unzip colmdriver.zip",
+        "cd /opt/mdrive/ckpt && sed -i 's|root_dir: .*|root_dir: /opt/mdrive/ckpt|; s|test_dir: .*|test_dir: /opt/mdrive/ckpt|; s|validate_dir: .*|validate_dir: /opt/mdrive/ckpt|' colmdriver/percpetion/config.yaml",
+        "touch /opt/mdrive/ckpt/dataset_index.txt",
+        "cd /opt/mdrive && CUDA_VISIBLE_DEVICES=0 conda run -n vllm vllm serve ckpt/colmdriver/VLM --port 1111 --max-model-len 8192 --trust-remote-code --enable-prefix-caching",
+        "cd /opt/mdrive && CUDA_VISIBLE_DEVICES=1 conda run -n vllm vllm serve ckpt/colmdriver/LLM --port 8888 --max-model-len 4096 --trust-remote-code --enable-prefix-caching",
+        "cd /opt/mdrive && CARLA_ROOT=/opt/mdrive/carla912 CUDA_VISIBLE_DEVICES=2 conda run -n colmdriver python tools/run_custom_eval.py --planner colmdriver_rulebase --routes-dir routes/Lane_Change_Negotiation_d5 --add-no-negotiation --start-carla --gpus 2 --results-tag outsider-veto-d2"
+      ],
+      "passCondition": "Both public variants must finish and produce simulator, planner, communication, and result artifacts with the fixed commit recorded. A dry-run, route count, loader success, fixture, syntax check, or one-sided run does not pass. The d5 outsider remains non-responsive, so this gate proves only the message/planner task path, not the outsider-response claim.",
+      "failAction": "Stop. Do not patch around missing checkpoints, substitute a mock planner, or proceed to outcome claims."
+    },
+    "day4HardGate": {
+      "objective": "Demonstrate a public response-capable outsider and an exact same-simulator-state cooperative/masked planner comparison with raw episode traces.",
+      "requiredArtifacts": [
+        "A documented public scenario with at least two cooperative egos and at least one nonparticipant whose controller can react after treatment assignment.",
+        "A callable state checkpoint/restore or pre-action dual-planner entry that evaluates cooperative and masked messages from the same simulator state before either action mutates the world.",
+        "A frozen pre-treatment nonparticipant ID set and serialized per-tick pose, speed, acceleration or derivation inputs, waiting state, collision state, and termination reason.",
+        "A branch manifest recording scenario, seed, checkpoint hash, message mask, planner hash, response controller, and whether any replay guard or scripted trigger was active."
+      ],
+      "exactCommands": [
+        "cd /opt/mdrive && test -f tools/run_outsider_veto_pair.py",
+        "cd /opt/mdrive && python tools/run_outsider_veto_pair.py --help",
+        "cd /opt/mdrive && CARLA_ROOT=/opt/mdrive/carla912 python tools/run_outsider_veto_pair.py --planner colmdriver_rulebase --scenario <public-responsive-scenario> --branches cooperative,masked --save-world-trace --save-nonparticipant-outcomes --output results/outsider-veto-d4",
+        "jq -e '.episodes[] | select(.branches.cooperative and .branches.masked) | .nonparticipants | length > 0' /opt/mdrive/results/outsider-veto-d4/episode-outcomes.json"
+      ],
+      "currentStatus": "failed-before-implementation: tools/run_outsider_veto_pair.py and episode-outcomes.json do not exist at the fixed commit, and the public negotiation route's NPC is non-responsive.",
+      "responseModelRule": "A public scripted trigger, MDrive intelligent_guard replay adjustment, or Flow IDM controller may pass only as an explicitly named simulation stress-response model. A hand-written kinematic response layer does not pass this gate and forces rejection. No such result may be described as natural, human, or real-world effect.",
+      "failAction": "Stop and retain reject. Do not create synthetic outsider outcomes from ego-only trajectories."
+    },
+    "day7HardGate": {
+      "objective": "Run the same episode interface for the paired candidate and direct strong baselines, then verify episode-level outsider and system outcomes without changing response semantics between methods.",
+      "requiredBaselines": [
+        "Unshielded public negotiation policy.",
+        "The same planner with peer messages masked.",
+        "Veto-enabled paired policy.",
+        "An all-actor welfare or social-value objective on the same action surface.",
+        "A minimal-disruption or safety-constrained baseline on the same action surface.",
+        "A public IDM or equivalent response-controller sanity condition, labeled as simulation rather than a direct MDrive policy baseline."
+      ],
+      "exactCommands": [
+        "cd /opt/mdrive && test -f tools/run_outsider_veto_eval.py",
+        "cd /opt/mdrive && python tools/run_outsider_veto_eval.py --help",
+        "cd /opt/mdrive && CARLA_ROOT=/opt/mdrive/carla912 python tools/run_outsider_veto_eval.py --episode-manifest results/outsider-veto-d4/paired-manifest.json --policies unshielded,masked,veto,all_actor_welfare,minimal_disruption --response-model <public-response-model> --output results/outsider-veto-d7",
+        "jq -e '.episodes | length > 0 and all(.[]; (.policy and .scenario and .seed and .nonparticipantOutcomes and .systemOutcomes and .terminationReason))' /opt/mdrive/results/outsider-veto-d7/episode-outcomes.json"
+      ],
+      "outcomesRequired": [
+        "Per-episode outsider trajectory, braking, waiting or delay, collision, route completion, and termination reason.",
+        "Per-episode ego route completion, collision, intervention or veto action, and system delay or throughput measure.",
+        "Paired provenance showing the same pre-action state and response model for every branch compared."
+      ],
+      "currentStatus": "failed-before-implementation: the fixed commits provide neither the unified evaluator nor direct implementations of the all-actor-welfare and minimal-disruption baselines. The Flow fixture checkpoints do not satisfy this gate.",
+      "failAction": "Stop. Do not replace missing baselines with metadata labels or count unrelated pretrained fixtures as policy execution."
+    },
+    "days8To14": {
+      "authorization": "Proceed only if day 2, day 4, and day 7 all pass with archived commands and artifacts.",
+      "work": "Run the predeclared paired episode manifest, audit failures and missingness at episode level, report outcome distributions and branch-level traces, and preserve an explicit stress-test label for scripted, replay-guard, IDM, or other simulated response models.",
+      "claimBoundary": "The maximum supportable claim is behavior inside the named simulator and response controller. No natural-response, human-response, field-effect, or real-world causal claim is permitted."
+    }
+  },
+  "blockingIssues": [
+    "No fixed-commit public path combines a cooperative message policy, a masked branch, a response-capable outsider, and episode-level outsider outcomes without new integration code.",
+    "MDrive's public negotiation runner launches separate closed-loop variants rather than evaluating both branches from an identical restored state.",
+    "The only NPC in MDrive's five Lane_Change_Negotiation route sets is a non-reactive WaypointFollower with collision avoidance disabled by default.",
+    "MDrive's raw world trace is not exported as a ready episode-level outsider outcome table, and no wired NPC kinematics logger was found.",
+    "MDrive's rulebase path still requires CARLA, perception/planning checkpoints, and VLM/LLM services; it is not a lightweight no-checkpoint baseline.",
+    "Flow provides public IDM response but no communication or message-masking policy branch at the fixed commit.",
+    "Flow's multiagent merge action loop uses enumerate() incorrectly, so the public path needs a source change before policy actions can be trusted.",
+    "The available Flow checkpoints are ring or figure-eight artifacts, not trained multiagent merge coalition policies or direct strong baselines.",
+    "Crossing MDrive actions into Flow responses requires a new synchronization and kinematic-response layer. That layer would define the measured response and cannot be hidden behind a natural-effect interpretation.",
+    "The published dependency stacks are legacy and heterogeneous enough that environment repair, not experiment execution, could consume the two-week window."
+  ],
+  "strongestObjection": "The proposed outsider burden is not currently an outcome of a public end-to-end policy-response system. MDrive can change cooperative messages but its negotiation outsider is non-responsive; Flow can react with IDM but has no coalition message policy. Joining them requires a newly authored response adapter, so the resulting braking or waiting would primarily validate that adapter's simulation semantics, not a natural or real outsider effect of coalition communication.",
+  "verdict": "reject"
+}

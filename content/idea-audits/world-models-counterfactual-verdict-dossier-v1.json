@@ -1,0 +1,166 @@
+{
+  "candidateId": "statewise-counterfactual-verdict-admission",
+  "direction": "world-models",
+  "title": "同初态动作对的反事实 Verdict 准入证书",
+  "hook": "不再问世界模型是否听从动作，而是问它能否在同一状态下正确判断两种可执行动作谁更危险，并在判断不可信时拒绝给出 verdict。",
+  "output": "评测协议、准入校准器与负结果地图",
+  "effort": "中等工程量，核心研究无需训练基础世界模型",
+  "timeline": "首轮 10 至 12 周，Gate 0/1 可在前 4 周内止损",
+  "decision": "保留为可证伪的评测与安全准入线，不主张通用现实 L4 迁移",
+  "whyNow": "ACT-Bench、Orbis 2 和 ReactSim-Bench 已分别让动作兑现、反事实转向和多主体反应可执行，而世界模型准入工作又暴露了视觉排名与动作排名可能反转；这些公开资产首次允许把问题压缩为逐状态、逐动作对、逐时域的错误准入，而不是继续比较视频观感。",
+  "keyProblem": "给定完全相同的可观测初态 s、固定随机种子族和一对满足动力学约束的 ego 动作 a0/a1，世界模型产生的 rollout 是否能在 1、2、4、6 秒有效时域内保持独立风险 oracle 给出的风险差分符号与动作排序；若不能，准入器能否在固定 coverage 下控制 false admission，即把错误动作排序当作可信 verdict 放行的比例。",
+  "currentLimitations": "最近工作分别覆盖单动作轨迹兑现、长时生成、多主体反应、策略选择和一般世界模型准入，但尚未把 state identity、action pair、response horizon、独立 risk oracle 与 fixed-coverage false admission 绑定成一个可复现 estimand。仅报告 ACT、ADE、视觉质量或聚合策略排序，会掩盖世界模型在某个具体状态上把更危险动作错误判成更安全的情况。",
+  "hypothesis": "在匹配状态和动作可执行性后，ACT/ADE、最近训练动作距离或一般生成不确定性仍不能充分预测逐状态动作对的 verdict 错误；结合动作支持距离、反应存活和风险差分稳定性的校准器，能在相同 coverage 下显著降低 false admission，并在跨场景族与第二 planner 上保持方向一致。",
+  "noveltyClaims": [
+    {
+      "nearestWork": "ACT-Bench 已量化给定轨迹指令是否在生成视频中兑现。",
+      "irreducibleDifference": "本研究对象是同初态下动作对的风险差分符号和错误准入，不把单动作执行一致性等同于策略 verdict 正确。"
+    },
+    {
+      "nearestWork": "ReactSim-Bench 已分离 AV 与环境智能体控制并评测偏离日志后的反应。",
+      "irreducibleDifference": "这里固定 state identity 与 action pair，进一步校准反应效应在 1/2/4/6 秒的存活及其对动作风险排序的影响。"
+    },
+    {
+      "nearestWork": "世界模型准入工作提出 L0-L4 证据阶梯，Imperfect World Models are Exploitable 给出策略偏好反转理论。",
+      "irreducibleDifference": "本研究实例化可计算的 statewise false-admission 风险和拒绝协议，不再提出一个抽象准入层级或一般 exploitation 定理。"
+    }
+  ],
+  "method": [
+    {
+      "step": "动作对与状态身份账本",
+      "detail": "从 ReactSim 显式状态构造每场景四个动力学可执行 ego 行为；state identity 固定地图、ego/NPC 状态、历史窗口、随机种子族和 planner 输入，只允许 action pair 变化，并记录 branch lineage。"
+    },
+    {
+      "step": "独立风险 Oracle",
+      "detail": "主结论使用与被测世界模型不同实现的显式状态仿真或规则事件锚点，输出碰撞、越界、最小 TTC、舒适度和路线进度；学习型视频 judge 只能作为附加诊断，不能自证 verdict。"
+    },
+    {
+      "step": "有效时域与反应存活",
+      "detail": "在 1、2、4、6 秒分别比较风险差分的符号、幅度和动作排序，定义首次发生符号翻转、NPC 响应消失或事件身份不可匹配的 horizon。"
+    },
+    {
+      "step": "固定 Coverage 准入",
+      "detail": "使用独立校准集把动作支持距离、ACT/ADE、ensemble 分歧和响应存活映射为 abstain/accept；在预注册 coverage 网格上报告 false admission，而不是事后挑选阈值。"
+    },
+    {
+      "step": "二级传感器动作响应探针",
+      "detail": "在 Orbis 2 和 ACT-Bench 上复现短长时动作响应，仅验证状态域结论是否能映射到像素 rollout；该探针不承担现实反事实真值。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "asset": "ReactSim-Bench 71e54fda7426678d0baee9b62b0d32b323725fb8",
+      "reuse": "复用 2,636 个场景、公开 baseline checkpoint、新模型适配接口和多主体状态 rollout。",
+      "boundary": "仓库未声明许可证，启动前必须核对 nuPlan 与 vendored baseline 条款；不重新分发受限资产。"
+    },
+    {
+      "asset": "ACT-Bench e6c825519f27b3f1fd44c5b5d8b949fcb91fa5ee",
+      "reuse": "Apache-2.0 代码、2,286 样本、ACT-Estimator 与 run_benchmark.py 用作单动作兑现基线。",
+      "boundary": "instruction_trajs 需要自建适配层，且该数据不含真实同初态 NPC 反事实。"
+    },
+    {
+      "asset": "Orbis 2 f8a0d6898689a20df10e9f71bcc0fa2abfdb7a8c",
+      "reuse": "MIT 代码、L1/L2 checkpoint、rollout_demo_v2.py、速度/偏航率和二维轨迹接口用于二级传感器探针。",
+      "boundary": "仓库不提供独立风险 oracle 或策略 verdict，自建事件提取和分支对齐。"
+    },
+    {
+      "module": "自建 branch ledger 与 verdict adapter",
+      "detail": "统一 state hash、action-pair ID、随机种子、horizon、oracle event 和 planner 输出；实现 conformal/风险控制式阈值校准、审计日志与可复现实验 manifest。"
+    },
+    {
+      "compute": "算力资源和执行接口预算",
+      "detail": "Gate 0 仅需 CPU 状态重放；Gate 1 预计 1 台 24–48 GB GPU 运行公开 checkpoint，主实验约 300×4×多种子状态 rollout，可按场景并行，不训练基础模型。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "phase": "Gate 0：协议可识别性预检",
+      "plan": "抽取 30 个状态、每个状态四个动作，验证 state hash、动作可执行性、reference branch 和 oracle event 在重放中稳定；此项尚未执行，不写成自然故障发生证据。"
+    },
+    {
+      "phase": "Gate 1：风险膨胀存在性",
+      "plan": "在至少 100 个状态上检查 ACT/ADE 相近时是否仍出现风险排序翻转，并确认翻转不是 oracle 噪声或非法动作造成；若不存在，停止开发新准入器。"
+    },
+    {
+      "phase": "完整状态域主实验",
+      "plan": "使用 300 个显式状态、每状态四个动作和至少三个随机种子，报告 1/2/4/6 秒差分符号、Kendall 排序、fixed-coverage false admission 与 abstention cost。"
+    },
+    {
+      "phase": "跨规划系统冻结验证",
+      "plan": "冻结阈值后迁移到第二 planner 和不同场景族；Orbis 2/ACT 仅进行传感器动作探针，并明确仿真内结论不能外推为现实道路安全率。"
+    }
+  ],
+  "strongBaselines": [
+    "无拒绝地接受所有世界模型 verdict，以及随机拒绝在相同 coverage 下的下界对照。",
+    "ACT-Bench 的 ACT-Estimator、ADE/轨迹一致性和最近训练动作距离，均使用相同状态、动作对和时域。",
+    "ensemble disagreement、像素或 latent uncertainty、L2 safe-horizon 代理，并在相同校准集和 coverage 下比较。",
+    "独立 oracle 的 full-information 准入上界，以及仅按场景类别拒绝的简单规则基线。"
+  ],
+  "metrics": [
+    "主指标：在 50%、70%、90% coverage 下的 statewise false-admission rate，并以状态为统计单位给出 bootstrap 置信区间。",
+    "动作对指标：风险差分符号准确率、Kendall 或 pairwise ranking agreement、差分幅度校准误差。",
+    "时域指标：1/2/4/6 秒 response-survival 曲线、首次符号翻转时间和 horizon 条件下的风险覆盖。",
+    "代价指标：abstention rate、漏放/误拒成本、每个 verdict 的额外延迟和显存占用。"
+  ],
+  "successCriteria": [
+    "相对最强非 oracle 基线，在预注册的至少两个 coverage 点把 false admission 的 95% bootstrap 上界降低至少 25%，且风险差分排序不恶化。",
+    "冻结后的准入器在第二 planner 和至少一个留出场景族上保持同方向改善，且不是靠拒绝单一场景类别获得。",
+    "独立风险 oracle 与人工事件复核在抽样子集上达到预注册一致性，证明主要翻转不是提取器伪差。"
+  ],
+  "killCriteria": [
+    "Gate 0 无法同时保持 state identity、动作可执行性和独立 reference branch，导致风险差分不可识别。",
+    "Gate 1 中 ACT/ADE、支持距离或 L2 horizon 已在相同 coverage 下达到等价错误准入控制，新校准器无不可替代增量。",
+    "差分错误只在单一 CARLA 行为模型或单一 planner 出现，换 planner、种子或场景族后方向消失。"
+  ],
+  "risks": [
+    "显式状态仿真器的 NPC 行为和规则 oracle 可能把仿真偏差误当世界模型错误，因此主张限定为仿真内可识别性并保留人工事件复核。",
+    "动作对可能在动力学上可执行却在行为分布中极不自然，需要预注册支持距离和自然度筛选，不能用合成可注入性宣称现实频率。",
+    "Orbis 2 的像素级事件提取可能引入第二层误差，故只作外部探针，不覆盖状态域主结论。",
+    "ReactSim 许可和上游数据条款可能限制再分发；若无法合法使用，只能更换公开状态仿真资产并重新审计可比性。"
+  ],
+  "impact": "正结果将给世界模型作为 planner、策略选择器或仿真裁判提供可审计的逐状态准入条件，帮助团队知道何时必须 abstain；负结果若显示现有 ACT/ADE 已足够，或错误只来自某一仿真器，也会直接阻止继续投入复杂安全校准器，并收紧世界模型可声称的使用边界。",
+  "gates": {
+    "gate0": "尚未执行：验证状态身份、动作合法性、分支重放和独立 oracle 的协议可识别性。",
+    "gate1": "尚未执行：确认同 ACT/ADE 条件下存在稳定的风险排序翻转，且基线尚未控制 false admission。"
+  },
+  "evidence": [
+    {
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "role": "直接提出世界模型准入证据阶梯并报告视觉排名与动作排名反转，但尚未实例化逐状态错误准入校准。",
+      "localPaperId": "world-model-simulator-admissibility",
+      "localLink": "papers/world-model-simulator-admissibility/"
+    },
+    {
+      "title": "ACT-Bench: Towards Action Controllable World Models for Autonomous Driving",
+      "url": "https://iclr.cc/virtual/2025/37570",
+      "role": "提供单动作兑现的公开数据、估计器和强基线，同时界定动作跟随不等于动作对风险差分。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ReactSim-Bench: Benchmarking Reactive Behavior World Model Simulation in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.14058",
+      "role": "提供显式状态、多主体反应场景与公开 baseline，是构造匹配初态动作对和独立状态锚点的主资产。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Orbis 2: A Hierarchical World Model for Driving",
+      "url": "https://arxiv.org/abs/2607.15898",
+      "role": "提供公开 checkpoint 和反事实转向控制，可检验状态域准入信号能否映射到传感器级 rollout。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Imperfect World Models are Exploitable",
+      "url": "https://arxiv.org/abs/2605.15960",
+      "role": "形式化模型与真实环境策略偏好反转，支撑错误准入的决策后果，但未给出驾驶状态级协议。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "CG-World: A Large-Scale World-State Dataset and Protocol for World Models",
+      "url": "https://arxiv.org/abs/2607.26452",
+      "role": "提供严格 counterfactual branch lineage 和状态身份协议，可借鉴分支账本但不作为驾驶现实真值。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:11:20.935Z"
+}

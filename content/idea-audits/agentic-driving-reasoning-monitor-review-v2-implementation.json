@@ -1,0 +1,28 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "05aee8a9-d339-45a8-a801-b7b29939e44e",
+  "reviewedAt": "2026-08-01T04:15:18Z",
+  "scores": {
+    "novelty": 8,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "同一 Alpamayo 1.5 checkpoint 内固定原生 CoT 与 monitor，只改变 action expert 消费的 cache，再检验 condition-by-monitor interaction，确实避开了跨模型身份混杂。VLADriveBench 已占据 CoT splice、selfsplice 和方向性动作响应，因此新增量主要是 monitor transport、matched harm 与多 donor cache 的交互识别，而不是 cache intervention 本身。",
+    "feasibility": "固定权重 revision 存在，官方代码明确把 VLM past_key_values 交给 diffusion action expert，VLADriveBench 也给出了 sequential cache rebuild 与 bit-identical selfsplice 的一手先例。权重仅限非商业研究，推理代码为 Apache-2.0；官方要求 Linux、CUDA 12、Python 3.12，单样本约 24 GB VRAM，多样本约 40-60 GB。扣分来自尚无本项目权重/数据访问、单路线 smoke、CARLA 0.9.15/AlpaSim 适配、cache capture/replay、三类 donor cache、几何标签器或 route-family runner；8-10 周同时关闭这些接口和规模化运行偏紧。",
+    "success-probability": "当前没有 native/native、selfsplice、order-swap、channel-decoupling、自然 harm prevalence、monitor score 共同支持或功效结果。CARLA 对 Alpamayo 是已知 OOD，既可能放大 CoT 作用，也可能造成停滞和异常伤害；多 donor cache 还可能形成不可控的内部状态偏移。即使工程门通过，主张仍要求自然 harm-positive 路线足够、interaction 超过 additive 与 trajectory-only 基线并跨至少两类 cache 保持方向，连续失败点较多。",
+    "impact": "正结果会为 reasoning monitor 增加可操作的 action-channel transport 边界，紧区间负结果也能支持固定条件下的低成本监测。影响被人工 cache 条件、固定 checkpoint、预注册 CARLA 路线和 OOD 输入严格限定，不能直接升级为真实道路或一般 VLA 的安全结论。",
+    "comparison-readiness": "condition-only、monitor-only、additive、interaction、trajectory-only、consistency 与 per-condition oracle 的比较层次清楚，split、路线簇单位、失败对账和多 cache 分层也较完整。剩余缺口是 CoT monitor 的具体冻结特征、正则化自由度、cache family 生成器、数值等效界和 pilot 后可承担的路线数都尚未由可运行 artifact 固定。"
+  },
+  "strongestObjection": "核心处理不是一个已核验的可控变量：替换整段 KV cache 可能同时改变语义、token 历史、位置编码和广泛隐藏状态分布；在本项目 selfsplice、多 donor family、语义保持控制和非法轨迹审计全部为空时，任何 interaction 都可能只是人工内部状态偏移或 CARLA OOD failure，而非同一 monitor 安全含义发生变化。",
+  "requiredExperiment": "先在固定 revision 的一个小型、按 route family 隔离的 CARLA smoke 集上完成原生推理，并对每个世界状态执行 native/native、selfsplice、order-swap 及至少三类 donor cache；保存 token、KV、RNG、动作与轨迹哈希。只有 native/native 和 selfsplice 落入预先冻结的等效界、三类 donor 均削弱有方向语义响应且非法轨迹率不升高时，才运行独立 pilot 估计自然 harm、共同支持与路线级功效；任一门失败即足以证伪当前实现路径。",
+  "evidenceReopened": [
+    "https://huggingface.co/nvidia/Alpamayo-1.5-10B/tree/089866afb4cfa2231fa7822c67e1e8bc91eed46f",
+    "https://arxiv.org/abs/2606.12706"
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "9d52194eb043d40d2ddfc3f445aaf6f11979e5940e497b63f34ab4d342586ac8"
+}

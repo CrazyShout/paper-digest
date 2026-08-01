@@ -1,0 +1,30 @@
+{
+  "candidateId": "verifier-selection-winners-curse",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 4
+  },
+  "rationales": {
+    "novelty": "TOAD 已把 learned scorer 当作 CEM reward，DriveVer 已做测试时轨迹验证与修正，推理时 reward hacking 也已有通用机制；本候选剩余的新意是驾驶域内按 N/CEM 搜索压力测量 verifier 分数上升、独立安全结果下降和 false acceptance 尾部，而非再提出 verifier。",
+    "feasibility": "DiffusionDrive 固定提交和 MIT 权重可运行 NAVSIM，内部确实生成 20 条轨迹及分类分数；但 forward_test 最终只返回 argmax 的单条 trajectory，必须改造内部接口才能缓存 selected/unselected proposals。NAVSIM PDM scorer 与 HUGSIM 的闭环 pipe/eval.json 路径公开，HUGSIM 也发布场景资产；然而 HUGSIM 原生只启动 UniAD/VAD/LTF 客户端，DiffusionDrive/自建 verifier 接入、候选级离线 oracle join 和闭环重规划都需实质工程。",
+    "success-probability": "增加候选数放大 scorer 尾部误差在结构上可信，但 dossier 同时要求轨迹留在 proposal support、两个 verifier seed 均出现自然反转、现有 trust region/calibration 不能消除，并由反应式闭环复核。轻量 verifier 的训练标签尚未具体化，若与 NAVSIM components 共用标签，独立 oracle 会失效；若只用 imitation/ADE 标签，反转可能只是目标定义差异。",
+    "impact": "若确认搜索压力存在安全反转，可直接改变 best-of-N、CEM 和 test-time verifier 的预算准入方式，并要求保存全部候选而非只报 winner；这比平均 PDMS 改进更接近部署风险。",
+    "comparison-readiness": "DiffusionDrive、NAVSIM、HUGSIM 与 N=1/random/oracle-selector 可以实现，但截至核验时 TOAD 页面仍写明代码将公开，DriveVer 的 arXiv 页面也没有代码入口。缺少两个最近直接方法的实现意味着公平复现其 trust region、verifier 训练目标和搜索预算目前不可完成，自建近似不能替代直接比较。"
+  },
+  "strongestObjection": "核心 verifier 的训练标签没有被定义到足以证明与 oracle 独立：若用 NAVSIM/PDM 安全组件训练，它与所谓独立 oracle 共享目标；若改用 ADE、模仿或人工标签，观察到的反转可能只是代理选择而非 TOAD/DriveVer 类安全 verifier 的赢家诅咒。没有先锁定可审计的标签谱系，selected/unselected proposal 曲线无法识别主张。",
+  "requiredExperiment": "先修改固定 DiffusionDrive commit，使每个 scene/seed 导出全部 20 条 poses_reg、poses_cls、anchor/support 距离和最终 winner；在不看 held-out oracle 的 train split 上分别训练两个 verifier seed，并公开列出每个训练标签和特征。对至少 100 个 held-out scenes 用嵌套 N={1,2,4,8,16} 缓存候选，仅在选择后 join 一个明确不共享标签/特征的几何或反应式 oracle。若无法证明标签谱系独立，或 N 曲线只在越界轨迹上反转，应停止。",
+  "evidenceReopened": [
+    "https://github.com/hustvl/DiffusionDrive/tree/9b52ed0ec06b073d82d6f392ab084c7b301c8681",
+    "https://github.com/hyzhou404/HUGSIM/tree/62c690d39fd90020e68a196bd8bcc1c4d4191f2e",
+    "https://arxiv.org/abs/2606.07170",
+    "https://arxiv.org/abs/2607.00399"
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "90901a27d519a38ee933544dcaccfd2a69a5c40423819dc88911e13748c1f490"
+}

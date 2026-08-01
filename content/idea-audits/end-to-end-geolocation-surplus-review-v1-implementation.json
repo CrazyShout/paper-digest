@@ -1,0 +1,30 @@
+{
+  "candidateId": "geolocation-controlled-retrieval-surplus",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "直接工作已经做了 geographic image drop、随机错图和基于 GPS distance/ZNCC 的 reliability gate；把 estimand 收紧为固定 GPS、route、road identity 后的像素条件增量，并加入 same-location temporal mismatch 与 tile-disjoint 外推，仍是有辨识度的审计问题，但不是新的检索或规划方法。",
+    "feasibility": "固定 commit 的 End2End-Planning 仓库确有 VAD+Geo 配置、Apache-2.0 代码、单卡测试脚本和 Google Drive checkpoint，nuScenes-Geography 也以 CC-BY-NC-SA-4.0 发布约 6.03 GB/3,600 行数据。发布的数据管线把 streetview/satellite 张量、extrinsics、distance 和 quality label送入模型，因而替换像素并保持其余字段不变可实现；但 GPS/route-only 支路、tile/road identity ledger 与五分支 provenance 均需自建，Dataset Devkit 固定提交自身未带 LICENSE，旧版 CUDA 11.3/PyTorch 1.9.1/MMCV 栈也增加复现成本。",
+    "success-probability": "正式结果在 full split 的平均碰撞率改善仅约 0.01 个百分点，较明显差异集中于 night 子集；在 held-out tiles 上再与同位置错时、等距离错位和学习型 GPS/route prior 的最强控制比较后，正向像素 surplus 很可能缩小或落入等价区间。Gate 0/1 可在两周内止损，但 dossier 的成功条件要求所有主要控制下仍保留实用增量，达成概率偏低。",
+    "impact": "无论正负，结果都能约束地理检索论文必须报告的混杂控制，并帮助判断 6 GB 级图像缓存、检索延迟和许可成本是否值得；影响目前仍绑定 nuScenes、VAD 和 non-reactive 规划代理，无法直接外推为真实闭环安全。",
+    "comparison-readiness": "VAD、VAD+Geo、zero/mismatch 分支和官方 evaluator 均有明确实现入口，强比较基本齐全；GPS/route-only 需要重新训练且并非官方输入分支，NAVSIM/Bench2Drive 也没有与该 checkpoint 直接对齐的开箱即用接口，因此第二评价层与容量公平性仍需先锁定。"
+  },
+  "strongestObjection": "发布系统把地理图像、由位姿得到的 extrinsics/distance、CAN bus 和 route command 共同送入旧版 VAD 栈，但没有独立的 GPS/route-only 执行支路；若新支路必须训练而真实图像分支保持冻结，所谓条件像素增量会同时混入训练制度和表示容量差异，不能由五分支表面字段一致性自动解决。",
+  "requiredExperiment": "先在 200 个样本上实现可哈希的 paired-input replay：对 real、zero、same-location mismatch、distance-matched wrong-location 四个冻结分支逐字段比较相机、CAN bus、ego_fut_cmd、street/satellite extrinsics、distance、quality label 与 checkpoint 输出；随后只用 train tiles 训练等容量 GPS/route prior，并在完全未见 tile 的 scene-level 单位上预注册等价界。若冻结分支不能保持这些不变量，或 GPS/route prior 的训练制度无法与图像支路公平对齐，应停止主张像素 conditional surplus。",
+  "evidenceReopened": [
+    "https://github.com/SpatialRetrievalAD/End2End-Planning/tree/af4631fd13fee73ff4af7351b6bca9ba9a0ca236",
+    "https://github.com/SpatialRetrievalAD/SpatialRetrievalAD-Dataset-Devkit/tree/2e772f42a2dd7cd9866fa8b685f85ab67c6cecef",
+    "https://huggingface.co/datasets/SpatialRetrievalAD/nuScenes-Geography-Data",
+    "https://spatialretrievalad.github.io/"
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "76450390f353855f7feec803aa5714db48d431d9d8c0926c14278dd129055241"
+}

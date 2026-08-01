@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "agentic-driving",
+  "candidateId": "failure-diagnosis-intervention-consistency",
+  "stage": "pre-review",
+  "title": "失败标签的行动价值：驾驶 VLA 的诊断能否稳定选中真正有效的局部修复",
+  "hook": "不再用分类准确率评价失败诊断，而是在同一冻结失败状态上追问一个更严格的问题：诊断标签能否在相同计算与编辑预算下，稳定选中比随机修复和通用反思更能改善驾驶结果的干预。",
+  "output": "诊断到修复的配对评测协议、冻结失败状态集、统一修复适配器和负结果边界报告",
+  "effort": "中高，主要成本是失败状态回放、两类修复器适配和预算配平",
+  "timeline": "8 至 10 周完成最小研究，跨修复器确认与闭环复核不超过 12 周",
+  "whyNow": "ELF-VLA 已把规划、推理和轨迹执行等结构化失败反馈用于训练，Counterfactual VLA 已把反事实自反思用于动作修正；两条研究线使诊断和修复都进入了公开驾驶 VLA 流程，但尚未隔离验证诊断标签本身是否携带可迁移的干预选择信息。现在可以利用公开模型、NAVSIM 类规划指标和可回放失败样本，把这一缺口改写成低成本、可推翻的配对实验。",
+  "keyProblem": "现有工作通常同时生成诊断、生成修复并训练或评测完整系统，最终增益混合了教师能力、更多计算、候选搜索、训练数据扩增和诊断语义。即使结构化反馈优于标量奖励，也不能推出标签正确指向了应采用的修复类型。需要估计的是标签的条件行动价值：在冻结同一失败状态、模型、可编辑范围和计算预算后，标签指定修复相对随机指定、通用反思和无修复的独立驾驶结果增益。",
+  "currentLimitations": "ELF-VLA 报告结构化诊断反馈与反馈引导 refinement 的联合训练收益，却没有把标签替换、修复器替换和预算匹配拆成因子；Counterfactual VLA 证明自反思能修正部分不安全动作，但其筛选、标签和训练流水线也没有检验失败类型到修复类型的条件对应。SERA 根据日志检索相似场景后再修复训练分布，HINT 将行为故障定位到模块与代码，它们分别覆盖场景修复和故障定位，仍未给出驾驶 VLA 中标签选择局部干预的配对因果证据。",
+  "hypothesis": "在预注册的失败类型与至少两类结构不同的局部修复器上，标签指定修复相对随机标签映射和通用反思会获得更高的配对轨迹或闭环收益，而且该方向在独立确认集、第二修复器和任务簇 bootstrap 中保持。研究不声称标签恢复唯一根因；若优势只来自某个强教师、更多搜索或事后挑选修复，则标签行动价值主张被否定。",
+  "claimBoundary": "研究对象是固定失败标签体系在预算匹配局部干预选择中的预测价值，不评价诊断文本是否像人类解释，也不把相关标签称为唯一因果根因。主要结论限于可确定性回放的公开失败状态、固定模型版本、预注册修复族和独立驾驶结果；开放环增益不能直接外推真实道路安全。",
+  "estimand": "对每个冻结失败状态 s、诊断标签 z 和修复族 r，估计独立结果 Y 在 label-directed repair 与预算匹配随机 repair 之间的配对增益，并检验 z 对各修复族收益排序的条件预测能力。统计单位是失败状态或路线任务簇，而不是相邻帧、生成候选或教师 token。",
+  "noveltyClaims": [
+    "把失败诊断从分类或解释任务改写为可证伪的干预选择问题：同一标签只有在不读取修复后结果的情况下，能预测哪种预算匹配局部修复改善独立驾驶结果，才具有行动价值。",
+    "提出冻结状态的修复交叉实验，将诊断标签、修复族和修复生成器拆开；标签指定、随机置换、通用反思、无操作与同预算 oracle-search 上界共享相同候选数、调用次数、可编辑范围和轨迹评测。",
+    "把可迁移性作为主门槛：诊断到修复的收益排序必须跨至少两个结构不同的修复族或生成器保持，而不是只证明单个教师能够同时写出标签和答案。",
+    "将负结果转化为明确结论：若标签不能优于预算匹配对照，则后续系统应把结构化反馈视为高带宽提示或搜索辅助，而不能把其类别解释成已验证的故障定位。"
+  ],
+  "method": [
+    "从固定公开模型的失败 rollout 中建立不可变状态清单，保存传感器输入、route/scenario ID、模型输出、随机种子、失败判据和环境状态；诊断器只看修复前信息，状态进入发现集或确认集后不得跨集复用相邻帧。",
+    "冻结一个不依赖修复结果的标签本体，例如 planning、reasoning、trajectory-execution 与 insufficient-perception，并在发现集上确定标签到修复族的映射；确认集不允许根据结果重命名标签、合并类别或选择更有利的修复。",
+    "实现两类结构不同的局部修复：A 为上下文或理由纠正，只编辑反馈/推理输入后重新生成轨迹；B 为轨迹或控制约束纠正，只编辑候选轨迹、meta-action 或局部控制目标。两类修复均禁止更新视觉骨干或扩大感知输入。",
+    "对每个失败状态运行 label-directed、permuted-label、random-repair、generic-reflection、no-op 和 matched-budget oracle-search upper bound；所有生成条件共享调用次数、候选数、最大 token、可编辑字段、解码种子组和后续评测预算。",
+    "以冻结状态为配对单位计算结果增益和修复排序，以 route/scenario family 做 cluster bootstrap；主要分析在独立确认集完成，并按失败类别、修复器、初始严重度和场景族报告共同支持与异质性。"
+  ],
+  "implementationPath": [
+    "第 1 周固定 ELF-VLA、Counterfactual VLA 及底层公开评测资产的版本和许可证，核对能否导出失败前状态、诊断文本、候选轨迹与独立规划指标；保存版本、哈希、提示和运行参数。",
+    "第 2 周构建 30 至 50 个失败状态的回放 smoke set，验证重复 no-op 的结果噪声、状态身份、随机数控制和开放环评测可重复性；若不能冻结同一状态，则停止因果比较。",
+    "第 3 至 4 周实现诊断器接口、标签本体、理由/上下文修复器和轨迹/控制修复器，并用合成单元测试确认每个修复器只修改预注册字段。",
+    "第 5 周运行预算审计，逐条件记录模型调用、token、候选数、延迟、显存和可编辑自由度；oracle-search 只作为同预算上界，不参与标签映射或主要方法选择。",
+    "第 6 至 8 周在发现集冻结所有规则后运行确认集，完成配对统计、任务簇 bootstrap、第二修复器复核和失败标签置换检验。",
+    "第 9 至 10 周对预注册的高影响子集做闭环或更强轨迹评测，发布状态 manifest、适配器、预算账本、负结果和不可复现边界；受许可证限制的输入只发布索引与哈希。"
+  ],
+  "minimumStudy": [
+    "Gate 0：至少获得 120 个可确定性回放的独立失败状态，覆盖不少于三类预注册失败标签和四个路线或场景任务簇；重复 no-op 的主要连续指标噪声须低于最小有意义修复效应的一半。",
+    "Gate 1：在与确认集隔离的发现集上冻结标签本体、标签到修复映射、两类修复接口、预算单位、排除规则和主要结果；任何事后新增标签或修复只能进入探索性附录。",
+    "Gate 2：在确认集对每个状态执行全部预算匹配条件，至少用两个独立修复生成器或两个结构不同修复族复核，并保存每次调用和编辑范围的逐状态审计记录。",
+    "Gate 3：对主要配对效应、标签乘修复族交互和修复排序做 route/scenario-cluster bootstrap；在预注册高影响状态子集做闭环或独立安全指标复核。"
+  ],
+  "strongBaselines": [
+    "no-op 与重复 no-op，分别给出自然失败基线和回放噪声下界。",
+    "不使用失败类别的通用自反思或统一反馈提示，在相同调用、token 和候选预算下重新生成。",
+    "对标签做状态级随机置换后执行同一标签到修复映射，用于检验标签语义是否比类别频率和修复器先验更有信息。",
+    "从可用修复族中均匀随机选择的 random-repair，以及按训练集总体最好修复固定选择的 majority-best repair。",
+    "同预算 oracle-search 上界：生成同样数量候选后用独立结果选最佳，只衡量可达改进空间，不作为可部署方法。",
+    "ELF-VLA 式结构化反馈引导 refinement 和 Counterfactual VLA 式通用反事实修正的可复现近似版本。"
+  ],
+  "metrics": [
+    "每状态相对 no-op 的 PDMS/EPDMS、碰撞代理、可行轨迹率、最小安全裕度或闭环任务成功增益，并保留各单项而非只报告复合分。",
+    "label-directed 相对 permuted-label、random-repair、generic-reflection 和 majority-best 的配对增益、route/scenario-cluster bootstrap 95% 置信区间与预注册等效区间。",
+    "诊断标签对最优修复族的 top-1 accuracy、macro-F1、pairwise ranking accuracy 和条件互信息；这些仅作行动选择度量，不命名为根因准确率。",
+    "标签乘修复族交互、跨修复器方向一致率、按初始失败严重度和场景族的异质性，以及确认集共同支持覆盖率。",
+    "逐状态调用次数、token、候选数、延迟、显存和实际编辑字段，验证所有主要对照满足预算与干预范围合同。",
+    "负结果中的可排除效应上界：在给定样本和噪声下，标签指定修复最多可能比随机或通用修复多获得多少独立结果增益。"
+  ],
+  "successCriteria": [
+    "确认集内 label-directed 相对 permuted-label 和 generic-reflection 在预注册主要结果上均达到最小有意义配对增益，任务簇 bootstrap 95% 置信区间下界高于零，且预算、候选数和编辑范围审计全部通过。",
+    "上述优势在第二修复生成器或第二结构修复族中保持同方向，至少三类有足够支持的失败标签中有两类通过，并且不是由单一场景簇、单个教师或少数极端样本驱动。",
+    "标签对修复族排序的确认集准确率显著高于标签置换分布，同时同预算 oracle-search 显示尚有可达改进空间；否则不能把系统总增益归因于标签行动价值。"
+  ],
+  "killCriteria": [
+    "不能在第 2 周前获得至少 120 个可确定性回放的独立失败状态，或 repeated no-op 噪声达到或超过预注册最小有意义效应。",
+    "label-directed 的优势在严格配平调用、token、候选数和编辑范围后消失，或被 majority-best、permuted-label 与 generic-reflection 同时达到。",
+    "收益只在由同一个教师同时生成标签与修复的配置中存在，换第二修复器或结构不同修复族后方向不保持。",
+    "标签本体、映射或样本排除必须读取确认集修复结果才能成立，或者主要结果依赖不可审计的私有状态与资产。",
+    "标签只能预测开放环代理改善，却在预注册闭环或独立安全结果上无改善或产生相反方向；此时停止安全与行动价值主张。"
+  ],
+  "risks": [
+    "诊断器和修复器可能共享教师，标签优势实际来自教师风格或隐藏置信度；使用标签置换、第二修复器、结构不同修复族和不含诊断文本的 majority-best 对照隔离。",
+    "相同计算并不等于相同修复自由度；除 token 和调用外还需冻结候选数、可编辑字段、感知输入、轨迹时域和后处理，并公开逐状态预算账本。",
+    "驾驶状态难以完全回放，环境随机性会淹没局部修复效应；先用 repeated no-op 估计经验零分布，以状态配对和任务簇 bootstrap 分析，噪声过大即退出。",
+    "失败标签可能只是严重度代理，使某些修复看似更有效；按修复前结果、场景族和可见风险分层，并报告标签在这些变量之外的增量排序能力。",
+    "公开模型或数据可能缺少完整训练接口；最小研究优先采用冻结模型的推理时局部修复，不把需要大规模重训的配置作为成功前提。"
+  ],
+  "impact": "若成立，该结果会给失败驱动驾驶 VLA 一个比诊断准确率更严格的设计准则：每个结构化标签必须绑定经预算配平验证的有效修复族，才能进入训练、运行时反思或安全恢复流程。若不成立，同样能阻止把高带宽教师反馈误称为根因诊断，并把研发资源转向直接的候选搜索、通用反思或结果验证器。公开的冻结状态交叉实验也可迁移到机器人 VLA、Agent 自修复和模块化自动驾驶故障定位。",
+  "evidence": [
+    {
+      "title": "Unleashing VLA Potentials in Autonomous Driving via Explicit Learning from Failures",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Luo_Unleashing_VLA_Potentials_in_Autonomous_Driving_via_Explicit_Learning_from_CVPR_2026_paper.html",
+      "role": "最直接的结构化失败诊断与 feedback-guided refinement 先例；联合结果证明链条可执行，但未隔离标签对修复类型的预算匹配预测价值。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Counterfactual VLA: Self-Reflective Vision-Language-Action Model with Adaptive Reasoning",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Peng_Counterfactual_VLA_Self-Reflective_Vision-Language-Action_Model_with_Adaptive_Reasoning_CVPR_2026_paper.html",
+      "role": "最直接的驾驶 VLA 反事实修正先例；证明 meta-action 自反思可改善轨迹与安全指标，但没有进行诊断标签乘修复族的冻结状态交叉实验。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "From Failures to Fixes: LLM-Driven Scenario Repair for Self-Evolving Autonomous Driving",
+      "url": "https://arxiv.org/abs/2505.22067",
+      "role": "自动驾驶失败日志到场景检索和修复训练的相邻方法，构成强系统基线；其对象是训练场景修复，不直接验证标签选择局部策略干预。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Hierarchical Fault Localization for Autonomous Driving Systems with Hypothesis Validation and Intent Analysis",
+      "url": "https://arxiv.org/abs/2607.12598",
+      "role": "截至冻结日很新的 ADS 模块与代码级故障定位竞品，约束本研究不能声称首个驾驶故障诊断；残余只限诊断标签到结果改善干预的一致性。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "role": "提供推理通道与驾驶行为会同时受扰动的直接证据和独立安全度量选择，但属于故障探测与攻击评测，不解决修复选择。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Diagnosing and Repairing Factual Errors in RAG under Budget Constraints",
+      "url": "https://proceedings.mlr.press/v318/hashemifar26a.html",
+      "role": "跨领域的诊断到预算受限修复基线，说明资源配平与动作选择已有直接先例；只能借鉴实验机制，不能支持驾驶领域新颖性。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T06:56:13Z"
+}

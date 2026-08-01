@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-co-mtp-asset-repro-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "candidate": "Co-MTP non-oracle ego and infrastructure future replacement",
+  "mode": "read-only-primary-source-audit",
+  "quantitativeRatingPerformed": false,
+  "rankingPerformed": false,
+  "officialRepository": {
+    "url": "https://github.com/xiaomiaozhang/Co-MTP",
+    "commit": "8d0937faec0cfb929a9d50dd921d39f0837a84f0"
+  },
+  "conclusion": {
+    "faithfulReproductionFromPublicAssets": "hard-blocked",
+    "deploymentReadyEgoFuture": false,
+    "deploymentReadyOtherFuture": false,
+    "twoWeekNonOracleVerticalSlice": "conditionally-feasible-after-contract-repair",
+    "candidateUse": "evidence-boundary-only-until-the-public-path-runs",
+    "reasons": [
+      "The paper constructs ego planning input from the true ego future, including quintic interpolation of that future; this is not an online planner proposal.",
+      "The paper describes other-agent futures as infrastructure-only predictions, while the public preprocessing path extracts future labels and no matching prediction-to-loader entry point or checkpoint was verified.",
+      "The public README command, argparse flags, checkpoint default, training-mode call, absolute data paths, and preprocessing schemas contain independent execution blockers.",
+      "Neither the audited Co-MTP repository nor the V2X-Seq repository exposes a verified applicable license."
+    ]
+  },
+  "oracleDataFlow": {
+    "egoFuture": {
+      "status": "verified-oracle-input",
+      "paperEvidence": [
+        "The vehicle-side model input includes historical trajectories, AV future ground truth, and map context.",
+        "The paper uses a quintic curve over the true ego future to simulate a planning trajectory.",
+        "The experiment uses 3 seconds of history and 5 seconds of future at 5 Hz."
+      ],
+      "codeEvidence": [
+        {
+          "file": "preprocess/preprocess_v2x.py",
+          "lines": "383-394",
+          "finding": "Extracts up to 50 true future ego frames into AV_fut."
+        },
+        {
+          "file": "training/dataset_v2x_road.py",
+          "lines": "93-115,568-584,610-688",
+          "finding": "Loads, downsamples, transforms, and inserts the future into future-agent nodes and planning edges."
+        }
+      ]
+    },
+    "otherFuture": {
+      "status": "oracle-or-incomplete-schema",
+      "paperEvidence": [
+        "The paper states that other-agent futures are predicted by an infrastructure-only Co-MTP model."
+      ],
+      "codeEvidence": [
+        {
+          "file": "preprocess/preprocess_v2x.py",
+          "lines": "412-416",
+          "finding": "Builds other_fut_fea, other_fut_mask, and other_fut_type from future labels."
+        },
+        {
+          "file": "training/dataset_v2x_road.py",
+          "lines": "98-115",
+          "finding": "The loader instead expects other_label, other_auxiliary_label, and other_label_mask."
+        }
+      ],
+      "unresolved": "No public converter from an infrastructure-only predictor output to the loader schema was verified."
+    },
+    "infrastructureHistory": {
+      "status": "schema-incompatible",
+      "finding": "The training loader expects tar_id, road_feature, road_feature_mask, road_ids, and road_type, while preprocess_road.py emits a different payload containing agent_feature, label, auxiliary_label, label_mask, pred_num, object_id_lis, agent_type, and map_fea."
+    }
+  },
+  "publicExecutionBlockers": [
+    {
+      "id": "missing-root-entrypoint",
+      "severity": "hard",
+      "finding": "The README invokes python train.py, but the repository root has no train.py; the file is training/train.py."
+    },
+    {
+      "id": "boolean-cli-contract",
+      "severity": "hard",
+      "finding": "The published command passes True or False to flags implemented with action=store_false, so argparse rejects the documented values.",
+      "evidence": "training/train.py:74-80"
+    },
+    {
+      "id": "checkpoint-default-case",
+      "severity": "hard",
+      "finding": "The default checkpoint is the string None, but the no-checkpoint condition compares against lowercase none, causing an attempted load of a path named None.",
+      "evidence": "training/train.py:64-67,315-319"
+    },
+    {
+      "id": "training-disabled",
+      "severity": "hard",
+      "finding": "The epoch loop calls run_model with is_train=false, bypassing backward, optimizer step, and checkpoint-save paths.",
+      "evidence": "training/train.py:365-366,420-490"
+    },
+    {
+      "id": "author-local-paths",
+      "severity": "hard",
+      "finding": "Default dataset and map paths point to author-local absolute paths; one data_path default also contains an extra quote.",
+      "evidence": "training/train.py:79-86 and preprocessing main blocks"
+    },
+    {
+      "id": "preprocessing-loader-schema",
+      "severity": "hard",
+      "finding": "The public preprocessing outputs do not satisfy the public training loader contract for road observations and other futures."
+    }
+  ],
+  "assets": {
+    "checkpoint": {
+      "status": "not-found-in-official-assets",
+      "evidence": [
+        "The official repository has no release or tag containing a checkpoint.",
+        "The only checkpoint-related tree hit is the local-load argument in training/train.py.",
+        "The official issue requesting pretrained weights remains open without a verified asset."
+      ],
+      "issueUrl": "https://github.com/xiaomiaozhang/Co-MTP/issues/4"
+    },
+    "dataset": {
+      "name": "V2X-Seq-TFD",
+      "repository": "https://github.com/AIR-THU/DAIR-V2X-Seq",
+      "commit": "8a5b4f82da5ab5c6eeacbf961aafbf2c883f437c",
+      "status": "official-links-published-transfer-unverified",
+      "notes": [
+        "The repository publishes example and full-dataset Google Drive links.",
+        "No archive download, checksum, capacity audit, or loader-compatible sample run completed in this audit."
+      ]
+    },
+    "licenses": {
+      "coMtpCode": "unknown-no-license-file-or-github-license-metadata",
+      "v2xSeqDataset": "unknown-no-dataset-license-verified",
+      "boundary": "A license from the parent DAIR-V2X code repository cannot be projected onto the sequence dataset without explicit terms."
+    }
+  },
+  "compute": {
+    "paperTrainingConfiguration": {
+      "hardware": "4 x NVIDIA RTX 4090",
+      "duration": "5-6 days",
+      "epochs": 45,
+      "batchSize": 24,
+      "futureModes": 6,
+      "transformerLayers": 6,
+      "hiddenDimension": 256,
+      "attentionHeads": 8
+    },
+    "inferenceCost": "not-reported-and-not-benchmarkable-from-current-public-path"
+  },
+  "minimumNonOracleVerticalSlice": {
+    "status": "proposed-not-executed",
+    "scope": "A contract and execution audit, not a faithful-paper reproduction.",
+    "steps": [
+      "Define one loader-compatible sample contract containing no values from t greater than t0.",
+      "Replace AV_fut with a history-only constant-acceleration or external planner-proposal adapter and log its provenance.",
+      "Replace other futures with an infrastructure-history-only constant-velocity adapter before attempting any learned predictor.",
+      "Repair the documented CLI, checkpoint condition, training mode, paths, and preprocessing schema without changing model semantics.",
+      "Pass one-batch forward, finite loss, backward, optimizer step, checkpoint save, reload, and identical deterministic inference.",
+      "Add no-future, top-1 proposal, oracle-future, and fully marginalized controls only after the non-oracle path runs."
+    ],
+    "goGates": [
+      "A sample can be produced and loaded with a machine-checkable proof that no t greater than t0 truth enters any input.",
+      "The one-batch train-save-reload smoke test passes from a clean environment.",
+      "The ego and other-future adapters have explicit shapes, coordinate frames, time horizons, and missing-data behavior.",
+      "The public-data license permits the planned use."
+    ],
+    "noGoGates": [
+      "Any future label, oracle ego trajectory, or post-t0 map-derived state remains in a claimed deployment input.",
+      "The loader contract cannot be reconstructed from public assets.",
+      "The only viable experiment requires the unpublished checkpoint or author-local preprocessing artifacts.",
+      "The contribution reduces to fixing repository bugs without a separate scientific hypothesis."
+    ]
+  },
+  "primarySources": [
+    {
+      "title": "Co-MTP: A Cooperative Trajectory Prediction Framework with Multi-Temporal Fusion for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2502.16589",
+      "role": "Paper input and experiment contract."
+    },
+    {
+      "title": "Official Co-MTP repository",
+      "url": "https://github.com/xiaomiaozhang/Co-MTP/commit/8d0937faec0cfb929a9d50dd921d39f0837a84f0",
+      "role": "Executable-path, schema, checkpoint, and compute audit."
+    },
+    {
+      "title": "Official V2X-Seq repository",
+      "url": "https://github.com/AIR-THU/DAIR-V2X-Seq/commit/8a5b4f82da5ab5c6eeacbf961aafbf2c883f437c",
+      "role": "Dataset entry and license boundary."
+    }
+  ]
+}

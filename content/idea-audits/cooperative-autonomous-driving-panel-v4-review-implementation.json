@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "panelId": "cooperative-autonomous-driving-finalist-panel-v4",
+  "round": 1,
+  "reviewerAgentId": "019fb773-ffd9-7913-a1fe-52eebf22c847",
+  "freshContext": true,
+  "thresholdDisclosed": false,
+  "reviewedAt": "2026-07-31T17:34:44+08:00",
+  "lens": "implementation-reviewer",
+  "candidates": [
+    {
+      "candidateId": "runtime-semantic-checkers-for-fusion-contracts",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 7,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "跨论文、配置、转换器、索引、加载器、checkpoint和评估器的协同感知契约 IR，较通用 schema、数据漂移检测和测试派生 checker 有明确领域增量；但核心技术仍是既有静态分析、溯源和差分测试的组合。",
+        "feasibility": "四个静态差分入口均可定位：V2XScenes 的训练和测试场景列表相同，Co-MTP 生产端 other_fut_* 与消费端 other_label* 不匹配，CooperScene 转换器限定三个车辆 ego，CodeFilling 有命令入口。两周 CPU 原型可行，但七类语义 mutant、受限 pickle/state_dict 解析及四栈统一 IR 偏满；六周模型实验可使用公开 CoSDH，但尚未端到端执行且 pickle checkpoint 需要隔离加载。",
+        "success-probability": "至少三个静态漂移大概率可被 checker 捕获；关键风险是这些实例分别表现为静态协议差异、立即缺键或缺失 wire framing，未证明会在原实现不报错时改变冻结模型输出或评估 cohort。",
+        "impact": "若能在模型执行前稳定定位跨资产语义漂移，可显著改善协同感知基准的可复现性与发布审计；若只生成仓库特定键检查表，影响会退化为一次性维护工具。",
+        "comparison-readiness": "已列出结构 schema、原仓库断言、哈希绑定、字段统计和最终指标等基线，并定义检测率、误报、定位和开销；但尚无冻结的 clean corpus、等价容差和能证明 shared-rule coverage 的跨仓库基准。"
+      },
+      "strongestObjection": "现有证据证明了四类发布资产不一致，却没有证明统一契约 IR 能发现原实现静默接受且影响模型或评估结果的错误；最可能的结果是高质量静态审计器而非运行时语义 checker。",
+      "requiredExperiment": "在固定 CooperScene 提交、CoSDH 配置和已核验 SHA-256 checkpoint 上，构造一个结构合法但语义错误的 ego、变换或 cohort mutant，同时运行原始、结构 schema、契约 checker 和规范化路径；要求原始路径不抛异常、checker 在融合前定位错误、配对输出或评估 cohort 可测地改变，并在合法 agent permutation 和单位变换上保持零误报。",
+      "overall": 7
+    },
+    {
+      "candidateId": "cooperative-benchmark-cohort-missingness",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 6,
+        "success-probability": 5,
+        "impact": 7,
+        "comparison-readiness": 6
+      },
+      "rationales": {
+        "novelty": "相对 SRA-CP 的风险感知选择和通用 conformal risk control，新增点主要是物理事件聚类、benchmark-native cohort、显式拒绝保证及三路 fallback；这是可信的统计与部署组合，但不可替代的方法增量尚不强。",
+        "feasibility": "CooperScene CoSDH 的 111360914 字节 checkpoint、LFS SHA-256、Docker/CUDA 栈和测试命令均已核验，显著改善两周 smoke test 可行性。仍未完成一次端到端运行，官方 agent_setting 没有显式 ego-only 模式，安全降级动作也未实现；V2X-Real 无官方 checkpoint，不能承担短周期复现。",
+        "success-probability": "CooperScene 全集仅有 24 个序列，mini 测试只有 30 个物理事件；按 ego、协作者组成、数量、模态和缺失原因细分后，独立支持很可能不足以形成有信息量的同时单侧风险界。即使策略可运行，也可能只能大量拒绝条件保证。",
+        "impact": "若能以可部署特征控制每个有支持 cohort 的有害协作风险，价值高于平均 AP 鲁棒性表；但收益受数据集 cohort 覆盖、混合漂移和真实缺失原因标签限制。",
+        "comparison-readiness": "always-cooperate、ego-only、全局阈值、分角色阈值、叶 cohort、层次策略和 oracle 基线较完整，且提出序列级划分和聚类区间；但第三个 safe-degraded 动作、置信度定义、等风险比较协议及同一冻结模型的 ego-only 反事实入口尚未冻结。"
+      },
+      "strongestObjection": "统计承诺与公开独立样本量不匹配：24 个序列不足以支撑当前层级的细粒度 group-conditional 风险保证，而 mini 的 30 个事件只能验证代码，不能验证主要研究主张。",
+      "requiredExperiment": "先在同一 CoSDH checkpoint 和同一物理事件上端到端生成 cooperative 与仅保留 ego 的配对输出，确认后者不依赖另一个模型；随后按完整序列划分校准和测试，仅保留一个预注册的粗粒度 ego-role 或 topology cohort，报告独立支持数、全局与层次策略的同时单侧界、覆盖率和拒绝率。若该粗粒度界仍无信息量，应停止扩展叶 cohort。",
+      "overall": 6
+    },
+    {
+      "candidateId": "clock-domain-provenance-age-identifiability",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 8,
+        "success-probability": 8,
+        "impact": 7,
+        "comparison-readiness": 8
+      },
+      "rationales": {
+        "novelty": "单向时延与时钟偏移不可联合识别是既有理论，区间运算本身也直接；增量在于把 V2X、ROS 2、MCAP 的事件语义、时钟域、同步代际和时间戳平面统一成可执行溯源契约，并以 fresh、stale、uncertain 取代未经证明的点判定。",
+        "feasibility": "两周方案无需训练模型，核心是标准字段账本、合成 MCAP、双世界轨迹和区间计算器。MCAP 明确区分 log_time 与 publish_time且允许二者相同，ROS 2 明确存在 System、Steady、ROS time及时间跳变，RFC 7679要求同步与时间戳边界误差核算；实现路径和 CPU 资源需求清楚。",
+        "success-probability": "双世界反例由模型直接保证，且多个官方字段契约缺少每消息时钟域和映射误差。主要不确定性不是能否产生反例，而是能否在冻结公开路径获得校准真值和有效误差界，并证明实际代码做了跨未证实时钟域的直接相减。",
+        "impact": "该方法可阻止把日志、发布、捕获和接收时间误当作可比较时间，适合数据审计和 deadline gate；部署影响取决于系统是否愿意提供同步状态和误差界，否则输出可能长期停留在 uncertain。",
+        "comparison-readiness": "naive subtraction、MCAP 差值、RTT/2、PTP 点估计、oracle common clock 与区间 provenance 基线清楚，偏移、漂移、重锁、deadline 网格和 coverage、false-fresh、区间宽度指标均已预注册；缺口主要是误差区间的实际校准方法。"
+      },
+      "strongestObjection": "核心不可识别性是经典结论；若真实公开管线没有错误的跨域 freshness 判定，成果可能只是一份严谨字段审计和保守区间包装，而非新的协同驾驶机制。",
+      "requiredExperiment": "生成两组消息内容、顺序和网络服务过程完全相同但 offset 或 one-way delay 不同、且跨越同一 deadline 的 ROS 2 MCAP；比较 naive、log-minus-publish、RTT/2、PTP 点估计和区间 gate，在独立校准的 offset、drift、relock 真值上验证预注册 coverage 与零区间外 false-fresh，并在一个冻结公开加载或 freshness 路径上复现错误点判定。",
+      "overall": 8
+    },
+    {
+      "candidateId": "coupled-adaptive-rate-controller-stability",
+      "scores": {
+        "novelty": 8,
+        "feasibility": 6,
+        "success-probability": 5,
+        "impact": 8,
+        "comparison-readiness": 6
+      },
+      "rationales": {
+        "novelty": "Quality over Quantity 明确把 BME 收敛、阈值与周期交互、VoI 驱动 BME 反馈留作未来工作，因此面向 gain、delay、更新周期和节点数的耦合稳定域具有清楚空位。将跨发送者语义效用耦合与普通拥塞振荡分离也有实质增量。",
+        "feasibility": "Artery 固定提交包含 CPM、LIMERIC、GPLv2 许可、OMNeT++ 5.6.2和SUMO 1.21容器，以及 run_example 命令。审计未实际编译；官方文档仅支持 Linux，容器会从源码构建大型依赖。两周内还需实现控制器、日志和高维 sweep，六周又缺少 Artery-to-OpenCOOD 适配器及固定语义效用定义。",
+        "success-probability": "目前没有实测的 off-diagonal semantic utility derivative，也没有证据表明新增反馈会产生与现有 LIMERIC或数值步长不同的振荡。即使观察到振荡，也可能无法归因于语义控制；零结果概率较高。",
+        "impact": "若稳定边界能预测语义饥饿和振荡，可直接指导 CPS/BME 控制器设计并连接网络与感知价值，潜在影响高；但第一阶段仅覆盖 ITS-G5 仿真，不能外推 C-V2X sidelink 或神经感知质量。",
+        "comparison-readiness": "固定速率、LIMERIC、加权 LIMERIC、FABRIC-style 和 Quality over Quantity-style 基线及振荡、饥饿定义已给出；但直接 QoQ 实现不可用，增益 sweep、效用归一化、队列稳定性判据和多个重实现基线的等价性尚未冻结。"
+      },
+      "strongestObjection": "语义边际效用既没有公开适配器也没有冻结定义，因此计划可能先设计一个合成效用反馈，再从该自定义反馈中发现预期振荡，无法证明这是协同感知系统的真实耦合。",
+      "requiredExperiment": "在不接入神经模型前先编译固定 Artery 容器并复现官方 example；随后用五发送者、冻结的解析效用函数运行语义反馈开启和关闭的配对 gain-delay sweep，测量一个发送者变化对其他发送者效用的非零导数，并要求振荡边界在异步更新、减半仿真步长和不同随机种子下稳定，而在关闭语义反馈后消失。",
+      "overall": 6
+    },
+    {
+      "candidateId": "failure-domain-evidence-quorum",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 6
+      },
+      "rationales": {
+        "novelty": "failure-domain quorum、Byzantine quorum 和保守相关融合均非新概念；增量是协同感知 evidence-root sidecar、固定车辆数但改变根基数的配对协议、root-disjoint admission及错误溯源敏感性。范围边界诚实，但方法新颖性主要来自领域落地。",
+        "feasibility": "CoopDet3D 官方页提供 TUMTraf-V2X 权重、MIT 代码、Docker和单 GPU测试命令，可作为候选所列资产中的短周期 checkpoint 路径；但仓库仅两个提交，依赖 PyTorch 1.9至1.10.2和mmcv 1.4，权重在外部文件服务且无已核验哈希，公开测试真值不可用。RCP-Bench 没有仓库内权重，V2X-Real也没有官方 checkpoint。",
+        "success-probability": "在仿真或 sidecar 中指定 shared cause_id 后，克隆同根证据不增加 q_FD 的性质几乎由定义保证；真正不确定的是相同车辆数和可见性下，observable或assigned roots 是否能稳定改善模型错误接受，而非依赖 oracle 根标签或过度拒绝协作。",
+        "impact": "对共同地图、标定、模型、网络和注入故障根计数可揭示车辆多数投票的相关失效，安全意义较强；但公开数据没有认证的完整 lineage，现实部署收益受可信 provenance 基础设施限制。",
+        "comparison-readiness": "all-fusion、车辆数投票、ROBOSAC、随机丢协作者、oracle collapse及错误 lineage 敏感性方向合理；但 ROBOSAC 和信任基线没有同栈命令级实现，TUMTraf-V2X主要是双代理，RCP-Bench与CoopDet3D之间也没有现成注入适配器。"
+      },
+      "strongestObjection": "方法把根标签当作可用输入，而公开数据至多提供部分观测或实验者分配的 lineage；若收益只在 oracle cause_id 下出现，它证明的是实验清单有用，而不是部署可执行的证据 quorum。",
+      "requiredExperiment": "使用官方 CoopDet3D TUMTraf-V2X checkpoint 和公开有真值的训练或验证切分，固定模型、场景、可见性、字节和故障强度，构造 independent-root、shared-root、同根消息克隆及 shuffled-root placebo；比较 all-fusion、车辆计数和 q_FD，要求 shared-root 条件下错误接受下降且 clean utility与覆盖不过度损失，并报告 merge、split、missing和wrong root 标签的完整敏感性曲线。",
+      "overall": 6
+    }
+  ]
+}

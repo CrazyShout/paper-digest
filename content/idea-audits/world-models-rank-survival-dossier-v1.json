@@ -1,0 +1,166 @@
+{
+  "candidateId": "judge-optimization-rank-survival-audit",
+  "direction": "world-models",
+  "title": "评价器优化与筛选后的跨族排名存活审计",
+  "hook": "一个评价器能选出自己最喜欢的视频并不说明世界模型真的更好；需要测量选择强度增加时，这个排名能否在封存的人类、几何、动作和任务评价器上存活。",
+  "output": "Goodhart 审计协议、跨评价器基准与选择后校准曲线",
+  "effort": "中等评测工程量，Gate 0/1 不训练大型生成器",
+  "timeline": "首轮 8 至 10 周，样本可得性与评价器独立性在前 3 周止损",
+  "decision": "保留为评价器外部有效性审计线，不再训练一个新的通用视频 judge",
+  "whyNow": "WorldModelBench 已展示自动 judge 可同时用于评价和 reward 最大化，WorldLens 与 DrivingGen 又提供了不同信息族的公开输出和指标；随着 best-of-N、reward post-training 和 judge-guided selection 进入世界模型流程，静态人类对齐已不足以回答被优化分布上的外部有效性。",
+  "keyProblem": "当 judge A 被用于 best-of-N 选择、拒绝采样或可获得时的奖励优化后，生成器排名和样本增益是否仍能在事先封存、训练数据与 backbone 尽量去耦的人工偏好、显式几何、动作兑现和下游任务评价器上保持；随着 N 或优化强度增加，是否出现 judge A 上升而 held-out family 排名反转的 winner's curse。",
+  "currentLimitations": "WorldModelBench、WorldLens、DrivingGen 和 WorldReasonBench 主要验证静态测试分布上的相关性、诊断能力或人工对齐，无法保证评价器参与筛选或优化后仍有效。把多个共享 VLM backbone、共享训练标签或同类 prompt 的 judge 当成独立证据，还可能严重高估 rank survival。",
+  "hypothesis": "即使 judge A 在未选择样本上与人工偏好高度相关，增加 best-of-N 选择强度仍会产生可重复的跨评价器 winner's curse：judge A 得分单调提高，而至少一个封存的人工、几何、动作或任务评价器的增益饱和、消失或反转；显式 evaluator-family 去耦和选择后校准可以预测该失效边界。",
+  "noveltyClaims": [
+    {
+      "nearestWork": "WorldModelBench 训练了与人工标签对齐的自动 judge，并报告最大化 judge reward 能改善其评分。",
+      "irreducibleDifference": "本研究把 judge 诱导的分布偏移作为处理变量，专门检验优化或筛选后在异族 held-out evaluator 上的排名存活。"
+    },
+    {
+      "nearestWork": "WorldLens 和 DrivingGen 提供多维、跨模型的驾驶世界模型评测。",
+      "irreducibleDifference": "这里不再增加一个综合分，而是预先封存 evaluator families，测量 N/优化强度曲线、rank reversal 和 leave-one-family-out 稳健性。"
+    },
+    {
+      "nearestWork": "一般 reward hacking、preference repair 和 model exploitation 研究已经说明优化代理可能失效。",
+      "irreducibleDifference": "贡献必须来自驾驶视频世界模型的可复现选择协议、共享偏差谱系和任务后果，而不是把通用 Goodhart 现象换数据集复述。"
+    }
+  ],
+  "method": [
+    {
+      "step": "候选组与处理定义",
+      "detail": "按同一 prompt、初态、动作条件和模型形成独立采样组；处理分别为 judge A 的 best-of-N 选择、阈值筛选，以及仅在公开训练入口可验证时的小规模 reward 优化。"
+    },
+    {
+      "step": "Evaluator Family 谱系",
+      "detail": "为每个评价器记录训练数据、backbone、prompt、输入模态和标签来源，按人工、几何、动作、任务四族封存；共享 backbone 的多个 VLM judge 只能算同一族。"
+    },
+    {
+      "step": "跨评价器排名存活曲线",
+      "detail": "在 N=1/2/4/8/16 或对应优化步数下，测量 judge A 选择增益、held-out family 增益、模型级 Kendall/Spearman 排名和 pairwise reversal，并按场景聚类估计置信区间。"
+    },
+    {
+      "step": "去耦与反事实对照",
+      "detail": "加入 random-of-N、固定第一样本、oracle-by-family 和 adversarially high-A/low-B 样本；通过 leave-one-evaluator-family-out 检查结论是否被单一评价器驱动。"
+    },
+    {
+      "step": "评价器选择后的条件校准",
+      "detail": "比较选择前后的可靠性曲线和 conditional calibration，学习只用于预测 rank survival/abstain 的轻量校准器，不反向调优封存 evaluator。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "asset": "WorldModelBench 00b7aa17a05f9fd1ab5c8f66bcf476d04c9c33bf",
+      "reuse": "复用 evaluation.py、仓库样本、公开 judge 指针以及物理和指令 prompt，作为 judge A 与静态准确率基线。",
+      "boundary": "仓库元数据未声明许可证；VILA 依赖、权重和数据条款需分别核验，静态 judge 准确率不能当优化后证据。"
+    },
+    {
+      "asset": "WorldLens fa6c5ff177e99d0d5b126f238ca42a430982b19a",
+      "reuse": "Apache-2.0 主代码、公开 nuScenes 模型输出、evaluate.py 和多维 metric 作为 held-out family 来源。",
+      "boundary": "固定提交尚未发布 WorldLens-26K，第三方组件另有条款；不得把未来人工数据承诺写成现成资产。"
+    },
+    {
+      "asset": "DrivingGen 48ed35695855ef17d7a7cbd4adc0e8bd5fcc8223",
+      "reuse": "Apache-2.0 benchmark、公开数据下载与视频/轨迹指标，提供与 VLM judge 信息来源不同的几何和动作评价。",
+      "boundary": "下载需要 Hugging Face token，第三方模型与数据许可独立；不提供真实闭环 verdict。"
+    },
+    {
+      "module": "自建候选组 manifest 与 evaluator registry",
+      "detail": "固定模型、条件、随机种子、样本哈希、选择策略和评价器谱系；实现盲化人工标注界面、rank-survival 分析和相关评价器聚类。"
+    },
+    {
+      "compute": "算力资源和执行接口预算",
+      "detail": "Gate 0 以公开输出和离线 evaluator 为主，预计 1 台 24–48 GB GPU 加 CPU 批量指标；若每条件样本不足，只对一个开源模型固定随机种子采样，不依赖 M4World 或 OmniDreams 私有资产。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "phase": "Gate 0：候选密度与许可预检",
+      "plan": "核验至少三个模型、每个条件至少 16 个独立样本或可合法生成等价候选，并固定样本哈希；此检查尚未执行，样本仓库存在不等于足够形成选择曲线。"
+    },
+    {
+      "phase": "Gate 1：评价器独立性与人工锚点",
+      "plan": "完成训练数据/backbone/prompt 谱系，确认至少三类异族 held-out evaluator 和一个盲化人工子集可用；若只能获得同族 VLM judge，停止外部有效性主张。"
+    },
+    {
+      "phase": "完整选择强度主实验",
+      "plan": "对固定候选池执行 N=1/2/4/8/16 的 judge A best-of-N，比较 random/no-selection/oracle，对每个 evaluator family 报告增益、排名和 reversal。"
+    },
+    {
+      "phase": "参数优化方式边界外推",
+      "plan": "只有在公开模型训练入口和预算允许时，增加小规模 reward tuning；必须把筛选效应与参数更新效应分开，不能从 best-of-N 直接声称训练期 reward hacking。"
+    }
+  ],
+  "strongBaselines": [
+    "N=1、固定第一样本和 random-of-N，均使用与 judge A 选择相同的候选预算。",
+    "judge A best-of-N 与各 held-out family 的 oracle-of-N 上界，用于区分候选池不足和评价器失真。",
+    "WorldModelBench 静态相关性、WorldLens/DrivingGen 原始模型排名，以及不经过选择的跨族排名。",
+    "共享 backbone 的 judge ensemble、异构 evaluator ensemble 和只按生成模型身份预测的简单基线。"
+  ],
+  "metrics": [
+    "选择曲线：judge A 与各 held-out family 在 N=1/2/4/8/16 的标准化增益、饱和点和斜率差。",
+    "排名指标：模型级 Kendall tau、Spearman rho、pairwise rank reversal rate 和 top-k survival。",
+    "外部有效性：盲化人工胜率、显式几何/轨迹错误、动作兑现以及可获得的任务代理指标。",
+    "审计代价：每个候选的 evaluator 延迟、GPU 时、人工标注量和 abstention 后可用覆盖。"
+  ],
+  "successCriteria": [
+    "在至少两个生成模型族和两个场景子集上，预注册的异族 evaluator 显示随 N 增大而稳定的 rank-survival 下降或 reversal，95% 场景聚类置信区间排除零。",
+    "反转在盲化人工或显式几何/动作锚点之一复现，且 evaluator 谱系分析证明不是同一 backbone 或重复标签造成的伪独立。",
+    "若不存在反转，也能以足够统计功效给出 judge A 的可用选择强度边界，并改变 best-of-N 或 reward 优化的使用决策。"
+  ],
+  "killCriteria": [
+    "Gate 0 无法形成同条件的 N 级候选池，或许可不允许合法重放/生成，导致选择强度不可识别。",
+    "Gate 1 只有同族、共享 backbone 的学习型 judge，且没有人工、几何、动作或任务独立锚点。",
+    "所谓反转在控制样本组成、量纲和随机性后消失，只剩单一指标噪声，无法改变模型或选择策略排序。"
+  ],
+  "risks": [
+    "公开模型输出可能并非独立同分布采样，候选池组成会与模型身份混杂；必须按条件分组并限制结论到可核验的采样协议。",
+    "人工偏好也可能偏向视觉质量而忽视驾驶后果，因此不能将人工单独视为终极 oracle，需要与几何、动作和任务族并列。",
+    "评价器训练数据或 VLM backbone 重叠可能隐藏共享偏差，必须公开谱系并把相关评价器聚成一族。",
+    "只做 best-of-N 不能直接证明参数更新中的 reward hacking；若训练入口不可得，产出必须限定为 selection-induced Goodhart。"
+  ],
+  "impact": "正结果会给世界模型 benchmark、best-of-N 展示和 reward post-training 建立最低外部有效性要求，防止研究者把对单一 judge 的优化误报为能力提升；可靠的负结果同样有价值，因为它能给出特定 judge、候选规模和评价族下的安全使用范围，决定是否值得继续投入更昂贵的人类或任务评测。",
+  "gates": {
+    "gate0": "尚未执行：确认公开输出或可合法采样的候选密度足以形成 N=1/2/4/8/16 选择曲线。",
+    "gate1": "尚未执行：完成评价器谱系并确认人工、几何、动作、任务中至少三类真正异族的 held-out 锚点。"
+  },
+  "evidence": [
+    {
+      "title": "WorldModelBench: Judging Video Generation Models As World Models",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/4ec03ed08a3fcb59e1c815b5598beff1-Abstract-Datasets_and_Benchmarks_Track.html",
+      "role": "提供人工标签对齐 judge 并报告 judge reward 最大化，是研究优化后外部有效性的最直接起点。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "WorldLens: Full-Spectrum Evaluations of Driving World Models in Real World",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Liang_WorldLens_Full-Spectrum_Evaluations_of_Driving_World_Models_in_Real_World_CVPR_2026_paper.html",
+      "role": "提供生成、动作、下游任务和人工偏好维度，可构成与 judge A 不同的信息族和公开模型输出。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DrivingGen: A Comprehensive Benchmark for Generative Video World Models in Autonomous Driving",
+      "url": "https://openreview.net/forum?id=OrgL5DsU0f",
+      "role": "提供视频、轨迹物理、时序和 ego controllability 指标，用于 held-out 几何与动作评价族。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "WorldReasonBench: Human-Aligned Stress Testing of Video Generators as Future World-State Predictors",
+      "url": "https://arxiv.org/abs/2605.10434",
+      "role": "提供结构化未来状态推理与专家偏好诊断，同时说明静态人类对齐仍需接受选择后分布偏移检验。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "M4World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming",
+      "url": "https://arxiv.org/abs/2607.14005",
+      "role": "展示长时多模态生成和 VLM judge 使用，界定实际世界模型流程中评价器耦合的应用场景。",
+      "localPaperId": "m4world-multimodal-driving-world",
+      "localLink": "papers/m4world-multimodal-driving-world/"
+    },
+    {
+      "title": "RENEW: Towards Learning World Models and Repairing Model Exploitation from Preferences",
+      "url": "https://arxiv.org/abs/2607.14180",
+      "role": "说明偏好可用于修复世界模型 exploitation，也构成必须区分通用 preference repair 与本项驾驶评价器审计的近邻。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:12:23.155Z"
+}

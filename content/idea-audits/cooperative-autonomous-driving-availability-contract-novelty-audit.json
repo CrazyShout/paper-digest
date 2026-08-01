@@ -1,0 +1,960 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-availability-contract-novelty-audit-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "status": "completed-with-claim-guardrails",
+  "purpose": "Narrow novelty audit for a CooperScene transport-availability state contract and frozen-model benchmark-semantics counterfactual. This is not an audit of a new asynchronous compensation network.",
+  "scoringPerformed": false,
+  "otherReviewerScoresConsulted": false,
+  "scope": {
+    "years": [
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "requiredWorksCovered": [
+      "CADET",
+      "Harbor",
+      "LRCP",
+      "CATNet",
+      "TraF-Align",
+      "V2X-ReaLO",
+      "CooperScene",
+      "RCP-Bench",
+      "CooperTrim"
+    ],
+    "directSemanticWorksAdded": [
+      "CoInfra",
+      "V2X-INCOP",
+      "AdaMap",
+      "Age of Information Guaranteed Scheduling for Asynchronous Status Updates in Collaborative Perception",
+      "Timeliness-Oriented Scheduling and Resource Allocation in Multi-Region Collaborative Perception",
+      "Learning for V2V Cooperative Perception under Lossy Communication",
+      "Bringing Network Coding into Multi-Robot Systems",
+      "STARE"
+    ],
+    "question": "Has prior work already established the exact combination of throughput-and-payload-derived transmission completion, explicit complete/incomplete/right-censored/trace-missing states, and frozen-model counterfactual measurement of fallback-induced benchmark verdict and ranking changes in CooperScene?",
+    "outOfScope": [
+      "A new temporal alignment or asynchronous feature compensation architecture",
+      "A general wireless packet simulator",
+      "Re-scoring prior idea reviews",
+      "Claims about unpublished or inaccessible implementations",
+      "Patent novelty"
+    ]
+  },
+  "evidencePolicy": {
+    "acceptedEvidence": [
+      "Primary paper full text from arXiv, CVF Open Access, OpenReview, ACM author-hosted paper, IEEE DOI landing page, or the publisher",
+      "Official author project page",
+      "Official repository and immutable source-code links where available"
+    ],
+    "discoveryOnly": [
+      "Search-result snippets",
+      "Secondary summaries",
+      "Repository-name guesses"
+    ],
+    "absenceClaimBoundary": "No exact prior was found in the executed public-primary-source search. This is a bounded search result, not a proof that no unpublished, closed-source, patent, or differently named work exists.",
+    "codeAvailabilityCaveat": "Several 2026 papers do not expose a complete public implementation. Paper claims and released-code behavior are therefore kept separate."
+  },
+  "candidateDefinition": {
+    "name": "Transport availability state contract for CooperScene replay",
+    "nonGoal": "Do not train or propose another asynchronous compensation network.",
+    "systemInput": [
+      "A directed sender-receiver throughput trace with an explicit unit and sampling interval",
+      "The exact runtime serialized payload size for each sender, frame, model, and communication representation",
+      "Frame generation time, decision deadline, trace observation interval, and link identity",
+      "A frozen perception checkpoint and a fixed underlying scene/frame input"
+    ],
+    "completionEvent": {
+      "definition": "For payload size B_ij bits sent on directed link i->j at t_send, completion is the first t such that the integral of service rate r_ij over [t_send,t] reaches B_ij.",
+      "formula": "T_complete(i,j,k) = inf{t >= T_send(i,j,k): integral[T_send,t] r_ij(u) du >= 8 * payload_bytes(i,j,k)}",
+      "requiredAssumptions": [
+        "Throughput samples are converted to a stated service-rate unit.",
+        "The interpolation rule between samples is fixed, with sample-and-hold and at least one sensitivity alternative reported.",
+        "Queue discipline, concurrent payload policy, preemption, and link sharing are explicit.",
+        "A payload cannot be declared complete from a scalar mean-throughput division when the proposal claims trace-level completion semantics."
+      ],
+      "epistemicLabel": "throughput-derived service completion",
+      "mustNotBeLabeledAs": [
+        "measured packet-delivery completion",
+        "measured end-to-end latency",
+        "measured packet loss",
+        "measured retransmission behavior",
+        "measured MAC contention"
+      ]
+    },
+    "availabilityStates": [
+      {
+        "state": "current-complete",
+        "definition": "The intended source-frame payload completed by the decision deadline."
+      },
+      {
+        "state": "historical-complete",
+        "definition": "The intended source-frame payload did not complete by the deadline, but at least one older payload completed and is available; its age is explicit."
+      },
+      {
+        "state": "incomplete-at-deadline",
+        "definition": "The payload has not completed by the decision deadline, while the trace continues far enough to determine a later completion or continued service."
+      },
+      {
+        "state": "right-censored",
+        "definition": "A payload has not completed when the observable service trace ends, so only a lower bound on completion time is known."
+      },
+      {
+        "state": "trace-missing-or-invalid",
+        "definition": "The directed link, interval, unit, timestamp alignment, or required throughput sample is absent or invalid; transport availability is not identifiable and must fail closed."
+      }
+    ],
+    "boundaryClarification": {
+      "deadlineNonCompletionIsNotAutomaticallyRightCensoring": "If the trace continues after the deadline, the payload is incomplete at the deadline but not right-censored merely because the benchmark made a decision.",
+      "takeStartIsNotRightCensoring": "A request for history before the beginning of a take is left-truncated or warm-start-unknown. Calling the silent first-frame clamp right-censoring would be statistically incorrect.",
+      "dropIsAPolicyNotAState": "Drop is one action after an unavailable or expired message state is established; it is not evidence about why the message is unavailable.",
+      "expirationIsAPolicyNotCompletion": "A completed but stale payload may be expired, while an unfinished payload may never have become available. These cases must remain distinguishable."
+    },
+    "counterfactualPolicies": [
+      {
+        "policy": "silent-first-frame-clamp",
+        "definition": "Reproduce the audited public CooperScene behavior when requested history exceeds the take."
+      },
+      {
+        "policy": "drop",
+        "definition": "Exclude the unavailable collaborator payload from fusion without substituting another frame."
+      },
+      {
+        "policy": "latest-completed",
+        "definition": "Fuse only the newest payload whose completion event precedes the decision deadline, with its age recorded."
+      },
+      {
+        "policy": "age-aware-native",
+        "definition": "Use a frozen model's existing, documented delay/age input with the completion-derived age. Mark this policy unsupported for models without a native age input rather than adding a learned adapter."
+      }
+    ]
+  },
+  "auditedCooperSceneFacts": [
+    {
+      "factId": "CS-F1",
+      "finding": "The audited public dataset path derives a scalar delay from payload size divided by throughput and discretizes it into frame delay.",
+      "implication": "The public path models delay but does not expose a transport completion state machine."
+    },
+    {
+      "factId": "CS-F2",
+      "finding": "When requested delay exceeds available history, delayed lookup clamps to the first frame.",
+      "implication": "The first frame can be silently treated as if it were a valid delayed message even when no such historical completion is established."
+    },
+    {
+      "factId": "CS-F3",
+      "finding": "When delayed lookup returns no sample, the already loaded synchronized collaborator entry can remain in the sample.",
+      "implication": "A failed delayed lookup can preserve current synchronized information instead of making unavailability explicit."
+    },
+    {
+      "factId": "CS-F4",
+      "finding": "The cooperative detector initializes prior_encoding.time_delay to zero, and the audited dataset path does not thread the computed delay into this field.",
+      "implication": "An age-aware model path can receive a zero-delay prior even when the dataset selected a delayed frame."
+    },
+    {
+      "factId": "CS-F5",
+      "finding": "The released communication trace exposes directed throughput samples but not packet events, latency, loss, jitter, retransmission, or queue state.",
+      "implication": "Completion can only be derived under an explicit service model; packet-level ground-truth claims are prohibited."
+    }
+  ],
+  "taxonomy": [
+    {
+      "term": "generic-latency-compensation",
+      "definition": "A method aligns, predicts, or warps an already selected stale feature or message using an assumed/configured delay.",
+      "distinguishingQuestion": "How should an available stale message be compensated?",
+      "representativePrior": [
+        "LRCP",
+        "TraF-Align",
+        "CATNet",
+        "CoBEVFlow"
+      ],
+      "notEquivalentBecause": "It does not by itself determine whether a payload completed and became available."
+    },
+    {
+      "term": "trace-replay",
+      "definition": "A system replays recorded or configured network conditions during evaluation.",
+      "distinguishingQuestion": "How are time-varying network conditions reproduced?",
+      "representativePrior": [
+        "CADET",
+        "Harbor",
+        "CoInfra"
+      ],
+      "notEquivalentBecause": "Replay can still use ambiguous completion, fallback, warm-start, or missing-trace semantics."
+    },
+    {
+      "term": "packet-or-message-expiration",
+      "definition": "A policy rejects a message after a staleness or deadline rule.",
+      "distinguishingQuestion": "What should happen to a late or stale message?",
+      "representativePrior": [
+        "Harbor",
+        "CoInfra",
+        "Age of Information Guaranteed Scheduling"
+      ],
+      "notEquivalentBecause": "Expiration does not identify whether the message was complete, unfinished, lost, or unobservable."
+    },
+    {
+      "term": "deadline-aware-selection",
+      "definition": "A system fuses only messages that arrive before a decision deadline and may select a fallback for missing views.",
+      "distinguishingQuestion": "Which arrived messages may enter this decision?",
+      "representativePrior": [
+        "Harbor",
+        "CoInfra",
+        "AdaMap"
+      ],
+      "notEquivalentBecause": "It is a strong functional collision for availability-at-deadline, but published systems do not provide the proposed CooperScene-specific right-censoring and trace-missing benchmark counterfactual."
+    },
+    {
+      "term": "right-censoring",
+      "definition": "The observation window ends before completion is observed, while a lower bound on completion time remains known.",
+      "distinguishingQuestion": "Is completion absent, or merely unobserved beyond the trace boundary?",
+      "representativePrior": [],
+      "notEquivalentBecause": "No directly matching cooperative-perception primary work was found that uses this explicit transport-observation state in benchmark replay."
+    },
+    {
+      "term": "availability-semantics-contract",
+      "definition": "A deterministic, auditable mapping from trace evidence and payload service to availability state, model input, and fallback action.",
+      "distinguishingQuestion": "What evidence makes each message available, unavailable, censored, or unidentifiable, and how does that state affect the benchmark verdict?",
+      "representativePrior": [
+        "proposed work"
+      ],
+      "notEquivalentBecause": "It treats data-state semantics and benchmark validity as the object of study rather than treating delay as an input corruption alone."
+    }
+  ],
+  "coreClaims": [
+    {
+      "claimId": "C1",
+      "status": "proposed-and-testable",
+      "claim": "A CooperScene replay should expose current-complete, historical-complete, incomplete-at-deadline, right-censored, and trace-missing-or-invalid states instead of silently converting all cases to a frame index.",
+      "noveltyBoundary": "The state taxonomy is not novel merely because it uses deadlines or drops. Its defensible contribution is the explicit observation contract tied to CooperScene's directed throughput and runtime payload."
+    },
+    {
+      "claimId": "C2",
+      "status": "proposed-and-testable",
+      "claim": "Under frozen checkpoints and identical underlying scenes, fallback policy alone can be isolated as a benchmark-semantic variable.",
+      "noveltyBoundary": "Harbor and CoInfra already implement deadline-aware missing-view behavior. The narrower delta is a controlled counterfactual over silent clamp, drop, latest completed, and model-native age handling on the same completed-message ledger."
+    },
+    {
+      "claimId": "C3",
+      "status": "proposed-and-testable",
+      "claim": "Benchmark verdict sensitivity should be measured both as metric change and as method-ordering stability.",
+      "noveltyBoundary": "V2X-ReaLO already demonstrates that online execution can change performance relative to offline evaluation. The candidate must measure attribution to availability semantics rather than claim the first online/offline ranking discrepancy."
+    },
+    {
+      "claimId": "C4",
+      "status": "proposed-and-testable",
+      "claim": "A pre-registered equivalence result can justify a simpler availability contract over the released trace support.",
+      "noveltyBoundary": "A non-significant difference is insufficient. Simplification evidence requires state-frequency coverage, equivalence margins, and confidence intervals."
+    },
+    {
+      "claimId": "C5",
+      "status": "audited-implementation-finding",
+      "claim": "The audited CooperScene public path contains silent first-frame clamp, synchronized-frame retention on failed delayed lookup, and a zero-valued time-delay prior path.",
+      "noveltyBoundary": "These are code-audit findings and motivation. They are not by themselves a standalone research contribution."
+    }
+  ],
+  "closestPriorWork": [
+    {
+      "work": "Harbor: Boosting Collaborative Vehicular Perception on the Edge with V2V Communication",
+      "year": 2024,
+      "venue": "ACM SenSys 2024",
+      "relation": "functional-collision",
+      "occupiedFunction": "Trace-driven network emulation, a 500 ms end-to-end deadline, local fallback when the edge result misses the deadline, and an edge-result bitmap identifying which vehicle views were processed so missing views can be merged locally.",
+      "remainingDelta": "No CooperScene directed-throughput completion ledger, no explicit right-censored versus trace-missing states, and no frozen-model four-policy ranking-stability audit.",
+      "paperUrl": "https://feng-qian.github.io/paper/harbor_sensys24.pdf",
+      "projectUrl": "https://ry4nzhu.github.io/publication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication/",
+      "codeUrl": null
+    },
+    {
+      "work": "CoInfra: A Communication-Aware Cooperative Perception System for CAVs",
+      "year": 2025,
+      "venue": "arXiv",
+      "relation": "functional-collision",
+      "occupiedFunction": "Trace-driven synchronization, adaptive deadlines, fusion of only messages that arrive before the deadline, and substitution of missing expected contributions using the most recent observation and EKF prediction.",
+      "remainingDelta": "The proposed contract distinguishes incomplete, censored, and trace-missing evidence and audits CooperScene verdict sensitivity without introducing a new predictor.",
+      "paperUrl": "https://arxiv.org/abs/2507.02245",
+      "projectUrl": null,
+      "codeUrl": "https://github.com/NingMingHao/CoInfra",
+      "codeCaveat": "The indexed official repository did not expose the paper's deadline, latency-trace, or EKF logic in searchable source at audit time; system claims are therefore paper-supported, not code-verified."
+    },
+    {
+      "work": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception",
+      "year": 2025,
+      "venue": "arXiv",
+      "relation": "functional-collision",
+      "occupiedFunction": "Real online ROS transmission, serialization and compression measurements, a receiver feature bank, selection of the latest collaborator neural message within a time window, and evidence that offline and online conclusions can differ.",
+      "remainingDelta": "It does not publish the proposed completion/censoring/trace-missing state contract or isolate fallback semantics on one frozen completed-message ledger.",
+      "paperUrl": "https://arxiv.org/abs/2503.10034",
+      "projectUrl": null,
+      "codeUrl": null,
+      "codeCaveat": "The paper states that code and data will be released; no official repository was verified in this audit."
+    },
+    {
+      "work": "CooperScene: A Large-scale Comprehensive Dataset and Benchmark for Cooperative Perception",
+      "year": 2026,
+      "venue": "arXiv",
+      "relation": "implementation-target",
+      "occupiedFunction": "Dataset, benchmark, communication traces, scalar payload/throughput delay conversion, delayed-frame lookup, and a model prior encoding with a time-delay slot.",
+      "remainingDelta": "The public path does not expose the proposed state contract, runtime per-message completion ledger, fail-closed trace-missing behavior, or policy counterfactual.",
+      "paperUrl": "https://arxiv.org/abs/2606.31219",
+      "projectUrl": "https://cisl.ucr.edu/CooperScene/",
+      "codeUrl": "https://github.com/UCR-CISL/CooperScene"
+    },
+    {
+      "work": "CADET: A System and Benchmarking Toolkit for Collaborative Autonomous Driving Systems",
+      "year": 2026,
+      "venue": "IEEE ICRA 2026",
+      "relation": "component-collision",
+      "occupiedFunction": "Trace-driven network and workload emulation with synchronized model, system, and task metrics; the paper describes replayable latency, jitter, loss, and bandwidth profiles.",
+      "remainingDelta": "It is a general systems benchmark rather than the proposed CooperScene-specific completion/censoring contract and frozen fallback-semantics audit.",
+      "paperUrl": "https://arxiv.org/abs/2606.04072",
+      "projectUrl": "https://nesl.github.io/cadet-web/",
+      "codeUrl": "https://github.com/nesl/cadet",
+      "codeCaveat": "The official GitHub repository was empty through the GitHub API at audit time, so implementation semantics could not be verified."
+    },
+    {
+      "work": "RCP-Bench: Benchmarking Robustness for Collaborative Perception under Diverse Corruptions",
+      "year": 2025,
+      "venue": "CVPR 2025",
+      "relation": "component-collision",
+      "occupiedFunction": "A robustness benchmark in which RCP-Drop randomly discards collaborator data to simulate sensor or communication failures, alongside temporal misalignment and other corruptions.",
+      "remainingDelta": "Random drop is a corruption operator, not a completion event or censoring state inferred from directed throughput and runtime payload.",
+      "paperUrl": "https://openaccess.thecvf.com/content/CVPR2025/papers/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.pdf",
+      "projectUrl": null,
+      "codeUrl": "https://github.com/LuckyDush/RCP-Bench"
+    },
+    {
+      "work": "V2X-INCOP: A Communication-Resilient Cooperative Perception Framework",
+      "year": 2024,
+      "venue": "IEEE Transactions on Intelligent Vehicles",
+      "relation": "component-collision",
+      "occupiedFunction": "Models random communication interruption and uses historical information with a learned spatiotemporal mechanism to recover missing collaborator messages.",
+      "remainingDelta": "It treats interruption as a communication corruption and learns recovery; it does not distinguish unfinished, right-censored, and trace-missing states or run a frozen fallback-semantics audit.",
+      "paperUrl": "https://arxiv.org/abs/2304.11821",
+      "projectUrl": null,
+      "codeUrl": null
+    },
+    {
+      "work": "LRCP: Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+      "year": 2025,
+      "venue": "WACV 2025",
+      "relation": "generic-latency-compensation",
+      "occupiedFunction": "Uses cached historical BEV features and explicit delay inputs to compensate asynchronous feature fusion, with configured delay evaluation.",
+      "remainingDelta": "It assumes a stale feature has been selected and does not infer whether transport completed or distinguish missing trace from unfinished service.",
+      "paperUrl": "https://openaccess.thecvf.com/content/WACV2025/papers/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.pdf",
+      "projectUrl": null,
+      "codeUrl": "https://github.com/junjie-wang-dev/LRCP"
+    },
+    {
+      "work": "TraF-Align: Trajectory-aware Feature Alignment for Asynchronous Multi-agent Perception",
+      "year": 2025,
+      "venue": "CVPR 2025",
+      "relation": "generic-latency-compensation",
+      "occupiedFunction": "Aligns asynchronous multi-agent features using trajectory cues; the official configuration simulates delay and threads time_delay into the model.",
+      "remainingDelta": "Configured delay augmentation and feature alignment do not define transport completion or observation censoring.",
+      "paperUrl": "https://openaccess.thecvf.com/content/CVPR2025/html/Song_TraF-Align_Trajectory-aware_Feature_Alignment_for_Asynchronous_Multi-agent_Perception_CVPR_2025_paper.html",
+      "projectUrl": null,
+      "codeUrl": "https://github.com/zhyingS/TraF-Align"
+    },
+    {
+      "work": "CATNet: Collaborative Alignment and Transformation Network for Cooperative Perception",
+      "year": 2026,
+      "venue": "CVPR 2026",
+      "relation": "generic-latency-compensation",
+      "occupiedFunction": "STSync aligns asynchronous feature streams through adjacent-frame differential modeling, alongside denoising and feature selection.",
+      "remainingDelta": "It addresses feature degradation after asynchronous input selection, not evidence for message completion, censoring, or trace failure.",
+      "paperUrl": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_CATNet_Collaborative_Alignment_and_Transformation_Network_for_Cooperative_Perception_CVPR_2026_paper.html",
+      "projectUrl": null,
+      "codeUrl": null,
+      "codeCaveat": "No official public code repository was verified in this audit."
+    },
+    {
+      "work": "CooperTrim: Toward Adaptive Feature Selection for Resource-Efficient Collaborative Perception",
+      "year": 2026,
+      "venue": "ICLR 2026",
+      "relation": "payload-selection-adjacent",
+      "occupiedFunction": "Adaptively changes requested feature quantity using temporal uncertainty and scene complexity, creating model- and frame-dependent communication payloads.",
+      "remainingDelta": "It determines what and how much to request, not whether a selected runtime payload completed by a decision deadline or became censored.",
+      "paperUrl": "https://arxiv.org/abs/2602.13287",
+      "projectUrl": "https://huggingface.co/cisl-hf/CooperTrim",
+      "codeUrl": "https://github.com/UCR-CISL/CooperTrim"
+    },
+    {
+      "work": "AdaMap: High-scalable Real-time Cooperative Perception at the Edge",
+      "year": 2023,
+      "venue": "ACM/IEEE SEC 2023",
+      "relation": "deadline-and-payload-adjacent",
+      "occupiedFunction": "Adapts object selection and compression under time-varying networking to meet percentile-latency objectives.",
+      "remainingDelta": "It optimizes payload and latency rather than auditing distinct completion-observation states and benchmark fallback bias.",
+      "paperUrl": "https://arxiv.org/abs/2309.13526",
+      "projectUrl": null,
+      "codeUrl": null
+    },
+    {
+      "work": "Age of Information Guaranteed Scheduling for Asynchronous Status Updates in Collaborative Perception",
+      "year": 2023,
+      "venue": "arXiv",
+      "relation": "deadline-scheduling-adjacent",
+      "occupiedFunction": "Formulates asynchronous collaborative-perception scheduling with Age of Information constraints.",
+      "remainingDelta": "AoI scheduling controls update freshness but does not provide the proposed data-lineage states or frozen fallback-policy counterfactual.",
+      "paperUrl": "https://arxiv.org/abs/2310.04813",
+      "projectUrl": null,
+      "codeUrl": null
+    },
+    {
+      "work": "Timeliness-Oriented Scheduling and Resource Allocation in Multi-Region Collaborative Perception",
+      "year": 2026,
+      "venue": "arXiv",
+      "relation": "deadline-scheduling-adjacent",
+      "occupiedFunction": "Jointly treats timeliness, communication volume, scheduling, and resource allocation for collaborative perception.",
+      "remainingDelta": "It optimizes when and how much to communicate, not the replay semantics of incomplete and censored messages in an existing benchmark.",
+      "paperUrl": "https://arxiv.org/abs/2601.04542",
+      "projectUrl": null,
+      "codeUrl": null
+    },
+    {
+      "work": "Learning for V2V Cooperative Perception under Lossy Communication",
+      "year": 2023,
+      "venue": "IEEE Transactions on Intelligent Vehicles",
+      "relation": "packet-loss-adjacent",
+      "occupiedFunction": "Learns cooperative perception under lossy communication and repairs corrupted transmitted features.",
+      "remainingDelta": "Lossy packet repair is distinct from determining whether a whole runtime payload completed by a deadline or was right-censored by trace termination.",
+      "paperUrl": "https://arxiv.org/abs/2212.08273",
+      "projectUrl": null,
+      "codeUrl": null,
+      "doiUrl": "https://doi.org/10.1109/TIV.2023.3260040"
+    },
+    {
+      "work": "Bringing Network Coding into Multi-Robot Systems: A Practical Case for Coping with Lossy Wireless Links",
+      "year": 2026,
+      "venue": "arXiv",
+      "relation": "transport-semantics-adjacent",
+      "occupiedFunction": "Studies delayed and lossy transport, in-order delivery stalls, and deadline reliability for safety-relevant V2V messages.",
+      "remainingDelta": "It is transport-adjacent but does not audit cooperative-perception model rankings or CooperScene fallback semantics.",
+      "paperUrl": "https://arxiv.org/abs/2603.17472",
+      "projectUrl": null,
+      "codeUrl": null
+    },
+    {
+      "work": "STARE: Bridging the latency gap in continuous stream evaluation",
+      "year": 2026,
+      "venue": "Nature Communications",
+      "relation": "benchmark-semantics-analogy",
+      "occupiedFunction": "Evaluates continuous predictions against high-frequency ground truth using the latest available prediction and explicitly treats output staleness as an evaluation concern.",
+      "remainingDelta": "It is not collaborative perception and does not model directed wireless payload completion, but it is a direct warning against claiming that availability-aware benchmark semantics are conceptually unprecedented.",
+      "paperUrl": "https://www.nature.com/articles/s41467-026-70240-6",
+      "projectUrl": null,
+      "codeUrl": null
+    }
+  ],
+  "functionalEquivalenceCollisions": [
+    {
+      "collisionId": "COL-1",
+      "prior": "Harbor",
+      "equivalentFunction": "Determine whether a collaborative result or contributing view is present by a deadline and invoke an explicit local fallback.",
+      "severityForNovelty": "This occupies the broad claim of first deadline-aware availability and fallback in collaborative vehicular perception.",
+      "survivingDifference": "The candidate audits a released benchmark's hidden fallback semantics with throughput-derived completion, censoring, trace-missing states, and cross-policy ranking stability."
+    },
+    {
+      "collisionId": "COL-2",
+      "prior": "CoInfra",
+      "equivalentFunction": "Fuse only messages that arrive before an adaptive deadline and replace missing expected contributions using the most recent observation plus prediction.",
+      "severityForNovelty": "This occupies deadline-aware message-set construction and latest-history substitution.",
+      "survivingDifference": "The candidate has no learned predictor and asks whether benchmark conclusions change solely because the availability-state contract changes."
+    },
+    {
+      "collisionId": "COL-3",
+      "prior": "V2X-ReaLO",
+      "equivalentFunction": "Use actual online message arrival behavior, retain received neural messages in a feature bank, and select the latest message within a time window.",
+      "severityForNovelty": "This occupies the broad claim that online availability and stale-message selection matter to cooperative-perception evaluation.",
+      "survivingDifference": "The candidate formalizes unavailable versus censored versus unidentifiable states and compares fallback policies on the same completion ledger."
+    },
+    {
+      "collisionId": "COL-4",
+      "prior": "RCP-Bench and V2X-INCOP",
+      "equivalentFunction": "Represent communication failure by dropping or recovering collaborator information.",
+      "severityForNovelty": "This occupies generic drop robustness and missing-message recovery.",
+      "survivingDifference": "The candidate does not treat all absence as Bernoulli drop; it assigns evidence-grounded states before applying a policy."
+    },
+    {
+      "collisionId": "COL-5",
+      "prior": "CADET, Harbor, and CoInfra",
+      "equivalentFunction": "Replay time-varying network conditions and correlate them with system or task outcomes.",
+      "severityForNovelty": "This occupies broad trace-driven evaluation.",
+      "survivingDifference": "The candidate's narrow object is the semantics of transmission completion and observation boundaries in CooperScene, not trace replay itself."
+    },
+    {
+      "collisionId": "COL-6",
+      "prior": "LRCP, TraF-Align, CATNet, and CoBEVFlow",
+      "equivalentFunction": "Use message age or delay to compensate asynchronous features.",
+      "severityForNovelty": "This occupies generic age-aware compensation.",
+      "survivingDifference": "The candidate only feeds completion-derived age into an already existing native path and freezes all weights."
+    }
+  ],
+  "explicitDelta": {
+    "oneSentence": "The defensible delta is a CooperScene-specific, evidence-typed transport availability contract plus a frozen-model counterfactual that attributes benchmark verdict and ranking changes to fallback semantics rather than to a newly trained compensation method.",
+    "elementsThatMustAppearTogether": [
+      "Exact runtime serialized payload size rather than a nominal tensor-size constant",
+      "Directed trace integration rather than a scalar mean-throughput delay",
+      "An auditable completion ledger with stated service and queue assumptions",
+      "Separate current-complete, historical-complete, incomplete-at-deadline, right-censored, and trace-missing-or-invalid states",
+      "Correct treatment of take-start warmup as left-truncated or unknown rather than right-censored",
+      "Frozen checkpoints and fixed underlying scenes across policy counterfactuals",
+      "Silent first-frame clamp, drop, latest-completed, and supported model-native age-aware policies",
+      "Both metric/verdict sensitivity and method-ordering stability",
+      "A pre-specified equivalence analysis for negative results"
+    ],
+    "whatIsNotDelta": [
+      "Trace replay alone",
+      "Deadline-aware fusion alone",
+      "Latest-message selection alone",
+      "Drop corruption alone",
+      "Historical-feature compensation alone",
+      "Payload adaptation alone",
+      "Discovering that online and offline metrics differ",
+      "The CooperScene code bug report by itself"
+    ],
+    "boundedNoveltyFinding": "No audited 2023-2026 primary source combined all required elements. Harbor and CoInfra are the closest functional collisions and materially narrow the claim."
+  },
+  "standaloneProjectAssessment": {
+    "verdict": "conditionally-viable-as-a-narrow-benchmark-validity-and-systems-measurement-study",
+    "notViableAs": [
+      "A novel asynchronous perception architecture",
+      "The first deadline-aware collaborative-perception system",
+      "The first trace-driven collaborative-perception benchmark",
+      "A paper whose only contribution is fixing first-frame clamp"
+    ],
+    "conditionsForIndependentProject": [
+      "The affected states occur often enough across released traces, payloads, and model operating points to support inference beyond a few take-boundary frames.",
+      "At least several heterogeneous frozen methods are evaluated, including native age-aware and non-age-aware methods.",
+      "Harbor-style deadline/drop fallback and CoInfra-style latest-history fallback are acknowledged and operationally represented in the comparison.",
+      "The study reports a formal estimand: policy-induced change in metric, pairwise method verdict, and ranking under a shared completion ledger.",
+      "Completion assumptions and their sensitivity materially affect or tightly bound conclusions.",
+      "Negative results use equivalence margins and state-coverage evidence rather than a failure to reject a null.",
+      "The artifact is reusable as an evaluator, ledger, tests, and state-level diagnostics rather than a one-off patch."
+    ],
+    "collapseCondition": "If almost all samples are current-complete, differences are confined to warm-start frames, and ranking/verdict equivalence holds under all plausible service assumptions, the work should be presented as a benchmark contract note or merged into a broader trace-replay study."
+  },
+  "strongestObjections": [
+    {
+      "objectionId": "O1",
+      "objection": "Harbor and CoInfra already implement the core systems idea of deadline-aware message/view availability plus explicit fallback.",
+      "requiredResponse": "Claim only the CooperScene-specific completion-observation contract and frozen benchmark counterfactual; reproduce those prior policy classes rather than portraying them as new."
+    },
+    {
+      "objectionId": "O2",
+      "objection": "Right-censoring may be terminology without a statistical estimand or method.",
+      "requiredResponse": "Define the observation boundary, preserve completion-time lower bounds, separate deadline noncompletion from trace-end censoring, and show how state treatment changes estimands, inclusion, or uncertainty."
+    },
+    {
+      "objectionId": "O3",
+      "objection": "Directed throughput plus payload size does not identify packet loss, retransmission, queuing, MAC contention, or application-level delivery.",
+      "requiredResponse": "Call the result throughput-derived service completion, publish queue/interpolation assumptions, and run sensitivity analyses. Do not claim measured network delivery."
+    },
+    {
+      "objectionId": "O4",
+      "objection": "The first-frame clamp may affect only take warmup and therefore be too rare for a standalone result.",
+      "requiredResponse": "Report state prevalence before headline accuracy, stratify warmup versus steady state, and apply the collapse condition if support is negligible."
+    },
+    {
+      "objectionId": "O5",
+      "objection": "Ranking changes may be caused by architecture-specific payload size rather than fallback semantics.",
+      "requiredResponse": "Report both actual-payload and equalized-payload controls, and decompose transport-load effects from policy effects."
+    },
+    {
+      "objectionId": "O6",
+      "objection": "An age-aware-native policy is not comparable for models that do not accept age, and adding an adapter would violate the frozen-model design.",
+      "requiredResponse": "Use native inputs only where documented, declare unsupported cells, and keep drop/latest-completed comparisons common across all methods."
+    },
+    {
+      "objectionId": "O7",
+      "objection": "Trace missing is data quality, while unfinished transport is a physical state; putting both in one ordinal state variable can imply false ordering.",
+      "requiredResponse": "Use a tagged union or separate availability and observability fields. Trace-missing must fail closed and remain excluded from transport-performance claims."
+    },
+    {
+      "objectionId": "O8",
+      "objection": "A frozen-model comparison changes collaborator inputs across policies, so 'same input' can be misleading.",
+      "requiredResponse": "State that the underlying ego frame, candidate collaborator frames, trace, payload, and checkpoint are fixed; the fused collaborator set and age metadata are the controlled intervention."
+    },
+    {
+      "objectionId": "O9",
+      "objection": "Frames within a take and directed links are not independent, making naive confidence intervals and rank tests anti-conservative.",
+      "requiredResponse": "Use take-clustered or hierarchical resampling and report take-level effects."
+    },
+    {
+      "objectionId": "O10",
+      "objection": "A negative result can be misrepresented as evidence that semantics never matter.",
+      "requiredResponse": "Predefine practical equivalence margins and limit simplification claims to the audited traces, payload range, deadlines, models, and state frequencies."
+    }
+  ],
+  "necessaryExperiments": [
+    {
+      "experimentId": "E1-state-ledger-validation",
+      "question": "Does the completion ledger implement the stated transport evidence correctly?",
+      "requirements": [
+        "Unit tests for exact-boundary completion, partial service, zero throughput, missing directed link, trace end, take start, and concurrent payload assumptions.",
+        "Independent numerical integration cross-check on sampled links.",
+        "Per-state counts and durations before any perception result."
+      ]
+    },
+    {
+      "experimentId": "E2-public-path-reproduction",
+      "question": "Can the audited CooperScene fallback behavior be reproduced and isolated?",
+      "requirements": [
+        "A test where requested delay exceeds available history and selects the first frame.",
+        "A test where delayed lookup is missing and the synchronized collaborator remains.",
+        "A test showing whether completion-derived delay reaches prior_encoding.time_delay.",
+        "Byte-for-byte or tensor-identity logging of the collaborator input under each policy."
+      ]
+    },
+    {
+      "experimentId": "E3-service-model-sensitivity",
+      "question": "Are conclusions robust to plausible interpretations of the released throughput trace?",
+      "requirements": [
+        "Sample-and-hold versus an alternative interpolation.",
+        "FIFO serialization versus explicitly bounded concurrency assumptions.",
+        "Actual runtime payload versus nominal and equalized payload controls.",
+        "Multiple decision deadlines and warmup policies."
+      ]
+    },
+    {
+      "experimentId": "E4-frozen-policy-counterfactual",
+      "question": "How much does fallback semantics alone change outputs?",
+      "requirements": [
+        "Freeze checkpoint, preprocessing, ego frame, candidate collaborator frames, trace segment, payload encoding, and random seed.",
+        "Change only silent clamp, drop, latest-completed, or supported native age-aware policy.",
+        "Store paired per-frame detections and state lineage."
+      ]
+    },
+    {
+      "experimentId": "E5-verdict-and-ranking-stability",
+      "question": "Do policy changes alter benchmark conclusions or method ordering?",
+      "requirements": [
+        "Report primary task metrics and paired deltas.",
+        "Report pairwise winner sign, top-method agreement, rank inversions, Kendall tau, and Spearman rho.",
+        "Use take-clustered confidence intervals.",
+        "Predefine what constitutes a benchmark verdict change."
+      ]
+    },
+    {
+      "experimentId": "E6-state-stratified-analysis",
+      "question": "Which availability states drive any observed effect?",
+      "requirements": [
+        "Separate current-complete, historical-complete, incomplete-at-deadline, right-censored, trace-missing, and take-start-unknown cases.",
+        "Report warmup and steady-state results separately.",
+        "Relate effect size to payload, directed throughput, collaborator count, and message age without treating correlated frames as independent."
+      ]
+    },
+    {
+      "experimentId": "E7-prior-policy-reproduction",
+      "question": "Does the candidate improve semantic precision beyond the closest prior policy classes?",
+      "requirements": [
+        "Harbor-style deadline/drop or local-only fallback.",
+        "CoInfra-style latest-history fallback, without claiming its EKF predictor is reproduced unless it actually is.",
+        "V2X-ReaLO-style latest-in-window selection.",
+        "RCP-Bench-style random drop as a corruption control rather than a transport-ground-truth baseline."
+      ]
+    },
+    {
+      "experimentId": "E8-negative-result-equivalence",
+      "question": "When may the contract be simplified?",
+      "requirements": [
+        "Pre-register practical equivalence margins for task metric and ranking stability.",
+        "Use confidence intervals compatible with clustered data.",
+        "Require adequate exposure to non-current-complete states.",
+        "State the exact trace, payload, deadline, and model support over which simplification is justified."
+      ]
+    }
+  ],
+  "negativeResultContract": {
+    "acceptableInference": "Within the audited support and pre-specified margins, a simpler fallback policy is practically equivalent to the fuller state contract for the evaluated benchmark verdict.",
+    "unacceptableInference": "Availability semantics do not matter in cooperative perception.",
+    "minimumEvidence": [
+      "Nontrivial state exposure",
+      "Equivalence rather than null-hypothesis non-significance",
+      "Cluster-aware uncertainty",
+      "Sensitivity to service-model assumptions",
+      "No hidden replacement of missing trace with zero delay or first-frame data"
+    ]
+  },
+  "allowedClaims": [
+    "We audit a CooperScene-specific transport-availability contract derived from released directed throughput and exact runtime payload under explicit service assumptions.",
+    "We distinguish completion at a decision deadline, later-observed incompletion, trace-end right-censoring, take-start unknown history, and missing or invalid trace evidence.",
+    "We isolate fallback semantics with frozen checkpoints and fixed underlying scene/trace inputs.",
+    "We quantify how silent first-frame clamp, drop, latest-completed, and supported native age-aware handling affect benchmark metrics, verdicts, and method-ordering stability.",
+    "In the executed 2023-2026 primary-source search, no work was found that combines this exact CooperScene completion-state contract with the proposed frozen-policy counterfactual.",
+    "Harbor and CoInfra are the closest functional precedents for deadline-aware availability and fallback.",
+    "A negative equivalence result can support a simpler contract only within the measured trace, payload, deadline, state-frequency, and model range."
+  ],
+  "forbiddenClaims": [
+    "The first work on message availability, deadlines, missing views, or fallback in cooperative perception.",
+    "The first trace-driven collaborative-perception benchmark or system.",
+    "The first work to select the latest available or historical collaborator message.",
+    "The first work to show online and offline cooperative-perception results differ.",
+    "The first asynchronous or latency-robust cooperative-perception method.",
+    "The released CooperScene trace measures packet latency, packet loss, jitter, retransmission, or MAC behavior.",
+    "Throughput divided into payload size is measured end-to-end delivery latency.",
+    "A payload incomplete at the benchmark deadline is necessarily right-censored.",
+    "A request before take start is right-censored.",
+    "Drop, expiration, trace missing, and unfinished transmission are equivalent states.",
+    "Silent first-frame clamp causes benchmark bias or rank inversion before paired experiments establish it.",
+    "A lack of statistical significance proves fallback policies are equivalent.",
+    "The findings generalize to all radios, deployments, datasets, payload formats, or deadlines.",
+    "The contribution is a new compensation architecture when all model weights are frozen.",
+    "Public-code behavior was verified for CADET, CATNet, or V2X-ReaLO when no inspectable implementation was available."
+  ],
+  "primarySources": [
+    {
+      "sourceId": "SRC-COOPERSCENE-PAPER",
+      "title": "CooperScene: A Large-scale Comprehensive Dataset and Benchmark for Cooperative Perception",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-COOPERSCENE-CODE",
+      "title": "UCR-CISL/CooperScene",
+      "url": "https://github.com/UCR-CISL/CooperScene",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-COOPERSCENE-DELAY-CODE",
+      "title": "CooperScene coop_dataset.py payload, throughput, and delay path",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/cooperscene/models/cooperative/datasets/coop_dataset.py#L84-L117",
+      "type": "official-code-immutable"
+    },
+    {
+      "sourceId": "SRC-COOPERSCENE-LOOKUP-CODE",
+      "title": "CooperScene coop_dataset.py delayed lookup and fallback path",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/cooperscene/models/cooperative/datasets/coop_dataset.py#L140-L153",
+      "type": "official-code-immutable"
+    },
+    {
+      "sourceId": "SRC-COOPERSCENE-PRIOR-CODE",
+      "title": "CooperScene prior encoding initialization",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/cooperscene/models/cooperative/datasets/coop_dataset.py#L18-L21",
+      "type": "official-code-immutable"
+    },
+    {
+      "sourceId": "SRC-CADET-PAPER",
+      "title": "CADET: A System and Benchmarking Toolkit for Collaborative Autonomous Driving Systems",
+      "url": "https://arxiv.org/abs/2606.04072",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-CADET-PROJECT",
+      "title": "CADET project page",
+      "url": "https://nesl.github.io/cadet-web/",
+      "type": "official-project"
+    },
+    {
+      "sourceId": "SRC-CADET-CODE",
+      "title": "nesl/cadet",
+      "url": "https://github.com/nesl/cadet",
+      "type": "official-code-empty-at-audit"
+    },
+    {
+      "sourceId": "SRC-HARBOR-PAPER",
+      "title": "Harbor: Boosting Collaborative Vehicular Perception on the Edge with V2V Communication",
+      "url": "https://feng-qian.github.io/paper/harbor_sensys24.pdf",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-HARBOR-PROJECT",
+      "title": "Harbor author project page",
+      "url": "https://ry4nzhu.github.io/publication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication/",
+      "type": "official-project"
+    },
+    {
+      "sourceId": "SRC-HARBOR-DOI",
+      "title": "Harbor ACM DOI",
+      "url": "https://doi.org/10.1145/3666025.3699328",
+      "type": "publisher-record"
+    },
+    {
+      "sourceId": "SRC-COINFRA-PAPER",
+      "title": "CoInfra: A Communication-Aware Cooperative Perception System for CAVs",
+      "url": "https://arxiv.org/abs/2507.02245",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-COINFRA-CODE",
+      "title": "NingMingHao/CoInfra",
+      "url": "https://github.com/NingMingHao/CoInfra",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-LRCP-PAPER",
+      "title": "Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/papers/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.pdf",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-LRCP-CODE",
+      "title": "junjie-wang-dev/LRCP",
+      "url": "https://github.com/junjie-wang-dev/LRCP",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-CATNET-PAPER",
+      "title": "CATNet: Collaborative Alignment and Transformation Network for Cooperative Perception",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Chen_CATNet_Collaborative_Alignment_and_Transformation_Network_for_Cooperative_Perception_CVPR_2026_paper.pdf",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-TRAFALIGN-PAPER",
+      "title": "TraF-Align: Trajectory-aware Feature Alignment for Asynchronous Multi-agent Perception",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Song_TraF-Align_Trajectory-aware_Feature_Alignment_for_Asynchronous_Multi-agent_Perception_CVPR_2025_paper.pdf",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-TRAFALIGN-CODE",
+      "title": "zhyingS/TraF-Align",
+      "url": "https://github.com/zhyingS/TraF-Align",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-V2XREALO-PAPER",
+      "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception",
+      "url": "https://arxiv.org/abs/2503.10034",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-RCPBENCH-PAPER",
+      "title": "RCP-Bench: Benchmarking Robustness for Collaborative Perception under Diverse Corruptions",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.pdf",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-RCPBENCH-CODE",
+      "title": "LuckyDush/RCP-Bench",
+      "url": "https://github.com/LuckyDush/RCP-Bench",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-COOPERTRIM-PAPER",
+      "title": "CooperTrim: Toward Adaptive Feature Selection for Resource-Efficient Collaborative Perception",
+      "url": "https://arxiv.org/abs/2602.13287",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-COOPERTRIM-OPENREVIEW",
+      "title": "CooperTrim OpenReview paper",
+      "url": "https://openreview.net/pdf?id=8NgKNuHRiH",
+      "type": "primary-paper-formal"
+    },
+    {
+      "sourceId": "SRC-COOPERTRIM-CODE",
+      "title": "UCR-CISL/CooperTrim",
+      "url": "https://github.com/UCR-CISL/CooperTrim",
+      "type": "official-code"
+    },
+    {
+      "sourceId": "SRC-V2XINCOP-PAPER",
+      "title": "V2X-INCOP: A Communication-Resilient Cooperative Perception Framework",
+      "url": "https://arxiv.org/abs/2304.11821",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-ADAMAP-PAPER",
+      "title": "AdaMap: High-scalable Real-time Cooperative Perception at the Edge",
+      "url": "https://arxiv.org/abs/2309.13526",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-AOI-SCHEDULING-PAPER",
+      "title": "Age of Information Guaranteed Scheduling for Asynchronous Status Updates in Collaborative Perception",
+      "url": "https://arxiv.org/abs/2310.04813",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-TIMELINESS-SCHEDULING-PAPER",
+      "title": "Timeliness-Oriented Scheduling and Resource Allocation in Multi-Region Collaborative Perception",
+      "url": "https://arxiv.org/abs/2601.04542",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-V2VLC-PAPER",
+      "title": "Learning for V2V Cooperative Perception under Lossy Communication",
+      "url": "https://arxiv.org/abs/2212.08273",
+      "type": "primary-paper-2023-publication"
+    },
+    {
+      "sourceId": "SRC-NETWORK-CODING-PAPER",
+      "title": "Bringing Network Coding into Multi-Robot Systems: A Practical Case for Coping with Lossy Wireless Links",
+      "url": "https://arxiv.org/abs/2603.17472",
+      "type": "primary-paper"
+    },
+    {
+      "sourceId": "SRC-STARE-PAPER",
+      "title": "STARE: Bridging the latency gap in continuous stream evaluation",
+      "url": "https://www.nature.com/articles/s41467-026-70240-6",
+      "type": "primary-paper"
+    }
+  ],
+  "searchAudit": {
+    "executedAt": "2026-07-31",
+    "sourceFamilies": [
+      "arXiv primary records and full text",
+      "CVF Open Access papers",
+      "ACM author-hosted paper and DOI records",
+      "OpenReview",
+      "Publisher primary pages",
+      "Official author project pages",
+      "Official GitHub repositories and immutable source links"
+    ],
+    "queryFamilies": [
+      {
+        "family": "required-title-verification",
+        "intent": "Resolve each required work to its primary paper, formal page, project, and official code."
+      },
+      {
+        "family": "message-availability",
+        "intent": "Find cooperative-perception work that explicitly determines whether a collaborator message or view is available at a decision time."
+      },
+      {
+        "family": "unfinished-transmission",
+        "intent": "Find work distinguishing in-flight or incomplete payloads from loss, drop, and stale completed messages."
+      },
+      {
+        "family": "censoring",
+        "intent": "Find cooperative-perception work using right-censored completion observations or trace-boundary semantics."
+      },
+      {
+        "family": "fallback",
+        "intent": "Find first-frame clamp, local-only, drop, latest-arrived, latest-completed, and predicted-history fallback behavior."
+      },
+      {
+        "family": "deadline-and-expiration",
+        "intent": "Separate deadline-aware message selection and packet/message expiration from completion observation."
+      },
+      {
+        "family": "trace-replay",
+        "intent": "Find trace-driven evaluation systems and determine whether their trace use implies an explicit availability contract."
+      },
+      {
+        "family": "ranking-and-verdict",
+        "intent": "Find online, streaming, or network-aware benchmarks that report changes in model conclusions or ranking."
+      }
+    ],
+    "directSearchResult": "Harbor, CoInfra, and V2X-ReaLO provide the closest availability/fallback functions. No primary source in the executed search exposed the exact combination of CooperScene directed-throughput plus runtime-payload completion, explicit incomplete/right-censored/trace-missing states, and frozen fallback-policy ranking counterfactual.",
+    "specificNoMatchObservations": [
+      "No directly matching cooperative-perception primary work was found for the phrase and concept of right-censored transmission completion.",
+      "No directly matching public implementation was found for explicit first-frame-clamp semantics as an intentional benchmark contract.",
+      "Prior work does directly cover deadline-aware arrival sets, local fallback, latest-history substitution, random drop, lossy repair, trace replay, and age-aware compensation; these are not novelty gaps."
+    ],
+    "limitations": [
+      "The search is limited to public sources available on 2026-07-31.",
+      "Closed, proprietary, unpublished, and patent sources were not audited.",
+      "CADET's official repository was empty at audit time.",
+      "No official public code was verified for CATNet or V2X-ReaLO.",
+      "The audit did not execute full training or benchmark pipelines."
+    ]
+  },
+  "conclusion": {
+    "answer": "The candidate can be an independent narrow project only when framed as benchmark validity and transport-semantics measurement, with Harbor and CoInfra treated as strong functional precedents. The exact proposed combination was not found, but most broad component claims are already occupied.",
+    "mostDefensibleContribution": "An executable CooperScene completion-and-observability contract, paired frozen-policy counterfactuals, state-stratified verdict/ranking analysis, and equivalence-based negative-result simplification.",
+    "mainNoveltyRisk": "Reviewers may view the work as a benchmark bug fix or a repackaging of Harbor/CoInfra deadline fallback unless the censoring distinction, shared completion ledger, causal policy isolation, and cross-method verdict stability are all central and experimentally consequential.",
+    "goNoGoGate": "Before full-scale evaluation, run state-prevalence and warmup-versus-steady-state diagnostics. If non-current states are negligible or only boundary artifacts, merge the work into a broader CooperScene replay audit rather than claiming a standalone method contribution."
+  }
+}

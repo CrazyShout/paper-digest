@@ -1,0 +1,75 @@
+{
+  "selectionAgentId": "019fbbe7-eb0c-7931-95b6-6553d39073da",
+  "selectedAt": "2026-08-01T06:09:16Z",
+  "directionId": "3d-reconstruction",
+  "candidatePoolPath": "content/idea-audits/3d-reconstruction-final-candidate-pool-v1.json",
+  "selectedCandidateIds": [
+    "trajectory-support-task-admission-certificate",
+    "unposed-pose-geometry-task-equivalence-break",
+    "multitraversal-current-state-provenance"
+  ],
+  "candidateDecisions": [
+    {
+      "candidateId": "trajectory-support-task-admission-certificate",
+      "decision": "shortlist",
+      "reason": "FlexDrive、GAVIS 和预测光度不确定性分别确认 out-of-path 失真与视角支持问题，Cam2Sim 和 Instant NuRec 又让重建资产进入策略比较。候选只保留轨迹级任务假接受控制这一残差：冻结重建器和下游任务，在相同 coverage 下比较 false admission，并用 held-out 城市或 rig 检验校准，能与 PSNR、最近相机距离及像素不确定性公平对照。"
+    },
+    {
+      "candidateId": "unposed-pose-geometry-task-equivalence-break",
+      "decision": "shortlist",
+      "reason": "DGGT、DynamicVGGT 与 MoRe 都联合处理相机和动态几何，Physical 4D 又给出观测耦合的结构歧义，但尚未检验像素拟合相近的自然联合解是否在度量任务上等价。冻结 DGGT 后仅改变输入视图子集、顺序和时窗，匹配 observed-view 误差并在 GT pose 对齐后比较 ATE、深度和 detector 输出，可避免人工位姿扰动并直接证伪主张。"
+    },
+    {
+      "candidateId": "multitraversal-current-state-provenance",
+      "decision": "shortlist",
+      "reason": "3DGM、MTGS、GaME、LT-Gaussian 和 CubifyGS 已覆盖持久地图、遍历成分和 stale 更新，却都不能在部分重访时把未观察区域与已移除对象区分。以对象或区域维护 current、stale、unknown 及观测来源，并在相同地图覆盖下同时测 false-keep、false-drop 和冻结任务后果，残差明确；MTGS、GaME 与 Mapverse 提供了可信自建起点。"
+    },
+    {
+      "candidateId": "generic-view-uncertainty-abstention",
+      "decision": "reject",
+      "reason": "GAVIS 已直接输出各向异性可见性不确定性，Predictive Photometric Uncertainty 也提供像素级、视角相关的不确定性并用于下游选择。若不绑定任务后果与轨迹级错误准入，当前主张的输入、输出和用途均与直接工作等价，只能形成复现或数据域迁移。"
+    },
+    {
+      "candidateId": "generic-perception-aware-reconstruction",
+      "decision": "reject",
+      "reason": "Beyond Visual Reconstruction Quality 已提出感知对齐评价与优化，ParkGaussian 又把目标区域和停车位任务约束直接纳入重建。换一个 detector 或加入同类任务损失不能产生新的问题对象；公开 ParkGaussian 固定提交还未发布训练代码，比较既缺少不可替代差异也没有完整复现路径。"
+    },
+    {
+      "candidateId": "generic-stale-map-pruning",
+      "decision": "reject",
+      "reason": "GaME、LT-Gaussian、CubifyGS 和 Changes in Real Time 已分别实现过时内容移除、结构变化更新和对象级维护。仅比较新旧遍历并输出 latest-only 地图与这些工作的输入、更新目标和结果一致；可保留的残差已经被上面的三状态来源契约单独表达。"
+    },
+    {
+      "candidateId": "camera-lidar-radar-edit-consistency",
+      "decision": "reject",
+      "reason": "NeuRadar 已联合相机、LiDAR、雷达并展示编辑，SplatAD、RadarSplat 等也覆盖多模态传感器建模。固定代码可以测同一编辑的内部守恒，却没有同一现实干预后的三模态配对真值；由同一生成栈同时造数据和裁决只能自证一致，无法识别现实正确性，且主对象更接近传感器仿真。"
+    },
+    {
+      "candidateId": "policy-ranking-preservation",
+      "decision": "reject",
+      "reason": "Instant NuRec 已在 140 个场景和 5 个策略上报告内部排序，Cam2Sim 也进行闭环策略比较。再次计算重建器上的聚合策略排名只是直接复现；若改为逐事件现实失败集合，则统计单位和产物转为 autonomous-driving-testing，不再是本方向的新重建表示。"
+    },
+    {
+      "candidateId": "failure-set-predictivity-beyond-psnr",
+      "decision": "reject",
+      "reason": "逐事件 failure-set 比聚合 PSNR 或策略排名更有意义，但最小设计需要真实、HIL 或高保真执行与快速重建的同场景配对。允许输入中的公开资产不能提供足够现实事件真值，Real-World Perturbation Testing 也只有有限路线；因此该对象主要属于测试有效性，当前重建方向没有可信闭环。"
+    },
+    {
+      "candidateId": "collision-physics-parameter-identifiability",
+      "decision": "reject",
+      "reason": "Real2Sim 和 PhysGS 说明接触物性校准确有残差，但截止输入没有开放的仪器化真实驾驶碰撞配对数据，也没有可执行的 Real2Sim 代码。若在自建 MPM 中生成碰撞再回归参数，估计器与真值来自同一模拟器，不能独立验证现实参数；核心对象也更属于机器人接触物理。"
+    },
+    {
+      "candidateId": "uncertainty-triggered-feedforward-refinement",
+      "decision": "reject",
+      "reason": "iSplat 已直接提出不确定性引导的选择性迭代细化，Instant NuRec 与 GAVIS 分别提供快速前馈重建和不确定性信号。把同一机制接入驾驶 backbone 只会得到速度与画质曲线，没有新的任务 estimand、自然失效边界或不可替代机制，属于一般方法迁移。"
+    },
+    {
+      "candidateId": "arbitrary-trajectory-editable-real2sim",
+      "decision": "reject",
+      "reason": "HorizonForge 已直接覆盖任意轨迹和车辆编辑，ReconDreamer、FlexDrive 与 UniSim 也处理离轨渲染和闭环编辑。当前宽泛能力主张在功能上被最新直接工作占据，继续更换 backbone 或增加编辑类型既成本高，也不会产生新的可证伪问题；可信准入和物理辨识已作为更窄对象另行判断。"
+    }
+  ],
+  "crossDirectionFinding": "本池没有与其他七池完全相同的 candidateId。概念上，trajectory-support certificate 与 world-model 的 statewise verdict admission、testing 的 execution-layer verdict set 都使用选择性准入，但三者分别以重建轨迹支持、同状态动作对和跨执行层现实事件为统计单位，资产与失败标签不同；保留项不会重复发表同一实验。policy-ranking 与 failure-set 两项则因主要产物属于 testing 而在本方向拒绝。",
+  "candidatePoolSnapshotFingerprint": "c9804b323c1a742c79f638d1336d65fdfaa9145568881e05e86a600b15e06410"
+}

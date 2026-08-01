@@ -1,0 +1,124 @@
+{
+  "candidateId": "episodewise-risk-budget-for-sequential-verification",
+  "title": "重复 Trajectory Verifier 调用的 Episode-wise 风险预算",
+  "hook": "当系统每步从更多候选里挑最好轨迹时，验证器也会被反复试探；该研究直接控制整段驾驶至少一次危险接受的风险。",
+  "output": "episode 风险评测协议、预算分配算法与闭环基准",
+  "effort": "中等",
+  "timeline": "8-10 周得到 go/no-go 结论",
+  "whyNow": "DriveVer 和 TOAD 已把 learned verifier/scorer 接入 test-time 轨迹选择，候选数和闭环调用次数开始成为部署变量；同时 conformal decision 与 online conformal 提供统计工具，但现有驾驶工作没有把自适应 best-of-N、重复停止和状态依赖合并为 episode 内至少一次 unsafe acceptance 的风险对象。",
+  "keyProblem": "在每个决策步生成多个候选、按 learned verifier 选择并闭环重复调用时，如何按 episode 分配危险接受预算，使候选数、驾驶时长和自适应停止变化时，至少一次 unsafe acceptance 的概率仍受控。",
+  "currentLimitations": "当前 trajectory verifier 与 test-time optimization 主要优化单次评分、轨迹质量或 benchmark 总分；逐步 accuracy、平均 calibration 和时间平均 conformal coverage 都不能直接约束 episode 中任意一步发生危险接受。若只评估被选中轨迹，还会因 verifier-selection missingness 看不到高分未选候选的真实风险，强搜索也可能利用 scorer 误差产生 winner's curse。",
+  "hypothesis": "在记录全部 proposals 并为选中与随机审计的未选候选获得安全标签后，按 episode 长度和自适应候选数分配 alpha 的风险预算器，能在 held-out 闭环 episodes 上将 any-unsafe-accept 置信上界控制在预注册预算内，同时比固定保守阈值保留更高任务完成率；若风险不随候选数/时长膨胀或简单 episode 阈值等效，则主张被推翻。",
+  "gate0": {
+    "decision": "继续到风险膨胀存在性实验",
+    "basis": "直接工作已经部署 verifier 与更强候选搜索，一般统计工作又没有覆盖 ADS 的闭环自适应选择，因此存在明确、可观察且与安全相关的组合残差。",
+    "boundary": "仅把一般 conformal 阈值套到单帧或报告 verifier accuracy 不构成贡献；必须先观察 candidate count 或 episode length 引起的名义风险失真。"
+  },
+  "gate1": {
+    "decision": "公开 simulator 与自建 verifier 足以形成 8-10 周可证伪闭环",
+    "requiredEvidence": "第 3 周前在 held-out episodes 上完成 N=1,2,4,8 与两种 episode 长度的全候选 rollout，确认是否存在可重复的 any-unsafe-accept 膨胀。",
+    "hardStop": "若最佳固定 episode threshold 已在相同任务完成率下稳定满足风险预算，或未观察到候选规模/时长效应，则不继续开发新预算算法。"
+  },
+  "noveltyClaims": [
+    "DriveVer 学习 trajectory safety confidence 与修正，TOAD 用 learned scorer 扩展 test-time 搜索；本研究不提出更强轨迹生成器，而是审计并控制搜索增强后 episode 级至少一次危险接受的概率。",
+    "Conformal Decision Theory 直接校准自主决策风险，online conformal 处理序列覆盖；本研究的不可替代对象是自适应 best-of-N、闭环状态反馈和停止时刻共同诱发的 family-wise episode event，而非把成熟公式应用到单一驾驶数据集。",
+    "评价保留全部候选及其抽样 rollout，显式处理只观察被选轨迹造成的 verifier-selection missingness；只用已执行候选做 per-step calibration 的直接工作无法识别该偏差。",
+    "方法和 verifier 质量解耦：在两个 verifier 家族、多个候选生成策略与固定 candidate-count 随机化下检验风险预算，避免把一个 scorer 的缺陷包装成普遍规律。"
+  ],
+  "method": [
+    "定义 episode 级主事件：任一被 verifier 接受并实际执行的轨迹违反预注册 safety oracle；decision step 和 candidate 嵌套在 episode 内，不作为独立 Bernoulli。",
+    "记录每步全部候选、score、被选标记、候选数、停止规则、状态和随机种子；对未选候选做全量短 horizon rollout或预注册随机审计，估计 selection missingness。",
+    "构造 alpha-spending 风险预算器，根据剩余 horizon、已用预算和自适应候选数给出接受阈值或 abstain/fallback；先实现无模型 union-bound 版本，再探索 online calibration 版本。",
+    "随机化 N=1,2,4,8 和短/长 episode，隔离 candidate scaling 与环境难度；使用按 episode 的精确事件、cluster bootstrap 和可选的 time-uniform confidence sequence。",
+    "比较 per-step calibration、固定 episode threshold、Bonferroni/union bound、online conformal 与 no-verifier，所有方法共享候选、oracle、计算预算和 fallback。",
+    "做 verifier、generator、horizon estimator 和 alpha schedule 消融；报告任务完成、干预成本与风险，防止以总是拒答获得形式安全。"
+  ],
+  "implementationPath": [
+    "可复用资产：Bench2Drive-Robust 固定提交提供 CARLA 0.9.15、mini routes、agent 接口、frame/action 扰动和评估脚本；用于闭环 episode 与安全 oracle，不把注入故障解释为自然发生。",
+    "直接工作边界：DriveVer 与 TOAD 的论文用于定义强比较对象；若截至实验冻结日没有完整官方代码或兼容 checkpoint，则实现公开描述的轻量 verifier/scorer proxy，并明确不声称复现其绝对结果。",
+    "必须自建：多候选 trajectory adapter、proposal logger、未选候选 rollout/audit queue、episode event evaluator、alpha-spending controller、fallback policy 和按 episode 的统计工具。",
+    "许可证与分发：Bench2Drive-Robust 为 CC-BY-NC-ND-4.0，只通过配置和独立 adapter 调用，不改写或再分发受限内容；自建代码和生成日志采用独立许可证，模型 checkpoint 逐项记录来源。",
+    "算力与数据：Bench2Drive mini routes 起步，2-4 个 candidate counts、两种 verifier、至少 200 个 held-out episodes；预计 1-2 张 24 GB GPU、8-16 CPU 核和 2 TB rollout 存储，全量未选 rollout 可用分层随机审计降本。",
+    "里程碑：第 1-2 周冻结 oracle、fallback 与候选接口；第 3 周完成风险膨胀 existence check；第 4-5 周实现基线和预算器；第 6-7 周完成随机化闭环；第 8 周做统计审计，只有跨 verifier 效应存在时才用第 9-10 周扩展场景。"
+  ],
+  "minimumStudy": [
+    "在固定 Bench2Drive mini routes 或等价公开闭环中，至少运行 200 个 held-out episodes；随机分配 N=1,2,4,8 以及短/长 horizon，保留所有 proposals 与 score。",
+    "使用两个结构不同的 verifier：一个轻量学习 scorer 和一个基于规则/可达性的 verifier；候选生成器固定，另做一次生成器替换验证。",
+    "对全部被选候选和预注册比例的未选候选执行安全 rollout；若不能全量 rollout，按候选 score 与场景难度分层抽样并用已知抽样概率估计。",
+    "在 alpha=0.05 和 0.10 下比较 fixed per-step threshold、固定 episode threshold、union-bound alpha spending、online conformal、no-verifier 与 proposed adaptive budget。",
+    "主分析以 episode 为单位报告 any-unsafe-accept；任务完成、碰撞、路线偏离和 fallback 次数为辅助结果，不按成功 episode 条件化。",
+    "第 3 周预注册 go/no-go：候选数从 1 增至 8 或 episode 延长时，至少一个 verifier 的名义 per-step 校准必须出现可重复的 episode 风险膨胀，才继续复杂方法。"
+  ],
+  "strongBaselines": [
+    "无 verifier：按生成器默认排名执行，测量 verifier 的净风险与任务收益。",
+    "固定 per-step threshold：使用 held-out calibration set 选单步阈值，代表常见但可能错误外推到 episode 的做法。",
+    "固定 episode threshold：按最大 score 或最危险 step 统一校准，检验简单保守规则是否已经足够。",
+    "Bonferroni/union-bound alpha spending：按最大 episode 长度等分预算，作为有保证但可能过度保守的基线。",
+    "Conformal Decision Theory/online conformal 适配：在相同日志、horizon 和 fallback 下实现一般风险控制工具，防止把通用统计迁移误写为新颖性。",
+    "oracle verifier：使用 rollout 后真值选择候选，仅作为不可部署的任务完成上界与风险下界。"
+  ],
+  "metrics": [
+    "主指标：episode any-unsafe-accept rate、相对预注册 alpha 的超额及其单侧 95% 置信上界，统计单位为 episode。",
+    "校准与规模效应：按 candidate count 和 episode length 分层的风险、risk inflation ratio、time-to-first unsafe accept。",
+    "效用：route completion、任务成功率、碰撞/越界率、fallback/abstention 次数和每公里干预成本。",
+    "选择偏差：被选与未选候选的 unsafe rate、score 条件风险、审计抽样权重有效样本量和 winner's-curse gap。",
+    "系统成本：每个 decision 的候选 rollout 数、GPU 时延、episode wall-clock 和达到给定风险-完成率点的总计算量。"
+  ],
+  "successCriteria": [
+    "在两个 verifier 中至少一个、N=4 或 8 的 held-out episodes 上，proposed 方法的 any-unsafe-accept 单侧 95% 上界不超过预注册 alpha，且固定 per-step threshold 明确超出 alpha。",
+    "相对满足同一 alpha 的最佳固定 episode/union-bound 基线，proposed 方法将 route completion 提高至少 10% 相对值或将 fallback 降低至少 20%，并在第二个 verifier 上方向一致。",
+    "风险控制在短/长 episode 和至少两个场景难度层都不失效；结果不依赖排除失败 episode、减少候选到 N=1 或只使用一个特定 generator。"
+  ],
+  "killCriteria": [
+    "若 N 从 1 增至 8、episode 延长和自适应停止都未造成可重复的 episode 风险膨胀，停止该研究对象，不为追求方法贡献制造组合效应。",
+    "若固定 episode threshold 或简单 union bound 在相同任务完成率下与 proposed 方法等效，停止新算法，只发布协议或负结果。",
+    "若未选候选无法获得可信安全标签，导致 selection missingness 不可估计，或安全 oracle 与实际碰撞/越界没有一致方向，停止风险保证主张。"
+  ],
+  "risks": [
+    "episode unsafe event 可能过少导致统计功效不足；必须预注册样本量与精确上界，不得把 decision steps 当独立样本补数量。",
+    "反事实未选候选 rollout 会改变后续状态，不能与真实执行完全等价；主分析应区分短 horizon 安全标签和完整 closed-loop 结果。",
+    "自建 verifier 可能过弱，使风险膨胀成为低质量 scorer 的特例；需要规则 verifier、学习 verifier 和至少一次 generator 替换。",
+    "安全 oracle 若只等于碰撞会漏掉责任、舒适和规则风险；本研究限定为预注册技术 safety oracle，不声称法律责任结论。"
+  ],
+  "impact": "正结果会为 verifier 驱动的 test-time scaling 提供 episode 级部署口径，明确增加候选和推理步数时如何支付安全风险预算；负结果若表明简单固定阈值足够或没有规模膨胀，也会阻止把一般 conformal 包装成复杂驾驶方法，并为后续 benchmark 规定必须保存全部 proposals 和未选候选审计信息。",
+  "evidence": [
+    {
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "role": "本库执行证据：提供可冻结 route/seed 的闭环平台与部署扰动，但仿真事件只用于评测协议，不代表自然发生率。",
+      "localPaperId": "bench2drive-robust-deployment-perturbations",
+      "localLink": "papers/bench2drive-robust-deployment-perturbations/"
+    },
+    {
+      "title": "DriveVer: Lightweight Trajectory Evaluator as Test-Time Verifier for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2607.00399",
+      "role": "外部直接竞品：实例化 learned trajectory verifier，但未控制多候选选择和重复闭环调用下的 episode 风险。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Test-Time Trajectory Optimization for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.07170",
+      "role": "外部直接竞品：以 learned scorer 和 CEM 扩展候选搜索，形成 scorer 误差被强搜索利用的可检验边界。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Conformal Decision Theory: Safe Autonomous Decisions from Imperfect Predictions",
+      "url": "https://arxiv.org/abs/2310.05921",
+      "role": "外部统计基线：对自主决策风险做 conformal 校准，但未处理 ADS 自适应 best-of-N 与 episode any-failure 组合。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Online Conformal Prediction via Online Optimization",
+      "url": "https://proceedings.mlr.press/v267/areces25a.html",
+      "role": "外部序列基线：提供在线覆盖工具；时间平均或逐时覆盖并不等于 episode 内至少一次危险接受的风险。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Bench2Drive-Robust official benchmark",
+      "url": "https://github.com/Thinklab-SJTU/Bench2Drive-Robust/tree/ae1b5867324710bf0574cba797062280d9d97105",
+      "role": "外部固定资产：核验 CARLA 0.9.15 注入、评估脚本和 mini route 入口；CC-BY-NC-ND-4.0 限制派生分发。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:54:06.950Z"
+}

@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "round": 2,
+  "lens": "empirical-reviewer",
+  "reviewedAt": "2026-07-31",
+  "independenceStatement": "本评审仅依据指定 dossier、dossier 明确引用的本地 audit/pilot 和重新打开的一手论文与官方代码独立完成；未读取任何 cooperative-autonomous-driving-panel-round-2-review-*.json，未询问、参考或推测其他评审者结果，也未推测主流程的接受规则。",
+  "evidenceChecked": [
+    {
+      "title": "Cooperative Autonomous Driving Panel Dossier v2",
+      "url": "content/idea-audits/cooperative-autonomous-driving-panel-dossier-v2.json",
+      "type": "local-dossier",
+      "finding": "两候选均把 take 设为采集单位并禁止用 frame/link/seed 扩充样本量；候选 1 允许有限发布物证书，候选 2 受 frame mapping、runtime payload、frozen input 和 state prevalence 四个硬门槛约束。"
+    },
+    {
+      "title": "CooperScene Take-9 Completion Pilot",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json",
+      "type": "local-pilot",
+      "finding": "CPU pilot 对 12 条定向链路、1,932 个 start-link 对和 35,451 行指标完成了独立积分校验；A0 1.6 Mbps 相对 exact 的完成率绝对差随四个论文载荷约为 0.035、0.141、0.173、0.207，而 per-link mean 约为 0.005-0.011。该结果只有一个 take，且 completion-time median/p95 只在完成样本上计算，不是删失校正后的等价证据。"
+    },
+    {
+      "title": "CooperScene All-Takes Summary Audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "type": "local-binary-audit",
+      "finding": "14/14 MCAP 的 schema、25 个 topic、12 条 throughput link 和 summary CRC 通过，但 audit 未解码其余 13 个 take 的 throughput 数值，不能排除跨 take 的重复序列或共享慢变状态。14 段时间戳全部位于 2025-09-28 约 20:22-22:27 UTC 的同一连续采集窗口，因此它们是 14 个不重叠文件，但尚未被证明是 14 个独立重复 session。"
+    },
+    {
+      "title": "CooperScene Take-9 Frame Alignment Audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json",
+      "type": "local-alignment-audit",
+      "finding": "严格 mappingClass 仍为 none：12 个首/中/末 pose anchor 支持 ordinal candidate，但 644 行中其余行未逐行锚定；任何感知、策略或排序结论仍被 G1 阻断。"
+    },
+    {
+      "title": "Cooperative Autonomous Driving Trace Methodology",
+      "url": "content/idea-audits/cooperative-autonomous-driving-trace-methodology.json",
+      "type": "local-methodology",
+      "finding": "方法文件正确禁止 frame/link/surrogate 伪重复，并承认 K_usable<=14 主要只能检测大效应；但其 studentized take bootstrap 在极小 K 下不稳定，且未给出本 dossier 所需的数值等价界、共同限制时间或闭合的多重性策略。"
+    },
+    {
+      "title": "CooperScene Public Payload-Replay Gap Audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+      "type": "local-code-and-paper-audit",
+      "finding": "公开路径以 nominal payload/单一 throughput 计算并向下量化到 100 ms，越过 take 起点时夹到首帧，delayed lookup 失败时可能保留同步帧；静态 payload calculator 与论文载荷存在 0.67-1.08 倍偏差。Iperf2 5 Mbps/100 ms 采集 workload 与 Table-2 的 2,100-byte/1 ms 物理传输及模型 workload 不可直接等同。"
+    },
+    {
+      "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "type": "primary-paper",
+      "finding": "论文确认 10 Hz 感知、100 ms Iperf2 报告、每 agent 一个 5 Mbps UDP client 和三个 server，并报告 Table 2 的 payload/latency；论文同时说明多 take 连续采集与首帧丢失时复用最近有效帧。其 lower-layer scheduling/RSSI 缺失限制支持 transport-only 边界。"
+    },
+    {
+      "title": "UCR-CISL/CooperScene",
+      "url": "https://github.com/UCR-CISL/CooperScene",
+      "type": "official-code",
+      "finding": "官方代码提供模型、checkpoint 接口和 scalar-delay 路径，但未提供 MCAP trace integration、显式 unfinished state、逐链路队列或 fail-closed missing-trace 行为。"
+    },
+    {
+      "title": "CellReplay: Towards Accurate Record-and-Replay for Cellular Networks",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+      "type": "primary-paper",
+      "finding": "CellReplay 直接证明 record workload 与 replay workload 不匹配会导致评测偏差，并以双 workload 记录和插值处理 workload sensitivity；这支持候选 1 的校准边界，也削弱把单一 Iperf throughput 当成 workload-invariant service truth 的可行性。"
+    },
+    {
+      "title": "CADET: A Modular Platform for Evaluating Distributed Cooperative Autonomy in Connected Autonomous Vehicles",
+      "url": "https://arxiv.org/abs/2606.04072",
+      "type": "primary-paper",
+      "finding": "CADET/NetWaggle 已覆盖 trace-driven network/workload emulation、队列和多层指标，但未给出 CooperScene 定向 throughput 的 nested abstraction-equivalence certificate；候选 1 的差异必须保持在该窄边界。"
+    },
+    {
+      "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+      "url": "https://doi.org/10.1145/3666025.3699328",
+      "type": "primary-paper",
+      "finding": "Harbor 已实现 server deadline、迟到结果丢弃和 remote miss 后 local detection fallback；因此候选 2 不能把 deadline/drop/local fallback 本身作为新颖性。"
+    },
+    {
+      "title": "CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset for Vehicle-Infrastructure Cooperation in Adverse Weather",
+      "url": "https://arxiv.org/abs/2507.02245",
+      "type": "primary-paper",
+      "finding": "当前 v3 标题与 dossier 所列标题不同；CoInfra 使用按近期时延估计的 adaptive fusion window，并对 late arrivals 做 motion-corrected post-fusion update，不是 dossier 所称的简单 latest-history policy。"
+    },
+    {
+      "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+      "url": "https://arxiv.org/abs/2503.10034",
+      "type": "primary-paper",
+      "finding": "V2X-ReaLO 明确把收到的特征存入 Feature Bank，并在 ego 推理时查询时间窗内最新 collaborator message；它是 latest-completed/latest-available 类策略更直接的功能先例。"
+    },
+    {
+      "title": "Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+      "type": "primary-paper",
+      "finding": "LRCP 已以历史 BEV、连续 delay 和 flow-guided sampling 处理异步特征；候选 2 的 age-aware 比较只能作为既有方法类的受控 comparator，不能作为新方法贡献。"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "trace-structure-sufficiency-certificate",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 6,
+        "comparison-readiness": 6
+      },
+      "rationales": {
+        "novelty": "证据：CooperScene 公开实现只用 1.6 Mbps scalar，CADET 提供一般 trace emulation，CellReplay 研究 workload-sensitive replay；重开的来源中没有 CooperScene-specific A0-A6 nested sufficiency certificate。反例：trace replay、surrogate shuffle、workload calibration 和 transport metric 本身均已有直接先例；若结果只剩“per-link mean 比 global mean 好”，会接近 benchmark plumbing。评分 7，因为受控逐层删结构的证书有明确不可替代差异，但差异很窄。",
+        "feasibility": "证据：take-9 pilot 已验证解析器和独立积分器，14/14 summary audit 证明每 take 有同构 12-link schema，总 MCAP 约 90.9 GB，运输层批处理本身可在预算内完成。反例：其余 13 个 take 尚未解码数值；四个 released model 的 exact runtime serialized bytes 通常需要可运行的 CUDA/model 环境，故“primary study CPU-only”并不完整；FIFO、no-queue、bounded concurrency 和 unit/interpolation sensitivity 会形成大矩阵。评分 6。",
+        "success-probability": "证据：take 9 已出现有方向性的梯度，A0 完成率误差达到 3.5-20.7 个百分点，而 per-link mean 仅约 0.5-1.1 个百分点，至少支持找到 A0 counterexample 的较高概率。反例：这是 n=1；pilot 的完成时间只对 completed observations 求 median/p95，受行政删失选择偏差影响；10 MB 和短 deadline 等 cell 为全失败/全零，无法产生有信息的等价结论。若把 14 take 当随机独立样本，未校正 TOST 在理想零均值下达到 90% power 也大致需要约 0.82 个 take-level SD 的宽等价半界，且多指标/多 cell 后更差。评分 6，只认可有限发布物 counterexample 的成功概率，不认可总体等价的高概率。",
+        "impact": "证据：当前 scalar 路径与 take-9 exact replay 差异可达实质量级；一个可执行的最小充分结构证书能减少后续 CooperScene transport evaluation 的成本和误报。反例：公开 trace 只有 assumed-Mbps throughput，不能支持 packet、MAC、physical-radio、perception 或 road-safety 结论；CellReplay 还表明跨 workload 外推可能失败。评分 6。",
+        "comparison-readiness": "证据：A0-A6 ladder、identity/direction/missing-interval 负控制、actual/equalized payload 和 exact trace reference 基本齐全，且明确 seed 只表示 Monte Carlo uncertainty。反例：dossier 没有冻结任何数值等价界、共同限制随访时间、支持集中的非退化 cell、small-K interval 方法或 ladder selection 的 simultaneous/closed-testing 规则；all-take audit 也未排除跨 take/link 复制。评分 6。"
+      },
+      "strongestObjection": "所谓 14 个独立采集单位目前只被证明为 14 个不重叠 MCAP 文件：它们全部来自同一天约两小时的连续采集窗口，且 13 个 take 的 throughput payload 尚未解码，无法排除同一 Iperf session、共享慢变信道状态、链路序列复用或前后缀重复。若仍用 take-clustered interval 做总体等价，采集独立性与功效基础均不足；若目标只是 14-take finite census，则应放弃随机总体推断并改用逐 take/逐 cell 的确定性最坏界。",
+      "requiredExperiment": "最小修正：先只解码 14 个 MCAP 的 12 条 throughput_x 序列，做去绝对时间后的逐链路哈希、最长重复前后缀、跨 take 互相关和 capture-session 分组；在通过前不得写 14 independent replicates。随后把主张冻结为 14-take finite-release certificate：预先给出一个主 payload support、少量 decision-relevant deadlines、每个 estimand 的数值等价界和一个共同限制时间 tau；只在 take_end-tau 之前生成消息，使 completion-by-tau 与 min(T,tau) 完全可判定，并把全零/全失败 cell 标为 non-informative。对每个 ladder level 要求所有 14 take 的 paired worst-case bound 均落入界内；seed 只用于 MC error。若要超出有限发布物做总体等价，先用独立新 session 的 paired SD 做功效计算并补采，而不是增加 frame/link/seed。",
+      "factualCorrections": [
+        "14 个 MCAP 目前是 14 个文件/连续 take，不是已核实独立的 14 个采集 session；summary audit 不能证明统计独立性。",
+        "take-9 pilot 的 completion-time median 和 p95 是 completed-only summaries，不是 restricted mean completion time，也不能处理 informative administrative censoring。",
+        "“CPU-only primary study”只覆盖 trace decoding/replay；要取得四个 released model 的 exact runtime serialized payload，仍需使其真实通信边界可执行，通常需要 GPU 环境。",
+        "10 MB payload 在 take 9 内零完成，多个 100/500/1000 ms deadline cell 对中大型 payload 全为零；这些退化 cell 不能因为两种 abstraction 同为零就授予有意义的等价证书。"
+      ],
+      "overall": 6
+    },
+    {
+      "candidateId": "transport-availability-state-contract",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 4,
+        "success-probability": 4,
+        "impact": 6,
+        "comparison-readiness": 4
+      },
+      "rationales": {
+        "novelty": "证据：CooperScene 公开路径确有首帧夹取、同步帧保留和 zero prior_encoding 风险；把 availability、observability、censoring、tensor lineage 与 frozen-policy counterfactual 合成同一 benchmark-validity contract，在重开来源中未见完全同构实现。反例：Harbor 已有 deadline/drop/local fallback，V2X-ReaLO 已有 latest message Feature Bank，CoInfra 已有 adaptive fusion window/late update，LRCP 已有 age/asynchrony compensation。评分 6，因为剩余创新是审计与因果隔离协议，不是新 fallback 方法。",
+        "feasibility": "证据：官方模型、checkpoint 接口、trace 和 Range-readable YAML 均公开；take-9 的 12 anchors 强烈支持可用的 ordinal mapping，补齐 sidecar 在工程上可行。反例：严格 frame mapping 当前为 none，runtime payload 未采集，四模型 tensor identity 未验证；10-12 周内要完成所有 take sidecar、四模型多策略 GPU inference、equalized payload 和独立 rerun 偏紧。更关键的是 minimum study 把 train take 留作配置、只用 validation/test 做主推断，而公开 split 为 10/2/2，故主推断 K 最大仅 4。评分 4。",
+        "success-probability": "证据：take-9 在 0.338/0.423/0.500 MB 下的 take-end noncompletion 分别约 24.6%/31.0%/36.2%，说明 unavailable state 可能不稀少；公开 silent fallback 足以产生可检验 counterfactual。反例：这些不是 frame-aligned policy exposure，更不是 task-metric effect；去掉 warmup、左截断和不足随访后状态可能显著减少。K=4 时，未校正单一 TOST 在理想零均值和 90% power 下也大致需要约 1.82 个 take-level SD 的极宽等价半界，rank/method multiplicity 只会更差。评分 4。",
+        "impact": "证据：若 silent fallback 改变官方 metric winner 或 method ordering，会直接影响 benchmark 使用；若在充足 exposure 下严格等价，也能简化 evaluator。反例：影响仅限 CooperScene 的开放环 benchmark，无法直接外推物理 delivery、规划或道路安全；若效应仅来自 payload size 或 take boundary，独立贡献会坍缩。评分 6。",
+        "comparison-readiness": "证据：silent clamp、synchronized retention、drop/local-only、latest-completed、native age-aware、ego-only 和 equalized-payload controls 基本覆盖功能类别，且 current-complete tensor identity 是合适负控制。反例：CoInfra 被错误命名和错误概括；V2X-ReaLO 才是更直接的 latest-history precedent。主 outcome 在 dossier 中写 official task metric，而 trace methodology 写固定误报预算下的 per-take recall，尚未统一；task-metric/rank 等价界也无数值，四模型的 Kendall tau 极离散。评分 4。"
+      },
+      "strongestObjection": "候选把“take 是单位”写对了，却在执行计划中把主推断限制到 2 个 validation 加 2 个 test take。K=4 无法同时支撑四模型、多策略、task metric、winner sign、rank inversion、Kendall tau/Spearman rho 和等价结论；frame、ego、link、object 与 seed 都不能增加自由度。加上 14 段本身来自同一短采集 campaign，当前设计无法把未显著结果判为等价，也无法稳定区分真实排序变化与单 take 波动。",
+      "requiredExperiment": "最小修正分两阶段。阶段 A 在不开 task metrics 前补齐每个纳入 take 的全帧 sidecar、runtime bytes、共同 completion ledger 和 warmup/steady-state state prevalence；将 pre-start history 一律标为 left-truncated unknown，并排除 deadline 超出 trace support 的 frame-policy 对。阶段 B 不再对当前 K=4 做总体等价：若目标是现有发布物审计，冻结一个可分解的主 metric、一个主 policy contrast 和共同 analyzable frame set，在全部 14 take 上做 finite-census paired effects 与逐 take 最坏界，不报 population p-value/CI；official mAP 和四方法排序仅作次级描述。若目标必须是总体 rank/equivalence，则先用阶段 A 的 paired SD 与预先数值 margin 计算 90% power，补采独立日期/路线/session；在达到样本量前止损为 transport-state audit。先完成一个 take×一个 model 的 current-complete identity、left-truncation、right-censoring 和 equalized-payload smoke matrix，再扩展 GPU 运行。",
+      "factualCorrections": [
+        "arXiv:2507.02245 当前标题是 CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset for Vehicle-Infrastructure Cooperation in Adverse Weather，不是 dossier 所列 A Communication-Aware Cooperative Perception System for CAVs。",
+        "CoInfra 的相关策略是 adaptive fusion window 加 motion-corrected post-fusion update；V2X-ReaLO 才明确从 Feature Bank 查询时间窗内最新 collaborator message。",
+        "按候选自己的 split 规则，主推断不是 14 take，而是 validation=2 加 test=2，K 最大为 4；train=10 仅用于配置和 smoke tests。",
+        "take-9 strict frame mapping 尚未通过：当前只有 12/644 行被独立 pose-anchor，不能开始任何 perception metric 或 ranking 比较。",
+        "take-start-unknown 是左截断/未知初始队列与 Feature Bank 状态，不是 deadline noncompletion 或 trace-end right-censoring；三者必须使用不同风险集。",
+        "take-9 pilot 未运行感知模型，不能作为 fallback policy 会改变方法排序的证据。"
+      ],
+      "overall": 5
+    }
+  ]
+}

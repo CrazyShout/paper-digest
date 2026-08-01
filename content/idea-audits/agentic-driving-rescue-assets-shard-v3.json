@@ -1,0 +1,597 @@
+{
+  "shard_id": "agentic-driving-round2-system-interface-blindspots-2026-08-01",
+  "reviewerAgentId": "019fbad4-780b-7613-93d0-1c823fa43396",
+  "searchedAt": "2026-08-01T00:00:00+08:00",
+  "searched_queries": [
+    {
+      "query": "local decisive-audit-v2 and four agentic-driving candidate pools",
+      "purpose": "逐项核对既有机制、反例与功能等价碰撞，避免仅改名后重复提交。"
+    },
+    {
+      "query": "AutoVLA action_tokenizer action_start_id invalid token decode zero padding",
+      "purpose": "检查生成 token 到驾驶轨迹之间是否存在失效开放或静默别名。"
+    },
+    {
+      "query": "AutoVLA adaptive CoT max_length action token count EOS trim NAVSIM trajectory",
+      "purpose": "检查推理长度是否会侵占实际驾驶轨迹的预测时域。"
+    },
+    {
+      "query": "MindDrive ego_fut_preds pw_ego_fut_pred PID controller",
+      "purpose": "核验路径头、速度头和最终控制器是否形成未经任一预测头提出的混合动作。"
+    },
+    {
+      "query": "MindDrive torch.nan_to_num trajectory controller",
+      "purpose": "检查数值异常是否被转换成外观合法但缺少故障语义的驾驶动作。"
+    },
+    {
+      "query": "SimLingo PchipInterpolator predicted route PID controller",
+      "purpose": "检查离散安全轨迹经过插值和控制转换后是否产生新的连续路径风险。"
+    },
+    {
+      "query": "SimLingo force_move brake false creep_throttle stuck",
+      "purpose": "核验脱困逻辑是否会覆盖模型的停车或制动意图。"
+    },
+    {
+      "query": "Bench2Drive-VL USE_GT 24 graph q50 NO_PERC_INFO special_state_str",
+      "purpose": "追踪真值和模拟器特权信息是否能到达最终控制决策。"
+    },
+    {
+      "query": "Bench2Drive-VL extract_key_list last direction speed fallback last_spd_cmd",
+      "purpose": "核验方向和速度字段是否以非原子方式解析并跨帧拼接。"
+    },
+    {
+      "query": "Bench2Drive-VL inference workers API retry frame timestamp action freshness",
+      "purpose": "检查多节点推理图是否缺少面向危险时距的证据与动作有效期。"
+    },
+    {
+      "query": "SimLingo commentary cause_object dreamer safe_to_execute opposite action retrieval",
+      "purpose": "按更新口径重新考虑此前因需要自建检索 adapter 而排除的自然反义驾驶义务样本。"
+    },
+    {
+      "query": "ActionCodec action tokenizer invalid sequence waypoint-action gap Bench2Drive-Robust delay VLADriver-RAG",
+      "purpose": "核对候选与外部近期工作的功能等价碰撞及剩余研究边界。"
+    }
+  ],
+  "verified_primary_sources": [
+    {
+      "source_id": "local-workflow",
+      "type": "local-contract",
+      "location": "config/idea-exploration-workflow.json",
+      "verified": "候选必须区分可注入性与自然发生、方法迁移与新问题对象、仓库存在与可执行证据。"
+    },
+    {
+      "source_id": "local-review",
+      "type": "local-review",
+      "location": "content/reviews/agentic-driving.json",
+      "verified": "当前综述覆盖记忆检索、推理到动作、慢速路由、多智能体协作和安全边界。"
+    },
+    {
+      "source_id": "local-prior-audits",
+      "type": "local-dedup-corpus",
+      "location": "content/idea-audits/agentic-driving-*-candidate-pool-v1.json and decisive-audit-v2 files",
+      "verified": "已核对动作相反检索、最小支持集、推理时限、动作修复、安全包络、状态污染、证明携带动作及多智能体候选。"
+    },
+    {
+      "source_id": "autovla-code",
+      "type": "fixed-commit-code",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "commit": "ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "verified": "动作 token 解码、生成长度、轨迹输出和 NAVSIM 评测入口位于同一 AutoVLA 执行链。"
+    },
+    {
+      "source_id": "autovla-model",
+      "type": "public-model",
+      "url": "https://huggingface.co/Zewei-Zhou/AutoVLA",
+      "verified": "公开模型资产可用于复现生成到 NAVSIM 轨迹评分的链路。"
+    },
+    {
+      "source_id": "minddrive-code",
+      "type": "fixed-commit-code",
+      "url": "https://github.com/xiaomi-mlab/MindDrive/tree/1a4085dab1c20895a0c8d2b67b4f8e65712fa8de",
+      "commit": "1a4085dab1c20895a0c8d2b67b4f8e65712fa8de",
+      "verified": "路径预测、速度预测、PID 控制和 Bench2Drive 评测位于同一仓库执行链。"
+    },
+    {
+      "source_id": "minddrive-model-data",
+      "type": "public-model-and-data",
+      "url": "https://huggingface.co/poleyzdk/Minddrive",
+      "verified": "公开模型与 Chat-B2D-plus 资产可支持局部回放和闭环验证。"
+    },
+    {
+      "source_id": "simlingo-code",
+      "type": "fixed-commit-code",
+      "url": "https://github.com/RenzKa/simlingo/tree/743b243afd6cf5ff51b9fa1f8cac86f22d569684",
+      "commit": "743b243afd6cf5ff51b9fa1f8cac86f22d569684",
+      "verified": "模型、PCHIP 路径处理、PID、脱困控制和 Bench2Drive/CARLA evaluator 属于同一执行栈。"
+    },
+    {
+      "source_id": "simlingo-model",
+      "type": "public-model",
+      "url": "https://huggingface.co/RenzKa/simlingo",
+      "verified": "公开 checkpoint 支持官方闭环入口。"
+    },
+    {
+      "source_id": "simlingo-data",
+      "type": "public-data",
+      "url": "https://huggingface.co/datasets/RenzKa/simlingo",
+      "verified": "数据包含 commentary、cause_object、scenario、Dreamer waypoint、allowed 和 safe_to_execute 等字段。"
+    },
+    {
+      "source_id": "simlingo-paper",
+      "type": "formal-paper",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Renz_SimLingo_Vision-Only_Closed-Loop_Autonomous_Driving_with_Language-Action_Alignment_CVPR_2025_paper.html",
+      "verified": "SimLingo 为 CVPR 2025 闭环语言动作驾驶系统。"
+    },
+    {
+      "source_id": "b2dvl-code",
+      "type": "fixed-commit-code",
+      "url": "https://github.com/Thinklab-SJTU/Bench2Drive-VL/tree/653f9a3b6942c511c3024510bd6b61c33a08090b",
+      "commit": "653f9a3b6942c511c3024510bd6b61c33a08090b",
+      "verified": "图推理、GT 节点、命令解析、API worker、CARLA agent 和路线评分属于同一官方框架。"
+    },
+    {
+      "source_id": "b2dvl-data",
+      "type": "public-data",
+      "url": "https://huggingface.co/datasets/Telkwevr/Bench2Drive-VL-base",
+      "verified": "公开数据可支持离线解析回放和闭环场景准备。"
+    },
+    {
+      "source_id": "fail2drive-code",
+      "type": "fixed-commit-code",
+      "url": "https://github.com/autonomousvision/fail2drive/tree/37a14423e8f7c3f57a0e101ec1072d94bf624dec",
+      "commit": "37a14423e8f7c3f57a0e101ec1072d94bf624dec",
+      "verified": "公开失效对照路线、扰动资产和闭环指标可作为相邻证据或独立复核工具。"
+    },
+    {
+      "source_id": "actioncodec",
+      "type": "paper",
+      "url": "https://arxiv.org/abs/2602.15397",
+      "verified": "用于核对动作 tokenizer、无效序列和截断问题的功能碰撞。"
+    },
+    {
+      "source_id": "waypoint-action-gap",
+      "type": "paper",
+      "url": "https://arxiv.org/abs/2602.06214",
+      "verified": "用于核对 waypoint 与实际控制之间接口缺口的功能碰撞。"
+    },
+    {
+      "source_id": "bench2drive-robust",
+      "type": "paper",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "verified": "用于核对传感器故障和控制时延鲁棒性问题的功能碰撞。"
+    },
+    {
+      "source_id": "vladriver-rag",
+      "type": "paper",
+      "url": "https://arxiv.org/abs/2605.08133",
+      "verified": "用于核对驾驶历史知识检索和结构化匹配的功能碰撞。"
+    }
+  ],
+  "asset_matrix": [
+    {
+      "stack": "AutoVLA",
+      "fixed_commit": "ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "license": "仓库 LICENSE 为面向学术和非营利用途的定制许可；实验前需遵守其传播限制。",
+      "checkpoint_or_sample": "公开 Hugging Face checkpoint；NAVSIM navmini 可作为最小样本。",
+      "dependencies": ["Qwen2.5-VL", "PyTorch", "NAVSIM", "nuPlan-compatible assets"],
+      "entrypoint": "官方 AutoVLA NAVSIM agent 与 PDM evaluation script",
+      "real_checker": "NAVSIM PDM Score，包括轨迹与驾驶规则相关组件",
+      "engineering_risk": "模型显存、NAVSIM 数据准备及定制许可证；无需重新训练即可先完成 token trace 和短序列回放。"
+    },
+    {
+      "stack": "MindDrive",
+      "fixed_commit": "1a4085dab1c20895a0c8d2b67b4f8e65712fa8de",
+      "license": "Apache-2.0",
+      "checkpoint_or_sample": "公开 0.5B/3B 模型和 Chat-B2D-plus 数据。",
+      "dependencies": ["Python 3.8", "PyTorch 2.4.1", "CUDA 11.8", "CARLA 0.9.15", "Bench2Drive"],
+      "entrypoint": "team_code/minddrive_b2d_agent.py",
+      "real_checker": "Bench2Drive Driving Score、Success Rate 和 infractions",
+      "engineering_risk": "CARLA 部署较重；可先从公开日志或短路线验证双头到控制器的接口，再扩展闭环。"
+    },
+    {
+      "stack": "SimLingo",
+      "fixed_commit": "743b243afd6cf5ff51b9fa1f8cac86f22d569684",
+      "license": "代码 Apache-2.0；数据使用另有 LICENCE_Dataset，传播衍生数据前需单独核对。",
+      "checkpoint_or_sample": "公开 checkpoint；完整数据较大，但 commentary/Dreamer 小分片和少量路线足以完成阶段零验证。",
+      "dependencies": ["Python 3.8.18", "PyTorch 2.2", "CARLA 0.9.15", "Transformers 4.46.3", "Bench2Drive"],
+      "entrypoint": "start_eval_simlingo.py -> team_code/agent_simlingo.py",
+      "real_checker": "Bench2Drive/CARLA route completion、Driving Score 与 infraction evaluator",
+      "engineering_risk": "完整闭环环境准备较重；候选均允许先做官方 checkpoint 的记录回放，再选择性运行短路线。"
+    },
+    {
+      "stack": "Bench2Drive-VL",
+      "fixed_commit": "653f9a3b6942c511c3024510bd6b61c33a08090b",
+      "license": "CC BY-NC-ND 4.0；本地研究修改和结果传播需严格核对许可边界。",
+      "checkpoint_or_sample": "公开基础数据、Docker/环境脚本及 API 或本地 VLM 接口；接口研究不依赖特定训练 checkpoint。",
+      "dependencies": ["CARLA 0.9.15", "Bench2Drive", "Python web server", "supported API or local VLM backend"],
+      "entrypoint": "startup.sh -> inference workers -> leaderboard/team_code/autopilot.py",
+      "real_checker": "Bench2Drive 原生 route completion、Driving Score 和 infractions",
+      "engineering_risk": "多进程和 CARLA 环境复杂；API 延迟存在成本与不确定性，可先用固定响应记录进行确定性回放。"
+    },
+    {
+      "stack": "Fail2Drive",
+      "fixed_commit": "37a14423e8f7c3f57a0e101ec1072d94bf624dec",
+      "license": "MIT",
+      "checkpoint_or_sample": "公开成对路线、17 类 shift、模拟器资产和 TransFuser++ checkpoint。",
+      "dependencies": ["CARLA", "leaderboard evaluator", "released route and perturbation assets"],
+      "entrypoint": "官方 Fail2Drive evaluator",
+      "real_checker": "路线成败、完成度和具体驾驶 infractions",
+      "engineering_risk": "只作为独立压力测试或外部碰撞证据；不得将其内部组件拼入其他 agent 后宣称原系统闭环成立。"
+    }
+  ],
+  "candidates": [
+    {
+      "dedup_key": "autovla-fail-open-action-token-alias-v2",
+      "mechanism": {
+        "blind_spot": "AutoVLA 将低于 action_start_id 的 token 静默映射为动作码 0；RFT 路径还会用零补齐缺失动作 token。",
+        "driving_specific_object": "语言/填充 token 到驾驶码本第零动作的失效开放别名。",
+        "counterexample": "两个序列只在一个位置分别包含合法动作 token 与非动作 token，但解码后都形成码本动作 0，后者没有故障标志并继续生成驾驶轨迹。",
+        "proposed_probe": "增加只记录不改变行为的 token-validity trace，并比较原始解码、严格拒绝、保持上一安全轨迹和受约束生成。"
+      },
+      "natural_evidence": {
+        "established": "固定提交中存在确定性的低 token 到动作码 0 映射以及缺失动作的零填充路径。",
+        "unverified": "公开 checkpoint 在 navmini 自然运行中产生非动作 token、短动作序列或补齐动作的频率。",
+        "no_claim": "单纯人工注入 token 只能证明接口可达，不能证明自然失效发生率。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["minimal-retrieval-action-support-set", "proof-carrying-action", "typed-tool-contracts"],
+        "external": ["ActionCodec 的无效动作序列与 tokenizer 设计", "通用 constrained decoding"],
+        "residual_boundary": "关注的是驾驶 VLA 中无效语言 token 被静默解释为一个具体可执行机动，而非一般格式校验或 tokenizer 精度。"
+      },
+      "single_stack_execution_path": "AutoVLA 公共 checkpoint -> 官方生成函数 -> 官方 action_tokenizer -> 官方 AutoVLA NAVSIM agent -> navmini -> PDM Score。adapter 仅记录 token 合法性或在同一边界执行拒绝策略，不引入其他驾驶模型。",
+      "two_week_plan": {
+        "days_1_2": "固定提交和模型 revision，完成 navmini 单样本推理，记录原始 token、动作 token 数和解码轨迹。",
+        "days_3_5": "扫描自然非动作 token、EOS 缺失和短序列；建立逐位置故障注入测试。",
+        "days_6_8": "实现严格拒绝、上一安全轨迹保持和 constrained decoding 三个同栈 adapter。",
+        "days_9_12": "在短场景运行 PDM 对照，区分自然样本和注入样本。",
+        "minimal_validation": "一个自然生成异常或一个可重复的有效前缀截断，使原始解码产生未声明动作且 PDM/轨迹检查器可观测。",
+        "engineering_risk": "自然发生率可能极低；必须保留 phase-0 退出条件。"
+      },
+      "baselines": ["原始 fail-open 解码", "严格序列拒绝", "保持上一条已验证轨迹", "合法动作 token constrained decoding"],
+      "success/kill": {
+        "success": "发现自然或真实生成边界下的非法/缺失 token，并证明其被解释为码本动作 0，且 validity-aware 策略改变轨迹风险或 PDM 结果。",
+        "kill": "公开 checkpoint 在自然及合理生成扰动下始终输出完整合法动作序列，且别名路径无法到达官方 agent 的实际轨迹输出。"
+      },
+      "positive/negative consequence": {
+        "positive": "可以形成面向驾驶 action tokenizer 的 fail-closed 接口协议和直接可测的完整性指标。",
+        "negative": "若只有任意 token 注入才能触发，则结果最多是代码缺陷报告，不能支撑自然驾驶风险主张。"
+      }
+    },
+    {
+      "dedup_key": "autovla-reasoning-tail-horizon-starvation-v2",
+      "mechanism": {
+        "blind_spot": "自适应 CoT 与动作 token 共用总 max_length，输出尾 token 又被无条件删除；推理变长可能直接减少驾驶轨迹点。",
+        "driving_specific_object": "语言推理预算对五秒驾驶轨迹时域的结构性侵占。",
+        "counterexample": "相同场景和机动意图仅因解释更长而从十个动作 token 变成九个或更少，导致远端避障轨迹消失，即使推理耗时被设为零也会发生。",
+        "proposed_probe": "记录推理 token 数、动作 token 数和实际轨迹时域，加入动作时域保留预算或双终止条件。"
+      },
+      "natural_evidence": {
+        "established": "生成配置使用共享长度预算，动作从同一序列中过滤，并存在固定尾 token 删除。",
+        "unverified": "默认 prompt 和 checkpoint 是否会在公开样本上接近长度边界。",
+        "no_claim": "仅增加人工延迟不能证明该机制；必须观察 token 预算对轨迹点数的直接因果路径。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["deadline-censored-value-of-thought", "safety-bounded-reasoning-influence"],
+        "external": ["Bench2Drive-Robust 的控制延迟", "ActionCodec 的动作序列截断"],
+        "residual_boundary": "旧候选关注墙钟时限和思考价值；这里关注零额外延迟下语言长度对物理预测时域的占用。"
+      },
+      "single_stack_execution_path": "AutoVLA checkpoint -> 官方 adaptive-CoT generate -> 官方 token filtering/尾部裁剪 -> action tokenizer -> NAVSIM trajectory -> PDM Score。",
+      "two_week_plan": {
+        "days_1_2": "复现默认生成并绘制推理长度、动作长度和轨迹时域。",
+        "days_3_5": "构造语义等价但解释长度不同的官方输入变体，保持图像和导航目标不变。",
+        "days_6_8": "实现动作预算预留与显式 EOS/动作终止解析。",
+        "days_9_12": "在长时域避障、并线和转弯 navmini 片段中比较轨迹完整性与 PDM。",
+        "minimal_validation": "至少一个真实模型输出因共享预算或尾裁剪少掉动作点，并改变 checker 可见的轨迹性质。",
+        "engineering_risk": "默认序列可能远离上限；需在两天内完成预算距离扫描。"
+      },
+      "baselines": ["原始共享 max_length", "固定 CoT 上限", "动作 token 预留预算", "语言与动作独立终止条件"],
+      "success/kill": {
+        "success": "动作时域随推理长度系统性缩短，并在至少一种驾驶场景中产生可测的轨迹或 PDM 后果。",
+        "kill": "所有自然和语义等价输入均远离长度边界，动作点数恒定，尾裁剪只删除确定的 EOS。"
+      },
+      "positive/negative consequence": {
+        "positive": "可得到比通用推理限时更具体的语言预算到物理时域契约。",
+        "negative": "若默认部署永远保留充足余量，该问题只适用于错误配置，研究意义明显下降。"
+      }
+    },
+    {
+      "dedup_key": "minddrive-cross-head-hybrid-actuation-v2",
+      "mechanism": {
+        "blind_spot": "MindDrive 控制器使用 pw_ego_fut_pred 决定路径/转向，同时使用 ego_fut_preds 决定期望速度，最终控制可能不属于任一预测头提出的完整轨迹。",
+        "driving_specific_object": "语言元动作驱动的路径头和速度头之间形成的未提议混合驾驶动作。",
+        "counterexample": "路径头选择急转或并线路径，速度头同时选择适合直行的高速度；单独看两个头都可能合理，组合后的横纵向控制却越出可行包络。",
+        "proposed_probe": "建立 head-pair 一致性证书，检查最终控制在曲率、横向加速度和停止距离上的耦合可行性。"
+      },
+      "natural_evidence": {
+        "established": "官方 agent 和 PID 控制器明确从两个预测输出分别取路径与速度。",
+        "unverified": "公共 checkpoint 在自然 Bench2Drive 场景中的头间分歧频率及实际安全后果。",
+        "no_claim": "随机交换两个头只能证明可注入性；核心证据必须来自同一帧自然预测或真实扰动。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["semantic-advice-to-envelope", "planner-verifier-cross-support"],
+        "external": ["Addressing the Waypoint-Action Gap", "通用 integrated planning and control"],
+        "residual_boundary": "不是一般 waypoint 控制误差，而是同一 VLA 内两个语言元动作头被控制器组合成未被任一头表述的第三种驾驶动作。"
+      },
+      "single_stack_execution_path": "MindDrive 公共 checkpoint -> minddrive_b2d_agent.py 的两个原生预测头 -> pid_controller_de.py -> CARLA control -> Bench2Drive evaluator。",
+      "two_week_plan": {
+        "days_1_2": "复现少量 B2D 路线并记录两头轨迹、最终控制和车辆状态。",
+        "days_3_5": "定义曲率-速度、停止距离和轨迹占用一致性检查器。",
+        "days_6_8": "实现只在分歧区域触发的联合投影或保守选头 adapter。",
+        "days_9_12": "运行转弯、并线、跟车和停车短路线，比较 infractions 与完成度。",
+        "minimal_validation": "找到自然头间分歧，并证明最终控制不等于任一头对应的可执行动作且越过耦合约束。",
+        "engineering_risk": "需要确认两个张量的坐标系和时域完全可比。"
+      },
+      "baselines": ["原始双头混合", "只使用路径头导出的速度", "只使用速度头对应轨迹", "曲率-速度一致性投影"],
+      "success/kill": {
+        "success": "自然分歧在闭环中产生可重复的不合理横纵向组合，联合检查器降低相关 infraction 且不过度损害完成度。",
+        "kill": "两个头在公共模型上几乎总是一致，或 PID 内部已保证最终控制始终位于两个候选的共同可行域。"
+      },
+      "positive/negative consequence": {
+        "positive": "可形成多头驾驶模型到控制器之间的组合完整性检查。",
+        "negative": "若分歧只来自坐标转换误读，则候选退化为实现排错。"
+      }
+    },
+    {
+      "dedup_key": "simlingo-interpolation-induced-safety-gap-v2",
+      "mechanism": {
+        "blind_spot": "SimLingo 将离散预测路径用 PCHIP 加密后交给控制器；离散 waypoint 安全不自动保证连续插值曲线的扫掠区域安全。",
+        "driving_specific_object": "离散驾驶意图经过路径插值后形成的 between-waypoint 占用走廊。",
+        "counterexample": "所有原始 waypoint 都位于车道或障碍物外侧，但插值曲线在两点之间切入路缘、对向车道或动态参与者安全域。",
+        "proposed_probe": "同时检查原始点、插值曲线和车辆 footprint swept path，并比较 PCHIP、线性插值和受约束曲线。"
+      },
+      "natural_evidence": {
+        "established": "固定提交在正式 agent 控制路径上调用 PchipInterpolator。",
+        "unverified": "公开 checkpoint 的自然输出中是否存在足以造成越界的曲率与点间距组合。",
+        "no_claim": "任意手工 waypoint 的数学反例不足以证明模型闭环问题。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["language-trajectory-verifier", "world-model-verdict-gate"],
+        "external": ["Addressing the Waypoint-Action Gap", "通用轨迹平滑与可行性投影"],
+        "residual_boundary": "识别对象是模型离散输出与官方后处理曲线之间的安全语义反转，而非重新训练更平滑的轨迹预测器。"
+      },
+      "single_stack_execution_path": "SimLingo checkpoint -> pred_route -> 官方 PCHIP densification -> 官方 PID -> CARLA -> Bench2Drive checker。",
+      "two_week_plan": {
+        "days_1_2": "复现官方评测并记录插值前后路径。",
+        "days_3_4": "实现车辆 footprint、车道边界和参与者安全域的 swept-path checker。",
+        "days_5_7": "扫描公共模型输出和高曲率原生场景，区分自然样本与构造反例。",
+        "days_8_10": "实现线性、限曲率和走廊约束三种后处理。",
+        "days_11_12": "短路线闭环比较 infraction、控制抖动和完成度。",
+        "minimal_validation": "至少一个自然模型输出满足离散点通过而连续扫掠路径失败，并在控制回放或 CARLA 中可观测。",
+        "engineering_risk": "CARLA 地图边界和车辆 footprint 对齐需要谨慎验证。"
+      },
+      "baselines": ["官方 PCHIP", "线性插值", "限曲率插值", "带占用走廊约束的插值"],
+      "success/kill": {
+        "success": "自然预测中出现插值新增的走廊违规，且受约束后处理减少违规而不显著增加路线失败。",
+        "kill": "在覆盖高曲率和稀疏 waypoint 的自然输出后，PCHIP 从不越出原始安全走廊。"
+      },
+      "positive/negative consequence": {
+        "positive": "可提出面向 VLA 后解码器的连续路径契约和轻量 checker。",
+        "negative": "若只能通过不可能由模型产生的 waypoint 构造反例，则不应主张系统风险。"
+      }
+    },
+    {
+      "dedup_key": "simlingo-force-move-brake-priority-inversion-v2",
+      "mechanism": {
+        "blind_spot": "SimLingo 的 force_move 在车辆阻塞达到阈值后提高油门并直接清除 brake，未显式证明前向走廊为空或模型停车义务已解除。",
+        "driving_specific_object": "脱困活性策略对停车、让行和占用安全义务的优先级反转。",
+        "counterexample": "车辆因行人、拥堵车辆或遮挡路口正确停车，却被 stuck 计时器识别为需要脱困，最终覆盖 STOP 并向前蠕行。",
+        "proposed_probe": "为 force_move 增加触发原因分类、前向 TTC/占用证书和有时限的安全蠕行状态机。"
+      },
+      "natural_evidence": {
+        "established": "官方控制代码存在 throttle=max(creep_throttle, throttle) 和 brake=False 的覆盖路径。",
+        "unverified": "原生 Bench2Drive 路线中该路径在被占用走廊或真实停车义务下的触发次数。",
+        "no_claim": "另一个仓库存在类似代码只能作为独立佐证，不能替代 SimLingo 自身执行证据。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["recoverability-fallback", "minimum-risk-after-refusal", "action-lease"],
+        "external": ["通用 runtime assurance 与 fallback policy"],
+        "residual_boundary": "具体研究边界是已发布语言动作驾驶栈中 stuck detector、模型 brake 意图和最终 actuator 优先级的可达冲突。"
+      },
+      "single_stack_execution_path": "SimLingo checkpoint -> 官方 route/speed 输出 -> 官方 PID -> 官方 stuck/force_move override -> CARLA control -> Bench2Drive infraction checker。",
+      "two_week_plan": {
+        "days_1_2": "记录 force_move 触发时的模型 brake、速度、前向参与者和场景状态。",
+        "days_3_5": "回放所有自然触发片段并按机械阻塞、交通义务和感知不确定性分类。",
+        "days_6_8": "实现占用/TTC gate、有限蠕行速度和超时停车三个 adapter。",
+        "days_9_12": "在行人横穿、拥堵跟车、遮挡路口和真实卡死场景中对照。",
+        "minimal_validation": "同一官方栈中 force_move 在仍有停车义务时清除制动，并产生近碰、碰撞或安全裕度下降。",
+        "engineering_risk": "需要避免把 CARLA 初始化卡顿误记为语义停车。"
+      },
+      "baselines": ["原始 force_move", "完全禁用脱困", "固定低速蠕行", "TTC/占用证明后脱困"],
+      "success/kill": {
+        "success": "观察到自然优先级反转，安全 gate 消除对应风险且在真正卡死场景仍能恢复一定完成度。",
+        "kill": "所有自然 force_move 触发时前向走廊均为空，或上游状态机已可靠排除交通义务。"
+      },
+      "positive/negative consequence": {
+        "positive": "可以把活性恢复从启发式覆盖改造成带驾驶义务证明的系统接口。",
+        "negative": "过度保守的 gate 可能显著增加路线超时，因此必须同时报告完成度。"
+      }
+    },
+    {
+      "dedup_key": "bench2drive-vl-control-reachable-oracle-provenance-v2",
+      "mechanism": {
+        "blind_spot": "Bench2Drive-VL 示例图可将 USE_GT 节点、模拟器 basic_info 和由 GT action 描述形成的停车状态注入下游推理，且这些信息可能到达最终 q50 控制。",
+        "driving_specific_object": "从特权驾驶事实到闭环方向/速度命令的 control-reachable provenance graph。",
+        "counterexample": "删除或反事实替换一个上游 GT 节点后，视觉输入不变但最终控制改变，说明闭环成绩部分依赖部署时不可得的 oracle。",
+        "proposed_probe": "为每个最终命令保留来源位图，通过删除、遮蔽和反事实替换估计各特权源的控制可达性。"
+      },
+      "natural_evidence": {
+        "established": "官方配置和 agent 代码存在 USE_GT、NO_PERC_INFO、last_basic_info 及 GT-derived special state 接口。",
+        "unverified": "默认发布配置中每种特权源对最终控制和 Driving Score 的实际贡献。",
+        "no_claim": "配置中出现 GT 不等于成绩泄漏；必须证明其到达最终动作并产生因果影响。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["provenance", "tool-withdrawal", "planner-verifier-cross-support"],
+        "external": ["通用 benchmark leakage 和 privileged information ablation"],
+        "residual_boundary": "不是数据集级标签泄漏，而是多节点驾驶推理图中 oracle 信息是否穿过依赖边到达实时控制。"
+      },
+      "single_stack_execution_path": "Bench2Drive-VL 官方 graph config -> 官方 inference workers -> 官方 autopilot command parser -> CARLA control -> Bench2Drive evaluator；仅切换同一图内的信息源。",
+      "two_week_plan": {
+        "days_1_2": "冻结一个官方支持后端并复现少量路线，输出节点依赖和 provenance trace。",
+        "days_3_5": "分别删除 USE_GT 节点、basic_info 和 special_state，不改变其他输入。",
+        "days_6_8": "加入结构保持的反事实值，定位真正到达 q50 的路径。",
+        "days_9_12": "在停车、路口、跟车和转向场景比较最终命令、DS 和 infractions。",
+        "minimal_validation": "证明至少一个 oracle 源通过官方图改变最终控制，而不是仅改变解释文本。",
+        "engineering_risk": "不同后端的随机性会污染因果判断，需要缓存输入并固定解码。"
+      },
+      "baselines": ["官方完整信息图", "全部非视觉特权源关闭", "逐源删除", "随机但格式匹配的反事实源"],
+      "success/kill": {
+        "success": "某一特权源在视觉状态不变时稳定改变最终动作或闭环指标，并可绘制完整控制可达路径。",
+        "kill": "GT 和 basic_info 仅用于日志/解释，最终控制在固定解码下对其完全不敏感。"
+      },
+      "positive/negative consequence": {
+        "positive": "可建立闭环 VLM benchmark 的控制可达信息审计，而不仅是输入清单检查。",
+        "negative": "发现泄漏后可能使既有结果不可直接比较，且需要区分调试配置与正式报告配置。"
+      }
+    },
+    {
+      "dedup_key": "bench2drive-vl-nonatomic-command-transaction-v2",
+      "mechanism": {
+        "blind_spot": "命令解析器分别收集方向和速度键并各取最后一个；速度缺失时又沿用 last_spd_cmd，可能合成模型从未在同一决策中表达的方向-速度组合。",
+        "driving_specific_object": "方向与速度作为一个驾驶命令事务的原子性和跨帧一致性。",
+        "counterexample": "响应先写减速左转，后在解释中提及直行，但没有新速度字段；解析结果可能成为新方向加上一帧速度。",
+        "proposed_probe": "把命令改为带 frame_id、完整字段、唯一匹配和校验和的原子对象；解析失败时不允许字段级提交。"
+      },
+      "natural_evidence": {
+        "established": "官方 evaluator/parser 独立提取多个方向和速度键，agent 存在速度字段回退。",
+        "unverified": "真实模型输出中多命令、截断命令和单字段缺失的发生率。",
+        "no_claim": "任意恶意字符串只能验证解析漏洞，不能代替自然模型输出统计。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["typed-tool-contracts", "action-lease", "transactional-cognitive-state"],
+        "external": ["通用 structured output validation"],
+        "residual_boundary": "剩余对象是闭环驾驶中横向和纵向命令的联合语义，以及跨帧半提交如何产生未表达动作。"
+      },
+      "single_stack_execution_path": "Bench2Drive-VL 官方模型/API 输出 -> B2DVL_Adapter extract_key_list -> autopilot 的 direction/speed 状态 -> CARLA control -> Bench2Drive checker。",
+      "two_week_plan": {
+        "days_1_2": "收集固定路线的原始响应与解析结果，标记多匹配、缺字段和跨帧回退。",
+        "days_3_4": "建立响应到联合命令的可追踪 oracle parser。",
+        "days_5_7": "实现严格原子 JSON/grammar parser 和安全失败策略。",
+        "days_8_12": "自然回放加受控截断实验，比较命令合成率、infraction 和路线完成度。",
+        "minimal_validation": "出现至少一个解析后的方向-速度对未作为联合命令存在于原始响应，且能影响实际控制。",
+        "engineering_risk": "需要确认 prompt 是否已强制唯一格式，以及不同后端是否走同一 parser。"
+      },
+      "baselines": ["原始字段级解析", "取首个完整命令", "严格唯一联合命令", "解析失败时安全保持或停车"],
+      "success/kill": {
+        "success": "自然或真实截断条件下出现非原子合成命令，并由原子 parser 消除且改善控制一致性。",
+        "kill": "固定后端的全部真实响应始终只有一个完整联合命令，且 last_spd_cmd 回退不可到达。"
+      },
+      "positive/negative consequence": {
+        "positive": "可给 agentic driving 定义可测试的控制事务协议。",
+        "negative": "严格失败可能增加停车和超时，需要联合评估安全与可用性。"
+      }
+    },
+    {
+      "dedup_key": "bench2drive-vl-reasoning-snapshot-freshness-v2",
+      "mechanism": {
+        "blind_spot": "多个推理节点顺序处理同一帧，API 单节点可多次重试，但图边和最终命令没有显式绑定证据年龄、危险 TTC 或动作租约。",
+        "driving_specific_object": "多节点驾驶推理图中每条证据边相对于动态参与者 time-to-contact 的新鲜度。",
+        "counterexample": "图从无行人帧开始推理，期间行人进入车道；迟到的完整答案仍被当作当前命令提交。",
+        "proposed_probe": "传播 capture_time、node_finish_time 和 hazard-specific TTL，最终动作只能消费仍满足 TTC 约束的节点结果。"
+      },
+      "natural_evidence": {
+        "established": "官方 worker 对同一请求进行顺序节点调用并允许多次等待重试，代码记录时间但未见动作级 freshness contract。",
+        "unverified": "迟到结果是否在正式 agent 中被直接提交，以及默认后端的实际尾延迟。",
+        "no_claim": "仅证明 API 慢不够；必须追踪迟到结果到真实控制提交。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["deadline-censored-value-of-thought", "action-lease", "safety-bounded-reasoning-influence"],
+        "external": ["Bench2Drive-Robust 的 compute-induced control delay"],
+        "residual_boundary": "不是统一墙钟 deadline，而是推理 DAG 中不同证据节点具有不同危险相关寿命，旧节点可能污染一个表面完整的新动作。"
+      },
+      "single_stack_execution_path": "Bench2Drive-VL capture frame -> 官方 graph workers/API interface -> q50 command -> 官方 autopilot -> CARLA -> Bench2Drive evaluator。",
+      "two_week_plan": {
+        "days_1_2": "记录每帧、每节点和最终控制的完整时间线。",
+        "days_3_5": "在不改模型的情况下施加可控节点延迟和重试失败，确认迟到结果的控制可达性。",
+        "days_6_8": "实现 per-edge timestamp、TTC-aware lease 和过期后的短时安全控制。",
+        "days_9_12": "在行人横穿、前车急停和静态转弯场景比较。",
+        "minimal_validation": "一个迟到图结果在环境已变化后仍提交并产生 checker 可见后果，或 lease 明确阻止该后果。",
+        "engineering_risk": "需要区分推理延迟、CARLA 同步 tick 阻塞和控制线程保持旧命令三种机制。"
+      },
+      "baselines": ["原始无租约图", "统一固定 deadline", "仅最终节点时间戳", "TTC-aware per-edge lease"],
+      "success/kill": {
+        "success": "证明旧证据通过 DAG 到达控制，且危险相关 freshness contract 优于统一 deadline。",
+        "kill": "官方同步机制在推理期间安全冻结世界，或所有迟到结果都会在执行前被丢弃。"
+      },
+      "positive/negative consequence": {
+        "positive": "可把推理图正确性扩展为时态正确性，并直接连接动态驾驶风险。",
+        "negative": "若模拟器同步冻结掩盖真实部署问题，只能得到架构分析，闭环结论有限。"
+      }
+    },
+    {
+      "dedup_key": "simlingo-obligation-opposite-retrieval-twins-v2",
+      "mechanism": {
+        "blind_spot": "视觉和语言语义高度相近的驾驶片段可能具有相反义务，例如继续与停车、抢行与让行；普通相似度检索可能把错误义务作为动作支持。",
+        "driving_specific_object": "由 cause_object、可见性、相对位置、通行权和 safe_to_execute 共同定义的 obligation-opposite twins。",
+        "counterexample": "两帧都描述前方绿色车辆和相似路线，但一帧车辆正在让行且可继续，另一帧形成遮挡或占用必须停车；普通检索将二者视为近邻。",
+        "proposed_probe": "在 SimLingo 数据内建立自然 twin 挖掘器和义务一致性检索 adapter，检索结果只作为同一模型的附加上下文。"
+      },
+      "natural_evidence": {
+        "established": "公开数据含 commentary、cause_object、scenario、allowed、safe_to_execute、waypoints 和动作相关标签，具备挖掘条件。",
+        "unverified": "是否存在足量自然近邻且动作义务相反的样本，以及加入检索后是否实际改变闭环动作。",
+        "no_claim": "若只能人工改写句子或跨数据集拼接反例，不得主张自然检索盲点。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["action-opposite-semantic-retrieval-twins", "minimal-retrieval-action-support-set", "misleading-text", "retrieval-distractor"],
+        "external": ["VLADriver-RAG", "通用 hard-negative retrieval"],
+        "residual_boundary": "这是对旧候选的重新开放，不以现成 RAG 代码为前提；新增边界是从公开驾驶因果字段定义自然义务等价类，并要求同一 SimLingo 栈中的动作与 checker 后果。",
+        "hard_dedup_condition": "若只实现普通向量检索、合成反义文本或复述旧 action-opposite 候选，则视为功能等价重复。"
+      },
+      "single_stack_execution_path": "SimLingo 公开数据挖掘自然 twins -> 在 SimLingo prompt/context 边界实现轻量 retrieval adapter -> 同一 SimLingo checkpoint -> 官方 route/speed decoder -> 官方 PID -> Bench2Drive checker；不使用 DiLu memory、planner 或 action pipeline。",
+      "two_week_plan": {
+        "days_1_2": "只下载必要 commentary/Dreamer 小分片，按场景、cause_object 和动作义务建立候选对。",
+        "days_3_4": "人工核验自然 twin 是否真实存在；若不足立即停止。",
+        "days_5_7": "实现普通相似度、义务条件检索和无检索三个上下文 adapter。",
+        "days_8_10": "离线比较语言输出、route/speed 和义务一致性。",
+        "days_11_12": "仅对有明显动作差异的自然样本运行短路线或确定性回放。",
+        "minimal_validation": "发现多组非合成自然 twins，并证明普通检索会提高义务相反证据的排名且可到达动作输出。",
+        "engineering_risk": "SimLingo 原模型未必稳定消费新增检索上下文；这属于可实现 adapter 风险，不是预先淘汰理由。"
+      },
+      "baselines": ["无检索 SimLingo", "普通语义近邻", "按动作标签过滤", "按 cause_object 与通行义务联合约束的检索"],
+      "success/kill": {
+        "success": "自然 twins 足量存在，普通检索造成可重复的动作义务混淆，而义务约束检索改善动作或 checker 后果。",
+        "kill": "两天内无法从公开数据找到自然 obligation-opposite twins，或检索上下文无法影响同一模型的动作输出。"
+      },
+      "positive/negative consequence": {
+        "positive": "可得到比通用 RAG hard negative 更贴近驾驶因果义务的检索评测对象。",
+        "negative": "若只有离线语言差异而没有动作可达性，候选不能升级为闭环系统问题。"
+      }
+    },
+    {
+      "dedup_key": "minddrive-nonfinite-to-valid-action-laundering-v2",
+      "mechanism": {
+        "blind_spot": "MindDrive 在预测输出边界使用 nan_to_num，将非有限轨迹静默转换为有限数值后继续进入控制器，数值故障可能失去故障身份。",
+        "driving_specific_object": "非有限路径或速度预测被洗成零值驾驶轨迹后形成的可执行动作别名。",
+        "counterexample": "路径头或速度头出现 NaN，转换后成为居中、零位移或零速度序列；PID 将其视为普通停车或目标点，而非模型失效。",
+        "proposed_probe": "在数值转换前传播 validity bit，比较原始静默转换、显式拒绝、单头降级和最小风险停车。"
+      },
+      "natural_evidence": {
+        "established": "官方模型代码存在输出进入下游前的 nan_to_num 路径，表明数值异常边界实际存在。",
+        "unverified": "默认 checkpoint 在正常或合理压力条件下是否自然产生非有限值。",
+        "no_claim": "直接注入 NaN 只能验证错误传播路径；自然风险结论需要真实依赖、精度或输入压力下的发生证据。"
+      },
+      "functional_equivalence_collision": {
+        "local": ["minimum-risk-after-refusal", "typed-tool-contracts", "proof-carrying-action"],
+        "external": ["通用 numerical robustness 和 NaN sanitization"],
+        "residual_boundary": "研究对象是驾驶多头轨迹中数值故障被转换成具有停车、直行或目标点语义的合法控制，而不是一般深度学习 NaN 检测。"
+      },
+      "single_stack_execution_path": "MindDrive checkpoint -> 官方预测头 -> nan_to_num -> minddrive_b2d_agent.py -> pid_controller_de.py -> CARLA control -> Bench2Drive checker。",
+      "two_week_plan": {
+        "days_1_2": "在转换前后记录 finite mask、两个预测头和最终控制。",
+        "days_3_5": "运行正常、混合精度、极端但合法视觉输入和短路线压力测试，寻找自然非有限值。",
+        "days_6_8": "实现 validity bit、单头降级和最小风险停车 adapter。",
+        "days_9_12": "若发现自然事件则闭环复现；否则仅完成可达性与退出报告。",
+        "minimal_validation": "真实运行条件产生非有限输出，并经 nan_to_num 变成 checker 可执行的普通动作。",
+        "engineering_risk": "自然非有限事件可能完全不存在；不得用任意故障注入替代自然发生证据。"
+      },
+      "baselines": ["原始 nan_to_num", "非有限即整帧拒绝", "仅禁用异常预测头", "显式最小风险停车"],
+      "success/kill": {
+        "success": "观察到自然非有限输出被静默动作化，并证明显式 validity 传播能改善控制后果或诊断性。",
+        "kill": "覆盖正常及合理压力条件后没有非有限输出，且异常只能由脱离真实依赖范围的人工注入触发。"
+      },
+      "positive/negative consequence": {
+        "positive": "可建立数值有效性到驾驶动作语义之间的故障保持接口。",
+        "negative": "若自然发生证据为零，该候选应降为工程防御建议，不能作为主要研究问题。"
+      }
+    }
+  ]
+}

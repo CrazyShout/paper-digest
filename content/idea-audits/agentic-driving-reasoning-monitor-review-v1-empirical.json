@@ -1,0 +1,45 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "empirical-reviewer",
+  "reviewerAgentId": "019fbb3d-078b-7d50-b38a-aee0c017b7d8",
+  "reviewedAt": "2026-08-01T03:10:02Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "VLADriveBench 已经证明观察对齐与 CoT 干预会背离，因此一般性的“观察不等于因果”并不新；本候选仍有清楚残差，即把独立标定的因果制度当作监测器 transport variable，直接检验自然几何伤害上的跨制度校准、排序和共同支持反例。主要新颖性风险是两个自然制度各只对应一个模型，制度在自然模型对中与模型身份完全共线，必须依赖同 checkpoint 脱钩实验才能把结果提升为机制证据。",
+    "feasibility": "ORION 固定仓库同时给出 CoT、开放环和 Bench2Drive/CARLA 闭环入口，VLADriveBench 也公开了两类模型的 splice 边界与 selfsplice 检查，说明工程路径可执行。重大风险在于两套模型的相机契约、动作解码和控制器不同，Alpamayo 在 CARLA 又是 OOD；在 8 至 10 周内同时复现两个重型栈、构造统一伤害标签并完成同 checkpoint KV-cache 脱钩，进度和接口风险仍高。",
+    "success-probability": "自然理由错误和观察-干预背离均有一手结果，核心现象并非凭空假设；但从这些结果到“同一冻结监测器的 AUROC/ECE 发生足够大的制度差异且制度条件化降低至少 10% Brier”还有两次未验证跳跃。最小研究每制度测试约 120 个路线-种子单元，支持门仅要求 20 个 harm-positive；这不足以稳健估计 15-bin ECE、0.10 AUROC 差和多变量 isotonic 校准，更难同时获得 80 个六维共同支持匹配单元和同 checkpoint 机制复现。当前正结果概率约为中低水平。",
+    "impact": "若在自然输出和同 checkpoint 脱钩中同时成立，结果会直接约束理由型驾驶 VLA 的运行时监测部署：观察分数必须连同因果适用域和校准边界报告。影响受固定模型对、CARLA OOD、模型特定传感器与控制器以及无真实道路事故证据限制；负结果仍能给出这两个 checkpoint 上的迁移上界，但不能形成广泛架构结论。",
+    "comparison-readiness": "比较集合覆盖 VLADriveBench 指标、faithfulness 指标、trajectory-only、pooled、model-ID、regime-aware 和每模型 oracle，且伤害标签与 CoT 隔离，基线设计较完整。尚缺基于路线簇和实际伤害率的前瞻功效计算、ECE 分箱在小样本下的替代方案、多重主要终点控制，以及把同 checkpoint 脱钩从最多 40 个冲突场景的机制附件提升为能与跨模型主效应同等检验的设计。"
+  },
+  "strongestObjection": "在自然数据中 causal regime、模型架构、传感器接口和控制器是一一绑定的；因此任何跨制度校准差都可以由模型或控制链差异解释。当前同 checkpoint 脱钩对照规模更小且使用人工中性 cache，若它没有被设计成有充分功效的主实验，候选最多能证明 fixed-pair transport failure，不能证明因果制度是可迁移的解释变量。这是一个边界意识强、自然问题证据真实的固定模型对研究，但当前最小样本对校准差、匹配反转和机制复现的联合功效不足。只有先用有功效的同 checkpoint 脱钩主实验打破制度与模型身份的共线性，跨模型结果才不只是描述性 transport failure。",
+  "requiredExperiment": "先把 Alpamayo 1.5 同 checkpoint 的原生耦合分支与动作端中性-cache 脱钩分支做成随机、配对、全测试规模的主实验：监测器在两分支读取完全相同的原生 CoT，世界状态、随机数流和控制器固定，只改变动作端是否消费该 CoT；按路线族聚类估计 regime-by-monitor 交互、Brier/ECE/AUROC 和伤害率差。先用独立 pilot 估计自然 harm prevalence 与簇内相关，冻结等效界和至少 80% 功效所需路线数；若每分支不能获得足以检出预注册 10% Brier 改善或 0.05 ECE 差的事件数，则不得进入跨模型机制结论。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2606.12706",
+      "finding": "论文直接报告 ORION 的高观察对齐与非语义 token/长度效应，以及 Alpamayo 1.5 在两条路线上的方向性制动和加速响应；selfsplice 近零。Alpamayo 结果只有 5 至 7 个 seed，且作者明确将 CARLA OOD 下的效应幅度视为上界。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.17268",
+      "finding": "在 100 个 PhysicalAI-AV 场景的 300 次 Alpamayo R1 推理中，论文报告 42.5% overall fidelity、53.3% low reasoning-action consistency 和 14.3% silent failures，支持自然监测问题存在；结果仍是单模型、以 ADE 和规则核验为主，并非跨制度闭环伤害证据。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.21446",
+      "finding": "论文在 1,996 个场景和约 18,000 次推理上报告 reasoning consistency 与轨迹偏移的强关联，并给出启用 CoC 的匹配消融；它强化了观察监测基线，也说明本候选必须证明跨制度增量，而不能只重复单模型相关性。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.29114",
+      "finding": "ReasonBreak 证明文本推理通道可在黑盒扰动下改变轨迹与闭环安全指标，同时显示 reasoning shift 与 trajectory shift 仅弱相关；这支持机制可达性，但攻击成功率不能替代自然故障发生率。"
+    },
+    {
+      "url": "https://github.com/xiaomi-mlab/Orion/tree/657f3cf09b745d3972affb84d68f7e376140b221",
+      "finding": "固定提交公开 CoT 推理、开放环和 Bench2Drive/CARLA 闭环入口，并给出 FP32 大于 32 GB、FP16 大于 17 GB 的建议显存；资产存在，但依赖和闭环复现并非轻量。"
+    }
+  ],
+  "overall": 6
+}

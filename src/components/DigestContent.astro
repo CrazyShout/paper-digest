@@ -1,0 +1,95 @@
+---
+import { routeUrl } from "../lib/navigation.js";
+
+const {
+  digest,
+  basePath = "/",
+  bodyHtml = digest.bodyHtml,
+  headingLevel = 2,
+  showHeader = true
+} = Astro.props;
+
+const Heading = `h${Math.min(6, Math.max(2, Number(headingLevel) || 2))}`;
+---
+
+<section class="digest-content" id="digestArticle" aria-label={`${digest.title} 简报`}>
+  {showHeader && (
+    <header class="digest-intro">
+      <div class="paper-tag-list" aria-label="本期研究方向">
+        {digest.tags.map((tag) => (
+          <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
+        ))}
+      </div>
+      <dl class="doc-meta-grid" aria-label="本期简报统计">
+        <div>
+          <dt>收录论文</dt>
+          <dd>{digest.papers.length}</dd>
+        </div>
+        <div>
+          <dt>研究方向</dt>
+          <dd>{digest.tags.length}</dd>
+        </div>
+        <div>
+          <dt>发布日期</dt>
+          <dd>{digest.displayDate || digest.date}</dd>
+        </div>
+      </dl>
+    </header>
+  )}
+
+  {bodyHtml && <section class="digest-note" set:html={bodyHtml} />}
+
+  {digest.tags.map((tag) => {
+    const papers = digest.papers.filter((paper) => paper.tags.includes(tag.id));
+    return (
+      <section class="digest-section" id={`section-${tag.id}`} aria-labelledby={`title-${tag.id}`}>
+        <header>
+          <p class="eyebrow">{papers.length} Papers</p>
+          <Heading id={`title-${tag.id}`}>{tag.label}</Heading>
+          <p>{tag.description}</p>
+        </header>
+        <div class="paper-list">
+          {papers.map((paper) => (
+            <article class="paper-card" style={`--tag-color: ${tag.color}`}>
+              <div class="paper-tag-list">
+                {digest.tags
+                  .filter((tagItem) => paper.tags.includes(tagItem.id))
+                  .map((tagItem) => (
+                    <span class="paper-tag" style={`--tag-color: ${tagItem.color}`}>
+                      {tagItem.label}
+                    </span>
+                  ))}
+              </div>
+              <h3>
+                <a href={routeUrl(basePath, `papers/${paper.id}`)}>{paper.title}</a>
+              </h3>
+              <p class="paper-comment">{paper.comment}</p>
+              <div class="paper-meta">
+                <span>
+                  <strong>抓取位置：</strong>
+                  {paper.sourceLinks?.length ? (
+                    <span class="paper-source-links">
+                      {paper.sourceLinks.map((link) => (
+                        <a href={link.url} target="_blank" rel="noopener noreferrer">
+                          {link.label} <span aria-hidden="true">↗</span>
+                        </a>
+                      ))}
+                    </span>
+                  ) : paper.source}
+                </span>
+                <span><strong>作者：</strong>{paper.authors.join(", ")}</span>
+                <span><strong>单位：</strong>{paper.affiliations.join("; ")}</span>
+              </div>
+              <div class="paper-card-footer">
+                <span></span>
+                <a href={routeUrl(basePath, `papers/${paper.id}`)}>
+                  阅读详细报告 <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  })}
+</section>

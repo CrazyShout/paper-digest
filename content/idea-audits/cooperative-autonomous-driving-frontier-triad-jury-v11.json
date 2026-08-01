@@ -1,0 +1,639 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-frontier-triad-jury-v11",
+  "direction": "cooperative-autonomous-driving",
+  "batch": "second-candidate-audit",
+  "reviewerAgentId": "codex-main/cooperative-autonomous-driving-frontier-triad-jury-v11",
+  "reviewedAt": "2026-08-01T10:06:34+08:00",
+  "inputs": {
+    "candidateSource": "content/idea-audits/agentic-driving-rescue-frontier-shard-v3.json",
+    "workflow": "config/idea-exploration-workflow.json",
+    "routing": "content/idea-audits/cross-direction-candidate-routing-v1.json",
+    "candidateIds": [
+      "implicit-action-channel-substitution",
+      "shared-backbone-cooperation-error-correlation",
+      "precommitment-intent-identifiability-bound"
+    ]
+  },
+  "independence": {
+    "numericRatingsProduced": false,
+    "otherReviewerOutputsConsulted": false,
+    "selectionLimit": 2,
+    "reviewMode": "primary-source functional-equivalence audit",
+    "note": "本审计不读取其他评估者结论，也不生成任何分数；verdict 仅依据重新打开的一手论文、官方代码和公开数据入口。"
+  },
+  "workflowPolicyApplied": [
+    "公开 runner、场景生成器或可注入干预只证明可测试性，不证明自然问题已经发生。",
+    "把成熟的控制、博弈、ensemble 或协同感知对象迁移到驾驶场景，不自动构成新贡献。",
+    "官方仓库存在不等于开箱即用；本审计分别记录可复用资产、缺失模块和自建路径。",
+    "新版可行性允许自行实现配对 runner、观测干预、校准器和 evaluator，因此不以缺少现成脚本作为淘汰理由。",
+    "负结果必须能改变消息协议、模型配对、风险控制或数据采集决策，否则不构成保留理由。"
+  ],
+  "sourcesReopened": [
+    {
+      "sourceId": "SRC-MDRIVE-PAPER",
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "shared-backbone-cooperation-error-correlation",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "225 个闭环场景同时覆盖感知共享与决策协商；论文明确报告感知改善并不总能转化为规划改善，且协商在复杂、密集交通中可能伤害规划。该证据建立了系统级异常，但没有识别本批任一候选所声称的具体机制。"
+    },
+    {
+      "sourceId": "SRC-MDRIVE-CODE",
+      "title": "ucla-mobility/MDrive",
+      "year": 2026,
+      "sourceType": "official-code",
+      "url": "https://github.com/ucla-mobility/MDrive",
+      "verification": "opened-official-repository-readme",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "shared-backbone-cooperation-error-correlation",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "Apache-2.0 仓库公开 CARLA 0.9.12 安装、225 场景、scenario generator、CoLMDriver/CoDriving/单车及 perception-swap runner，并能导出驾驶综合指标、成功率、违规和协商统计。它是可信底座，但三个候选的配对干预和 evaluator 均需自行实现。"
+    },
+    {
+      "sourceId": "SRC-COLMDRIVER-PAPER",
+      "title": "CoLMDriver: LLM-based Negotiation Benefits Cooperative Autonomous Driving",
+      "year": 2025,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2503.08683",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "显式 V2V 语言协商已经进入完整闭环：LLM 协商模块把多车决策转为可执行 waypoint，并在 InterDrive 的交互场景报告成功率增益。因此显式语言通道本身不是空白。"
+    },
+    {
+      "sourceId": "SRC-COLMDRIVER-CODE",
+      "title": "cxliu0314/CoLMDriver",
+      "year": 2025,
+      "sourceType": "official-code",
+      "url": "https://github.com/cxliu0314/CoLMDriver",
+      "verification": "opened-official-repository-readme",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "仓库给出 CARLA 0.9.10.1、LLM/VLM 服务、InterDrive 评估入口、基线与 checkpoint 下载位置。可作为显式消息强基线，但其旧依赖和多进程 GPU 部署需要单独复现预检。"
+    },
+    {
+      "sourceId": "SRC-NEGOTIATOR",
+      "title": "Self-Driving Negotiator: An Interactive, Verifiable Benchmark for Social Negotiation and Theory of Mind under Hidden Intent",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/html/2606.15139v1",
+      "verification": "opened-primary-full-text-html",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "论文直接构造 delayed reveal：不同 disposition 在早期观测完全相同，接近冲突点才分叉，并把合理策略定义为在承诺可见前保持 hedge。它已覆盖隐藏意图、晚揭示和等待承诺这一功能对象，但环境是程序化文本状态，不含车辆动力学推导的最后安全决策时刻。"
+    },
+    {
+      "sourceId": "SRC-PRIDE-PREJUDICE",
+      "title": "Pride and Prejudice: Toward an Information-Theoretic Framework for Mutually Communicative Driver Behavior Modeling",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/html/2606.16735v1",
+      "verification": "opened-primary-full-text-html",
+      "usedFor": [
+        "implicit-action-channel-substitution",
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "驾驶中的轻微速度和轨迹变化被直接建模为隐式通信；方法同时建模表达、倾听、Bayesian persuasion 与 information gain，并在 NGSIM 和驾驶员在环实验上验证。动作作为信号及主动获取信息已是直接驾驶先例。"
+    },
+    {
+      "sourceId": "SRC-ROLES",
+      "title": "Learning from My Partner's Actions: Roles in Decentralized Robot Teams",
+      "year": 2020,
+      "sourceType": "primary-paper",
+      "url": "https://proceedings.mlr.press/v100/losey20a.html",
+      "verification": "opened-publisher-full-record",
+      "usedFor": [
+        "implicit-action-channel-substitution"
+      ],
+      "reopenedFinding": "通过角色约束让动作具有可解释通信含义，并报告隐式动作通信可达到与显式消息团队相当的表现。这是显式与隐式通道替代的功能等价先例。"
+    },
+    {
+      "sourceId": "SRC-ASE",
+      "title": "Agent-Specific Effects: A Causal Effect Propagation Analysis in Multi-Agent MDPs",
+      "year": 2024,
+      "sourceType": "primary-paper",
+      "url": "https://proceedings.mlr.press/v235/triantafyllou24a.html",
+      "verification": "opened-publisher-full-record",
+      "usedFor": [
+        "implicit-action-channel-substitution"
+      ],
+      "reopenedFinding": "ASE 与 cf-ASE 已形式化一个代理动作经由其他代理响应传播到结果的因果效应，并给出识别条件和采样估计。冻结删除消息不能代表适应后响应这一批评并非新的通用因果对象。"
+    },
+    {
+      "sourceId": "SRC-ENSEMBLE-COVARIANCE",
+      "title": "Managing Diversity in Regression Ensembles",
+      "year": 2005,
+      "sourceType": "primary-paper",
+      "url": "https://www.jmlr.org/papers/v6/brown05a.html",
+      "verification": "opened-publisher-full-record",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "ensemble diversity 可精确写成个体输出协方差，并由 bias-variance-covariance 权衡控制；在固定个体质量下改变相关结构属于成熟的 ensemble 研究对象。"
+    },
+    {
+      "sourceId": "SRC-MAJORITY-DIVERSITY",
+      "title": "A Diversity-aware Model for Majority Vote Ensemble Accuracy",
+      "year": 2020,
+      "sourceType": "primary-paper",
+      "url": "https://proceedings.mlr.press/v108/durrant20a.html",
+      "verification": "opened-publisher-record",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "多数投票 ensemble 的整体准确率已被直接作为个体准确率与 diversity 的联合函数研究，进一步削弱了仅以固定边际误差、改变相关性作为新 estimand 的主张。"
+    },
+    {
+      "sourceId": "SRC-STAMP-CODE",
+      "title": "taco-group/STAMP: Scalable Task And Model-agnostic Collaborative Perception",
+      "year": 2025,
+      "sourceType": "official-code",
+      "url": "https://github.com/taco-group/STAMP",
+      "verification": "opened-official-repository-readme",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "MIT 仓库已经支持异构传感器、异构 backbone、异构融合器、检测和 BEV 分割，以及 OPV2V/V2V4Real 训练入口；checkpoint 仍标为待发布。它可生成真实异构代理对，但不直接提供固定边际误差的配对器。"
+    },
+    {
+      "sourceId": "SRC-RCP-BENCH-CODE",
+      "title": "LuckyDush/RCP-Bench: Benchmarking Robustness for Collaborative Perception Under Diverse Corruptions",
+      "year": 2025,
+      "sourceType": "official-code",
+      "url": "https://github.com/LuckyDush/RCP-Bench",
+      "verification": "opened-official-repository-readme",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "公开 14 类 corruption、全局/ego/CAV 三种干扰位置、10 个模型及 PosC/NegC 等协作指标，并指出 backbone、融合形式和车辆数量会改变鲁棒性。共享故障与协作收益的评估空间已经相当拥挤。"
+    },
+    {
+      "sourceId": "SRC-COBEVMOE-PAPER",
+      "title": "CoBEVMoE: Heterogeneity-aware Feature Fusion with Dynamic Mixture-of-Experts for Collaborative Perception",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2509.17107",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "方法显式同时建模代理间 feature similarity 与 heterogeneity，并用 metric loss 增强 inter-expert diversity，在 OPV2V 与 DAIR-V2X-C 上评估。协同感知中的多样性已经是直接优化目标。"
+    },
+    {
+      "sourceId": "SRC-COBEVMOE-CODE",
+      "title": "godk0509/CoBEVMoE",
+      "year": 2026,
+      "sourceType": "official-code",
+      "url": "https://github.com/godk0509/CoBEVMoE",
+      "verification": "opened-official-repository-readme",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "MIT 仓库公开框架说明和代码树，但 README 未发现 checkpoint 入口。可作为方法级强基线，资产可执行性仍需独立 smoke test。"
+    },
+    {
+      "sourceId": "SRC-V2X-DSC",
+      "title": "V2X-DSC: Multi-Agent Collaborative Perception with Distributed Source Coding Guided Communication",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2602.00687",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "论文明确把多代理特征描述为强相关，并以接收端 side information 只编码互补 innovation，直接围绕相关、冗余与互补信息设计通信。它处理的是表示与带宽，不是固定边际错误下的闭环规划因果效应。"
+    },
+    {
+      "sourceId": "SRC-V2X-ERROR-STUDY",
+      "title": "When Autonomous Vehicle Meets V2X Cooperative Perception: How Far Are We?",
+      "year": 2025,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2509.24927",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "大规模实证研究识别六类协同感知错误，报告更多协同错误可对应更多驾驶违规，并比较 V2V/V2I、融合和通信干扰。它建立错误到驾驶后果的自然问题证据，但没有隔离 pairwise error correlation。"
+    },
+    {
+      "sourceId": "SRC-DEFER-TO-PLAN",
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "year": 2026,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "shared-backbone-cooperation-error-correlation"
+      ],
+      "reopenedFinding": "最新工作已把多代理融合直接对齐闭环规划目标，并采用异构特征的 MoE 融合。它没有固定边际误差的相关性干预，但说明仅把协同指标从 AP 推到规划已不足以形成独立残差。"
+    },
+    {
+      "sourceId": "SRC-ACTIVE-INTENT",
+      "title": "Game Theoretic Decision Making by Actively Learning Human Intentions Applied on Autonomous Driving",
+      "year": 2023,
+      "sourceType": "primary-paper",
+      "url": "https://arxiv.org/abs/2301.09178",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "工作以 POMDP、迭代推理、概率推断和 active learning 在线估计驾驶员潜在认知状态，并在真实感模拟器执行密集交通换道。主动试探和意图推断不是新机制。"
+    },
+    {
+      "sourceId": "SRC-IPLAN",
+      "title": "Intent-Aware Planning in Heterogeneous Traffic via Distributed Multi-Agent Reinforcement Learning",
+      "year": 2023,
+      "sourceType": "primary-paper",
+      "url": "https://proceedings.mlr.press/v229/wu23b.html",
+      "verification": "opened-publisher-full-record",
+      "usedFor": [
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "iPLAN 已从局部观测推断其他驾驶员的 private incentives，并将推断纳入轨迹与意图联合规划。新的残差不能只是再做一个 intent-aware planner。"
+    },
+    {
+      "sourceId": "SRC-IRL-IDENTIFIABILITY",
+      "title": "Identifiability in Inverse Reinforcement Learning",
+      "year": 2021,
+      "sourceType": "primary-paper",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2021/hash/671f0311e2754fcdd37f70a8550379bc-Abstract.html",
+      "verification": "opened-publisher-record",
+      "usedFor": [
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "潜在 reward 即使在完美最优行为观测下也可不可辨识，并已有必要/充分条件分析。该理论是全局 reward 识别，不等价于有限观测前缀能否赶在车辆动力学不可逆点前支持安全动作。"
+    },
+    {
+      "sourceId": "SRC-INTERHUB",
+      "title": "InterHub: A Naturalistic Trajectory Dataset with Dense Interaction for Autonomous Driving",
+      "year": 2025,
+      "sourceType": "primary-paper-and-public-data-description",
+      "url": "https://arxiv.org/abs/2411.18302",
+      "verification": "opened-primary-record-and-abstract",
+      "usedFor": [
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "InterHub 从大规模自然驾驶记录中挖掘密集多车交互，并提供统一分类和扩展工具。它足以支持自然前缀 Phase 0，但公开轨迹只给出实现动作与未来结果，不直接观测心理意图。"
+    },
+    {
+      "sourceId": "SRC-IEDD",
+      "title": "An Interactive Enhanced Driving Dataset for Autonomous Driving",
+      "year": 2026,
+      "sourceType": "primary-paper-and-public-data-description",
+      "url": "https://www.nature.com/articles/s41597-026-07929-2",
+      "verification": "opened-publisher-full-record",
+      "usedFor": [
+        "precommitment-intent-identifiability-bound"
+      ],
+      "reopenedFinding": "IEDD 从五个自然轨迹数据集构造 731 万个 ego-centric 交互片段，其中 666 万为多代理案例，覆盖跟驰、合流和交叉。它可用于跨数据集验证前缀可预测性，但同样不能把未来机动标签自动解释为真实潜在意图。"
+    }
+  ],
+  "candidateAudits": [
+    {
+      "candidateId": "implicit-action-channel-substitution",
+      "auditedClaim": "冻结策略删除显式消息会夸大语言协商价值，因为适应后的策略可能用车辆微动作替代消息；需要分离显式消息与隐式运动信号的贡献。",
+      "naturalProblemEvidence": {
+        "status": "partial-mechanism-evidence-only",
+        "evidence": [
+          "SRC-PRIDE-PREJUDICE 直接证明真实驾驶轨迹中的速度和轨迹变化可以承载隐式通信，并建模表达与倾听。",
+          "SRC-COLMDRIVER-PAPER 与 SRC-COLMDRIVER-CODE 证明显式语言协商已进入 V2V 闭环控制。",
+          "SRC-MDRIVE-PAPER 报告协商在复杂、密集交通中可能反而伤害规划，说明通道价值不是单调的。"
+        ],
+        "notEstablished": [
+          "没有重新打开的一手自然日志证明：真实系统在消息丢失后会通过学习或在线适应系统性转移到微动作信号。",
+          "没有证据量化冻结消息消融相对适应后消融的偏差方向和规模。",
+          "MDrive 能实现消息 mask 只证明可测试性，不证明这种替代偏差在自然部署中已经发生。"
+        ]
+      },
+      "closestWork": [
+        {
+          "sourceId": "SRC-PRIDE-PREJUDICE",
+          "functionalEquivalence": "驾驶动作同时影响物理状态并表达意图，且接收方主动倾听和更新信念。",
+          "differenceLeft": "未与显式 V2X 语言通道做冻结策略与适应策略的成对价值分解。"
+        },
+        {
+          "sourceId": "SRC-ROLES",
+          "functionalEquivalence": "显式消息和隐式动作通信已被直接比较，隐式角色策略可达到与显式消息相当的团队表现。",
+          "differenceLeft": "不是车辆动力学环境，也不研究消息删除后的策略再适应。"
+        },
+        {
+          "sourceId": "SRC-ASE",
+          "functionalEquivalence": "已定义动作经由伙伴响应传播的因果效应和反事实估计条件。",
+          "differenceLeft": "没有针对 V2X 语言与车辆运动两个可替代通道做协议级估计。"
+        },
+        {
+          "sourceId": "SRC-COLMDRIVER-PAPER",
+          "functionalEquivalence": "完整显式语言协商与控制闭环已经存在。",
+          "differenceLeft": "原始评估没有给行为通道可适应替代的 estimand。"
+        }
+      ],
+      "nonSubstitutableResidual": {
+        "status": "insufficient",
+        "candidateResidual": "在同一物理 V2V 任务中，估计显式消息的冻结删除效应、重新适应后的剩余效应及其与动作信号可见性的交互。",
+        "whyItIsNotEnough": [
+          "这是把已有的隐式动作通信、显式消息比较和响应介导因果效应组合成驾驶评测协议，尚未产生新的机制边界或识别定理。",
+          "所谓隐藏微动作不可通过普通观测 mask 干净实现：伙伴动作会改变未来物理状态；若把其运动从观察中抹掉，场景将变成信息不一致的非物理干预。",
+          "冻结与重新训练比较的是两个策略类和两个训练分布，而不是仅改变通信通道的同一因果量；适应收益可能来自一般分布适配而非通道替代。"
+        ]
+      },
+      "minimumFalsifiableExperiment": {
+        "purpose": "即使当前淘汰，给出能够真正推翻或挽救主张的最小协议，而不是把简单 message dropout 当证据。",
+        "reusableAssets": [
+          "SRC-MDRIVE-CODE 的 interaction/interdrive 场景、scenario pool、结果分析器和自定义 planner 接口。",
+          "SRC-COLMDRIVER-CODE 的显式语言协商策略、CoDriving 与 TCP 基线。"
+        ],
+        "selfBuiltModules": [
+          "按 scenario/seed 配对执行的 runner，固定背景车随机性和冲突几何。",
+          "四种策略训练入口：显式加隐式、仅显式、仅隐式、两者皆无；每种条件独立适应，另保留冻结消融。",
+          "通道 evaluator，分别计算消息增量价值、动作响应介导价值、碰撞、成功、等待、舒适性和通信开销。",
+          "非物理干预检查器，拒绝任何导致伙伴真实位姿与 ego 观测状态互相矛盾的微动作 mask。"
+        ],
+        "protocol": [
+          "只选合流和无保护交叉口，预先固定 30 个以上 route/seed；消息内容、频率、时延和带宽保持一致。",
+          "先运行冻结消息删除，再对删除后的策略提供相同交互预算做轻量适应；用同预算的无关观测适配作为分布适配对照。",
+          "隐式通道不能用视觉擦除实现；应通过限制可用于信号表达但不影响安全可达性的控制自由度，或比较预先训练的 signaling-neutral 与 signaling-enabled 策略。",
+          "用 paired bootstrap 报告每场景差值，并检验 message visibility、action-signaling capacity 与 adaptation 三者交互。"
+        ],
+        "identificationRequirement": "只有在物理状态一致、训练预算一致、一般适配效应被对照后，适应导致的消息增量价值下降才能归因于通道替代。"
+      },
+      "strongBaselines": [
+        "CoLMDriver 显式语言协商",
+        "CoLMDriver 的 rule-based negotiation ablation",
+        "CoDriving 无语言协同感知与规划",
+        "行为观测加 iPLAN 风格意图推断",
+        "仅消息且动作信号受约束的策略",
+        "仅动作信号且无消息的策略",
+        "无消息、无适应与无消息、等预算适应两个对照",
+        "oracle 意图和随机/无信息消息控制"
+      ],
+      "successConditions": [
+        "在至少两类交互和独立 seed 上，冻结删除消息的损失显著大于等预算适应后的剩余损失。",
+        "该差异只在动作信号有可用容量时出现，限制动作信号后消息独立价值恢复。",
+        "结果在控制一般分布适配、时延和物理轨迹分布后仍成立，并改变对显式协商协议是否必要的系统决策。"
+      ],
+      "killConditions": [
+        "适应后消息仍有稳定且同量级的独立收益。",
+        "同预算无关观测适配产生同样恢复，说明效果是一般分布适配。",
+        "动作信号干预不可避免地改变可达性、碰撞风险或伙伴真实状态，使通道效应不可识别。",
+        "仅能复现已有的隐式动作优于或等于显式消息，而不能给出新的驾驶特定机制边界。"
+      ],
+      "verdict": "reject-functional-equivalence-and-intervention-confounding",
+      "verdictRationale": "自然机制有意义且实验可自建，但核心功能对象已被动作通信、显隐式通道比较和多代理响应因果效应覆盖；当前微动作可见性干预还混入物理动力学与策略类变化。它不进入保留集合。"
+    },
+    {
+      "candidateId": "shared-backbone-cooperation-error-correlation",
+      "auditedClaim": "在单车边际感知质量和通信预算相同的条件下，共享 backbone、训练集或提示造成的跨代理错误相关性会增加共同盲点并降低融合与规划收益。",
+      "naturalProblemEvidence": {
+        "status": "partial-system-evidence-without-claimed-cause",
+        "evidence": [
+          "SRC-MDRIVE-PAPER 证明感知共享的改善并不稳定转化为规划改善。",
+          "SRC-V2X-ERROR-STUDY 识别协同感知错误模式，并把更多错误与更多驾驶违规联系起来。",
+          "SRC-V2X-DSC 明确观察多代理表示强相关且含冗余信息。",
+          "SRC-RCP-BENCH-CODE 显示全局、ego 和协作车 corruption 位置会改变协作鲁棒性。"
+        ],
+        "notEstablished": [
+          "没有一手结果证明共享 backbone 在边际误差严格配平后仍自然地产生更高错误相关性。",
+          "没有一手结果把模型同源性、错误相关性和闭环规划损失组成已识别的因果链。",
+          "MDrive 的感知到规划断裂不能单独归因于相关错误，也可能来自目标类别、空间位置、置信度校准、时延或 planner 接口。"
+        ]
+      },
+      "closestWork": [
+        {
+          "sourceId": "SRC-ENSEMBLE-COVARIANCE",
+          "functionalEquivalence": "固定个体质量时，整体收益取决于误差协方差和多样性，这一对象已有精确分解和控制方法。",
+          "differenceLeft": "不含 V2X 空间错误、融合器和闭环规划后果。"
+        },
+        {
+          "sourceId": "SRC-MAJORITY-DIVERSITY",
+          "functionalEquivalence": "ensemble 准确率已按成员准确率与多样性联合建模。",
+          "differenceLeft": "不含连续空间感知和安全控制。"
+        },
+        {
+          "sourceId": "SRC-COBEVMOE-PAPER",
+          "functionalEquivalence": "协同感知已显式优化代理间异质性和 inter-expert diversity。",
+          "differenceLeft": "没有把错误相关性作为配平边际质量后的独立干预量，也没有闭环规划曲线。"
+        },
+        {
+          "sourceId": "SRC-V2X-DSC",
+          "functionalEquivalence": "直接利用多代理相关性、冗余和互补 innovation 设计通信与融合。",
+          "differenceLeft": "主要优化准确率与带宽，不估计错误相关性对规划的独立作用。"
+        },
+        {
+          "sourceId": "SRC-STAMP-CODE",
+          "functionalEquivalence": "公开框架已经系统支持模型、模态与任务异构。",
+          "differenceLeft": "没有现成的固定边际误差配对和闭环 evaluator。"
+        }
+      ],
+      "nonSubstitutableResidual": {
+        "status": "insufficient",
+        "candidateResidual": "把驾驶安全敏感的联合错误结构与最后规划损失连接，并在边际性能相同的代理对之间给出模型选配原则。",
+        "whyItIsNotEnough": [
+          "固定边际、改变相关结构是成熟 ensemble/covariance 问题；迁移到单一 V2X benchmark 本身不满足 method-transfer-is-not-novelty。",
+          "总体 AP 或错误率相同不代表边际错误真正相同。对象类别、距离、遮挡、空间位置、置信度和时序持续性都可能同时改变规划结果。",
+          "通过共享 backbone、数据或提示改变相关性会同时改变表示、校准、时延和错误语义，因此 pairwise correlation 不是被单独操纵的变量。",
+          "即使离线重排缓存预测可固定边际分布，得到的联合错误对也可能不是任何可部署模型对能够产生的实现分布。"
+        ]
+      },
+      "minimumFalsifiableExperiment": {
+        "purpose": "用最严格的条件配平检验相关结构是否仍能独立改变闭环方法排序；该实验可执行，但只有产生驾驶特定边界才可能挽救新颖性。",
+        "reusableAssets": [
+          "SRC-STAMP-CODE 的异构 backbone/模态训练入口。",
+          "SRC-RCP-BENCH-CODE 的 corruption 生成器、协作指标和三个公开数据集接口。",
+          "SRC-MDRIVE-CODE 的 perception-swap planner、闭环场景池和结果分析器。",
+          "SRC-COBEVMOE-CODE 作为 diversity-aware 方法基线。"
+        ],
+        "selfBuiltModules": [
+          "缓存每个代理逐帧、逐目标预测与误差的 runner。",
+          "按类别、距离、遮挡、目标尺寸、场景和置信度分层配平边际错误的 pair constructor。",
+          "同时报告二元错误相关、条件互信息、共同漏检簇和时序持续性的 evaluator。",
+          "把缓存配对送入同一融合器，并对极端高低相关组运行 MDrive 闭环的 adapter。"
+        ],
+        "protocol": [
+          "从至少三个 backbone 来源生成真实模型对，并固定传感器视角、通信预算和融合器。",
+          "第一阶段只在离线缓存上做精细分层配平；若任何关键边际 strata 无 common support，则停止声称固定边际。",
+          "第二阶段用受约束最优传输或 copula 重排构造相关性梯度，同时把真实模型对和合成上界分开报告。",
+          "第三阶段只选择真实可部署的高低相关模型对做闭环验证，并以 scenario 为统计单位。",
+          "回归中同时控制错误空间位置、类别、持续时间、置信度、时延和 agent 数；检验相关结构是否仍改变 fusion/planning 排名。"
+        ],
+        "identificationRequirement": "只有真实模型对在细粒度边际和系统开销配平后仍呈现稳定的相关性效应，且合成重排与真实对方向一致，才可声称相关结构具有独立作用。"
+      },
+      "strongBaselines": [
+        "相同 backbone、不同随机种子的同构代理对",
+        "STAMP 的异构 backbone/模态代理对",
+        "CoBEVMoE diversity-aware 融合",
+        "V2X-DSC 互补 innovation 通信",
+        "RCP-Drop 与 RCP-Mix 鲁棒训练",
+        "按单车 AP、最差单车 AP、oracle diversity 和随机配对选择模型",
+        "只按共同漏检率或条件互信息选择模型的简单启发式",
+        "单车、早期融合、晚期融合和 oracle fusion"
+      ],
+      "successConditions": [
+        "真实模型对在细粒度边际、时延和通信预算配平后，相关结构仍显著解释共同盲点与闭环损失。",
+        "按相关结构选配代理会反转仅按单车 AP、backbone 或平均融合 AP 得到的方法排序。",
+        "结果跨 OPV2V/DAIR-V2X-C 与至少一个 MDrive 闭环场景族成立，并导出可迁移的模型配对或训练准则。"
+      ],
+      "killConditions": [
+        "效应在控制错误位置、类别、持续性和置信度后消失。",
+        "只有不可实现的缓存重排能产生效应，真实模型对不能复现。",
+        "CoBEVMoE、STAMP 异构配对或简单共同漏检率已经完全解释和利用该效应。",
+        "结果只是再次确认 ensemble 多样性有益，不改变融合、配对或规划方法排序。"
+      ],
+      "verdict": "reject-functional-equivalence-and-underidentification",
+      "verdictRationale": "问题真实且可通过自建 runner/evaluator 执行，但核心 estimand 是成熟的 ensemble 协方差对象，协同感知也已直接优化异质性、互补性和鲁棒性。当前方案还不能把相关性从空间语义错误等混杂中隔离，因此不进入保留集合。"
+    },
+    {
+      "candidateId": "precommitment-intent-identifiability-bound",
+      "auditedClaim": "协商失败可能源于对方意图在车辆必须作出不可逆安全动作之前仍不可辨识；应估计可靠信息首次出现时刻与最后安全决策时刻之间的 actionability margin。",
+      "requiredClaimRevision": {
+        "originalRisk": "自然轨迹没有真实心理意图标签，直接声称 latent intent 的信息论上界会把未来实现动作循环地当成意图真值；有限模型失败也不是 Bayes 不可辨识证明。",
+        "revisedObject": "先把 intent 操作化为预先定义的未来机动或交互响应类别，估计强预测器集合下的经验可辨识时刻 t_identifiable；再用独立车辆动力学与可达集计算最后安全决策时刻 t_last_safe。定义 actionabilityMargin = t_last_safe - t_identifiable，负值表示可靠信息到达过晚。",
+        "claimBoundary": "Phase 0 只能声称经验 actionability gap；只有在生成模型、观测模型和假设类明确后，才可进一步声称理论 identifiability bound。"
+      },
+      "naturalProblemEvidence": {
+        "status": "credible-hypothesis-requiring-phase-zero-occurrence-test",
+        "evidence": [
+          "SRC-NEGOTIATOR 已构造早期观测完全相同、接近冲突点才分叉的 delayed reveal，并显示应等待承诺而非过早猜测。",
+          "SRC-PRIDE-PREJUDICE 证明驾驶动作携带信息且可通过主动倾听获得 information gain，说明信息出现时间与控制动作耦合。",
+          "SRC-ACTIVE-INTENT 与 SRC-IPLAN 表明密集交通中的潜在状态推断会直接影响规划。",
+          "SRC-INTERHUB 和 SRC-IEDD 提供足够规模的自然合流、交叉和跟驰轨迹，可在不依赖合成注入的情况下先检验晚可辨识现象是否存在。"
+        ],
+        "notYetEstablished": [
+          "SRC-NEGOTIATOR 是程序化 benchmark，不能证明自然驾驶中存在同等比例和严重度的 late reveal。",
+          "InterHub 与 IEDD 提供数据，不自动证明 actionabilityMargin 为负；必须实际执行前缀审计。",
+          "未来轨迹只能标注实现机动或响应，不能无条件恢复驾驶员真实心理意图。"
+        ]
+      },
+      "closestWork": [
+        {
+          "sourceId": "SRC-NEGOTIATOR",
+          "functionalEquivalence": "最接近：直接控制隐藏 disposition 的 reveal 时间，早期信息缺失，并把等待可见承诺作为正确策略。",
+          "nonSubstitutableDifference": "没有车辆动力学、制动/可达集定义的 t_last_safe，也没有从自然轨迹估计发生率和经验前缀下界。"
+        },
+        {
+          "sourceId": "SRC-ACTIVE-INTENT",
+          "functionalEquivalence": "通过 POMDP、概率信念和主动动作获取驾驶员潜在状态并规划。",
+          "nonSubstitutableDifference": "目标是更好地推断和行动，不检验信息是否在物理上已经晚于最后安全动作窗口。"
+        },
+        {
+          "sourceId": "SRC-PRIDE-PREJUDICE",
+          "functionalEquivalence": "动作表达、倾听、信息增益和主动社会学习已经进入驾驶交互模型。",
+          "nonSubstitutableDifference": "没有把最早可靠信息时刻与独立的动力学不可逆点对齐。"
+        },
+        {
+          "sourceId": "SRC-IPLAN",
+          "functionalEquivalence": "从局部观测推断 private incentives 并联合规划。",
+          "nonSubstitutableDifference": "以性能增益为目标，不提供失败究竟是学习不足还是信息到达过晚的诊断。"
+        },
+        {
+          "sourceId": "SRC-IRL-IDENTIFIABILITY",
+          "functionalEquivalence": "潜在 reward/intent 的不可辨识已有严格理论先例。",
+          "nonSubstitutableDifference": "其对象是给定策略下 reward 的全局等价类，不是有限驾驶前缀与最后安全决策时刻之间的任务特定 gap。"
+        }
+      ],
+      "nonSubstitutableResidual": {
+        "status": "conditional-and-specific",
+        "statement": "仍未被上述工作替代的对象，是自然驾驶中的时间化 actionability gap：在 deployment-observable 前缀上达到预注册可靠度的最早时刻，是否晚于由物理可达性独立决定的最后安全决策时刻；并用受控 reveal 实验证明该 gap 而非 planner 能力不足决定闭环上限。",
+        "whyItSurvives": [
+          "它不再提出另一个 intent predictor、通信协议或主动试探策略，而是诊断哪些交互从信息层面已经来不及。",
+          "自然数据 Phase 0 估计发生率，MDrive 配对 reveal Phase 1 识别时序因果效应，两者互相约束，避免仅靠合成 fixture。",
+          "正结果会把系统决策从继续扩大推理模型转向更早显式通信或保守可达集控制；负结果会把问题明确归还给可学习的意图估计与规划。"
+        ],
+        "remainingCollisionRisk": "Self-Driving Negotiator 已非常接近 delayed reveal；若不加入自然发生率、独立动力学 t_last_safe 和闭环 actionability curve，本候选应立即视为撞题。"
+      },
+      "minimumFalsifiableExperiment": {
+        "phaseZeroNaturalOccurrence": {
+          "datasets": [
+            "SRC-INTERHUB",
+            "SRC-IEDD"
+          ],
+          "scope": "只选合流与无保护交叉两类交互；预先定义未来机动/让行响应标签，不声称心理意图。",
+          "protocol": [
+            "按交互事件和原始数据源划分 train/validation/test，禁止同一事件的相邻前缀跨 split。",
+            "对每个时间前缀训练并校准常速度/IDM、HMM、轨迹 Transformer 和地图感知预测器；报告校准误差、AUROC、Brier、选择性风险及 bootstrap 置信区间。",
+            "定义 t_identifiable 为预测器在预注册风险阈值下首次达到且持续达到可靠度的时间；模型集合的最好结果只称经验 envelope，不称理论 Bayes bound。",
+            "由道路几何、速度、最大舒适/紧急制动和可达集独立计算 t_last_safe，禁止使用未来类别标签回填该时刻。",
+            "报告 actionabilityMargin = t_last_safe - t_identifiable 的全分布，并检查地图、遮挡、速度和交互强度子群。"
+          ],
+          "firstStopRule": "若强基线和地图上下文加入后，两个数据集都不存在稳定负 margin 尾部，则停止，不进入 CARLA。"
+        },
+        "phaseOneControlledCausality": {
+          "asset": "SRC-MDRIVE-CODE",
+          "protocol": [
+            "生成共享初始状态、背景车 seed 和动力学的成对场景，只改变对方未来响应类别及其显式 reveal 时刻。",
+            "在 t_last_safe 前后至少五个 offset 揭示 oracle 充分统计量；同时评估无揭示、行为线索、显式 V2X 消息和 oracle。",
+            "自建 paired runner 锁定 route/seed，自建 evaluator 对齐 success、collision-free progress、等待、舒适性和最坏子群风险。",
+            "加入 intent-agnostic reachability hedge，检验无需识别意图的保守策略是否已经达到 oracle。",
+            "用 reveal-time 与 t_last_safe 的交互，而不是单点 oracle 增益，识别信息是否确实因到达太晚而失去控制价值。"
+          ]
+        },
+        "reusableAssets": [
+          "InterHub/IEDD 的自然交互片段与轨迹指标。",
+          "MDrive 的合流、交叉场景生成器、CARLA runner 和结果分析器。",
+          "CoLMDriver 显式消息策略作为语言协商基线。"
+        ],
+        "selfBuiltModules": [
+          "事件级防泄漏的 prefix dataset builder。",
+          "多模型概率校准与 t_identifiable evaluator。",
+          "基于制动包络或 Hamilton-Jacobi/采样可达集的 t_last_safe evaluator。",
+          "可控隐藏变量与 reveal scheduler。",
+          "锁定 seed 的 paired runner 和 actionability curve 分析器。"
+        ],
+        "engineeringBoundary": "无需等待现成配对脚本；新版可行性允许自建以上 runner/evaluator。主要风险是标签解释与识别有效性，而不是代码缺口。"
+      },
+      "strongBaselines": [
+        "常速度、IDM 与基于 time-to-conflict 的无需学习基线",
+        "HMM/贝叶斯意图过滤器",
+        "地图感知轨迹 Transformer 与校准后的选择性预测",
+        "iPLAN 风格局部观测意图推断与规划",
+        "SRC-ACTIVE-INTENT 风格主动信息获取 POMDP",
+        "Self-Driving Negotiator 风格 hedge-until-commitment 策略",
+        "intent-agnostic 制动/可达集鲁棒策略",
+        "CoLMDriver 显式 V2V 语言消息",
+        "oracle 从场景开始可见和仅在 t_last_safe 后可见两个上界/无效信息控制"
+      ],
+      "successConditions": [
+        "在 InterHub 与 IEDD 的事件级独立测试上，至少两个交互子类出现可复现的负 actionabilityMargin 尾部；预注册示例门槛为 margin 小于 -0.5 秒的事件比例之 95% bootstrap 下界超过 10%。",
+        "负尾部在加入地图、遮挡与历史轨迹强基线后仍存在，且不是 split 泄漏、标签时间锚点或数据源特有现象。",
+        "MDrive 中在 t_last_safe 前揭示显著改善 collision-free progress，而同等信息在 t_last_safe 后的收益接近消失；曲线拐点与独立计算的 t_last_safe 对齐。",
+        "结论改变方法选择：负 margin 子群优先使用早期显式消息或鲁棒 hedge，正 margin 子群才值得继续提升行为意图预测。"
+      ],
+      "killConditions": [
+        "强地图与轨迹基线在自然数据中始终早于 t_last_safe 达到可靠阈值，负 margin 尾部消失。",
+        "所谓负 margin 只来自把未来实现动作当心理意图、标签锚点泄漏或同一事件跨 split。",
+        "oracle 在 t_last_safe 之后仍同样改善结果，说明不可逆点定义错误或 planner 并未受该物理窗口约束。",
+        "intent-agnostic reachability hedge 在相同进度约束下达到早期 oracle，说明识别意图不是必要瓶颈。",
+        "只在程序化 delayed-reveal fixture 上得到结果，无法在任何自然数据集确认发生率。",
+        "最终贡献退化为更好的 intent predictor 或复现 Self-Driving Negotiator 的 reveal sweep，而没有自然发生率和动力学 actionability gap。"
+      ],
+      "verdict": "retain-conditionally-after-phase-zero",
+      "verdictRationale": "这是三项中唯一仍有不可替代残差的候选，但必须按 requiredClaimRevision 缩小为经验 actionability gap，并先通过自然数据 Phase 0。保留不代表问题已被证明；Phase 0 本身就是第一道硬淘汰门。"
+    }
+  ],
+  "selection": {
+    "retainedCandidateIds": [
+      "precommitment-intent-identifiability-bound"
+    ],
+    "retainedCount": 1,
+    "maximumAllowed": 2,
+    "rejectedCandidateIds": [
+      "implicit-action-channel-substitution",
+      "shared-backbone-cooperation-error-correlation"
+    ],
+    "selectionRationale": "前两项虽可执行，但分别与隐式动作通信/响应介导因果效应及 ensemble covariance/协同感知多样性形成功能等价碰撞，并存在关键干预混杂。第三项只有在自然发生率加独立动力学不可逆点的严格改写后，才保留一个驾驶特定的诊断对象。"
+  }
+}

@@ -1,0 +1,597 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "auditId": "cooperscene-trace-implementation-and-data-audit-2026-07-31",
+  "auditedAt": "2026-07-31",
+  "purpose": "Verify whether the public CooperScene release can support a trace-preserving, frame-level C-V2X replay experiment without inventing unavailable measurements.",
+  "scoringPerformed": false,
+  "repository": {
+    "officialUrl": "https://github.com/UCR-CISL/CooperScene",
+    "auditedCommit": "0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+    "commitDate": "2026-07-13T22:54:34-07:00",
+    "commitSubject": "Add DATA_LICENSE: dataset is CC BY-NC-SA 4.0, code remains MIT",
+    "checkoutPath": "/tmp/paper-digest-cooperscene-audit",
+    "checkoutState": "clean",
+    "codeLicense": "MIT",
+    "datasetLicense": "CC BY-NC-SA 4.0",
+    "modificationsMade": false
+  },
+  "evidencePolicy": {
+    "directObservation": "A value decoded from the audited commit, an official portal object, a ZIP central directory, or an MCAP record read during this audit.",
+    "codeInference": "A behavior implied by an inspected executable code path but not exercised end to end with a model checkpoint.",
+    "documentationClaim": "A claim made by the official paper, project page, README, or portal that was not assumed to exist in the binary schema until independently observed.",
+    "nonFabricationRule": "Unavailable latency, packet-loss, jitter, PHY, MAC, scheduling, or packet-event fields must remain unavailable; they may not be synthesized and relabeled as measured CooperScene observations."
+  },
+  "portalInventory": {
+    "portalUrl": "https://data.ucr.edu/datasets/cooperscene/",
+    "portalConfigUrl": "https://data.ucr.edu/datasets/cooperscene/config.json",
+    "sceneCount": 14,
+    "coreArchives": {
+      "train": {
+        "sceneArchiveCount": 10,
+        "compressedBytes": 62405275939
+      },
+      "validate": {
+        "sceneArchiveCount": 2,
+        "compressedBytes": 11931658244
+      },
+      "test": {
+        "sceneArchiveCount": 2,
+        "compressedBytes": 19922179488
+      },
+      "totalCompressedBytes": 94259113671
+    },
+    "mcap": {
+      "directoryUrl": "https://data.ucr.edu/datasets/cooperscene/mcap/",
+      "fileCount": 14,
+      "totalBytes": 90907217741,
+      "smallest": {
+        "takeId": "9",
+        "url": "https://data.ucr.edu/datasets/cooperscene/mcap/9.mcap",
+        "bytes": 2404378457
+      },
+      "largest": {
+        "takeId": "11",
+        "url": "https://data.ucr.edu/datasets/cooperscene/mcap/11.mcap",
+        "bytes": 16535015753
+      },
+      "distributionGranularity": "one MCAP file per take"
+    },
+    "mcapPreview": {
+      "directoryUrl": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/",
+      "fileCount": 14,
+      "totalBytes": 8364348117,
+      "smallest": {
+        "takeId": "9",
+        "url": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/9.mcap",
+        "bytes": 230732201
+      },
+      "largest": {
+        "takeId": "11",
+        "url": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/11.mcap",
+        "bytes": 1582203033
+      }
+    },
+    "mini": {
+      "url": "https://data.ucr.edu/datasets/cooperscene/mini.zip",
+      "bytes": 2918993095,
+      "publishedSha256": "ae720aa6935bad086f75100815fea690d62b38e15958d81bed3dd9a5faccdafc",
+      "centralDirectoryEntryCount": 2002,
+      "entryCounts": {
+        "directories": 19,
+        "pkl": 3,
+        "yaml": 720,
+        "pcd": 720,
+        "png": 540,
+        "mcap": 0
+      },
+      "containsNetworkTraces": false,
+      "evidence": "The ZIP central directory was range-read and mechanically enumerated. No .mcap entry was present."
+    },
+    "availabilityNotes": [
+      "The UCR server returned Accept-Ranges: bytes for mini.zip, per-take ZIP archives, full MCAP files, and preview MCAP files.",
+      "The repository README correctly states that MCAP recordings are distributed separately from train, validate, and test archives.",
+      "A Hugging Face dataset API request timed out after 10 seconds during this audit. The UCR portal remained accessible and is the audited data authority.",
+      "GitHub issue 2 contained an official 2026-07-22 reply saying dataset hosting on Hugging Face could be discussed in the future; the existing Hugging Face repository should not be assumed to be a complete dataset mirror."
+    ]
+  },
+  "rangeReadSampleMethod": {
+    "goal": "Recover published MCAP structure and real message values without downloading a multi-gigabyte take.",
+    "target": {
+      "takeId": "9",
+      "fullMcapUrl": "https://data.ucr.edu/datasets/cooperscene/mcap/9.mcap",
+      "fullMcapBytes": 2404378457,
+      "previewMcapUrl": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/9.mcap",
+      "previewMcapBytes": 230732201
+    },
+    "steps": [
+      {
+        "id": "preview-footer",
+        "httpRange": "bytes=-64",
+        "bytesRead": 64,
+        "result": "Decoded a valid MCAP footer and magic. summary_start=230633137 and summary_offset_start=230732008."
+      },
+      {
+        "id": "preview-summary",
+        "httpRange": "bytes=230633137-230732163",
+        "bytesRead": 99027,
+        "result": "Parsed 299 summary records: 25 Schema, 25 Channel, 242 ChunkIndex, 1 Statistics, and 6 SummaryOffset records."
+      },
+      {
+        "id": "full-footer",
+        "httpRange": "bytes=-64",
+        "bytesRead": 64,
+        "result": "Decoded a valid MCAP footer. summary_start=2404308733 and summary_offset_start=2404378316."
+      },
+      {
+        "id": "full-summary",
+        "httpRange": "bytes=2404308733-2404378419",
+        "bytesRead": 69687,
+        "sha256": "15acebd0a5b9d4037bed3ca57237fb88051858a0179c15ff9645431847a16ee8",
+        "result": "Recovered the complete full-take schema, channel inventory, message counts, time range, and chunk indexes."
+      },
+      {
+        "id": "full-first-chunk",
+        "httpRange": "bytes=39-9343156",
+        "bytesRead": 9343118,
+        "compression": "zstd",
+        "uncompressedBytes": 10309073,
+        "uncompressedSha256": "b93e0e3672f339ba16d545ed5ecb8888d815b9b67036fdd37bbc23e6d9e95bce",
+        "result": "Decompressed and parsed 5 Schema, 13 Channel, and 9 Message records, including three directed throughput samples."
+      },
+      {
+        "id": "mini-central-directory",
+        "httpRanges": [
+          "bytes=-131072",
+          "bytes=2918797356-2918993072"
+        ],
+        "centralDirectoryBytes": 195717,
+        "centralDirectorySha256": "5987311833f65f820248a65c2277a969d0e2ee2293285cc56279b00d7d04a649",
+        "result": "Enumerated every mini.zip entry without downloading the full archive."
+      },
+      {
+        "id": "take-9-zip-central-directory-and-yaml",
+        "zipUrl": "https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+        "zipBytes": 2501028472,
+        "centralDirectoryEntries": 1780,
+        "yamlSamplePath": "9/0/540710.yaml",
+        "yamlSampleUncompressedBytes": 696,
+        "result": "Verified that frame identity is carried by the filename while the YAML contains pose and object labels but no absolute MCAP timestamp or network observation."
+      }
+    ],
+    "boundedScope": [
+      "No complete MCAP, scene archive, or mini.zip was downloaded.",
+      "Only the first compressed chunk of full take 9 was decoded for payload values.",
+      "The schema and channel inventory are complete for full take 9 because they were recovered from its MCAP summary.",
+      "The three numeric throughput values are a bounded sample and are not claimed to summarize the take distribution."
+    ]
+  },
+  "take9Audit": {
+    "source": "full MCAP, not preview",
+    "fileBytes": 2404378457,
+    "statistics": {
+      "messageCount": 4669,
+      "schemaCount": 5,
+      "channelCount": 25,
+      "attachmentCount": 0,
+      "metadataCount": 0,
+      "chunkCount": 258,
+      "messageStartTimeNs": 1759096860008969472,
+      "messageEndTimeNs": 1759096876065923328,
+      "durationNs": 16056953856
+    },
+    "schemas": [
+      {
+        "id": 1,
+        "name": "foxglove.FrameTransform",
+        "encoding": "protobuf"
+      },
+      {
+        "id": 2,
+        "name": "foxglove.CompressedImage",
+        "encoding": "protobuf"
+      },
+      {
+        "id": 3,
+        "name": "foxglove.Vector3",
+        "encoding": "protobuf"
+      },
+      {
+        "id": 4,
+        "name": "foxglove.SceneUpdate",
+        "encoding": "protobuf"
+      },
+      {
+        "id": 5,
+        "name": "foxglove.PointCloud",
+        "encoding": "protobuf"
+      }
+    ],
+    "channelGroups": {
+      "frameTransform": {
+        "count": 1,
+        "topics": [
+          "/tf"
+        ]
+      },
+      "lidar": {
+        "count": 4,
+        "topics": [
+          "/0_LIDAR",
+          "/1_LIDAR",
+          "/2_LIDAR",
+          "/3_LIDAR"
+        ]
+      },
+      "camera": {
+        "count": 3,
+        "topics": [
+          "/1_Camera",
+          "/2_Camera",
+          "/3_Camera"
+        ]
+      },
+      "boundingBoxes": {
+        "count": 5,
+        "topics": [
+          "/0_Bbox",
+          "/1_Bbox",
+          "/2_Bbox",
+          "/3_Bbox",
+          "/bbox_global"
+        ]
+      },
+      "directedThroughput": {
+        "count": 12,
+        "schema": "foxglove.Vector3",
+        "topicPattern": "/<receiver>_Throughput_from_agent_<sender>",
+        "topics": [
+          "/0_Throughput_from_agent_1",
+          "/0_Throughput_from_agent_2",
+          "/0_Throughput_from_agent_3",
+          "/1_Throughput_from_agent_0",
+          "/1_Throughput_from_agent_2",
+          "/1_Throughput_from_agent_3",
+          "/2_Throughput_from_agent_0",
+          "/2_Throughput_from_agent_1",
+          "/2_Throughput_from_agent_3",
+          "/3_Throughput_from_agent_0",
+          "/3_Throughput_from_agent_1",
+          "/3_Throughput_from_agent_2"
+        ],
+        "messagesPerChannel": 161,
+        "directionSemantics": "The topic prefix identifies the receiver and the suffix identifies the sender."
+      }
+    },
+    "sampleMessages": [
+      {
+        "topic": "/2_Throughput_from_agent_0",
+        "receiverAgentId": "2",
+        "senderAgentId": "0",
+        "sequence": 1,
+        "logTimeNs": 1759096860008969472,
+        "publishTimeNs": 1759096860008969472,
+        "protobuf": {
+          "x": 0.8232,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "payloadHex": "098126c286a757ea3f"
+      },
+      {
+        "topic": "/2_Throughput_from_agent_1",
+        "receiverAgentId": "2",
+        "senderAgentId": "1",
+        "sequence": 1,
+        "logTimeNs": 1759096860008969472,
+        "publishTimeNs": 1759096860008969472,
+        "protobuf": {
+          "x": 0.1176,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "payloadHex": "092575029a081bbe3f"
+      },
+      {
+        "topic": "/2_Throughput_from_agent_3",
+        "receiverAgentId": "2",
+        "senderAgentId": "3",
+        "sequence": 1,
+        "logTimeNs": 1759096860008969472,
+        "publishTimeNs": 1759096860008969472,
+        "protobuf": {
+          "x": 0.7056,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "payloadHex": "09dcd781734694e63f"
+      }
+    ],
+    "timestampObservations": {
+      "mcapRecordTime": "Nanosecond Unix-epoch log_time and publish_time are present in each MCAP Message record.",
+      "pointCloudMessageTimeExample": {
+        "topic": "/2_LIDAR",
+        "seconds": 1759096860,
+        "nanos": 69456128,
+        "frameId": "2_base_link"
+      },
+      "datasetFrameIdentity": "The take 9 scene ZIP contains exactly 161 contiguous YAML frame names per agent, from 540600 through 540760.",
+      "alignmentLimitation": "The sampled YAML contains no absolute MCAP timestamp. Equal counts and ordering are insufficient as a permanent alignment contract; a checked per-take mapping must be generated and stored."
+    },
+    "throughputFieldSemantics": {
+      "observedField": "Vector3.x",
+      "layoutEvidence": "The official CooperScene Foxglove layout plots only .x for every throughput topic.",
+      "unitEmbeddedInSchema": false,
+      "unitInterpretation": "Mbps is supported by the repository's cv2x_throughput parameter and benchmark documentation, but the unit is not encoded in the Protobuf schema itself.",
+      "sampledYAndZ": "Both y and z were zero in all three decoded throughput messages.",
+      "claimBoundary": "The bounded sample does not establish that y and z are zero in every message or every take."
+    },
+    "explicitlyMissingPublishedChannels": {
+      "latency": {
+        "presentAsIndependentChannel": false,
+        "presentAsNamedVectorField": false
+      },
+      "packetLoss": {
+        "presentAsIndependentChannel": false,
+        "presentAsNamedVectorField": false,
+        "packetEventStreamPresent": false
+      },
+      "jitter": {
+        "presentAsIndependentChannel": false,
+        "presentAsNamedVectorField": false
+      },
+      "lowerLayerSchedulingOrSignalState": {
+        "present": false
+      },
+      "interpretation": "The official project describes latency, throughput, packet loss, and jitter, but the complete full-take-9 MCAP summary exposes only directed throughput topics for network observations. This audit found no executable field for the other metrics in that published MCAP."
+    }
+  },
+  "converterAndMiniPklAudit": {
+    "currentConverter": {
+      "path": "tools/dataset_converters/coop_data_converter.py",
+      "egoCandidateAgentIds": [
+        "1",
+        "2",
+        "3"
+      ],
+      "outputMetainfoDataset": "CooperScene",
+      "sampleFields": [
+        "sample_idx",
+        "scenario",
+        "timestamp",
+        "agent_id",
+        "ego_pose",
+        "lidar_points",
+        "instances",
+        "cooperators",
+        "images"
+      ],
+      "networkFieldsWritten": [],
+      "mcapTimestampWritten": false,
+      "observation": "The converter walks static split/take/agent frame files and does not read an MCAP trace."
+    },
+    "miniBundledPkl": {
+      "metainfoDataset": "OPV2V",
+      "networkFieldsObserved": [],
+      "splitSummaries": [
+        {
+          "split": "train",
+          "sampleCount": 480,
+          "uniqueFrameCount": 120,
+          "frameMin": 481260,
+          "frameMax": 481379,
+          "egoSamplesPerAgent": {
+            "0": 120,
+            "1": 120,
+            "2": 120,
+            "3": 120
+          }
+        },
+        {
+          "split": "validate",
+          "sampleCount": 120,
+          "uniqueFrameCount": 30,
+          "frameMin": 481380,
+          "frameMax": 481409,
+          "egoSamplesPerAgent": {
+            "0": 30,
+            "1": 30,
+            "2": 30,
+            "3": 30
+          }
+        },
+        {
+          "split": "test",
+          "sampleCount": 120,
+          "uniqueFrameCount": 30,
+          "frameMin": 481410,
+          "frameMax": 481439,
+          "egoSamplesPerAgent": {
+            "0": 30,
+            "1": 30,
+            "2": 30,
+            "3": 30
+          }
+        }
+      ],
+      "binaryPathObservation": "Bundled PKL lidar_path values use .bin paths, while mini.zip contains no .bin entries.",
+      "samplePklSha256": {
+        "validate": "c7421cf285f0f101ba6555ba3adca130e7f1725594d0699aeaf00b094e3d7783"
+      }
+    },
+    "inconsistencies": [
+      "The bundled mini PKLs label the dataset OPV2V, while the audited converter writes CooperScene.",
+      "The bundled mini PKLs rotate agent 0, 1, 2, and 3 through the ego role, while the audited converter allows only vehicle agents 1, 2, and 3 as ego.",
+      "The bundled mini PKLs contain 4 samples per frame; the audited converter would produce 3 samples per frame.",
+      "The bundled mini PKLs contain no network trace field or MCAP-to-frame alignment.",
+      "The bundled PKLs reference .bin point clouds that are not shipped in mini.zip."
+    ],
+    "requiredDisposition": [
+      "Regenerate all experiment PKLs with the audited converter commit and --convert-pcd, or with a reviewed successor converter.",
+      "Do not mix bundled mini PKLs with newly converted full-data PKLs in one comparison.",
+      "Store converter commit, arguments, output hash, ego-agent policy, and frame counts in the experiment manifest.",
+      "Generate a separate checked trace-alignment sidecar rather than mutating unverified bundled PKLs in place."
+    ]
+  },
+  "officialNetworkModelAudit": {
+    "codePath": "models/cooperative/datasets/coop_dataset.py",
+    "defaultCv2xThroughputMbps": 1.6,
+    "payloadConversion": "data_size = share_size_mb * 8.0",
+    "delayCalculation": "time_delay_ms = data_size_Mb / transmission_speed_Mbps * 1000 + optional overhead and backbone delay",
+    "frameQuantization": "delay_frames = floor(time_delay_ms / 100)",
+    "linkSpecific": false,
+    "timeVaryingTraceUsed": false,
+    "contentionModeled": false,
+    "packetLossModeled": false,
+    "jitterTraceUsed": false,
+    "dropOrDeadlineEventModeled": false,
+    "table2ScriptObservation": "tools/run_table2.sh defaults every agent setting to 1.6 Mbps and instructs users to edit the values to measured throughputs.",
+    "modelConditioningRisk": "models/cooperative/detectors/cooperative_detector.py constructs zero prior_encoding values for time_delay, velocity, and infrastructure when no value is supplied. Delayed input selection alone does not inform delay-aware models of the actual replay delay.",
+    "reproducibilityBoundary": "A trace replay extension must not be described as the unchanged official Table 2 network implementation."
+  },
+  "minimalReplayInsertionPoints": [
+    {
+      "order": 1,
+      "location": "models/cooperative/datasets/coop_dataset.py:CoopDataset.__init__",
+      "change": "Add explicit trace_root, trace_mode, payload_bits or payload-size source, alignment-manifest path, missing-link policy, and trace fingerprint configuration.",
+      "reason": "Replay configuration must be immutable and recorded before evaluation."
+    },
+    {
+      "order": 2,
+      "location": "models/cooperative/datasets/coop_dataset.py:load_data_list",
+      "change": "Load and validate a per-take trace/alignment sidecar before sample parsing.",
+      "reason": "The current PKL contains no MCAP absolute time or network measurements."
+    },
+    {
+      "order": 3,
+      "location": "models/cooperative/datasets/coop_dataset.py:_build_valid_coops",
+      "change": "Replace the scalar _time_delay call with a scheduler lookup keyed by scenario, receiver ego agent_id, sender cooperator agent_id, current frame, and payload size.",
+      "reason": "The directed topic schema is receiver/sender specific, while the current delay function receives no link identity."
+    },
+    {
+      "order": 4,
+      "location": "new isolated trace scheduler module",
+      "change": "For throughput-only replay, accumulate observed service per 100 ms interval until the payload completes, then return the latest delivered source frame, completion delay, Age of Information, and explicit missing-data status.",
+      "reason": "A separate scheduler can be calibrated independently of perception and prevents benchmark code from silently inventing packet behavior."
+    },
+    {
+      "order": 5,
+      "location": "models/cooperative/datasets/coop_dataset.py:_attach_coops and the cooperative input packing path",
+      "change": "Carry replay delay, Age of Information, sender identity, receiver identity, completion status, and trace provenance into the packed sample.",
+      "reason": "The current attached cooperator entry retains only agent_id, lidar_path, feature count, and optional images."
+    },
+    {
+      "order": 6,
+      "location": "models/cooperative/detectors/cooperative_detector.py:_to_opencood_data_dict",
+      "change": "Populate prior_encoding.time_delay from the replay result when the evaluated model consumes it; otherwise document that the model is intentionally delay-unaware.",
+      "reason": "Leaving prior_encoding at zero creates a mismatch between stale inputs and model conditioning."
+    },
+    {
+      "order": 7,
+      "location": "trace alignment build step",
+      "change": "Create and validate a per-take mapping between MCAP time and dataset frame number, including monotonicity, duplicate, missing, and maximum alignment-error checks.",
+      "reason": "The scene YAML has only filename frame identity and no absolute MCAP timestamp."
+    }
+  ],
+  "resourceAudit": {
+    "officialRuntime": {
+      "python": "3.10",
+      "pytorch": "2.1.1",
+      "cuda": "12.1",
+      "baseImage": "pytorch/pytorch:2.1.1-cuda12.1-cudnn8-devel",
+      "keyDependencies": [
+        "mmengine>=0.10",
+        "mmcv>=2.0,<2.2",
+        "mmdet>=3.2,<3.4",
+        "mmdet3d>=1.4,<1.5",
+        "numpy<1.25",
+        "spconv-cu120",
+        "open3d",
+        "pyyaml"
+      ]
+    },
+    "missingReplayDependencies": [
+      "No MCAP parser is declared in requirements.txt.",
+      "No Protobuf runtime is declared for decoding Foxglove schemas.",
+      "No explicit zstd Python dependency is declared for compressed MCAP chunks."
+    ],
+    "gpuMemory": {
+      "officialMinimumPublished": false,
+      "documentedBatchDefaults": "Per-GPU defaults are 2 for some CoBEVT configurations and 4 for several other cooperative configurations.",
+      "safeAuditStatement": "No minimum VRAM can be claimed from the public artifacts. A smoke test should begin at batch_size=1 and record actual peak allocation for each checkpoint."
+    },
+    "storage": {
+      "coreArchivesCompressedBytes": 94259113671,
+      "mcapBytes": 90907217741,
+      "combinedCompressedCoreAndMcapBytes": 185166331412,
+      "previewMcapBytes": 8364348117,
+      "take9SceneZipBytes": 2501028472,
+      "take9SceneZipUncompressedPayloadBytes": 3646087405,
+      "take9ExpansionRatio": 1.4580023237216737,
+      "additionalConversionRisk": "PCD-to-BIN conversion writes additional point-cloud files and therefore requires storage beyond the extracted archives.",
+      "planningRule": "Storage plans must include archives, extracted sensor data, converted BIN files, selected MCAP files, checkpoints, caches, and outputs; archive size alone is insufficient."
+    }
+  },
+  "silentFallbackRisks": [
+    {
+      "location": "models/cooperative/datasets/transforms/cooperative_loading.py:LoadCooperativePointCloud.transform",
+      "behavior": "A broad except Exception block skips a cooperator and continues.",
+      "risk": "Missing, unreadable, or incompatible cooperator data can be silently converted into a lower-agent experiment.",
+      "requiredMitigation": "Fail closed in audited evaluation, or emit a structured failure record and exclude the sample under a preregistered rule. Report effective cooperator counts."
+    },
+    {
+      "location": "models/cooperative/datasets/coop_dataset.py:_lookup_delayed",
+      "behavior": "Delayed lookup clamps to the first available frame.",
+      "risk": "Large delays at a take boundary can silently reuse the first frame instead of representing no delivered message.",
+      "requiredMitigation": "Replay must distinguish not-yet-delivered, expired, dropped, and valid stale messages."
+    },
+    {
+      "location": "models/cooperative/datasets/coop_dataset.py:_build_valid_coops",
+      "behavior": "If delayed lookup returns None, the current cooperator frame remains selected.",
+      "risk": "A failed delay lookup can silently become a synchronized message.",
+      "requiredMitigation": "A missing replay lookup must never fall back to the current frame."
+    },
+    {
+      "location": "models/cooperative/detectors/cooperative_detector.py:_to_opencood_data_dict",
+      "behavior": "Missing prior_encoding is replaced by zeros.",
+      "risk": "The evaluated model may receive stale features while being told the delay is zero.",
+      "requiredMitigation": "Require explicit prior encoding for delay-aware configurations or record that the model is delay-unaware."
+    },
+    {
+      "location": "mini bundled PKL",
+      "behavior": "The release contains stale OPV2V-labeled PKLs and absent .bin targets.",
+      "risk": "A smoke test can appear to use the current converter while actually evaluating a different ego-role and metadata contract.",
+      "requiredMitigation": "Regenerate PKLs and fingerprint them before any result is accepted."
+    }
+  ],
+  "prohibitions": [
+    "Do not claim exact CooperScene latency replay from the audited public take 9 MCAP; no independent latency field was observed.",
+    "Do not claim packet-loss replay, packet-level burst analysis, or loss-episode reconstruction; no packet event or named loss field was observed.",
+    "Do not claim jitter replay; no named jitter field was observed.",
+    "Do not assign Vector3.y or Vector3.z to latency, loss, or jitter without primary producer-schema evidence and a new binary audit.",
+    "Do not call throughput-derived serialization completion time a measured end-to-end latency.",
+    "Do not multiply throughput by an invented one-minus-loss term or inject a synthetic loss process and label it CooperScene measured loss.",
+    "Do not infer PHY or MAC causes, resource scheduling, RSSI, congestion-control state, or radio contention from the observed throughput channel alone.",
+    "Do not treat equal frame counts or sorted order as a verified MCAP-to-sensor alignment contract.",
+    "Do not use the bundled mini PKLs as evidence of the audited converter's current output.",
+    "Do not mix four-ego bundled mini PKLs with three-ego regenerated PKLs in a comparison.",
+    "Do not allow missing trace records, failed point-cloud loads, or delayed lookup failures to fall back silently to synchronized data.",
+    "Do not claim official Table 2 reproduction after replacing its scalar network model with a new trace scheduler.",
+    "Do not report a GPU-memory requirement that was not measured for the exact checkpoint, configuration, batch size, and hardware.",
+    "Do not redistribute CooperScene sensor data, annotations, traces, or derivatives under the repository's MIT code license; the dataset is CC BY-NC-SA 4.0.",
+    "Do not elevate the three decoded throughput values into a distributional claim about take 9 or the full dataset."
+  ],
+  "auditDisposition": {
+    "traceReplayFeasibility": "conditionally feasible for directed throughput-driven frame delivery",
+    "exactPublishedMetricsReplay": "not feasible from the audited take 9 MCAP for latency, packet loss, or jitter",
+    "minimumHonestExperimentLabel": "CooperScene directed-throughput-derived completion replay",
+    "blockingPrerequisites": [
+      "Regenerate and fingerprint PKLs under the audited converter contract.",
+      "Build and validate a per-take MCAP-to-frame alignment sidecar.",
+      "Implement a link-aware scheduler with explicit missing and boundary states.",
+      "Remove or instrument silent synchronized-data and cooperator-drop fallbacks.",
+      "Run a batch_size=1 CUDA smoke test with one published checkpoint.",
+      "Freeze payload semantics and workload-extrapolation limits before evaluating perception outcomes."
+    ]
+  }
+}

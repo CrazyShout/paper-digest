@@ -1,0 +1,50 @@
+{
+  "candidateId": "coalition-outsider-counterfactual-veto",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb3d-072d-7a73-9809-e6919125f44c",
+  "reviewedAt": "2026-08-01T03:06:58Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "反事实策略评估、Do No Harm、最小扰动控制、个体与社会福利权衡均有直接一手先例，MDrive 也已有 negotiation 与 no-negotiation 模式。因此，全局收益掩盖第三方负担这一动机本身不新。可保留的残差是把第一次真实协商消息前冻结的消息参与者和明确受益者定义为 coalition，把同一预处理 roster 的补集定义为 outsider，并要求 actor-wise burden ledger 相较强 welfare、Do-No-Harm 和 min-disruption 基线实际改变准入或 veto 决策。该 membership-conditioned 决策增量在所查来源中未出现，但若不改变决策，就很容易被解释为既有反事实安全约束的分组重命名。",
+    "feasibility": "MDrive 固定仓库已经能构造 negotiation 和 no-negotiation 运行，并传递 CARLA provider 与 traffic-manager seeds，说明两策略可执行。核心难点是它们目前是独立 closed-loop runs，而非从首次消息前完整序列化的 world、controller、LLM history、随机事件流和 actor identity 恢复；相同 seed 不能证明共同前缀。多轮 coalition 变化、actor 退出或替换及第二背景响应 cohort 进一步增加识别风险，故仍有重大实现缺口。",
+    "success-probability": "成功需要自然出现 coalition 获益与 outsider 可归因受损的联合事件，还要让 actor-wise ledger 给出不同于 Do-No-Harm、welfare 或 min-disruption 的准入决定，并在第二响应模型下维持 outsider 风险改善且 coalition 损失受限。当前一手证据只说明密集交通中协商可能整体变差，没有给出这组三重条件的发生率，因此正结果概率受多个未经测量的门约束。",
+    "impact": "若成员身份条件化的 veto 在强基线之外稳定改善 outsider 风险，它可直接影响协同协商协议的准入、fallback 和报告规范，并迫使评测保留退出、碰撞和延误的逐 actor 后果。影响仍局限于可定义 coalition 的协议和响应模型；若结果随背景策略翻转或只是更保守，不能外推为一般多车公平或安全原则。",
+    "comparison-readiness": "候选明确列出 no-negotiation、min-disruption、welfare 或 SVO、Do No Harm、outsider selector、no-treatment twin、actor identity placebos 和第二响应 cohort，并把相对强基线的决策分歧设为必要条件。其比较设计足以直接检验组合风险。主要未决项是共同前缀恢复尚未验证，以及 coalition loss bound、burden 阈值和各强基线的等预算实现仍需在冻结前落地。"
+  },
+  "strongestObjection": "把非参与 actor 单列后施加 harm constraint，功能上可能就是逐 actor 的 Do No Harm，再用 coalition 标签进行聚合；counterfactual policy evaluation、minimally disruptive control 和 welfare baselines 已覆盖其决策原语。若这些强基线在同一预算与信息集上选择相同动作，outsider ledger 只增加解释界面，不构成新的可替代性缺口。综合判断：候选的可辩护新意是通信 membership、共同前缀 actor identity 和决策增量三者的联合约束，不是第三方 harm 或反事实比较本身。它目前比较设计成熟，但共同前缀机制和自然联合事件均未实证，且最关键的 novelty gate 是能否在强 Do-No-Harm 与 welfare 基线之外改变准入决定。",
+  "requiredExperiment": "在预注册的自然交互模板中，于第一次真实协商消息前冻结 roster、coalition、完整世界与控制器状态，并证明 negotiation、fallback 与 no-treatment twin 的共同前缀哈希和 actor identity 完全一致。成对运行 negotiation、no-negotiation、Do-No-Harm、min-disruption、welfare 或 SVO 及 outsider-veto，保留退出与碰撞 actor 的结局；随后在第二个反应式背景策略 cohort 复现。必要结果不是平均指标更好，而是 outsider-veto 在相同信息和预算下改变至少一个强基线的准入决定，同时降低 outsider 风险且满足预注册 coalition 损失上限。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2605.10904",
+      "finding": "MDrive 含 112 个 interaction-rich reactive 场景，并报告协商在复杂密集交通中可能降低表现；论文没有冻结首次消息前 coalition 或给出 outsider 的逐 actor 反事实账本。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "finding": "固定提交的 run_custom_eval.py 可加入 no-negotiation 运行并设置 CARLA 与 traffic-manager seeds，但实现是运行矩阵而不是从一个已验证的预消息快照分叉，也未建立 actor identity ledger。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v242/vaskov24a.html",
+      "finding": "Do No Harm 已用相对于替代安全策略的反事实 harm constraint 约束自动驾驶策略，直接覆盖不让他者承担因果伤害的决策原语；它未按通信 membership 补集定义 outsider。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2003.11919",
+      "finding": "Counterfactual Policy Evaluation 已在执行前模拟不同他车行为，并显化自车策略对周围车辆的因果影响，因此 paired counterfactual admission 不是本候选独有。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2303.05991",
+      "finding": "最小扰动协同换道已针对任意数量 CAV 优化交通流扰动，构成直接的 outsider burden 或 disruption 强基线。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2604.20231",
+      "finding": "该混合交通工作同时建模个体与系统效用，并用边际效用分配协调收益，说明个体负担和社会福利的权衡已有并发实现；未见预消息 membership-conditioned veto。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "25b3f8af5e717a028aa02d95251459761fea053c9e02489e5514424662a336be"
+}

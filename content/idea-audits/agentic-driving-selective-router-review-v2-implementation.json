@@ -1,0 +1,29 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "05aee8a9-d339-45a8-a801-b7b29939e44e",
+  "reviewedAt": "2026-08-01T04:15:18Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "潜在结果、OPE、CRM 与 learning-to-defer 已成熟，AutoVLA 也已训练 trajectory-only 与 CoT 模式。候选保留的新增量是先证明 prompt-level fast/slow treatment 稳定，再用完整配对驾驶净收益检验 complexity-benefit 符号错配是否改变同预算部署排序；这个识别合同有领域针对性，但 forced branches 是研究者构造处理而非官方部署机制。",
+    "feasibility": "固定 AutoVLA 代码提交、NAVSIM agent、action tokenizer、PDM scorer 和公开 checkpoint 均有入口，静态同观测配对比闭环 twin 更可控。扣分来自当前官方推理仅以 use_cot 切换两套 prompt，use_cot=true 仍允许按需直接输出，且 predict 默认 do_sample=true；没有 ForcedBranchAdapter、统一 grammar 合规器或 deterministic runner。checkpoint 为单个约 16.3 GB 的 pickle-based ckpt，模型卡缺少许可证元数据，代码仅允许学术/非营利研究且禁止转移衍生软件；还需 nuPlan/NAVSIM 数据、metric cache、Python 3.9 与大量固定依赖，实际显存和完整 450+ 独立 scene 生成成本未 smoke。",
+    "success-probability": "95% 分支合规、两套 prompt 的分支内等效、branch 间稳定差异、跨 decoding 稳定、至少 300 scene 的符号错配以及最终预算排序变化是连续硬门。官方 adaptive 行为没有强制 slow 保证，prompt 与输出长度会改变上下文和失败率，因此 branch contract 很可能先失败；即使 treatment 成立，复杂度或置信度也可能已近似单调解释净收益，或完整账本不改变任何部署结论。",
+    "impact": "若完整配对真值确实改变同预算路由排序，能直接改进驾驶 VLA 的路由监督与评测。没有可重复闭环 twin 时，结果只能说明 NAVSIM 冻结观测下的规划和计算分配，墙钟时延不能解释等待期间的真实安全，因此影响范围中等。",
+    "comparison-readiness": "always-fast/slow、官方 adaptive、随机、complexity、confidence、L2D、benefit predictor、oracle 与 OPE 家族覆盖充分，预算匹配、unsupported strata 和失败计分也写得清楚。主要未闭合项是 Cognitive Dual-Process 无官方 checkpoint、forced prompt 文本与 equivalence margins 尚未冻结、安全优先层级效用的具体边界未实现，checkpoint revision/hash 与模型许可也未记录。"
+  },
+  "strongestObjection": "研究所需的 fast/slow treatment 在固定代码中并不存在：官方只有 prompt 配置开关和随机生成路径。若四个研究者 prompt 不能在同一 grammar、预测时域和共享 decoding 下形成分支内等效且分支间稳定的处理，后续 paired benefit、router ranking 和 OPE 审计都没有可识别对象。",
+  "requiredExperiment": "在下载任何大规模 NAVSIM split 后，先固定 checkpoint hash、代码许可与单 scene 显存，选取按 log 隔离的 30-50 scenes，交叉两套 forced-fast、两套 forced-slow、官方 adaptive、greedy 重复与共享 RNG sampling，并完整计入非法输出。只有每分支合规、同分支 prompt 等效、order-swap/no-op 稳定且 branch 间差异显著超过重复与 prompt-by-branch 交互时，才扩展到 150-scene validity 和 300-scene confirmatory ledger；小规模门失败即可证伪实现前提。",
+  "evidenceReopened": [
+    "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+    "https://huggingface.co/Zewei-Zhou/AutoVLA",
+    "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html"
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "ac3c66ceed6e88de05e5e265497592450a273c1035e07abbfc3983d9fe879bd7"
+}

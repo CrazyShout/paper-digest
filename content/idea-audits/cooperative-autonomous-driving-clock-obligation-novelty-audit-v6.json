@@ -1,0 +1,1384 @@
+{
+  "schemaVersion": "1.0",
+  "auditId": "cooperative-autonomous-driving-clock-obligation-novelty-audit-v6",
+  "candidateId": "cross-domain-freshness-obligation",
+  "auditedAt": "2026-07-31",
+  "cutoffDate": "2026-07-31",
+  "auditRole": {
+    "role": "independent-novelty-collision-researcher",
+    "candidateScoringPerformed": false,
+    "acceptanceThresholdsConsulted": false,
+    "acceptanceThresholdsInferred": false,
+    "scopeNote": "本审计只判断严格功能等价、局部碰撞和剩余差异，不给候选评分，不猜测或讨论任何接受阈值。"
+  },
+  "candidate": {
+    "name": "cross-domain freshness obligation toolchain for autonomous driving, ROS, and V2X",
+    "strictScope": "面向自动驾驶、ROS 和 V2X 源码中的行为改变型 freshness、timeout 或 deadline subtraction。工具链只允许两类可判定语义：由同一接收端时钟采样的 receipt-time freshness，或由显式、当前有效且保守的跨域 clock-relation certificate 支持的 source-event age。其余情况必须返回 uncertain 并 fail closed。",
+    "requiredArtifacts": [
+      "固定仓库、固定 commit、固定源码路径、固定表达式和行为分支的审计证据。",
+      "同一可见输入、同一源码表达式结果、但相反 reference-clock deadline truth 的可执行 paired-world witness。",
+      "缺失、错域、过期、relock generation 不匹配、边界次序无效或阈值区间跨越时返回 uncertain 的 fail-closed 分支。",
+      "同一固定源码路径上的修复前后对照，以及覆盖 missing relation、wrong domain、expired relation、wrong relock generation、invalid bounds 等错误的 mutant suite。"
+    ],
+    "excludedBroadIdeas": [
+      "泛称时间同步、PTP、NTP、TSN 或 clock accuracy。",
+      "泛称 timestamp provenance、timestamp quality metadata 或 interval time。",
+      "泛称 static analysis、taint analysis、type checking 或 CodeQL/Semgrep rule。",
+      "泛称 runtime verification、timed systems、fault monitor 或安全认证。",
+      "只检测 replay、sequence freshness 或消息重复，而不处理物理 source-event age 的跨域可比性。",
+      "只提出 clock relation、conversion function 或时间戳类型，而不绑定固定源码行为、paired witness、fail-closed repair 和 mutants。"
+    ]
+  },
+  "repositoryEvidence": [
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-provenance-dossier-v3.json",
+      "sha256": "6c801b9c509906394f1e7734b1820a66a85cb6cfc253310a3d0f3b10959beb9a",
+      "use": "提供 affine clock non-identifiability、区间 age 语义和最小 provenance contract。",
+      "boundary": "是数学和契约证据，不是现有工具的新颖性证据，也不证明真实部署中时钟不同。"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-public-path-audit-v4.json",
+      "sha256": "98da4230981ce593b6081ffebc8428ee4640c19845baf207a7923a43d69eb694",
+      "use": "提供两个固定公开行为路径和三个同域 receipt-time 对照。",
+      "fixedPositivePaths": [
+        {
+          "caseId": "POS-01-AUTOWARE-VTL",
+          "repository": "autowarefoundation/autoware_universe",
+          "commit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+          "sourcePath": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "subtractionLines": [
+            459,
+            468
+          ],
+          "behaviorLines": [
+            269,
+            299
+          ],
+          "sourceUrl": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp#L459-L468",
+          "expression": "clock_->now() - rclcpp::Time(state.stamp)",
+          "behavior": "timeout 可使 planner 插入 stop velocity。"
+        },
+        {
+          "caseId": "POS-02-CARMA-GNSS",
+          "repository": "usdot-fhwa-stol/carma-platform",
+          "commit": "1c774df099ce23e77394758969bf86b0e5f40863",
+          "sourcePath": "localization_manager/src/LocalizationManager.cpp",
+          "subtractionLines": [
+            263,
+            287
+          ],
+          "sourceUrl": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/localization_manager/src/LocalizationManager.cpp#L263-L287",
+          "expression": "timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_)",
+          "behavior": "timeout 信号进入 localization state transition table。"
+        }
+      ],
+      "boundary": "只支持 public path 中缺少显式 relation 证据，不支持实际时钟不一致、漏洞、安全后果或部署风险结论。"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-public-path-replay-v5.json",
+      "sha256": "d82bc07378bf5d49f5765291689a58b517b5133f14a3805f39f3985adab07ef8",
+      "use": "提供两个固定表达式的机械提取、源码哈希、paired-world witnesses、同域 control、receipt-time repair 和 threshold-straddling uncertain control。",
+      "witnessSummary": [
+        {
+          "caseId": "POS-01-AUTOWARE-VTL",
+          "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3",
+          "sourceExpressionTimeout": true,
+          "referenceTruths": [
+            true,
+            false
+          ]
+        },
+        {
+          "caseId": "POS-02-CARMA-GNSS",
+          "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9",
+          "sourceExpressionTimeout": true,
+          "referenceTruths": [
+            true,
+            false
+          ]
+        }
+      ],
+      "boundary": "适配器只重放减法、单位转换、比较器和已记录分支，不是上游 ROS 2 栈的完整构建或端到端执行。"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v5.json",
+      "sha256": "8cff1c8034d105121360da9e93bb96834fad88f7d1516c52e5b7804e71fea9ea",
+      "use": "界定当前 pilot 的可保留实现证据和方法学阻断项。",
+      "blockingDefect": "rate uncertainty 使用一阶对称 half-width，而不是在合法 rate endpoints 上精确逆仿射求界；独立复算最大 underreach 为 0.014910638 ms。",
+      "proceduralBlocker": "没有 external timestamp 或 immutable pre-run commit，不能声称 preregistration。",
+      "boundary": "当前只能保留构造内 witness、分支行为和有限总体结果；严格 identified-set、部署风险和 utility 主张被阻断。"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-freshness-obligation-pilot-v6.json",
+      "sha256": "9ea7b7319f9e28e2360b185d4a1ee2f43c55fa8b2967c64cf948f97de9a2fa03",
+      "use": "附加检查，用于确认当前 obligation 原型已有两个 path adapters、C++17 typed positive/negative compile cases、repair closures 和 mutant branches。",
+      "boundary": "该原型明确不是 C++ AST extractor、ROS message-type checker、production patch 或 ecosystem prevalence study。"
+    }
+  ],
+  "exactEquivalenceTest": {
+    "allConditionsRequired": true,
+    "completePackageName": "four-part source-bound freshness-obligation package",
+    "conditions": [
+      {
+        "id": "E1",
+        "name": "fixed-source-path obligation audit",
+        "requirement": "工具在固定 repository、commit 和 source path 上，机械追踪 incoming timestamp、local now、subtraction、threshold 和行为改变分支；并区分同域 local receipt-time 与需要跨域证明的 source-event age，而不是仅匹配文本或依赖人工结论。"
+      },
+      {
+        "id": "E2",
+        "name": "executable opposite-truth witness",
+        "requirement": "对每个命中路径生成可执行 witness：两个 worlds 保持可见 now、stamp、threshold、comparator、path identity 和源码表达式结果完全相同，但在合法单调 clock mappings 下产生相反 reference deadline truth；witness 绑定源码片段或语义适配器哈希。"
+      },
+      {
+        "id": "E3",
+        "name": "fail-closed semantic closure",
+        "requirement": "修复必须显式选择 time-since-local-receipt 或 source-event-age。前者要求两个 operands 来自同一 local receipt clock；后者要求 source/target domain identity、timescale/epoch、保守 offset/rate interval、validity interval 和 relock generation。缺失、错域、过期、relock mismatch、malformed 或 threshold-straddling relation 返回 uncertain，且不得静默转为 fresh 或 timeout。"
+      },
+      {
+        "id": "E4",
+        "name": "differential repair and mutant evidence",
+        "requirement": "同一固定路径有可构建或可执行的 before/after repair 对照，并有 mutant suite 至少覆盖 missing relation、wrong source/target domain、expired relation、wrong relock generation、invalid interval order 和不保守 endpoint；测试证明 mutants 被 obligation gate 拒绝。"
+      }
+    ],
+    "statusVocabulary": {
+      "full": "一手来源明确实现该条件。",
+      "partial": "一手来源实现相邻机制，但缺少条件中的至少一个实质要素。",
+      "none": "未在核验的一手来源中发现该条件。"
+    },
+    "collisionRule": "只有同一 prior work 或同一公开集成系统在 cutoffDate 之前同时达到 E1、E2、E3、E4 的 full，才构成完整功能碰撞。不同来源分别覆盖子机制不构成同一作品的完整碰撞，但会压缩可声称范围。"
+  },
+  "searchAudit": {
+    "dateRange": "foundational sources through 2026-07-31",
+    "searchDate": "2026-07-31",
+    "method": "多 query-family web discovery，随后只用正式 proceedings/publisher 页面、标准组织页面、官方文档、官方代码仓库或作者提交的 arXiv 页面逐条核验。二手页面只用于发现，不作为等价性结论的依据。",
+    "resultCountPolicy": "检索接口未提供稳定的 per-query total hit count，并会截断或重排结果。所有 queryRuns 的 resultCount 因此为 null，并明确记录限制；没有把展示条数伪装成总命中数。",
+    "familyCount": 10,
+    "queryRunCount": 30,
+    "verifiedPrimarySourceCount": 27
+  },
+  "queryRuns": [
+    {
+      "id": "Q01",
+      "sourceFamily": "exact-concept-and-recent-2026",
+      "query": "\"cross-domain\" timestamp freshness clock relation certificate",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "检索接口不提供总命中数；结果被截断。核验后未发现完整 E1-E4。"
+    },
+    {
+      "id": "Q02",
+      "sourceFamily": "exact-concept-and-recent-2026",
+      "query": "\"clock domain\" timestamp subtraction static analysis freshness deadline",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；发现 clock metadata、typed clocks 和 generic static analysis，相互不能拼成同一 prior work。"
+    },
+    {
+      "id": "Q03",
+      "sourceFamily": "exact-concept-and-recent-2026",
+      "query": "\"Temporal Integrity Metadata\" clock domain uncertainty 2026 IETF",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；直接核验 draft-ackerman-temporal-integrity-metadata-00。"
+    },
+    {
+      "id": "Q04",
+      "sourceFamily": "ros-time-semantics",
+      "query": "site:design.ros2.org/articles/clock_and_time.html ROS 2 clock time semantics",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "站点定向查询；核验 ROS 2 官方设计文档。"
+    },
+    {
+      "id": "Q05",
+      "sourceFamily": "ros-time-semantics",
+      "query": "site:github.com/ros2/rclcpp Time operator subtraction clock type exception",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "GitHub 搜索结果不提供完整总数；核验 rclcpp 官方代码仓库和生成 API 文档。"
+    },
+    {
+      "id": "Q06",
+      "sourceFamily": "ros-time-semantics",
+      "query": "site:docs.ros2.org rclcpp Time different time sources subtraction",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "rolling 文档受访问控制，改用官方 latest API 页面和官方仓库交叉核验。"
+    },
+    {
+      "id": "Q07",
+      "sourceFamily": "distributed-clock-uncertainty-and-intervals",
+      "query": "distributed systems clock uncertainty interval timestamp official paper TrueTime Sundial",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；核验 Spanner/TrueTime、Sundial 和 uncertainty-aware timing stack。"
+    },
+    {
+      "id": "Q08",
+      "sourceFamily": "distributed-clock-uncertainty-and-intervals",
+      "query": "site:usenix.org clock synchronization uncertainty interval distributed systems paper",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "USENIX 定向查询；核验 OSDI 2020 Sundial 和 NSDI 2022 Graham 页面，后者未列入最近 27 项，因为只增加 clock-drift partial collision。"
+    },
+    {
+      "id": "Q09",
+      "sourceFamily": "distributed-clock-uncertainty-and-intervals",
+      "query": "site:pmc.ncbi.nlm.nih.gov Lab Streaming Layer time synchronization 2025",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "站点定向查询；核验正式论文、官方代码和官方文档。"
+    },
+    {
+      "id": "Q10",
+      "sourceFamily": "ptp-ntp-tsn",
+      "query": "site:standards.ieee.org IEEE 1588-2019 precision clock synchronization protocol official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "IEEE 页面提供摘要但标准全文可能需要访问权限；只依据公开官方摘要作边界结论。"
+    },
+    {
+      "id": "Q11",
+      "sourceFamily": "ptp-ntp-tsn",
+      "query": "site:standards.ieee.org IEEE 802.1AS-2025 timing synchronization time-sensitive applications official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "IEEE 页面提供公开摘要；未把未公开全文中的可能内容推定为功能。"
+    },
+    {
+      "id": "Q12",
+      "sourceFamily": "ptp-ntp-tsn",
+      "query": "site:linuxptp.org/documentation ptp4l phc2sys clock domain time scale official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方工具文档定向查询；核验 domain、clock identity、timescale offset 和 sanity checks。"
+    },
+    {
+      "id": "Q13",
+      "sourceFamily": "v2x-freshness-and-replay",
+      "query": "site:etsi.org V2X freshness replay protection generationTime maximum transmission delay",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "ETSI 定向查询；核验公开 PDF 中 REPLAY_DETECTION_TIME 和 timestamp replay clauses。"
+    },
+    {
+      "id": "Q14",
+      "sourceFamily": "v2x-freshness-and-replay",
+      "query": "site:autosar.org Secure Onboard Communication freshness value replay R25-11",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "AUTOSAR 定向查询；核验 current R25-11 SecOC PDF。"
+    },
+    {
+      "id": "Q15",
+      "sourceFamily": "v2x-freshness-and-replay",
+      "query": "site:etsi.org ITS timestamp replay GNSS spoofing expired old messages",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "ETSI 定向查询；核验 TS 102 731 和 TR 102 893。"
+    },
+    {
+      "id": "Q16",
+      "sourceFamily": "typed-units-and-time-apis",
+      "query": "site:eel.is/c++draft time_point Clock subtraction different clocks",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "标准草案定向查询；核验同一 Clock template 的 subtraction 和 same-epoch clock requirements。"
+    },
+    {
+      "id": "Q17",
+      "sourceFamily": "typed-units-and-time-apis",
+      "query": "site:doc.rust-lang.org std time Instant opaque monotonic compare official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方 Rust 文档定向查询；作为 typed/opaque same-process time 邻近项，不列入 27 项最近来源，因为其跨域相关性弱于 C++/rclcpp。"
+    },
+    {
+      "id": "Q18",
+      "sourceFamily": "typed-units-and-time-apis",
+      "query": "PHYSFRAME type checking physical frames robotic systems official paper",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；核验 ESEC/FSE 2021 DOI 和作者 arXiv。"
+    },
+    {
+      "id": "Q19",
+      "sourceFamily": "static-analysis-codeql-semgrep",
+      "query": "site:codeql.github.com/docs C++ data flow custom query official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方 CodeQL 文档定向查询；没有找到 first-party clock-freshness obligation query。"
+    },
+    {
+      "id": "Q20",
+      "sourceFamily": "static-analysis-codeql-semgrep",
+      "query": "site:semgrep.dev/docs taint mode data flow analysis official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方 Semgrep 文档定向查询；没有找到 first-party clock-domain freshness rule。"
+    },
+    {
+      "id": "Q21",
+      "sourceFamily": "static-analysis-codeql-semgrep",
+      "query": "HAROS ROS static analysis source model extraction official paper GitHub",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；核验 HAROS paper 和官方代码，官方仓库说明 ROS1 版本已停止开发。"
+    },
+    {
+      "id": "Q22",
+      "sourceFamily": "runtime-verification-and-timed-systems",
+      "query": "RTAMT Online Robustness Monitors from STL ROS official paper code",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；核验作者 arXiv 和官方 rtamt4ros repository。"
+    },
+    {
+      "id": "Q23",
+      "sourceFamily": "runtime-verification-and-timed-systems",
+      "query": "StreamLAB Stream-based Monitoring of Cyber-Physical Systems CAV 2019",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "核验 Springer CAV 2019 正式页面；未发现 clock-relation certificate 或 source-bound witness。"
+    },
+    {
+      "id": "Q24",
+      "sourceFamily": "runtime-verification-and-timed-systems",
+      "query": "monitoring ROS2 from requirements FRET Ogma hard real-time 2022",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "无稳定总数；作为需求到 monitor 的 adjacent work 检查，相关性低于 RTAMT/StreamLAB，未列入最近 27 项。"
+    },
+    {
+      "id": "Q25",
+      "sourceFamily": "autonomous-driving-fault-and-deadline-monitors",
+      "query": "site:autowarefoundation.github.io autoware topic state monitor timeout diagnostics official",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方 Autoware 文档定向查询；核验 subscription timeout 和 rate monitor。"
+    },
+    {
+      "id": "Q26",
+      "sourceFamily": "autonomous-driving-fault-and-deadline-monitors",
+      "query": "site:apollo.baidu.com/docs monitor module topic timeout autonomous driving",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "Apollo 官方文档列出 channel/latency/localization monitors，但公开检索片段不足以证明跨域 freshness obligation，因此未作更强结论。"
+    },
+    {
+      "id": "Q27",
+      "sourceFamily": "autonomous-driving-fault-and-deadline-monitors",
+      "query": "site:autowarefoundation.github.io system error monitor diagnostic timeout emergency state",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "官方 Autoware 文档定向查询；确认行为改变型 timeout monitor，但它监控本地接收/heartbeat，不建立 remote event-age relation。"
+    },
+    {
+      "id": "Q28",
+      "sourceFamily": "collaborative-perception-asynchrony-and-multiclock-driving",
+      "query": "\"Spatiotemporal Feature Alignment and Weighted Fusion\" network synchronization age of information",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "核验 2026-02 arXiv v1；未找到作者公开代码或正式 venue 页面。"
+    },
+    {
+      "id": "Q29",
+      "sourceFamily": "collaborative-perception-asynchrony-and-multiclock-driving",
+      "query": "\"Multiclock Constraint System Modelling and Verification for Ensuring Cooperative Autonomous Driving Safety\"",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "核验 2020 正式 DOI 全文页面；工作位于 SysML/CCSL design-time model 层。"
+    },
+    {
+      "id": "Q30",
+      "sourceFamily": "collaborative-perception-asynchrony-and-multiclock-driving",
+      "query": "CoBEVFlow official NeurIPS 2023 asynchronous collaborative perception code",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "limitation": "核验 NeurIPS 正式页面、arXiv 和官方代码。"
+    }
+  ],
+  "sourceAttempts": [
+    {
+      "sourceFamily": "exact-concept-and-recent-2026",
+      "status": "searched-and-verified",
+      "domains": [
+        "datatracker.ietf.org",
+        "arxiv.org",
+        "github.com"
+      ],
+      "outcome": "TIM draft 是 provenance/domain/uncertainty 的最强新近碰撞；Han et al. 是 collaborative-perception clock mapping plus AoI 的最强新近领域碰撞。未发现完整 E1-E4。"
+    },
+    {
+      "sourceFamily": "ros-time-semantics",
+      "status": "searched-and-verified",
+      "domains": [
+        "design.ros2.org",
+        "docs.ros2.org",
+        "github.com/ros2"
+      ],
+      "outcome": "ROS 2 明确 System/Steady/ROS time、jump 和 clock-type checks；message Time 构造仍可由调用者指定本地 clock type，不构成跨主机 relation certificate。"
+    },
+    {
+      "sourceFamily": "distributed-clock-uncertainty-and-intervals",
+      "status": "searched-and-verified",
+      "domains": [
+        "research.google",
+        "usenix.org",
+        "arxiv.org",
+        "pmc.ncbi.nlm.nih.gov",
+        "github.com/sccn"
+      ],
+      "outcome": "TrueTime、Sundial、uncertainty-aware timing stack 和 LSL 已占据 uncertainty interval、bounded sync 和 clock mapping。未发现固定 ROS/V2X source subtraction audit 与 witness/mutant closure。"
+    },
+    {
+      "sourceFamily": "ptp-ntp-tsn",
+      "status": "searched-and-verified-with-access-limits",
+      "domains": [
+        "standards.ieee.org",
+        "rfc-editor.org",
+        "linuxptp.org"
+      ],
+      "outcome": "标准和工具覆盖同步、domain、clock identity、timescale、dispersion、uncertainty 和 discontinuity。IEEE 全文访问受限，因此只依据官方公开摘要，不推定未公开条款。"
+    },
+    {
+      "sourceFamily": "v2x-freshness-and-replay",
+      "status": "searched-and-verified",
+      "domains": [
+        "etsi.org",
+        "autosar.org"
+      ],
+      "outcome": "ETSI 已规定 timestamp-based replay/freshness checks，AUTOSAR SecOC 已规定 freshness-value acceptance/drop。它们没有提供源码级 cross-domain event-age obligation 四件套。"
+    },
+    {
+      "sourceFamily": "typed-units-and-time-apis",
+      "status": "searched-and-verified",
+      "domains": [
+        "eel.is",
+        "docs.ros2.org",
+        "doc.rust-lang.org",
+        "dl.acm.org",
+        "arxiv.org"
+      ],
+      "outcome": "标准库和 ROS 已有 clock-type protection，PHYSFRAME 已证明 ROS domain-specific type inference 可落地。不能声称 typed time 或 ROS static type checking 本身新颖。"
+    },
+    {
+      "sourceFamily": "static-analysis-codeql-semgrep",
+      "status": "searched-and-verified",
+      "domains": [
+        "codeql.github.com",
+        "docs.semgrep.dev",
+        "github.com/git-afsantos",
+        "arxiv.org"
+      ],
+      "outcome": "CodeQL、Semgrep 和 HAROS 提供 source-to-sink/dataflow/model extraction substrate；未找到官方 clock-freshness obligation implementation。"
+    },
+    {
+      "sourceFamily": "runtime-verification-and-timed-systems",
+      "status": "searched-and-verified",
+      "domains": [
+        "link.springer.com",
+        "arxiv.org",
+        "github.com/nickovic"
+      ],
+      "outcome": "StreamLAB 和 RTAMT4ROS 已覆盖 timed/asynchronous stream monitoring 和 ROS temporal logic monitors；输入时间语义/clock relation 仍由模型或用户提供。"
+    },
+    {
+      "sourceFamily": "autonomous-driving-fault-and-deadline-monitors",
+      "status": "searched-and-verified",
+      "domains": [
+        "autowarefoundation.github.io",
+        "github.com/autowarefoundation",
+        "apollo.baidu.com"
+      ],
+      "outcome": "Autoware/Apollo 已有 topic、heartbeat、latency 和 error monitors。可核验的 Autoware topic monitor 是 receipt-time timeout precedent，不是跨域 source-event age certificate gate。"
+    },
+    {
+      "sourceFamily": "collaborative-perception-asynchrony-and-multiclock-driving",
+      "status": "searched-and-verified",
+      "domains": [
+        "onlinelibrary.wiley.com",
+        "proceedings.neurips.cc",
+        "arxiv.org",
+        "github.com/MediaBrain-SJTU"
+      ],
+      "outcome": "Wang et al. 2020 覆盖 cooperative-driving multiclock model verification，CoBEVFlow 覆盖 asynchronous feature alignment，Han et al. 2026 覆盖 clock sync/AoI/uncertainty；均不实现完整 E1-E4。"
+    }
+  ],
+  "verifiedNearestWorks": [
+    {
+      "id": "S01",
+      "title": "Temporal Integrity Metadata (TIM) for Infrastructure Telemetry",
+      "year": 2026,
+      "sourceType": "IETF individual Internet-Draft, work in progress, not an IETF standard",
+      "links": {
+        "official": "https://datatracker.ietf.org/doc/draft-ackerman-temporal-integrity-metadata/",
+        "fullText": "https://datatracker.ietf.org/doc/html/draft-ackerman-temporal-integrity-metadata-00"
+      },
+      "primaryContribution": "定义 event/emission/ingestion time、sync state、uncertainty interval、time domain、grandmaster/source metadata 和 confidence classes；跨域 correlation 必须识别 domains、应用 conversion 和 delay correction、合并 uncertainty，且不得静默直接比较不同 domains。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "强碰撞于 timestamp provenance、domain metadata、uncertainty interval、cross-domain conversion 和 degraded/sequence-only semantics。",
+      "remainingDifference": "不是 ROS/V2X source audit；没有行为改变型 freshness/deadline sink、固定 path、same-input/opposite-truth witness、repair patch 或 mutant suite；draft 也没有 certificate validity/relock generation 的候选完整约束。",
+      "verificationNote": "官方 datatracker 明确其为 -00 individual draft，2026-04-15 更新，2026-10-17 过期，不能称已发布 IETF 标准。"
+    },
+    {
+      "id": "S02",
+      "title": "Spatiotemporal Feature Alignment and Weighted Fusion in Collaborative Perception Enabled by Network Synchronization and Age of Information",
+      "year": 2026,
+      "sourceType": "arXiv preprint",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2602.13439"
+      },
+      "primaryContribution": "为 Internet of Vehicles collaborative perception 连续估计车辆间 clock state，映射到 shared time reference，结合 network delay 计算 AoI，并用 synchronization/alignment uncertainty 和 AoI 加权 feature fusion。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "最强领域算法碰撞：unsynchronized clocks、shared reference、source freshness/AoI 和 uncertainty 已被明确联结。",
+      "remainingDifference": "没有 source-code subtraction audit、fail-closed obligation、opposite-truth witness、repair comparison 或 mutants；方法输出 estimated alignment/weights，而不是证据不足时禁止 freshness decision。",
+      "verificationNote": "arXiv 页面为 2026-02-13 v1；标题和 arXiv ID 的代码检索未发现作者公开 repository，不能声称没有任何私有代码。"
+    },
+    {
+      "id": "S03",
+      "title": "Multiclock Constraint System Modelling and Verification for Ensuring Cooperative Autonomous Driving Safety",
+      "year": 2020,
+      "sourceType": "peer-reviewed journal article",
+      "links": {
+        "formal": "https://onlinelibrary.wiley.com/doi/10.1155/2020/8830752",
+        "doi": "https://doi.org/10.1155/2020/8830752"
+      },
+      "primaryContribution": "为 cooperative autonomous driving 构建 SysML profile，将 state-machine model 转换为 CCSL multiclock constraints，以 bisimulation 证明 semantic preservation，并用 TimeSquare 模拟 overtaking case。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "标题和领域高度接近，明确处理 globally asynchronous/locally synchronous multiclock cooperative-driving verification，并生成 executable design traces。",
+      "remainingDifference": "对象是 design-time SysML/CCSL model，不是 ROS/V2X implementation path；没有 incoming stamp/local now dataflow、reference-truth identifiability witness、relation certificate gate、source repair 或 candidate mutant suite。",
+      "verificationNote": "正式全文明确使用 TimeSquare 进行模型执行，不应把模型 trace 误写为固定生产源码 replay。"
+    },
+    {
+      "id": "S04",
+      "title": "ROS 2 Clock and Time design",
+      "year": 2018,
+      "sourceType": "official ROS 2 design document",
+      "links": {
+        "official": "https://design.ros2.org/articles/clock_and_time.html"
+      },
+      "primaryContribution": "定义 SystemTime、SteadyTime、ROSTime、/clock override、time jumps、zero-as-uninitialized 和 clock-type comparison expectations；承认 ROS network timestamps 依赖 synchronized system clocks。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "占据 ROS clock semantics、jump handling、time-source type separation 和 uninitialized fail behavior。",
+      "remainingDifference": "不携带 per-message producer domain/relation certificate，不审计 freshness sinks，也不生成 witness、repair 或 mutants。",
+      "verificationNote": "文档区分 real time 与 real-time deadlines；不能把它当 deadline-obligation 工具。"
+    },
+    {
+      "id": "S05",
+      "title": "rclcpp::Time API and source",
+      "year": 2026,
+      "yearBasis": "living documentation snapshot verified at the 2026-07-31 cutoff, not the first release year of rclcpp",
+      "sourceType": "official ROS 2 API and code",
+      "links": {
+        "api": "https://docs.ros2.org/latest/api/rclcpp/classrclcpp_1_1Time.html",
+        "code": "https://github.com/ros2/rclcpp"
+      },
+      "primaryContribution": "Time comparisons/subtraction reject different rcl clock types at runtime；builtin_interfaces::msg::Time constructor accepts an explicit/default clock type supplied by the consumer。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "已有 clock-type mismatch guard；否定任何“ROS 完全没有 clock typing”的宽泛主张。",
+      "remainingDifference": "clock enum 相同不证明不同 host clocks 共享 epoch/offset/rate bound；consumer 可把 incoming numeric stamp 包装成本地 clock type；没有 relation validity、relock 或 source-bound obligation suite。",
+      "verificationNote": "rolling API 页面受访问控制，使用 official latest generated API 和 official repository 交叉核验。"
+    },
+    {
+      "id": "S06",
+      "title": "C++ Working Draft: chrono Clock requirements and time_point arithmetic",
+      "year": 2026,
+      "yearBasis": "working-draft snapshot verified at the 2026-07-31 cutoff",
+      "sourceType": "official C++ working draft text",
+      "links": {
+        "clockRequirements": "https://eel.is/c++draft/time.clock.req",
+        "timePoint": "https://eel.is/c++draft/time.point"
+      },
+      "primaryContribution": "std::chrono::time_point 以 Clock 为类型参数；两个 time_point 的 subtraction operator 要求同一 Clock template；Clock requirements 说明关联 clocks 必须同 epoch。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "编译期防止不同 clock types 的直接 subtraction 已是标准能力。",
+      "remainingDifference": "类型相同仍不编码 remote clock instance、synchronization state、offset/rate bounds、validity 或 relock；也不检查 ROS message provenance 或行为分支。",
+      "verificationNote": "这是标准草案文本，不是候选 domain-specific tool。"
+    },
+    {
+      "id": "S07",
+      "title": "Spanner: Google's Globally-Distributed Database",
+      "year": 2012,
+      "sourceType": "peer-reviewed OSDI paper",
+      "links": {
+        "formal": "https://research.google/pubs/spanner-googles-globally-distributed-database-2/"
+      },
+      "primaryContribution": "TrueTime API 暴露 bounded clock uncertainty，并把时间不确定度用于 externally consistent transactions 和 commit-wait。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "interval time 和 behavior-changing uncertainty-aware decision 已是经典先例。",
+      "remainingDifference": "领域是受控数据库时间服务，不是 arbitrary ROS/V2X incoming timestamps；没有源码审计、paired witness、receipt-time alternative 或 mutant suite。",
+      "verificationNote": "不能声称 interval clock 或 uncertainty-aware behavior 本身新颖。"
+    },
+    {
+      "id": "S08",
+      "title": "Sundial: Fault-tolerant Clock Synchronization for Datacenters",
+      "year": 2020,
+      "sourceType": "peer-reviewed OSDI paper",
+      "links": {
+        "formal": "https://www.usenix.org/conference/osdi20/presentation/li-yuliang",
+        "paper": "https://www.usenix.org/system/files/osdi20-li_yuliang.pdf"
+      },
+      "primaryContribution": "在 datacenter failures 下提供约 100 ns time-uncertainty bound、fast failure detection 和 recovery，并展示 uncertainty 对 Spanner/one-way-delay applications 的影响。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "fault-tolerant synchronization、uncertainty bound 和 failure-state handling 已有正式系统。",
+      "remainingDifference": "不审计 application timestamp subtraction，不提供 per-message relation certificate、opposite-truth witness 或 source repair/mutants。",
+      "verificationNote": "其 uncertainty guarantee 位于 Sundial deployment model，不能直接移植为任意 ROS message 的有效 certificate。"
+    },
+    {
+      "id": "S09",
+      "title": "RFC 7679: A One-Way Delay Metric for IP Performance Metrics",
+      "year": 2016,
+      "sourceType": "IETF Internet Standard, STD 81",
+      "links": {
+        "official": "https://www.rfc-editor.org/rfc/rfc7679.html",
+        "record": "https://www.rfc-editor.org/info/rfc7679/"
+      },
+      "primaryContribution": "定义 source/destination timestamps 的 one-way delay，明确 clock synchronization、resolution、skew、wire-vs-host time uncertainty，并要求校准和组合误差项。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "跨主机 subtraction 的 uncertainty accounting 和 additive bounds 已被标准化。",
+      "remainingDifference": "是测量方法标准，不是 automotive freshness decision gate；没有 fixed source path、certificate lifecycle、witness、repair 或 mutants。",
+      "verificationNote": "RFC 明确同步方式可能在具体 measurement method 之外，因此不能把它读成自动证明任意 timestamps 可比。"
+    },
+    {
+      "id": "S10",
+      "title": "RFC 5905: Network Time Protocol Version 4",
+      "year": 2010,
+      "sourceType": "IETF Standards Track RFC",
+      "links": {
+        "official": "https://www.rfc-editor.org/rfc/rfc5905.html"
+      },
+      "primaryContribution": "定义 NTPv4 offset、delay、dispersion、jitter、root distance、clock selection/discipline，使应用可评估同步误差。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "clock relation estimation 和 error bound substrate 已成熟。",
+      "remainingDifference": "NTP 同步状态不会自动绑定到 ROS/V2X message event timestamp、relock generation 或 application branch；无 source audit/witness/repair/mutants。",
+      "verificationNote": "不能用“运行 NTP”替代 per-decision relation validity proof。"
+    },
+    {
+      "id": "S11",
+      "title": "IEEE 1588-2019 Precision Time Protocol",
+      "year": 2019,
+      "sourceType": "active IEEE standard",
+      "links": {
+        "official": "https://standards.ieee.org/ieee/1588/6825/"
+      },
+      "primaryContribution": "定义 packet-network clock synchronization、grandmaster、timing domains、topology、path-asymmetry correction、time scales 和 profiles。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "timing domain、grandmaster identity、cross-device sync 和 correction 已是正式标准。",
+      "remainingDifference": "PTP protocol state 不自动证明某一 application header.stamp 在某一行为 subtraction 时处于有效 relation；无 fixed code audit/witness/repair/mutants。",
+      "verificationNote": "结论限于 IEEE 公开摘要；未推定付费全文中的额外条款。"
+    },
+    {
+      "id": "S12",
+      "title": "IEEE 802.1AS-2025 Timing and Synchronization for Time-Sensitive Applications",
+      "year": 2025,
+      "sourceType": "active IEEE standard",
+      "links": {
+        "official": "https://standards.ieee.org/ieee/802.1AS/11968/"
+      },
+      "primaryContribution": "定义 LAN timing transport、best timeTransmitter selection、synchronized time 和 phase/frequency discontinuity indications，是 IEEE 1588 profile。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "TSN synchronized time 和 discontinuity indication 已覆盖候选 certificate 的部分基础字段。",
+      "remainingDifference": "不审计 ROS/V2X application subtraction，不提供 same-visible-input witness、receipt-time redesign 或 mutants。",
+      "verificationNote": "官方页面显示 2025-12-17 发布并 supersede 802.1AS-2020。"
+    },
+    {
+      "id": "S13",
+      "title": "LinuxPTP ptp4l and phc2sys",
+      "year": 2026,
+      "yearBasis": "living tool documentation snapshot verified at the 2026-07-31 cutoff, not the original project release year",
+      "sourceType": "official open-source tool documentation",
+      "links": {
+        "ptp4l": "https://www.linuxptp.org/documentation/ptp4l/",
+        "phc2sys": "https://www.linuxptp.org/documentation/phc2sys/"
+      },
+      "primaryContribution": "ptp4l 实现 PTP domains、clock identity、clock class 和 hardware/software timestamping；phc2sys 同步 PHC/system clocks、处理 UTC/PTP timescale offset、domain sockets 和 frequency sanity limits。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "正式工具已执行 clock mapping、domain selection、timescale handling、state waiting 和 sanity checks。",
+      "remainingDifference": "没有 per-message application provenance binding、validity/relock certificate consumed by freshness branches，也没有 source audit/witness/repair/mutants。",
+      "verificationNote": "phc2sys 官方文档明确错误 timescale offset 可造成整秒偏差，支持候选需要显式 timescale 的问题动机，但不是候选四件套。"
+    },
+    {
+      "id": "S14",
+      "title": "Realizing Uncertainty-Aware Timing Stack in Embedded Operating System",
+      "year": 2018,
+      "sourceType": "author arXiv preprint of embedded-systems work",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/1802.00922"
+      },
+      "primaryContribution": "提出 uncertainty-aware clock model 和 Kalman-filter synchronization protocol，在 embedded Linux 暴露并适配 system time uncertainty。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "embedded OS 中暴露 clock uncertainty 并让 services/applications 适配已被提出和实现。",
+      "remainingDifference": "没有 automotive source path obligation、message provenance certificate lifecycle、opposite-truth witness 或 source mutants。",
+      "verificationNote": "不能声称 embedded uncertainty-aware time API 本身新颖。"
+    },
+    {
+      "id": "S15",
+      "title": "The Lab Streaming Layer for Synchronized Multimodal Recording",
+      "year": 2025,
+      "sourceType": "peer-reviewed paper plus official open-source tool",
+      "links": {
+        "formal": "https://doi.org/10.1162/IMAG.a.136",
+        "openAccess": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12434378/",
+        "code": "https://github.com/sccn/labstreaminglayer",
+        "docs": "https://labstreaminglayer.readthedocs.io/info/time_synchronization.html"
+      },
+      "primaryContribution": "在多设备 steady clocks 间持续测量 offset/drift，映射 remote sample timestamps 到 local clock domain，记录 corrections，并处理 reconnects/discontinuities；正式论文讨论 device-internal delay limitations。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "是最强正式工具级 cross-clock mapping 邻近项之一，且有代码、记录格式和故障恢复。",
+      "remainingDifference": "面向 multimodal recording，不扫描 ROS/V2X behavior branches；不会对无有效 mapping 的 freshness subtraction 生成 obligation/witness/repair/mutants，也不证明 device capture time。",
+      "verificationNote": "论文明确 LSL 无法学习设备内部 acquisition delay；这限制了其 timestamp mapping 被等同于 physical source-event age certificate。"
+    },
+    {
+      "id": "S16",
+      "title": "ETSI TS 102 723-8 V1.1.1",
+      "year": 2016,
+      "sourceType": "ETSI Technical Specification",
+      "links": {
+        "officialPdf": "https://www.etsi.org/deliver/etsi_ts/102700_102799/10272308/01.01.01_60/ts_10272308v010101p.pdf"
+      },
+      "primaryContribution": "定义 ITS security/network interface；REPLAY_DETECTION_TIME 要求 receiver 检查 maximum transmission delay，CAM example 为 100 ms，并把 outdated/future timestamp 视为不合理。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "V2X timestamp freshness/replay 的行为 gate 已被标准明确规定。",
+      "remainingDifference": "规范没有在该条款中要求 per-message source/receiver clock relation uncertainty certificate，也没有 fixed implementation path、opposite-truth witness、repair 或 mutants。",
+      "verificationNote": "不能声称 V2X timestamp freshness gate 是新概念。"
+    },
+    {
+      "id": "S17",
+      "title": "ETSI TS 102 731 V1.1.1",
+      "year": 2010,
+      "sourceType": "ETSI Technical Specification",
+      "links": {
+        "officialPdf": "https://www.etsi.org/deliver/etsi_ts/102700_102799/102731/01.01.01_60/ts_102731v010101p.pdf"
+      },
+      "primaryContribution": "定义 timestamp-based replay protection：维护 recently received messages，拒绝重复消息或 timestamp too old；另定义 sequence-number replay protection。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "消息 age/replay rejection 和 fail behavior 已有正式 V2X 先例。",
+      "remainingDifference": "freshness 主要是 security replay semantics，不是带 bounded cross-domain physical clock relation 的 source-event age obligation；无源码四件套。",
+      "verificationNote": "timestamp 和 sequence freshness 必须与候选的 physical event-age semantics 区分。"
+    },
+    {
+      "id": "S18",
+      "title": "ETSI TR 102 893 V1.1.1",
+      "year": 2010,
+      "sourceType": "ETSI Technical Report",
+      "links": {
+        "officialPdf": "https://www.etsi.org/deliver/etsi_tr/102800_102899/102893/01.01.01_60/tr_102893v010101p.pdf"
+      },
+      "primaryContribution": "ITS threat/risk analysis 讨论 UTC/GNSS timestamp、expired-message replay、timestamp creation uncertainty、cryptographic binding 和 GNSS spoofing；建议 differential monitoring。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "none"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "V2X 中“timestamp 如何创建和用于 validity check”的不确定性及 spoofing 风险早已被官方报告明确提出。",
+      "remainingDifference": "是威胁分析和 countermeasure discussion，不是 fixed-source audit/tool、identified-set witness 或 repair/mutant implementation。",
+      "verificationNote": "不能声称首次指出 V2X timestamp provenance/validity 问题。"
+    },
+    {
+      "id": "S19",
+      "title": "AUTOSAR CP R25-11 Specification of Secure Onboard Communication",
+      "year": 2025,
+      "sourceType": "official automotive software standard",
+      "links": {
+        "officialPdf": "https://www.autosar.org/fileadmin/standards/R25-11/CP/AUTOSAR_CP_SWS_SecureOnboardCommunication.pdf"
+      },
+      "primaryContribution": "SecOC 定义 freshness values、receiver reference/tolerance checks、recently received freshness list，并在太旧或重复时停止验证和 drop Secured I-PDU。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "汽车软件中 fail-closed freshness validation、wrong/old value rejection 和 testable state machine 已正式存在。",
+      "remainingDifference": "freshness value 可为 counter/sequence scheme，不等于跨 clock physical source-event age；规范不扫描 ROS code，也没有 opposite-reference-truth witness 或 source repair mutants。",
+      "verificationNote": "不能把 SecOC freshness 与候选的 clock-domain obligation 混为一谈，也不能声称汽车领域没有 freshness gate。"
+    },
+    {
+      "id": "S20",
+      "title": "Asynchrony-Robust Collaborative Perception via Bird's Eye View Flow",
+      "year": 2023,
+      "sourceType": "peer-reviewed NeurIPS paper plus official code",
+      "links": {
+        "formal": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/5a829e299ebc1c1615ddb09e98fb6ce8-Abstract-Conference.html",
+        "arxiv": "https://arxiv.org/abs/2309.16940",
+        "code": "https://github.com/MediaBrain-SJTU/CoBEVFlow"
+      },
+      "primaryContribution": "对 irregular continuous timestamps 的 collaborative-perception messages 用 BEV flow 进行 temporal motion compensation，构建 IRV2V 异步数据并公开代码。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "partial",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "协同感知中 clock misalignment、communication delay、continuous timestamp 和 before/after asynchrony evaluation 已有成熟方法和代码。",
+      "remainingDifference": "把 timestamps 作为 alignment inputs，不验证它们的 clock-domain relation；没有 fail-closed freshness obligation、same-visible/opposite-truth witness 或 clock-certificate mutants。",
+      "verificationNote": "异步鲁棒性不是 timestamp comparability 证明。"
+    },
+    {
+      "id": "S21",
+      "title": "PHYSFRAME: Type Checking Physical Frames of Reference for Robotic Systems",
+      "year": 2021,
+      "sourceType": "peer-reviewed ESEC/FSE paper",
+      "links": {
+        "formal": "https://doi.org/10.1145/3468264.3468608",
+        "arxiv": "https://arxiv.org/abs/2106.11266"
+      },
+      "primaryContribution": "从 ROS project source 自动推断 physical frame types，检查 frame inconsistency 和 conventions；在 180 个公开 ROS projects 上评估，并检查修复版本。",
+      "conditionCoverage": {
+        "E1": "partial",
+        "E2": "none",
+        "E3": "none",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "证明 ROS-specific semantic types、automatic source inference、public-project audit 和 repaired-code validation 可作为一体化 static tool。",
+      "remainingDifference": "语义维度是 spatial reference frames，不是 clock domains；没有 freshness branch、clock certificate、opposite-truth witness 或 required mutants。",
+      "verificationNote": "候选不能声称首次把 domain-specific reference semantics 做成 ROS static analyzer。"
+    },
+    {
+      "id": "S22",
+      "title": "The High-Assurance ROS Framework (HAROS)",
+      "year": 2021,
+      "sourceType": "tool paper plus official open-source code",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2103.01603",
+        "code": "https://github.com/git-afsantos/haros"
+      },
+      "primaryContribution": "从 ROS source 静态提取 models，并支持 model checking、runtime verification、property-based testing 和 plugins。",
+      "conditionCoverage": {
+        "E1": "partial",
+        "E2": "partial",
+        "E3": "none",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "ROS source model extraction 加多种 verification/test backends 已是公开工具。",
+      "remainingDifference": "官方 ROS1 tool 没有 clock-domain freshness obligation model、clock certificate validator、opposite deadline truth generator 或 candidate mutant suite。",
+      "verificationNote": "官方 repository 说明该 ROS1 version 已不再开发，ROS2 rewrite 位于另一 repository；这不改变其 prior-art 地位。"
+    },
+    {
+      "id": "S23",
+      "title": "CodeQL C/C++ data-flow and custom library models",
+      "year": 2026,
+      "yearBasis": "living official documentation snapshot verified at the 2026-07-31 cutoff",
+      "sourceType": "official static-analysis tool documentation",
+      "links": {
+        "dataFlow": "https://codeql.github.com/docs/codeql-language-guides/analyzing-data-flow-in-cpp/",
+        "customModels": "https://codeql.github.com/docs/codeql-language-guides/customizing-library-models-for-cpp/",
+        "code": "https://github.com/github/codeql"
+      },
+      "primaryContribution": "提供 C/C++ local/global data flow、taint tracking、path queries、sources/sinks/barriers/additional steps 和 custom library models。",
+      "conditionCoverage": {
+        "E1": "partial",
+        "E2": "partial",
+        "E3": "none",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "实现固定源码路径追踪和 source-to-sink evidence 的通用 substrate 已存在。",
+      "remainingDifference": "官方查询/模型中未发现 cross-domain freshness obligation；CodeQL 本身不提供 clock semantics、valid certificate、paired-world truth generator 或 repair mutant oracle。",
+      "verificationNote": "候选的新颖性只能落在 domain model 和 end-to-end evidence package，不能落在 dataflow/path query 技术。"
+    },
+    {
+      "id": "S24",
+      "title": "Semgrep taint and data-flow analysis",
+      "year": 2026,
+      "yearBasis": "living official documentation snapshot verified at the 2026-07-31 cutoff",
+      "sourceType": "official static-analysis tool documentation",
+      "links": {
+        "taint": "https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview",
+        "dataFlow": "https://docs.semgrep.dev/writing-rules/data-flow/data-flow-overview",
+        "code": "https://github.com/semgrep/semgrep"
+      },
+      "primaryContribution": "支持 source/propagator/sanitizer/sink taint rules、traces、interprocedural/interfile modes 和 rule-defined fixes；官方文档明确路径敏感性、pointer/shape 和 soundness 限制。",
+      "conditionCoverage": {
+        "E1": "partial",
+        "E2": "partial",
+        "E3": "none",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "lightweight source path audit、taint trace、test rules 和 autofix substrate 已存在。",
+      "remainingDifference": "未发现 clock-domain freshness rule；generic taint 不证明 affine clock identifiability、certificate validity 或 threshold interval semantics。",
+      "verificationNote": "若候选基于 Semgrep，必须正面处理官方文档列出的 false-positive/false-negative 和 ignored constructs 风险。"
+    },
+    {
+      "id": "S25",
+      "title": "StreamLAB: Stream-based Monitoring of Cyber-Physical Systems",
+      "year": 2019,
+      "sourceType": "peer-reviewed CAV tool paper",
+      "links": {
+        "formal": "https://link.springer.com/chapter/10.1007/978-3-030-25540-4_24"
+      },
+      "primaryContribution": "用 RTLola specifications 监控 asynchronous/variable-rate streams，提供 formal semantics、memory analysis、runtime guarantees、sliding windows 和 trigger actions。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "partial",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "timed asynchronous stream monitoring、formal threshold triggers 和 executable monitor generation 已存在。",
+      "remainingDifference": "输入 timestamps 的 domain relation 由 monitor input/model 假定，不审计 ROS source producers，也不生成 cross-clock identifiability witness、receipt-time repair 或 certificate mutants。",
+      "verificationNote": "不能声称首次对 asynchronous timestamp streams 做 formal runtime monitoring。"
+    },
+    {
+      "id": "S26",
+      "title": "RTAMT and RTAMT4ROS",
+      "year": 2020,
+      "sourceType": "tool paper/preprint plus official open-source ROS integration",
+      "links": {
+        "arxiv": "https://arxiv.org/abs/2005.11827",
+        "code": "https://github.com/nickovic/rtamt4ros"
+      },
+      "primaryContribution": "从 STL/IA-STL specifications 生成 online robustness monitors，支持 discrete/dense time，并通过 RTAMT4ROS 集成 ROS topics、launch 和 rosbag examples。",
+      "conditionCoverage": {
+        "E1": "none",
+        "E2": "partial",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "ROS temporal properties、runtime monitor generation、quantitative robustness 和 executable examples 已公开实现。",
+      "remainingDifference": "不静态追踪 incoming stamp/local clock provenance，不要求 clock-relation certificate，也没有 same-visible/opposite-truth source witness 或 source repair mutants。",
+      "verificationNote": "STL dense-time semantics 不自动解决不同 physical clock domains 的可比性。"
+    },
+    {
+      "id": "S27",
+      "title": "Autoware topic_state_monitor and system_error_monitor",
+      "year": 2026,
+      "yearBasis": "living official documentation and repository snapshot verified at the 2026-07-31 cutoff",
+      "sourceType": "official autonomous-driving software documentation and code repository",
+      "links": {
+        "topicMonitor": "https://autowarefoundation.github.io/autoware_universe/main/system/autoware_topic_state_monitor/",
+        "systemMonitor": "https://autowarefoundation.github.io/autoware_universe/refs-tags-v1.0/system/system_error_monitor/",
+        "code": "https://github.com/autowarefoundation/autoware_universe"
+      },
+      "primaryContribution": "topic_state_monitor 以 local subscription receipt/rate 监控 NotReceived、Timeout 和 low frequency；system_error_monitor 可把 diagnostic/heartbeat timeout 传播到 STALE 或 emergency behavior。",
+      "conditionCoverage": {
+        "E1": "partial",
+        "E2": "none",
+        "E3": "partial",
+        "E4": "partial"
+      },
+      "functionallyEquivalent": false,
+      "partialCollision": "自动驾驶栈中同域 receipt-time timeout、diagnostic aggregation 和 behavior-changing fail state 已有正式实现。",
+      "remainingDifference": "这是候选允许的同域 receipt-time branch 的先例，不是审计任意 header stamp 的工具；没有 cross-domain certificate、opposite-truth witness 或 mutation suite。",
+      "verificationNote": "候选不能声称 receipt-time timeout monitor 或 autonomous-driving deadline monitor 本身新颖。"
+    }
+  ],
+  "equivalenceSummary": {
+    "exactCollisionCount": 0,
+    "completePackageFound": false,
+    "sourceIdsWithAllFullConditions": [],
+    "closestCombinations": [
+      {
+        "combination": [
+          "S01",
+          "S02",
+          "S15"
+        ],
+        "covers": "provenance/domain metadata、cross-domain mapping、uncertainty、AoI 和 formal/open-source synchronization",
+        "missing": "同一作品内的 E1 fixed-source audit、E2 source-bound opposite-truth witness 和 E4 repair/mutant evidence。"
+      },
+      {
+        "combination": [
+          "S16",
+          "S17",
+          "S19",
+          "S27"
+        ],
+        "covers": "V2X/automotive freshness rejection、receipt timeout、fail states 和 message drop",
+        "missing": "physical source-event age 的 explicit clock relation certificate 和 E1/E2/E4 source evidence package。"
+      },
+      {
+        "combination": [
+          "S21",
+          "S22",
+          "S23",
+          "S24"
+        ],
+        "covers": "ROS/domain-specific type inference、source extraction、dataflow paths、test rules 和 fixes",
+        "missing": "clock identifiability semantics、validity/relock-aware interval closure 和 executable opposite-reference-truth witnesses。"
+      },
+      {
+        "combination": [
+          "S25",
+          "S26",
+          "S03"
+        ],
+        "covers": "timed systems、multiclock design models、runtime monitors 和 executable traces",
+        "missing": "fixed implementation timestamp subtraction audit、per-message relation evidence、repair patch 和 mutants。"
+      }
+    ],
+    "collisionDecision": "截至 2026-07-31，在核验的 27 条最接近一手来源中，没有发现单一作品或单一公开集成系统完整实现 E1-E4。候选未被完整撞题淘汰，但其宽泛构件几乎全部被 prior art 占据，剩余空间仅是四件套在 ROS/V2X/autonomous-driving fixed-source paths 上的严格集成。",
+    "mandatoryEliminationRule": "若后续发现 cutoffDate 之前的单一公开作品同时达到 E1、E2、E3、E4 的 full，则本候选按当前精确主张直接淘汰，不得以领域名称、实现语言、不同 certificate 字段名或工具后端不同规避碰撞。"
+  },
+  "partialCollisionClusters": [
+    {
+      "cluster": "temporal provenance and cross-domain uncertainty",
+      "sourceIds": [
+        "S01",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "S12",
+        "S13",
+        "S14",
+        "S15"
+      ],
+      "preemptedClaims": [
+        "首次表示 timestamp uncertainty interval。",
+        "首次声明 clock domain、sync state、grandmaster 或 timescale。",
+        "首次要求跨域 conversion 并合并 uncertainty。",
+        "首次在行为决策中使用 uncertainty-aware time。"
+      ]
+    },
+    {
+      "cluster": "V2X and automotive freshness/replay",
+      "sourceIds": [
+        "S16",
+        "S17",
+        "S18",
+        "S19"
+      ],
+      "preemptedClaims": [
+        "首次对 V2X message 做 timestamp freshness/replay rejection。",
+        "首次 fail closed 丢弃 old/duplicate automotive messages。",
+        "首次指出 GNSS timestamp/replay/spoofing 会影响 validity。"
+      ]
+    },
+    {
+      "cluster": "typed clocks and ROS semantic static analysis",
+      "sourceIds": [
+        "S04",
+        "S05",
+        "S06",
+        "S21",
+        "S22",
+        "S23",
+        "S24"
+      ],
+      "preemptedClaims": [
+        "首次禁止不同 clock types 直接 subtraction。",
+        "首次从 ROS source 推断 domain-specific semantic types。",
+        "首次用 CodeQL/Semgrep/HAROS 追踪 source-to-sink path。",
+        "首次提供 static finding trace、fix 或 rule tests。"
+      ]
+    },
+    {
+      "cluster": "timed runtime and autonomous-driving monitoring",
+      "sourceIds": [
+        "S03",
+        "S25",
+        "S26",
+        "S27"
+      ],
+      "preemptedClaims": [
+        "首次监控 asynchronous timed streams。",
+        "首次生成 ROS temporal monitors。",
+        "首次为 cooperative driving 建模 multiclock constraints。",
+        "首次在 autonomous-driving stack 中用 timeout 改变 diagnostic/emergency behavior。"
+      ]
+    },
+    {
+      "cluster": "collaborative-perception asynchrony and AoI",
+      "sourceIds": [
+        "S02",
+        "S20"
+      ],
+      "preemptedClaims": [
+        "首次处理 collaborative-perception clock misalignment。",
+        "首次用 AoI 或 continuous timestamps 对异步特征对齐/加权。",
+        "首次将 synchronization uncertainty 与 cooperative fusion 结合。"
+      ]
+    }
+  ],
+  "remainingNarrowGap": {
+    "gap": "把已经分别存在的 clock metadata/uncertainty、V2X freshness gates、ROS source analysis 和 timed monitors，收束为一个固定源码、证据绑定、语义 fail-closed 的 obligation toolchain。",
+    "preciseNoveltyClaim": "在截至 2026-07-31 的本次检索范围内，未发现一项公开一手作品能够对 ROS/V2X/autonomous-driving 代码中的行为改变型 freshness/deadline subtraction 同时完成以下闭环：固定 commit/path 的 timestamp-to-behavior 机械追踪；生成同可见输入但相反 reference deadline truth 的 source-bound executable witness；仅以同域 local receipt-time 或具有 domain、timescale、保守 offset/rate bounds、validity 和 relock generation 的显式有效 relation 解除 obligation，其他情况返回 uncertain；并在同一 fixed path 上提供 before/after repair 和 certificate mutant suite。",
+    "claimForm": "search-bounded negative finding plus an implementation-specific integration claim",
+    "claimStatusToday": "not-yet-earned-as-an-implemented-system-claim",
+    "whyNotYetEarned": [
+      "当前 v6 obligation pilot 自述不是 AST extractor、ROS message-type checker 或 production patch。",
+      "当前 public-path replay 只执行固定 subtraction/branch adapters，没有构建完整 upstream stacks。",
+      "当前 methodology audit 发现 rate endpoint nonconservatism，严格 identified-set claim 被阻断。",
+      "没有 immutable pre-run commit/external timestamp，不能声称 preregistered evaluation。"
+    ],
+    "nonCombinationWarning": "不能把 TIM、PTP/NTP、ETSI freshness、CodeQL、RTAMT 和 Autoware monitor 的组合简单表述为候选已实现；新颖性只可能来自经过实现和验证的端到端 binding，而不是把已知模块列在同一架构图中。"
+  },
+  "claimsThatMustNotBeMade": [
+    "不得声称首次提出 timestamp provenance、clock-domain metadata、sync state、uncertainty interval、clock conversion 或 temporal confidence。",
+    "不得声称首次提出跨域 timestamps 不可直接比较、必须转换或必须合并 uncertainty。",
+    "不得声称首次提出 typed clocks、same-clock subtraction、ROS clock-type checking 或 opaque monotonic time。",
+    "不得声称首次提出 V2X timestamp freshness、replay rejection、message age plausibility、SecOC freshness value 或 old-message drop。",
+    "不得声称首次把 static analysis、taint/dataflow、CodeQL、Semgrep、HAROS 或 domain-specific type inference 用于 ROS。",
+    "不得声称首次生成 timed/asynchronous runtime monitors、STL/RTLola monitors 或 autonomous-driving timeout/error monitors。",
+    "不得声称首次处理 collaborative-perception asynchrony、clock drift、AoI、continuous timestamp alignment 或 uncertainty-weighted fusion。",
+    "不得声称固定的 Autoware/CARMA paths 在真实部署中使用不同、失同步或错误配置的 clocks。",
+    "不得把 public-path evidence 表述为漏洞、攻击、事故、安全违反、可达行为、field failure、发生频率或产品缺陷。",
+    "不得把 local receipt-time repair 表述为 source-event-age repair；两者回答不同语义问题。",
+    "不得把 constructed clock relation bounds 表述为 field-calibrated guarantees。",
+    "不得把当前一阶 rate half-width 表述为严格保守 identified set；已知合法端点 underreach 约 0.014910638 ms。",
+    "不得把当前 synthetic finite-population counts 表述为部署总体风险、utility、confidence interval 或自然错误率。",
+    "不得声称当前 prototype 是完整 AST extractor、production patch、ecosystem prevalence study、certification system 或安全认证。"
+  ],
+  "evidenceRequiredBeforeClaim": [
+    {
+      "id": "R01",
+      "requirement": "实现对至少 C++/ROS 2 fixed commits 的 AST/dataflow extractor，机械定位 incoming timestamp producer、local now producer、subtraction、unit conversion、threshold、branch 和行为 sink；输出稳定 path evidence 和 source hashes。",
+      "blocks": "implemented fixed-source-path tool claim"
+    },
+    {
+      "id": "R02",
+      "requirement": "在与手工 gold set 独立的 positive/negative corpus 上测量 extractor completeness/precision，并包含 rclcpp wrappers、aliases、helper functions、templates、clock conversions、sim time 和 message restamping。",
+      "blocks": "automatic or comprehensive audit claim"
+    },
+    {
+      "id": "R03",
+      "requirement": "把两个现有 replay adapters 升级为对 pinned source build artifacts 或可验证 IR 的 replay，证明 source snippet/hash、extracted semantics 和 executable witness 一致。",
+      "blocks": "source-bound executable witness claim"
+    },
+    {
+      "id": "R04",
+      "requirement": "修复 rate uncertainty：在合法 rate endpoints 和 anchor endpoints 上精确逆仿射求 min/max，或给出可证明保守 remainder；增加正 age、接近零、threshold equality、negative raw interval 和 endpoint coverage tests。",
+      "blocks": "strict conservative identified-set claim"
+    },
+    {
+      "id": "R05",
+      "requirement": "定义 machine-checkable clock-relation certificate schema，至少绑定 source/target clock instance IDs、timescale/epoch、timestamping plane、offset interval、rate-ratio interval、validity interval、relock generation、transform ID、measurement/calibration provenance 和 authenticity/trust status。",
+      "blocks": "explicit valid certificate claim"
+    },
+    {
+      "id": "R06",
+      "requirement": "明确 certificate authenticity 不是 accuracy guarantee；验证器必须分别检查签名/attestation、issuer policy、domain binding、validity、relock continuity 和 numeric conservatism。",
+      "blocks": "certificate validity or trust claim"
+    },
+    {
+      "id": "R07",
+      "requirement": "实现 local receipt-time instrumentation，证明 receipt timestamp 在 callback/transport boundary 由同一 local monotonic clock 采样，并在 repair 中明确语义由 source-event-age 改为 time-since-local-receipt。",
+      "blocks": "same-domain receipt repair claim"
+    },
+    {
+      "id": "R08",
+      "requirement": "在两个 pinned public paths 上提供可构建 before/after patches 或最小 faithful harness，验证原始 branch、uncertain branch、valid relation branch 和 receipt-time branch。",
+      "blocks": "repair comparison claim"
+    },
+    {
+      "id": "R09",
+      "requirement": "扩展 mutant suite：missing relation、wrong source/target domain、wrong timescale、expired/not-yet-valid、wrong relock generation、replayed certificate、invalid offset/rate order、too-narrow interval、threshold straddle、NaN/overflow、clock jump 和 consumer relabeling；每个 mutant 都必须被预期 gate 杀死。",
+      "blocks": "mutation-adequate fail-closed claim"
+    },
+    {
+      "id": "R10",
+      "requirement": "定义 operational fail-closed：uncertain 不得进入原 fresh 或 stale/timeout action，必须映射到明确的 degraded/safe supervisory behavior；对不同应用分别记录该 behavior，不把 abstract uncertain 自动等同于 vehicle stop。",
+      "blocks": "behaviorally fail-closed claim"
+    },
+    {
+      "id": "R11",
+      "requirement": "在新实验前把 source、commits、queries、seeds、metrics、mutants 和 stop rules 写入 immutable commit 并取得 independent external timestamp；之后使用未用过的 test cases。",
+      "blocks": "preregistered or prospectively frozen evaluation claim"
+    },
+    {
+      "id": "R12",
+      "requirement": "由未参与 extractor/rule 编写的人独立复核每个 true positive、repair semantic target 和 certificate validity；公开 false positives、false negatives、unsupported constructs 和 source drift。",
+      "blocks": "independently validated tool claim"
+    },
+    {
+      "id": "R13",
+      "requirement": "在公开主张日前重复 recent-work search，特别复查 TIM 后续版本、2026 collaborative-perception clock/AoI work、ROS2 HAROS rewrite、CodeQL/Semgrep registries 和 automotive time-integrity tooling。",
+      "blocks": "current novelty claim after cutoffDate"
+    }
+  ],
+  "killConditions": [
+    {
+      "id": "K01",
+      "condition": "发现 2026-07-31 之前的单一公开 prior work 在同一系统内完整达到 E1-E4。",
+      "action": "按当前精确 novelty claim 淘汰候选。"
+    },
+    {
+      "id": "K02",
+      "condition": "TIM 的更早版本、正式标准、官方 implementation 或其他 telemetry tool 已在 cutoffDate 前对 application source freshness sinks 提供 fixed-path audit、opposite-truth witness 和 repair mutants。",
+      "action": "若四条件全满则淘汰；若只补足部分条件则进一步收窄 claim。"
+    },
+    {
+      "id": "K03",
+      "condition": "Han et al. 2026 或同时期 collaborative-perception work 的公开 supplementary/code 实际包含 fail-closed clock-relation gate、source-path audit、paired witness 和 repair mutants。",
+      "action": "重新核验代码；若 E1-E4 全满则淘汰。"
+    },
+    {
+      "id": "K04",
+      "condition": "实现后的 extractor 不能可靠区分 producer event time、emission time、receipt time、bag log/publish time 和 consumer-relabeled clock enum，或需要人工逐路径决定关键 provenance。",
+      "action": "淘汰 automatic toolchain 主张；最多保留人工审计方法。"
+    },
+    {
+      "id": "K05",
+      "condition": "对合法 certificate bounds 的精确 endpoint 检查出现任何 undercoverage，包含当前已知约 0.014910638 ms rate underreach。",
+      "action": "阻断 strict identified-set 和 fail-closed correctness 主张，直至修复并重跑。"
+    },
+    {
+      "id": "K06",
+      "condition": "same-visible-input/opposite-truth witness 不能绑定到 fixed source expression，或两个 worlds 改变了 visible inputs、path identity、threshold、comparator 或 source-expression result。",
+      "action": "淘汰 E2 witness 主张。"
+    },
+    {
+      "id": "K07",
+      "condition": "valid certificate 只证明 clock 类型/名称相同，或只证明签名有效，却不保守绑定 offset/rate、validity、timescale 和 relock generation。",
+      "action": "视为未解除 obligation；若工具仍作 fresh/timeout 判定，则淘汰 E3。"
+    },
+    {
+      "id": "K08",
+      "condition": "uncertain 分支最终沿用原 fresh、stale 或 timeout 行为，或被 default/exception handler 静默强制转换，而不是进入应用明确声明的 degraded/safe behavior。",
+      "action": "淘汰 fail-closed 主张。"
+    },
+    {
+      "id": "K09",
+      "condition": "receipt-time repair 被宣传为 source-event freshness，或修复改变 semantic target 却没有在 API、specification 和 tests 中显式记录。",
+      "action": "淘汰语义保持主张；只可称替代需求。"
+    },
+    {
+      "id": "K10",
+      "condition": "任一 required mutant 未被 gate 杀死，尤其 wrong domain、expired relation、relock mismatch、wrong timescale、too-narrow bound 或 replayed certificate。",
+      "action": "阻断 mutation-adequate 和 valid-certificate claims。"
+    },
+    {
+      "id": "K11",
+      "condition": "在 fixed Autoware/CARMA path 上的 repair 无法构建、无法到达记录分支，或对同域 valid cases 产生不可接受的 false rejection。",
+      "action": "淘汰该 path 的 implementation claim，不得用 synthetic adapter 替代。"
+    },
+    {
+      "id": "K12",
+      "condition": "prospective evaluation 仍无 immutable pre-run commit/external timestamp，或在看到结果后改变 bounds、mutants、thresholds、query families 或 stop rules。",
+      "action": "阻断 preregistration 和 unbiased prospective evaluation 主张。"
+    },
+    {
+      "id": "K13",
+      "condition": "公开主张时只把 CodeQL/Semgrep、TIM/PTP、ETSI freshness 和 RTAMT 组合在架构图中，但没有可复现 end-to-end implementation 和 tests。",
+      "action": "淘汰 system/toolchain novelty 主张；最多保留 proposal。"
+    },
+    {
+      "id": "K14",
+      "condition": "公开主张日前的新作品完成相同 E1-E4，即使晚于本审计 cutoffDate。",
+      "action": "更新 prior-art cutoff 并重新判定；本 JSON 的 negative finding 不自动延续。"
+    }
+  ],
+  "finalVerdict": {
+    "status": "no-complete-functional-collision-found-narrow-integration-gap-only",
+    "completeCollisionFound": false,
+    "eliminateCandidateNow": false,
+    "reason": "27 条最近一手来源分别覆盖了候选的所有基础构件，但没有单一公开作品完成 E1-E4 的 source-bound 闭环。因此没有触发立即撞题淘汰；剩余可主张空间仅是严格集成，不是任何单独构件。",
+    "strongestCollision": "S01 TIM draft 对 provenance/domain/uncertainty/cross-domain conversion 的碰撞最强；S02 对 collaborative-perception clock mapping/AoI/uncertainty 的领域碰撞最强；S03 对 cooperative-driving multiclock verification 的标题与模型碰撞最强。",
+    "implementationGate": "当前候选仍不能声称已实现精确 novelty claim。必须先完成 R01-R13，尤其 AST/dataflow extraction、exact endpoint conservatism、pinned-path patches、behaviorally fail-closed uncertain handling 和 mutation adequacy。",
+    "collisionPolicy": "任何后续发现的完整 E1-E4 prior work 都直接触发 K01 淘汰，不按应用标签、工具后端或字段命名作豁免。",
+    "claimBoundary": "本结论是截至 2026-07-31、基于列出 query families 和可访问一手来源的 search-bounded negative finding，不是全球穷尽证明或专利法律意见。"
+  }
+}

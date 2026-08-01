@@ -1,0 +1,30 @@
+{
+  "candidateId": "judge-optimization-rank-survival-audit",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 3,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "WorldModelBench 已训练 human-aligned judge，WorldLens/DrivingGen 已提供多族指标，但公开工作主要评价静态输出；对 judge A best-of-N 之后的分布偏移、跨族排名存活和 reversal 做预注册审计是明确的新问题。",
+    "feasibility": "WorldModelBench 固定提交只有 evaluation.py、样例图像和 VILA judge 入口，仓库未声明 LICENSE；其脚本能给单视频打分但不生成候选。WorldLens 的 Apache-2.0 工具和多个模型公开输出可运行多轴指标，但 README 明确 WorldLens-26K 与 WorldLens-Agent 仍为 To be updated。DrivingGen 有 Apache-2.0 评测、HF 数据和 Wan2.2-14B 生成示例，却没有每条件 16 个独立候选的现成池。用单张 24–48 GB GPU在 8–10 周内为至少三个模型、多个条件生成 N=16 的 101 帧视频并跑深度、SLAM、检测和人工锚点，资源估计明显不足。",
+    "success-probability": "judge 选择导致 held-out 指标退化具有合理机制，但 dossier 的 success 要求至少两个模型族和两个场景子集、异族 evaluator 与人工/几何锚点共同复现。若退回一个开源模型以控制预算，就无法满足该成功条件；若只使用 WorldLens 已公开单样本输出，也无法形成嵌套 N 曲线。",
+    "impact": "可靠的 rank-survival 边界会直接影响视频世界模型 leaderboard、best-of-N 与 reward tuning 的使用方式，并揭示 judge overoptimization；但在候选池和人工锚点不足时，研究容易退化成又一次指标相关性矩阵。",
+    "comparison-readiness": "WorldModelBench、WorldLens 和 DrivingGen 三套 evaluator 均有实际执行入口，N=1/random/oracle-of-N 也清晰；不过 WorldModelBench judge 的训练谱系、WorldLens 第三方模型、DrivingGen trajectory extractor 之间存在共享 backbone/数据的潜在相关性，且没有现成候选 manifest 或统一模型输出协议。"
+  },
+  "strongestObjection": "核心处理变量是同一 condition 下的选择强度 N，但固定资产只提供静态评测器和通常每模型每条件一个公开输出；WorldLens-26K 尚未发布。没有真实的 N=1/2/4/8/16 嵌套候选池，任何排名变化都会混入模型、prompt、seed 或样本组成变化，无法归因于 judge 优化。",
+  "requiredExperiment": "Gate 0 只做候选密度审计：选一个许可清楚且权重公开的模型和 30 个条件，固定 prompt、初帧、checkpoint、sampler 与 16 个 seed，生成并哈希完整候选池；先确认 judge A 能稳定产生选择压力，再用不共享 backbone 的几何/动作指标和 100 对盲化人工比较测 N 曲线。只有该最小池出现可复现 rank-survival 下降且算力实测可外推后，才扩展到第二模型族；否则停止多模型主张。",
+  "evidenceReopened": [
+    "https://github.com/WorldModelBench-Team/WorldModelBench/tree/00b7aa17a05f9fd1ab5c8f66bcf476d04c9c33bf",
+    "https://github.com/worldbench/WorldLens/tree/fa6c5ff177e99d0d5b126f238ca42a430982b19a",
+    "https://github.com/youngzhou1999/DrivingGen/tree/48ed35695855ef17d7a7cbd4adc0e8bd5fcc8223",
+    "https://worldmodelbench-team.github.io/"
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "75ae65558d9868a018a7ba8a3a99ba31bd21094a8759ac89259a6cfbe23e32f1"
+}

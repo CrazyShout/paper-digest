@@ -1,0 +1,171 @@
+{
+  "candidateId": "verdict-causal-error-repair-decomposition",
+  "direction": "world-models",
+  "title": "世界模型 Verdict 反转的通道修复因果分解",
+  "hook": "多维评分只能告诉我们哪里看起来错了；逐项修复 ego、NPC、几何、时间身份和提取器后重跑同一决策系统，才能知道哪类错误真正改变了策略结论。",
+  "output": "通道干预协议、因果归因工具与 verdict 反转数据集",
+  "effort": "中高工程量，优先完成状态域四通道和视频域两通道",
+  "timeline": "首轮 10 至 12 周，干预不变量在前 4 周内决定止损",
+  "decision": "保留为失败归因线，主张限定为冻结 planner 与可验证干预下的 verdict 因果效应",
+  "whyNow": "WorldLens 和 DrivingGen 已能同时指出视觉、几何、动作与任务误差，世界模型准入又明确提出更高层失败归因需求；ReactSim、ACT-Bench 和 Orbis 2 的公开状态或动作接口，使同一失败 rollout 上的受控通道替换首次能在不训练基础模型的情况下被系统化验证。",
+  "keyProblem": "当世界模型与独立 reference 对同一动作或策略给出相反 verdict 时，ego state、NPC response、地图/场景 geometry、time identity 和视频 extractor 哪个通道是必要或充分原因；在冻结 planner、动作、事件窗口和未修复通道后，单项或两两 repair 是否消除 verdict reversal，而不是仅改善一个与决策相关的静态分数。",
+  "currentLimitations": "现有多轴 benchmark 并列报告各维度误差，却没有把某个误差通道修复为明确干预并重跑冻结决策系统；直接用相关系数、特征归因或同一学习型 extractor 前后比较，无法排除通道耦合、时间错配和提取器自身错误，因此不能解释哪个错误真正导致策略排序反转。",
+  "hypothesis": "在预注册的 verdict 不一致集合上，少数可解释通道及其二阶交互会解释大部分可修复 reversal；保持其他通道、动作和时间身份不变的 targeted repair，比随机等幅修复或静态综合分更能预测冻结 planner 的 verdict 变化，并可在第二 planner 上复现主要归因方向。",
+  "noveltyClaims": [
+    {
+      "nearestWork": "WorldLens 与 DrivingGen 已对视觉、几何、动作和任务表现做多轴评测。",
+      "irreducibleDifference": "本研究的 estimand 是修复某一错误通道对 verdict reversal 的处理效应，而不是通道分数与决策结果的相关性。"
+    },
+    {
+      "nearestWork": "KineBench 通过独立运动学 grounding 减少 IDM 与世界模型误差的归因歧义。",
+      "irreducibleDifference": "这里把独立锚点扩展到驾驶的 ego/NPC/geometry/time identity，并要求修复后重跑同一个冻结 planner。"
+    },
+    {
+      "nearestWork": "CounterScene 通过因果图和最小干预生成安全关键场景，准入论文提出但未实例化 L3 失败归因。",
+      "irreducibleDifference": "本研究不生成新危险场景，而是在固定失败 rollout 上做 channel repair intervention，识别会改变既有 verdict 的错误链。"
+    }
+  ],
+  "method": [
+    {
+      "step": "冻结失败集合与决策对象",
+      "detail": "在显式状态域收集至少 200 个世界模型/reference verdict 不一致场景，冻结两种 planner、动作集合、事件窗口、风险函数、随机种子和场景身份。"
+    },
+    {
+      "step": "预注册通道与不变量",
+      "detail": "分别定义 ego 位姿/速度、NPC 状态/响应、地图与占据 geometry、帧时间与对象 identity、视频到状态 extractor；每次 repair 必须通过未修复通道误差、动作一致性和事件身份检查。"
+    },
+    {
+      "step": "单项与两两 Repair",
+      "detail": "用独立 reference 值替换一个通道，再对预注册的高交互通道对做联合替换；每次都重跑同一冻结 planner/verdict，记录 reversal 是否消除和风险差分变化。"
+    },
+    {
+      "step": "反事实对照和归因",
+      "detail": "加入 no-repair、随机等幅 repair、错误通道置换、full-oracle replacement 与静态综合分基线；估计通道平均处理效应、必要/充分比例和二阶交互，不把 Shapley 或相关分数单独称为因果。"
+    },
+    {
+      "step": "视频域隔离修复边界探针",
+      "detail": "只在可验证的 ego-motion 和 extractor 两通道上使用 Orbis 2/ACT 输出，并由人工事件抽样复核；NPC 与全场景像素修复不在首轮主张范围。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "asset": "ReactSim-Bench 71e54fda7426678d0baee9b62b0d32b323725fb8",
+      "reuse": "复用 2,636 个显式多主体场景、baseline checkpoints 和新模型接口，构造主状态域失败集合与 NPC repair。",
+      "boundary": "仓库未声明许可证，需核对 nuPlan 与 vendored baseline 条款；公开资产可测试性不能证明自然错误频率。"
+    },
+    {
+      "asset": "WorldLens fa6c5ff177e99d0d5b126f238ca42a430982b19a",
+      "reuse": "复用 Apache-2.0 主工具、公开输出和生成/动作/下游维度，作为静态多轴评分强基线。",
+      "boundary": "固定提交的 WorldLens-26K 尚未发布，第三方组件条款独立；其学习型 agent 不作为独立因果 oracle。"
+    },
+    {
+      "asset": "ACT-Bench e6c825519f27b3f1fd44c5b5d8b949fcb91fa5ee 与 Orbis 2 f8a0d6898689a20df10e9f71bcc0fa2abfdb7a8c",
+      "reuse": "ACT 的 Apache-2.0 动作估计器和 Orbis 2 的 MIT checkpoint/控制接口用于视频域 ego-motion 与 extractor 子实验。",
+      "boundary": "二者均无真实同初态反事实和独立 planner verdict，需要自建对齐器与人工事件复核。"
+    },
+    {
+      "module": "自建 typed state schema 与 repair engine",
+      "detail": "为 ego、NPC、geometry、time identity、extractor 输出定义类型化接口、单位、哈希和 invariants；实现局部替换、两两组合、重放和差异审计。"
+    },
+    {
+      "module": "自建冻结 planner/verdict harness",
+      "detail": "统一两个 planner 的输入、动作集合和风险输出，缓存模型与 reference 分支，确保 repair 前后唯一变化来自指定通道。"
+    },
+    {
+      "compute": "算力资源和工程执行预算",
+      "detail": "状态域主实验以 CPU/GPU 混合批量重放为主，预计 1 台 24–48 GB GPU 足够；视频探针只跑冻结 checkpoint，不训练基础生成器，人工复核约 200 个事件片段。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "phase": "Gate 0：干预不变量预检",
+      "plan": "在 30 个失败场景逐一替换五类通道，验证动作、未修复通道、对象身份和时间窗口保持不变；此项尚未执行，若 invariant 失败则不能做因果主张。"
+    },
+    {
+      "phase": "Gate 1：可归因后果预检",
+      "plan": "在至少 80 个 verdict 不一致状态上确认 targeted repair 会改变冻结 planner 输出，且优于随机等幅 repair；若所有修复只改善静态分数而不改变 verdict，停止。"
+    },
+    {
+      "phase": "完整状态域通道主实验",
+      "plan": "扩展到至少 200 个失败场景、两个 planner，完成 ego/NPC/geometry/time identity 的单项和预注册两两修复，报告 reversal 消除率及交互。"
+    },
+    {
+      "phase": "视频域外推边界实验",
+      "plan": "在 Orbis 2/ACT 子集只修复 ego-motion 与 extractor 输出，使用人工事件裁决检查提取器错误；不承诺不可审计的像素级全通道修复。"
+    }
+  ],
+  "strongBaselines": [
+    "WorldLens/DrivingGen 的静态单轴误差与综合分，用相同失败集合预测 verdict reversal。",
+    "no-repair、随机选择通道、随机等幅 repair 和错误通道置换，控制修改本身带来的分布变化。",
+    "full-oracle replacement 作为可修复上界，以及只修复最大静态误差通道的贪心基线。",
+    "相关性回归、特征归因或 Shapley 风格分解作为非干预基线，但不把其输出当因果真值。"
+  ],
+  "metrics": [
+    "主指标：每个通道 repair 消除错误 verdict reversal 的比例、风险差分变化和平均处理效应，以场景为统计单位。",
+    "交互指标：单项效应之外的二阶 interaction、必要/充分比例和 full-oracle 可解释份额。",
+    "不变量指标：未修复通道漂移、动作偏差、对象/帧身份错误和 intervention validity pass rate。",
+    "泛化指标：跨 planner 归因方向一致率、场景族留出稳定性，以及视频人工事件与 extractor 结论一致率。",
+    "成本指标：每类 repair 的实现时间、重放延迟、人工复核量和无法修复场景占比。"
+  ],
+  "successCriteria": [
+    "至少一个预注册通道或通道对在两个 planner 上都显著提高错误 reversal 消除率，并相对随机等幅 repair 的 95% 场景聚类置信区间排除零。",
+    "targeted repair 的归因能比最强静态单轴/综合分基线更准确地预测哪个修改会改变 verdict，且未修复通道 invariant 达到预注册通过率。",
+    "正或负结果能形成可迁移的审计边界：明确哪些错误值得优先修复，或证明当前多轴分数无法支持因果资源分配。"
+  ],
+  "killCriteria": [
+    "Gate 0 中 repair 无法保持其他通道、动作或时间身份，导致处理变量与多个变化混杂。",
+    "reference branch 只能由同族学习模型产生，且没有显式状态、规则或人工锚点可独立核验。",
+    "Gate 1 中 targeted repair 不改变 verdict 或不优于随机等幅 repair，且跨 planner 归因方向完全不稳定。"
+  ],
+  "risks": [
+    "通道在真实生成模型中并非模块化可分，状态域 repair 可能高估像素世界模型中的可干预性，因此视频域只做受限外推。",
+    "独立 reference 仍可能包含仿真器和规则偏差，主结论必须限定到冻结协议并报告换 reference/planner 的敏感性。",
+    "失败集合按 verdict 不一致筛选会引入选择偏差，需另报告全量状态上的发生率和只在失败集成立的条件效应。",
+    "组合通道数量增长迅速，首轮只预注册理论上有耦合的两两 repair，避免事后搜索出看似显著的交互。"
+  ],
+  "impact": "正结果会把世界模型的多维错误报告转化为可行动的修复优先级，告诉系统开发者修复哪一通道才会改变 planner 或测试 verdict；负结果若显示通道无法被独立干预、静态分数不预测决策后果，也会否定以相关指标分配研发资源的做法，并推动 benchmark 记录更严格的状态、时间和提取器身份。",
+  "gates": {
+    "gate0": "尚未执行：验证 ego、NPC、geometry、time identity、extractor repair 能保持动作和其余通道不变量。",
+    "gate1": "尚未执行：确认 targeted repair 能在真实失败集合上改变冻结 verdict，并优于随机等幅修改。"
+  },
+  "evidence": [
+    {
+      "title": "WorldLens: Full-Spectrum Evaluations of Driving World Models in Real World",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Liang_WorldLens_Full-Spectrum_Evaluations_of_Driving_World_Models_in_Real_World_CVPR_2026_paper.html",
+      "role": "提供 24 维多轴评测和公开输出，是必须超越的相关性诊断基线，但未做修复干预。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DrivingGen: A Comprehensive Benchmark for Generative Video World Models in Autonomous Driving",
+      "url": "https://openreview.net/forum?id=OrgL5DsU0f",
+      "role": "提供视觉、轨迹物理、时序与 controllability 指标，用于检验静态分数能否预测真正的 verdict 改变。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "role": "提出但尚未实例化 L3 失败归因，直接定义本研究需要落地的决策级证据缺口。",
+      "localPaperId": "world-model-simulator-admissibility",
+      "localLink": "papers/world-model-simulator-admissibility/"
+    },
+    {
+      "title": "ReactSim-Bench: Benchmarking Reactive Behavior World Model Simulation in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.14058",
+      "role": "提供显式多主体状态和行为 baseline，使 NPC、ego、geometry 与 time identity 的受控替换可被验证。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "KineBench: Benchmarking Embodied World Models via IDM-Free Kinematic Grounding",
+      "url": "https://arxiv.org/abs/2607.19876",
+      "role": "展示独立运动学 grounding 能减少提取器归因歧义，为驾驶通道修复中的独立锚点提供方法边界。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "CounterScene: Counterfactual Causal Reasoning in Generative World Models for Safety-Critical Closed-Loop Evaluation",
+      "url": "https://arxiv.org/abs/2603.21104",
+      "role": "以因果图和最小干预生成安全场景，是需要区分的直接近邻；本项改为固定失败 rollout 的通道处理效应。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:11:21.106Z"
+}

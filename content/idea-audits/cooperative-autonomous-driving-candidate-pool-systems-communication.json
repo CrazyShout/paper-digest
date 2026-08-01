@@ -1,0 +1,459 @@
+{
+  "shard_id": "systems-communication",
+  "candidates": [
+    {
+      "dedup_key": "receiver-burst-isolation-gpu-pcie",
+      "title": "协同消息突发下的接收端 GPU/PCIe 隔离",
+      "method_steps": [
+        "在 QuantV2X 中记录消息到达、反序列化、CPU-GPU 拷贝、协同融合 kernel 和 ego 推理完成时间。",
+        "保持总消息量不变，构造 1-4 个协作者的同步突发、错相突发和均匀到达三种负载。",
+        "比较共享 FIFO、按发送者隔离队列、受限协同批处理和 ego 优先 CUDA stream。",
+        "报告 ego 推理尾延迟、协同队列驻留时间、显存峰值和冻结模型精度。"
+      ],
+      "falsifiable_hypothesis": "即使网络时延为零，同步协同消息也会通过 PCIe 和 GPU 排队显著抬高 ego 推理尾延迟；若所有负载下变化均低于预注册界限，则负结果证明该栈的主要瓶颈不在接收端资源竞争。",
+      "minimum_experiment": "一张至少 24 GB 的 CUDA GPU，两个 QuantV2X 模型，1/2/4 个协作者，三种到达相位；正信号为隔离机制降低至少 25% 的 p99 ego 延迟且 mAP 下降不超过 1 点，负信号为 FIFO 与隔离机制在预注册等价界内。",
+      "contribution_type": "系统测量与接收端调度机制",
+      "estimated_effort": "6-8 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/ucla-mobility/QuantV2X",
+          "role": "external: 官方代码、V2X-Real 接口、TensorRT 和量化模型执行基线"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/V2X-Real",
+          "role": "external: 官方多智能体真实数据和基准配置"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://arxiv.org/abs/2503.10034",
+          "overlap": "external primary source: V2X-ReaLO 已发现 GPU-host 拷贝是在线传输模块的重要开销，但未隔离多发送者突发造成的接收端资源竞争。"
+        },
+        {
+          "url": "https://github.com/SJTU-IPADS/reef",
+          "overlap": "external direct systems collision: REEF 已研究并发 DNN 的 GPU 优先级与抢占；本候选必须限定为协同驾驶消息到达、PCIe 拷贝和融合工作共同形成的端到端队列。"
+        }
+      ],
+      "so_what": "若瓶颈成立，继续压缩空口消息并不能保证在线收益，协同感知栈还需要显式的接收端资源合同；若不成立，则可排除一个常被猜测但未验证的部署瓶颈。",
+      "objective_constraints": [
+        "硬门槛：至少两个官方 checkpoint 必须完成可复现的逐阶段时间线。",
+        "不得把平均推理时间代替尾延迟，也不得把模拟协作者数量当作独立道路样本。",
+        "模型、输入和消息字节在调度策略间必须完全冻结。",
+        "不提出 deadline/drop、稀疏选择或 planning-value-per-byte 机制。"
+      ]
+    },
+    {
+      "dedup_key": "periodic-sensor-incast-phase-leases",
+      "title": "同步传感周期触发的协同 incast 与错相发送租约",
+      "method_steps": [
+        "在 OpenCDA 中生成固定 10 Hz、相同总字节但不同相位的多车消息流。",
+        "将协作者规模从 2 扩展到 4、8、16，并记录接收队列、突发宽度、发送公平性和消息年龄离散度。",
+        "实现无需语义评分的确定性错相租约，由接收者仅分配周期内发送相位。",
+        "比较完全同步、随机抖动、静态错相和租约失效后的恢复行为。"
+      ],
+      "falsifiable_hypothesis": "传感器同步会在共享接收点形成周期性 incast，使尾延迟和发送者不公平性显著恶化；若错相后没有稳定改善，则负结果表明当前规模下同步采样并非系统瓶颈。",
+      "minimum_experiment": "OpenCDA 中固定一个融合模型和固定消息大小，运行 2/4/8/16 协作者的四种相位策略；正信号为错相租约同时降低至少 30% 的队列峰值和 p99 消息驻留时间，负信号为所有规模下差异落入预注册等价界。",
+      "contribution_type": "通信系统诊断与轻量控制面机制",
+      "estimated_effort": "6-8 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/ucla-mobility/OpenCDA",
+          "role": "external: 官方全栈协同驾驶仿真和 V2X 管理接口"
+        },
+        {
+          "url": "https://github.com/RadetzkyLi/Multi-V2X",
+          "role": "external: 官方高渗透率数据与最多 31 个通信智能体的场景资产"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://arxiv.org/abs/2503.10034",
+          "overlap": "external primary source: V2X-ReaLO 展示 10 Hz 在线消息与真实计算开销，但未分解采样相位导致的多发送者 incast。"
+        },
+        {
+          "url": "https://ry4nzhu.github.io/publication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication/",
+          "overlap": "external direct collision: Harbor 已做动态 helper-helpee 分配；本候选不能再声称新的协作者选择，只研究固定协作者集合的周期相位和接收突发。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2606.31219",
+          "overlap": "local-corpus primary source: CooperScene 提供三车一站和 10 Hz 同步采集事实，但公开审计未建立接收端 incast 机制。"
+        }
+      ],
+      "so_what": "它检验一个不依赖新模型和语义排序的部署盲点：同步感知是否反而把平稳平均负载变成周期性尾延迟。",
+      "objective_constraints": [
+        "硬门槛：同步与错相实验必须保持总字节、协作者集合和模型输出不变。",
+        "不得将随机 seed 或单帧视为独立道路采集单位。",
+        "租约只能改变发送相位，不能选择内容、协作者或规划价值。",
+        "若 4 个以上协作者无法在现有平台稳定执行，则缩减为纯系统测量而不声称规模结论。"
+      ]
+    },
+    {
+      "dedup_key": "pose-feature-calibration-epoch-atomicity",
+      "title": "特征、位姿与标定版本的原子快照合同",
+      "method_steps": [
+        "在同一感知帧中分别记录 feature、ego pose、relative pose、extrinsic calibration 和坐标系版本。",
+        "冻结 feature tensor，仅注入 pose 与 calibration 元数据的版本滞后、提前更新和交叉组合。",
+        "实现 epoch manifest，使接收端只融合来自同一生成快照的特征与几何元数据。",
+        "比较普通高斯位姿噪声、版本错配和 epoch 一致性恢复后的检测与 ghost-object 指标。"
+      ],
+      "falsifiable_hypothesis": "相同误差幅度下，离散的版本错配比独立高斯位姿噪声造成更严重且更难被现有鲁棒融合吸收的错误；若两者影响等价，则负结果否定单独引入版本合同的必要性。",
+      "minimum_experiment": "选择 CooperScene 或 V2X-Real 的一个可运行中间融合模型，构造 1/2/5 帧的 calibration/pose 版本偏移；正信号为版本错配显著增加 ghost 或 AP 损失且 epoch 合同恢复大部分损失，负信号为两类误差在预注册界限内等价。",
+      "contribution_type": "协议正确性诊断与元数据一致性机制",
+      "estimated_effort": "7-9 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/UCR-CISL/CooperScene",
+          "role": "local-corpus: 官方代码、同步多智能体数据和标定文件"
+        },
+        {
+          "url": "https://github.com/zhuyaoye/MamV2XCalib",
+          "role": "external: 官方 V2X 标定代码，可产生和验证替代 calibration epoch"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Zhu_MamV2XCalib_V2X-based_Target-less_Infrastructure_Camera_Calibration_with_State_Space_Model_ICCV_2025_paper.html",
+          "overlap": "external direct collision: MamV2XCalib 解决标定估计质量；本候选不能声称新标定算法，只研究正确标定在滚动更新时的版本一致性。"
+        },
+        {
+          "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Hong_Multi-agent_Collaborative_Perception_via_Motion-aware_Robust_Communication_Network_CVPR_2024_paper.html",
+          "overlap": "external direct collision: MRCNet 已研究连续位姿噪声和运动噪声；本候选的差异必须是离散元数据版本错配与原子快照。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2606.31219",
+          "overlap": "local-corpus primary source: CooperScene 声明严格同步和精确标定，但未定义运行时 calibration version 的传输合同。"
+        }
+      ],
+      "so_what": "真实车辆和路侧设备会独立更新定位与标定；若消息不携带一致性版本，模型鲁棒性无法区分小噪声和错误坐标快照。",
+      "objective_constraints": [
+        "硬门槛：必须在 current-epoch 条件下逐位验证 feature 和 pose 输入与原实现一致。",
+        "不得训练新的异步补偿或几何对齐网络。",
+        "必须单独报告连续噪声与离散版本错配，不能混成一个 pose-error 曲线。",
+        "若公开数据无法确定标定文件与帧的对应关系，则只保留合成版本合同结论。"
+      ]
+    },
+    {
+      "dedup_key": "rolling-model-wire-capability-negotiation",
+      "title": "协同感知滚动升级中的 wire capability 协商",
+      "method_steps": [
+        "选择两个官方 backbone/checkpoint 版本和两个量化或 codebook 版本，形成车辆分批升级矩阵。",
+        "定义包含 encoder family、feature shape、坐标网格、量化器、codebook 和 calibration frame 哈希的 wire manifest。",
+        "比较静默解码、拒绝不兼容消息和基于已存在 interpreter 的显式协商三种路径。",
+        "测量静默错误率、协作覆盖率、检测退化和升级期间的兼容窗口。"
+      ],
+      "falsifiable_hypothesis": "静态异构训练结果不能保证滚动升级安全，未声明的模型或 codebook 版本偏差会产生静默误融合；若所有官方组合天然兼容或明确失败，则负结果可形成受限兼容性证书。",
+      "minimum_experiment": "QuantV2X/V2X-Real 上至少四个 sender-receiver 版本组合；正信号为存在通过 shape 检查却造成显著精度下降的静默组合，且 manifest 能在不修改模型的情况下阻止它，负信号为所有组合显式失败或精度等价。",
+      "contribution_type": "部署协议与兼容性测试",
+      "estimated_effort": "8-10 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/ucla-mobility/QuantV2X",
+          "role": "external: 官方全精度、量化和 codebook 执行路径"
+        },
+        {
+          "url": "https://github.com/cxliu0314/CodeAlign",
+          "role": "external: 官方异构 code-space 对齐实现"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/V2X-Real",
+          "role": "external: 共同数据和基准模型接口"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://arxiv.org/abs/2411.16799",
+          "overlap": "external direct collision: PolyInter 已处理固定异构模型的 feature interpreter；本候选不能把异构适配本身作为新意。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2509.09310",
+          "overlap": "external direct collision: PHCP 已研究推理时对未知模型的渐进适配；本候选聚焦滚动升级协议、版本发现和静默不兼容。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2603.00609",
+          "overlap": "external direct collision: CodeAlign 已解决 modality isolation 和 code-space 翻译，但没有给出在线版本协商或升级事务合同。"
+        }
+      ],
+      "so_what": "跨厂商协同系统不可能要求所有车辆同时更新；确认静默版本错配是否存在，直接决定中间特征接口能否作为可部署协议。",
+      "objective_constraints": [
+        "硬门槛：至少找到两个可运行且 wire 表面兼容、内部语义不同的官方版本。",
+        "不得把重新训练一个更强 interpreter 作为主要贡献。",
+        "manifest 检测必须只使用发送时可获得的元数据，不得查看 ground truth 或接收端预测。",
+        "若所有不兼容组合均在 shape 或反序列化阶段显式失败，则以兼容性负结果结束。"
+      ]
+    },
+    {
+      "dedup_key": "cam-cpm-cross-service-queue-isolation",
+      "title": "CAM/BSM 与协同感知流量共存时的跨服务队列隔离",
+      "method_steps": [
+        "从 SEE-V2X 的 BSM-only、Perception-only 和 BSM&Perception 场景提取消息大小、到达率和跨层负载范围。",
+        "在 VaN3Twin 中固定 CPM 内容，构造共享 FIFO、标准 DCC 和带保底借用的双队列策略。",
+        "联合测量 CAM inter-reception gap、CPM object-awareness、信道占用和队列饥饿。",
+        "在未参与参数拟合的密度和遮挡场景中验证策略是否同时保护两类服务。"
+      ],
+      "falsifiable_hypothesis": "平均信道负载相同的情况下，共享排队会产生跨服务优先级反转，使感知流量和基础安全消息至少一方出现长尾饥饿；若标准 DCC 已在所有测试范围内避免该问题，则负结果支持无需新增隔离机制。",
+      "minimum_experiment": "VaN3Twin-CARLA 中三档车辆密度和三档 CPM 负载，固定感知内容并比较三种队列策略；正信号为双队列同时降低 CAM 长间隔事件和 CPM awareness 损失，负信号为相对标准 DCC 无实践差异。",
+      "contribution_type": "跨层通信测量与设施层调度机制",
+      "estimated_effort": "8-10 weeks",
+      "public_assets": [
+        {
+          "url": "https://cisl.ucr.edu/SEE-V2X/",
+          "role": "external primary asset: 官方真实 C-V2X 跨层数据，包含 BSM 与 perception 共存场景"
+        },
+        {
+          "url": "https://github.com/DriveX-devs/VaN3Twin",
+          "role": "external: ETSI 兼容的 ns-3、SUMO、CARLA 协同仿真栈"
+        },
+        {
+          "url": "https://forge.etsi.org/rep/ITS/asn1/cpm_ts103324",
+          "role": "external: ETSI 官方 CPM ASN.1 定义"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://cisl.ucr.edu/SEE-V2X/",
+          "overlap": "external direct collision: SEE-V2X 已实测 BSM 与 perception 共存及跨层行为；本候选必须增加可执行队列机制和任务级联合验收，而非重复数据描述。"
+        },
+        {
+          "url": "https://doi.org/10.1109/VTC2024-SPRING62846.2024.10683237",
+          "overlap": "external direct collision: 该工作已研究 MCM/CAM 优先级与 DCC；差异必须限定为 CPM 感知质量和安全消息接收间隔的共同约束。"
+        }
+      ],
+      "so_what": "协同感知不会独占 5.9 GHz 信道；若它破坏基础安全消息或反被 DCC 长期饿死，单独报告感知带宽没有部署意义。",
+      "objective_constraints": [
+        "硬门槛：必须先复现 SEE-V2X 中至少一个共存趋势，再测试新策略。",
+        "固定 CPM 感知内容，禁止通过普通稀疏传输降低负载。",
+        "不得从 packet 指标直接声称道路安全改进。",
+        "每种策略必须保持相同物理层、移动轨迹和应用消息生成过程。"
+      ]
+    },
+    {
+      "dedup_key": "coupled-adaptive-rate-controller-stability",
+      "title": "多车自适应压缩控制器的耦合振荡审计",
+      "method_steps": [
+        "为每个发送者实现 R-ACP 风格的本地 channel/queue 到编码率控制器，但固定感知模型和候选码率集合。",
+        "让 4-16 个控制器竞争同一 5G-LENA sidelink 或共享接收瓶颈。",
+        "扫描反馈延迟、控制增益和同步更新时间，检测极限环、相位锁定、饥饿和 Jain fairness。",
+        "比较独立控制、随机错相和带共享拥塞价格或 ECN 的稳定化机制。"
+      ],
+      "falsifiable_hypothesis": "单车稳定的自适应编码控制器在共享无线资源上会因同步反馈形成持续振荡和不公平；若在覆盖的增益与反馈延迟下均收敛，则负结果给出一个有界稳定区间。",
+      "minimum_experiment": "Multi-V2X 的 4/8/16 智能体配置，三档反馈延迟和四档控制增益；正信号为出现持续码率振荡、队列振荡或发送者饥饿且共享信号显著抑制，负信号为所有配置在预注册稳态界内。",
+      "contribution_type": "控制-通信系统诊断与稳定化机制",
+      "estimated_effort": "8-10 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/RadetzkyLi/Multi-V2X",
+          "role": "external: 高渗透率多智能体场景与官方代码"
+        },
+        {
+          "url": "https://gitlab.com/cttc-lena/nr",
+          "role": "external: 官方 5G-LENA NR 模块和 sidelink 仿真基础"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/QuantV2X",
+          "role": "external: 可执行的多档量化消息与感知基线"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://arxiv.org/abs/2410.04168",
+          "overlap": "external direct collision: R-ACP 已根据 channel capacity 自适应压缩并优化信息新鲜度；本候选不能再声称自适应压缩，只研究多控制器闭环稳定性。"
+        },
+        {
+          "url": "https://ry4nzhu.github.io/publication/boosting_collaborative-vehicular-perception-on-the-edge-with-v2v-communication/",
+          "overlap": "external direct collision: Harbor 已做动态网络条件下的 runtime assignment，但未把多个独立码率控制器的反馈耦合当作研究对象。"
+        }
+      ],
+      "so_what": "如果每辆车都根据同一拥塞信号同时升降码率，单体最优控制可能在系统级失稳；正负结果都能约束自适应通信机制的部署方式。",
+      "objective_constraints": [
+        "硬门槛：单发送者控制器必须先在全部参数下稳定，否则不能归因于多发送者耦合。",
+        "控制器之间除声明的共享信号外不得交换感知语义。",
+        "不得把平均 throughput 提升作为主要结论，主结果必须是稳定性和公平性。",
+        "感知模型、码率集合和物理层配置在策略间保持一致。"
+      ]
+    },
+    {
+      "dedup_key": "pseudonym-rotation-perception-cache-continuity",
+      "title": "V2X 伪名轮换下的感知缓存连续性",
+      "method_steps": [
+        "在 ETSI CPM/OpenCDA 栈中按可配置周期轮换发送者伪名，同时保持车辆运动和传感器数据不变。",
+        "定位 tracking、Feature Bank、协作者历史和重复对象抑制中以 sender ID 为键的状态。",
+        "比较静态 ID、直接清空缓存、错误继承和仅使用短窗运动一致性的 receiver-local 重关联。",
+        "联合报告 ghost、duplicate track、缓存污染和重关联可链接性。"
+      ],
+      "falsifiable_hypothesis": "隐私伪名轮换会破坏协同感知的 sender-keyed 状态并产生重复或错误继承；若所有目标栈均为无状态或指标等价，则负结果证明该风险不适用于测试实现。",
+      "minimum_experiment": "V2Xverse/OpenCDA 中三种交通密度、三种轮换周期和至少一个带历史状态的协同方法；正信号为轮换显著增加 duplicate/ghost 且短窗重关联恢复效果，负信号为相对静态 ID 的差异落入预注册界限。",
+      "contribution_type": "隐私-系统兼容性诊断与状态管理机制",
+      "estimated_effort": "7-9 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/DriveX-devs/VaN3Twin",
+          "role": "external: ETSI 兼容消息栈和可修改的发送者身份路径"
+        },
+        {
+          "url": "https://forge.etsi.org/rep/ITS/asn1/cpm_ts103324",
+          "role": "external: 官方 CPM schema"
+        },
+        {
+          "url": "https://github.com/CollaborativePerception/V2Xverse",
+          "role": "external: 官方协同感知与闭环驾驶仿真代码"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://www.jstage.jst.go.jp/article/comex/14/3/14_2024XBL0184/_article/-char/en",
+          "overlap": "external direct collision: 2025 工作已优化伪名轮换的位置隐私；本候选不能提出新的伪名方案，只检验其与感知状态的接口冲突。"
+        },
+        {
+          "url": "https://xml.jips-k.org/full-text/view?doi=10.3745%2FJIPS.03.0210",
+          "overlap": "external direct collision: V-TRACE 已研究伪名变化后的恶意车辆持续跟踪；本候选必须限定为正常协同感知缓存正确性和隐私约束。"
+        }
+      ],
+      "so_what": "隐私标准要求身份变化，而协同模型常隐含稳定 agent ID；验证两者是否冲突是跨协议层的真实部署问题。",
+      "objective_constraints": [
+        "硬门槛：推理时禁止使用仿真 ground-truth 稳定身份。",
+        "必须同时报告感知恢复和攻击者可链接性，不能以永久标识换取精度。",
+        "不研究恶意节点检测、信任评分或攻击防御。",
+        "若目标模型没有任何 sender-keyed 状态，应明确作为负结果而不添加人为缓存。"
+      ]
+    },
+    {
+      "dedup_key": "encrypted-v2x-feature-metadata-leakage",
+      "title": "稀疏协同特征的加密流量元数据泄漏",
+      "method_steps": [
+        "对 Where2comm、QuantV2X 和一个稀疏模型记录最终序列化后的包长、包数和发送时刻，不读取负载内容。",
+        "训练被动观察者从元数据预测目标数量、交通密度、遮挡事件或场景类别。",
+        "按采集序列和地点划分训练测试集，排除帧邻近与固定路由造成的数据泄漏。",
+        "比较固定 bucket、随机 padding 和定时整形对攻击 AUC、字节开销和冻结感知指标的影响。"
+      ],
+      "falsifiable_hypothesis": "内容加密不能隐藏数据依赖型稀疏消息的场景信息，元数据攻击可显著超过随机基线；若跨场景测试保持随机水平，则负结果给出该类 wire format 的有界隐私证据。",
+      "minimum_experiment": "至少两个数据依赖型消息生成器、三个互斥场景 split 和三种防御；正信号为攻击 AUC 至少 0.8 且某防御以不超过 20% 的额外字节降至 0.6 以下，负信号为严格跨场景测试接近随机。",
+      "contribution_type": "通信隐私测量与流量整形机制",
+      "estimated_effort": "6-8 weeks",
+      "public_assets": [
+        {
+          "url": "https://coperception.github.io/where2comm/",
+          "role": "external: 官方数据依赖型空间消息打包方法和代码入口"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/QuantV2X",
+          "role": "external: 可执行量化消息与真实数据基线"
+        },
+        {
+          "url": "https://catalog.data.gov/dataset/c-v2x-interoperability-testing-datasets",
+          "role": "external: NIST 官方 C-V2X PCAP/PDML 互操作数据，可验证包级特征提取工具"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://www.microsoft.com/en-us/research/publication/whisper-leak-a-side-channel-attack-on-large-language-models/",
+          "overlap": "external direct methodological collision: Whisper Leak 已证明加密流的包长与时序可泄漏语义；新意必须来自 V2X 感知消息和可量化的驾驶场景泄漏。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2604.09206",
+          "overlap": "external primary source: Long-SCOPE 展示数据依赖型全稀疏协同消息，但未审计加密后元数据隐私。"
+        }
+      ],
+      "so_what": "很多通信高效方法让消息大小直接跟场景内容变化；即使负载加密，旁观者仍可能推断车辆周围目标和敏感路线状态。",
+      "objective_constraints": [
+        "硬门槛：攻击输入只能包含加密后仍可见的长度、数量和时间信息。",
+        "必须按独立场景或采集 campaign 划分数据，禁止随机逐帧切分。",
+        "不提出新的稀疏传输或 planning-value-per-byte 方法。",
+        "防御比较必须同时报告隐私、真实序列化开销和感知指标。"
+      ]
+    },
+    {
+      "dedup_key": "pc5-uu-exactly-once-perception-commit",
+      "title": "PC5/Uu 双路径协同消息的 exactly-once 融合提交",
+      "method_steps": [
+        "在 OpenCDA 与 5G-LENA 中为同一 CPM 或中间特征建立 PC5、Uu 两条不同延迟和丢包路径。",
+        "构造复制、路径切换、乱序和一条路径恢复后的晚到副本。",
+        "实现包含 logical message ID、generation epoch 和单调 commit index 的接收合同。",
+        "比较单路径、朴素双发和 exactly-once 提交下的重复融合、乱序提交、感知指标及额外状态成本。"
+      ],
+      "falsifiable_hypothesis": "双路径复制虽然提高消息到达率，但朴素接收会因重复和乱序造成非幂等融合错误；若目标融合器在全部条件下天然幂等，则负结果证明无需额外提交层。",
+      "minimum_experiment": "两个公开融合方法、三种 PC5/Uu 延迟差和三档相关丢包；正信号为朴素双发出现可复现 duplicate/out-of-order 感知损失且 exactly-once 消除，负信号为与单路径或幂等基线等价。",
+      "contribution_type": "多连接传输协议与融合一致性机制",
+      "estimated_effort": "8-10 weeks",
+      "public_assets": [
+        {
+          "url": "https://gitlab.com/cttc-lena/nr",
+          "role": "external: 官方 5G-LENA NR、Uu 和 sidelink 仿真基础"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/OpenCDA",
+          "role": "external: 官方协同驾驶应用与融合接口"
+        },
+        {
+          "url": "https://forge.etsi.org/rep/ITS/asn1/cpm_ts103324",
+          "role": "external: 官方 CPM 消息定义"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://www.sciencedirect.com/science/article/abs/pii/S2214209625000993",
+          "overlap": "external direct collision: 2025 工作已研究 PC5/Uu 按消息类型路由与 RSU 融合；本候选不能声称双接口本身新颖，只研究同一逻辑消息的重复、乱序和提交语义。"
+        },
+        {
+          "url": "https://www.mdpi.com/2076-3417/14/7/2841",
+          "overlap": "external direct collision: 2024 多路径 V2C 工作已研究复制可靠性和冗余削减，但未连接非幂等协同感知融合。"
+        }
+      ],
+      "so_what": "多连接提升链路可靠性不等于提升感知可靠性；重复或旧版本被融合两次时，网络层的正收益可能在应用层反转。",
+      "objective_constraints": [
+        "硬门槛：平台必须同时产生两条可独立控制且能乱序的路径，否则停止多路径结论。",
+        "不得把单纯链路切换或 fallback 作为贡献。",
+        "发送内容和两条路径的逻辑消息必须逐字节一致。",
+        "必须先验证目标融合算子是否幂等，再解释重复消息造成的效果。"
+      ]
+    },
+    {
+      "dedup_key": "clock-domain-provenance-age-identifiability",
+      "title": "协同消息时钟域溯源与单向 age 可识别性",
+      "method_steps": [
+        "枚举 CooperScene MCAP、ROS 和模型输入中的 sensor time、publish time、host receive time、MCAP log time 与推理完成时间。",
+        "为每个时间戳增加 clock-domain 标签，并检查现有代码是否直接跨时钟相减。",
+        "保持消息到达顺序和网络过程不变，仅注入发送时钟 offset、drift 和同步重锁事件。",
+        "比较朴素单向 age、区间 age 和带同步不确定性的 age 对现有 age-aware 分支和系统指标的影响。"
+      ],
+      "falsifiable_hypothesis": "缺少时钟域溯源会把 clock offset/drift 错当成传输或信息年龄，并触发错误的 age-aware 行为；若所有公开路径都有同源或可验证同步时间，则负结果形成一个明确的可识别性证书。",
+      "minimum_experiment": "CooperScene 加一个 OpenCDA/ROS 风格管线，扫描固定 offset、线性 drift 和同步重锁三类干预；正信号为在网络过程不变时朴素 age 导致行为或指标变化，而区间合同保持一致，负信号为所有时间运算均有可验证共同时间基准。",
+      "contribution_type": "时间语义审计与可观测性合同",
+      "estimated_effort": "6-8 weeks",
+      "public_assets": [
+        {
+          "url": "https://github.com/UCR-CISL/CooperScene",
+          "role": "local-corpus: 官方 MCAP、同步数据、模型代码和时间字段"
+        },
+        {
+          "url": "https://github.com/ucla-mobility/OpenCDA",
+          "role": "external: 可注入独立 agent clock 的协同驾驶运行环境"
+        },
+        {
+          "url": "https://catalog.data.gov/dataset/c-v2x-interoperability-testing-datasets",
+          "role": "external: NIST 官方包捕获时间戳数据，用于验证抓包时钟边界"
+        }
+      ],
+      "prior_work": [
+        {
+          "url": "https://arxiv.org/abs/2602.13439",
+          "overlap": "external direct collision: 2026 工作已提出网络同步、AoI 和时空特征补偿；本候选不能再提出异步补偿，差异必须是公开系统中 age 是否可由现有时间字段识别。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2503.10034",
+          "overlap": "external primary source: V2X-ReaLO 使用 ROS 在线消息和测量时延，但未提供跨时钟域 age 可识别性审计。"
+        },
+        {
+          "url": "https://arxiv.org/abs/2606.31219",
+          "overlap": "local-corpus primary source: CooperScene 声明 PTP 和硬件同步，但本地审计表明公开通信字段不足以自动推出所有模型消息的单向 age。"
+        }
+      ],
+      "so_what": "如果发送和接收时间不在可证明的共同时间基准上，任何基于 age、latency 或 freshness 的机制都可能优化一个不可识别量。",
+      "objective_constraints": [
+        "硬门槛：必须先建立每个时间字段的生产者、时钟域和同步证据表。",
+        "不训练或引入新的异步特征补偿模型。",
+        "注入 clock drift 时必须保持消息内容、到达顺序和网络服务过程不变。",
+        "无法证明的单向 delay 必须报告为区间或不可识别，禁止用 host 时间替代。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "candidateId": "paired-execution-layer-verdict-set",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbc0-f9cd-7293-8632-441a239393a2",
+  "reviewedAt": "2026-08-01T13:24:22+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 2,
+    "success-probability": 2,
+    "impact": 8,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "把同一 scenario-version-seed 在多执行层视为缺失重复测量，并直接控制现实 false-safe，比非配对相关和固定一致投票更严谨；但 set-valued calibration 本身依赖现成统计工具，贡献成败主要在配对数据。",
+    "feasibility": "Cam2Sim 固定提交确有一个 reference bag、CARLA/GS replay 和 DAVE-2 闭环入口，但没有提供至少 60 个独立现实/物理配对单元、第二场景族或 HIL。Real-World Perturbation Testing 论文证明多层不一致存在，却没有在当前资产中提供可复用的逐场景 paired corpus。10-12 周内自建真实或物理层数据不可信。",
+    "success-probability": "Gate 1 要求的场景身份、版本、oracle 语义和现实 paired set 同时满足，当前资产至少缺三项。用第二 simulator 或世界模型替代 HIL 只能开发方法，不能验证现实 false-safe 主指标，因此很可能只能得到协议而非论文主张。",
+    "impact": "若真实配对成立，该方法能直接回答哪些仿真 verdict 可被信任，安全和测试成本价值很高。",
+    "comparison-readiness": "单 simulator、双层一致、多数票和缺失感知模型容易实现；但现实层历史标签、统一 scenario identity 和相同 oracle 不可得，导致最关键的比较目标无法执行。"
+  },
+  "strongestObjection": "研究的核心输入不是算法而是可审计的跨执行层同场景配对数据；公开 Cam2Sim 只有单 reference bag，现实扰动论文也未给出可直接重放的 60 个 scenario-version-seed 单元。缺少现实/物理 verdict 时，false-safe 标签不可观测，把世界模型或第二 simulator 当替代层不能支持现实迁移结论。",
+  "requiredExperiment": "第 1-2 周只做 pairing feasibility audit：对每个候选单元生成带 hash 的 scenario manifest，证明至少 60 个独立单元在经典仿真、一个替代执行层和现实/物理锚点间可对齐，且 oracle 语义和不可执行原因可追踪；统计场景族、现实 verdict、missingness 与 inclusion rate。任何现实/物理层少于 60、只有单场景族或 identity 无法审计的情况都应立即停止方法开发。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ast-fortiss-tum/cam2sim/tree/8268453c5c91bef06d9e05326d926133d1798649",
+      "finding": "固定提交提供 ROS-to-CARLA、GS trajectory replay、DAVE-2 闭环及一个 reference_bag quick start；它能支撑接口 pilot，但公开 README 没有 60 个独立现实/物理配对单元或第二场景族。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.04953",
+      "finding": "一手论文在 offline、HIL 和全尺寸实车上评估 72 种扰动并观察层间不一致，证明问题重要；公开论文页没有提供本候选所需的逐 scenario-version-seed 可重放 paired asset。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.04770",
+      "finding": "Cam2Sim 一手论文定位于真实记录到 CARLA/GS 的闭环重建，适合作为单场景接口锚点，不能单独满足多层现实迁移的样本规模。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "2dcfc5946a1377805e7c9b739a35e13443aa9d914956e66f99ab3903a3eba6e0"
+}

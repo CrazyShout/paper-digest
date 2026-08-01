@@ -1,0 +1,46 @@
+{
+  "candidateId": "geolocation-controlled-retrieval-surplus",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.293Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "地理街景增强规划本身已被 Spatial Retrieval Augmented Autonomous Driving 和 PriorEye 直接覆盖，后者甚至把街景先验锚定到预期路线并加入自适应门控。剩余新意是更窄的识别问题：在路线、GPS、道路身份和空间元数据固定后，像素是否仍有不可替代增量。该 conditional-surplus estimand 及同位置时序错配、等距离错位置、GPS/route-only 的联合对照尚未在重开的直接工作中出现，但它主要是高价值审计设计，不是新的规划机制。",
+    "feasibility": "Spatial Retrieval 公开了数据构建与基线方向，NAVSIM 也提供可复现的非反应式规划评价接口，因此冻结审计技术上可做。主要阻力是 Google 街景数据的许可和完整复现、地理 tile 与道路片段无泄漏切分，以及 GPS/route-only 分支需要重新训练，无法与纯输入替换完全对称；五分支若不共享训练预算和非像素张量，结论会失去可识别性。",
+    "success-probability": "Spatial Retrieval 在全量 VAD 上只报告极小规划差异，而较明显改善集中在夜间碰撞子集；PriorEye 的路线锚定又说明高层意图和位置结构本身具有强信号。因而在 held-out tiles 且以最强位置匹配控制为对手时，真实像素仍稳定胜出的概率有限。负结果很可能表明收益主要来自道路身份、路线前瞻或静态几何，而不是不可替代的视觉内容。",
+    "impact": "若能证明像素在控制位置和路线后仍有稳定增量，可直接支持街景缓存、更新频率和门控策略的部署投资；若不能，也能避免把地图或路线先验误包装成视觉检索收益。影响取决于结果能否越过 NAVSIM 的伪闭环边界，当前设计本身不能支持真实道路安全结论。",
+    "comparison-readiness": "候选已列出零图像、同位置时序错配、等距离错位置、GPS/route-only、原始 VAD 和 VAD+Geo，并规定 scene 聚合、tile 隔离与配对统计，比较框架较完整。仍需把 GPS/route-only 的参数量、训练步数、地图拓扑输入及 route identity 表示锁死，否则最关键的公平基线可能偏弱。"
+  },
+  "strongestObjection": "PriorEye 已把视觉先验与预期路线绑定，Spatial Retrieval 的检索和门控也显式使用 GPS 距离；因此所谓像素增量可能只是路线/道路身份的高带宽编码。单独训练的轻量 GPS/route-only 网络不是与图像分支等价的干预，同位置时序错配又同时改变季节、天气、视角和图像质量。除非所有非像素张量、检索集合、训练预算和表达容量都匹配，否则即使真实图像获胜，也不能归因于不可替代的地理视觉内容。",
+  "requiredExperiment": "在预先按 geographic tile 和 road segment 双重隔离的至少 200 个独立 scenes 上，固定同一 VAD backbone、路线、GPS、道路图、检索距离、相机姿态、checkpoint 选择规则和 evaluator，训练或校准容量匹配的 real-image、zero-image、same-location-temporal-mismatch、distance-matched-wrong-location、GPS/route-only 五分支。主检验必须使用 scene-level paired difference，比 real image 对逐项最强控制，报告夜间与全量结果、等价界和 cluster bootstrap；同时用只含位置/路线的高容量控制确认结论不依赖刻意做弱的 prior baseline。",
+  "evidenceReopened": [
+    {
+      "title": "Spatial Retrieval Augmented Autonomous Driving",
+      "url": "https://arxiv.org/abs/2512.06865",
+      "finding": "论文已用 GPS/ego pose 检索地理图像、基于图像相似度与 GPS 距离做可靠性门控，并在 VAD 规划中报告全量近乎持平、夜间碰撞率小幅改善；其错误图像实验未隔离路线和道路身份。"
+    },
+    {
+      "title": "PriorEye: Geospatial Visual Priors for End-to-End Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.31830",
+      "finding": "该工作已直接提出锚定到预期行驶路线的街景视觉先验、双记忆与自适应门控，并在 NAVSIM-v2 多个端到端基线上报告提升，显著压缩了方法层面的新颖空间。"
+    },
+    {
+      "title": "NAVSIM: Data-Driven Non-Reactive Autonomous Vehicle Simulation and Benchmarking",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/32768f7faf1995026ef9821c696f3404-Abstract-Datasets_and_Benchmarks_Track.html",
+      "finding": "NAVSIM 提供基于真实日志的非反应式规划评价和标准化指标，适合冻结配对审计，但不能把分数差直接解释为真实闭环安全增量。"
+    },
+    {
+      "title": "Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-To-End Autonomous Driving",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/7d0e831810cc1ab137a1d5bf1744f0ee-Abstract-Datasets_and_Benchmarks_Track.html",
+      "finding": "Bench2Drive 提供闭环、多能力驾驶评价背景，但并未提供地理视觉像素相对位置和路线先验的识别设计。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "76450390f353855f7feec803aa5714db48d431d9d8c0926c14278dd129055241"
+}

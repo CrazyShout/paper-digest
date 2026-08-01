@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-age-pilot-v4-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "preparedAt": "2026-07-31",
+  "purpose": "Executable CPU pilot for clock-domain provenance and one-way-age identifiability.",
+  "preregistration": {
+    "registrationTiming": "Constants and stop checks were frozen in the executable before the recorded audit run; this is not an externally timestamped preregistration.",
+    "seeds": {
+      "calibration": 2026073101,
+      "test": 2026073102
+    },
+    "splitRule": "Calibration and test use distinct seeds and disjoint episode IDs. Calibration truth may fit bounds; test truth is available only to oracle and post-prediction evaluation.",
+    "independentUnit": "One clock-network episode is one cluster. Multiple messages and the two paired worlds within an episode are dependent observations.",
+    "episodeCounts": {
+      "calibration": 512,
+      "perCriticalTestRegime": 400,
+      "testRecords": 4400
+    },
+    "regimes": [
+      "paired-counterexample",
+      "bounded-provenance",
+      "common-clock",
+      "unknown-domain",
+      "relock-control"
+    ],
+    "grid": {
+      "offsetMs": [
+        0,
+        -20,
+        20,
+        -100,
+        100,
+        -500,
+        500
+      ],
+      "driftPpm": [
+        -100,
+        -50,
+        -10,
+        10,
+        50,
+        100
+      ],
+      "relock": [
+        "none",
+        "step"
+      ],
+      "deadlineMs": [
+        50,
+        100,
+        200
+      ]
+    },
+    "pairedWorldRule": {
+      "deadlineGapMs": 12,
+      "sameFields": [
+        "payload",
+        "message order",
+        "sender publish timestamp",
+        "receiver receipt timestamp",
+        "MCAP log timestamp",
+        "RTT observation",
+        "PTP-like point",
+        "provenance sidecar",
+        "network service-process id and all queue, serialization, and receiver-processing durations"
+      ],
+      "variedHiddenFactors": [
+        "sender clock offset and drift differ between paired worlds",
+        "sender relock state is held fixed within each pair and varied across the preregistered grid",
+        "forward and reverse one-way propagation delay differ between paired worlds"
+      ],
+      "requiredWitness": "The same observable trace must be fresh in one world and stale in the other for the same deadline. Forward/reverse propagation may trade off to preserve the same RTT; the declared queue and service process may not change. Relock mismatch and post-relock recovery are tested separately so a valid paired-world provenance counter is not falsified by construction."
+    },
+    "intervalInputFirewall": "The interval method receives only observation plus the calibration artifact. It receives no test age, one-way delay, sender clock truth, or truth verdict. Missing clock_domain, validity, rate, or relock evidence returns [0,+infinity] and uncertain.",
+    "calibrationRule": "Draw calibration mapping residuals within +/-18 ms and rate residuals within +/-120 ppm, then use the maximum absolute residual plus fixed guards of 2 ms and 2 ppm. Apply each transform from an anchor 2000 sender-clock ms before the message so rate and rate uncertainty participate in the mapping. A verified common clock has zero cross-domain mapping uncertainty.",
+    "metricDefinitions": {
+      "clusteredCoverage": "Fraction of episode clusters in which every evaluated true age is inside the reported point or interval; Wilson 95% interval over cluster successes.",
+      "falseFresh": "Fraction of episode clusters containing at least one fresh verdict on a stale truth, conditional on a stale event in the cluster.",
+      "falseStale": "Fraction of episode clusters containing at least one stale verdict on a fresh truth, conditional on a fresh event in the cluster.",
+      "zeroEventUpper95": "For zero observed cluster events, one-sided 95% bound 1-0.05^(1/n).",
+      "uncertainRate": "Mean per-episode fraction of uncertain verdicts.",
+      "intervalWidthMs": "Mean finite interval width and fraction of infinite-width intervals.",
+      "decisionCost": "Mean per-episode cost with false-fresh=10, false-stale=4, uncertain=1, correct=0."
+    },
+    "stopThresholds": {
+      "minimumCriticalRegimeClusters": 400,
+      "minimumClusteredCoverage": 0.99,
+      "maximumZeroFalseFreshUpper95": 0.01,
+      "maximumBoundedUncertainRate": 0.1,
+      "minimumPairedWitnesses": 400,
+      "minimumUnknownDomainUncertainRate": 0.99,
+      "minimumRelockTransitionUncertainRate": 0.99,
+      "minimumRelockStableDecisionAccuracy": 0.99,
+      "minimumCommonClockDecisionAccuracy": 0.99,
+      "minimumAblationFailClosedRate": 0.99
+    }
+  },
+  "methods": [
+    {
+      "id": "naive-direct-subtraction",
+      "kind": "point",
+      "definition": "fusion_use(receiver clock) minus sender publish timestamp, assuming numeric clocks are directly comparable"
+    },
+    {
+      "id": "mcap-log-minus-publish",
+      "kind": "point",
+      "definition": "MCAP log_time minus publish_time, without a clock-domain binding"
+    },
+    {
+      "id": "rtt-half-point",
+      "kind": "point",
+      "definition": "RTT/2 plus receiver-local receipt-to-use lag"
+    },
+    {
+      "id": "ptp-like-point",
+      "kind": "point",
+      "definition": "single affine sender-to-reference mapping point, ignoring its uncertainty and validity"
+    },
+    {
+      "id": "provenance-interval",
+      "kind": "interval",
+      "definition": "independently calibrated affine mapping interval with domain, validity, rate, and relock checks"
+    },
+    {
+      "id": "oracle",
+      "kind": "oracle",
+      "definition": "test truth age; evaluation-only upper bound"
+    },
+    {
+      "id": "provenance-minus-clock-domain",
+      "kind": "ablation",
+      "definition": "provenance interval after removing clock_domain; missing evidence fails closed"
+    },
+    {
+      "id": "provenance-minus-validity",
+      "kind": "ablation",
+      "definition": "provenance interval after removing validity; missing evidence fails closed"
+    },
+    {
+      "id": "provenance-minus-rate",
+      "kind": "ablation",
+      "definition": "provenance interval after removing rate; missing evidence fails closed"
+    },
+    {
+      "id": "provenance-minus-relock",
+      "kind": "ablation",
+      "definition": "provenance interval after removing relock; missing evidence fails closed"
+    }
+  ],
+  "execution": {
+    "date": "2026-07-31",
+    "command": "node scripts/idea-pilots/clock-age-identifiability.mjs",
+    "testCommand": "node --test test/clock-age-identifiability.test.mjs",
+    "runtime": {
+      "node": "v24.14.0",
+      "platform": "darwin",
+      "arch": "arm64"
+    },
+    "calibration": {
+      "calibrationSeed": 2026073101,
+      "calibrationEpisodeCount": 512,
+      "mappingHalfWidthMs": 19.99270362,
+      "rateHalfWidthPpm": 121.531275257,
+      "fitRule": "max absolute calibration residual plus preregistered guard",
+      "testTruthUsed": false
+    }
+  },
+  "results": {
+    "overall": {
+      "naive-direct-subtraction": {"clusteredCoverage":{"estimate":0.2,"ci95":[0.183052,0.218098]},"falseFresh":{"estimate":0.4075,"zeroEventUpper95":null},"falseStale":0.271,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":2.420167,"clusters":2000},
+      "mcap-log-minus-publish": {"clusteredCoverage":{"estimate":0.2,"ci95":[0.183052,0.218098]},"falseFresh":{"estimate":0.4075,"zeroEventUpper95":null},"falseStale":0.271,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":2.420167,"clusters":2000},
+      "rtt-half-point": {"clusteredCoverage":{"estimate":0.2,"ci95":[0.183052,0.218098]},"falseFresh":{"estimate":0.248,"zeroEventUpper95":null},"falseStale":0.0505,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":1.341,"clusters":2000},
+      "ptp-like-point": {"clusteredCoverage":{"estimate":0.2,"ci95":[0.183052,0.218098]},"falseFresh":{"estimate":0.285,"zeroEventUpper95":null},"falseStale":0.0765,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":1.578,"clusters":2000},
+      "provenance-interval": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":0.466667,"intervalWidthMs":{"finiteMean":29.421766,"infiniteRate":0.266667},"decisionCost":0.466667,"clusters":2000},
+      "oracle": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":0,"clusters":2000},
+      "provenance-minus-clock-domain": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":null,"infiniteRate":1},"decisionCost":1,"clusters":2000},
+      "provenance-minus-validity": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":null,"infiniteRate":1},"decisionCost":1,"clusters":2000},
+      "provenance-minus-rate": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":null,"infiniteRate":1},"decisionCost":1,"clusters":2000},
+      "provenance-minus-relock": {"clusteredCoverage":{"estimate":1,"ci95":[0.998083,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.001497},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":null,"infiniteRate":1},"decisionCost":1,"clusters":2000}
+    },
+    "provenanceIntervalByRegime": {
+      "paired-counterexample": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":40.471532,"infiniteRate":0},"decisionCost":1,"clusters":400},
+      "bounded-provenance": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":38.283024,"infiniteRate":0},"decisionCost":0,"clusters":400},
+      "common-clock": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":0,"clusters":400},
+      "unknown-domain": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":null,"infiniteRate":1},"decisionCost":1,"clusters":400},
+      "relock-control": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":0.333333,"intervalWidthMs":{"finiteMean":38.932509,"infiniteRate":0.333333},"decisionCost":0.333333,"clusters":400}
+    },
+    "pairedCounterexampleByMethod": {
+      "naive-direct-subtraction": {"clusteredCoverage":{"estimate":0,"ci95":[0,0.009512]},"falseFresh":{"estimate":0.57,"zeroEventUpper95":null},"falseStale":0.43,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":3.71,"clusters":400},
+      "mcap-log-minus-publish": {"clusteredCoverage":{"estimate":0,"ci95":[0,0.009512]},"falseFresh":{"estimate":0.57,"zeroEventUpper95":null},"falseStale":0.43,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":3.71,"clusters":400},
+      "rtt-half-point": {"clusteredCoverage":{"estimate":0,"ci95":[0,0.009512]},"falseFresh":{"estimate":1,"zeroEventUpper95":null},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":5,"clusters":400},
+      "ptp-like-point": {"clusteredCoverage":{"estimate":0,"ci95":[0,0.009512]},"falseFresh":{"estimate":1,"zeroEventUpper95":null},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":5,"clusters":400},
+      "provenance-interval": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":1,"intervalWidthMs":{"finiteMean":40.471532,"infiniteRate":0},"decisionCost":1,"clusters":400},
+      "oracle": {"clusteredCoverage":{"estimate":1,"ci95":[0.990488,1]},"falseFresh":{"estimate":0,"zeroEventUpper95":0.007461},"falseStale":0,"uncertainRate":0,"intervalWidthMs":{"finiteMean":0,"infiniteRate":0},"decisionCost":0,"clusters":400}
+    },
+    "controls": {
+      "pairedCounterexample": {
+        "episodePairs": 400,
+        "identicalObservableOppositeTruthPairs": 400,
+        "identicalServiceProcessPairs": 400,
+        "provenanceUncertainRate": 1
+      },
+      "commonClockPositiveControl": {
+        "episodeClusters": 400,
+        "naiveDecisionAccuracy": 1
+      },
+      "unknownDomainNegativeControl": {
+        "episodeClusters": 400,
+        "provenanceUncertainRate": 1
+      },
+      "relockPositiveControl": {
+        "episodeClusters": 400,
+        "transitionUncertainRate": 1,
+        "stableDecisionAccuracy": 1
+      },
+      "fieldAblationFailClosedRate": {
+        "provenance-minus-clock-domain": 1,
+        "provenance-minus-validity": 1,
+        "provenance-minus-rate": 1,
+        "provenance-minus-relock": 1
+      }
+    },
+    "stopCondition": {
+      "checks": {
+        "criticalRegimeClusterCount": true,
+        "boundedCoverage": true,
+        "boundedFalseFreshUpper95": true,
+        "boundedUncertainRate": true,
+        "pairedWitnesses": true,
+        "pairedIntervalRefusal": true,
+        "unknownDomainRefusal": true,
+        "relockTransitionRefusal": true,
+        "relockStableAccuracy": true,
+        "commonClockAccuracy": true,
+        "ablationsFailClosed": true
+      },
+      "action": "continue-to-calibrated-trace-phase"
+    }
+  },
+  "stopCondition": {
+    "ifAnyCheckFails": "Stop at the counterexample generator and provenance audit tooling; do not claim a usable bounded-age gate.",
+    "ifAllChecksPass": "Continue only to a separately calibrated trace phase; passing this synthetic pilot is not evidence about a deployed system.",
+    "observedChecks": {
+      "criticalRegimeClusterCount": true,
+      "boundedCoverage": true,
+      "boundedFalseFreshUpper95": true,
+      "boundedUncertainRate": true,
+      "pairedWitnesses": true,
+      "pairedIntervalRefusal": true,
+      "unknownDomainRefusal": true,
+      "relockTransitionRefusal": true,
+      "relockStableAccuracy": true,
+      "commonClockAccuracy": true,
+      "ablationsFailClosed": true
+    },
+    "observedAction": "continue-to-calibrated-trace-phase"
+  },
+  "claimBoundary": "This synthetic deterministic CPU pilot establishes only an executable observational-equivalence witness and the behavior of the listed estimators under the frozen generator. It does not establish a vulnerability, timestamp misuse, safety defect, or performance effect in any real cooperative-perception, ROS 2, MCAP, PTP, V2X, or deployed system. The interval results depend on calibration bounds being valid and do not validate a real calibration source. No candidate, paper, asset, or system is scored."
+}

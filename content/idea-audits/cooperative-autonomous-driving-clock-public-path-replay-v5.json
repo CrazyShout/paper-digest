@@ -1,0 +1,900 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditId": "cooperative-autonomous-driving-clock-public-path-replay-v5",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "mode": "read-only-source-equivalent-time-semantics-replay",
+  "purpose": "Evaluate only whether each frozen source expression's visible now, incoming stamp, and threshold identify reference-clock deadline truth.",
+  "execution": {
+    "executedAt": "2026-07-31T10:44:28.807Z",
+    "command": "node scripts/idea-pilots/clock-public-path-replay.mjs --output content/idea-audits/cooperative-autonomous-driving-clock-public-path-replay-v5.json",
+    "testCommand": "node --test test/clock-public-path-replay.test.mjs",
+    "runtime": {
+      "node": "v24.14.0",
+      "platform": "darwin",
+      "arch": "arm64"
+    },
+    "sourceAudit": {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-public-path-audit-v4.json",
+      "sha256": "98da4230981ce593b6081ffebc8428ee4640c19845baf207a7923a43d69eb694",
+      "strictPositiveIds": [
+        "POS-01-AUTOWARE-VTL",
+        "POS-02-CARMA-GNSS"
+      ]
+    },
+    "sourceContractsSha256": "04b7df5b76953d1d9bf84176cecade16cd51ac6557f96fb3adde307067f7f435",
+    "localArtifactSha256": {
+      "scripts/idea-pilots/clock-public-path-replay.mjs": "de5fee46623ba1460575c3d0c7c9ed02a023360b18e654e107873107dd752b98",
+      "test/clock-public-path-replay.test.mjs": "4428e1f77878e64b616825c28ad9f42240ee470cca23da6843bb199cfb5e368e"
+    }
+  },
+  "sourceVerification": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "repository": "autowarefoundation/autoware_universe",
+      "readOnlyRoot": "/private/tmp/clock-audit-autoware",
+      "expectedCommit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+      "observedHead": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+      "commitMatches": true,
+      "worktreeClean": true,
+      "extractionRef": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+      "files": [
+        {
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/config/virtual_traffic_light.param.yaml",
+          "gitBlobOid": "ca5fc6fc1e3d13905a7e0864b71636ff3f8bf580",
+          "sourceSha256": "389bd5080e130805c4cb75a2f9859b8509f243e498dfeef39ffb9f7fe7ef48c4",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "autoware-configured-threshold",
+              "lines": [
+                1,
+                8
+              ],
+              "sha256": "961353c7e826a5922031c39d6a3318717baad7f088c3467e3a3984ee3e7ac4d9",
+              "text": "/**:\n  ros__parameters:\n    virtual_traffic_light:\n      max_delay_sec: 3.0\n      near_line_distance: 1.0\n      dead_line_margin: 1.0\n      max_yaw_deviation_deg: 90.0\n      check_timeout_after_stop_line: true\n"
+            }
+          ]
+        },
+        {
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+          "gitBlobOid": "90ed5204b3a4f447adae0397f9f729de32fbc36a",
+          "sourceSha256": "5a97a5331b7e433a9a5736d84a348be7e07f40b63d65fe5188e369ab828549c2",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "autoware-threshold-binding",
+              "lines": [
+                45,
+                55
+              ],
+              "sha256": "4168b4f7b051bf6df6902f96c46cb568201c98c3eaf44609e2d4ece5b1d8f3dc",
+              "text": "  {\n    auto & p = planner_param_;\n    p.max_delay_sec = get_or_declare_parameter<double>(node, ns + \".max_delay_sec\");\n    p.near_line_distance = get_or_declare_parameter<double>(node, ns + \".near_line_distance\");\n    p.dead_line_margin = get_or_declare_parameter<double>(node, ns + \".dead_line_margin\");\n    p.hold_stop_margin_distance =\n      get_or_declare_parameter<double>(node, ns + \".hold_stop_margin_distance\");\n    p.max_yaw_deviation_rad = autoware_utils::deg2rad(\n      get_or_declare_parameter<double>(node, ns + \".max_yaw_deviation_deg\"));\n    p.check_timeout_after_stop_line =\n      get_or_declare_parameter<bool>(node, ns + \".check_timeout_after_stop_line\");\n"
+            }
+          ]
+        },
+        {
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "gitBlobOid": "40505fe4eb9f233a1d7d1c6e2c486c3078240526",
+          "sourceSha256": "5ac459db0f8143b15ed827973ed057fad2d4ca7af6e7bdce29b85b09f9c6fc32",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "autoware-incoming-state-store",
+              "lines": [
+                587,
+                624
+              ],
+              "sha256": "e94d85ac64de0e82f5b3b8dc8e7c5a8283e83135f1f7ae000d07f093a52256ac",
+              "text": "void VirtualTrafficLightModule::setCorrespondingVirtualTrafficLightState(\n  const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr\n    virtual_traffic_light_states)\n{\n  if (!virtual_traffic_light_states) {\n    return;\n  }\n\n  for (const auto & state : virtual_traffic_light_states->states) {\n    if (state.id != map_data_.instrument_id) {\n      continue;\n    }\n\n    const bool has_previous_state = virtual_traffic_light_state_.has_value();\n\n    const bool prev_has_right_of_way =\n      has_previous_state ? hasRightOfWay(*virtual_traffic_light_state_) : false;\n    const bool has_right_of_way = hasRightOfWay(state);\n    if (!prev_has_right_of_way && has_right_of_way) {\n      logInfo(\n        \"received message for instrument (ID: %s) is updated : right of way is given, approval: \"\n        \"true, finalized: %s, stamp: %ld.%09ld\",\n        state.id.c_str(), state.is_finalized ? \"true\" : \"false\", state.stamp.sec,\n        state.stamp.nanosec);\n    }\n\n    const bool prev_finalized =\n      has_previous_state ? virtual_traffic_light_state_->is_finalized : false;\n    const bool current_finalized = state.is_finalized;\n    if (!prev_finalized && current_finalized) {\n      logInfo(\n        \"received message for instrument (ID: %s) is updated : finalization is completed, \"\n        \"approval: %s, finalized: true, stamp: %ld.%09ld\",\n        state.id.c_str(), state.approval ? \"true\" : \"false\", state.stamp.sec, state.stamp.nanosec);\n    }\n\n    virtual_traffic_light_state_ = state;\n    return;\n"
+            },
+            {
+              "id": "autoware-timeout-expression",
+              "lines": [
+                459,
+                468
+              ],
+              "sha256": "7967c8109581dde6373086e0e82ccd50c6582121149a2acb3e6303b12fa21f9e",
+              "text": "bool VirtualTrafficLightModule::isStateTimeout(\n  const tier4_v2x_msgs::msg::VirtualTrafficLightState & state)\n{\n  const auto delay = (clock_->now() - rclcpp::Time(state.stamp)).seconds();\n  if (delay > planner_param_.max_delay_sec) {\n    logDebug(\"delay=%f, max_delay=%f\", delay, planner_param_.max_delay_sec);\n    return true;\n  }\n\n  return false;\n"
+            },
+            {
+              "id": "autoware-before-stop-line-branch",
+              "lines": [
+                269,
+                280
+              ],
+              "sha256": "47624d0d8c9f451de85d0727eaf5e41d1ebb5e1a102eb08f949b57e8e773ce93",
+              "text": "  // Stop at stop_line if state is timeout before stop_line\n  if (isBeforeStopLine(end_line_idx)) {\n    setModuleState<State::REQUESTING>();\n    if (isStateTimeout(*virtual_traffic_light_state_)) {\n      logWarnThrottle(\n        5000, \"virtual traffic light state is timeout, stop at stop line (ID: %s)\",\n        map_data_.stop_line_id_for_log.c_str());\n      insertStopVelocityAtStopLine(path, end_line_idx);\n    }\n\n    updateInfrastructureCommand();\n    return true;\n"
+            },
+            {
+              "id": "autoware-after-stop-line-branch",
+              "lines": [
+                288,
+                299
+              ],
+              "sha256": "51f4b4044c87f383793f1b0d5407a91c726cd002477184b1dfbc70bd17e2f5df",
+              "text": "  // Check timeout after stop_line if the option is on\n  if (\n    planner_param_.check_timeout_after_stop_line && isStateTimeout(*virtual_traffic_light_state_)) {\n    setModuleState<State::PASSING>();\n    logWarnThrottle(\n      5000,\n      \"virtual traffic light state is timeout after stop line, insert stop velocity at stop line \"\n      \"(ID: %s)\",\n      map_data_.stop_line_id_for_log.c_str());\n    insertStopVelocityAtStopLine(path, end_line_idx);\n    updateInfrastructureCommand();\n    return true;\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "repository": "usdot-fhwa-stol/carma-platform",
+      "readOnlyRoot": "/private/tmp/clock-audit-carma-platform",
+      "expectedCommit": "1c774df099ce23e77394758969bf86b0e5f40863",
+      "observedHead": "1c774df099ce23e77394758969bf86b0e5f40863",
+      "commitMatches": true,
+      "worktreeClean": true,
+      "extractionRef": "1c774df099ce23e77394758969bf86b0e5f40863",
+      "files": [
+        {
+          "path": "localization_manager/include/localization_manager/LocalizationManagerConfig.hpp",
+          "gitBlobOid": "d9902d5b9712a2de47363b54399db4ca9a7b182c",
+          "sourceSha256": "b12df4e201fff592f9398801bd51f15e90ec312eda916b5cf6ef6982fab40a3e",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "carma-threshold-default",
+              "lines": [
+                44,
+                45
+              ],
+              "sha256": "cc194deeef19917b9b983ca1e9563e9f3d414c74131f86233040e367c3330df7",
+              "text": "        //! GNSS Data timeout. If exceeded the system will assume the GNSS is no longer functional. Units are ms\n        int gnss_data_timeout = 500;\n"
+            }
+          ]
+        },
+        {
+          "path": "localization_manager/src/localization_manager_node.cpp",
+          "gitBlobOid": "fc163fb55801553d8ed393fd933f5f89b1e7f7a4",
+          "sourceSha256": "600397ae38b9562f1a5dcb20e2c1a4a87bd89bbe012d783472528e11869a91f1",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "carma-threshold-declaration",
+              "lines": [
+                35,
+                41
+              ],
+              "sha256": "f1689afada65d5721825650f3b1d64068d56190a572bdec2a9b859e4925fb1e3",
+              "text": "        config_.ndt_frequency_degraded_threshold = declare_parameter<double>(\"ndt_frequency_degraded_threshold\", config_.ndt_frequency_degraded_threshold);\n        config_.ndt_frequency_fault_threshold = declare_parameter<double>(\"ndt_frequency_fault_threshold\", config_.ndt_frequency_fault_threshold);\n        config_.auto_initialization_timeout = declare_parameter<int>(\"auto_initialization_timeout\", config_.auto_initialization_timeout);\n        config_.gnss_only_operation_timeout = declare_parameter<int>(\"gnss_only_operation_timeout\", config_.gnss_only_operation_timeout);\n        config_.sequential_timesteps_until_gps_operation = declare_parameter<int>(\"sequential_timesteps_until_gps_operation\", config_.sequential_timesteps_until_gps_operation);\n        config_.gnss_data_timeout = declare_parameter<int>(\"gnss_data_timeout\", config_.gnss_data_timeout);\n        config_.localization_mode = declare_parameter<int>(\"localization_mode\", config_.localization_mode);\n"
+            },
+            {
+              "id": "carma-threshold-load",
+              "lines": [
+                53,
+                62
+              ],
+              "sha256": "096f5deefc8c51cd0ee554c05bb049a585549f43d53ab1950e1d0f3d0ffdd385",
+              "text": "        // Load parameters\n        get_parameter<double>(\"fitness_score_degraded_threshold\", config_.fitness_score_degraded_threshold);\n        get_parameter<double>(\"fitness_score_fault_threshold\", config_.fitness_score_fault_threshold);\n        get_parameter<double>(\"ndt_frequency_degraded_threshold\", config_.ndt_frequency_degraded_threshold);\n        get_parameter<double>(\"ndt_frequency_fault_threshold\", config_.ndt_frequency_fault_threshold);\n        get_parameter<int>(\"auto_initialization_timeout\", config_.auto_initialization_timeout);\n        get_parameter<int>(\"gnss_only_operation_timeout\", config_.gnss_only_operation_timeout);\n        get_parameter<int>(\"sequential_timesteps_until_gps_operation\", config_.sequential_timesteps_until_gps_operation);\n        get_parameter<int>(\"gnss_data_timeout\", config_.gnss_data_timeout);\n        get_parameter<int>(\"localization_mode\", config_.localization_mode);\n"
+            },
+            {
+              "id": "carma-gnss-subscription",
+              "lines": [
+                81,
+                85
+              ],
+              "sha256": "fa147a331e164d433a8a090bd5da6ddc18b80b06baab848229eecceffa94bbf2",
+              "text": "        // Setup subscribers\n        gnss_pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(\"gnss_pose\", 5,\n                                                                              std::bind(&LocalizationManager::gnssPoseCallback, manager_.get(), std_ph::_1));\n        initialpose_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(\"initialpose\", 1,\n                                                                                              std::bind(&LocalizationManager::initialPoseCallback, manager_.get(), std_ph::_1));\n"
+            }
+          ]
+        },
+        {
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "gitBlobOid": "a6f0f89cf905d5feb8256c44e4e6a2b68def59d3",
+          "sourceSha256": "ee5d41fa49cffffe773c9f216d0675ea50c68dd48d22f4b6c03db8aaf0981bc2",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "carma-local-clock-type-binding",
+              "lines": [
+                26,
+                39
+              ],
+              "sha256": "fbf9658858dbe644306f8a024f4cae8ad27fc2d112ad6e2171d47b943964715e",
+              "text": "    LocalizationManager::LocalizationManager(PosePublisher pose_pub,\n                                             StatePublisher state_pub, ManagedInitialPosePublisher initialpose_pub,\n                                             const LocalizationManagerConfig &config,\n                                             rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logger,\n                                             std::unique_ptr<carma_ros2_utils::timers::TimerFactory> timer_factory)\n        : pose_pub_(pose_pub), state_pub_(state_pub), initialpose_pub_(initialpose_pub), config_(config), logger_(logger), timer_factory_(std::move(timer_factory)), transition_table_(static_cast<LocalizerMode>(config_.localization_mode))\n\n    {\n\n        transition_table_.setTransitionCallback(std::bind(&LocalizationManager::stateTransitionCallback, this,\n                                                          std::placeholders::_1, std::placeholders::_2,\n                                                          std::placeholders::_3));\n        timer_clock_type_ = timer_factory_->now().get_clock_type();\n    }\n"
+            },
+            {
+              "id": "carma-incoming-gnss-store",
+              "lines": [
+                143,
+                150
+              ],
+              "sha256": "f2b10efd68e332def07e20ab67478c4827b0c4b46108185c0e7eb988362cab25",
+              "text": "    void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)\n    {\n        last_raw_gnss_value_ = *msg;\n        // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized\n        if (transition_table_.getState() == LocalizationState::UNINITIALIZED)\n        {\n            lidar_init_sequential_timesteps_counter_ = 0;\n            transition_table_.signal(LocalizationSignal::INITIAL_POSE);\n"
+            },
+            {
+              "id": "carma-timeout-expression-and-signal",
+              "lines": [
+                263,
+                287
+              ],
+              "sha256": "4ae54a3550fb5f501875f7c1cb9e988b8bbd616ba8154e4810dd3a328c2e7736",
+              "text": "    void LocalizationManager::posePubTick()\n    {\n        // Clear any expired timers\n        clearTimers();\n\n        // Evaluate NDT Frequency if we have started receiving messages\n        // This check provides protection against excessively long NDT computation times that do not trigger the callback\n        if (prev_ndt_stamp_)\n        {\n            double freq = computeFreq(rclcpp::Time(prev_ndt_stamp_.get(), timer_clock_type_), timer_factory_->now());\n            if (freq <= config_.ndt_frequency_fault_threshold)\n            {\n                transition_table_.signal(LocalizationSignal::UNUSABLE_NDT_FREQ_OR_FITNESS_SCORE);\n            }\n            else if (freq <= config_.ndt_frequency_degraded_threshold)\n            {\n                transition_table_.signal(LocalizationSignal::POOR_NDT_FREQ_OR_FITNESS_SCORE);\n            }\n        }\n\n        // check if last gnss time stamp is older than threshold and send the corresponding signal\n        if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > rclcpp::Duration::from_nanoseconds(config_.gnss_data_timeout * 1e6))\n        {\n            transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);\n        }\n"
+            }
+          ]
+        },
+        {
+          "path": "localization_manager/src/LocalizationTransitionTable.cpp",
+          "gitBlobOid": "46cbb7292e210c979f5576768b32f41198e0a1d5",
+          "sourceSha256": "9dc296dfdfb4ebef3f2b085293480d87b11cfb7d3481193b5f0a247cb8da7f11",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "carma-timeout-state-branch",
+              "lines": [
+                169,
+                193
+              ],
+              "sha256": "b783e805bef73ff76b82d825277ef2b4dca4d4c1596970d17a4b8a90c8b0bf75",
+              "text": "    void LocalizationTransitionTable::signalWhenDEGRADED_NO_LIDAR_FIX(LocalizationSignal signal)\n    {\n        switch (signal)\n        {\n        case LocalizationSignal::INITIAL_POSE:\n            if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET)\n            {\n                setAndLogState(LocalizationState::INITIALIZING, signal);\n            }\n            break;\n        case LocalizationSignal::GOOD_NDT_FREQ_AND_FITNESS_SCORE:\n            if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET)\n            {\n                setAndLogState(LocalizationState::OPERATIONAL, signal);\n            }\n            break;\n        case LocalizationSignal::TIMEOUT:\n            if (mode_ != LocalizerMode::GNSS && mode_ != LocalizerMode::GNSS_WITH_FIXED_OFFSET && mode_ != LocalizerMode::AUTO_WITHOUT_TIMEOUT && mode_ != LocalizerMode::GNSS_WITH_NDT_INIT)\n            {\n                setAndLogState(LocalizationState::AWAIT_MANUAL_INITIALIZATION, signal);\n            }\n            break;\n        case LocalizationSignal::GNSS_DATA_TIMEOUT:\n            throw std::runtime_error(\"GNSS_DATA_TIMEOUT occurred while in DEGRADED_NO_LIDAR_FIX state. Localization cannot recover\");\n        default:\n"
+            }
+          ]
+        },
+        {
+          "path": "approaching_emergency_vehicle_plugin/src/approaching_emergency_vehicle_plugin_node.cpp",
+          "gitBlobOid": "3e1ac229533f483489733911db9670ad961eda9a",
+          "sourceSha256": "571ac1045da676411a5cf8245922e6e83056a1b59f794a5f3465ee70ca28f6e0",
+          "worktreeMatchesFixedCommit": true,
+          "snippets": [
+            {
+              "id": "carma-same-clock-timeout-control",
+              "lines": [
+                235,
+                245
+              ],
+              "sha256": "b89edba7f587f2591f4f36b0bd1bf6c42818866275e886f29dc8b26b85a17283",
+              "text": "  void ApproachingEmergencyVehiclePlugin::checkForErvTimeout(){\n    // Trigger timeout event if a timeout has occurred for the currently tracked ERV\n    if(has_tracked_erv_){\n      double seconds_since_prev_update = (this->get_clock()->now() - tracked_erv_.latest_update_time).seconds();\n\n      if(seconds_since_prev_update >= config_.timeout_duration){\n        RCLCPP_ERROR_STREAM(rclcpp::get_logger(logger_name), \"Timeout occurred for ERV \" << tracked_erv_.vehicle_id);\n        has_tracked_erv_ = false;\n        has_planned_upcoming_lc_ = false;\n        transition_table_.event(ApproachingEmergencyVehicleEvent::ERV_UPDATE_TIMEOUT);\n      }\n"
+            },
+            {
+              "id": "carma-same-clock-receipt-store",
+              "lines": [
+                870,
+                877
+              ],
+              "sha256": "d92f10dcdb42a973e96ff347e2f3e71c7c3e46c3e8a950465159b8c34fd6ad15",
+              "text": "    else{\n      // Update tracked ERV information since this is an active ERV that is approaching the ego vehicle\n      tracked_erv_ = *erv_information;\n      tracked_erv_.latest_update_time = this->now();\n\n      if(!has_tracked_erv_){\n        has_tracked_erv_ = true;\n      }\n"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "mechanicalExtraction": {
+    "autoware": {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "threshold": {
+        "symbol": "planner_param_.max_delay_sec",
+        "configuredValue": 3,
+        "unit": "seconds",
+        "sourceSnippetIds": [
+          "autoware-configured-threshold",
+          "autoware-threshold-binding"
+        ]
+      },
+      "incomingStamp": {
+        "operand": "state.stamp",
+        "storage": "virtual_traffic_light_state_ = state",
+        "selection": "state.id == map_data_.instrument_id",
+        "sourceSnippetId": "autoware-incoming-state-store"
+      },
+      "localNow": {
+        "operand": "clock_->now()",
+        "sourceSnippetId": "autoware-timeout-expression"
+      },
+      "expression": {
+        "operation": "(clock_->now() - rclcpp::Time(state.stamp)).seconds()",
+        "comparator": ">",
+        "thresholdSymbol": "planner_param_.max_delay_sec",
+        "sourceSnippetId": "autoware-timeout-expression"
+      },
+      "subsequentControlBranches": [
+        {
+          "condition": "before stop line and isStateTimeout",
+          "action": "insertStopVelocityAtStopLine",
+          "sourceSnippetId": "autoware-before-stop-line-branch"
+        },
+        {
+          "condition": "check_timeout_after_stop_line and isStateTimeout",
+          "action": "insertStopVelocityAtStopLine and updateInfrastructureCommand",
+          "sourceSnippetId": "autoware-after-stop-line-branch"
+        }
+      ]
+    },
+    "carma": {
+      "caseId": "POS-02-CARMA-GNSS",
+      "threshold": {
+        "symbol": "config_.gnss_data_timeout",
+        "configuredDefault": 500,
+        "unit": "milliseconds",
+        "conversionToNanoseconds": 1000000,
+        "sourceSnippetIds": [
+          "carma-threshold-default",
+          "carma-threshold-declaration",
+          "carma-threshold-load"
+        ]
+      },
+      "incomingStamp": {
+        "operand": "last_raw_gnss_value_->header.stamp",
+        "subscription": "gnss_pose PoseStamped -> gnssPoseCallback",
+        "storage": "last_raw_gnss_value_ = *msg",
+        "clockTypeAppliedAtUse": "timer_clock_type_",
+        "sourceSnippetIds": [
+          "carma-gnss-subscription",
+          "carma-incoming-gnss-store",
+          "carma-timeout-expression-and-signal"
+        ]
+      },
+      "localNow": {
+        "operand": "timer_factory_->now()",
+        "clockTypeBinding": "timer_clock_type_ = timer_factory_->now().get_clock_type()",
+        "sourceSnippetIds": [
+          "carma-local-clock-type-binding",
+          "carma-timeout-expression-and-signal"
+        ]
+      },
+      "expression": {
+        "operation": "timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_)",
+        "comparator": ">",
+        "thresholdOperation": "rclcpp::Duration::from_nanoseconds(config_.gnss_data_timeout * 1e6)",
+        "sourceSnippetId": "carma-timeout-expression-and-signal"
+      },
+      "subsequentControlBranches": [
+        {
+          "condition": "timeout expression is true",
+          "action": "transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT)",
+          "sourceSnippetId": "carma-timeout-expression-and-signal"
+        },
+        {
+          "condition": "GNSS_DATA_TIMEOUT while state is DEGRADED_NO_LIDAR_FIX",
+          "action": "throw runtime_error: Localization cannot recover",
+          "sourceSnippetId": "carma-timeout-state-branch"
+        }
+      ],
+      "sameClockControl": {
+        "storedValue": "tracked_erv_.latest_update_time",
+        "receiptClock": "this->now()",
+        "decisionClock": "this->get_clock()->now()",
+        "comparator": ">=",
+        "thresholdSymbol": "config_.timeout_duration",
+        "sourceSnippetIds": [
+          "carma-same-clock-receipt-store",
+          "carma-same-clock-timeout-control"
+        ]
+      }
+    }
+  },
+  "pairIdentityDefinition": "SHA-256 of canonical JSON containing case, adapter, visible now, visible incoming stamp, threshold, and comparator; clock mappings are intentionally excluded.",
+  "pairIdentities": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+      "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3"
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+      "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9"
+    }
+  ],
+  "strictPositivePairs": [
+    {
+      "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+      "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3",
+      "visibleInputs": {
+        "caseId": "POS-01-AUTOWARE-VTL",
+        "adapterId": "autoware-vtl-seconds-greater-than",
+        "nowNanoseconds": "100000000000",
+        "stampNanoseconds": "96000000000",
+        "thresholdNanoseconds": "3000000000",
+        "comparator": ">"
+      },
+      "sourceEquivalentResult": {
+        "observedDelay": {
+          "nanoseconds": "4000000000",
+          "milliseconds": 4000,
+          "seconds": 4
+        },
+        "threshold": {
+          "seconds": 3,
+          "nanoseconds": "3000000000"
+        },
+        "comparator": ">",
+        "timeout": true
+      },
+      "worlds": [
+        {
+          "worldId": "pos-01-autoware-vtl-7a16ba842ba883b2-world-1",
+          "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+          "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3",
+          "clockMapping": {
+            "kind": "monotone-unit-rate-affine-to-reference",
+            "localClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "sourceClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "monotone": true,
+            "invertible": true
+          },
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "100000000000",
+              "milliseconds": 100000,
+              "seconds": 100
+            },
+            "referenceStamp": {
+              "nanoseconds": "96000000000",
+              "milliseconds": 96000,
+              "seconds": 96
+            },
+            "referenceAge": {
+              "nanoseconds": "4000000000",
+              "milliseconds": 4000,
+              "seconds": 4
+            },
+            "comparator": ">",
+            "timeout": true
+          },
+          "relation": "source-expression-matches-reference-truth"
+        },
+        {
+          "worldId": "pos-01-autoware-vtl-7a16ba842ba883b2-world-2",
+          "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+          "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3",
+          "clockMapping": {
+            "kind": "monotone-unit-rate-affine-to-reference",
+            "localClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "sourceClock": {
+              "rate": 1,
+              "offsetNanoseconds": "2000000000"
+            },
+            "monotone": true,
+            "invertible": true
+          },
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "100000000000",
+              "milliseconds": 100000,
+              "seconds": 100
+            },
+            "referenceStamp": {
+              "nanoseconds": "98000000000",
+              "milliseconds": 98000,
+              "seconds": 98
+            },
+            "referenceAge": {
+              "nanoseconds": "2000000000",
+              "milliseconds": 2000,
+              "seconds": 2
+            },
+            "comparator": ">",
+            "timeout": false
+          },
+          "relation": "source-expression-diverges-from-reference-truth"
+        }
+      ],
+      "checks": {
+        "visibleInputsIdenticalAcrossWorlds": true,
+        "pairIdentityIdenticalAcrossWorlds": true,
+        "sourceExpressionTimeoutIdenticalAcrossWorlds": true,
+        "referenceDeadlineTruthOppositeAcrossWorlds": true
+      }
+    },
+    {
+      "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+      "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9",
+      "visibleInputs": {
+        "caseId": "POS-02-CARMA-GNSS",
+        "adapterId": "carma-gnss-duration-greater-than",
+        "nowNanoseconds": "10000000000",
+        "stampNanoseconds": "9400000000",
+        "thresholdNanoseconds": "500000000",
+        "comparator": ">"
+      },
+      "sourceEquivalentResult": {
+        "observedDelay": {
+          "nanoseconds": "600000000",
+          "milliseconds": 600,
+          "seconds": 0.6
+        },
+        "threshold": {
+          "milliseconds": 500,
+          "nanoseconds": "500000000"
+        },
+        "comparator": ">",
+        "timeout": true
+      },
+      "worlds": [
+        {
+          "worldId": "pos-02-carma-gnss-20b5963da1d5315f-world-1",
+          "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+          "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9",
+          "clockMapping": {
+            "kind": "monotone-unit-rate-affine-to-reference",
+            "localClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "sourceClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "monotone": true,
+            "invertible": true
+          },
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "10000000000",
+              "milliseconds": 10000,
+              "seconds": 10
+            },
+            "referenceStamp": {
+              "nanoseconds": "9400000000",
+              "milliseconds": 9400,
+              "seconds": 9.4
+            },
+            "referenceAge": {
+              "nanoseconds": "600000000",
+              "milliseconds": 600,
+              "seconds": 0.6
+            },
+            "comparator": ">",
+            "timeout": true
+          },
+          "relation": "source-expression-matches-reference-truth"
+        },
+        {
+          "worldId": "pos-02-carma-gnss-20b5963da1d5315f-world-2",
+          "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+          "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9",
+          "clockMapping": {
+            "kind": "monotone-unit-rate-affine-to-reference",
+            "localClock": {
+              "rate": 1,
+              "offsetNanoseconds": "0"
+            },
+            "sourceClock": {
+              "rate": 1,
+              "offsetNanoseconds": "300000000"
+            },
+            "monotone": true,
+            "invertible": true
+          },
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "10000000000",
+              "milliseconds": 10000,
+              "seconds": 10
+            },
+            "referenceStamp": {
+              "nanoseconds": "9700000000",
+              "milliseconds": 9700,
+              "seconds": 9.7
+            },
+            "referenceAge": {
+              "nanoseconds": "300000000",
+              "milliseconds": 300,
+              "seconds": 0.3
+            },
+            "comparator": ">",
+            "timeout": false
+          },
+          "relation": "source-expression-diverges-from-reference-truth"
+        }
+      ],
+      "checks": {
+        "visibleInputsIdenticalAcrossWorlds": true,
+        "pairIdentityIdenticalAcrossWorlds": true,
+        "sourceExpressionTimeoutIdenticalAcrossWorlds": true,
+        "referenceDeadlineTruthOppositeAcrossWorlds": true
+      }
+    }
+  ],
+  "controls": {
+    "sameClock": {
+      "pairId": "carma-erv-same-clock-62df4738bae2bb32",
+      "visibleInputSha256": "62df4738bae2bb325475467322cea3a782fd26b4ff7350e1a916232b472e22ca",
+      "sourceEvidenceSnippetIds": [
+        "carma-same-clock-receipt-store",
+        "carma-same-clock-timeout-control"
+      ],
+      "visibleInputs": {
+        "controlId": "CARMA-ERV-SAME-CLOCK",
+        "adapterId": "carma-erv-same-clock-seconds-greater-than-or-equal",
+        "nowNanoseconds": "20000000000",
+        "latestUpdateNanoseconds": "15000000000",
+        "thresholdNanoseconds": "5000000000",
+        "comparator": ">="
+      },
+      "sourceEquivalentResult": {
+        "observedDelay": {
+          "nanoseconds": "5000000000",
+          "milliseconds": 5000,
+          "seconds": 5
+        },
+        "threshold": {
+          "seconds": 5,
+          "nanoseconds": "5000000000"
+        },
+        "comparator": ">=",
+        "timeout": true
+      },
+      "worlds": [
+        {
+          "worldId": "carma-erv-same-clock-62df4738bae2bb32-world-1",
+          "pairId": "carma-erv-same-clock-62df4738bae2bb32",
+          "visibleInputSha256": "62df4738bae2bb325475467322cea3a782fd26b4ff7350e1a916232b472e22ca",
+          "commonReferenceOffsetNanoseconds": "-7000000000",
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "13000000000",
+              "milliseconds": 13000,
+              "seconds": 13
+            },
+            "referenceStamp": {
+              "nanoseconds": "8000000000",
+              "milliseconds": 8000,
+              "seconds": 8
+            },
+            "referenceAge": {
+              "nanoseconds": "5000000000",
+              "milliseconds": 5000,
+              "seconds": 5
+            },
+            "comparator": ">=",
+            "timeout": true
+          }
+        },
+        {
+          "worldId": "carma-erv-same-clock-62df4738bae2bb32-world-2",
+          "pairId": "carma-erv-same-clock-62df4738bae2bb32",
+          "visibleInputSha256": "62df4738bae2bb325475467322cea3a782fd26b4ff7350e1a916232b472e22ca",
+          "commonReferenceOffsetNanoseconds": "13000000000",
+          "sourceExpressionTimeout": true,
+          "referenceDeadlineTruth": {
+            "referenceNow": {
+              "nanoseconds": "33000000000",
+              "milliseconds": 33000,
+              "seconds": 33
+            },
+            "referenceStamp": {
+              "nanoseconds": "28000000000",
+              "milliseconds": 28000,
+              "seconds": 28
+            },
+            "referenceAge": {
+              "nanoseconds": "5000000000",
+              "milliseconds": 5000,
+              "seconds": 5
+            },
+            "comparator": ">=",
+            "timeout": true
+          }
+        }
+      ],
+      "checks": {
+        "commonOffsetAppliedToBothOperands": true,
+        "sourceExpressionAndReferenceTruthInvariant": true,
+        "exactThresholdUsesGreaterThanOrEqual": true
+      }
+    },
+    "receiptTimeRedesign": [
+      {
+        "controlId": "pos-01-autoware-vtl-7a16ba842ba883b2-local-receipt-time",
+        "basedOnPairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+        "semanticTarget": "time-since-local-receipt",
+        "sourceEventAgeEstimated": false,
+        "localReceiptNanoseconds": "98500000000",
+        "remoteSourceStampUsedByDecision": false,
+        "sourceEquivalentComparatorAndUnitsRetained": true,
+        "result": {
+          "observedDelay": {
+            "nanoseconds": "1500000000",
+            "milliseconds": 1500,
+            "seconds": 1.5
+          },
+          "threshold": {
+            "seconds": 3,
+            "nanoseconds": "3000000000"
+          },
+          "comparator": ">",
+          "timeout": false
+        },
+        "worlds": [
+          {
+            "sourceWorldId": "pos-01-autoware-vtl-7a16ba842ba883b2-world-1",
+            "remoteSourceOffsetNanoseconds": "0",
+            "receiptTimeout": false
+          },
+          {
+            "sourceWorldId": "pos-01-autoware-vtl-7a16ba842ba883b2-world-2",
+            "remoteSourceOffsetNanoseconds": "2000000000",
+            "receiptTimeout": false
+          }
+        ],
+        "checks": {
+          "invariantToRemoteClockMapping": true,
+          "reportsOnlyLocalReceiptFreshness": true
+        }
+      },
+      {
+        "controlId": "pos-02-carma-gnss-20b5963da1d5315f-local-receipt-time",
+        "basedOnPairId": "pos-02-carma-gnss-20b5963da1d5315f",
+        "semanticTarget": "time-since-local-receipt",
+        "sourceEventAgeEstimated": false,
+        "localReceiptNanoseconds": "9750000000",
+        "remoteSourceStampUsedByDecision": false,
+        "sourceEquivalentComparatorAndUnitsRetained": true,
+        "result": {
+          "observedDelay": {
+            "nanoseconds": "250000000",
+            "milliseconds": 250,
+            "seconds": 0.25
+          },
+          "threshold": {
+            "milliseconds": 500,
+            "nanoseconds": "500000000"
+          },
+          "comparator": ">",
+          "timeout": false
+        },
+        "worlds": [
+          {
+            "sourceWorldId": "pos-02-carma-gnss-20b5963da1d5315f-world-1",
+            "remoteSourceOffsetNanoseconds": "0",
+            "receiptTimeout": false
+          },
+          {
+            "sourceWorldId": "pos-02-carma-gnss-20b5963da1d5315f-world-2",
+            "remoteSourceOffsetNanoseconds": "300000000",
+            "receiptTimeout": false
+          }
+        ],
+        "checks": {
+          "invariantToRemoteClockMapping": true,
+          "reportsOnlyLocalReceiptFreshness": true
+        }
+      }
+    ],
+    "boundedProvenance": [
+      {
+        "controlId": "pos-01-autoware-vtl-7a16ba842ba883b2-bounded-provenance",
+        "basedOnPairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+        "provenance": {
+          "sourceClockDomainId": "POS-01-AUTOWARE-VTL-source-clock",
+          "decisionClockDomainId": "POS-01-AUTOWARE-VTL-decision-clock",
+          "referenceClockDomainId": "replay-reference-clock",
+          "domainBound": true,
+          "mappingValid": true,
+          "localReferenceOffsetBoundsNanoseconds": [
+            "0",
+            "0"
+          ],
+          "sourceReferenceOffsetBoundsNanoseconds": [
+            "0",
+            "2000000000"
+          ]
+        },
+        "result": {
+          "verdict": "uncertain",
+          "reason": "identified-age-interval-crosses-strict-threshold",
+          "comparator": ">",
+          "threshold": {
+            "nanoseconds": "3000000000",
+            "milliseconds": 3000,
+            "seconds": 3
+          },
+          "identifiedAge": {
+            "lower": {
+              "nanoseconds": "2000000000",
+              "milliseconds": 2000,
+              "seconds": 2
+            },
+            "upper": {
+              "nanoseconds": "4000000000",
+              "milliseconds": 4000,
+              "seconds": 4
+            }
+          }
+        },
+        "checks": {
+          "containsBothConstructedWorldTruths": true,
+          "identifiedAgeIntervalCrossesThreshold": true,
+          "verdictIsUncertain": true
+        }
+      },
+      {
+        "controlId": "pos-02-carma-gnss-20b5963da1d5315f-bounded-provenance",
+        "basedOnPairId": "pos-02-carma-gnss-20b5963da1d5315f",
+        "provenance": {
+          "sourceClockDomainId": "POS-02-CARMA-GNSS-source-clock",
+          "decisionClockDomainId": "POS-02-CARMA-GNSS-decision-clock",
+          "referenceClockDomainId": "replay-reference-clock",
+          "domainBound": true,
+          "mappingValid": true,
+          "localReferenceOffsetBoundsNanoseconds": [
+            "0",
+            "0"
+          ],
+          "sourceReferenceOffsetBoundsNanoseconds": [
+            "0",
+            "300000000"
+          ]
+        },
+        "result": {
+          "verdict": "uncertain",
+          "reason": "identified-age-interval-crosses-strict-threshold",
+          "comparator": ">",
+          "threshold": {
+            "nanoseconds": "500000000",
+            "milliseconds": 500,
+            "seconds": 0.5
+          },
+          "identifiedAge": {
+            "lower": {
+              "nanoseconds": "300000000",
+              "milliseconds": 300,
+              "seconds": 0.3
+            },
+            "upper": {
+              "nanoseconds": "600000000",
+              "milliseconds": 600,
+              "seconds": 0.6
+            }
+          }
+        },
+        "checks": {
+          "containsBothConstructedWorldTruths": true,
+          "identifiedAgeIntervalCrossesThreshold": true,
+          "verdictIsUncertain": true
+        }
+      }
+    ]
+  },
+  "results": {
+    "strictPositivePairCount": 2,
+    "sourceExpressionTimeoutSameWithinEveryPair": true,
+    "referenceDeadlineTruthOppositeWithinEveryPair": true,
+    "sameClockControlInvariant": true,
+    "receiptTimeRedesignInvariantToRemoteMapping": true,
+    "boundedProvenanceVerdictsUncertain": true
+  },
+  "limitations": [
+    "The upstream ROS 2 stacks are not built or executed; the adapters replay only the exact subtraction, unit conversion, comparator, and recorded conditional branch semantics.",
+    "Synthetic affine mappings are constructive information-sufficiency witnesses, not observations of either repository's deployment clocks.",
+    "The JavaScript adapters do not model rclcpp exception behavior, integer overflow, clock jumps, simulation-time activation, scheduling, transport, or callback interleavings.",
+    "The Autoware and CARMA configured defaults are replay inputs, while either deployment may override parameters.",
+    "The same-clock control verifies one frozen CARMA receipt-time path and is not a universal audit of same-clock implementations.",
+    "The bounded-provenance control assumes declared mapping bounds are valid; this experiment does not estimate or validate such bounds.",
+    "The downstream effects are source-level conditional branches only; no claim is made about their runtime frequency, reachability, severity, or field outcome."
+  ],
+  "claimBoundary": {
+    "researchQuestion": "Whether the visible operands of each frozen source expression are sufficient to identify deadline truth when their clock relation is not supplied to that expression.",
+    "supported": [
+      "At the two fixed commits, the recorded snippets, hashes, operands, thresholds, comparators, and conditional downstream branches match the declared source contracts.",
+      "For each replayed expression, two monotone unit-rate clock mappings preserve the same visible now, stamp, threshold, pair identity, and source-expression timeout while producing opposite reference-clock deadline truths.",
+      "A same-clock source control is invariant to a common reference-clock offset, a local receipt-time redesign is invariant to the remote mapping for time-since-receipt semantics, and a bounded mapping that straddles the threshold returns uncertain."
+    ],
+    "notSupported": [
+      "No claim is made that clocks in a real deployment are different, unsynchronized, misconfigured, or outside any error bound.",
+      "No product-safety, field-behavior, vulnerability, incident, frequency, prevalence, or deployment-risk conclusion is made.",
+      "The replay does not establish reachability of the surrounding runtime state, end-to-end actuation, or a safety consequence.",
+      "The receipt-time redesign measures time since local receipt rather than source-event age, and the illustrative bounded-provenance intervals are not field-calibrated guarantees.",
+      "No candidate, repository, implementation, product, or paper is scored."
+    ]
+  }
+}

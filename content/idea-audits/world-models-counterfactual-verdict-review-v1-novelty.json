@@ -1,0 +1,51 @@
+{
+  "candidateId": "statewise-counterfactual-verdict-admission",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.547Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 5,
+    "success-probability": 5,
+    "impact": 8,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "ACT-Bench 已测单动作兑现，ReactSim-Bench 已将偏离日志的 AV 动作作为独立输入并测多主体反应，最新准入工作又明确提出 L2 拒绝和 L3 失败归因；Imperfect World Models are Exploitable 形式化了策略偏好反转。候选保留的增量是 statewise action-pair 风险差分、有效时域和 fixed-coverage false admission 的联合 estimand，属于对开放准入层级的具体实例化，而不是全新理论。",
+    "feasibility": "ReactSim-Bench 提供 2,636 个显式状态反应场景、偏离动作构造和规则指标，技术入口较好；ACT-Bench 与 Orbis 2 可做像素探针。难点是为同一状态构造四个自然且支持内的动作、获得与被测模型实现独立的 reference branches，并跨动作保持可比较的事件身份。现实中不存在同一时刻两种动作的观测真值，因此主实验只能识别仿真器内一致性。",
+    "success-probability": "动作跟随和风险排序并不等价，且长时反应会放大模型误差，出现 statewise 排序翻转具有合理概率。但支持距离、ACT/ADE 或简单 horizon 已可能解释大部分错误；若 reference branch 与被测模型共享 nuPlan/CARLA 行为假设，新的准入器可能只学习场景类别或 oracle 特征。",
+    "impact": "fixed-coverage false admission 直接回答何时拒绝使用世界模型 verdict，比视觉质量或平均动作分更接近安全评估。如果能跨 planner 与场景族稳定，将为世界模型作为测试 oracle 提供可操作证书；但没有真实或高可信外部锚点时，影响仍限于特定仿真协议。",
+    "comparison-readiness": "候选纳入 accept-all、random reject、ACT/ADE、最近训练动作距离、ensemble、uncertainty、safe horizon 和 oracle upper bound，并规定 coverage 曲线与第二 planner 冻结迁移，比较充分。需要额外加入只按动作幅度、场景类别和 TTC 的简单校准器，防止复杂准入器仅重编码容易的规则风险。"
+  },
+  "strongestObjection": "同初态和同随机种子并不能提供真实反事实真值：动作分叉后，多主体反应、事件身份和可观测状态都会成为动作的后果。ReactSim-Bench 的规则/仿真 reference 只能说明被测模型与另一套仿真假设不一致，不能判定哪一个动作在现实中更安全。如果独立 oracle 与 reference branch 共享地图、行为模型或规则，false admission 只是 simulator-relative disagreement，而不是可信 verdict 错误。",
+  "requiredExperiment": "在一个能记录 branch lineage、外生随机变量和显式多主体状态的环境中，预注册 300 个状态、每状态四个动力学可执行且支持距离匹配的动作、至少三个 seeds。用与被测世界模型不同实现的 reference simulator 生成完整 descendants，不手工冻结动作后变量；人工复核抽样事件身份和风险标签。按状态划分独立 calibration/test，比较 accept-all、随机拒绝、ACT/ADE、支持距离、TTC/场景规则、ensemble 与新校准器在 50/70/90% coverage 的 false admission。阈值冻结后迁移到第二 planner 和留出场景族；结论必须明确限定为 reference-simulator-relative，除非另有现实分支数据。",
+  "evidenceReopened": [
+    {
+      "title": "ACT-Bench: Towards Action Controllable World Models for Autonomous Driving",
+      "url": "https://iclr.cc/virtual/2025/37570",
+      "finding": "ACT-Bench 已公开量化轨迹条件是否在生成视频中兑现，但其单动作 fidelity 不检验同初态动作对的风险差分符号或 fixed-coverage 错误准入。"
+    },
+    {
+      "title": "ReactSim-Bench: Benchmarking Reactive Behavior World Model Simulation in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.14058",
+      "finding": "ReactSim-Bench 已把 AV 控制与环境智能体分离，用规则和人工筛选的偏离日志动作测试反应，并提供碰撞、地图和运动学指标；它没有为每个状态提供现实反事实分支。"
+    },
+    {
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "finding": "该工作已提出 L0-L4 准入阶梯，明确要求 L2 的 OOD 检测/拒绝和 L3 的 simulator-vs-policy 归因，同时承认这些高层证据尚未被实例化。"
+    },
+    {
+      "title": "Imperfect World Models are Exploitable",
+      "url": "https://arxiv.org/abs/2605.15960",
+      "finding": "该工作已形式化世界模型与真实环境对策略偏好的反转及 safe horizon，覆盖一般机制但未提供驾驶 statewise coverage-risk 协议。"
+    },
+    {
+      "title": "CG-World: A Large-Scale World-State Dataset and Protocol for World Models",
+      "url": "https://arxiv.org/abs/2607.26452",
+      "finding": "截至 7 月 29 日，CG-World 已显式记录动作、机制干预、严格反事实分支、invariants 和 branch lineage；它提供了协议近邻，但不是现实驾驶反事实真值。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "e65c5cbd8b1201e1b419790b43a0f849ad10b39e4f5b5ea4e5c231a9cce832f0"
+}

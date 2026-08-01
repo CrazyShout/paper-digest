@@ -1,0 +1,54 @@
+{
+  "candidateId": "failure-diagnosis-intervention-consistency",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbc39-f082-7891-a4a2-20e28a22bb11",
+  "reviewedAt": "2026-08-01T07:38:54Z",
+  "dossierSnapshotFingerprint": "71b38c0dbccf68ee0f9f22896f1d28326ea1e4b311c86de026a41899cbdba0c2",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "The exact object of study is distinct: a frozen-state, fully crossed test of whether a diagnosis label predicts which local repair family improves an independent driving outcome. ELF-VLA, CF-VLA, SERA, CorrectionPlanner, and HINT each connect failures to feedback, correction, retraining, or localization, but none of the reopened work isolates label-to-repair routing under a common candidate and compute budget. The novelty is methodological rather than a new driving model, and it narrows further in light of CorrectionPlanner's explicit correction-budget and candidate-selection comparisons.",
+    "feasibility": "A public path exists through the released AutoVLA code/checkpoint and NAVSIM devkit, so a frozen-model inference study does not require reproducing ELF-VLA or CF-VLA. However, the dossier's first-week plan should explicitly select that public stack: CF-VLA uses proprietary data and 64 A100 GPUs, while ELF-VLA reports custom data, a 32B teacher, and up to 32 H20 GPUs. Building two genuinely distinct edit adapters, auditing every edit, finding 120 independent failures, running the full cross, and adding reactive confirmation is possible but tight in 8-12 weeks.",
+    "success-probability": "The factorial design can estimate routing value, but a positive result is uncertain because the proposed labels may mostly encode severity, scene type, or the diagnostic teacher's preferred wording. Planning, reasoning, execution, and insufficient-perception labels also do not have equally expressive repairs under the stated no-new-perception restriction. Four route or scenario clusters are too few for reliable cluster bootstrap inference, and NAVSIM's non-reactive evaluation can reward trajectory edits that may not survive interaction. These risks make an informative negative result at least as plausible as a stable cross-repair gain.",
+    "impact": "A clean positive result would justify routing repair mechanisms with structured failure labels; a clean null result would discourage treating high-bandwidth teacher feedback as validated fault localization. Both outcomes could affect driving VLA evaluation and transfer to other agent-repair settings. Impact is capped because the minimum study is based primarily on replay or pseudo-simulation and a fixed ontology, so it cannot by itself establish real-road safety or general root-cause validity.",
+    "comparison-readiness": "The dossier includes no-op, repeated no-op, permuted labels, random repair, majority-best repair, generic reflection, matched oracle search, and approximations of the closest VLA systems. It still lacks the most important identifiability comparator: a budget-matched label-free router trained on the same pre-repair state features. It also needs CorrectionPlanner-style rejection/candidate-selection controls, identical pre-generated candidate tables across routers, and substantially more than four independent scenario families before the comparisons are publication-ready."
+  },
+  "strongestObjection": "The proposed attribution is not identified if the label is produced by a teacher that shares information or style with the repair generator, if the two repair families have different effective freedom, or if the label merely compresses severity and scene context. Permuted-label, random, majority-best, and generic-reflection controls do not rule out a label-free state router choosing the same repairs. Without separating candidate generation from routing and comparing against that router, any gain can be credited to state-dependent repair selection but not specifically to the diagnostic labels.",
+  "requiredExperiment": "Run a preregistered confirmatory cross on at least 120 non-adjacent AutoVLA failures drawn from at least 20 independent route or scenario families. An independent diagnostician, blind to repair candidates, candidate outcomes, ground-truth futures, and confirmation-set results, assigns the frozen labels. Before routing, generate the same K candidates for every repair family with fixed model version, editable fields, calls, tokens, seeds, horizon, and post-processing, then hide all outcome scores. Compare label routing against a label-free state-feature router of matched capacity and inference budget, state-level label permutation, majority-best, random routing, generic reflection, no-op, rejection resampling, candidate selection, and an outcome-aware upper bound. Evaluate every router on the identical candidate table, repeat no-op to quantify replay noise, use family-level randomization or cluster bootstrap, reproduce direction with a second repair generator, and confirm a prespecified subset of at least 30 states in a reactive simulator. The study is not interpretable if replay noise exceeds half the target effect, effective edit freedom cannot be matched, or fewer than 20 independent families survive.",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2603.01063",
+      "finding": "ELF-VLA's teacher receives the failed trajectory, ground-truth trajectory, and detailed NAVSIM metrics before producing diagnosis and correction; its reported stack uses InternVL3-8B, Qwen3-VL-32B, and up to 32 H20 GPUs. This is direct overlap but also a teacher-information and resource confound that the proposed study must avoid."
+    },
+    {
+      "url": "https://arxiv.org/abs/2512.24426",
+      "finding": "CF-VLA samples six free and six ground-truth-meta-action-conditioned trajectories per scene, filters with expert-future error, and labels with Qwen2.5-VL-72B. Its evaluation uses a proprietary 80,000-hour corpus and training uses 64 A100 GPUs, so its model and data cannot be assumed as minimum-study assets."
+    },
+    {
+      "url": "https://arxiv.org/abs/2603.15771",
+      "finding": "CorrectionPlanner is a directly overlapping propose-evaluate-correct planner with reactive and log-replay evaluation. It compares correction traces against rejection resampling and candidate selection and shows that collision/progress tradeoffs depend on correction threshold and maximum correction length, making it a necessary budget-aware baseline."
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.12598",
+      "finding": "The July 2026 HINT work is the latest reopened diagnosis overlap. It validates hypotheses against synchronized runtime evidence on 72 Apollo/CARLA faults, executes retained cases at least three times, and releases a replication package, but it localizes modular code faults rather than testing VLA label-directed interventions."
+    },
+    {
+      "url": "https://github.com/autonomousvision/navsim",
+      "finding": "The official NAVSIM devkit, OpenScene scene representation, metric cache, standardized splits, and v2 pseudo-simulation are public. This supports scalable frozen-input scoring, but the core benchmark is non-reactive and therefore cannot substitute for the proposed reactive confirmation subset."
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA",
+      "finding": "The official AutoVLA repository released training and annotation code in February 2026 and merged checkpoints in May 2026, with an explicit NAVSIM evaluation path. This is the clearest public base asset for an 8-12 week study, although its reasoning data remains unavailable."
+    },
+    {
+      "url": "https://arxiv.org/abs/2505.22067",
+      "finding": "SERA maps failure logs to retrieved scenarios and fine-tunes driving models, using four RTX 4090 GPUs and closed-loop CARLA evaluation on 220 routes. It demonstrates practical failure-conditioned repair but operates through scenario selection and model updates rather than same-state local intervention routing."
+    }
+  ],
+  "overall": 6
+}

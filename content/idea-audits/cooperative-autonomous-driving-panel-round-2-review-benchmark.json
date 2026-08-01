@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "round": 2,
+  "lens": "benchmark-reviewer",
+  "reviewedAt": "2026-07-31T13:48:23+08:00",
+  "independenceStatement": "本评审仅读取候选 dossier、关键一手论文、官方数据路径、官方代码和与接口核验直接相关的本地审计证据；未读取任何 cooperative-autonomous-driving-panel-round-2-review-*.json，未询问或参考其他评审者结果，也未推测主流程如何接受候选。",
+  "evidenceChecked": [
+    {
+      "title": "CooperScene: Benchmarking V2X Communication for Cooperative Perception",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "type": "primary-paper",
+      "finding": "论文给出 100 ms 粒度的成对吞吐量采集、5 Mbps UDP Iperf2 负载和 2100-byte 分片的物理传输实验；这些证据支持把发布 trace 当作应用吞吐服务记录，但不支持把它称为含排队、时延、丢包、调度和无线状态的 packet-ground-truth。"
+    },
+    {
+      "title": "CooperScene public dataset configuration",
+      "url": "https://data.ucr.edu/datasets/cooperscene/config.json",
+      "type": "official-dataset-path",
+      "finding": "公开配置实际列出 14 个 intersection MCAP take；train 为 1/3/4/5/6/7/9/10/11/12，test 为 2/8，validate 为 13/14。因此候选 1 可对 14 个 take 做传输层有限总体审计，而候选 2 所称 validate+test 主推断只有 4 个 acquisition units，且 validation 不能自动视为未参与 checkpoint 选择的独立 test。"
+    },
+    {
+      "title": "CooperScene official repository",
+      "url": "https://github.com/UCR-CISL/CooperScene/tree/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+      "type": "official-code",
+      "finding": "官方代码和 checkpoint 覆盖多种 OpenCOOD 模型，但默认通信路径使用全局 1.6 Mbps 标量，把 MB/Mbps 延时量化为 100 ms 帧移，并在历史帧不可得时保留当前同步输入；默认模型前向没有读取发布 MCAP 的精确有向吞吐 trace。"
+    },
+    {
+      "title": "CooperScene cooperative dataset implementation",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/datasets/coop_dataset.py",
+      "type": "official-code",
+      "finding": "该实现确认 CV2X_THROUGHPUT_MBPS=1.6、以整数 100 ms 帧移模拟延迟、越界时钳到首帧，以及 delayed lookup 失败时可能沿用当前 cooperator。若把这一整套行为打包成 A0，就无法判断差异来自速率抽象、时间量化还是 fallback。"
+    },
+    {
+      "title": "CooperScene cooperative detector implementation",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/detectors/cooperative_detector.py",
+      "type": "official-code",
+      "finding": "包装器默认把 prior_encoding 置零，没有证据表明所有候选 checkpoint 都以非零 age 输入训练。所谓 age-aware-native 只能对明确支持且训练分布一致的模型单列，不能作为四模型共同的冻结 policy baseline。"
+    },
+    {
+      "title": "CooperScene all-takes MCAP schema audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "type": "local-primary-artifact-audit",
+      "finding": "14 个公开 take 均含 12 条有向 throughput channel，但 MCAP schema 未发现独立 latency/loss/jitter channel；take 时长约 16 至 116 秒，且 take 1 的部分链路消息数不齐。精确 trace 的可用性成立，物理网络真值的外推不成立。"
+    },
+    {
+      "title": "CooperScene payload and replay gap audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+      "type": "local-code-and-artifact-audit",
+      "finding": "官方融合路径没有现成 wire serializer；静态 share-size 工具按压缩 BEV 维度乘 4 bytes 估算，与论文载荷也非完全一致。候选必须冻结一个规范 codec，并称为 study-serialized bytes，或退回 tensor bytes，不能声称直接观测到真实线上序列化载荷。"
+    },
+    {
+      "title": "CooperScene take 9 frame-alignment audit",
+      "url": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json",
+      "type": "local-primary-artifact-audit",
+      "finding": "严格 pose-to-frame 映射尚未通过；现有证据只有 12/644 个 pose anchor，ordinal mapping 仍只是候选。候选 2 的 G1 是真实阻塞门而非已解决的工程细节。"
+    },
+    {
+      "title": "CellReplay: A Framework for Replaying Cellular Network Performance",
+      "url": "https://www.usenix.org/system/files/nsdi25-sentosa.pdf",
+      "type": "primary-paper",
+      "finding": "CellReplay 证明吞吐回放会随 workload 改变，并要求轻/重 PDO trace 与 base delay 来拟合重放；这是 CooperScene Iperf-to-model workload transfer 的强方法学反例，但发布 CooperScene 单一 throughput trace 不满足其输入契约。"
+    },
+    {
+      "title": "CellReplay official code",
+      "url": "https://github.com/williamsentosa95/cellreplay",
+      "type": "official-code",
+      "finding": "官方实现通过 Mahimahi/TUN 重放 packetized application，并不直接消费 CooperScene MCAP 或 OpenCOOD tensor。它可作为外部有效性方法对照，不能列为同数据同 checkpoint 的直接 baseline。"
+    },
+    {
+      "title": "CADET: A System for Network-Aware Distributed Autonomous Vehicles",
+      "url": "https://arxiv.org/pdf/2606.04072",
+      "type": "primary-paper",
+      "finding": "CADET/NetWaggle 提供网络与 workload trace 仿真及系统级指标，但其分布式 AV workload 和接口不是 CooperScene/OpenCOOD MCAP 接口。除非另建并验证 adapter，它只能作为系统层功能对照。"
+    },
+    {
+      "title": "Harbor: Exploring Practical Collaborative Autonomous Driving",
+      "url": "https://feng-qian.github.io/paper/harbor_sensys24.pdf",
+      "type": "primary-paper",
+      "finding": "Harbor 在 deadline 到达时用已到达输入融合，并在远端结果逾期时使用本地检测，形成 deadline/local fallback 的功能先例；但其 raw/cropped point cloud、Draco、TCP/UDP、Mininet-WiFi/CARLA 与 PointPillars 接口不同，且论文未提供可核验的同接口代码，因此不是 CooperScene 的直接可运行 baseline。"
+    },
+    {
+      "title": "CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset in Adverse Weather",
+      "url": "https://arxiv.org/abs/2507.02245",
+      "type": "primary-paper",
+      "finding": "dossier 将该 arXiv 记录误写为通信感知 CAV 系统并放入 latest-history 证据链；实际论文是多基础设施节点、恶劣天气和同步相关的数据集/系统，已核验的一手证据不足以支持 latest-completed fallback 归类。"
+    },
+    {
+      "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception",
+      "url": "https://arxiv.org/pdf/2503.10034",
+      "type": "primary-paper",
+      "finding": "Feature Bank 查询时间窗内最新的协作者神经消息，构成 latest-history 的直接功能先例；但论文表述代码和数据将发布，未核验到可直接接入 CooperScene 的官方 V2X-ReaLO 实现，所以只能作为功能对照。"
+    },
+    {
+      "title": "Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+      "type": "primary-paper-and-official-code",
+      "finding": "LRCP 通过缓存 BEV、flow prediction 和专门训练处理异步输入，官方代码基于其他数据集和两阶段训练。它不是冻结同 checkpoint 下的简单 fallback policy，只能作为 learned asynchronous method 层对照。"
+    },
+    {
+      "title": "RCP-Bench official repository",
+      "url": "https://github.com/LuckyDush/RCP-Bench",
+      "type": "official-code",
+      "finding": "RCP-Drop 是训练期随机丢弃协作者的鲁棒性策略，数据和软件栈也不同；它适合作为随机 corruption 负对照，不是 trace-grounded completion policy，也不是同 checkpoint 的直接 baseline。"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "trace-structure-sufficiency-certificate",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 7,
+        "success-probability": 6,
+        "impact": 6,
+        "comparison-readiness": 6
+      },
+      "rationales": {
+        "novelty": {
+          "evidence": [
+            "在同一组 CooperScene 有向 trace 上，把 global scalar、per-link mean、独立边际、共同置换、块置换、方向交换和 exact trace 放入结构移除试验，并用 equivalence/counterexample 判定最小充分结构，区别于只报告某个网络仿真器或某个鲁棒模型的性能。",
+            "CooperScene 官方路径只实现 1.6 Mbps 标量帧移；官方代码并未给出这一结构充分性证书。"
+          ],
+          "counterevidence": [
+            "CellReplay 已建立 workload-dependent replay 的一般方法学动机，CADET 也已提供 trace-driven 系统仿真，因此贡献不能表述为首次研究 trace 重放或网络感知协同驾驶。",
+            "A5 方向交换不保持与 A0-A4 的严格嵌套关系，更像 falsification control，而不是唯一有序的抽象阶梯。"
+          ],
+          "judgment": "CooperScene 特定的结构充分性审计有不可替代差异，达到值得继续的 7 分，但一般性的 trace replay 和 workload-transfer 动机已有强前例。"
+        },
+        "feasibility": {
+          "evidence": [
+            "14 个公开 take 均存在 12 条有向 throughput channel，且单 take 的分段常数服务积分器已有可复算 pilot，CPU 路线在工程上可信。",
+            "A1-A5 都可由同一 exact trace 离线确定性生成，不依赖外部系统代码。"
+          ],
+          "counterevidence": [
+            "公开数据约 90 GB，take 时长和链路消息数不完全一致，需要固定下载校验、缺失区间规则和缓存。",
+            "官方模型路径没有 wire serializer；四个模型、checkpoint、精确载荷 codec 仍未冻结。若临时设计 codec，研究对象会从真实序列化载荷变成研究定义载荷。",
+            "大载荷/短 deadline 下可能出现大量右删失或近零完成率，使若干网格单元没有辨识力。"
+          ],
+          "judgment": "传输审计主干可执行，但载荷定义和模型清单不是现成输入，故不能高于 7 分。"
+        },
+        "success-probability": {
+          "evidence": [
+            "无论找到低阶等价抽象还是稳定反例，候选都预先定义了可发表的正反结论，并有 exact trace 作为同接口 reference。",
+            "以 take 为 acquisition unit、做 leave-one-take-out 和有限总体报告，可避免把帧当独立样本。"
+          ],
+          "counterevidence": [
+            "只有 14 个、且均为公开 intersection take；短 trace、take 1 不齐和删失会显著放宽 equivalence interval。",
+            "dossier 尚未给出 payload/deadline support 的数值边界、每个 estimand 的 equivalence margin、失败单元处置和多重比较规则；在看到结果后再定会产生研究者自由度。",
+            "Iperf2 5 Mbps 背景负载到模型分片流量的 transfer gap 无法由这些 trace 内部消除。"
+          ],
+          "judgment": "得到有方向性的审计结果概率较高，但得到统计上清晰且可外推的“证书”只有中等把握，评 6 分。"
+        },
+        "impact": {
+          "evidence": [
+            "若低阶抽象等价，可为后续 CooperScene benchmark 提供更便宜且可解释的 transport contract；若不等价，可阻止用 global scalar 隐藏链路方向和同步结构。",
+            "同一模型输入和 checkpoint 下隔离传输抽象，比跨系统末端指标对比更能定位因果来源。"
+          ],
+          "counterevidence": [
+            "结论只覆盖 14 个发布 trace、声明的载荷/deadline support 和 completion estimands，不验证 packet loss、RTT、MAC 调度、竞争业务或真实无线部署。",
+            "若四模型的运行时载荷最终只能用 study codec 表示，系统实践影响会进一步受限。"
+          ],
+          "judgment": "对 benchmark 设计有实用价值，但不是无线系统或协同感知总体有效性结论，评 6 分。"
+        },
+        "comparison-readiness": {
+          "evidence": [
+            "exact trace、结构变换和 public scalar 都能在 CooperScene 数据上通过统一 completion-ledger 接口实现；同 take、同消息起点、同 payload cell 的配对比较方向正确。",
+            "候选区分 actual payload 和 equal-payload sensitivity，并把模型、take 与 payload/deadline 网格纳入预声明。"
+          ],
+          "counterevidence": [
+            "A0 若直接调用官方帧移实现，会同时改变速率、100 ms 量化、首帧钳位和当前帧保留；必须与连续时间 common integrator 做因子化，不能把差异全归因于 global scalar。",
+            "四个模型及其 config/checkpoint SHA、规范 codec、消息 enqueue 规则、deadline 网格、equivalence margin 和 tie/删失规则均未冻结。",
+            "CellReplay、CADET 和 Harbor 不消费 CooperScene MCAP/OpenCOOD tensor，当前只能列为 methodology/system comparators，不能进入同表排名。",
+            "equal payload 只有在保持模型 tensor 内容不变、仅以 padding 或独立 service-demand override 实现时才公平；截断或重编码会同时改变模型输入。"
+          ],
+          "judgment": "框架已接近可预注册协议，但直接 baseline 和功能对照仍混在同一叙述层，且关键数值契约缺失，评 6 分。"
+        }
+      },
+      "strongestObjection": "所谓“最小充分结构”可能被未定义的载荷 codec 和 A0 捆绑的 100 ms 帧移/fallback 行为所混淆；即使修复，14 个短 intersection trace 与高删失网格也可能不足以在预先给定的实用 margin 内作 equivalence certificate。",
+      "requiredExperiment": "先冻结四个明确模型的 config/checkpoint SHA、规范 payload codec、消息起点、数值 payload/deadline support、每个 estimand 的 equivalence margin 和失败规则。随后在 14 个 take 上运行一个因子化矩阵：每个 A0-A6 都进入同一连续时间 ledger，同时额外单列官方 100 ms 量化、首帧钳位和 current-retention 开关；A5 作为 falsification control 而非嵌套层。报告 take 配对差值、cluster interval、leave-one-take-out、删失比例和超出 margin 的具体单元。只有通过该实验，才可声称结构而非实现细节造成结果。",
+      "factualCorrections": [
+        "公开 CooperScene transport 路径当前是 14 个 intersection MCAP take；论文更广的场景统计不能替代本候选实际可运行范围。",
+        "exact directed trace 是 100 ms 应用吞吐服务记录，不是含 RTT、loss、queue、MAC scheduling 和 packet timing 的精确网络真值。",
+        "A5 directed swap 不构成 A0-A4-A6 的严格嵌套抽象，应标为方向敏感性的负对照。",
+        "官方模型融合路径没有现成 wire serializer；若采用研究定义 codec，应写作 study-serialized payload，不能写成已观测的实际线上 serialized payload。",
+        "CellReplay、CADET、Harbor 目前只能做方法学或系统功能对照；没有经过 adapter 验证前，不得列为同 CooperScene 数据、同 checkpoint 的直接 baseline。",
+        "public scalar baseline 必须拆分 scalar-rate 假设与 100 ms 取整、历史钳位和 current-input fallback，否则比较层级不公平。"
+      ],
+      "overall": {
+        "score": 6,
+        "verdict": "有条件继续",
+        "summary": "候选的 CooperScene 内部 exact-trace 结构审计是可运行且有区别度的，但要先冻结载荷与等价性契约，并把外部系统降为功能层对照。当前可复现性尚不足以支持“证书”措辞。"
+      }
+    },
+    {
+      "candidateId": "transport-availability-state-contract",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 5,
+        "success-probability": 4,
+        "impact": 6,
+        "comparison-readiness": 5
+      },
+      "rationales": {
+        "novelty": {
+          "evidence": [
+            "把 current complete、historical complete、deadline incomplete、right-censored、take-start unknown 与 trace-missing 分开，并在同一 completion ledger 上冻结 policy counterfactual，是比简单随机丢包更严谨的 benchmark contract。",
+            "以同 checkpoint、同候选 tensor lineage 和只改变 availability policy 的方式审计模型排名，针对 CooperScene 官方 silent fallback 提出了明确问题。"
+          ],
+          "counterevidence": [
+            "Harbor 已有 deadline/local fallback，V2X-ReaLO 已有 latest-message Feature Bank，LRCP 已研究异步历史特征，RCP-Bench 已有 dropout 鲁棒性负对照；策略类别本身并不新。",
+            "dossier 把 CoInfra 错放到 latest-history 证据链，削弱了前人覆盖边界的准确性。",
+            "若最终只是比较 drop、latest 和 local fallback，而没有经审计的状态 ledger 与公平冻结协议，贡献会退化为已有策略的重跑。"
+          ],
+          "judgment": "新意主要在 CooperScene 的状态语义和公平 counterfactual contract，而非 policy 发明；有价值但已有强功能先例，评 6 分。"
+        },
+        "feasibility": {
+          "evidence": [
+            "官方模型和 checkpoint 可获取，completion ledger 可复用候选 1 的确定性积分器；drop/local-only/latest-completed 都可在模型输入边界实现。",
+            "硬门、stop rule、actual/equal-payload 两层和 take-level inference 已被显式提出。"
+          ],
+          "counterevidence": [
+            "G1 尚未通过：现有 take 9 审计只有 12/644 pose anchor，严格 frame mapping 未建立。",
+            "G2 尚未通过：官方路径没有 wire serializer，四模型的 exact runtime payload 仍未定义。",
+            "四模型并未以名称、config 和 checkpoint hash 冻结；age-aware-native 也没有四模型共同支持的证据。",
+            "公开 validate+test 只有 4 个 take；四模型乘多 policy、actual/equal payload、deadline sensitivity 的 10-12 周单卡预算偏紧，尤其仍需 adapter 和完整缓存验证。"
+          ],
+          "judgment": "主流程可实现，但两个关键门仍未通过且模型清单未冻结，只能评 5 分。"
+        },
+        "success-probability": {
+          "evidence": [
+            "状态 prevalence 门能在昂贵推理前止损；若非 current 状态足够多，配对 policy counterfactual 可能直接暴露 silent fallback 对结果的影响。",
+            "候选允许以 practical equivalence 作为成功结果，而不强迫显著性。"
+          ],
+          "counterevidence": [
+            "validate+test 总计仅 4 个 acquisition units；若把 validation 留给实现与门控，则 untouched test 只有 take 2 和 8。这样的 n 很难支撑 ranking stability 或 equivalence 的总体推断。",
+            "validation split 可能参与已发布 checkpoint 选择，不能与 test 合并后统称独立 confirmatory holdout。",
+            "只有四个模型时 Kendall tau、Spearman rho 和 top-1 agreement 本身高度离散；再叠加 take clustering、metric noise 和 tie，会使排名结论不稳定。",
+            "若状态 prevalence 低、历史帧不足或大载荷普遍右删失，policy 差异可能主要由 warm-up/censoring 边界驱动。"
+          ],
+          "judgment": "通过 gate 并得到描述性结果有现实可能，但按现协议得到可信的 ranking/equivalence 结论概率偏低，评 4 分。"
+        },
+        "impact": {
+          "evidence": [
+            "官方 silent fallback 会改变实际送入模型的协作者时态；将其显式化可防止通信退化被无声的同步当前输入掩盖。",
+            "若在同 ledger 和冻结 checkpoint 下导致模型排序改变，会直接影响 CooperScene benchmark 的报告规范。"
+          ],
+          "counterevidence": [
+            "结论仍是有限的离线吞吐完成反事实，不验证真实无线时延、丢包、序列化开销或在线控制闭环。",
+            "四个 held-out take 和研究定义 payload 限制了跨场景、跨部署和安全结论。",
+            "Harbor、V2X-ReaLO 与 LRCP 只能说明功能先例，不能通过当前实验给出跨系统优劣排序。"
+          ],
+          "judgment": "对 benchmark 语义与排名透明度有明确影响，但外推边界较窄，评 6 分。"
+        },
+        "comparison-readiness": {
+          "evidence": [
+            "使用同一 completion ledger、同一冻结 checkpoint、同一底层场景和候选 tensor lineage，且只让 policy 决定选择哪个 tensor/mask/age，是正确的公平比较骨架。",
+            "actual payload 与 equal-payload sensitivity 分层，可分别呈现模型真实通信成本和等载荷条件下的 policy 效果。",
+            "以 take 为 acquisition unit 并报告 pairwise sign、inversion 和 rank agreement，优于把帧当独立样本。"
+          ],
+          "counterevidence": [
+            "“同一 ledger”需精确定义为每个 take/model/payload-regime 的同一不可变消息日程在所有 policy 间复用；actual payload 的不同模型不能假装共享相同 completion rows。",
+            "equal payload 的目标字节数和实现未定义。只有 padding 或独立 service-demand override 且保持模型 tensor 内容不变才是公平的合成控制；截断、压缩或改变表示会破坏 same-input 条件。",
+            "四个模型、metric 名称和 IoU 阈值、deadline、tie rule、rank/equivalence margin、缺失/右删失处理、multiplicity 和 one-shot test 规则均未冻结。",
+            "Harbor 是 deadline/local 的功能先例，V2X-ReaLO 是 latest-history 的功能先例，LRCP 是需重训的 learned method，RCP-Bench 是训练期随机 drop 负对照；均不能进入同数据同 checkpoint 的直接排名表。",
+            "CoInfra 的题名和功能归类错误；age-aware-native 对官方 checkpoint 的训练支持也未建立。"
+          ],
+          "judgment": "公平性思想正确，但直接 baseline、合成等载荷控制和统计契约仍有重大缺口，评 5 分。"
+        }
+      },
+      "strongestObjection": "协议宣称做排名与等价性审计，但公开 validate+test 只有 4 个 take，validation 还可能参与 checkpoint 选择；同时 frame mapping 和 payload gate 均未通过。即使工程跑通，也很容易得到一个接口严格但统计上无法支持 ranking/equivalence 的有限案例表。",
+      "requiredExperiment": "先在 validation take 上完成且公开 G1-G4：冻结四个模型名称、config/checkpoint SHA、唯一 metric/IoU、规范 codec、deadline、状态机、warm-up、tie 和 equivalence margin；equal-payload 只用保持 tensor 不变的 padding/service-demand override，并冻结每个 take/model/regime 的消息日程供所有 policy 共用。validation 仅用于实现和预注册，不与 test 混作独立验证；随后对 test take 2/8 一次性运行，另把 validate 13/14 作为开发后复现层单列。若仅有这 4 个公开 take，主结论必须限定为 finite-benchmark descriptive audit，不得声称总体 ranking/equivalence certificate；要做后者需新增独立 take。外部系统只做功能映射表，不参加同接口数值排名。",
+      "factualCorrections": [
+        "公开 CooperScene validate+test 是 4 个 take：test 2/8、validate 13/14；不是 14 个独立 held-out take。",
+        "validation split 不能自动与 test 合并为 confirmatory sample，尤其发布 checkpoint 可能经过 validation 选择；必须分层报告并冻结 one-shot test。",
+        "CoInfra 的正确题名是 CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset in Adverse Weather；现有一手证据不支持把它列为 latest-history fallback 基线。",
+        "V2X-ReaLO 支持 latest-message 的功能先例，但未核验到可直接消费 CooperScene 数据和 checkpoint 的官方实现，不能称为直接可运行 baseline。",
+        "Harbor 的 deadline/local 行为、LRCP 的 learned asynchronous fusion、RCP-Bench 的训练期随机 drop 分属不同比较层，均不能进入冻结同 checkpoint 的 policy 排名。",
+        "age-aware-native 只能对 checkpoint 训练时明确支持非零 age 输入的模型单列；官方 wrapper 默认 zero prior 不是共同支持证据。",
+        "same input 应理解为固定底层场景、候选 tensor 池、预处理和 checkpoint，并只允许 policy 选择的 tensor/mask/age 不同；不能要求不同 policy 最终喂入完全相同 tensor，否则 policy 反事实失去定义。",
+        "same completion ledger 应在每个 model/payload regime 内复用；actual-payload 模型因载荷不同会有不同 completion ledger，只有 equal-payload 合成层才能共享相同 service demand。",
+        "equal-payload 必须标为合成 transport sensitivity，明确共同字节目标并保持模型 tensor 内容不变，不能把截断或重新编码后的输入称为同输入比较。"
+      ],
+      "overall": {
+        "score": 5,
+        "verdict": "重大补强后再评",
+        "summary": "状态契约和冻结 counterfactual 的方向正确，但前人功能先例、CoInfra 错配、两个未通过硬门及仅 4 个公开 held-out take，使当前 ranking/equivalence 协议尚不能形成公平可复现的强比较。"
+      }
+    }
+  ]
+}

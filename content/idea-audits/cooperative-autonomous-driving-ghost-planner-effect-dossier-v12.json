@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "accurate-v2x-ghost-planner-effect",
+  "stage": "pre-review",
+  "title": "从非注入协同 Ghost 到规划动作：MDrive 中的来源归因与冻结状态审计",
+  "hook": "先证明一个 false positive 确实由协同分支引入或放大，再只删除这个对象并从完全相同的规划状态重放，用 GT-oracle 与独立风险参照判断它究竟改变了动作、改善了安全，还是只是制造了无方向的数值差异。",
+  "output": "事件账本、来源归因协议与对象级规划效应审计",
+  "effort": "中高，需要仿真重放与若干窄接口模块",
+  "timeline": "8 至 12 周完成最小研究",
+  "whyNow": "近期一手工作已经在低但非零噪声仿真中记录到未经定向注入的协同融合 ghost，MDrive 固定提交又公开了协同检测输出、ego-only 路径、GT 和 object-list planner handoff。问题发生机制和最小干预边界首次同时具备，但公开研究仍没有给出来源可归因、状态冻结且含安全方向参照的完整事件账本。",
+  "keyProblem": "协同感知论文通常报告 AP 或整体 closed-loop 分数，无法回答一个自然出现的 cooperative-output false positive 是否由协同融合引入、是否真正造成某个规划动作，以及该动作变化的安全方向。没有这三层分解，团队既可能把普通 detector FP 错称为 V2X ghost，也可能把刹车或轨迹变化直接当作危害，还可能因平均 AP 改善而忽略少量高后果事件。",
+  "currentLimitations": "Fusion or Confusion 证明的是低但非零误差仿真中的自然发生机制，不是零误差 V2X 或真实道路发生率；MDrive 提供可插入的 object-list 接口，但没有现成的跨帧 ghost ledger、来源 provenance 或冻结 planner runner。既有 planner-centric metrics 已做过逐框删除和假阳性插入，因此 remove-only 本身不是新贡献；攻击论文也已证明恶意伪造对象可传播到规划。剩余残差必须同时依赖非注入 occurrence、协同来源归因、不可变状态配对、规范安全参照和完整 null 账本。",
+  "hypothesis": "在固定 MDrive nominal simulation、检测器 checkpoint 和 object-list planner 下，held-out 场景中会出现少量非 self-origin、非标签或同步歧义且由 cooperative 分支引入或放大的 ghost。对这些事件执行冻结状态单对象删除，会产生超过 no-op floor 的局部规划效应；其中只有同时更接近 GT-oracle 动作且改善独立风险指标的子集可被判定为 harmful ghost。若 occurrence、来源归因或安全方向任一门失败，则对应危害主张被撤回。",
+  "claimBoundary": "结论只适用于固定 MDrive nominal simulation、所测协同 detector 与显式 object-list planner。不得声称真实道路已观察到该现象、零误差 V2X 仍会产生 ghost、所有端到端 BEV planner 都受影响，或一步效应等价于长期闭环碰撞因果效应。未通过 cooperative/primary-only/leave-one-cooperator-out 审计的事件只能称 cooperative-output FP。",
+  "primaryEstimand": "对每个通过来源归因的 ghost g，估计 tau_g = A(S, D) - A(S, D \\ {g})。S 包含逐字段相同的 ego、route、planner memory、随机状态和时间；D 是同一次协同感知前向后的不可变检测集合。两个分支不重跑 detector、fusion、NMS 或 tracking，除 g 外所有对象的值和顺序必须相同。",
+  "noveltyClaims": [
+    "构建公开 cooperative-driving 栈中的非注入 ghost 总体账本，并用 cooperative、primary-only 与逐 cooperator leave-one-out 重放把 fusion-introduced、fusion-amplified 和 ordinary detector FP 操作化分开，而不是根据 cooperative 输出中的 FP 直接猜测来源。",
+    "把通用逐框删除收窄成一条完整识别链：held-out occurrence、来源归因、不可变 planner state、对象级配对、机制特异性对照与 GT-oracle/独立风险双参照；贡献是协同特定的可复算实证对象，不是 remove-only 算子。",
+    "对零发生、零动作效应和方向不确定结果分别给出置信上界与系统决策后果，使负结果能够停止 ghost mitigation 投入、限定评测范围或暴露安全参照不足，而不是只保留触发制动的视频。"
+  ],
+  "closestWorkDifference": [
+    "Fusion or Confusion 已直接证明协同关联与融合可以自然产生 ghost，因此发生机制本身不新；它没有公开事件级 replay，也没有测量规划动作后果。",
+    "MDrive 与 Defer to Plan 已把 V2X 协同放入闭环规划，因此 planner-aware cooperation 不新；它们比较的是整套输入或融合策略，没有识别单个自然 ghost 的边际效应。",
+    "Planner-Centric Metrics 已做逐框删除和假阳性插入，攻击研究也已测恶意对象的驾驶后果；本候选只保留 benign occurrence、fusion provenance、冻结状态和规范安全方向组合后的窄残差。"
+  ],
+  "method": [
+    "在 45 个 discovery 场景中只构建 occurrence ledger，冻结 GT 匹配、歧义标签、persistence、planner exposure、来源类别和决策帧规则；这一阶段不得查看 remove-only 动作差来挑选阈值或事件。",
+    "在其余 180 个 held-out 场景中执行 occurrence hard gate，并对每个 cooperative-output FP 用相同原始 LiDAR 与 poses 运行 cooperative、primary-only 和逐 cooperator leave-one-out。只有满足冻结变化规则的事件才标记为 fusion-introduced 或 fusion-amplified。",
+    "对通过来源门的事件保存不可变 D 与完整 planner state，独立恢复 A0 原始、A1 remove-only 和 A2 no-op/no-op 分支；执行顺序随机化并做 order-swap，任何同量级 no-op 漂移都会阻断主分析。",
+    "加入 planner-relevance-matched TP、同状态 matched non-fusion FP 或几何 placebo，以及 GT-oracle object set。matched controls 用于机制特异性，GT-oracle 与独立 TTC/碰撞风险参照用于把结果分成 harmful、beneficial 和 behaviorally-different-but-undetermined。",
+    "以 scene 或 ghost track 为聚类单位报告完整效应分布、零效应、反方向事件、定义敏感性和来源类别异质性；只有 no-op deterministic replay 通过后才做短时闭环扩展。"
+  ],
+  "operationalDefinitions": [
+    "Fusion-introduced：候选 FP 在 cooperative 输出中满足冻结匹配与持续性规则，在 primary-only 中无匹配对象，并在至少一个预注册 leave-one-cooperator-out 分支中消失且其它输入一致。",
+    "Fusion-amplified：primary-only 已有对应 FP，但 cooperative 分支使其 score、定位偏差、持续性或 planner exposure 跨过预冻结阈值，且删除某一 cooperator 后变化反转。",
+    "Ordinary detector FP：primary-only 与 cooperative 均出现且 leave-one-cooperator-out 不能按冻结规则改变其身份；该类只作对照，不支撑标题中的 cooperative ghost。",
+    "Harmful planner effect：A1 相对 A0 同时更接近 GT-oracle planner 输出，并改善至少一个预注册独立风险指标而不越过通行损失上限；两类参照不一致时标记为方向不确定。"
+  ],
+  "reusableAssets": [
+    "MDrive commit 9e08377042b8f2e2860bb00de2416b3ebcfa3be4 的 225 个闭环场景、协同/ego 感知路径、GT diagnostics 和 planner_dets handoff。",
+    "MDrive 可替换的 cooperative detector 与 BasicAgent、BehaviorAgent 或 rule planner，用于固定一组后再做第二实现范围复核。",
+    "Fusion or Confusion 的 ghost 定义、低非零噪声发生机制与距离分桶，作为 occurrence 规则起点而非 MDrive 结果。"
+  ],
+  "modulesToBuild": [
+    "GhostTrackMiner 与歧义标签器，用于全量 ledger、跨帧 persistence 和阈值敏感性。",
+    "CooperativeProvenanceRunner，用相同原始观测重放 primary-only 与 leave-one-cooperator-out，并生成来源分类证据。",
+    "ImmutableDetectionSnapshot 与 PairedPlannerExecutor，逐字段校验 D、恢复 planner memory，并执行 no-op、remove-only、placebo 和 oracle arms。",
+    "NormativeOutcomeAnalyzer，把 action delta、GT-oracle 距离、独立风险和通行代价组合为预注册的三类方向结论。"
+  ],
+  "implementationPath": [
+    "固定 MDrive commit、CARLA、detector config/checkpoint、planner、依赖与所有随机状态，完成一个官方 cooperative 场景 smoke run并保存环境和输出哈希。",
+    "实现 GhostTrackMiner，在 discovery 集人工复核边界样本，冻结 GT 匹配、host-self、同步/标签歧义、persistence 和 planner-exposure 规则。",
+    "实现 provenance runner，对同一传感器帧执行 cooperative、primary-only 和每个 cooperator leave-one-out，保存各分支 detections 及逐字段输入 diff。",
+    "实现 planner state 序列化或双实例恢复，先通过 no-op/no-op、order-swap 与列表复制测试，再允许单对象删除进入主分析。",
+    "实现 matched TP、同状态 non-fusion FP/几何 placebo 和 GT-oracle arms，冻结 oracle 距离、TTC/碰撞风险与通行损失判定。",
+    "扫描完整 held-out 集并发布 included、excluded、no-ghost 三类对账；达到 occurrence gate 后完成配对统计和至少一个第二 planner 或 detector 的范围复核。"
+  ],
+  "minimumStudy": [
+    "Discovery：只用 45 个预先抽取且分层覆盖场景类别的 MDrive 场景冻结规则，动作差不可用于调参，所有候选和排除原因进入 ledger。",
+    "Confirmation occurrence gate：无早停地扫描其余 180 个 held-out 场景。主要 action inference 至少需要 20 条 provenance-confirmed ghost tracks、来自至少 10 个独立场景且单场景最多贡献两条；该下限使二元方向比例的最坏 95% 区间半宽约为 0.20，只作为 go/no-go，不包装成高精度人口估计。",
+    "Source attribution：每条确认候选必须完成 cooperative、primary-only 与所有可用 cooperator leave-one-out；未通过冻结来源定义的 FP 不进入主 estimand。",
+    "Frozen one-step study：从同一 snapshot 和 planner memory 运行原始、remove-only、no-op、matched TP、matched non-fusion FP/几何 placebo 与 GT-oracle，按 scene 聚类 bootstrap。",
+    "Scope replication：在第二 planner 或第二 cooperative detector 上重复 occurrence 或 action 机制；短时闭环只在 deterministic no-op replay 通过后作为扩展。"
+  ],
+  "strongBaselines": [
+    "No-op/no-op deterministic twin 与分支 order-swap。",
+    "Primary-only 和逐 cooperator leave-one-out 来源审计。",
+    "Planner-relevance-matched true-positive removal。",
+    "同状态 matched non-fusion false positive 或预注册几何 placebo。",
+    "GT-oracle object-set planner 输出与独立 TTC/碰撞风险参照。",
+    "MDrive 现有 host-self filter、普通 confidence filter 和 geometry filter。",
+    "Ego-only perception 以及第二 planner 或第二 cooperative detector 的范围复核。"
+  ],
+  "metrics": [
+    "每 scene、每千帧和每公里的 provenance-confirmed ghost track rate、scene-level 置信区间及零发生上界。",
+    "Fusion-introduced、fusion-amplified、ordinary detector FP、host-self 和 ambiguity 的完整来源占比。",
+    "Paired brake、throttle、steer、target speed 与 planned-trajectory endpoint/lateral/longitudinal deltas。",
+    "相对 GT-oracle action 的距离变化、minimum TTC、预测碰撞风险、hard-brake 状态与通行时间损失。",
+    "主效应相对 no-op floor、matched TP 与 matched non-fusion/placebo 的 scene-level 配对差和 bootstrap 置信区间。",
+    "不同匹配阈值、persistence、距离、持续时间、来源车辆和 detector/planner 组合下的异质性。"
+  ],
+  "successCriteria": [
+    "Held-out 集达到冻结 occurrence 数量和场景覆盖门槛，且事件可由 provenance replay 归为 fusion-introduced 或 fusion-amplified，而不是普通 detector FP、host-self 或标签/同步歧义。",
+    "No-op、order-swap 与逐字段 snapshot 检查通过，A0-A1 超过确定性 floor，并在 matched controls 后保持 ghost 特异性。",
+    "至少一个预注册主要效应在 scene-level 置信区间中排除零，且 GT-oracle 接近度与独立风险指标对安全方向一致；方向不一致的事件不得算作 harmful。",
+    "Occurrence 或 action mechanism 在第二 planner 或第二 detector 上复现，并公开完整 ledger、环境哈希、正负事件和重算脚本。"
+  ],
+  "killCriteria": [
+    "Held-out 180 场景中无 provenance-confirmed 事件，或未达到 20 tracks/10 scenes 的 action inference 门槛；此时只报告发生率上界，不继续选择性挖掘动作案例。",
+    "所谓 ghost 在 primary-only 已存在且 leave-one-cooperator-out 不改变其身份，或只在攻击、手工注入、特意放大误差和绕过官方过滤时出现。",
+    "A0-A1 在正确恢复 planner state、no-op 与 order-swap 后消失，或 matched TP/non-fusion FP/placebo 产生不可区分的效应。",
+    "动作变化不能同时由 GT-oracle 和独立风险参照确定方向，只能形成通用 planner sensitivity，而这一残差已被 planner-centric metrics 覆盖。",
+    "短时闭环 no-op 分支自然产生与主效应同量级的轨迹分叉，无法建立可解释的 common-state 比较。"
+  ],
+  "negativeResultConsequence": "零 occurrence 会停止在该公开栈上开发 ghost mitigation，并给出配置特定上界；有 occurrence 但零 action effect 会否定由低比例 FP 直接外推规划危害；有 action delta 但方向不确定会把后续投入转向规范风险参照，而不是继续宣称安全改善。三类负结果都必须保留完整 ledger，不能被有动作的视频替代。",
+  "risks": [
+    "Fusion or Confusion 与 MDrive 使用不同误差模型和融合层级；其一只支撑可信机制，MDrive occurrence 必须重新测量，不能借用论文中的 low-noise 数值。",
+    "MDrive 默认 object-list planner 不代表直接消费 BEV features 的端到端 planner；首篇结论必须限定接口，feature-level counterfactual 是后续独立课题。",
+    "GT matching、标签时延和遮挡会改变 ghost 身份；需要多阈值敏感性、人工复核和 ambiguity 类别，不能用单一 5 m 阈值定论。",
+    "Planner memory、列表顺序和 CARLA 随机性可能制造伪差异；双实例恢复、逐字段 diff、no-op 和 order-swap 是分析前硬门。",
+    "Occurrence 可能低到无法支撑 12 周内的 action inference；这会形成有价值的上界但不会自动成为高影响论文，候选应按 kill 条件停止升级。"
+  ],
+  "impact": "这项研究提供协同感知从‘出现错误’到‘由协同造成’再到‘改变动作并具有安全方向’的责任链。正结果会告诉系统开发者哪些非注入融合 ghost 值得优先过滤，以及普通 AP 为何看不到其后果；负结果则会阻止把低比例仿真 ghost 夸大成普遍安全风险。事件账本、来源重放和冻结 planner 协议还可迁移到 stale V2X、duplicate tracks、地图对象和多车语义消息的对象级审计。",
+  "evidence": [
+    {
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "role": "本地详细报告确认 MDrive 提供 225 个闭环协同场景，并记录整体感知改善不必然转化为规划收益；它是执行底座，不直接证明 ghost occurrence。",
+      "localPaperId": "mdrive-closed-loop-cooperative-driving",
+      "localLink": "papers/mdrive-closed-loop-cooperative-driving/"
+    },
+    {
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "role": "本地报告界定 planning-stage adaptive V2X fusion 与闭环评价已存在，约束本候选不能把 planner-aware cooperation 本身当作新意。",
+      "localPaperId": "defer-to-plan-v2x-driving",
+      "localLink": "papers/defer-to-plan-v2x-driving/"
+    },
+    {
+      "title": "Fusion or Confusion? Potential and Challenges in Fusion of Onboard Sensors and V2X Data in Cooperative Perception",
+      "url": "https://doi.org/10.1109/CSCN67557.2025.11230764",
+      "role": "一手正式论文提供低但非零传感器与 GNSS 误差下非注入 ghost 的发生机制，同时明确不能支持真实道路或零误差外推。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MDrive official repository at fixed commit",
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "role": "固定代码暴露 cooperative detections、primary frame boxes、GT diagnostics、planner_dets 和 stateful planner handoff，支持自建来源重放与冻结单框干预。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Learning to Evaluate Perception Models Using Planner-Centric Metrics",
+      "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Philion_Learning_to_Evaluate_Perception_Models_Using_Planner-Centric_Metrics_CVPR_2020_paper.html",
+      "role": "该正式先例已经覆盖逐框删除和假阳性插入的 planner influence，迫使本候选把新意限定在自然 occurrence、协同来源与规范安全方向。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "From Stealthy Data Fabrication to Unsafe Driving: Realistic Scenario Attacks on Collaborative Perception",
+      "url": "https://arxiv.org/abs/2605.01301",
+      "role": "近期一手攻击研究已把恶意协同感知扰动传播到 tracking、prediction 和 planning；它说明虚假对象影响动作不新，但不替代 benign non-injected occurrence。",
+      "sourceOrigin": "external"
+    }
+  ]
+}

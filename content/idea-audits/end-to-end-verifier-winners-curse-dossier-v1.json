@@ -1,0 +1,222 @@
+{
+  "candidateId": "verifier-selection-winners-curse",
+  "title": "端到端驾驶测试时轨迹搜索的验证器赢家诅咒",
+  "hook": "搜索越多不一定越安全：固定验证器后，best-of-N 或 CEM 可能持续抬高代理分数，却更频繁选中验证器误差尾部。",
+  "output": "搜索压力-假接受风险曲线、预算受控的 verifier 评测协议、独立安全 oracle ledger 与可接受搜索预算规则。",
+  "effort": "1-2 名研究者，2-4 张 24-48GB 显存 GPU，并需要 NAVSIM/nuPlan 与可选 HUGSIM 或 Bench2Drive 环境。",
+  "timeline": "总周期 8-12 周；Gate 0/1 最多 3 周，反转验证、校准和闭环复核 5-9 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未证明 TOAD、DriveVer、DiffusionDrive 或任何公开 planner 在自然测试流程中出现 verifier winner's curse；Gate 0 只检查预注册设置中的发生性。",
+    "尚未运行 best-of-N、CEM、NAVSIM、HUGSIM、Bench2Drive 或本 dossier 的轻量 verifier、自建 oracle 和预算控制代码。",
+    "不把可人工制造的 verifier 噪声、越出动力学支持的轨迹或 LLM reward hacking 结果写成驾驶系统已经发生安全退化的证据。"
+  ],
+  "whyNow": "TOAD 已将 learned scorer 作为 reward 连续优化，DriveVer 直接使用轻量 verifier 选择和修正轨迹，DiffusionDrive 等多模态 planner 又能低成本产生更大的候选集。通用 inference-time reward hacking 表明扩大选择压力会放大代理误差，但驾驶论文通常只报告最大 verifier/NAVSIM 分数或平均闭环增益。当前公开 proposal generator、NAVSIM evaluator 和反应式模拟接口足以把搜索预算、代理分数与独立后果拆开测量。",
+  "keyProblem": "只要 learned verifier 存在非零、异方差或分布外误差，增加 N 或 CEM 迭代就会优先探索被高估的轨迹。若安全评价仍复用同一 verifier 或高度相关代理，表面分数单调提升可能掩盖独立几何和反应式后果的倒 U 形退化，导致搜索预算越大反而越危险。",
+  "problemEvidence": [
+    "TOAD 把 learned scorer 当作 CEM reward，并使用 trust region 控制偏移，说明 scorer 失真是结构性风险，但未报告搜索压力到独立安全后果的完整曲线。",
+    "DriveVer 用轻量双头 verifier 预测安全置信度并修正轨迹，是 best-of-N/verification 的直接近邻，但未发现固定 verifier 后系统扫描 N 的假接受分析。",
+    "Inference-Time Reward Hacking 在非驾驶任务中给出代理 reward 先升、真实 reward 后降的结构机制，只能作为待验证假设来源，不能替代驾驶发生性。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "Test-Time Trajectory Optimization for Autonomous Driving (TOAD)",
+      "overlap": "已实现 learned scorer、CEM 优化、trust region 和测试时轨迹改进。",
+      "unreplacedResidual": "未固定 scorer 后系统扫 N/迭代预算，并用不参与选择的几何与反应式 oracle 报告 proxy-true 反转、false acceptance 和风险拐点。"
+    },
+    {
+      "work": "DriveVer",
+      "overlap": "已用轻量 verifier 对候选轨迹进行安全评分、选择和修正。",
+      "unreplacedResidual": "未测量候选规模增长如何放大 verifier 误差尾部，也未把 verifier score 与独立闭环后果彻底分离。"
+    },
+    {
+      "work": "Inference-Time Reward Hacking in Large Language Models",
+      "overlap": "给出 best-of-N 扩大代理优化压力后真实 reward 下降的通用 winner's curse 机制。",
+      "unreplacedResidual": "不是驾驶轨迹、没有动力学支持与反应式交通后果，不能回答驾驶中的发生边界和可接受预算。"
+    },
+    {
+      "work": "MindDrive 与 HUGSIM",
+      "overlap": "前者包含候选生成和 VLM evaluator，后者提供可复用的神经渲染反应式闭环。",
+      "unreplacedResidual": "均未提供预算配平的搜索压力-假接受风险曲线与 verifier 独立 oracle。"
+    }
+  ],
+  "currentLimitations": "最近工作已经覆盖测试时 score-and-select、CEM 优化、轨迹修正、trust region 和平均 benchmark 改进，所以本候选不能把更多候选、更强 verifier 或增加安全约束作为贡献。唯一 residual 是在冻结 proposal distribution 与 verifier 后，量化搜索压力是否选择性放大代理误差，并给出与总 verifier calls、动力学支持和独立反应式后果绑定的预算止损规则。",
+  "residualClaim": "只研究测试时选择压力造成的 proxy-true safety gap 及其预算边界；不提出新的通用 planner，不把 NAVSIM 分数当真实安全真值，也不把越出 proposal support 的无效轨迹算作不可避免的 winner's curse。",
+  "estimand": {
+    "targetPopulation": "固定公开 proposal generator、固定 held-out scenes 与预注册 best-of-N/CEM 搜索范围内，位于动力学和 proposal support 的候选轨迹集合。",
+    "statisticalUnit": "独立 scene episode 与随机 seed 构成推断 cluster；同一 scene 下不同 N、CEM 迭代和候选轨迹是配对重复测量。",
+    "outcome": "选中轨迹的 learned verifier score、独立 NAVSIM component oracle、几何规则结果，以及固定 HUGSIM/Bench2Drive 场景中的 collision、最低 TTC、越线和完成度。",
+    "primaryEstimand": "随 log2(N) 或等价 verifier-call budget 增长，Delta_proxy(b) 与 Delta_oracle(b) 的斜率差、false-acceptance rate 及首个稳定排序反转预算 b*。",
+    "secondaryEstimands": "trust region、ensemble/bootstrapped verifier、校准和 support constraint 对反转幅度与可接受预算的改变。"
+  },
+  "hypothesis": "在至少两个独立 verifier seed 和受约束 proposal support 内，增加 best-of-N 或 CEM 搜索压力会使 learned verifier score 单调改善，却使未参与选择的几何或反应式安全 oracle 出现稳定倒 U 形、false acceptance 上升或方法排序反转；简单 calibration 或 trust region 不能完全消除该现象。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 自然发生性与可识别反转",
+      "state": "not-run",
+      "pass": "2-3 周内以冻结 DiffusionDrive 或等价公开 planner、两个独立 verifier seed 和 N={1,2,4,8,16,32}/受限 CEM，在 held-out NAVSIM scenes 观察到超出置信区间与实际等价界的 proxy-oracle 分歧，同时轨迹仍处于预注册动力学与 anchor support。",
+      "fail": "独立 oracle 随预算单调不降，所有分歧只来自人为噪声或越出支持的轨迹，或现有 trust region 在公平预算下完全消除反转时停止。"
+    },
+    {
+      "gate": "Gate 1 - 固定资产与独立测量链",
+      "state": "not-run",
+      "pass": "固定 proposal checkpoint、verifier 训练 split/seed、NAVSIM commit 和 oracle 定义，保存全部候选与选择日志，并证明 oracle 特征、标签和阈值未进入 verifier 训练或选择。",
+      "fail": "无法取得合法数据/checkpoint、verifier 与 oracle 共享不可拆分的标签或模型、预算无法配平，或只有 mock 候选能跑通时停止主实验。"
+    }
+  ],
+  "dataPreflight": [
+    "固定 DiffusionDrive commit 9b52ed0ec06b073d82d6f392ab084c7b301c8681、NAVSIM commit 0a380a9063d7162ec93d0f51e9990ebac585f720、可选 HUGSIM commit 62c690d39fd90020e68a196bd8bcc1c4d4191f2e，并重新记录各仓库、checkpoint 与 nuPlan/CARLA 数据条款。",
+    "在查看主结果前定义 proposal support：anchor 距离、动力学可行性、最大横纵向加速度与 jerk；超界轨迹单独记为 invalid，不计入核心 winner's curse。",
+    "从训练 split 自建轻量 verifier，锁定输入特征、容量、seed 和训练标签；独立 oracle 使用不参与训练的几何规则/NAVSIM components，反应式 oracle 再用 HUGSIM 或 Bench2Drive。",
+    "预注册 N、CEM 次数、总 verifier calls、墙钟预算和随机 seed；保存所有候选而不只保存 winner，以估计误差尾部和选择偏差。",
+    "Gate 0/1 通过前不宣称 TOAD 或 DriveVer 已发生 reward hacking，不进入昂贵 HUGSIM/Bench2Drive 复核。"
+  ],
+  "noveltyClaims": [
+    "新对象不是 verifier 或测试时优化，而是驾驶轨迹搜索压力对 verifier 误差尾部的选择性放大及独立安全后果反转。",
+    "以 verifier-call budget、proposal support 和独立 oracle 为三个控制量，区分真正 winner's curse、无效轨迹外推和单纯计算预算差异。",
+    "输出可接受搜索预算 b* 与 false-acceptance 风险曲线，使负结果也能决定是否需要 trust region、ensemble 或停止扩大 N。"
+  ],
+  "method": [
+    "冻结多模态 proposal generator，为每个 held-out scene 和 seed 预生成最大候选池；较小 N 使用嵌套前缀，避免不同预算改变 proposal distribution。",
+    "在独立训练 split 上训练小型 trajectory verifier，并禁止使用主 oracle 的特征、阈值和 held-out labels；至少使用两个 verifier seed。",
+    "按 N={1,2,4,8,16,32} 与 0-4 次受限 CEM 扫描搜索压力，按 verifier calls 和墙钟分别配平，记录全部候选、分数与选择。",
+    "用未参与选择的几何规则和 NAVSIM components 计算第一层 oracle；仅当 Gate 0 发现反转时，在固定 10-20 个 HUGSIM/Bench2Drive 场景计算反应式后果。",
+    "比较无约束、trust region、support constraint、calibrated verifier 和 bootstrap ensemble，估计 false acceptance、代理-真值斜率差与首个反转预算。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1 周）：完成许可证、数据、checkpoint、容器、proposal support 与 oracle 定义，生成资产清单。",
+    "阶段 B（第 2-3 周）：实现候选缓存、轻量 verifier、预算控制 wrapper 和独立 oracle ledger，完成 Gate 0/1。",
+    "阶段 C（第 4-6 周）：运行 best-of-N 与受限 CEM 全曲线，复核两个 verifier seed、随机选择和 oracle selector 上下界。",
+    "阶段 D（第 7-9 周，仅 Gate 0 通过）：在固定 HUGSIM/Bench2Drive 场景做反应式后果验证和 scene-seed cluster 分析。",
+    "阶段 E（第 10-12 周）：比较 trust region、support constraint、校准和 ensemble，形成预算准入规则与负结果边界。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "DiffusionDrive",
+        "revision": "9b52ed0ec06b073d82d6f392ab084c7b301c8681",
+        "reuse": "公开多模态候选生成、NAVSIM pipeline 和 checkpoint 说明，作为冻结 proposal generator。",
+        "licenseBoundary": "Gate 1 重新核对代码、checkpoint 和训练数据条款；仓库存在不等于权重和 nuPlan 数据可无条件使用。"
+      },
+      {
+        "asset": "NAVSIM",
+        "revision": "0a380a9063d7162ec93d0f51e9990ebac585f720",
+        "reuse": "PDM scoring、agent/evaluator 接口和第一层独立 component oracle。",
+        "licenseBoundary": "需要 nuPlan 数据；non-reactive component 只能作为独立代理，不是现实安全真值。"
+      },
+      {
+        "asset": "HUGSIM",
+        "revision": "62c690d39fd90020e68a196bd8bcc1c4d4191f2e",
+        "reuse": "closed_loop.py、公开 scenario 与 NAVSIM/VAD/UniAD 客户端接口，用于第二层反应式后果。",
+        "licenseBoundary": "重建场景、模型资产和数据许可需逐项核验；固定少量场景只支持边界验证，不代表真实道路。"
+      },
+      {
+        "asset": "Bench2Drive",
+        "revision": "2645714eb1f3a100217928dd113093cae0779f36",
+        "reuse": "CARLA routes、场景与闭环 evaluator，作为 HUGSIM 不可用时的反应式替代。",
+        "licenseBoundary": "CARLA 与 benchmark 资产条款、版本和算力成本独立复核；不与 HUGSIM 结果无条件合并。"
+      }
+    ],
+    "selfBuiltModules": [
+      "轻量 trajectory verifier 与严格 train/held-out split",
+      "预算配平的 nested best-of-N/CEM 搜索 wrapper",
+      "proposal-support 与动力学可行性过滤器",
+      "独立几何/NAVSIM oracle、反应式结果 join 与 false-acceptance ledger",
+      "search-pressure risk curve、反转点和 cluster uncertainty 分析器"
+    ],
+    "compute": "Gate 0 预算 2-4 张 GPU、约 1-2 GPU-weeks；只在观察到反转后追加 10-20 个固定反应式场景，总预算不超过约 6 GPU-weeks。",
+    "interfaces": "proposal generator 输出统一轨迹张量与 log-prob/support metadata；verifier 只读候选和当前观测，oracle 在选择完成后离线 join，禁止反向泄漏。",
+    "cycle": "8-12 周上限；不等待 TOAD/DriveVer 未公开代码，可信自建 verifier 是计划内研究模块而非自动淘汰理由。"
+  },
+  "minimumStudy": [
+    "完成 Gate 0：用一个固定 proposal checkpoint、两个 verifier seed、至少 100 个独立 held-out scenes 和预注册 N/CEM 网格检查自然 proxy-oracle 分歧。",
+    "完成 Gate 1：固定代码、数据 split、checkpoint、verifier、oracle、容器和预算，证明选择端无法访问独立 oracle。",
+    "缓存最大候选池并用嵌套前缀构造较小 N；CEM 单独报告，所有方法按 verifier calls 与墙钟双重配平。",
+    "报告 verifier score、独立 NAVSIM/geometric oracle、false acceptance 与 support violations 的完整预算曲线，而非只报告最佳点。",
+    "Gate 0 发现稳定反转后，在 10-20 个固定 HUGSIM 或 Bench2Drive 场景复核 collision、最低 TTC、越线和完成度。",
+    "比较 random choice、N=1、trust region、support constraint、calibration、ensemble 和 oracle selector，锁定后运行 scene-seed cluster bootstrap。"
+  ],
+  "strongBaselines": [
+    "N=1 base planner，不进行 verifier 选择，定义零搜索压力基线。",
+    "每个 N 中随机选择候选，控制候选池扩大本身而非 verifier 选择的效果。",
+    "best-of-N learned verifier，使用固定 verifier 和嵌套候选前缀。",
+    "受限 CEM 与论文式 trust region，在相同 verifier calls 和墙钟预算下比较。",
+    "calibrated verifier 与 bootstrap/ensemble verifier，检验普通不确定性方法能否消除反转。",
+    "independent oracle selector upper bound，只用于上界，不参与训练或部署选择。"
+  ],
+  "metrics": [
+    "代理指标：选中轨迹的 verifier score、相对 N=1 的增益和随 log2(N)/verifier calls 的斜率。",
+    "独立结果：NAVSIM component/geometric oracle 与反应式 collision、最低 TTC、越线、进度和完成率，均不参与选择。",
+    "核心风险：false-acceptance rate，即 verifier 接受/高排但独立 oracle 失败的 scene 比例，以及首个稳定反转预算 b*。",
+    "支持与公平性：anchor/support distance、动力学违规率、总 proposal 数、verifier calls、墙钟和 GPU 时间。",
+    "统计指标：scene-seed clustered 风险差、斜率差、倒 U 形检验、95% 区间及跨 verifier seed 方向一致率。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "scene 是主要独立单位，verifier/proposal seed 是第二层 cluster；同一 scene 的预算点与候选轨迹配对。",
+    "comparison": "先检验 proxy score 的非负斜率与独立 oracle 的负斜率/倒 U 形是否同时成立，再比较 mitigation；预注册反转点和 false-acceptance 实际等价界。",
+    "missingness": "模拟器失败、超时或无效轨迹按选择方法失败记录，同时单列 support violation；不得静默删除使高预算看似更好。",
+    "powerGate": "Gate 0 需要独立 scenes 和失败事件足以排除预注册等价界；若反转只在一个 seed 或少量 scenes 出现，则停止而不进入反应式扩展。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，在至少两个 verifier seed 和预注册支持范围内观察到 verifier score 上升而独立 oracle 显著下降、false acceptance 上升或方法排序反转。",
+    "反转在 scene-seed cluster 区间下稳定，并由至少一个 HUGSIM/Bench2Drive 反应式后果复核；不是 invalid trajectories 或预算不公平造成。",
+    "现有 trust region、普通 calibration 或单一 support constraint 在公平预算下不能完全消除现象，且风险曲线能给出可操作的搜索预算上限。"
+  ],
+  "killCriteria": [
+    "独立安全结果在预注册 N/CEM 范围和至少两个 verifier seed 上单调不降，或所有差异落入实际等价界。",
+    "所有反转都由越出动力学/proposal support、人工注入 verifier 噪声或 simulator 失败驱动，现有 trust region 能完全消除。",
+    "verifier 与 oracle 无法在数据、特征或标签上独立，导致最小实验不能识别 proxy-true gap。",
+    "合法数据、checkpoint 或反应式接口不可得且 NAVSIM Gate 0 也无法给出发生性，或周期超过 12 周。"
+  ],
+  "risks": [
+    "自建 verifier 可能过弱，制造不代表强方法的反转；使用两个 seed、容量/准确度审计和 DriveVer/TOAD 机制对齐降低该风险。",
+    "NAVSIM component 与闭环后果仍可能相关或共享偏差；因此 oracle 不参与训练，并仅在 Gate 0 通过后加入反应式第二层。",
+    "高 N 更容易越出 proposal support，造成平凡失败；嵌套候选、support ledger 和受限 CEM 将其与 winner's curse 分开。",
+    "HUGSIM/Bench2Drive 场景有限且计算昂贵；预注册少量固定场景用于结果复核，不用于探索性调参或现实道路外推。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若出现稳定反转，端到端 planner 需要把搜索预算视为安全超参数，报告 proxy-true 风险曲线，并采用独立验证、support control 或预算停止规则。",
+    "negative": "若强 verifier 和公平 support 控制下后果单调不降，将否决该设置中的 winner's curse 主张，并支持在声明预算内安全扩大搜索。",
+    "boundary": "正负结果都绑定固定 planner、verifier、oracle、搜索范围和模拟包络，不证明所有测试时优化或真实道路系统。"
+  },
+  "impact": "正结果会直接改变端到端驾驶中 best-of-N/CEM 的报告与部署方式，从只追求最大 verifier 分数转向预算受控的独立安全验证；负结果也能界定哪些 verifier、support 和预算条件足以避免通用 reward-hacking 风险。",
+  "evidence": [
+    {
+      "title": "Test-Time Trajectory Optimization for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.07170",
+      "role": "最近直接工作：把 learned scorer 作为 CEM reward 并使用 trust region，但未报告搜索压力到独立安全后果的反转曲线。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DriveVer: Lightweight Trajectory Evaluator as Test-Time Verifier for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2607.00399",
+      "role": "最近直接 verifier 方法：选择和修正轨迹，但未系统扫描 N 或测量独立反应式 false acceptance。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Inference-Time Reward Hacking in Large Language Models",
+      "url": "https://arxiv.org/abs/2506.19248",
+      "role": "提供 best-of-N 放大代理误差的结构机制；任务非驾驶，只作为待验证假设而不替代发生证据。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "NAVSIM: Data-Driven Non-Reactive Autonomous Vehicle Simulation and Benchmarking",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/32768f7faf1995026ef9821c696f3404-Abstract-Datasets_and_Benchmarks_Track.html",
+      "role": "提供公开 proposal/evaluator 接口和独立 components；non-reactive 边界要求再做反应式复核。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "HUGSIM: A Real-Time, Photo-Realistic and Closed-Loop Simulator for Autonomous Driving",
+      "url": "https://doi.org/10.1109/TPAMI.2025.3647952",
+      "role": "提供不参与 verifier 训练的反应式闭环第二证据层，可检查 collision、TTC 与完成度后果。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DiffusionDrive: Truncated Diffusion Model for End-to-End Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Liao_DiffusionDrive_Truncated_Diffusion_Model_for_End-to-End_Autonomous_Driving_CVPR_2025_paper.html",
+      "role": "提供公开多模态 proposal generator 与 checkpoint 路径，使嵌套 best-of-N 发生性检查可执行。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:08:08.913Z"
+}

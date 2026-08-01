@@ -1,0 +1,51 @@
+{
+  "candidateId": "judge-optimization-rank-survival-audit",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.633Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 5,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 9
+  },
+  "rationales": {
+    "novelty": "对固定 judge 做 best-of-N 或 reward optimization 后发生 Goodhart/winner's curse，已由 reward-model overoptimization 文献直接覆盖。WorldModelBench 不仅训练人类对齐 judge，还用其 reward 优化视频生成器；WorldLens 已提供生成、重建、动作、下游任务和人工偏好多族评价。候选的新意只剩驾驶世界模型上的 evaluator-family 谱系、选择强度曲线和 rank survival estimand，属于严谨外部有效性审计而非新优化方法。",
+    "feasibility": "WorldModelBench 和 WorldLens 均公开数据或代码入口，best-of-N 不需要重训模型，原则上可先做。实际瓶颈是至少三个模型、每条件 16 个独立视频的生成/存储成本，闭源模型采样协议与许可，以及盲化人工和几何/动作 evaluator 的标注预算。共享 VLM backbone 和训练数据很难彻底排除。",
+    "success-probability": "选择后分布偏移是成熟且可重复的机制，WorldModelBench 的小型 prompt 集和 judge 优化尤其容易暴露过拟合，因此发现某种跨族增益饱和或反转的概率较高。但模型级排名只有少数样本点，容易被候选池质量、采样非独立性和 evaluator 噪声驱动；稳定跨模型、跨场景 reversal 的成功率只是中等。",
+    "impact": "结果可约束自动 judge 被用于发布排名、拒绝采样和训练 reward 的方式，并推动封存 evaluator 与选择后校准。若只有静态 VLM 分数反转而没有几何、动作或人工后果，影响会限于评测方法学。",
+    "comparison-readiness": "N=1、fixed-first、random-of-N、judge-A best-of-N、各族 oracle upper bound、静态排名、同构/异构 ensemble 和 leave-one-family-out 均已覆盖，并明确把筛选与参数更新分开。核心比较要求清晰，必须预注册 evaluator family 的独立性判据和最小人工样本量，不能在看到结果后重组评价器。"
+  },
+  "strongestObjection": "这可能只是把已知的 reward overoptimization 搬到驾驶视频，并把多个相关 VLM judge 错当独立证据。WorldModelBench 已直接最大化其 judge reward，WorldLens 又已提供多轴评价；若所谓 held-out families 共享视频 backbone、训练语料、prompt 模板或人类标签，rank reversal 既不能证明外部有效性失效，也不能改变系统决策。",
+  "requiredExperiment": "在任何候选生成前封存 evaluator 谱系，将人工、显式几何、动作兑现和下游任务分为至少三类真正异族评价器，并保留一个盲化人工测试子集。对至少三个生成模型、两个场景子集和同条件独立候选池运行 N=1/2/4/8/16 的嵌套 best-of-N，同时保留 fixed-first、random-of-N 和 family-oracle。以 prompt/scene 为 cluster 报告 judge A 增益、各族增益、model-level Kendall/Spearman、pairwise reversal 和 top-k survival；只有人工或显式几何/动作锚点也出现预注册 reversal，才判定为跨族 winner's curse。参数 reward tuning 必须另做，不能由 best-of-N 推断。",
+  "evidenceReopened": [
+    {
+      "title": "WorldModelBench: Judging Video Generation Models As World Models",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/4ec03ed08a3fcb59e1c815b5598beff1-Abstract-Datasets_and_Benchmarks_Track.html",
+      "finding": "WorldModelBench 用 67K 人类标签训练自动 judge，并直接用 judge reward 优化视频生成模型；论文报告 judge 自身和静态人类对齐，但未系统检验选择或优化后的异族 evaluator 排名存活。"
+    },
+    {
+      "title": "WorldLens: Full-Spectrum Evaluations of Driving World Models in Real World",
+      "url": "https://arxiv.org/abs/2512.10958",
+      "finding": "WorldLens 已覆盖生成、重建、动作兑现、下游任务和人工偏好五方面、24 个维度，并训练 WorldLens-Agent；它提供 evaluator families，但未把某个 judge 参与选择后的分布作为处理变量。"
+    },
+    {
+      "title": "Scaling Laws for Reward Model Overoptimization",
+      "url": "https://proceedings.mlr.press/v202/gao23h.html",
+      "finding": "该工作已直接测量 best-of-N 和 RL 下 proxy reward 优化强度与 gold reward 的分离，覆盖候选的一般 winner's-curse 机制。"
+    },
+    {
+      "title": "Reward Model Ensembles Help Mitigate Overoptimization",
+      "url": "https://arxiv.org/abs/2310.02743",
+      "finding": "该工作已比较 best-of-N 下单一 reward model 与保守 ensemble，说明 ensemble 缓解方案本身不是新贡献，也提示 evaluator 相关性必须显式审计。"
+    },
+    {
+      "title": "M4World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming",
+      "url": "https://arxiv.org/abs/2607.14005",
+      "finding": "最新驾驶世界模型已使用自动 VLM judge 评价条件兑现与跨视角一致性，证明 judge 进入实际开发闭环，但也扩大了共享 VLM 偏差的风险。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "75ae65558d9868a018a7ba8a3a99ba31bd21094a8759ac89259a6cfbe23e32f1"
+}

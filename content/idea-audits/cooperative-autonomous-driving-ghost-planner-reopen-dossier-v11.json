@@ -1,0 +1,584 @@
+{
+  "schemaVersion": "idea-reopen-dossier-v11",
+  "candidateId": "accurate-v2x-ghost-planner-effect",
+  "agentId": "codex-independent-evidence-auditor-v11",
+  "auditedAt": "2026-08-01T09:56:54+08:00",
+  "verdict": "revise",
+  "verdictRationale": "该候选不应继续按‘没有现成 ghost ledger、适配器或完整闭环就不可执行’淘汰。外部一手论文已经证明：在低但非零传感器噪声和 0.5 m GNSS 标准差的有利仿真条件下，关联与融合过程会内生地产生未注入的 ghost；MDrive 的官方代码又暴露了结构化协同检测输出、逐框转规划器输入以及 BasicAgent/BehaviorAgent 调用点，因此自建 ghost 识别、单框 remove-only 干预和配对规划器执行器是可信的。候选仍需 revise，而不是无条件 reopen：现有证据没有证明零误差 V2X 或真实道路中自然 ghost 的发生，MDrive 注释里提到的 host-ego phantom 也不是经过统计验证的任务证据；同时，planner-centric perception evaluation 和恶意伪造目标到驾驶动作的影响已有工作，剩余新意只能限定为‘名义或低噪声协同融合自然产生的 ghost，在冻结同一规划状态下的单目标 matched remove-only 动作效应及其可复现实证协议’。",
+  "keyProblem": {
+    "researchQuestion": "当协同感知系统在名义或低噪声 V2X 输入下自然输出一个 false-positive/duplicate ghost 时，仅移除该 ghost、保持检测集合其余部分和规划器状态完全不变，会不会造成可重复且具有安全意义的规划动作变化？",
+    "whyItMatters": "已有感知研究通常报告 ghost rate 或 AP，规划研究通常比较整套协同与单车输入。二者都不能回答一个自然产生的具体 ghost 是否是刹车、转向或轨迹变化的原因。这个因果缺口会导致团队既可能夸大低比例 false positive 的安全危害，也可能因平均 AP 改善而忽略少量但高后果的目标。",
+    "requiredClaimNarrowing": "不得把候选表述为‘真实道路准确 V2X 已普遍出现 ghost 并造成事故’。可检验的首阶段主张应是‘在公开仿真闭环栈的名义/低噪声协同模型输出中，存在非人工注入的 fusion-generated ghost；对同一冻结规划状态做单目标 remove-only 配对干预，可以识别其瞬时动作影响’。",
+    "estimand": "对每个自然产生且经 GT 与时序规则确认的 ghost g，估计 tau_g = A(S, D) - A(S, D \\ {g})。S 包含完全相同的 ego 状态、路线、规划器内部状态和随机种子；D 是同一次感知前向产生的不可变检测集合；第二分支只删除 g，不重跑感知、NMS 或融合。"
+  },
+  "naturalProblemEvidence": {
+    "answer": "部分成立。自然 ghost 在准确度较高但仍含非零误差的仿真 V2X 下真实发生；在零误差 V2X、真实道路或真实部署分布下是否发生，目前没有被所审计的一手证据证明。",
+    "directEvidence": [
+      "Fusion or Confusion? 使用 SUMO ground truth 生成车载与 V2X tracks，再施加距离相关传感器噪声和 GNSS 误差，并由 greedy association、cluster merging 与 covariance intersection 完成融合。ghost 是融合输出中无法分配给 GT，或与分配 GT 的定位误差超过 5 m 的检测。因此该论文里的 ghost 是关联/融合流程内生输出，不是实验者在规划器前手工插入的障碍物。",
+      "在论文最有利的组合中，low sensor noise 仍为非零距离相关噪声，low GNSS error 为 0.5 m 标准差。Figure 8/10 显示该条件下 ghost object rate 很低但非零，并给出同一发送车的两个相近 tracks 因同源约束不能进入同一 cluster、遗留为 ghost 的具体机制。",
+      "该证据来自 5 km、4 车道 SUMO 高速公路、约 60 veh/km、超过 1000 个独立 10 s 仿真。它支持‘低噪声仿真中会自然发生’，不支持‘实车中已经观察到’。",
+      "MDrive 的 perception_swap_agent.py 注释说明协同 LiDAR 在 partner view 中会在 host ego 附近产生 phantom，并在送入规划器前设置 self-filter。这是代码作者记录的工程现象，但仓库没有提交发生率、scene ledger 或正式实验；且这个特定 self-origin artifact 已被现有过滤器处理，不能单独支撑候选。"
+    ],
+    "interpretationBoundary": [
+      "‘accurate’只能操作化为预注册的 nominal/low-noise 配置，不能写成 perfect、zero-error 或 real-world accurate。",
+      "自然发生要求 ghost 来自未针对目标注入或优化的标准感知/融合前向；攻击、手工 box 注入、特意放大的 pose error 和后处理伪造均不计入主发生率。",
+      "host ego 自身投影造成且已被官方 self-filter 排除的 phantom 必须单独记账，不能与环境中可影响规划的 ghost 合并。",
+      "单帧 GT 未匹配可能来自标签边界、遮挡或时间同步。主分析应要求跨帧持续或可追踪，并对匹配阈值做敏感性分析。"
+    ],
+    "evidenceGap": "尚缺公开真实道路数据上的自然 ghost 事件账本，也缺 MDrive 标准配置下多模型、多场景的量化发生率。第一阶段实验必须先做 occurrence audit；如果只找到 host-self artifact、标签错配或人为扰动造成的 false positive，则候选主张不成立。"
+  },
+  "closestWork": [
+    {
+      "work": "Fusion or Confusion? Potential and Challenges in Fusion of Onboard Sensors and V2X Data in Cooperative Perception",
+      "overlap": "直接定义并量化协同融合 ghost，且展示低传感器噪声、低 GNSS 误差时仍可因关联约束产生 ghost。",
+      "notCovered": "没有真实道路验证，没有公开事件账本，也没有把每个自然 ghost 送入规划器做动作级配对干预；对刹车/转向影响只作风险推断。",
+      "implication": "发生机制已有先例，不能把‘协同融合会产生 ghost’本身作为新意；候选只能研究未测量的动作后果与因果归因。"
+    },
+    {
+      "work": "MDrive: Closed-Loop Simulation for Mobility-Aware V2X Cooperative Driving",
+      "overlap": "在统一闭环栈中比较 cooperative 与 ego perception，支持多个协同检测器和多个规划器，并报告规划/闭环指标。",
+      "notCovered": "论文没有建立自然 ghost ledger，也没有对单个 false positive 做 frozen-state remove-only 配对；整体 cooperative-vs-ego 差异混合了 TP、FN、定位误差和所有特征变化。",
+      "implication": "它是可信执行底座，不是候选 estimand 的已有答案。"
+    },
+    {
+      "work": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "overlap": "说明近期工作已在规划阶段做自适应多车融合，并以闭环驾驶分数评价协同信息。",
+      "notCovered": "没有识别名义输入下自然产生的 object-level ghost，也没有在相同模型输出和规划状态上做单目标 remove-only 反事实。",
+      "implication": "‘planner-aware cooperative fusion’不是新方向；残余新意必须落在具体 ghost 的对象级因果审计。"
+    },
+    {
+      "work": "From Stealthy Data Fabrication to Unsafe Driving: Realistic Scenario Attacks on Collaborative Perception",
+      "overlap": "把协同感知中的伪造/扰动传播到 tracking、prediction 和 planning，展示可造成 hard braking 等驾驶后果。",
+      "notCovered": "研究对象是攻击者优化或操纵的恶意输入，不是标准配置下由融合自身产生的 benign ghost；也不是同一自然输出上的 matched remove-only estimand。",
+      "implication": "不能宣称首次研究 ghost/false object 对驾驶动作的影响，只能宣称审计 benign、fusion-generated、non-injected ghost 的边际动作效应。"
+    },
+    {
+      "work": "Learning to Evaluate Perception Models Using Planner-Centric Metrics; Injecting Planning-Awareness into Prediction and Detection Evaluation; Task-Aware Risk Estimation of Perception Failures for Autonomous Vehicles",
+      "overlap": "这些工作已经建立用下游规划器衡量检测错误任务影响的通用范式。",
+      "notCovered": "未针对准确度较高的协同 V2X 融合、自然 duplicate/association ghost、公开闭环栈中的同状态单框干预。",
+      "implication": "‘把感知输出送入规划器’和‘规划感知指标’不是方法创新；贡献必须是协同特定机制、严格配对协议、公开事件账本和实证结论。"
+    },
+    {
+      "work": "Track-to-Track Fusion for Cooperative Perception Using Collective Perception Messages",
+      "overlap": "近期正式论文在 CARLA/Autoware 上研究 CPM track-to-track association/fusion 和输入质量变化。",
+      "notCovered": "重点是单目标跟踪误差与协方差，没有自然 ghost 到规划动作的 remove-only 因果评估。",
+      "implication": "关联与融合模块的工程实现不是空白，但动作级 residual 仍未被直接覆盖。"
+    }
+  ],
+  "noveltyResidual": {
+    "status": "在本次打开的一手来源范围内未发现被直接覆盖，但范围很窄且必须用实验兑现。",
+    "residualClaim": "首次在公开 cooperative-driving 闭环代码路径中，对名义/低噪声协同模型自然输出的、经 GT 与时序确认的非 self-origin ghost，执行冻结感知输出与冻结规划器状态的 action-level matched remove-only 反事实，并发布可复查事件账本、匹配对照和正负结果。",
+    "notNovel": [
+      "证明协同融合一般会产生 ghost。",
+      "证明恶意虚假目标可以影响驾驶。",
+      "使用规划器评价感知误差。",
+      "比较 cooperative perception 与 ego-only perception 的总体驾驶性能。",
+      "为 false positive 加一个简单置信度阈值或 NMS。"
+    ],
+    "necessaryDifferentiators": [
+      "ghost 必须由未经目标化扰动的标准协同前向自然产生。",
+      "反事实必须只删除一个已识别 ghost，并保持其余 boxes、scores、顺序、ego state、route 和 planner memory 完全相同。",
+      "必须加入相同数量、距离、方位、置信度和尺寸匹配的 true-positive removal，以及 random false-positive removal，排除‘删任何目标都会改变动作’。",
+      "必须公开事件级 ledger、发现/确认划分、过滤规则和 null cases，而不只报告挑选出的有害片段。",
+      "主结论需明确限定仿真与所测规划器；真实道路发生率和端到端特征规划器外推应作为未证实问题。"
+    ],
+    "absenceCaveat": "文献审计只能说明在本次覆盖的直接相邻一手工作中未发现相同 estimand，不能证明全领域绝对不存在。正式立项前应按标题、引用链和关键词再做一次截止提交日的增量检索。"
+  },
+  "reusableAssets": [
+    {
+      "asset": "MDrive public scenario suite",
+      "source": "ucla-mobility/MDrive",
+      "use": "225 个场景，包括 67 个 V2XPnP Real2Sim、112 个交互场景和 46 个 InterDrive 场景，可用于发生率扫描、保持路线一致的规划器重放和后续闭环验证。",
+      "boundary": "Real2Sim 仍是仿真执行，不等于真实道路 ghost 观测。"
+    },
+    {
+      "asset": "MDrive PerceptionRunner.detect_cooperative structured output",
+      "source": "tools/perception_runner.py",
+      "use": "直接取得 corners、scores、centers_xy 和 P，并在 primary ego frame 中对每个模型输出建立稳定 ID；无需修改模型内部即可做输出级审计。",
+      "boundary": "需要固定模型配置与 checkpoint；仓库 README 对 perception-swap checkpoints 的准备说明不够完整。"
+    },
+    {
+      "asset": "MDrive planner handoff",
+      "source": "simulation/leaderboard/team_code/perception_swap_agent.py",
+      "use": "协同检测逐框转换为 planner_dets；rule planner 接收 planner.plan(ego, planner_dets, dt=0.1)，BasicAgent/BehaviorAgent 接收 set_detections(planner_dets) 后 run_step()。这是插入单框 remove-only 干预的明确边界。",
+      "boundary": "顺序调用同一个 stateful planner 会污染第二分支，必须自建状态克隆或双实例执行器。"
+    },
+    {
+      "asset": "MDrive GT and diagnostic hooks",
+      "source": "perception_swap_agent.py and run_custom_eval.py",
+      "use": "CARLA actor GT、现有 TP/FP/AP 收集、per-frame JSONL、boxes、scores 和 control 日志可复用为 ghost miner 和事件账本。",
+      "boundary": "现有 TP/FP 统计不是跨帧 ghost track 识别，也没有匹配反事实执行。"
+    },
+    {
+      "asset": "Multiple cooperative detectors and planners",
+      "source": "MDrive perception_swap_fcooper/attfuse/disco/cobevt variants and BasicAgent/BehaviorAgent",
+      "use": "在同一执行框架下做至少两个感知模型或两个规划器的机制复现，判断效应是否只属于单一实现。",
+      "boundary": "不要求第一轮把所有组合跑完；最小研究可先固定一个可运行 checkpoint 和一个规划器。"
+    },
+    {
+      "asset": "HEAL/OpenCOOD public model ecosystem",
+      "source": "yifanlu0227/HEAL official repository",
+      "use": "补充协同感知模型、数据准备与 checkpoint 来源，帮助复现 MDrive perception-swap 配置。",
+      "boundary": "版本、输入通道、坐标系和 checkpoint 兼容性仍需 smoke test，官方仓库存在特定 checkpoint 配置警告。"
+    },
+    {
+      "asset": "Fusion or Confusion ghost definition and mechanism",
+      "source": "IEEE CSCN 2025 paper and author-hosted/arXiv manuscript",
+      "use": "复用 GT 未分配或定位误差阈值、同源 track 关联冲突的机制假设和距离分桶方式，作为 occurrence audit 的起点。",
+      "boundary": "论文未发布可直接重放的代码、数据或 ghost scene IDs，不能把文字协议当现成执行资产。"
+    }
+  ],
+  "selfBuiltModules": [
+    {
+      "module": "GhostTrackMiner",
+      "requiredForMinimumStudy": true,
+      "responsibility": "将每帧 Detections 与同时间 CARLA GT 做类别、中心距离/IoU 和可见性匹配；链接跨帧 false positives，输出 persistence、distance、bearing、confidence、source-view 和 duplicate-association signature。",
+      "acceptanceCheck": "人工复查预注册随机样本和全部候选边界例；至少使用两组匹配阈值复算，host-self artifact 与环境 ghost 分开。"
+    },
+    {
+      "module": "ImmutableDetectionSnapshot",
+      "requiredForMinimumStudy": true,
+      "responsibility": "保存同一次模型前向的完整 D、原始顺序、浮点值、frame/timestamp、ego pose、route waypoint 和 checkpoint/config hash，两个分支不得重跑感知或后处理。",
+      "acceptanceCheck": "除被删 ghost 的索引外，对两个分支做逐字节/逐字段 diff，确认其余输入相同。"
+    },
+    {
+      "module": "PairedPlannerExecutor",
+      "requiredForMinimumStudy": true,
+      "responsibility": "从相同序列化 planner state 建立两个独立实例，分别运行 D 与 D\\{g}；记录 control、target speed、planned path 和 planner diagnostics。不得在同一 stateful planner 上先后调用。",
+      "acceptanceCheck": "先做 no-op/no-op 双分支，输出必须在预设数值容差内一致；交换分支执行顺序后结论不变。"
+    },
+    {
+      "module": "MatchedRemovalSampler",
+      "requiredForMinimumStudy": true,
+      "responsibility": "为每个 ghost 选择同帧或同场景中距离、方位、score、box size 和 planner relevance 匹配的 TP，以及随机 FP，形成 equal-count remove-only controls。",
+      "acceptanceCheck": "报告匹配前后协变量平衡；无法匹配的事件单独标记，不进入主要特异性比较。"
+    },
+    {
+      "module": "GhostEventLedger",
+      "requiredForMinimumStudy": true,
+      "responsibility": "保存所有扫描场景、所有候选、排除原因、模型配置、事件截图/BEV、持续帧、GT 匹配和配对输出，包括零效应事件。",
+      "acceptanceCheck": "场景总数可由 included、excluded 和 no-ghost 三类完整对账；不得只保留动作变化最大的片段。"
+    },
+    {
+      "module": "PairedEffectAnalyzer",
+      "requiredForMinimumStudy": true,
+      "responsibility": "以 ghost track/scene 为统计单位计算动作差和置信区间，执行 scene-level paired bootstrap 或 permutation test，并与 matched TP/random FP controls 比较。",
+      "acceptanceCheck": "不把连续帧当独立样本；预先固定聚合规则、阈值和多重比较策略。"
+    },
+    {
+      "module": "DeterministicBranchRunner",
+      "requiredForMinimumStudy": false,
+      "responsibility": "为短时闭环扩展保存场景 seed、actor 初始状态、route 与 planner memory，分别重跑 ghost-present/remove-only 分支，并使用 common random numbers。",
+      "acceptanceCheck": "no-op/no-op 闭环轨迹在容差内重合；否则闭环差异不能解释为 ghost 因果效应。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "stage": "environment-and-checkpoint-smoke",
+      "duration": "第 1-2 周",
+      "work": "固定 MDrive commit、CARLA 版本、协同模型 config/checkpoint 和一个规划器；运行官方 custom evaluation，确认 cooperative boxes、GT、route 和 controls 可被同帧记录。",
+      "deliverable": "可复现环境 manifest、一个成功场景日志和 checkpoint/config hashes。",
+      "decision": "若官方支持的模型 checkpoint 无法取得或在固定环境无法完成一次前向，应先修复兼容链；不能仅因缺少开箱即用适配器而淘汰。"
+    },
+    {
+      "stage": "occurrence-discovery",
+      "duration": "第 2-4 周",
+      "work": "在预先划分的 discovery 场景上运行未经定向扰动的 nominal cooperative 配置，构建跨帧 ghost ledger，并把 self-origin、标签/同步疑似错误和普通环境 ghost 分层。",
+      "deliverable": "全量候选清单、发生率、距离/持续性分布、机制样本和排除审计。",
+      "decision": "只有环境 ghost 才能进入主 estimand；若只发现已过滤的 host-self artifact，停止动作主张并报告 occurrence null。"
+    },
+    {
+      "stage": "held-out-occurrence-confirmation",
+      "duration": "第 4-5 周",
+      "work": "冻结 ghost 定义、过滤规则和阈值，在未参与调参的 held-out routes/scenarios 上确认发生，并做 GT matching sensitivity analysis。",
+      "deliverable": "确认集发生率及 scene-level uncertainty；发现集与确认集完全分开。",
+      "decision": "若 held-out 中没有可复查的自然环境 ghost，不进入选择性动作案例挖掘。"
+    },
+    {
+      "stage": "one-step-paired-planner-study",
+      "duration": "第 5-7 周",
+      "work": "在每个确认 ghost 的首个预注册决策帧冻结 D 和 planner state，运行 ghost-present、ghost-remove-only、matched-TP-remove、random-FP-remove 与 no-op duplicate execution。",
+      "deliverable": "事件级 action deltas、planned-path deltas、匹配质量和 no-op determinism 报告。",
+      "decision": "这一阶段足以识别瞬时 action-level 主张，不要求先完成完整闭环。"
+    },
+    {
+      "stage": "robustness-and-mechanism",
+      "duration": "第 7-9 周",
+      "work": "用第二规划器或第二感知模型复核，按 ghost mechanism、距离、持续时间和 planner relevance 分层；加入 score-threshold/self-filter 等常规基线。",
+      "deliverable": "跨实现复现、异质性分析和失败案例。",
+      "decision": "若效应只在单一代码分支或错误列表排序下出现，应归为实现 bug，而非研究机制。"
+    },
+    {
+      "stage": "optional-short-horizon-closed-loop",
+      "duration": "第 9-12 周",
+      "work": "仅在 deterministic no-op replay 通过后，对预注册事件做短时分支闭环，评价制动、碰撞、舒适性和通行损失。",
+      "deliverable": "可选的闭环因果结果及 determinism audit。",
+      "decision": "闭环未完成不否定一阶段 action-level estimand；但没有可比状态分支时不得声称闭环安全因果效应。"
+    }
+  ],
+  "minimumStudy": {
+    "primaryClaim": "在 MDrive 的一个固定 cooperative detector 与一个固定 planner 中，held-out nominal/low-noise 场景会产生经审计的自然环境 ghost；仅删除该 ghost 会改变同一冻结规划状态下的动作或规划轨迹，并且变化不同于 matched TP/random FP removal。",
+    "data": "优先使用 MDrive 公开 225 场景作 discovery/confirmation 划分；先不额外造攻击或高噪声场景。Real2Sim 子集单独报告，不能作为真实道路观测。",
+    "model": "选择官方路径可跑通且 checkpoint 来源可固定的一种 cooperative perception variant；保留 ego-only 输出用于总体参照，但不把 cooperative-vs-ego 差作为主 estimand。",
+    "planner": "先固定 BasicAgent 或代码中可直接消费 planner_dets 的 rule planner；每个分支使用从相同快照创建的独立 planner 实例。",
+    "unitOfAnalysis": "自然 ghost track/scene，而不是帧。每条 track 的决策帧由预注册规则选择，例如首次满足持续性和 planner relevance 的帧。",
+    "occurrenceGate": "发现集冻结规则后，确认集需出现可人工复查、非 self-origin、非标签/同步错误的 ghost tracks；建议至少覆盖 10 个独立场景和 20 条 tracks，且任何单一路线不占主要样本。达不到时报告稀有性和置信上界，不从少数手选视频外推。",
+    "pairedArms": [
+      "A0: 原始 ghost-present 检测集合 D。",
+      "A1: 仅删除目标 ghost 的 D\\{g}。",
+      "A2: 删除一个距离、方位、置信度和尺寸匹配的真实目标。",
+      "A3: 删除一个随机 false positive；若无其它 FP，则用跨帧/跨场景匹配并明确分层。",
+      "A4: D 的 no-op copy，用于检测 planner state、列表复制和执行顺序引入的差异。"
+    ],
+    "identificationProtocol": [
+      "所有 arms 使用同一 perception snapshot，不重跑 detector、fusion、NMS 或 tracking。",
+      "删除操作只作用于 planner 输入列表中的目标索引；保留其余对象的值和顺序。",
+      "每个 arm 从相同 ego/route/planner memory snapshot 初始化，随机种子相同，执行顺序随机化；no-op/no-op 必须先通过。",
+      "主比较为 A0-A1；A0-A2 和 A0-A3 检验效应是否具有 ghost 特异性；A0-A4 给出数值/执行噪声底线。",
+      "按 scene 聚合并做 paired bootstrap/permutation；同时发布完整分布、零效应和方向相反事件。"
+    ],
+    "identifies": "在所测模型、场景和 planner 下，一个已经自然产生的具体 ghost 对该时刻 planner 输出的边际动作效应。",
+    "doesNotIdentify": [
+      "真实道路中 ghost 的人口发生率。",
+      "零误差 V2X 是否仍会产生 ghost。",
+      "ghost 对所有端到端 BEV/feature planner 的通用影响。",
+      "没有 deterministic branching 时的长期碰撞或驾驶分数因果效应。",
+      "重新融合或重新训练后系统会如何自适应。"
+    ],
+    "negativeResultValue": "若确认集存在自然 ghost 但 A0-A1 与 no-op/control 不可区分，则直接否定‘低比例 ghost 必然造成规划危害’的外推，并给出哪些 planner/filter 对该机制天然稳健。若确认集无自然环境 ghost，则否定当前公开栈中的 occurrence 前提并停止动作主张。"
+  },
+  "strongBaselines": [
+    {
+      "name": "no-op duplicated execution",
+      "purpose": "验证状态克隆、执行顺序、浮点与随机性不会自行制造 action delta。"
+    },
+    {
+      "name": "matched true-positive remove-only",
+      "purpose": "区分 ghost 特异效应与‘删除任何 planner-relevant object 都会改变动作’。"
+    },
+    {
+      "name": "random false-positive remove-only",
+      "purpose": "区分目标 ghost 的几何/时序机制与普通低价值 FP 清理。"
+    },
+    {
+      "name": "existing host-ego self-filter",
+      "purpose": "确认结果不是 MDrive 已明确过滤的 partner-view host phantom。"
+    },
+    {
+      "name": "confidence threshold / conventional geometric filter",
+      "purpose": "判断简单后处理是否已足以消除效应，避免把易修复 artifact 包装成新方法。"
+    },
+    {
+      "name": "ego-only perception",
+      "purpose": "提供整套非协同输入的场景参照，但不替代单框 causal estimand。"
+    },
+    {
+      "name": "GT-oracle object set",
+      "purpose": "给出 planner 在无检测 FP/FN 时的动作参照，帮助判断 remove-only 后是否更接近合理动作。"
+    },
+    {
+      "name": "second planner or second cooperative detector",
+      "purpose": "检查现象是否只是某一列表接口、planner heuristic 或 checkpoint 的实现特例。"
+    }
+  ],
+  "metrics": {
+    "occurrence": [
+      "每 scene、每 1000 frames 和每公里的环境 ghost track rate，以及 scene-level confidence interval。",
+      "ghost persistence、距离、方位、score、box size、速度、可见性和来源车辆数。",
+      "duplicate-association、host-self、label/sync ambiguity 与其它机制占比。",
+      "在不同 GT 中心距离/IoU 阈值下的发生率敏感性。"
+    ],
+    "instantaneousAction": [
+      "delta brake、throttle、steer、target speed。",
+      "是否触发 hard-brake/stop/avoidance 状态切换。",
+      "planned trajectory 的 ADE、max lateral deviation、max longitudinal deviation 和 endpoint delta。",
+      "对 ghost 的规划最小距离、预测 TTC 或 planner cost 差；仅在对应 planner 可观测时报告。"
+    ],
+    "specificity": [
+      "A0-A1 相对 no-op 噪声的效应比例。",
+      "A0-A1 与 matched TP removal、random FP removal 的 paired difference。",
+      "效应对 ghost 距离、持续性、方位、score 和机制的分层一致性。"
+    ],
+    "optionalClosedLoop": [
+      "collision rate、route completion、driving score、infraction score、success rate。",
+      "hard-brake count、minimum TTC、jerk、速度损失和额外通行时间。",
+      "no-op/no-op 轨迹偏差，作为闭环 determinism floor。"
+    ],
+    "statisticalReporting": [
+      "scene/track-level paired bootstrap confidence intervals 或 permutation p-values。",
+      "完整效应分布、median/quantiles、零效应比例和方向相反比例。",
+      "发现集与确认集分开，所有排除和缺失日志完整对账。"
+    ]
+  },
+  "successCriteria": [
+    "在冻结规则后的 held-out 场景中复现非 self-origin、非注入、非 GT/同步 artifact 的环境 ghost tracks，并给出可审查 ledger；不能仅依赖 Fusion or Confusion 的仿真图或 MDrive 代码注释。",
+    "no-op/no-op 配对在预注册容差内一致，证明执行器没有引入可与主效应同量级的漂移。",
+    "A0-A1 在预注册的动作或轨迹指标上超过 no-op floor，并在 scene-level 配对统计中稳定；同时其分布和实际量级足以区分数值微扰与可解释 planner response。",
+    "主效应不能由 equal-count matched TP removal、random FP removal、列表重排或现有 self-filter artifact 解释。",
+    "至少在第二 planner 或第二 detector 上复现 occurrence 或 action mechanism；若不能复现，结论必须收窄到单一实现而非宣称一般 V2X 规律。",
+    "最终产出公开固定 commit/config/checkpoint hash、ghost ledger、paired snapshots、排除日志和正负事件，使第三方能重算 estimand。",
+    "若结果为 null，仍完整报告 occurrence 上界或 action-effect 上界，并明确撤回安全危害主张；这同样满足最小研究的可证伪性要求。"
+  ],
+  "killCriteria": [
+    "标准 nominal/low-noise 前向在 held-out 场景中没有可复查的自然环境 ghost，或所有候选都是 host-self phantom、标签缺失、同步误差、坐标变换 bug 或人为扰动。",
+    "ghost 只在为产生它而调大的 GNSS/sensor error、攻击或手工 box 注入下出现；此时不能继续使用 accurate/nominal 候选名称。",
+    "A0-A1 的差异在正确克隆 planner state、随机化执行顺序和 no-op 控制后消失，说明原效应来自 stateful sequential calls。",
+    "删除单框同时改变了其它 boxes、排序、NMS/fusion 输出、tracker memory 或 route state，无法把效应归因于 remove-only。",
+    "matched TP 或任意 FP removal 产生相同效应，且不能识别 cooperative-fusion-specific mechanism；此时只剩已有的通用 planner-centric detection evaluation。",
+    "发现集选择了动作变化最大的 ghost，而确认集不能复现，或连续帧被错误当作独立样本后才显著。",
+    "所谓闭环效果在 no-op/no-op 重跑中也出现同量级轨迹分叉，且无法建立 deterministic/common-random-number 分支；此时必须删除闭环因果主张。",
+    "最终贡献仅是一个适配器或演示视频，没有事件账本、匹配对照、可复算 estimand 和明确的 null consequence。"
+  ],
+  "risks": [
+    {
+      "risk": "术语夸大",
+      "detail": "Fusion or Confusion 的 favorable condition 仍含非零传感器噪声与 0.5 m GNSS 标准差。把它写成 perfect/zero-error V2X 会超过证据。",
+      "mitigation": "统一使用 nominal/low-noise simulated V2X，并在标题、摘要和图注中列出实际误差参数。"
+    },
+    {
+      "risk": "仿真到真实外推",
+      "detail": "SUMO、CARLA 和 Real2Sim 场景不能证明实车发生率或真实安全后果。",
+      "mitigation": "把真实道路 occurrence 留作外部验证；首篇只作仿真机制和公开栈因果审计。"
+    },
+    {
+      "risk": "ghost 定义依赖 GT 阈值",
+      "detail": "5 m、中心距离、IoU、遮挡和标签时延会改变 false-positive 身份。",
+      "mitigation": "预注册多阈值敏感性、人工审查和 ambiguity 标签，主结果要求跨帧 persistence。"
+    },
+    {
+      "risk": "planner 状态污染",
+      "detail": "BasicAgent/BehaviorAgent 含 PID、route queue 或历史状态；顺序运行 present/remove 会造成伪差异。",
+      "mitigation": "双实例或序列化状态恢复，no-op/no-op 和 order-swap 检查为硬门槛。"
+    },
+    {
+      "risk": "选择偏差",
+      "detail": "只挑会触发制动的 ghost 会夸大平均影响。",
+      "mitigation": "先冻结发生率 ledger 和决策帧规则，再在 held-out 全量事件上计算效应。"
+    },
+    {
+      "risk": "现有 self-filter 混淆",
+      "detail": "MDrive 已针对 host ego phantom 有过滤逻辑，绕过它得到的效果不是标准系统风险。",
+      "mitigation": "标准过滤前后分别记账；主结果仅用官方默认路径实际送入 planner 的环境 ghost。"
+    },
+    {
+      "risk": "checkpoint 与版本兼容",
+      "detail": "MDrive perception-swap 配置引用外部 HEAL/OpenCOOD checkpoint，README 未把所有准备步骤固化；模型输入通道也可能有版本差异。",
+      "mitigation": "第一个里程碑只要求固定一个可运行模型，记录 hash 和完整转换步骤；缺少开箱适配器不是淘汰理由，但 smoke test 失败会延迟实证。"
+    },
+    {
+      "risk": "对象列表接口的外部有效性",
+      "detail": "MDrive planner 消费显式 boxes，现代端到端 planner 可能消费融合 BEV features，单框删除无法直接迁移。",
+      "mitigation": "限定结论为 object-list planner，并把 feature-level counterfactual 作为后续独立问题。"
+    },
+    {
+      "risk": "闭环非确定性",
+      "detail": "CARLA actor dynamics 和 traffic interactions 会使两个重跑自然分叉。",
+      "mitigation": "最小研究先做冻结状态 one-step；闭环只有在 no-op replay 通过后才进入主结果。"
+    }
+  ],
+  "evidence": {
+    "localCorpus": [
+      {
+        "path": "config/idea-exploration-workflow.json",
+        "role": "约束本次 feasibility 判定：可分解实现路径和可证伪最小实验即可，不要求现成适配器、固定 checkpoint 或完整闭环；注入能力不能替代自然发生证据。"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-feasibility-reopen-shard-v11.json",
+        "role": "提供候选 accurate-v2x-ghost-planner-effect 的重开问题、旧淘汰理由和建议的 frozen-planner remove-only 最小路径；本审计没有沿用其中结论，而是重新核对外部来源和代码。"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-independent-rescue-audit-v10.json",
+        "role": "恢复候选的 action-level estimand、MDrive 执行设想和 closest-work 边界，作为需独立验证的历史主张。"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-harm-calibration-decisive-audit-v9.json",
+        "role": "核对 MDrive 225 场景、67 Real2Sim 和同栈 cooperative/ego 路径等本地记录，并区分 generic harm calibration 与本候选的对象级机制。"
+      }
+    ],
+    "externalPrimary": [
+      {
+        "id": "fusion-or-confusion-2025",
+        "type": "peer-reviewed-paper-and-author-manuscript",
+        "title": "Fusion or Confusion? Potential and Challenges in Fusion of Onboard Sensors and V2X Data in Cooperative Perception",
+        "url": "https://doi.org/10.1109/CSCN67557.2025.11230764",
+        "links": [
+          "https://arxiv.org/abs/2607.05889",
+          "https://uwicore.umh.es/files/paper/2025_internacional/Fusion_or_Confusion_Potential_and_Challenges_in_Fusion_of_Onboard_Sensors_and_V2X_Data_in_Cooperative_Perception.pdf"
+        ],
+        "checked": "全文方法、noise definitions、ghost definition、Figure 8、Figure 10 和 conclusion",
+        "supports": "低但非零噪声仿真中，协同关联/融合流程会内生产生未注入 ghost，并给出 duplicate-track/cluster constraint 机制。",
+        "doesNotSupport": "真实道路发生率、零误差 V2X、规划动作后果或公开 ghost replay assets。"
+      },
+      {
+        "id": "mdrive-paper-2026",
+        "type": "paper",
+        "title": "MDrive: Closed-Loop Simulation for Mobility-Aware V2X Cooperative Driving",
+        "url": "https://arxiv.org/abs/2605.10904",
+        "checked": "scenario composition、perception-sharing results、planner evaluation scope 和 Sim2Real limitation",
+        "supports": "公开闭环 V2X driving benchmark 可承载多协同感知模型和规划器，且整体感知改善并不保证规划改善。",
+        "doesNotSupport": "自然 ghost 的发生率或单目标 remove-only 因果效应。"
+      },
+      {
+        "id": "mdrive-code-9e08377",
+        "type": "official-code",
+        "title": "ucla-mobility/MDrive at commit 9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+        "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+        "links": [
+          "https://github.com/ucla-mobility/MDrive/blob/9e08377042b8f2e2860bb00de2416b3ebcfa3be4/simulation/leaderboard/team_code/perception_swap_agent.py",
+          "https://github.com/ucla-mobility/MDrive/blob/9e08377042b8f2e2860bb00de2416b3ebcfa3be4/tools/perception_runner.py",
+          "https://github.com/ucla-mobility/MDrive/blob/9e08377042b8f2e2860bb00de2416b3ebcfa3be4/tools/run_custom_eval.py",
+          "https://github.com/ucla-mobility/MDrive/blob/9e08377042b8f2e2860bb00de2416b3ebcfa3be4/simulation/leaderboard/team_code/agent_config/perception_swap_fcooper.yaml"
+        ],
+        "checked": "detect_cooperative output fields、box-to-Detection conversion、planner_dets handoff、BasicAgent/BehaviorAgent calls、GT/FP diagnostics、self-filter comment、config checkpoint path",
+        "supports": "模型输出、规划器和单框干预边界均可访问；自建 ghost miner 与 paired executor 不需要重写检测器或规划器。",
+        "doesNotSupport": "仓库现成提供了 matched remove-only executor、跨帧 ghost ledger、完整 checkpoint bootstrap 或确定性闭环分支。"
+      },
+      {
+        "id": "heal-code",
+        "type": "official-code",
+        "title": "HEAL: An Extensible Framework for Open Heterogeneous Collaborative Perception",
+        "url": "https://github.com/yifanlu0227/HEAL",
+        "checked": "公开模型/数据/checkpoint 入口和配置兼容提示",
+        "supports": "MDrive 协同感知后端存在公开复现生态和 checkpoint 来源。",
+        "doesNotSupport": "所有 MDrive perception-swap 配置可无需适配直接运行。"
+      },
+      {
+        "id": "defer-to-plan-2026",
+        "type": "accepted-paper",
+        "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+        "url": "https://arxiv.org/abs/2607.19774",
+        "checked": "method、V2Xverse closed-loop evaluation 和 contribution claims",
+        "supports": "近期 V2X driving 已覆盖 planning-stage adaptive fusion 与闭环评价。",
+        "doesNotSupport": "自然 object-level ghost 的识别和 matched remove-only action estimand。"
+      },
+      {
+        "id": "scenario-attacks-2026",
+        "type": "paper",
+        "title": "From Stealthy Data Fabrication to Unsafe Driving: Realistic Scenario Attacks on Collaborative Perception",
+        "url": "https://arxiv.org/abs/2605.01301",
+        "links": [
+          "https://arxiv.org/html/2605.01301v1"
+        ],
+        "checked": "attack model、tracking/prediction/planning propagation 和 hard-braking result",
+        "supports": "虚假协同感知信息传播到驾驶动作并不是未研究问题。",
+        "doesNotSupport": "benign nominal fusion 自然产生 ghost 的发生或单目标 remove-only 因果效应。"
+      },
+      {
+        "id": "adv-collaborative-perception-usenix-2024",
+        "type": "peer-reviewed-paper-and-official-code",
+        "title": "Adversarial Attacks on Collaborative Perception",
+        "url": "https://www.usenix.org/conference/usenixsecurity24/presentation/zhang-qingzhao",
+        "links": [
+          "https://github.com/zqzqz/AdvCollaborativePerception"
+        ],
+        "checked": "official paper page and code scope",
+        "supports": "协同场景中的 object spoof/removal attack 已有正式研究与代码。",
+        "doesNotSupport": "标准配置自然 ghost 的 occurrence 或 frozen-planner matched removal。"
+      },
+      {
+        "id": "planner-centric-metrics-cvpr-2020",
+        "type": "peer-reviewed-paper",
+        "title": "Learning to Evaluate Perception Models Using Planner-Centric Metrics",
+        "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Philion_Learning_to_Evaluate_Perception_Models_Using_Planner-Centric_Metrics_CVPR_2020_paper.html",
+        "checked": "planner-centric perception evaluation problem and method scope",
+        "supports": "以 planner 影响评价 detection 的通用思想已有成熟先例。",
+        "doesNotSupport": "V2X fusion-generated natural ghost 的特定实证问题。"
+      },
+      {
+        "id": "planning-awareness-iv-2022",
+        "type": "peer-reviewed-paper-project",
+        "title": "Injecting Planning-Awareness into Prediction and Detection Evaluation",
+        "url": "https://research.nvidia.com/labs/avg/publication/ivanovic.pavone.iv2022/",
+        "checked": "official project abstract and task-aware evaluation scope",
+        "supports": "规划感知的 detection/prediction evaluation 不是新颖方法本身。",
+        "doesNotSupport": "协同 V2X 的自然 ghost matched remove-only protocol。"
+      },
+      {
+        "id": "task-aware-risk-2023",
+        "type": "paper",
+        "title": "Task-Aware Risk Estimation of Perception Failures for Autonomous Vehicles",
+        "url": "https://arxiv.org/abs/2305.01870",
+        "checked": "perception-failure downstream risk estimation scope",
+        "supports": "感知失败的任务风险估计已有相邻工作。",
+        "doesNotSupport": "名义 cooperative-fusion ghost 的发生账本或对象级配对因果估计。"
+      },
+      {
+        "id": "track-to-track-fusion-2026",
+        "type": "peer-reviewed-paper",
+        "title": "Track-to-Track Fusion for Cooperative Perception Using Collective Perception Messages",
+        "url": "https://doi.org/10.3390/s26062003",
+        "links": [
+          "https://www.mdpi.com/1424-8220/26/6/2003"
+        ],
+        "checked": "CARLA/Autoware setup、CPM association/fusion and input-quality evaluation",
+        "supports": "近期高层 track-to-track cooperative fusion 与输入质量研究已存在。",
+        "doesNotSupport": "自然 ghost 到 planner action 的 remove-only estimand。"
+      }
+    ]
+  },
+  "evidenceChecks": [
+    {
+      "checkId": "natural-occurrence-under-accurate-v2x",
+      "question": "自然 ghost 是否在准确 V2X 下真实发生？",
+      "method": "重新读取 Fusion or Confusion 的生成流程、噪声定义、ghost 定义、图 8/10 与机制说明，并核对 MDrive 官方代码中的 phantom/self-filter 注释。",
+      "result": "partial",
+      "finding": "低但非零噪声的仿真 V2X 中确有由关联/融合内生而非手工注入的 ghost；零误差、真实道路和 MDrive 标准配置下的量化 occurrence 尚未证明。"
+    },
+    {
+      "checkId": "matched-remove-only-coverage",
+      "question": "action-level matched remove-only estimand 是否已被最近工作覆盖？",
+      "method": "逐项对比近期 planning-aware V2X fusion、协同感知攻击、planner-centric metrics、task-aware risk 和 track-to-track fusion 的主张与实验干预。",
+      "result": "not-directly-covered-in-audited-primary-sources",
+      "finding": "未发现对 benign、nominal/low-noise、自然 fusion ghost 使用同一冻结模型输出与规划状态做单目标 matched remove-only 的直接实验；但通用 planner-aware error evaluation 和恶意 false-object action impact 已覆盖，因此 residual 仅是这一特定机制与严格协议。"
+    },
+    {
+      "checkId": "data-path-credibility",
+      "question": "数据与自然事件发现路径是否可信？",
+      "method": "核对 MDrive 场景构成、CARLA GT/TP-FP 诊断和 per-frame 日志入口。",
+      "result": "credible-with-self-built-ledger",
+      "finding": "225 个公开场景和 CARLA actor GT 足以先做 occurrence audit；现有代码不是跨帧 ghost 数据集，必须自建 ledger、过滤 self-origin 与 ambiguity，并做 held-out 确认。"
+    },
+    {
+      "checkId": "model-output-path-credibility",
+      "question": "模型输出是否能在不重写感知模型的情况下截取和单框处理？",
+      "method": "检查 PerceptionRunner.detect_cooperative 返回结构与 perception_swap_agent 的逐框转换。",
+      "result": "credible",
+      "finding": "corners、scores、centers_xy、P 和 planner_dets 均为显式结构，单框索引、保存和 remove-only adapter 路径清晰。"
+    },
+    {
+      "checkId": "planner-path-credibility",
+      "question": "规划器是否有清晰可控的输入与输出边界？",
+      "method": "检查 rule planner、BasicAgent、BehaviorAgent 的 planner_dets/set_detections/run_step 调用。",
+      "result": "credible",
+      "finding": "显式 object-list handoff 可用；需要自建双实例/状态恢复，不能顺序复用一个 stateful planner。"
+    },
+    {
+      "checkId": "paired-executor-credibility",
+      "question": "配对执行器的自建路径是否可信？",
+      "method": "根据不可变 detection snapshot、显式 planner list 和独立 planner 实例设计 no-op audited paired execution。",
+      "result": "credible-for-one-step-requires-build",
+      "finding": "one-step action counterfactual 不依赖完整闭环或现成适配器，工程量可分解；短时闭环还需 deterministic branch runner，不能预设已经具备。"
+    },
+    {
+      "checkId": "minimum-study-identifiability",
+      "question": "最小实验是否能识别主张？",
+      "method": "检查 treatment、counterfactual、状态冻结、干预唯一性、对照、统计单位和外推边界。",
+      "result": "yes-for-instantaneous-action-claim",
+      "finding": "若同一自然 D、ego/route/planner state 下仅删除 g，并通过 no-op、matched TP 和 random FP controls，A0-A1 可识别该 ghost 的瞬时边际动作效应；它不能单独识别长期闭环安全或真实道路风险。"
+    },
+    {
+      "checkId": "turnkey-nonrejection",
+      "question": "是否因缺少开箱适配器、固定 checkpoint 或完整闭环而淘汰？",
+      "method": "按 idea-exploration-workflow 的 feasibilityPolicy 复核。",
+      "result": "compliant",
+      "finding": "没有因此淘汰。判定 revise 的原因是证据和主张边界需要收窄，不是因为模块需要自建。"
+    },
+    {
+      "checkId": "independence-and-scoring",
+      "question": "本审计是否保持独立且未评分？",
+      "method": "只使用用户指定本地候选材料作为待核历史记录，重新打开外部论文与官方代码；未读取或引用其它代理评审，未生成分数。",
+      "result": "compliant",
+      "finding": "输出仅给出 evidence-based verdict 与可证伪路径。"
+    }
+  ]
+}

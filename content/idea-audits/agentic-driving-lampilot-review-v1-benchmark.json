@@ -1,0 +1,34 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "lens": "benchmark-reviewer",
+  "reviewerAgentId": "019fbb51-b6f6-7223-b310-40ead534605c",
+  "reviewedAt": "2026-08-01T11:28:42+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 7,
+    "success-probability": 7,
+    "impact": 6,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "针对持久策略库把语言改写、异状态记忆和同初态策略复用拆成三个 estimand，并要求实际检索与消费 provenance，而不只比较 split 名称，是有价值的 benchmark 审计设计。group holdout、检索消融和数据 provenance 本身是成熟方法，贡献较依赖 LaMPilot 固定协议；最独特部分是内容保持的定向屏蔽与可行动的负结果保证。",
+    "feasibility": "固定源码清楚暴露 sample-command 笛卡尔展开、demo 列表、精确 iid 跳过、Chroma top-k 检索和 human-feedback runner，三个任务族的小规模门控实验工程上可做。现有 PolicyRepository 不保存来源 sample/seed，只按生成函数名存储且同名会覆盖，所谓只读 tracer 不足以回溯 provenance；外部 ChatOpenAI、默认 OpenAIEmbeddings、Chroma 状态和多条件多模型调用也使严格版本冻结和 6-8 周全量复核存在风险。",
+    "success-probability": "一手代码直接确认 demo 先写入持久库，测试仅跳过相同 iid，而每个 sample 与多个 paraphrased commands 生成不同 iid；检索 query 又正是 command，因此同组策略被返回并影响上下文具有较高可检验概率。效应未必改变成功率或模型排序，因为策略复用是系统预期能力，且生成的 policy 可能足够通用；仍有较好的机会至少得到明确的检索率与效应上界。",
+    "impact": "结果可纠正 LaMPilot human-feedback 路径把总分解释为语言泛化的粒度，并为 memory-augmented agent 提供 provenance-aware 报告范式。影响被单一 benchmark、较旧的外部 LLM 接口和 human-feedback 子路径限制，不能外推 stateless ICL 或证明普遍的数据泄漏；若模型排序不变，主要产出会是协议审计而非新驾驶能力。",
+    "comparison-readiness": "官方 exact-ID、逐条 reset、sample/seed group holdout、stateless zero/few-shot、retrieved-but-hidden 和定向 denylist 覆盖了主要解释，按 sample/seed 聚类也避免把 paraphrase 行当独立样本。当前方案没有保证屏蔽后 top-k 数量、相似度分布、上下文长度和顺序与官方条件匹配，也未证明 raw seed 跨配置代表同一初态；缺少这些 sham/backfill 对照时，公平归因仍不充分。"
+  },
+  "strongestObjection": "定向 denylist 尚不是隔离的同状态记忆处理：官方检索先返回 top-k，若事后删除 same-sample 或 same-seed 项，就会同时减少示例数量、改变相似度、上下文长度和排序；即便过滤发生在向量查询前，也必须用下一名异组策略回填才能与官方条件公平比较。与此同时，固定提交的 repository 不保存 sample/seed provenance，policy 还可能按相同 program name 覆盖；raw seed 在不同 scenario/config 下也不等于同一初始状态。没有不可变来源记录与状态指纹，性能差不能唯一归因于同状态策略复用。",
+  "requiredExperiment": "从 demo 生成阶段重新构建带不可变 provenance 的策略库，为每个 policy version 保存 scenario、完整 sample 配置、simulator seed、初态 replay hash、command、iid、program hash 和插入顺序。对同一 held-out 状态配对运行四条件：官方 top-k；按初态 hash 屏蔽同组并从下一名异组候选回填到相同 k；删除相同数量且相似度匹配的异组策略 sham；检索但隐藏上下文 placebo。固定模型 snapshot、embedding revision、库 bytes 和生成 seed，按初态 hash 聚类；只有回填条件相对官方有效、sham 为零且结果在第二任务族或第二模型复现，才能把差异解释为同状态策略复用。",
+  "evidenceReopened": [
+    {
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Ma_LaMPilot_An_Open_Benchmark_Dataset_for_Autonomous_Driving_with_Language_CVPR_2024_paper.html",
+      "finding": "CVPR 正式页面确认 LaMPilot-Bench 用 language-model programs 执行用户驾驶指令并公开代码与数据，支持将审计边界限定为该 benchmark 的能力归因。"
+    },
+    {
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "finding": "固定提交显示数据 ID 为 config_s{sample}_c{command}，sample 与 commands 做笛卡尔展开；demo 先迭代成功并写入持久策略库，测试只跳过精确 iid，后续 agent 按 command 从 Chroma 取 top-k，仓库条目未保存 sample/seed 来源。"
+    }
+  ],
+  "overall": 7,
+  "dossierSnapshotFingerprint": "f19b3fb2c5b25e697a331f3cf24a94485d7fe771a999944b7681bc2306deb1d7"
+}

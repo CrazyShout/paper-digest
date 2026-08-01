@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "round": 2,
+  "lens": "implementation-reviewer",
+  "reviewedAt": "2026-07-31T05:38:45Z",
+  "independenceStatement": "本评审仅依据指定 dossier、dossier 引用的本地审计、CooperScene 官方代码提交与官方数据/模型入口独立完成；未读取、询问、推断或参考任何其他 round-2 reviewer 结果，也不推测主流程如何接受候选。",
+  "evidenceChecked": [
+    {
+      "title": "Cooperative autonomous driving panel dossier v2",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-panel-dossier-v2.json",
+      "type": "local-dossier",
+      "finding": "两个候选的声明、止损、8-12 周计划、硬门槛和比较协议均按原范围评审。"
+    },
+    {
+      "title": "CooperScene official repository at audited commit 0945b52",
+      "url": "https://github.com/UCR-CISL/CooperScene/tree/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+      "type": "official-code",
+      "finding": "公开代码、Dockerfile、vendored OpenCOOD、转换器和评测入口存在，但仓库没有可见自动化测试，公开检查点也不在 Git 树中；README 指向独立 Hugging Face 模型仓库。"
+    },
+    {
+      "title": "CooperScene official data portal",
+      "url": "https://data.ucr.edu/datasets/cooperscene/",
+      "type": "official-data",
+      "finding": "官方清单包含 14 个 take；核心压缩归档约 94.26 GB，完整 MCAP 约 90.91 GB。场景归档分配为 train 10 个、validate 2 个、test 2 个，validate/test 主推断最多只有 4 个 take。"
+    },
+    {
+      "title": "CooperScene code and dataset licenses",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/DATA_LICENSE",
+      "type": "official-license",
+      "finding": "代码为 MIT；传感器、标注、通信 trace、MCAP 和衍生数据受 CC BY-NC-SA 4.0 约束，不能按 MIT 重新分发。"
+    },
+    {
+      "title": "CooperScene all-take MCAP summary audit",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "type": "local-binary-audit",
+      "finding": "14/14 个完整 MCAP 的 summary、CRC、五种 schema、25 个 topic 和 12 条定向吞吐 channel 已核验；未解码全部 take 的 throughput payload，take 1 有三条链路消息数偏少。"
+    },
+    {
+      "title": "CooperScene trace implementation audit",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-cooperscene-trace-audit.json",
+      "type": "local-code-and-data-audit",
+      "finding": "公开评测只用标称载荷、单一吞吐标量和 100 ms 整帧延迟；MCAP 没有独立 latency/loss/jitter/packet channel，requirements 也未声明 MCAP、Protobuf 或 zstd 解码依赖。"
+    },
+    {
+      "title": "CoopDataset delay and fallback path",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/datasets/coop_dataset.py",
+      "type": "official-code",
+      "finding": "_time_delay 用 share_size_mb*8/cv2x_throughput 并向下量化到 100 ms 帧；_lookup_delayed 把越界历史夹到首帧；delayed lookup 为 None 时当前同步 collaborator 保持不变。"
+    },
+    {
+      "title": "CooperScene payload and replay gap audit",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+      "type": "local-code-and-paper-audit",
+      "finding": "静态载荷计算与论文四个载荷的比值为 0.67-1.08；Iperf2 采集工作负载与 Table 2 的 2100-byte/1 ms 物理发送流程不同，trace 积分只能先作为发布基准抽象。"
+    },
+    {
+      "title": "CooperScene sharing measurement hooks",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/tools/measure_sharing.py",
+      "type": "official-code",
+      "finding": "脚本只对 ERMVP/CoSDH 用 hook 估算 shape、稀疏率和 fp32 字节，对 V2VNet/V2X-ViT/V2VAM/CoBEVT 仍调用静态计算；它没有真实 wire serialization、metadata/header 或逐帧 payload manifest。"
+    },
+    {
+      "title": "Take-9 completion pilot",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json",
+      "type": "local-executable-pilot",
+      "finding": "CPU-only pilot 对 1932 个 start-link pair、9 个载荷和 303 个 condition/repeat 组合生成 35451 个校验指标行；独立积分交叉检查通过，但独立 acquisition unit 只有 take 9 一个。"
+    },
+    {
+      "title": "Take-9 frame alignment audit",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json",
+      "type": "local-range-and-binary-audit",
+      "finding": "exact、offset、affine 和 strict ordinal 映射均未通过；12/644 行的 pose anchor 支持 ordinal 候选，仍需逐行锚定其余移动 agent YAML 并生成完整 sidecar。"
+    },
+    {
+      "title": "CooperativeDetector prior encoding path",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/models/cooperative/detectors/cooperative_detector.py",
+      "type": "official-code",
+      "finding": "wrapper 在缺失 prior_encoding 时注入全零；dataset 和默认 PackCooperative3DDetInputs 不生成或打包该字段。wrapper 注释写 [time_delay, velocity, infra]，而 vendored V2X-ViT 实际按 [velocity, time_delay, infra] 并读取索引 1。"
+    },
+    {
+      "title": "CooperScene official model repository entry",
+      "url": "https://huggingface.co/cisl-hf/CooperScene",
+      "type": "official-model-entry",
+      "finding": "官方 GitHub README 明确用该入口下载 config/checkpoint，公开模型仓库的存在也可检索；本次未能直接枚举每个 .pth 的文件清单、哈希和大小，因此不能把四模型检查点 smoke test 视为已通过。"
+    },
+    {
+      "title": "Availability-contract novelty audit",
+      "url": "/Users/atlas/work/repo/paper-digest/content/idea-audits/cooperative-autonomous-driving-availability-contract-novelty-audit.json",
+      "type": "local-primary-source-synthesis",
+      "finding": "Harbor、CoInfra 和 V2X-ReaLO 已占据 deadline/drop、latest-history 和在线消息可用性的主要功能；剩余差异是 CooperScene 特定的证据类型状态、共享 completion ledger 和冻结策略反事实。"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "trace-structure-sufficiency-certificate",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 6,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": {
+          "evidence": [
+            "本地 primary-source collision audit 未发现 CooperScene 特定的 A0-A6 嵌套结构剥离、全套实用等价边界和最小充分抽象证书。",
+            "贡献被正确收窄为 finite-release transport estimand，而不是 trace replay、无线网络仿真或感知新模型。"
+          ],
+          "counterEvidence": [
+            "CADET、Harbor 和 CellReplay 已覆盖 trace-driven evaluation 与 workload-fidelity 的大问题；trace 解码、方向性和载荷归一化本身不是新贡献。",
+            "若 per-link mean 已足够，成果主要是基准简化证书，方法新颖性有限。"
+          ],
+          "assessment": "差异明确且可证伪，但建立在已拥挤的 trace replay/benchmark-validity 家族内，不能按一般 C-V2X 充分性宣传。"
+        },
+        "feasibility": {
+          "evidence": [
+            "14/14 个 MCAP 的 schema/topic/CRC 已核验，take 9 的吞吐 payload、定向积分、常数解析解和独立积分交叉检查均已跑通。",
+            "主抽象梯子是 CPU 级数组/积分工作，90.91 GB MCAP 与 94.26 GB 核心压缩数据使低于 500 GB 的计划看起来可达到。"
+          ],
+          "counterEvidence": [
+            "官方 requirements 没有 MCAP/Protobuf/zstd 依赖，先导解析器只以临时脚本哈希记录，尚不是可安装的研究 artifact。",
+            "成功标准要求至少四个模型的精确运行时序列化载荷，但公开 tools/measure_sharing.py 对四个 dense 模型仍是静态公式，对 sparse 模型也只算 shape/rate*fp32 字节；没有真实 serialization boundary。",
+            "四模型 runtime payload 必须至少执行 checkpoint forward；官方 Docker 强制 CUDA 并依赖 spconv-cu120，因此整个 minimum study 不能诚实地称为 CPU-only。",
+            "没有任何公开 checkpoint/config 被本评审实际加载，GPU 峰值、模型兼容性和批量数据转换均未 smoke test。"
+          ],
+          "assessment": "运输核心可实现，但载荷门槛、环境封装和模型 smoke test 是重大未闭环项，8-10 周可行但没有足够证据支持无 GPU 或按周一次通过。"
+        },
+        "success-probability": {
+          "evidence": [
+            "take 9 中 1.6 Mbps 标量相对 exact-order 的完成率绝对差最高约 0.207，median completion time 差最高约 1457 ms，说明至少一个重要 baseline 很可能被否定。",
+            "per-link mean 与多种 shuffle 在完成率上接近 exact，而 completion-time quantile 仍偏移几十到数百毫秒，正好为分层证书或反例提供信号。"
+          ],
+          "counterEvidence": [
+            "目前只有一个独立 take 的 payload-level 数值，其他 13 个 take 只做了 summary 而未解码吞吐值。",
+            "14 个 take 对广泛 payload/deadline/support 网格的 equivalence interval 只对大效应有能力；很多 cell 可能既不能证等价也不能证不等价。",
+            "Iperf2 5 Mbps/100 ms trace 对任意模型 serialization schedule 的 workload transfer 未校准，Table 2 又无法直接映射到 take。"
+          ],
+          "assessment": "产出有界反例的概率高于得到完整最小充分证书的概率；若严格遵守等价门槛，出现大量 descriptive-only cell 的风险显著。"
+        },
+        "impact": {
+          "evidence": [
+            "若能证明全局标量、per-link mean 或某个 block level 在声明 support 内足够或不足，可直接改变 CooperScene 及类似基准的评测成本与报告规范。",
+            "显式 right censoring、方向性、queue/interpolation 和 payload manifest 会形成可复用的 evaluator contract。"
+          ],
+          "counterEvidence": [
+            "MCAP 只有吞吐，没有 packet、loss、jitter、retransmission 或 MAC 证据；结论不能成为物理无线或道路部署结论。",
+            "总体只有 14 个、时长约 16-116 秒的同一发布数据 acquisition units，外推面很窄。"
+          ],
+          "assessment": "对 benchmark methodology 有中等偏高价值，对协同自动驾驶系统或真实无线协议本身的直接影响有限。"
+        },
+        "comparison-readiness": {
+          "evidence": [
+            "A0-A6 梯子、exact reference、1.6 Mbps public path、方向交换、同步/独立 permutation、block permutation、单位/插值/queue 敏感性和负控制均已明确。",
+            "take 级独立性、leave-one-take-out、等价而非未拒绝零假设、right-censoring 和 least-structured selection rule 都是正确的比较骨架。"
+          ],
+          "counterEvidence": [
+            "payload/deadline support 与四类 practical-equivalence margin 尚未给出数值，无法提前判断证书是否有统计分辨率。",
+            "A5 direction swap 需要可比链路类别，否则会同时改变几何/身份；当前定义还不足以作为纯方向效应。",
+            "Table 2 calibration 的匹配 take、并发发送和 packetization 对应关系没有公开映射。"
+          ],
+          "assessment": "比较设计是两候选中更成熟者，但仍需在看全量结果前冻结 support、margin 和 link-swap matching。"
+        }
+      },
+      "strongestObjection": "核心声明依赖“至少四个模型的精确运行时序列化载荷”，但官方代码目前没有统一 wire serialization boundary：dense 模型仍用静态公式，sparse hook 只估算 fp32 tensor 字节；在四个 checkpoint 的 CUDA vertical slice 通过前，CPU-only、8-10 周和 workload support 都没有被真实证明。",
+      "requiredExperiment": {
+        "title": "四模型载荷与双 take 端到端可执行性闸门",
+        "design": "在全新官方 Docker 环境中固定四个公开 checkpoint，选择一个 dense、一个 data-dependent sparse 及另外两个不同 payload regime；对 take 9 和一个非 take-9 完整 take 以 batch_size=1 运行，分别在真正通信对象产生处记录逐 sender/frame 的 tensor、编码格式、metadata 和最终 serialized bytes。用同一 manifest 跑 exact trace、1.6 Mbps 和 per-link mean，并由第二个独立积分器复算账本。",
+        "passCriteria": [
+          "四个 config/checkpoint 均能加载并完成至少一个完整 take 或预注册代表性子集，记录 GPU 型号、峰值显存和墙钟时间。",
+          "每个发送对象都有可重放的最终 byte payload，而不是 shape*4 或论文表值；同一输入重复运行 payload hash 一致。",
+          "第二个 take 的 12 条定向 trace 可完整解码，守恒、单调性、censoring 和常数解析解测试全部通过。",
+          "基于实测吞吐、下载与推理时间重新估算后，8-10 周和存储上限仍有至少 25% 余量；否则缩减模型/support 并重写声明。"
+        ]
+      },
+      "factualCorrections": [
+        {
+          "correction": "“CPU-only for the primary transport study”只能描述抽象积分阶段，不能描述包含四模型 runtime payload 的 minimum study。",
+          "basis": "官方 Docker 基于 CUDA 12.1，依赖 spconv-cu120；精确 data-dependent payload 需要 checkpoint forward。"
+        },
+        {
+          "correction": "tools/measure_sharing.py 不是精确运行时 serialization 测量。",
+          "basis": "它对 ERMVP/CoSDH 使用 shape、稀疏率和固定 fp32 四字节估算，对 V2VNet/V2X-ViT/V2VAM/CoBEVT 明确退回 tools/calc_sharing.py；没有序列化格式、header 或逐帧最终字节。"
+        },
+        {
+          "correction": "全 14 take 的统一 channel/schema 已核验，但全 14 take 的 throughput 数值与单位一致性尚未核验。",
+          "basis": "all-take audit 只解析 summary/schema/channel，不解码 payload；take 1 还有三条链路消息数异常。"
+        },
+        {
+          "correction": "低于 500 GB 是可接受的规划假设，不是已验证资源需求。",
+          "basis": "仅压缩核心归档与完整 MCAP 已约 185.17 GB，还需解压数据、PCD-to-BIN、checkpoint、缓存和结果；只有 take 9 有 1.458 倍解压比例样本。"
+        },
+        {
+          "correction": "公开 checkpoint 入口存在，但四模型 checkpoint 文件、哈希、兼容性与峰值显存未在本评审中逐个验证。",
+          "basis": "GitHub Git 树不含 .pth；README 指向独立 Hugging Face 仓库，官方仓库没有 checkpoint smoke-test 记录。"
+        }
+      ],
+      "overall": 6
+    },
+    {
+      "candidateId": "transport-availability-state-contract",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 4,
+        "success-probability": 4,
+        "impact": 6,
+        "comparison-readiness": 5
+      },
+      "rationales": {
+        "novelty": {
+          "evidence": [
+            "未发现现有工作把 CooperScene 的 directed-throughput completion、观测可识别性、take-start unknown、right censoring、共享 ledger、冻结 fallback 反事实和 ranking equivalence 全部组合起来。",
+            "把 availability 与 observability 分成 tagged fields，并把 drop 定义为 policy 而不是 state，是严谨且可复用的 benchmark contract。"
+          ],
+          "counterEvidence": [
+            "Harbor 已覆盖 deadline/drop/local fallback，CoInfra 已覆盖 latest-history，V2X-ReaLO 已覆盖在线 serialization、feature bank 和 latest message；宽泛功能并不新。",
+            "如果稳态非 current 状态很少或结果只来自首帧 clamp，这会退化为 evaluator bug fix。"
+          ],
+          "assessment": "组合性差异存在，但依赖所有 state、ledger 和 rank-stability 元素共同成立，单独任何 policy 都不足以支撑新颖性。"
+        },
+        "feasibility": {
+          "evidence": [
+            "公开代码中首帧 clamp、lookup 失败保留同步 collaborator、宽泛异常吞掉 collaborator 和 prior_encoding 全零都能定位到具体函数。",
+            "take 9 的 12 个 pose anchor 给出了可执行 ordinal 候选；剩余 YAML 可用 Range read 完成，不必下载 PCD/PNG 来做映射。",
+            "V2X-ViT 的 vendored OpenCOOD 确有 use_RTE=True 的原生 delay consumer。"
+          ],
+          "counterEvidence": [
+            "G1 尚未通过：strict mapping 是 none，take 9 仅 12/644 行被独立锚定；primary validate/test 还需为 take 2、8、13、14 建完整 sidecar，约 8456 个 agent-frame row。",
+            "G2 尚未通过：没有逐 frame 最终 serialized bytes；公开 sharing hook 不能满足要求。",
+            "G3 需要改 dataset、scheduler、PackCooperative3DDetInputs、preprocessor 和模型输入 lineage。默认 packer 的 coop_keys 不含 prior_encoding。",
+            "wrapper 注释把三元组写成 [time_delay, velocity, infra]，vendored V2X-ViT 实际按 [velocity, time_delay, infra] 并从索引 1 取 delay；未经回归测试直接接线很容易产生零效应或错误效应。",
+            "24 GB 显存与约 400 GB 存储都没有按四个 checkpoint、实际 batch 和转换后数据测量；官方代码也没有自动化测试或已验证的四模型 run manifest。"
+          ],
+          "assessment": "这不是小幅 evaluator patch，而是跨数据转换、时间 sidecar、调度、输入打包、模型特定通信边界和统计账本的系统改造；10-12 周只有在前三周所有闸门一次通过时才勉强可行。"
+        },
+        "success-probability": {
+          "evidence": [
+            "take 9 对 0.338、0.423、0.500 MB 的 right-censoring 分别约 24.64%、31.00%、36.18%，说明“未完成消息不一定稀有”值得正式检查。",
+            "公开 C-V2X 路径把很多模型延迟量化为历史帧，同时不把真实 delay 送入 prior_encoding，因此 policy 对照存在真实实现差异。"
+          ],
+          "counterEvidence": [
+            "take 9 属于 train，候选 primary inference 只用 validate/test；官方门户对应 take 2、8、13、14，共 4 个独立 acquisition units，尚无这些 take 的状态暴露结果。",
+            "四个 take 难以对四模型、多 policy、多个指标和 ranking equivalence 给出窄区间；frame 数、link 数和 seed 不能弥补独立样本数。",
+            "take 9 先导只测了独立消息在 trace end 的完成，不是 continuous 10 Hz FIFO backlog 下的 latest-completed state prevalence，也没有任何 perception checkpoint 输出。",
+            "equalized-payload 后 policy effect 可能消失，或只剩 warmup/boundary artifact。"
+          ],
+          "assessment": "找到状态差异的概率中等，得到可归因且统计可用的 metric/ranking 结论概率偏低；四个 hard gate 中任何一个失败都会使项目并入候选 1。"
+        },
+        "impact": {
+          "evidence": [
+            "若同一冻结模型仅因 silent clamp、drop 或 latest-completed 就改变 winner/verdict，CooperScene 的公开评测结论和后续 benchmark 设计都必须修改。",
+            "即使等价，经过充分状态暴露与 cluster-aware interval 的简化结论也能减少 evaluator 复杂度。"
+          ],
+          "counterEvidence": [
+            "结论仍是 throughput-derived benchmark semantics，不是 measured delivery、闭环规划或道路安全。",
+            "Harbor/CoInfra/V2X-ReaLO 已表明 availability policy 有系统意义；本项目主要增加 CooperScene 特定的审计精度。"
+          ],
+          "assessment": "潜在 benchmark 影响可观，但只有跨方法、稳态、非边界且 equalized-payload 后仍成立时才超过局部修复。"
+        },
+        "comparison-readiness": {
+          "evidence": [
+            "silent clamp、同步保留、drop/local-only、latest-completed、supported native age-aware、public scalar、exact trace、ego-only 和 equalized-payload 的比较矩阵合理。",
+            "checkpoint、scene、candidate frames、trace、payload、seed 和 tensor lineage 的冻结要求，以及 take-level paired effect/rank 指标，能够隔离 policy intervention。"
+          ],
+          "counterEvidence": [
+            "原生 age-aware 并非共同接口；已核验的 V2X-ViT delay slot 还存在 wrapper 注释顺序冲突，其他模型应明确为 unsupported。",
+            "Harbor-style 与 CoInfra-style 只能算功能类 policy comparator；没有已核验的 Harbor 代码，也不能声称复现 CoInfra 的 EKF/predictor。",
+            "只有 4 个 validate/test take，尚未给出可达到的 metric/rank equivalence margin、multiplicity 方案或最小可检测效应。",
+            "current-complete identity control 需要实际 collaborator tensor hash；目前公开 loader 会宽泛捕获异常并改变有效 collaborator 数。"
+          ],
+          "assessment": "比较对象列得完整，但输入合同、共同支持集和统计分辨率尚未通过代码和数据验证，因此距离可直接开跑仍有重大缺口。"
+        }
+      },
+      "strongestObjection": "项目的 headline 是四模型 frozen-policy metric/ranking 审计，但前置事实仍是：没有一个完整 sidecar、没有一个最终 serialized payload manifest、默认打包链路不传 prior_encoding、delay slot 顺序还有注释/实现冲突，而且 primary validate/test 只有 4 个独立 take；这使 10-12 周内得到可解释 ranking-equivalence 结论的概率明显不足。",
+      "requiredExperiment": {
+        "title": "前三周全门槛预推断闸门",
+        "design": "在不打开任务指标的前提下，为 take 2、8、13、14 构建并验证全 row sidecar；用 V2X-ViT 和一个 delay-unaware 模型完成 checkpoint smoke test与逐 frame 最终 serialization；把 completion-derived state 和 age 经 dataset、packer、preprocessor 传到模型，记录 public silent fallback、drop 和 latest-completed 的 collaborator tensor hash；随后只报告四 take 的 warmup/steady-state 状态暴露、资源实测和功效边界。",
+        "passCriteria": [
+          "四个 primary take 的每个 agent-frame row 均有唯一 pose anchor、MCAP log time、protobuf timestamp、frame_id、成员 hash 和完整 missing/duplicate/monotonicity 检查。",
+          "至少两个架构的最终 serialized bytes、checkpoint hash、峰值显存和墙钟时间可复现；四模型剩余工作量据此仍能在第 6 周前完成。",
+          "V2X-ViT 的 delay 放在经回归测试确认的索引 1；default-zero、wrong-slot 和正确 delay 三个负控制产生预期可区分行为，其他模型 unsupported cell 不被填充。",
+          "current-complete 下三种 common policy 的 collaborator tensor 完全相同；missing trace 和 loader exception 必须 fail closed。",
+          "四个 take 的稳态 non-current 状态暴露超过预注册最低比例，且基于 take-level 方差的功效分析表明至少能检测预注册实际效应；否则在任务指标开启前合并进候选 1。"
+        ]
+      },
+      "factualCorrections": [
+        {
+          "correction": "take 9 的 644-row sidecar 尚未完成，严格映射类别仍为 none。",
+          "basis": "只核验了 12 个 first/middle/last pose anchor；exact、offset、affine 和 strict ordinal 均未通过。"
+        },
+        {
+          "correction": "primary validate/test 推断不是 14 个独立 take，而是官方门户中的 4 个 take：test 2、8 和 validate 13、14。",
+          "basis": "其余 10 个场景归档属于 train；候选自己禁止用 train 选择有利 policy。"
+        },
+        {
+          "correction": "公开模型路径没有自动把 completion-derived age 送入模型。",
+          "basis": "CoopDataset 不产生 prior_encoding，PackCooperative3DDetInputs 默认 coop_keys 不包含它，CooperativeDetector 缺失时注入全零。"
+        },
+        {
+          "correction": "prior_encoding 的公开 wrapper 注释顺序与 V2X-ViT 实际消费顺序冲突。",
+          "basis": "CooperativeDetector 注释为 [time_delay, velocity, infra]；vendored V2X-ViT 注释和代码为 [velocity, time_delay, infra]，并读取 prior_encoding[...,1] 作为 dt。"
+        },
+        {
+          "correction": "已核验的原生 age-aware 路径只明确存在于 V2X-ViT 的 RTE；不能把 age-aware-native 当作四模型共同 policy。",
+          "basis": "V2X-ViT config 设置 use_RTE=True，其他模型没有经本评审确认的统一 time-delay consumer。"
+        },
+        {
+          "correction": "take 9 的 right-censoring 先导不是连续 10 Hz FIFO 消息流下的 state prevalence。",
+          "basis": "先导从每个吞吐采样点独立启动单个 payload，不模拟跨帧 backlog、并发 payload 或 perception frame mapping。"
+        },
+        {
+          "correction": "24 GB GPU 和约 400 GB 本地存储是预算假设，不是公开 artifact 已证明的资源需求。",
+          "basis": "官方没有最小 VRAM；压缩核心+MCAP 已约 185.17 GB，仍需解压、BIN 转换、checkpoint、缓存和四模型输出。"
+        },
+        {
+          "correction": "公开 loader 的异常行为会改变有效 collaborator 数，不能仅靠 checkpoint/seed 冻结声明输入同一。",
+          "basis": "LoadCooperativePointCloud.transform 在 cooperator 读取/投影中 broad except Exception 后 continue，必须改为 fail closed 或结构化排除。"
+        }
+      ],
+      "overall": 5
+    }
+  ]
+}

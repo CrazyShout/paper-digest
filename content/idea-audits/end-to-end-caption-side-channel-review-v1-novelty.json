@@ -1,0 +1,46 @@
+{
+  "candidateId": "covla-caption-side-channel-future-motion",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.462Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 4,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "未来目标进入辅助标签属于普通 label leakage/privileged supervision，语言动作统一和无语言 latent-action 对照也已有大量近邻。Poutine 更直接公开了以专家未来 5 秒轨迹生成驾驶 caption 的流程，并在 CoVLA 上使用这些标注。剩余新意是对原始 CoVLA caption 做 span-level 最晚时间 provenance，并用 motion-only、motion-masked、strict-past 和 predicted-caption 分支量化其对方法结论的中介作用。",
+    "feasibility": "CoVLA 论文、项目页和 Hugging Face 卡公开了字段、规则 caption 所用速度/加速度/轨迹曲率，以及 VideoLLaMA2 的 3 秒窗口，但数据为 452 GB、需同意受限学术许可，页面未提供完整 caption 生成脚本。没有原始时间对齐规则时，无法仅凭文本反推出每个 span 的 cutoff；七分支重训也有明显算力和数据工程成本。",
+    "success-probability": "原始论文明确用车辆运动特征生成规则 caption，并让 VLM 看完整 3 秒视频窗口；ground-truth caption 又比 predicted caption 显著降低 ADE/FDE。Poutine 还证明实际流程会显式把未来轨迹喂给 captioner。因此发现 future-derived motion signal 的概率不低，但是否发生在原始 CoVLA 每帧 caption、是否越过对应 prediction cutoff，仍取决于未公开的精确时间链。",
+    "impact": "若严格过去 caption 的收益显著消失，可纠正 VLA 数据集、训练协议和关于语言推理贡献的解释；若收益保留，则能把可部署语义与动作标签捷径分开。影响主要是研究有效性和数据治理，不应直接外推为闭环安全改善。",
+    "comparison-readiness": "vision+ego、original、predicted、caption-only、motion-only、motion-masked、strict-past-lagged 和 no-language latent action 基线覆盖充分，且规定 drive/session split 与 cluster bootstrap。仍需明确 caption 是训练 target、前置输入还是模型自生成中间 token；这三种位置对应不同的泄漏定义，不能混合计分。"
+  },
+  "strongestObjection": "现有公开材料证明 caption 与动作强相关，却不足以证明原始 CoVLA 样本在预测时刻读取了未来：规则 caption 的 trajectory curvature 可能按当前或历史窗口计算，3 秒视频 caption 的起止点也未在页面中对齐到每帧 prediction cutoff。更重要的是，若 caption 只作为训练辅助目标并在部署时由模型自回归生成，它是 privileged/label-derived supervision，而不是运行时侧信道。没有生成脚本、字段时间戳和模型数据流三者的逐项 provenance，主张会退化为普通 label leakage 猜测。",
+  "requiredExperiment": "先取得合法 CoVLA payload、数据版本和 caption 生成实现或作者可核验的字段映射；随机抽取至少 1,000 个样本，建立每个 caption span 的源字段、最晚时间戳和相对 trajectory prediction cutoff，并由人工双标注验证 parser。随后按 drive/session 严格切分，在相同 backbone、trajectory head、样本量、训练步数和 seeds 下运行 vision+ego、original、predicted、caption-only、motion-only、motion-masked、至少两个 strict-past lags。必须分别报告 caption 作为输入、自生成中间输出和辅助 target 的结果；只有被证明为 future-derived 的 spans 能重现原始增益，且移除后改变方法排序，才能称为未来动作侧信道。",
+  "evidenceReopened": [
+    {
+      "title": "CoVLA: Comprehensive Vision-Language-Action Dataset for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2408.10845",
+      "finding": "论文说明规则 caption 使用速度、加速度和轨迹曲率，VideoLLaMA2 captioner 处理包含首尾帧的 3 秒窗口；同时 ground-truth caption 条件的 ADE/FDE 优于 predicted caption，但没有给出逐 span 的最晚时间戳。"
+    },
+    {
+      "title": "CoVLA-Dataset official dataset card",
+      "url": "https://huggingface.co/datasets/turing-motors/CoVLA-Dataset",
+      "finding": "官方卡显示单帧样本同时含 CAN/IMU 字段、60 点未来轨迹和 caption，且数据访问受学术许可和保密/禁止再分发条款约束；公开示例未记录 caption 的字段级时间来源。"
+    },
+    {
+      "title": "Poutine: Vision-Language-Trajectory Pre-Training and Reinforcement Learning",
+      "url": "https://storage.googleapis.com/waymo-uploads/files/research/2025%20Technical%20Reports/2025%20WOD%20E2E%20Driving%20Challenge%20-%20Special%20Mention%20-%20Poutine.pdf",
+      "finding": "Poutine 明确把专家未来 5 秒轨迹提供给 caption 生成器，并用生成的解释和 meta-behavior 训练未来轨迹预测；该直接近邻证明此类未来动作标签链真实存在，也使单纯发现相关性不再新颖。"
+    },
+    {
+      "title": "LatentVLA: Efficient Vision-Language Models for Autonomous Driving via Latent Action Prediction",
+      "url": "https://arxiv.org/abs/2601.05611",
+      "finding": "LatentVLA 已把语言标注带来的语言偏差和成本作为问题，并提供无显式语言标注的 latent-action 路线，可作为等容量 no-language 对照而非本候选的新方法。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "68fceb706c991068cecab1d77ef72bec31c59550d9e14ce75ff2e8dbfd61100c"
+}

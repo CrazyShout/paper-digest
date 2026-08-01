@@ -1,0 +1,281 @@
+{
+  "candidateId": "adaptive-detector-fallback-hazard-budget",
+  "directionId": "autonomous-driving-security",
+  "dossierVersion": 1,
+  "createdAt": "2026-08-01",
+  "reviewMode": "evidence-dossier-no-scoring",
+  "title": "检测到不等于安全：自适应攻击下 detector 与最小风险回退的联合 hazard budget",
+  "hook": "同一个异常分数既可能漏掉攻击，也可能把本可继续行驶的车辆错误送入高风险回退；要审计的是攻击者、检测器与实际 MRM 共同产生的车辆后果，而不是孤立检测率。",
+  "output": "配对闭环 hazard ledger、detector-aware attack suite 与可执行 MRM 对比协议",
+  "effort": "高投入",
+  "timeline": "10-12 周",
+  "whyNow": "AD2 已公开端到端驾驶视觉攻击与四类时空检测器，MA2T 已把自适应攻击、自然腐蚀和 CARLA 评测放进同一鲁棒训练工作，Bench2Drive-Robust 又公开了 CARLA 0.9.15 下的帧流、状态估计和动作延迟故障入口。与此同时，TrustVLA、UN R157 和 EMRM 分别覆盖 VLA 异常恢复、minimum risk manoeuvre 的正式语境和避险机动验证。当前可复用资产首次足以把 detector 输出接到真实执行的 continue、立即 fail-stop 与独立 MRM 上；但这些资产仍没有联合测量自适应绕过、误触发回退、检测时延和周围交通风险，仓库中的注入能力也只证明可测试性。",
+  "keyProblem": "现有防御常把攻击检测准确率或攻击后任务恢复当成车辆安全代理，却没有回答 detector 何时触发、触发后执行什么控制、错误触发会给本车和后车造成什么代价。了解 detector 的攻击者可以在有限视觉预算内同时优化驾驶危害、降低异常分数，或诱使系统在不利时刻触发回退。自然天气、设备故障和等预算随机噪声可能落入相同 detector 表征，但它们没有主动目标，必须分开估计。研究对象因此是条件于共同初态的车辆级 hazard budget：未检测攻击风险、真阳性回退风险、假阳性回退风险和检测时延暴露风险。",
+  "currentLimitations": "最近直接竞品已经覆盖了大部分组件。AD2 在 CARLA 闭环中研究视觉攻击并提供四类 detector 输出，但固定代码没有控制否决、fallback 或 MRM；MA2T 用作者自建的同预算自适应攻击训练端到端模型，也测自然腐蚀和 CARLA，但不研究 detector-triggered maneuver；TrustVLA 在机器人 VLA 上做检测、局部恢复与 clean utility，却把语义或非视觉 trigger 及模仿 evidence 的自适应攻击留在边界外。UN R157 给出 minimum risk manoeuvre 的车辆语境，EMRM 对避险机动做系统验证，但两者不处理攻击检测器。不可替代 residual 仅剩：在同一闭环、同一初态和固定攻击预算中，让攻击者针对 detector 与 fallback 联合优化，并实测 continue、立即 fail-stop 和非 fail-stop MRM 的风险排序是否反转。若只换 detector、只报告 ASR/AUROC，或把仿真注入写成现实攻击发生率，都不构成该 residual。",
+  "hypothesis": "在限定的 CARLA 0.9.15 ODD、固定 detector 阈值和相同视觉预算下，detector-aware attack 会相对 non-adaptive attack、自然退化、设备故障和随机噪声产生可重复的 excess vehicle risk，并可能改变 continue、立即 fail-stop 与独立 MRM 的风险排序；一个显式核算本车与后车安全裕度的 MRM 能降低总 hazard，而不是把漏检风险简单换成误停车风险。",
+  "threatModel": {
+    "attackerCapability": "主分析采用数字白盒上界：攻击者只能修改进入驾驶 agent 与 detector 的同一组同步 RGB 帧，不能写 detector 状态、车辆控制、地图、GNSS、交通参与者状态或模拟器内存。补充灰盒攻击只访问 agent/detector 查询结果并从替代模型迁移。",
+    "attackerKnowledge": "白盒攻击者知道固定 agent、AD2 detector、阈值、回退状态机和场景目标；不知道当前配对 rollout 的交通随机种子。灰盒攻击者只知道输入格式、处置策略族和查询返回的 detector 分数与轨迹结果。",
+    "budget": "主视觉预算预注册为每个受控 RGB 像素 L-infinity 不超过 8/255、最多连续 8 个 sensor ticks、不得改变帧尺寸或时间戳；随机视觉基线复用完全相同的像素支持、幅度和持续时间。若复现 AD2 的正式预算与此不一致，先报告两套预算，不通过事后放宽预算制造结果。",
+    "inputPath": "操纵点固定在 CARLA 相机渲染输出之后、agent 与 detector 共同预处理之前；这是一条研究用数字注入路径，只支持可控最坏情形，不证明道路攻击者已能获得该访问。",
+    "target": "攻击目标是降低 detector 分数或在危险交通状态诱发 detector 触发，同时最大化最低 TTC 下降、越线、碰撞或 MRM 暴露；不允许直接指定最终控制。",
+    "odd": "主 ODD 固定为 CARLA 0.9.15、Bench2Drive 兼容路线、白天干燥路面、限速不高于 50 km/h、含前车和后车的城市车道跟驰/交叉口场景；夜间、雨雾、高速和真实道路均为外部有效性边界。",
+    "comparators": {
+      "attack": "有主动目标的 non-adaptive 与 detector-aware RGB 优化；只有相对匹配 random/natural/fault 的 excess risk 才称为攻击特异性。",
+      "fault": "Bench2Drive-Robust 的 cached burst frame drop、GPS/速度误差和 FIFO action latency；无攻击者、无目标优化，分别报告。",
+      "natural": "固定 CARLA 天气、照明和普通图像腐蚀的自然退化分层；不把 partial observation 或数字遮挡自动称为自然天气。",
+      "random": "与攻击同像素支持、L-infinity 幅度、持续时间和帧位置的随机符号/均匀噪声，以及按 detector 分数匹配的随机样本；无目标搜索。"
+    }
+  },
+  "noveltyClaims": [
+    "把主要 estimand 从 detector AUROC/attack detection rate 改为同初态下的车辆级联合风险差，分解为漏检继续行驶、真阳性回退、假阳性回退和检测时延四项。",
+    "让攻击者同时看到 detector 与处置状态机，在相同视觉预算内优化驾驶危害、绕过检测或诱导不利回退；non-adaptive attack 只是直接竞品基线。",
+    "实现非 fail-stop 的独立 MRM：先维持横向可控与车道约束，再按前后 TTC、可用停车距离和 jerk 限制选择受控减速或可达避险区，完成后进入稳定最小风险状态。",
+    "用 attack、device fault、natural degradation 和 budget-matched random 四类输入的配对因果链限制安全主张，不把公开注入器、CARLA 碰撞或 detector 代码当作现实道路发生率证据。"
+  ],
+  "method": [
+    "固定 CARLA、路线包、agent checkpoint、AD2 detector commit、预处理、阈值和控制频率；先运行 no-op/no-op 双实例重放，验证相同初态、交通 seed 与无干预轨迹在容差内一致。",
+    "为每个 route-seed block 交叉运行 clean、attack、fault、natural 和 random 输入，并在同一初态分别执行 continue、immediate fail-stop 与 MRM；执行顺序随机化，所有失败和超时进入账本。",
+    "continue 保留原 agent 控制；immediate fail-stop 在触发时立刻输出零油门和最大允许制动，专门作为坏的简单基线；MRM 使用与被攻视觉链独立的 simulator pose、车道几何和前后 actor 距离，执行限 jerk 车道保持、受控减速、必要时进入预验证避险区并稳定停车。",
+    "训练或复现不看 detector 的攻击后，构造 detector-aware 多目标优化器，在固定预算中扫描 harm、evasion 与 false-trigger exploitation 的 Pareto 权重；开发路线调权，测试路线和交通 seed 完全隔离。",
+    "逐 tick 记录输入 provenance、detector logit/threshold、触发时刻、处置状态、原/替代控制、前后 TTC、制动距离、横向裕度、碰撞、越线、route completion、jerk 和 MRM 完成/失败原因，并生成可对账的 hazard ledger。",
+    "用 route-seed 为统计单位做配对风险差、cluster bootstrap 和分层 mixed model；天气、路线和交通密度是预注册 strata，帧、tick、攻击迭代和重复优化 seed 不作为独立样本。"
+  ],
+  "implementationPath": [
+    {
+      "type": "reusable",
+      "asset": "AD2 official detector and attack code",
+      "work": "固定提交 4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb，复用三相机两时刻 CBDetector、数据入口和 TransFuser/InterFuser 攻击回放。",
+      "boundary": "BSD-3-Clause 允许修改和再分发但须保留通知；代码的评估脚本含作者绝对路径、模型输出四类标签，且没有 fallback/MRM。CARLA 0.9.10.1 到 0.9.15 的迁移必须单独验收。"
+    },
+    {
+      "type": "reusable",
+      "asset": "Bench2Drive-Robust official benchmark",
+      "work": "固定提交 ae1b5867324710bf0574cba797062280d9d97105，复用 frame drop、partial observation、GPS/speed noise、FIFO latency、路线和结果格式作为非恶意故障对照。",
+      "boundary": "CC-BY-NC-ND-4.0 允许非商业内部改编但禁止分享改编材料；攻击器、MRM 和适配器放在独立包装层，只发布配置、调用接口与统计，不分发上游派生代码。"
+    },
+    {
+      "type": "reusable",
+      "asset": "CARLA 0.9.15",
+      "work": "固定 release tag 0.9.15 对应提交 d7b45c1e159e6d13296f7a3a4e8b13e6c2d62c18，复用 simulator、collision/lane sensors、traffic manager 与状态快照。",
+      "boundary": "MIT 许可；仿真动作响应和碰撞只形成限定 ODD 的闭环证据，未做 HIL/场地锚定时不得外推现实道路安全。"
+    },
+    {
+      "type": "self-built",
+      "asset": "DetectorDecisionAdapter",
+      "work": "把 AD2 四类 logit 校准为预注册异常分数，锁定阈值和迟滞窗口，并把 detector 输出、触发原因与延迟暴露给控制状态机。",
+      "acceptanceCheck": "clean 与四类已知样本可复现既有分类合同；阈值只能在开发路线校准，测试路线不可回看调参。"
+    },
+    {
+      "type": "self-built",
+      "asset": "IndependentMRMController",
+      "work": "实现非 fail-stop 状态机：stabilize-lane、rear-aware bounded deceleration、reachable-refuge selection、safe-stop hold 和 recovery lockout；控制输入不读取被攻击 RGB 或 agent 轨迹。",
+      "acceptanceCheck": "在 clean 触发 smoke 中满足横向边界、jerk、停车距离和最小前后 TTC 门；若行为等价于立即最大制动，则不能称为 MRM。"
+    },
+    {
+      "type": "self-built",
+      "asset": "DetectorAwareAttackOptimizer",
+      "work": "联合优化 detector score、车辆危害代理和不利触发时刻，支持 white-box 梯度与 query-limited gray-box 两条路径，严格执行像素和时序预算。",
+      "acceptanceCheck": "攻击张量只能进入声明的 RGB hook；任意状态、控制或 simulator 写权限立即使该 run 无效。"
+    },
+    {
+      "type": "self-built",
+      "asset": "PairedRolloutRunner and HazardLedger",
+      "work": "从同一快照分叉各策略，固定 common random numbers，保存逐 tick provenance、控制、风险与异常，并对所有计划 run 做完整对账。",
+      "acceptanceCheck": "no-op/no-op 轨迹不一致、交通 actor 不一致或日志缺失的 route-seed block 整块剔除并报告，不能挑选成功攻击。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Agent checkpoints and licenses",
+      "work": "优先使用 AD2 已实例化的 TransFuser/InterFuser checkpoint；下载前固定来源、摘要和各自许可证，若不能合法取得则换用 Bench2Drive 官方可用 agent 并重新建立 detector 合同。",
+      "boundary": "仓库存在不等于 checkpoint 可用；未核验权重时只属于资产风险，不写成已完成复现。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Compute and schedule",
+      "work": "预计 2-4 张 24GB 以上 GPU 用于 agent、detector 和攻击优化，16-32 CPU cores 运行 CARLA，多实例磁盘约 1-2 TB；第 1-2 周执行门，第 3-5 周攻击/MRM，第 6-10 周主实验，第 11-12 周复跑与审计。",
+      "boundary": "若单 route-seed block 的全条件运行时间使预注册样本在 12 周内不可达，先缩减 ODD 和条件数，不能用帧级伪重复补功效。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "stage": "execution-and-mrm-smoke",
+      "duration": "第 1-2 周",
+      "protocol": "在一个 agent、两条路线和固定交通 seed 上验证 CARLA 0.9.15 适配、AD2 detector 输出、同初态分叉和三种处置。每种 input provenance 至少 20 个配对 rollout；MRM 必须完成限 jerk 车道保持/减速/安全停车，而 immediate fail-stop 单列。",
+      "decision": "若 detector 不在执行路径、no-op 重放不稳定，或 MRM 与立即最大制动无法区分，停止车辆安全实验并修复执行合同。"
+    },
+    {
+      "stage": "attack-specificity-pilot",
+      "duration": "第 3-5 周",
+      "protocol": "在开发路线比较 non-adaptive、detector-aware、budget-matched random、natural 和 fault，锁定攻击预算、detector threshold 与 hazard endpoints；攻击优化 seed 嵌套在 route-seed 内。",
+      "decision": "若 detector-aware 输入不能在未扩大预算时改变 detector 分数或任何车辆风险，主假设进入 kill；不把注入成功本身当攻击结果。"
+    },
+    {
+      "stage": "powered-paired-study",
+      "duration": "第 6-10 周",
+      "protocol": "在隔离测试路线至少运行 240 个唯一 route-traffic-seed blocks，每个 block 复跑主要输入与处置组合。主分析为 adaptive versus non-adaptive/random 的配对 excess hazard，以及 detector+MRM versus detector+fail-stop/continue 的配对风险差。",
+      "decision": "运行前用 pilot 的配对相关与事件率做仿真功效分析；必须达到双侧 alpha 0.05、至少 80% 功效以检测 0.10 绝对 hazard 差或 0.20 标准差 TTC 差，并至少有 30 个 discordant hazard pairs，否则只能报告探索性区间。"
+    },
+    {
+      "stage": "held-out-and-sensitivity-audit",
+      "duration": "第 11-12 周",
+      "protocol": "在未用于调参的路线/天气复跑，扫描 detector threshold、攻击 Pareto 权重和后车密度；预注册缺失/超时处理并由独立脚本重算 ledger。",
+      "decision": "结论只保留跨至少两个测试 strata 同方向且不依赖单一阈值的效应；否则收缩到明确反例或负结果。"
+    }
+  ],
+  "strongBaselines": [
+    {
+      "name": "original agent, continue regardless of detector",
+      "role": "测量无回退时的攻击、自然退化和故障风险，也是判断 detector 是否真正改善车辆后果的基线。"
+    },
+    {
+      "name": "AD2 detector-only reporting",
+      "role": "复现最近检测竞品的四类输出与 AUROC/accuracy，但不把检测标签当作安全恢复。"
+    },
+    {
+      "name": "detector-triggered immediate fail-stop",
+      "role": "触发后立即最大允许制动，显式暴露误报停车和后车风险；不得与 MRM 合并。"
+    },
+    {
+      "name": "detector-triggered independent MRM",
+      "role": "执行车道稳定、rear-aware 限 jerk 减速、避险区选择和稳定停车，是候选系统而非默认安全上界。"
+    },
+    {
+      "name": "oracle anomaly label plus the same MRM",
+      "role": "用真实 provenance 触发相同 MRM，分离 detector 错误与 controller 固有风险。"
+    },
+    {
+      "name": "MA2T-style robust agent without detector fallback",
+      "role": "检验联合系统是否只是在复现普通 adversarial training 的收益；若官方权重不可复现则用已核验同类鲁棒 agent 并标注替代。"
+    },
+    {
+      "name": "non-adaptive attack, natural, fault and budget-matched random",
+      "role": "分别建立攻击适应性、自然鲁棒性、设备可靠性和随机噪声基线，四者不能合并成一个 corruption 平均值。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "paired vehicle hazard",
+      "definition": "预注册复合事件包含碰撞、最低 TTC 低于门限、严重越线或未在可用距离内完成 MRM；同时逐项报告，不能只报总分。",
+      "unit": "unique route-traffic-seed block"
+    },
+    {
+      "name": "attack-specific excess risk",
+      "definition": "在相同 route-seed、像素支持、幅度和持续时间下，targeted attack 相对 random、natural 与 fault 的 hazard 风险差和最低 TTC 差。",
+      "unit": "paired route-seed difference"
+    },
+    {
+      "name": "hazard budget decomposition",
+      "definition": "分别统计未检出继续行驶、真阳性 MRM、假阳性 MRM 和检测时延暴露贡献，不用 detector accuracy 替代。",
+      "unit": "route-seed contribution with cluster interval"
+    },
+    {
+      "name": "MRM execution quality",
+      "definition": "MRM 完成率、触发至受控状态时间、制动距离、横向裕度、前后最低 TTC、峰值减速度/jerk、避险区可达与恢复锁定。",
+      "unit": "triggered maneuver nested in route-seed"
+    },
+    {
+      "name": "clean and false-fallback cost",
+      "definition": "clean route completion、driving score、误触发率、无必要 MRM 距离损失、后车危险事件和额外推理/控制延迟。",
+      "unit": "clean route-seed block"
+    },
+    {
+      "name": "risk-ranking stability",
+      "definition": "continue、fail-stop 与 MRM 在 adaptive/non-adaptive/random/natural/fault 下的排序及其阈值、路线、天气敏感性。",
+      "unit": "pre-registered stratum"
+    }
+  ],
+  "successCriteria": [
+    "在至少 240 个独立 route-seed blocks、功效门和隔离测试路线下，detector-aware attack 相对预算匹配 random 与 non-adaptive attack 产生预注册方向的 excess hazard 或 TTC 损失，且 95% 配对区间不跨零。",
+    "独立 MRM 相对 immediate fail-stop 和 continue 至少降低一个车辆级主 hazard，同时不把后车风险、route completion 或 false fallback 推过预注册上限；MRM 状态轨迹证明它不是立即停车的别名。",
+    "联合评估改变明确决策：例如某 detector threshold 被否决、某 ODD 需要强制 MRM、某攻击条件下只能降级而不能继续，或 detector 必须与独立控制器共同准入。",
+    "负结果也必须改变系统选择：若 adaptive attack 无 excess risk，则不为该攻击增加专用 detector；若 MRM 不优于 fail-stop/continue，则禁止以检测成功宣称恢复安全并重新设计回退。"
+  ],
+  "killCriteria": [
+    "在固定预算、实际执行路径和足够功效下，detector-aware attack 不能相对 non-adaptive、random、natural 或 fault 改变车辆风险或处置策略排序。",
+    "所谓 MRM 在实现上等价于立即 fail-stop，或在主要 ODD 中因后车碰撞、越线、不可达避险区和控制延迟使总 hazard 不低于简单基线。",
+    "联合结果可由 clean accuracy、普通 detector latency 或单一 agent robustness 完全预测，没有新的阈值反例、风险分解或准入决策。",
+    "CARLA 重放、agent/checkpoint 许可证或计算吞吐无法支持至少 240 个独立 route-seed blocks，且缩小 ODD 后仍不能满足主 estimand 的功效门。"
+  ],
+  "risks": [
+    {
+      "risk": "自适应优化梯度遮蔽或预算不公平",
+      "detail": "detector 和控制器中的离散状态可能让白盒攻击看似失败，或 random 基线没有匹配时空支持。",
+      "mitigation": "同时使用 surrogate、BPDA/无梯度 query 攻击和 budget ledger；所有基线共享支持、幅度、持续时间与查询门。"
+    },
+    {
+      "risk": "MRM 使用 simulator 特权",
+      "detail": "独立 MRM 读取真值 pose、车道或 actor 距离可能高估可部署能力。",
+      "mitigation": "把真值 MRM 标为 oracle-sensor 上界，再加入带噪独立传感版本；不把仿真真值控制写成量产实现。"
+    },
+    {
+      "risk": "跨版本适配改变 detector 合同",
+      "detail": "AD2 基于较旧 CARLA 路径，迁移到 0.9.15 可能改变相机、时序和攻击效果。",
+      "mitigation": "先复现固定样本输出与类别合同，记录所有适配差异；不能复现时改用原版本做 detector 复现、0.9.15 只做独立联合实验。"
+    },
+    {
+      "risk": "仿真外推与 occurrence 混淆",
+      "detail": "数字 RGB hook 和 Bench2Drive 注入器不提供现实攻击或故障发生率。",
+      "mitigation": "所有结论绑定代码版本、数字访问、预算和 ODD；输出风险差而非道路频率，不使用开放道路安全措辞。"
+    },
+    {
+      "risk": "许可证阻止派生分发",
+      "detail": "Bench2Drive-Robust 的 CC-BY-NC-ND 与各 agent checkpoint 条款可能限制改编代码发布。",
+      "mitigation": "保留独立包装器，只发布原创模块、补丁说明、配置和统计；运行前逐项留存许可证与权重来源。"
+    }
+  ],
+  "impact": "正结果会把 detector 准入从分类性能门改成车辆级联合风险门，并明确哪些 ODD、阈值和攻击预算下必须进入独立 MRM；同时给回退控制器增加后车风险、完成时间和 false fallback 约束。负结果同样改变决策：若自适应攻击没有 excess risk，就把资源转向普通 robustness/fault testing；若 MRM 不优于 fail-stop 或 continue，就停止以检测成功宣称安全恢复，收紧 ODD 或重做回退。无论结果如何，结论只适用于固定仿真、agent、数字输入路径与预算，不构成自然攻击发生率或现实道路安全证据。",
+  "evidence": [
+    {
+      "title": "Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving",
+      "year": 2024,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2409.07321",
+      "localPaperId": "maat-e2e-adversarial-training",
+      "localLink": "papers/maat-e2e-adversarial-training/",
+      "role": "本地一手论文笔记对应的直接竞品：覆盖自适应攻击、自然腐蚀和 CARLA 鲁棒训练，但没有 detector-triggered fallback hazard accounting。"
+    },
+    {
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "localPaperId": "bench2drive-robust-deployment-perturbations",
+      "localLink": "papers/bench2drive-robust-deployment-perturbations/",
+      "role": "本地一手论文笔记对应的非恶意故障基线：帧流、状态估计和动作延迟只能作为 fault comparator，不能冒充攻击。"
+    },
+    {
+      "title": "AD2: Analysis and Detection of Adversarial Threats in Visual Perception for End-to-End Autonomous Driving Systems",
+      "year": 2026,
+      "venue": "WACV",
+      "url": "https://openaccess.thecvf.com/content/WACV2026/html/Sahu_AD2_Analysis_and_Detection_of_Adversarial_Threats_in_Visual_Perception_WACV_2026_paper.html",
+      "sourceOrigin": "external",
+      "role": "最近正式 detector 竞品及 BSD 固定代码来源；其输出合同是四类标签，没有控制否决、fallback 或 MRM。"
+    },
+    {
+      "title": "TrustVLA: Mechanism-Guided Inference-Time Defense Against Vision-Language-Action Backdoors",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.12571",
+      "sourceOrigin": "external",
+      "role": "最近 VLA 检测与恢复竞品；覆盖视觉触发和 clean utility，但不提供驾驶车辆级 MRM 或本候选的自适应 evidence-mimicry 联合风险。"
+    },
+    {
+      "title": "UN Regulation No. 157: Automated Lane Keeping Systems",
+      "year": 2021,
+      "venue": "UNECE",
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-157-automated-lane-keeping-systems-alks",
+      "sourceOrigin": "external",
+      "role": "给出 minimum risk manoeuvre 的正式车辆语境，约束 dossier 不能把检测或立即停车本身写成完成安全回退。"
+    },
+    {
+      "title": "Risk Assessments for Evasive Emergency Maneuvers in Autonomous Vehicles",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2604.26050",
+      "sourceOrigin": "external",
+      "role": "避险 minimum-risk maneuver 的直接邻近验证工作，说明主动转向/减速机动可区别于 emergency braking，但不处理 detector-aware attacker。"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:16:55.427Z"
+}

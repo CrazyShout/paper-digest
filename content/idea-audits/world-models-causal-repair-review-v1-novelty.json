@@ -1,0 +1,56 @@
+{
+  "candidateId": "verdict-causal-error-repair-decomposition",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.719Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 4,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "WorldLens/DrivingGen 已做多轴诊断，KineBench 已用独立运动学 grounding 处理世界模型与 extractor 的归因歧义，CounterScene 已用因果图和最小干预构造驾驶危险场景，通用 activation/causal mediation 也早已成熟。候选仍有一个较清晰的 residual：在固定失败 rollout 上替换显式错误通道、重跑冻结 planner，并估计 verdict reversal 的处理效应。该应用对象较新，但方法论主要是受控 patching 的迁移。",
+    "feasibility": "在 ReactSim 一类显式状态域中替换 ego、NPC、geometry 或 time identity 可编程实现，200 个失败场景和两个 planner 的规模也可控。然而这些通道是因果耦合的：替换 NPC 状态会要求同步更新遮挡、碰撞、未来响应和视频观测；局部 patch 极易产生 off-manifold 混合状态。视频域只能可靠处理少数可提取通道，完整五通道因果 repair 的实现难度高。",
+    "success-probability": "targeted repair 很可能改善某些静态指标，也可能翻转 planner verdict，但这种翻转未必是原错误通道的因果效应，而可能来自不一致混合状态或 planner 对 oracle 值的直接敏感性。失败集合按 verdict disagreement 选择还会引入 collider/selection bias。跨 planner 保持主要归因方向的概率偏低。",
+    "impact": "如果干预有效且有一致的机制语义，可把评测从列出错误升级为决定优先修复哪个通道，具备实际工程价值。若只能在显式仿真状态 patch 中成立而无法映射到视频世界模型，贡献会更像调试工具而不是通用世界模型因果分解。",
+    "comparison-readiness": "候选包含 no-repair、随机通道、随机等幅 repair、错误通道置换、full-oracle、最大静态误差、相关回归和 Shapley 基线，覆盖较好。缺失的关键比较是机制级 intervention：由可信 simulator 重新生成所有受影响 descendants，与简单 channel patch 比较；没有它无法判断所谓 invariant 是否足以定义合法处理。"
+  },
+  "strongestObjection": "ego、NPC、geometry、time identity 和 observation/extractor 不是可独立替换的模块化处理变量。把某个通道换成 reference、同时强行保持其因果后代和其他通道不变，通常会制造不可能的混合世界；此时 planner verdict 改变只证明 planner 对该 patch 敏感，不能解释原 reversal 的原因。没有结构因果模型或能重新生成受影响 descendants 的机制级 intervention，平均处理效应、必要性和充分性都没有明确识别对象。",
+  "requiredExperiment": "先在具有显式 branch lineage 与 mechanism interventions 的 simulator 中做 30 场景预检。对每个候选通道同时生成两种处理：简单 value patch，以及从该机制开始重新生成所有因果 descendants 的 structural repair；记录未处理 ancestors、不应变化的 siblings、动作和事件身份。只有两种处理在有效样本上方向一致且 intervention validity 达到预注册阈值，才扩展到至少 200 个失败场景和两个 planner。主比较需包含随机等幅 patch、错误通道、最大静态误差、full-oracle 和机制级 repair；同时在全量状态报告发生率，避免只在 disagreement 集合上作总体因果外推。",
+  "evidenceReopened": [
+    {
+      "title": "WorldLens: Full-Spectrum Evaluations of Driving World Models in Real World",
+      "url": "https://arxiv.org/abs/2512.10958",
+      "finding": "WorldLens 已提供视觉、几何、动作、下游任务和人工偏好多轴评价，但主要是相关性和诊断分数，没有对某一错误通道做修复干预后重跑同一 planner。"
+    },
+    {
+      "title": "CounterScene: Counterfactual Causal Reasoning in Generative World Models for Safety-Critical Closed-Loop Evaluation",
+      "url": "https://arxiv.org/abs/2603.21104",
+      "finding": "CounterScene 已用因果交互图识别关键智能体并实施最小干预来生成安全关键场景；它与本候选的固定失败修复对象不同，但使因果图和最小干预本身不再新颖。"
+    },
+    {
+      "title": "KineBench: Benchmarking Embodied World Models via IDM-Free Kinematic Grounding",
+      "url": "https://arxiv.org/abs/2607.19876",
+      "finding": "KineBench 截至 7 月 22 日已明确处理世界模型错误与 learned extractor 错误的归因歧义，并用显式运动学 grounding 做闭环验证；这要求本候选提供更强的通道干预识别而非仅换 extractor。"
+    },
+    {
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "finding": "准入阶梯已把 simulator-vs-policy failure attribution 定义为 L3 证据，并明确该层仍缺可操作协议；本候选可视为实例化，但不能把 L3 概念本身当创新。"
+    },
+    {
+      "title": "CG-World: A Large-Scale World-State Dataset and Protocol for World Models",
+      "url": "https://arxiv.org/abs/2607.26452",
+      "finding": "CG-World 已记录状态、事件、动作/机制干预、invariants 和严格反事实 branch lineage，说明合法 repair 应追踪因果后代，而不是仅拼接局部 oracle 值。"
+    },
+    {
+      "title": "RENEW: Towards Learning World Models and Repairing Model Exploitation from Preferences",
+      "url": "https://arxiv.org/abs/2607.14180",
+      "finding": "RENEW 已通过偏好直接修复可利用的世界模型动力学；其目标是模型更新而非错误通道处理效应，但进一步限制了泛称 world-model repair 的新颖性。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "b25232b1676c5e3b361e9a263b8063f6176998e0e95fb7d8acffad56c882a591"
+}

@@ -1,0 +1,30 @@
+{
+  "candidateId": "verdict-causal-error-repair-decomposition",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 3,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "WorldLens 已做 24 维相关性诊断，CounterScene 做生成式因果场景干预；固定失败 rollout、逐通道 repair 并观察冻结 planner verdict 的处理效应仍有价值，尤其是要求未修复通道不变量和随机等幅 repair 对照。",
+    "feasibility": "ReactSim 的显式 agents_history、agents_future、polylines、traffic lights 和 ego override 支持状态域的 ego/NPC/geometry 替换与重放；但它没有 LICENSE，也没有视频 extractor 通道。WorldLens 提供评测代码和公开视频输出，却不是可编辑 world-model state。Orbis 2 的 MIT checkpoint 接受 speed/yaw-rate 或 2D trajectory 并输出像素视频，但不暴露可独立替换的 NPC、geometry、time-identity latent，也没有 planner verdict。将五类通道统一到一个 frozen harness 不是普通 adapter，而是当前资产未定义的跨表示因果接口。",
+    "success-probability": "在 ReactSim 显式状态域做 ego/NPC 局部替换可能改变规则指标，但把结果称为世界模型 verdict 反转的通道因果分解还要求独立 reference branch、两个 planner 和未修复通道严格不变。视频域只能修复提取后的状态，无法保证像素世界模型其他通道不随生成重新采样；跨 planner 方向稳定的概率较低。",
+    "impact": "若能成立，会把多轴评价转成修复资源优先级，意义明显；但若只能在 ReactSim 的显式状态张量上替换 ground-truth channel，结论更接近 simulator state sensitivity，难以指导生成视频世界模型本身的训练和修复。",
+    "comparison-readiness": "WorldLens/DrivingGen 静态指标、no-repair、random repair 和 full-oracle replacement 都可定义；真正缺失的是同一失败集合上可编辑的 target world-model channels、冻结 planner 输入适配和独立 verdict oracle。Shapley/相关性基线容易实现，但无法弥补处理变量不可隔离。"
+  },
+  "strongestObjection": "dossier 把显式行为状态模拟器和像素生成世界模型放在同一五通道 repair 设计中，但现有固定资产没有共同、可逆且可局部编辑的 state representation。对生成视频先做 extractor 再替换 NPC/geometry，只是在修复 planner 输入，不是在修复世界模型 rollout；重新生成视频又会同时改变多个通道，因此核心单通道处理效应不可隔离。",
+  "requiredExperiment": "先把主张缩到 ReactSim 显式状态域，在 30 个失败场景为 ego、一个 NPC 和 geometry 各实现 typed replacement，逐张量哈希证明 action、未修复 agents、map、traffic light、时间索引和随机种子不变，并让两个冻结 planner 在同一 schema 上运行。只有单项 repair 相对 random equal-magnitude repair 能稳定改变 verdict，且 independent reference 不依赖 target simulator，才扩大到 200 场景；视频域必须另立研究，除非模型公开可编辑的通道级 latent 与确定性解码接口。",
+  "evidenceReopened": [
+    "https://github.com/Thinklab-SJTU/ReactSim-Bench/tree/71e54fda7426678d0baee9b62b0d32b323725fb8",
+    "https://github.com/worldbench/WorldLens/tree/fa6c5ff177e99d0d5b126f238ca42a430982b19a",
+    "https://github.com/lmb-freiburg/orbis2/tree/f8a0d6898689a20df10e9f71bcc0fa2abfdb7a8c",
+    "https://github.com/turingmotors/ACT-Bench/tree/e6c825519f27b3f1fd44c5b5d8b949fcb91fa5ee"
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "b25232b1676c5e3b361e9a263b8063f6176998e0e95fb7d8acffad56c882a591"
+}

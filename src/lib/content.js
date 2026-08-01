@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { lstat, readFile, readdir, realpath } from "node:fs/promises";
 import path from "node:path";
 import { reviewSnapshotFingerprint } from "./review-fingerprint.js";
 import {
@@ -101,9 +101,36 @@ async function readJsonDir(dir) {
   return docs;
 }
 
-export function markdownToHtml(markdown) {
+function markdownHeadingId(value, counts) {
+  const base = value
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+    .replace(/^-+|-+$/g, "") || "section";
+  const occurrence = (counts.get(base) || 0) + 1;
+  counts.set(base, occurrence);
+  return occurrence === 1 ? base : `${base}-${occurrence}`;
+}
+
+export function getMarkdownHeadings(markdown) {
+  const counts = new Map();
+  return markdown
+    .split(/\r?\n/)
+    .map((line) => line.trim().match(/^(#{1,3})\s+(.+)$/))
+    .filter(Boolean)
+    .map((heading) => ({
+      level: Math.min(heading[1].length, 3),
+      text: heading[2].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\*\*/g, ""),
+      id: markdownHeadingId(heading[2], counts)
+    }));
+}
+
+export function markdownToHtml(markdown, { headingIds = false } = {}) {
   const lines = markdown.split(/\r?\n/);
   const html = [];
+  const headingCounts = new Map();
   let paragraph = [];
   let list = [];
 
@@ -133,7 +160,8 @@ export function markdownToHtml(markdown) {
       flushParagraph();
       flushList();
       const level = Math.min(heading[1].length, 3);
-      html.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
+      const id = headingIds ? ` id="${escapeHtml(markdownHeadingId(heading[2], headingCounts))}"` : "";
+      html.push(`<h${level}${id}>${renderInlineMarkdown(heading[2])}</h${level}>`);
       continue;
     }
 
@@ -466,27 +494,525 @@ export function calculateIdeaScore(scoring, values = {}) {
   return Math.round(weightedScore / totalWeight);
 }
 
-export async function getIdeaCenter() {
-  const [ideaCenter, papers] = await Promise.all([
-    readFile(path.join(CONTENT, "idea-center.json"), "utf8").then(JSON.parse),
-    getPapers()
+async function resolveIdeaAuditPath(relativePath) {
+  if (!/^content\/idea-audits\/[a-z0-9][a-z0-9-]*\.json$/.test(relativePath || "")) {
+    throw new Error(`Invalid Idea audit path: ${relativePath}`);
+  }
+  const absolutePath = path.resolve(ROOT, String(relativePath || ""));
+  const auditRoot = path.join(CONTENT, "idea-audits");
+  const fileStat = await lstat(absolutePath);
+  if (fileStat.isSymbolicLink()) {
+    throw new Error(`Idea audit path cannot be a symbolic link: ${relativePath}`);
+  }
+  const [resolvedRoot, resolvedTarget] = await Promise.all([
+    realpath(auditRoot),
+    realpath(absolutePath)
   ]);
-  const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
+  const traversal = path.relative(resolvedRoot, resolvedTarget);
+  if (!traversal || traversal === ".." || traversal.startsWith(`..${path.sep}`)
+    || path.isAbsolute(traversal)) {
+    throw new Error(`Idea audit path must stay inside content/idea-audits: ${relativePath}`);
+  }
+  return resolvedTarget;
+}
+
+async function readIdeaAudit(relativePath) {
+  return JSON.parse(await readFile(await resolveIdeaAuditPath(relativePath), "utf8"));
+}
+
+function projectionArray(value, label, { optional = false } = {}) {
+  if (value == null && optional) return [];
+  if (!Array.isArray(value)) {
+    throw new TypeError(`Idea Center projection: ${label} must be an array.`);
+  }
+  return value;
+}
+
+function projectionObject(value, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError(`Idea Center projection: ${label} must be an object.`);
+  }
+  return value;
+}
+
+function projectionString(value, label) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new TypeError(`Idea Center projection: ${label} must be a non-empty string.`);
+  }
+  return value;
+}
+
+function projectionNumber(value, label) {
+  if (value === null || value === undefined || value === "" || typeof value === "boolean") {
+    throw new TypeError(`Idea Center projection: ${label} must be a finite number.`);
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    throw new TypeError(`Idea Center projection: ${label} must be a finite number.`);
+  }
+  return number;
+}
+
+function reviewedIdeaScore(scoring, reviews, context = "reviewed idea") {
+  const reviewList = projectionArray(reviews, `${context}.reviews`);
+  if (!reviewList.length) return null;
+
+  const scoringConfig = projectionObject(scoring, "scoring");
+  const scoringDimensions = projectionArray(scoringConfig.dimensions, "scoring.dimensions");
+  if (!scoringDimensions.length) {
+    throw new Error("Idea Center projection: scoring.dimensions must not be empty.");
+  }
+
+  const dimensionIds = scoringDimensions.map((dimension, index) => {
+    const item = projectionObject(dimension, `scoring.dimensions[${index}]`);
+    return projectionString(item.id, `scoring.dimensions[${index}].id`);
+  });
+  const maxScore = projectionNumber(scoringConfig.maxScore ?? 10, "scoring.maxScore");
+  const normalizedReviews = reviewList.map((review, reviewIndex) => {
+    const item = projectionObject(review, `${context}.reviews[${reviewIndex}]`);
+    const scores = projectionObject(item.scores, `${context}.reviews[${reviewIndex}].scores`);
+    const normalizedScores = Object.fromEntries(dimensionIds.map((dimensionId) => [
+      dimensionId,
+      projectionNumber(
+        scores[dimensionId],
+        `${context}.reviews[${reviewIndex}].scores.${dimensionId}`
+      )
+    ]));
+
+    return {
+      ...item,
+      overall: projectionNumber(item.overall, `${context}.reviews[${reviewIndex}].overall`),
+      scores: normalizedScores
+    };
+  });
+  const dimensions = Object.fromEntries(dimensionIds.map((dimensionId) => [
+    dimensionId,
+    Math.min(...normalizedReviews.map((review) => review.scores[dimensionId]))
+  ]));
+  const overall = Math.min(...normalizedReviews.map((review) => review.overall));
 
   return {
-    ...ideaCenter,
-    directions: ideaCenter.directions.map((direction) => ({
-      ...direction,
-      ideas: (direction.ideas || []).map((idea) => ({
-        ...idea,
-        computedScore: calculateIdeaScore(ideaCenter.scoring, idea.score?.dimensions),
-        evidence: idea.evidence.map((source) => ({
-          ...source,
-          localLink: source.localPaperId ? paperMap.get(source.localPaperId)?.link : undefined
-        }))
+    overall,
+    band: overall === maxScore && Object.values(dimensions).every((score) => score === maxScore)
+      ? "全项通过"
+      : "仍有缺口",
+    dimensions
+  };
+}
+
+function ideaPoolItemId(item) {
+  return typeof item === "string" ? item : item?.candidateId || item?.id;
+}
+
+function ideaPoolSourceUrl(source) {
+  return source?.url || source?.primaryUrl || source?.officialUrl;
+}
+
+function projectIdeaCandidatePool(pool) {
+  const references = pool.verifiedReferences || pool.searchAudit?.references || [];
+  const assets = pool.assetChecks || pool.assetAudit?.assets || [];
+  const candidateLedger = pool.candidateLedger || [];
+  const ledgerMap = new Map(candidateLedger.map((entry) => [ideaPoolItemId(entry), entry]));
+  const shortlist = pool.shortlist || [];
+  const rejected = pool.rejected || [];
+
+  return {
+    searchedAt: pool.searchedAt || pool.reviewedAt,
+    conclusion: typeof pool.conclusion === "string"
+      ? pool.conclusion
+      : pool.conclusion?.summary,
+    latestDelta: pool.searchAudit?.latestDelta || pool.latestDelta,
+    counts: {
+      queries: pool.searchAudit?.queryRuns?.length || 0,
+      references: references.length,
+      assets: assets.length,
+      candidates: candidateLedger.length,
+      shortlisted: shortlist.length,
+      rejected: rejected.length
+    },
+    candidateIds: candidateLedger.map(ideaPoolItemId),
+    shortlistIds: shortlist.map(ideaPoolItemId),
+    queryRuns: (pool.searchAudit?.queryRuns || []).map((run) => ({
+      id: run.familyId || run.family || run.id,
+      query: run.query,
+      source: run.source,
+      rationale: run.scopeRationale || run.rationale,
+      resultCount: run.resultCount
+    })),
+    references: references.map((source) => ({
+      id: source.canonicalId || source.id,
+      title: source.title || source.name || source.id,
+      url: ideaPoolSourceUrl(source),
+      venue: source.venue,
+      year: source.year,
+      provenance: source.sourceFamily || source.sourceOrigin || source.provenance
+        || (source.localPaperId ? "local-corpus" : "external-primary")
+    })),
+    assets: assets.map((asset) => ({
+      name: asset.name || asset.title || asset.id,
+      type: asset.type,
+      url: ideaPoolSourceUrl(asset),
+      version: asset.fixedCommit || asset.commit || asset.digest || asset.sha256 || asset.version,
+      finding: asset.finding || asset.result || asset.usability || asset.verifiedCapability
+        || asset.reuse || asset.status || asset.notes
+    })),
+    rejected: rejected.map((entry) => {
+      const id = ideaPoolItemId(entry);
+      const ledgerEntry = ledgerMap.get(id) || {};
+      const rawReasons = entry.reasons || entry.mechanicalReasons || entry.reason || [];
+      return {
+        id,
+        title: entry.title || ledgerEntry.title || ledgerEntry.canonicalClaim
+          || ledgerEntry.coreClaim || id,
+        category: entry.category || ledgerEntry.category || "未通过硬门槛",
+        reasons: Array.isArray(rawReasons) ? rawReasons : [rawReasons],
+        primaryUrl: entry.primaryUrl || ideaPoolSourceUrl(entry)
+          || ledgerEntry.primaryUrl || ideaPoolSourceUrl(ledgerEntry)
+      };
+    })
+  };
+}
+
+function newestIdeaAuditTimestamp(pools) {
+  return pools.map((pool) => pool.searchedAt).filter(Boolean).sort().at(-1);
+}
+
+function uniqueIdeaPoolItems(items, key) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const value = key(item);
+    if (!value || seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+}
+
+function projectIdeaCandidatePools(rawPools) {
+  const pools = rawPools.map(projectIdeaCandidatePool);
+  if (pools.length === 1) return { ...pools[0], rounds: 1 };
+
+  const queryRuns = uniqueIdeaPoolItems(
+    pools.flatMap((pool) => pool.queryRuns),
+    (run) => `${run.id || "query"}:${run.query || ""}`
+  );
+  const references = uniqueIdeaPoolItems(
+    pools.flatMap((pool) => pool.references),
+    (source) => source.id || source.url
+  );
+  const assets = uniqueIdeaPoolItems(
+    pools.flatMap((pool) => pool.assets),
+    (asset) => `${asset.url || asset.name}:${asset.version || ""}`
+  );
+  const candidateIds = [...new Set(pools.flatMap((pool) => pool.candidateIds))];
+  const shortlistIds = [...new Set(pools.flatMap((pool) => pool.shortlistIds))];
+  const rejected = uniqueIdeaPoolItems(
+    pools.flatMap((pool) => pool.rejected),
+    (candidate) => candidate.id
+  ).filter((candidate) => !shortlistIds.includes(candidate.id));
+
+  return {
+    searchedAt: newestIdeaAuditTimestamp(pools),
+    conclusion: pools.map((pool) => pool.conclusion).filter(Boolean).join(" "),
+    latestDelta: pools.map((pool) => pool.latestDelta).filter(Boolean).join(" "),
+    rounds: pools.length,
+    counts: {
+      queries: queryRuns.length,
+      references: references.length,
+      assets: assets.length,
+      candidates: candidateIds.length,
+      shortlisted: shortlistIds.length,
+      rejected: rejected.length
+    },
+    candidateIds,
+    shortlistIds,
+    queryRuns,
+    references,
+    assets,
+    rejected
+  };
+}
+
+function projectLegacyIdeaAudit(audit) {
+  const sources = new Map((audit.sourceLedger || []).map((source) => [source.canonicalId, source]));
+  return {
+    reviewedAt: audit.reviewedAt,
+    summary: audit.closureSummary?.interpretation,
+    ideas: (audit.ideas || []).map((idea) => ({
+      id: idea.originalIdeaId,
+      title: idea.originalClaim?.title || idea.originalIdeaId,
+      decision: idea.decision,
+      rationale: idea.rationale,
+      residualBoundary: idea.residualBoundary,
+      requiredNextAction: idea.requiredNextAction,
+      nearestWorks: (idea.nearestWorks || []).map((work) => ({
+        ...work,
+        title: sources.get(work.canonicalId)?.title || work.canonicalId,
+        url: sources.get(work.canonicalId)?.url
       }))
     }))
   };
+}
+
+function projectIdeaSelectionAudit(reports) {
+  const normalized = reports.map((report) => ({
+    selectedAt: report.selectedAt,
+    selectionAgentId: report.selectionAgentId,
+    candidatePoolPath: report.candidatePoolPath,
+    selectedCount: (report.selectedCandidateIds || []).length,
+    decisionCount: (report.candidateDecisions || []).length,
+    crossDirectionFinding: report.crossDirectionFinding
+  }));
+  return {
+    rounds: normalized.length,
+    selectedAt: normalized.map((report) => report.selectedAt).filter(Boolean).sort().at(-1),
+    reviewerCount: new Set(normalized.map((report) => report.selectionAgentId)).size,
+    decisionCount: normalized.reduce((sum, report) => sum + report.decisionCount, 0),
+    selectedCount: normalized.reduce((sum, report) => sum + report.selectedCount, 0),
+    reports: normalized
+  };
+}
+
+async function loadReviewedIdea(candidate, scoring, paperMap, workflow, readAudit, context) {
+  const candidateRef = projectionObject(candidate, context);
+  const dossierPath = projectionString(candidateRef.dossierPath, `${context}.dossierPath`);
+  const reviewPaths = projectionArray(candidateRef.reviewPaths, `${context}.reviewPaths`);
+  const [dossier, ...reviews] = await Promise.all([
+    readAudit(dossierPath),
+    ...reviewPaths.map((reviewPath, index) => (
+      readAudit(projectionString(reviewPath, `${context}.reviewPaths[${index}]`))
+    ))
+  ]);
+  const dossierRecord = projectionObject(dossier, `${context}.dossier`);
+  const dossierId = projectionString(
+    dossierRecord.id || dossierRecord.candidateId,
+    `${context}.dossier.candidateId`
+  );
+  const score = reviewedIdeaScore(scoring, reviews, `${context} (${dossierId})`);
+  if (!score) {
+    throw new Error(
+      `Idea Center projection: ${context}.reviewPaths must contain at least one review report.`
+    );
+  }
+
+  const workflowConfig = projectionObject(workflow, "idea exploration workflow");
+  const evaluation = projectionObject(workflowConfig.evaluation, "idea exploration workflow.evaluation");
+  const requirements = projectionObject(
+    workflowConfig.requirements,
+    "idea exploration workflow.requirements"
+  );
+  const reviewerLenses = projectionArray(
+    evaluation.reviewerLenses,
+    "idea exploration workflow.evaluation.reviewerLenses"
+  );
+  const requiredLenses = reviewerLenses.map((lens, index) => {
+    const item = projectionObject(
+      lens,
+      `idea exploration workflow.evaluation.reviewerLenses[${index}]`
+    );
+    return projectionString(
+      item.id,
+      `idea exploration workflow.evaluation.reviewerLenses[${index}].id`
+    );
+  });
+  const minimumReviewers = projectionNumber(
+    requirements.minBlindReviewersPerIdea,
+    "idea exploration workflow.requirements.minBlindReviewersPerIdea"
+  );
+  const panelComplete = reviews.length >= minimumReviewers
+    && requiredLenses.every((lens) => reviews.some((review) => review.lens === lens));
+  const publicationScore = projectionNumber(
+    evaluation.publicationScore,
+    "idea exploration workflow.evaluation.publicationScore"
+  );
+  const passed = panelComplete
+    && score.overall === publicationScore
+    && Object.values(score.dimensions).every((value) => value === publicationScore);
+  score.band = passed ? "全项通过" : "仍有缺口";
+  if (candidateRef.reviewStatus === "passed" && !passed) {
+    throw new Error(`${dossierId}: incomplete or non-perfect panel cannot be marked passed.`);
+  }
+  const reviewStatus = passed ? "passed" : candidateRef.reviewStatus || "rejected";
+
+  return {
+    ...dossierRecord,
+    id: dossierId,
+    rank: candidateRef.rank,
+    decision: candidateRef.decision,
+    reviewStatus,
+    score,
+    computedScore: score.overall,
+    blindReview: reviews.length ? {
+      status: reviewStatus,
+      round: candidateRef.round || 1,
+      summary: candidateRef.summary,
+      nextAction: candidateRef.nextAction,
+      reviewers: reviews.map((review, index) => ({
+        agentId: review.reviewerAgentId,
+        lens: review.lens,
+        reviewedAt: review.reviewedAt,
+        scores: review.scores,
+        rationales: review.rationales,
+        strongestObjection: review.strongestObjection,
+        requiredExperiment: review.requiredExperiment,
+        overall: review.overall,
+        reportPath: reviewPaths[index]
+      }))
+    } : null,
+    evidence: projectionArray(
+      dossierRecord.evidence,
+      `${context}.dossier.evidence`,
+      { optional: true }
+    ).map((source, sourceIndex) => {
+      const sourceRecord = projectionObject(
+        source,
+        `${context}.dossier.evidence[${sourceIndex}]`
+      );
+      return {
+        ...sourceRecord,
+        localLink: sourceRecord.localPaperId
+          ? paperMap.get(sourceRecord.localPaperId)?.link
+          : undefined
+      };
+    })
+  };
+}
+
+export async function projectIdeaCenterData(
+  ideaCenter,
+  { papers = [], workflow, readAudit = readIdeaAudit } = {}
+) {
+  const center = projectionObject(ideaCenter, "ideaCenter");
+  const directionRecords = projectionArray(center.directions, "ideaCenter.directions");
+  const paperRecords = projectionArray(papers, "papers");
+  if (typeof readAudit !== "function") {
+    throw new TypeError("Idea Center projection: readAudit must be a function.");
+  }
+  const paperMap = new Map(paperRecords.map((paper, paperIndex) => {
+    const paperRecord = projectionObject(paper, `papers[${paperIndex}]`);
+    return [paperRecord.id, paperRecord];
+  }));
+
+  const directions = await Promise.all(directionRecords.map(async (direction, directionIndex) => {
+    const directionRecord = projectionObject(direction, `ideaCenter.directions[${directionIndex}]`);
+    const directionId = projectionString(
+      directionRecord.id,
+      `ideaCenter.directions[${directionIndex}].id`
+    );
+    const directionContext = `ideaCenter.directions[${directionIndex}] (${directionId})`;
+    const isReviewed = directionRecord.status === "reviewed";
+    const candidateRefs = projectionArray(
+      directionRecord.candidateRefs,
+      `${directionContext}.candidateRefs`,
+      { optional: !isReviewed }
+    );
+    const candidatePoolPaths = projectionArray(
+      directionRecord.candidatePoolPaths
+        ?? (directionRecord.candidatePoolPath ? [directionRecord.candidatePoolPath] : []),
+      `${directionContext}.candidatePoolPaths`
+    ).map((auditPath, pathIndex) => projectionString(
+      auditPath,
+      `${directionContext}.candidatePoolPaths[${pathIndex}]`
+    ));
+    const selectionReportPaths = projectionArray(
+      directionRecord.selectionReportPaths,
+      `${directionContext}.selectionReportPaths`,
+      { optional: true }
+    ).map((auditPath, pathIndex) => projectionString(
+      auditPath,
+      `${directionContext}.selectionReportPaths[${pathIndex}]`
+    ));
+    const [reviewedIdeas, candidatePool, legacyAudit, selectionReports] = await Promise.all([
+      Promise.all((isReviewed ? candidateRefs : []).map((candidate, candidateIndex) => (
+        loadReviewedIdea(
+          candidate,
+          center.scoring,
+          paperMap,
+          workflow,
+          readAudit,
+          `${directionContext}.candidateRefs[${candidateIndex}]`
+        )
+      ))),
+      candidatePoolPaths.length
+        ? Promise.all(candidatePoolPaths.map((auditPath) => readAudit(auditPath)))
+        : null,
+      directionRecord.legacyAuditPath ? readAudit(directionRecord.legacyAuditPath) : null,
+      Promise.all(selectionReportPaths.map((auditPath) => readAudit(auditPath)))
+    ]);
+    const embeddedIdeaRecords = projectionArray(
+      directionRecord.ideas,
+      `${directionContext}.ideas`,
+      { optional: true }
+    );
+    const embeddedIdeas = (isReviewed ? [] : embeddedIdeaRecords).map((idea, ideaIndex) => {
+      const ideaRecord = projectionObject(idea, `${directionContext}.ideas[${ideaIndex}]`);
+      return {
+        ...ideaRecord,
+        computedScore: calculateIdeaScore(center.scoring, ideaRecord.score?.dimensions),
+        evidence: projectionArray(
+          ideaRecord.evidence,
+          `${directionContext}.ideas[${ideaIndex}].evidence`,
+          { optional: true }
+        ).map((source, sourceIndex) => {
+          const sourceRecord = projectionObject(
+            source,
+            `${directionContext}.ideas[${ideaIndex}].evidence[${sourceIndex}]`
+          );
+          return {
+            ...sourceRecord,
+            localLink: sourceRecord.localPaperId
+              ? paperMap.get(sourceRecord.localPaperId)?.link
+              : undefined
+          };
+        })
+      };
+    });
+    const projectionWarnings = isReviewed && embeddedIdeaRecords.length
+      ? [
+          `${directionContext}: ignored ${embeddedIdeaRecords.length} embedded idea(s); `
+          + "reviewed directions only project candidateRefs."
+        ]
+      : [];
+
+    return {
+      ...directionRecord,
+      ideas: isReviewed ? reviewedIdeas : embeddedIdeas,
+      projectionWarnings,
+      candidatePool: candidatePool ? projectIdeaCandidatePools(candidatePool) : null,
+      legacyAudit: legacyAudit ? projectLegacyIdeaAudit(legacyAudit) : null,
+      selectionAudit: selectionReports.length
+        ? projectIdeaSelectionAudit(selectionReports)
+        : null
+    };
+  }));
+
+  const finalReview = center.finalReview?.reportPath
+    ? {
+        ...center.finalReview,
+        report: {
+          ...await readAudit(projectionString(
+            center.finalReview.reportPath,
+            "ideaCenter.finalReview.reportPath"
+          )),
+          status: center.finalReview.status
+        }
+      }
+    : center.finalReview;
+
+  return {
+    ...center,
+    directions,
+    finalReview
+  };
+}
+
+export async function getIdeaCenter() {
+  const [ideaCenter, papers, workflow] = await Promise.all([
+    readFile(path.join(CONTENT, "idea-center.json"), "utf8").then(JSON.parse),
+    getPapers(),
+    readFile(path.join(CONFIG, "idea-exploration-workflow.json"), "utf8").then(JSON.parse)
+  ]);
+
+  return projectIdeaCenterData(ideaCenter, { papers, workflow });
 }
 
 const REVIEW_TYPE_LABELS = {

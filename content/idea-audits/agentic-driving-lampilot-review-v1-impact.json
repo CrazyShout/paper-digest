@@ -1,0 +1,34 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "lens": "impact-reviewer",
+  "reviewerAgentId": "019fbb48-8e3c-7432-94ce-8cc509aded17",
+  "reviewedAt": "2026-08-01T03:18:25Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 7,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "group holdout、检索来源追踪和记忆消融都不是一般方法上的新概念，语言模型程序与经验记忆也已有先例。候选的独特贡献在于把 LaMPilot human-feedback 路径中的总分拆成语言改写泛化、异状态记忆收益和同初态策略复用三个 estimand，并用保持其余仓库内容不变的定向 denylist 识别最后一项。若实际检索 trace 证明同组策略被消费且改变排名，这会形成一个具体而非泛化指控式的 benchmark 审计。",
+    "feasibility": "固定提交的代码直接显示 demo 先运行、成功策略写入持久 Chroma 仓库，随后测试只按精确 iid 跳过；DbLv1Dataset 也明确对 sample 与 command 做笛卡尔展开。因此重建官方路径并加入过滤 facade 是可行的。主要工程障碍是现有 PolicyRepository 只保存策略名、代码和描述，不保存来源 sample、seed 或 command，provenance 必须从一次全新运行开始旁路记录；外部 LLM、embedding 与 Chroma 版本也可能难以完全冻结。",
+    "success-probability": "代码结构使同 sample 的其他 command 在 demo 策略已持久化后进入测试成为真实可能，命令相似度检索也使实际消费具有合理概率。但目前没有一手运行结果证明这些同组策略进入 top-k、进入提示后被生成器利用，或足以改变成功率和模型排序；策略名重写还会模糊来源。Gate 0 能快速关闭这一不确定性，但在看到 trace 前只能给中等成功概率。",
+    "impact": "若同状态复用显著贡献 human-feedback 分数，LaMPilot 类 benchmark 应增加 sample/seed 分组、策略来源分布和定向屏蔽结果，模型排名与所谓语言改写泛化结论也可能改变。若同组检索和效应上界很小，负结果会为 exact-ID 协议提供可复算的稳健性证据，并防止把合法记忆能力笼统称为泄漏。影响主要覆盖该固定 human-feedback 持久记忆路径及相似 benchmark，不应外推到 stateless ICL、真实道路驾驶或所有检索增强 Agent。",
+    "comparison-readiness": "官方 exact-ID、same-sample 与 same-seed denylist、严格 group cold start、全库 reset、stateless ICL 和 retrieved-but-hidden placebo 形成了较完整的归因阶梯；组级配对统计和第二模型复核也能避免把 command 行伪作独立样本。还应增加一个内容与相似度匹配但来源为异 sample/异 seed 的检索对照，区分同状态来源本身与被屏蔽策略更相关、更高质量这两个解释。"
+  },
+  "strongestObjection": "LaMPilot 的持久策略复用本来就是被评测的系统能力；移除同 sample 或同 seed 的记忆后性能下降，并不自动说明协议混淆了语言泛化。除非论文或报告明确把 human-feedback 总分解释为跨状态语言泛化，并且实际 trace 证明同组策略被消费，候选可能只是在重新命名一个预期的 episodic-memory 消融。",
+  "requiredExperiment": "从空仓库开始重跑三个预注册任务族，在每次 add_new_policy 时不可变地记录 config、sample、simulator seed、command、策略名和版本，并在每次 retrieval 后记录 top-k、进入提示顺序及实际复用代码；对同一测试条目配对比较官方 exact-ID、same-sample denylist、same-seed denylist、retrieved-but-hidden placebo 与相似度匹配的异组策略替代。只有同组策略确实被消费、效应按 sample/seed 聚类后稳定且在第二模型或任务族复现，才能把总分解释为包含同状态复用贡献。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "finding": "通过该固定提交的 GitHub Contents API 重新打开 test_hf.py、dbl.py、hf_agent.py 与 policy_repo.py；代码确认 demo 先执行、成功策略持久化、测试只跳过精确 iid，sample-command 形成不同 ID，同时现有策略记录没有 sample/seed provenance。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2209.07753",
+      "finding": "重新打开 Code as Policies 一手页面；该工作已证明语言模型可从语言命令生成并重组具身控制程序，适合作为无 LaMPilot 持久驾驶策略库时的程序生成谱系基线，但不回答同状态策略复用的评测归因。"
+    }
+  ],
+  "overall": 7,
+  "dossierSnapshotFingerprint": "f19b3fb2c5b25e697a331f3cf24a94485d7fe771a999944b7681bc2306deb1d7"
+}

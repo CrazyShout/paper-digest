@@ -1,0 +1,74 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../../components/NotebookDocs.jsx";
+import DigestContent from "../../../components/DigestContent.astro";
+import {
+  getDigests,
+  getMarkdownHeadings,
+  markdownToHtml
+} from "../../../lib/content.js";
+import { getNotebookData } from "../../../lib/navigation.js";
+
+export async function getStaticPaths() {
+  const digests = await getDigests();
+  return digests.map((digest) => ({
+    params: { id: digest.id }
+  }));
+}
+
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const digest = notebook.digests.find((item) => item.id === Astro.params.id);
+
+if (!digest) {
+  return Astro.redirect(notebook.base);
+}
+
+const bodyHtml = markdownToHtml(digest.body, { headingIds: true });
+const toc = [
+  ...getMarkdownHeadings(digest.body)
+    .filter((heading) => heading.level === 2)
+    .map((heading) => ({
+      depth: 2,
+      title: heading.text,
+      url: `#${heading.id}`
+    })),
+  ...digest.tags.map((tag) => ({
+    depth: 2,
+    title: tag.label,
+    url: `#section-${tag.id}`
+  })),
+  { depth: 2, title: "阅读讨论", url: "#discussion" }
+];
+---
+
+<BaseLayout
+  title={`${digest.title} · Paper Digest`}
+  description={digest.summary}
+  canonicalPath={`digests/${digest.id}/`}
+  type="article"
+>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={digest.title}
+    description={digest.summary}
+    eyebrow={`Weekly Digest · ${digest.displayDate || digest.date}`}
+    toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    notes={{
+      digestId: digest.id,
+      issueLabel: digest.displayDate || digest.date,
+      seedNotes: digest.notes || [],
+      commentsEndpoint: notebook.runtime.commentsEndpoint
+    }}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <DigestContent
+      digest={digest}
+      basePath={notebook.base}
+      bodyHtml={bodyHtml}
+    />
+  </NotebookDocs>
+</BaseLayout>

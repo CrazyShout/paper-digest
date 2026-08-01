@@ -1,0 +1,90 @@
+---
+const { review } = Astro.props;
+const reviewers = Array.isArray(review?.reviewers) ? review.reviewers : [];
+const dimensions = [
+  ["novelty", "新颖性"],
+  ["feasibility", "实现可行性"],
+  ["success-probability", "成功率"],
+  ["impact", "影响力"],
+  ["comparison-readiness", "可比实验"]
+];
+const minimumScores = dimensions.map(([id, label]) => ({
+  id,
+  label,
+  score: reviewers.length
+    ? Math.min(...reviewers.map((reviewer) => Number(reviewer.scores?.[id] || 0)))
+    : 0
+}));
+const minimumOverall = reviewers.length
+  ? Math.min(...reviewers.map((reviewer) => Number(reviewer.overall || 0)))
+  : 0;
+const lensLabels = {
+  "novelty-reviewer": "新颖性视角",
+  "implementation-reviewer": "实现视角",
+  "empirical-reviewer": "实证视角",
+  "impact-reviewer": "影响力视角",
+  "benchmark-reviewer": "基准视角"
+};
+const statusLabel = review?.status === "passed"
+  ? "通过"
+  : review?.status === "rejected"
+    ? "提前淘汰"
+    : "需修订";
+const nextAction = review?.nextAction || review?.requiredAction;
+---
+
+{reviewers.length > 0 && (
+  <section class="blind-review-summary" aria-label="独立盲评结果">
+    <header>
+      <div>
+        <p class="eyebrow">Independent Panel · Round {review.round}</p>
+        <h4>{reviewers.length} 位评估者独立复核 · {statusLabel}</h4>
+      </div>
+      <strong>{minimumOverall}<span>/10</span></strong>
+    </header>
+    <dl>
+      {minimumScores.map((dimension) => (
+        <div>
+          <dt>{dimension.label}</dt>
+          <dd>{dimension.score}/10</dd>
+        </div>
+      ))}
+    </dl>
+    {review.summary && <p>{review.summary}</p>}
+    {nextAction && (
+      <div class="blind-review-next">
+        <strong>下一项决定性工作</strong>
+        <p>{nextAction}</p>
+      </div>
+    )}
+    <details class="blind-review-reports">
+      <summary>查看每位评审的证据判断</summary>
+      <ol>
+        {reviewers.map((reviewer) => (
+          <li>
+            <header>
+              <strong>{lensLabels[reviewer.lens] || reviewer.lens}</strong>
+              <span>{reviewer.overall}/10</span>
+            </header>
+            <div>
+              <h5>最强反对意见</h5>
+              <p>{reviewer.strongestObjection}</p>
+            </div>
+            <div>
+              <h5>要求的决定性实验</h5>
+              <p>{reviewer.requiredExperiment}</p>
+            </div>
+            <dl>
+              {dimensions.map(([id, label]) => (
+                <div>
+                  <dt>{label} · {reviewer.scores[id]}/10</dt>
+                  <dd>{reviewer.rationales[id]}</dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ol>
+    </details>
+  </section>
+)}

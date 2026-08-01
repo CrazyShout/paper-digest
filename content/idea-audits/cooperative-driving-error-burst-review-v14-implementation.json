@@ -1,0 +1,31 @@
+{
+  "candidateId": "temporal-dependence-cooperative-error-planner-effect",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "05aee8a9-d339-45a8-a801-b7b29939e44e",
+  "reviewedAt": "2026-08-01T04:15:18Z",
+  "scores": {
+    "novelty": 8,
+    "feasibility": 4,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "ASE 一手工作已经报告违规前 cooperative error 增多并使用计数回归，CooperScene 也证明真实链路指标随时间变化；通信中断、腐化和 planner-centric 反事实同样已有先例。候选仍保留清晰残差：固定错误多重集合、对象支持、严重度、规划暴露与前状态，只重排同一路线内时间依赖，并要求规划后果或方法排序发生变化。",
+    "feasibility": "MDrive 固定提交提供闭环场景、多个感知模型、object-list planners、GT 与 Apache-2.0 代码；官方 ASE 仓库和固定提交也提供 RQ3/RQ4 路线、四类 cooperative models 与 checkpoint 入口。扣分来自两栈均未运行，MDrive checkpoint 是未记录 hash 的 Google Drive 资产，ASE 仓库根目录没有许可证文件；两者依赖老旧且脆弱的 Python 3.7、CUDA 11.3、PyTorch 1.10.1、CARLA 0.9.10.1/0.9.12 和 spconv 1.2.1。官方接口记录错误计数和闭环结果，但没有 planner pre-state serializer、逐帧 memory hash、可交换对象级错误导出或四臂重排回放。",
+    "success-probability": "自然错误靠近违规的一手相关信号提高了找到候选序列的可能性，但它不保证存在非 Ghost、同对象、同可见性且可合法交换的窗口。固定前状态后效应可能消失，或 no-op/CARLA 漂移与候选效应同量级；即使单步 planner sensitivity 成立，短闭环共同前缀和方法排序变化仍是额外硬门。缺少自然事件率、有效路线数与功效估计，使 6-10 周完成第二栈复核不稳。",
+    "impact": "若固定边际后 burst 仍改变规划或方法排序，将直接要求协同基准保留连续错误与消息时序，并修正独立随机故障协议；严格零结果也能证明边际指标在声明范围内足够。影响受限于可恢复的公开栈和合法可交换窗口，开放环 fallback 不能支持碰撞或道路安全外推。",
+    "comparison-readiness": "边际计数、独立随机顺序、一阶 Markov burst、原始顺序、合法随机顺序、no-op、ego-only、always-cooperate 与 interruption-aware 方法覆盖了主要替代解释。较弱处是第二模型/第二栈只有条件式计划，V2X-INCOP、LRCP 和 Defer to Plan 的 checkpoint/interface 未固定，窗口、严重度匹配、planner exposure、样本量和方法排序判据还没有 executable manifest。"
+  },
+  "strongestObjection": "错误序列未必可交换：把同一误差记录从分散时刻移动到连续窗口，可能改变对象可见性、tracker memory、planner history 与此前动作产生的世界状态。没有相同 planner pre-state 恢复和合法窗口证明时，所谓固定边际只固定了账面错误条目，没有固定真正进入规划器的状态，因果效应不可识别。",
+  "requiredExperiment": "优先用 Apache-2.0 的 MDrive 固定一个 checkpoint、RulePlanner 和路线配置，完成同一路线重复 smoke；在未注入路线中找到至少两类非 Ghost cooperative-only errors，并从多个独立路线提取同对象、同可见性、同严重度的合法窗口。对每个快照运行 no-op、原始、clustered、dispersed 与合法随机顺序，要求输入多重集合和 pre-state hash 相等、no-op 低于冻结 floor，并以完整路线而非帧统计。若无法获得跨路线有效窗口或固定状态后效应消失，即停止闭环和第二栈投入。",
+  "evidenceReopened": [
+    "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+    "https://arxiv.org/abs/2605.10904",
+    "https://arxiv.org/abs/2509.24927",
+    "https://github.com/meng2180/V2X-Cooperative-Perception/tree/8b4987a7a4de487b3e232b482f26755475b06696",
+    "https://arxiv.org/abs/2606.31219"
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "a064f6302c9468a82c61fac1dca63f8a6b3b615797323341e293c7ba9ea0fbdc"
+}

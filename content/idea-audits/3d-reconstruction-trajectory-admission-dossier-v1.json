@@ -1,0 +1,211 @@
+{
+  "candidateId": "trajectory-support-task-admission-certificate",
+  "title": "面向任务假接受风险的轨迹支持准入证书",
+  "hook": "把驾驶重建资产从无条件渲染器改为逐轨迹给出可校准准入或拒绝结论的选择性系统。",
+  "output": "轨迹级准入证书、固定覆盖率 coverage-risk 曲线、预注册评测协议与负结果边界报告。",
+  "effort": "1 名研究者，2-4 张 24-48GB 显存 GPU，并需要可运行的 CARLA 与冻结任务栈。",
+  "timeline": "总周期 6-10 周；Gate 0/1 最多 2 周，校准与锁定实验 4-8 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未证明任何公开重建资产已经产生任务假接受事件；该发生性只由 Gate 0 检查。",
+    "尚未运行 Cam2Sim、SplatAD、NeuRAD、Instant NuRec 或本 dossier 中的任何自建代码。",
+    "不把可合成轨迹偏移、像素不确定性或仓库存在写成真实道路认证证据。"
+  ],
+  "whyNow": "FlexDrive 已把 out-of-path 视角作为独立评测对象，GAVIS 与 Predictive Photometric Uncertainty 已提供视角或像素可靠性信号，Cam2Sim 和 Instant NuRec 又把重建资产接到行为或策略比较；当前可检验的剩余问题不是再发明通用 uncertainty map，而是这些信号能否在固定 coverage 下阻止任务结论错误的轨迹被放行。",
+  "keyProblem": "窄采集轨迹之外的候选轨迹缺少直接监督。视觉质量、最近训练相机距离或像素 uncertainty 即使变差，也没有自动给出某条轨迹是否会改变冻结感知或规划结论的可校准准入规则；但这种任务假接受是否在拟议公开测试包中实际发生仍未知。",
+  "problemEvidence": [
+    "FlexDrive 用模拟器真值单独评测 out-of-path 渲染，直接表明录制路径内指标不能覆盖轨迹偏移。",
+    "GAVIS 把未见方向的可靠性表示为各向异性可见性，Predictive Photometric Uncertainty 从重建残差产生像素级预测不确定性；二者均未把输出校准成轨迹级任务假接受风险。",
+    "Cam2Sim 提供真实录制到 CARLA 场景、轨迹重放和闭环任务入口，Instant NuRec 报告有限策略集合上的聚合排序；这些一手结果提供任务消费者和实验接口，但不证明本候选的错误事件已经出现。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "GAVIS 与 Predictive Photometric Uncertainty",
+      "overlap": "提供后验视角或像素 uncertainty，可被聚合为轨迹分数。",
+      "unreplacedResidual": "它们没有估计固定 coverage 下的轨迹级任务假接受风险，也未验证跨城市或 rig 校准。"
+    },
+    {
+      "work": "FlexDrive",
+      "overlap": "直接优化并量化 out-of-path 视图质量。",
+      "unreplacedResidual": "它没有为具体重建资产输出面向冻结任务栈的 accept/abstain 证书。"
+    },
+    {
+      "work": "Cam2Sim、SafeComp 与 Instant NuRec",
+      "overlap": "分别提供闭环重放、能力边界思想和策略排序证据。",
+      "unreplacedResidual": "它们未在同一协议中比较简单距离、现有 uncertainty 与任务风险校准器的固定覆盖率增量。"
+    }
+  ],
+  "currentLimitations": "最近工作已覆盖 out-of-path 画质、可见性、像素预测不确定性和有限任务研究，因此本候选不能以 uncertainty map、轨迹距离或平均策略排序作为新颖性。唯一不可替代 residual 是：在相同 coverage 和相同校准预算下，相对最近训练相机距离及现有像素 uncertainty，轨迹证书对 held-out 域任务假接受率提供可重复的增量降低。",
+  "residualClaim": "只研究跨场景的轨迹级 task-risk control；不提出新的 renderer，不宣称通用闭环安全认证，也不以 PSNR 改善代替任务后果。",
+  "estimand": {
+    "targetPopulation": "满足 Gate 0 的 CARLA/Cam2Sim 类场景中，由预注册横向偏移、转向和遮挡模板产生且位于声明 ODD 内的候选轨迹。",
+    "statisticalUnit": "推断单位是独立 scene episode；scene 内的多条轨迹和多个任务头是重复测量，不能当作独立样本。",
+    "outcome": "Y=1 表示证书放行该轨迹，但冻结任务栈相对时间与轨迹匹配真值发生预注册的检测集合、占据或规划 verdict 不一致。",
+    "primaryEstimand": "在共同 coverage c=0.80 下，Delta_FA(c)=R_certificate(c)-R_baseline(c)，其中 R 是 accepted trajectories 中 Y=1 的比例，baseline 分别为最近相机距离和现有像素 uncertainty 经同一校准器后的最强者。",
+    "secondaryEstimands": "跨城市或 rig 的风险校准误差、coverage 漂移，以及不同任务头上的 scene-level risk difference；NVS 指标只作诊断。"
+  },
+  "hypothesis": "若捕获支持、跨视角残差和轨迹几何以同一 held-out 校准协议组合，则在 c=0.80 的固定 coverage 下，证书相对最近训练相机距离与现有像素 uncertainty 都能降低任务假接受风险，并在未参与校准的城市或 rig 上保持风险排序。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 数据与事件发生性",
+      "state": "not-run",
+      "pass": "在依法可用的至少 30 个独立 scene episodes 中，预注册轨迹网格产生足够的任务不一致事件，并且简单基线确实会放行其中一部分，才能估计 false-acceptance risk。",
+      "fail": "若事件不足、只在单一演示场景出现或没有时间与轨迹匹配真值，停止候选，不把可注入偏移当作发生性。"
+    },
+    {
+      "gate": "Gate 1 - 固定资产与测量链",
+      "state": "not-run",
+      "pass": "固定 commit 的 renderer、CARLA 回放和冻结任务栈可从原始输入产生可追踪的 render、truth 与 verdict 三联记录，且许可证允许该研究用途。",
+      "fail": "若关键资产无许可、无法复现轨迹/传感器对齐，或任务差异只能由 mock 产生，停止主实验。"
+    }
+  ],
+  "dataPreflight": [
+    "先核对 Cam2Sim 固定提交与预计算资产的使用许可；固定审计未发现标准许可证，因此未获作者或机构许可前只做接口阅读，不下载、修改或再分发资产。",
+    "枚举 CARLA towns、天气、相机 rig、场景 episode 和可获得的时间/轨迹匹配真值；在查看任务结果前锁定 calibration、validation 与 held-out city/rig split。",
+    "用冻结任务栈和预注册轨迹网格计算 Gate 0 事件表，只记录真实 simulator truth 对照；至少需要 30 个独立 scene clusters 和足够事件使风险差置信区间可估计。",
+    "核对每条轨迹的可见区域、最近相机距离、GAVIS-style 可见性与像素 uncertainty 都能从相同帧、相同分辨率和相同 renderer 输出计算，避免 baseline 信息量不公平。",
+    "在 Gate 0/1 通过前，不训练 task-risk calibrator，不查看 held-out task labels，也不声称存在任务假接受。"
+  ],
+  "noveltyClaims": [
+    "新对象是固定 coverage 下的轨迹级任务假接受风险，而不是像素 uncertainty、平均画质或任意 abstention map。",
+    "增量主张必须同时胜过简单最近训练相机距离和现有像素 uncertainty；任何一个达到等价风险即否决不可替代性。",
+    "输出是带声明 ODD、coverage、校准 split 和拒绝原因的证书，结论只覆盖冻结任务栈与测试包络。"
+  ],
+  "method": [
+    "从每条候选轨迹提取捕获支持特征：最近训练相机距离/朝向、训练 ray 覆盖、GAVIS-style 各向异性可见性和按轨迹聚合的像素预测 uncertainty。",
+    "冻结 renderer 与任务栈，定义检测集合、占据或规划 verdict 相对匹配真值的二元任务不一致标签；所有阈值在打开 held-out split 前预注册。",
+    "在 calibration scenes 上对每个单一 baseline 和组合证书使用同一种 split-conformal 或 risk-control 校准器，输出 accept/abstain 与风险上界。",
+    "在共同 coverage c=0.80 下比较选择性风险；若某方法达不到该 coverage，不外推阈值，而按失败记录。",
+    "用 scene-cluster bootstrap 和 held-out city/rig 分层报告风险差、coverage 与置信区间，并保留所有轨迹级 provenance 供审计。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1 周）：只做许可证、数据清单、split 和任务标签定义，完成 Gate 0；不把合成偏移本身计作问题证据。",
+    "阶段 B（第 2 周）：在固定资产上验证数据解析、坐标对齐、render/truth/verdict 三联记录和确定性重放，完成 Gate 1。",
+    "阶段 C（第 3-5 周）：实现轨迹特征提取器、统一校准器、coverage-risk 评测器和 baseline adapters。",
+    "阶段 D（第 6-8 周）：锁定阈值后运行 held-out scenes、跨 city/rig 复核与 scene-cluster bootstrap。",
+    "阶段 E（第 9-10 周，仅在前四阶段通过时）：做任务头敏感性、coverage 0.60/0.70/0.90 和单一真实录制锚点分析，不升级为道路认证结论。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "Cam2Sim official pipeline",
+        "revision": "8268453c5c91bef06d9e05326d926133d1798649",
+        "reuse": "ROS/OSM/CARLA 准备、GS 轨迹重放、DAVE-2 闭环入口与 real_world_trajectories。",
+        "licenseBoundary": "固定审计未发现标准许可证；Gate 0 必须取得许可确认，且其单场景证据不能支持广泛现实结论。"
+      },
+      {
+        "asset": "NeuRAD/SplatAD neurad-studio",
+        "revision": "c24765e3c37164db187119a224f3b9b83914f4bb",
+        "reuse": "Apache-2.0 代码；复用 SplatAD pipeline、驾驶数据 parser 与相机/LiDAR render 基线。",
+        "licenseBoundary": "数据集条款独立；重训练成本高，联合 render 不产生现实反事实真值。"
+      },
+      {
+        "asset": "Instant NuRec",
+        "revision": "1ce2288e646548e61fea6100bc58de3acd4bc8d0",
+        "reuse": "可选快速重建与已报告策略排序基线；代码 Apache-2.0。",
+        "licenseBoundary": "模型资产受 NVIDIA Open Model License，NCore 与内部策略栈受限，不能作为公开跨城市主实验的必要依赖。"
+      }
+    ],
+    "selfBuiltModules": [
+      "trajectory-support feature extractor 与轨迹级聚合器",
+      "冻结 task-disagreement evaluator 与可追踪 truth join",
+      "统一 split-conformal/risk-control calibrator",
+      "fixed-coverage comparator、scene-cluster bootstrap 与审计报告生成器"
+    ],
+    "compute": "Gate 0 以 CPU 和 1 张 GPU 做小样本测量链；主实验预算 2-4 张 24-48GB GPU、约 2-4 GPU-weeks，CARLA 与 renderer 任务分离调度。",
+    "cycle": "6-10 周上限；任一 Gate 失败即停止，不以增加 renderer 或任务头延长周期。"
+  },
+  "minimumStudy": [
+    "完成 Gate 0：锁定至少两个 simulator city/rig strata、独立 scene episodes、轨迹模板与任务不一致定义，并确认可估计事件率；未通过则无最小实验。",
+    "完成 Gate 1：固定所有 commit、checkpoint、容器摘要、传感器配置和任务栈版本，生成可复核的 render/truth/verdict 记录。",
+    "对每个 scene 生成相同横向偏移、转向与遮挡轨迹网格；同一轨迹只能进入一个 split，scene 不能跨 split。",
+    "对距离、GAVIS-style 可见性、像素 uncertainty 和组合证书使用相同 calibration scenes、相同模型容量与相同 coverage 目标。",
+    "只在锁定后打开 held-out city/rig，计算 c=0.80 下 task false-acceptance risk；scene 内轨迹只作重复测量。",
+    "报告主结果、事件稀疏时的精确区间、coverage 敏感性和失败清单；真实录制只作边界锚点，不提供未观测 novel trajectory 真值。"
+  ],
+  "strongBaselines": [
+    "最近训练相机的平移加旋转距离，经与主方法相同的单调校准器映射到 accept/abstain。",
+    "GAVIS-style 各向异性可见性轨迹聚合分数，经相同 calibration split 与 risk-control 过程校准。",
+    "Predictive Photometric Uncertainty 的像素级分数按相同轨迹区域聚合，并使用相同容量校准器。",
+    "PSNR/LPIPS 或 renderer residual proxy，只作为传统视觉质量基线，不访问 task labels。",
+    "仅由距离、可见性和像素 uncertainty 拼接的等容量逻辑回归，检验收益是否只是普通特征组合。",
+    "oracle simulator support 使用真值可见性给出不可部署上界，不参与新颖性比较。"
+  ],
+  "metrics": [
+    "主指标：fixed-coverage false-acceptance risk R(c)=accepted 且 task mismatch 的轨迹数除以 accepted 轨迹数，c 固定为 0.80。",
+    "主对比：相对距离 baseline 与最强现有 uncertainty baseline 的 scene-clustered risk difference、risk ratio 和 95% 置信区间。",
+    "约束指标：实际 coverage、跨 city/rig coverage 漂移、选择性 ECE/Brier score 与风险上界违约率。",
+    "任务诊断：检测集合 Jaccard/漏检、占据 IoU verdict 与规划动作或碰撞/离路 verdict；主任务在 Gate 0 前锁定。",
+    "非主指标：PSNR、SSIM、LPIPS、深度误差和运行时间，用于解释而不能替代任务风险。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "scene episode 是独立推断单位；按 city/rig 分层，以 scene 为 cluster 做配对 bootstrap，轨迹和任务头不单独增加样本量。",
+    "comparison": "所有方法在同一 scene/trajectory 上配对。先比较组合证书与两个强 baseline，再做预注册 Holm 校正；报告绝对风险差与相对风险。",
+    "missingness": "render、truth 或任务输出缺失的轨迹按方法失败记录，并额外报告 complete-case 敏感性，不能静默删除。",
+    "powerGate": "Gate 0 基于事件数和 cluster 数决定是否能把 95% 区间收窄到预注册的 5 个百分点实际等价界限；不能则停止。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，且 held-out city/rig 的 scene clusters 和任务不一致事件足以估计预注册风险差。",
+    "在 c=0.80、coverage 差不超过 1 个百分点时，组合证书相对最近相机距离和最强像素/视角 uncertainty 均至少降低 20% 相对风险，且 scene-cluster 95% 置信区间的风险差上界低于 0。",
+    "跨 city/rig 的效果方向一致，校准违约未超过预注册容忍度；任何结论明确绑定冻结 renderer、任务栈和测试包络。"
+  ],
+  "killCriteria": [
+    "Gate 0 找不到足够任务不一致或简单 baseline 放行事件，或事件仅来自一个合成演示场景。",
+    "最近相机距离或现有像素/视角 uncertainty 在共同 coverage 下落入 5 个百分点等价界并达到同等风险。",
+    "held-out city/rig 风险不校准、coverage 需要显著降低才能获得表面改善，或结果由单个 scene cluster 驱动。",
+    "Cam2Sim 或必要数据许可不允许研究复用，固定资产无法产生对齐 truth，或最小闭环超过 10 周。"
+  ],
+  "risks": [
+    "任务不一致事件可能过少，使 Gate 0 无法识别主 estimand；这是停止理由，不用更多合成故障补足。",
+    "证书可能只是重新学习最近相机距离；统一校准器与等容量组合 baseline 用于隔离这一风险。",
+    "冻结 detector/planner 的选择会限制外推；至少保留一个预注册主任务和一个不参与调参的敏感性任务。",
+    "Cam2Sim 的许可和单场景覆盖是硬边界；CARLA 上界与真实录制锚点必须分开表述。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若成功，结果支持在声明 ODD 内把重建器包装为选择性资产，并要求未来 out-of-path benchmark 同时报告 coverage-risk，而不是只报告画质。",
+    "negative": "若距离或现有 uncertainty 等价，结论将否决专用 trajectory certificate 的增量新颖性，并建议采用更简单的距离/uncertainty 准入规则；若 Gate 0 无事件，只能说明该公开包络不能识别主张。",
+    "boundary": "正结果不等于真实道路安全认证，负结果也不证明所有轨迹都安全；二者都只改变该测试包络中的资产准入设计。"
+  },
+  "impact": "正结果会把驾驶重建评测从平均 NVS 质量推进到可审计的选择性任务风险控制；负结果则能直接淘汰不必要的专用证书、保留简单 baseline，并明确哪些公开数据无法识别任务假接受。",
+  "evidence": [
+    {
+      "title": "Instant NuRec: Feed-Forward 3D Gaussian Reconstruction for Driving Scene Simulation",
+      "url": "https://research.nvidia.com/labs/sil/projects/instant-nurec",
+      "role": "本地论文报告提供快速重建与有限策略排序最近证据，同时明确内部数据和真实反事实边界。",
+      "localPaperId": "instant-nurec-feedforward-3dgs",
+      "localLink": "papers/instant-nurec-feedforward-3dgs/"
+    },
+    {
+      "title": "SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Hess_SplatAD_Real-Time_Lidar_and_Camera_Rendering_with_3D_Gaussian_Splatting_CVPR_2025_paper.html",
+      "role": "本地论文报告锚定可复用相机-LiDAR renderer 与传感器建模能力，但没有任务准入证书。",
+      "localPaperId": "splatad-realtime-3dgs",
+      "localLink": "papers/splatad-realtime-3dgs/"
+    },
+    {
+      "title": "Uncertainty-driven 3D Gaussian Splatting Active Mapping via Anisotropic Visibility Field",
+      "url": "https://arxiv.org/abs/2605.30342",
+      "role": "最近直接竞品：提供 GAVIS 视角可见性 uncertainty，但不估计轨迹级任务假接受风险。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Predictive Photometric Uncertainty in Gaussian Splatting for Novel View Synthesis",
+      "url": "https://arxiv.org/abs/2603.22786",
+      "role": "最近直接竞品：提供像素级预测 uncertainty 与下游视觉任务，不覆盖固定 coverage 的驾驶 task-risk。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "FlexDrive: Toward Trajectory Flexibility in Driving Scene Reconstruction and Rendering",
+      "url": "https://arxiv.org/abs/2502.21093",
+      "role": "直接证明 out-of-path 应有独立 simulator-grounded benchmark，但其终点仍是重建与渲染质量。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Cam2Sim: Neural Scenario Reconstruction for Closed-Loop Autonomous Driving Simulation",
+      "url": "https://arxiv.org/abs/2607.04770",
+      "role": "提供真实录制到 CARLA、GS 重放和闭环任务的原始实验接口；不能替代 Gate 0 的事件发生性。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:24:20.572Z"
+}

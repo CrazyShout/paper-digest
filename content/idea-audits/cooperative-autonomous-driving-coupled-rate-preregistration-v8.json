@@ -1,0 +1,988 @@
+{
+  "reviewerAgentId": "codex-independent-theory-experiment-protocol-v8",
+  "preparedAt": "2026-07-31T22:01:35+08:00",
+  "claimBoundary": {
+    "candidateId": "coupled-adaptive-rate-controller-stability",
+    "workingTitle": "语义选择阈值、发送周期与共享拥塞反馈的耦合稳定域",
+    "reviewRole": "independent-theory-and-experiment-protocol-only",
+    "primaryClaim": "在冻结的 CPU trace-driven 协同感知模型中，若发送者只能使用发送时可见的局部候选、已成功收到的历史 CPM 摘要和滞后共享拥塞反馈，则跨发送者语义冗余会在闭环 Jacobian 中产生负的非对角 utility-to-rate 通路；该通路连同增益、延迟、更新周期、节点数和负载决定的局部谱半径边界，可在未用于调参的 episode 和参数单元上预测持续振荡。",
+    "supportingClaims": [
+      "稳定但不公平的平衡点可由同一冻结模型中的正边际 utility 与服务份额联合判定，而不把低需求发送者误判为 starvation。",
+      "minimum-service 或 step-limited 稳定器只在减少 starvation 或 oscillation 且不增加队列积压、丢弃或平均 CBR 超限时才可获得支持。",
+      "若整个预注册范围内未出现反馈特异的不稳定，则只报告稳定 null envelope，不将其改写为新控制器优越性。"
+    ],
+    "excludedClaims": [
+      "不声称首创 LIMERIC、FABRIC、A-DCC、VoI 阈值、动态 CPM 周期、NUM 公平或离散时间稳定性分析。",
+      "不声称协议 utility 等于神经感知 AP、规划收益、碰撞风险或道路安全。",
+      "不从该 CPU 模型外推到真实 ITS-G5、C-V2X PC5、Uu、真实无线传播或 Artery 的端到端行为。",
+      "不使用未来标签、未来接收结果、全局真值对象 ID 或 episode 结束后的统计量生成在线 utility。",
+      "本文件不包含实现、实验结果、候选排序或正式分数。"
+    ],
+    "decisionVocabulary": {
+      "supported": "全部对应 successCriteria 在确认种子上成立且无 killCriteria 触发。",
+      "notSupported": "核心耦合、边界预测或因果对照任一失败。",
+      "boundedNull": "可执行、可辨识且控制检查通过，但预注册范围内没有反馈特异振荡或 starvation。",
+      "nonIdentifying": "负载匹配、局部线性化、可观测性或数值收敛检查失败，不能对语义耦合作正负结论。"
+    },
+    "independence": {
+      "rankedCandidate": false,
+      "scoredCandidate": false,
+      "implementationAuthored": false,
+      "confirmationResultsAvailableAtPreparation": false
+    }
+  },
+  "stateModel": {
+    "modelName": "minimal-visible-state-coupled-cpm-fluid-queue-v8",
+    "scope": "单冲突域、广播、CPU-only、冻结候选 trace、事件级发包与确定性流体服务；硬事件模型用于结果，平滑 lifted surrogate 只用于局部 Jacobian。",
+    "timeBase": {
+      "nominalStepMs": 10,
+      "halfStepMs": 5,
+      "quarterStepAdjudicationMs": 2.5,
+      "episodeSeconds": 60,
+      "warmupSeconds": 10,
+      "loadStepAtSeconds": 20,
+      "evaluationWindowSeconds": [
+        40,
+        60
+      ],
+      "rule": "控制周期、反馈延迟、trace 时间戳和消息时刻使用物理时间；改变 integration step 不得改变这些时钟。"
+    },
+    "traceSchema": {
+      "rowKey": [
+        "episodeSeed",
+        "senderId",
+        "availableAtMs",
+        "localTrackId"
+      ],
+      "onlineFields": [
+        "availableAtMs",
+        "localTrackId scoped to the sender and current pseudonym",
+        "classCode",
+        "relativePositionM",
+        "velocityMps",
+        "headingDeg",
+        "measurementAgeMs",
+        "objectPerceptionQuality",
+        "positionChangeM since that sender's last inclusion",
+        "speedChangeMps since that sender's last inclusion",
+        "headingChangeDeg since that sender's last inclusion",
+        "timeSinceThatSenderLastIncludedMs",
+        "encodedPayloadBytes"
+      ],
+      "analysisOnlyFields": [
+        "globalSyntheticEntityId",
+        "future trace rows",
+        "future packet delivery and loss outcomes",
+        "future receiver state",
+        "episode outcome labels"
+      ],
+      "analysisOnlyIsolation": "analysisOnlyFields may be used after an episode to audit generated overlap and ground-truth simulator bookkeeping, but they are absent from every online controller input object.",
+      "primaryTraceFamily": "Synthetic current-observation traces with Artery-compatible local motion, age and quality fields and QoQ-compatible object-count, VoI and payload-size ranges. Trace generation is exogenous to all controllers and frozen by seed before an episode starts.",
+      "optionalExternalTrace": "A later Artery export may populate the same schema, but it is an external validation arm and is not required for the CPU claim."
+    },
+    "senderVisibleState": {
+      "stateVector": "x_i(t) = [ell_i, theta_i, delta_i, packetPhase_i, semanticClockPhase_i, bmeClockPhase_i, q_i, headPacketResidual_i, localHistory_i, receivedPeerCache_i, delayedCbrBuffer_i, optionalDelayedSharedQueueBuffer_i]",
+      "components": [
+        {
+          "name": "ell_i",
+          "meaning": "log semantic send rate; r_i = exp(ell_i) and T_i = 1/r_i."
+        },
+        {
+          "name": "theta_i",
+          "meaning": "local semantic inclusion threshold in [0,1]."
+        },
+        {
+          "name": "delta_i",
+          "meaning": "local BME/A-DCC-like allowed channel share derived from shared delayed CBR."
+        },
+        {
+          "name": "receivedPeerCache_i",
+          "meaning": "only peer descriptors from packets whose delivery event completed before the current decision deadline; each entry stores sender pseudonym, send time, receive time and visible CPM descriptor fields."
+        },
+        {
+          "name": "q_i and headPacketResidual_i",
+          "meaning": "the sender's own transmit queue state; aggregate queue is visible only in the explicitly labelled shared-queue-feedback arm."
+        },
+        {
+          "name": "shared feedback",
+          "meaning": "all senders observe the same CBR sample after their configured delay; asynchronous arms sample that shared series at sender-specific controller phases."
+        }
+      ]
+    },
+    "onlineUtility": {
+      "status": "experimental-model, except the local base score is adapted from the current Artery CpService utility ordering",
+      "localBaseScore": "v_io(t) = clip((qualityNorm + f_pos + f_speed + f_heading + f_age)/5, 0, 1), where each f term is the same thresholded-and-clipped current-or-history-local quantity family used by Artery CpService; all numerical breakpoints are frozen in the trace manifest.",
+      "peerSimilarity": "K(z_io(t), z_jp(tau)) = I[class equal] * exp(-||p_i(t)-propagate(p_j(tau),v_j,t-tau)||^2/(2*4^2) - ||v_i-v_j||^2/(2*2^2) - wrap(heading_i-heading_j)^2/(2*15^2)).",
+      "novelty": "n_io(t) = clip(1 - max_{peer reports received by t-20 ms} K(z_io(t),z_peer) * exp(-(t-receiveTime)/1 s), 0, 1); max over an empty cache is 0 and entries expire after 2 s.",
+      "objectUtility": "u_io(t) = v_io(t) * n_io(t).",
+      "utilityPerByte": "ub_io(t) = u_io(t) / max(encodedPayloadBytes,1).",
+      "semanticPressure": "m_i(t) = sum_o u_io(t) * I[u_io(t) >= theta_i(t)] / max(sum_o v_io(t), 1e-9), clipped to [0,1].",
+      "positiveMarginalUtility": "mu_i_plus(t) = max ub_io(t) among current objects omitted by threshold or not yet served; zero when no such object exists.",
+      "couplingPath": "A delivered report from sender j changes receivedPeerCache_i, hence n_io, u_io and m_i; m_i changes r_i, so partial m_i / partial ell_j can be nonzero for i != j without exposing j's private candidate set.",
+      "tieBreak": "new local objects first, then descending utilityPerByte, then stable hash(senderId, localTrackId); no analysis-only ID participates."
+    },
+    "semanticSelector": {
+      "budget": "B_i(k) = max(0, delta_i(k) * C_eff * T_i(k) - H).",
+      "candidateBytes": "L_i(k) = sum_o encodedPayloadBytes_io(k).",
+      "loadRatio": "rho_i(k) = L_i(k)/B_i(k) for B_i(k)>0 and a manifest sentinel larger than every finite rho for B_i(k)=0.",
+      "thresholdIncrement": "DeltaTheta_i(k) = clip(beta_theta * (rho_i(k)-1), -0.10, 0.10).",
+      "thresholdUpdate": "theta_i(k+1) = clip((1-alpha_theta)*theta_i(k) + DeltaTheta_i(k), 0, 1).",
+      "hardSelection": "S_i(k) = {o: u_io(k) >= theta_i(k)}. All selected bytes enter the transmit queue; B_i drives theta_i but is not silently re-used as a hard post-selection cap.",
+      "messageBytes": "P_i(k) = 0 when S_i is empty; otherwise P_i(k) = ceil(H + sum_{o in S_i} encodedPayloadBytes_io(k)).",
+      "provenance": "The B, L, rho, DeltaTheta, theta and threshold-set forms adapt QoQ equations (2)-(7). Novelty-weighted u, adaptive T_i, queue admission and the no-second-cap rule are experimental."
+    },
+    "semanticRateController": {
+      "status": "experimental-model; QoQ fixes the CPM interval at 100 ms and explicitly leaves this interaction open",
+      "targetRate": "r_i_dem(k) = r_min + (r_max-r_min) * sigmoid(g_u * (m_i(k)-tau_u)).",
+      "update": "ell_i(k+1) = clip((1-eta_r)*ell_i(k) + eta_r*log(r_i_dem(k)), log(r_min), log(r_max)).",
+      "period": "T_i(k+1) = 1/exp(ell_i(k+1)); packetPhase_i accumulates h/T_i and emits at most one message per crossing because h*r_max<1.",
+      "bounds": {
+        "rMinHz": 1,
+        "rMaxHz": 10,
+        "periodMinMs": 100,
+        "periodMaxMs": 1000,
+        "tauU": 0.5,
+        "etaR": 0.5
+      },
+      "eventRule": "A controller update changes only future generation opportunities; it never reschedules or deletes an already enqueued packet."
+    },
+    "sharedCongestionAndQueue": {
+      "effectiveCapacity": "C_eff is calibrated once per node-count and trace-profile stratum from development traces so a fixed 10 Hz full-content reference reaches pre-step load 0.50; the resulting constant is frozen for all arms and confirmation seeds in that stratum.",
+      "queueArrival": "At a generation event, P_i bytes are appended to sender i's FIFO. Queue entries retain packet descriptors until their final byte is served.",
+      "service": "At each integration step, exogenous background consumes its declared bytes up to C_eff*h without entering a controlled-sender queue; remaining capacity is allocated by work-conserving fluid processor sharing across nonempty sender FIFOs in proportion to current queued bytes, capped by each queue's demand. Background excess is logged as unserved background, and a peer cache receives a controlled packet only when its head-of-line residual reaches zero.",
+      "queueCap": "Each sender queue cap is 2*C_eff/N bytes and overflow bytes are counted as drops; the aggregate cap is therefore two seconds of service.",
+      "backgroundStep": "The capacity calibration makes the fixed 10 Hz full-content reference equal 0.50 offered load before t=20 s. After t=20 s, backgroundRate=max(postStepLoad-0.50,0)*C_eff bytes/s, held constant and identical across paired arms.",
+      "rawCbr": "CBR_raw(k) = clip(bytesServedAcrossControlledAndBackgroundTraffic/(C_eff*T_cbr), 0, 1).",
+      "smoothedCbr": "CBR(k) = 0.5*CBR_raw(k) + 0.5*CBR(k-1).",
+      "bmeUpdateCbrOnly": "delta_i(k+1) = clip((1-alpha_c)*delta_i(k) + beta_c*(CBR_target-CBR(k-d_c)), delta_min, delta_max).",
+      "bmeUpdateCbrPlusQueue": "delta_i(k+1) = clip((1-alpha_c)*delta_i(k) + beta_c*(CBR_target-CBR(k-d_c)-kappa_q*Q_norm(k-d_q)), delta_min, delta_max), where Q_norm=sum_i q_i/(C_eff*1 s).",
+      "sourceBoundary": "CBR smoothing and the load-to-budget loop adapt QoQ; the FIFO/fluid service, finite queue, queue penalty and all queue thresholds are experimental."
+    },
+    "updateSemantics": {
+      "synchronous": "All semantic controllers share phase 0 and all BME controllers share phase 0. Every same-time update reads a common pre-event snapshot and commits simultaneously.",
+      "asynchronous": "For each sender and controller clock, a phase is drawn once from Uniform[0,T) by the episode seed, then remains fixed. An update reads the newest feedback whose receive time is strictly earlier than the decision time.",
+      "eventPriorityAtSameTimestamp": [
+        "complete channel service and packet deliveries",
+        "append newly visible local trace rows",
+        "expire peer-cache entries",
+        "sample delayed CBR or queue feedback",
+        "compute utility and simultaneous controller updates from the pre-update snapshot",
+        "advance packet generation phase and enqueue newly generated packets"
+      ],
+      "delayState": "CBR, optional shared queue and peer receipt delays are explicit shift-register states in the lifted model; no function may index a future buffer element."
+    },
+    "smoothAnalysisSurrogate": {
+      "purpose": "Construct a differentiable local map without changing the hard event controller used for empirical outcomes.",
+      "selectionRelaxation": "Replace I[u>=theta] by sigmoid((u-theta)/epsilon_theta) with epsilon_theta=0.02 only inside the surrogate.",
+      "noveltyRelaxation": "Replace max peer similarity by log-sum-exp with temperature 0.02 and summarize each directed pair by coverage state z_ij.",
+      "pairCoverage": "z_ij(k+1) = a_z*z_ij(k) + (1-a_z)*W_ij(k)*(1-exp(-r_j(k)*T_phi*p_j(k))), with a_z=exp(-T_phi/1 s), current visible overlap W_ij and relaxed selected fraction p_j.",
+      "fluidArrival": "Replace packet phase crossings by expected bytes r_i*P_i*h for the surrogate only.",
+      "hardModelSeparation": "No oscillation, starvation, fairness or queue verdict may be computed from the surrogate."
+    }
+  },
+  "sourceAttribution": {
+    "checkedAt": "2026-07-31",
+    "primarySources": [
+      {
+        "sourceId": "qoq-2607.18495v1",
+        "title": "Quality over Quantity: Value-Driven Distributed Congestion Control for the Collective Perception Service",
+        "version": "arXiv:2607.18495v1, submitted 2026-07-20; only listed version when checked",
+        "primaryUrl": "https://arxiv.org/html/2607.18495v1",
+        "usedFor": [
+          "A-DCC-like delta update and 200 ms control interval",
+          "100 ms fixed CPM interval",
+          "per-message budget, content bytes, load ratio, adaptive threshold and threshold selection equations (2)-(7)",
+          "abstract CBR and first-order smoothing equations (8)-(9)",
+          "127-byte fixed overhead and per-object payload approximation",
+          "explicit future-work boundary on BME convergence, BME-threshold interaction and adaptive CPM interval"
+        ],
+        "notAttributedToThisSource": [
+          "cross-sender novelty utility",
+          "adaptive-rate sigmoid",
+          "queue dynamics",
+          "Jacobian thresholds",
+          "starvation definition"
+        ]
+      },
+      {
+        "sourceId": "limeric-tvt-2013",
+        "title": "LIMERIC: A Linear Adaptive Message Rate Algorithm for DSRC Congestion Control",
+        "version": "IEEE Transactions on Vehicular Technology 62(9), 2013",
+        "primaryUrl": "https://ieeexplore.ieee.org/document/6570522",
+        "doi": "10.1109/TVT.2013.2275014",
+        "accessibleAuthorManuscript": "https://www.researchgate.net/publication/264586284_LIMERIC_A_Linear_Adaptive_Message_Rate_Algorithm_for_DSRC_Congestion_Control",
+        "usedFor": [
+          "linear update r_j[k]=(1-alpha)r_j[k-1]+beta*(r_goal-r_total[k-1])",
+          "single-collision-domain synchronous convergence condition alpha+K*beta<2 in the paper's normalized model",
+          "gain, node-count, delay, noise, saturation and asynchronous-update precedents"
+        ],
+        "boundary": "The classical condition is a load-only sanity comparator, not a stability theorem for the new semantic and queue states."
+      },
+      {
+        "sourceId": "fabric-1407.6965v3",
+        "title": "Distributed and Fair Beaconing Rate Adaptation for Congestion Control in Vehicular Networks",
+        "version": "arXiv:1407.6965v3, revised 2016-02-15; related DOI 10.1109/TMC.2016.2531693",
+        "primaryUrl": "https://arxiv.org/abs/1407.6965",
+        "pdfUrl": "https://arxiv.org/pdf/1407.6965",
+        "usedFor": [
+          "NUM objective max sum_i U_i(r_i) subject to neighborhood capacity and rate bounds",
+          "alpha-fair utility family",
+          "dual congestion price, projected or sign-scaled price update and sufficiently-small-step convergence",
+          "asynchronous and multi-hop fairness baseline precedent"
+        ],
+        "boundary": "FABRIC optimizes beaconing-rate utility and does not provide the novelty-cache semantic feedback used here."
+      },
+      {
+        "sourceId": "artery-e0ddd8c",
+        "title": "Artery V2X Simulation Framework",
+        "version": "master commit e0ddd8c0414b079f28e8efa932f52f66ae5a3c73 dated 2026-07-30; latest master commit when checked",
+        "primaryUrl": "https://github.com/riebl/artery/tree/e0ddd8c0414b079f28e8efa932f52f66ae5a3c73",
+        "usedFor": [
+          "LimericDccEntity targetCbr default 0.68 and Vanetza LIMERIC integration",
+          "CpService DCC-constrained generation interval bounded by 100 ms and 1000 ms defaults",
+          "sender-visible object utility terms based on current quality, motion change and time since inclusion",
+          "new-object-first then utility-descending object ordering",
+          "future translation target after the CPU protocol passes"
+        ],
+        "relevantPaths": [
+          "src/artery/networking/LimericDccEntity.ned",
+          "src/artery/networking/LimericDccEntity.cc",
+          "src/artery/envmod/service/CpService.cc",
+          "src/artery/envmod/service/CpService.ned",
+          ".devcontainer/debian/Dockerfile"
+        ],
+        "boundary": "The present preregistration neither compiles nor claims to reproduce Artery."
+      },
+      {
+        "sourceId": "etsi-tr-104073-v2.2.1",
+        "title": "ETSI TR 104 073 V2.2.1 Radio Resource Management Study",
+        "version": "2026-02",
+        "primaryUrl": "https://www.etsi.org/deliver/etsi_tr/104000_104099/104073/02.02.01_60/tr_104073v020201p.pdf",
+        "usedFor": [
+          "broad prior occupancy of discrete-time adaptive DCC convergence and stability",
+          "documented synchronized-node and CBR-measurement oscillation risks",
+          "weighted or dynamic-beta resource allocation precedent",
+          "need to separate semantic feedback from load-only and sampling effects"
+        ]
+      },
+      {
+        "sourceId": "etsi-cps-bme",
+        "title": "ETSI TS 103 324 V2.1.1 CPS and ETSI TS 103 141 V2.2.1 MCO Facilities",
+        "primaryUrls": [
+          "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+          "https://www.etsi.org/deliver/etsi_ts/103100_103199/103141/02.02.01_60/ts_103141v020201p.pdf"
+        ],
+        "usedFor": "CPS content adaptation and facilities-layer resource-limit architecture; no coupled semantic stability result is attributed to these standards."
+      }
+    ],
+    "internalAuditInputs": [
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-coupled-rate-stability-dossier-v3.json",
+        "usedFor": "claim boundary, source map, initial operational thresholds and simulator-risk list"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-panel-v4-round-1.json",
+        "usedFor": "reserve disposition and re-entry condition"
+      },
+      {
+        "paths": [
+          "content/idea-audits/cooperative-autonomous-driving-panel-v4-review-novelty.json",
+          "content/idea-audits/cooperative-autonomous-driving-panel-v4-review-implementation.json",
+          "content/idea-audits/cooperative-autonomous-driving-panel-v4-review-empirical.json",
+          "content/idea-audits/cooperative-autonomous-driving-panel-v4-review-impact.json",
+          "content/idea-audits/cooperative-autonomous-driving-panel-v4-review-benchmark.json"
+        ],
+        "usedFor": "all five candidate-specific objections and required controls: visible utility, off-diagonal derivative, load matching, semantic-feedback-off, asynchronous update, queue accounting and half-step"
+      },
+      {
+        "paths": [
+          "content/idea-audits/cooperative-autonomous-driving-second-candidate-novelty-triage-v8.json",
+          "content/idea-audits/cooperative-autonomous-driving-second-candidate-implementation-triage-v8.json"
+        ],
+        "usedFor": "two-week CPU trace-first boundary, 10 development seeds, 30 fresh confirmation seeds and early kill gates"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-search-audit-2026-07-31.json",
+        "usedFor": "source-family limitations, canonical-source discipline and the rule that protocol claims cannot borrow perception-only evidence",
+        "limitation": "Its configured query families did not directly audit coupled rate-controller stability; the targeted primary-source checks above supplement rather than inherit exhaustiveness from that audit."
+      }
+    ],
+    "equationLedger": [
+      {
+        "equationIds": [
+          "P-LIMERIC",
+          "P-QOQ-BME"
+        ],
+        "status": "prior-work",
+        "equations": "linear CBR or aggregate-rate error update for r_j or delta_j"
+      },
+      {
+        "equationIds": [
+          "P-QOQ-2",
+          "P-QOQ-3",
+          "P-QOQ-4",
+          "P-QOQ-5",
+          "P-QOQ-6",
+          "P-QOQ-7",
+          "P-QOQ-8",
+          "P-QOQ-9"
+        ],
+        "status": "prior-work-adapted-with-units-declared",
+        "equations": "budget, content load, load ratio, threshold update, threshold set, raw CBR and smoothed CBR"
+      },
+      {
+        "equationIds": [
+          "P-FABRIC-NUM",
+          "P-FABRIC-DUAL"
+        ],
+        "status": "prior-work-baseline-only",
+        "equations": "alpha-fair NUM allocation and congestion-price update"
+      },
+      {
+        "equationIds": [
+          "E-U-NOVELTY",
+          "E-U-PRESSURE",
+          "E-RATE",
+          "E-QUEUE",
+          "E-QUEUE-BME",
+          "E-Z-SURROGATE",
+          "E-JACOBIAN"
+        ],
+        "status": "experimental-model-only",
+        "equations": "peer-cache novelty, semantic pressure, adaptive period, finite queue, optional queue penalty, smooth pair coverage and lifted Jacobian"
+      }
+    ]
+  },
+  "observabilityContract": {
+    "decisionCutoff": "For a decision at time t, every utility input must carry sourceAvailableAt <= t and, for peer data, receiveCompleteAt <= t-20 ms. Strict inequality resolves same-timestamp ambiguity.",
+    "allowedOnlineInputs": [
+      "current sender-local trace rows available by the cutoff",
+      "that sender's own prior inclusion and transmit history",
+      "successfully received historical peer CPM descriptors",
+      "current local queue occupancy",
+      "delayed shared CBR",
+      "delayed aggregate queue only in the labelled queue-feedback arm",
+      "frozen controller constants and current clock phases"
+    ],
+    "forbiddenOnlineInputs": [
+      "globalSyntheticEntityId or oracle cross-sender identity",
+      "future local trace rows or future motion",
+      "future packet success, queue delay or receiver state",
+      "ground-truth detection, tracking, planning, collision or safety labels",
+      "episode-final AP, utility, throughput, fairness or outcome labels",
+      "other senders' untransmitted candidate sets or internal theta, delta and rate states",
+      "statistics computed across confirmation episodes"
+    ],
+    "associationRule": "Peer-to-local similarity uses only payload-visible class, position, velocity, heading and age after causal constant-velocity propagation. The analysis-only identity may audit false matches after the episode but may not repair them online.",
+    "normalizationRule": "All score scaling, clipping ranges, similarity bandwidths and utility normalization constants are fit or chosen using only source equations and development traces, then frozen before any confirmation episode.",
+    "lineageAudit": "Every logged utility term must include input event IDs and available-at timestamps. Any online read from a forbidden field or later timestamp invalidates the entire run family rather than only the affected packet.",
+    "confirmationFreeze": "The utility code hash, trace generator hash, field allowlist and controller constants must be identical across all confirmation arms except the explicitly named intervention."
+  },
+  "stabilityHypothesis": {
+    "nullHypotheses": [
+      "H0-coupling: all practically relevant off-diagonal derivatives partial m_i/partial ell_j are zero under the observability contract.",
+      "H0-boundary: the lifted spectral radius does not predict episode-level oscillation beyond a load-only LIMERIC comparator.",
+      "H0-attribution: disabling peer semantic feedback at matched offered load does not materially change oscillation or starvation incidence."
+    ],
+    "mechanismHypotheses": [
+      "H1-coupling: in balanced or asymmetric overlap traces, increasing sender j's log rate causally reduces at least one overlapping sender i's novelty-weighted pressure after the receipt delay, so G_ij=partial m_i/partial ell_j<0 for some i!=j; the same derivative is practically zero in zero-overlap traces.",
+      "H1-stability: increasing semantic gain, feedback delay, semantic update period or node count moves an eigenvalue of the lifted closed-loop Jacobian toward or beyond the unit circle even while the load-only LIMERIC block remains inside its classical stable range.",
+      "H1-starvation: a stable fixed point can still satisfy positive marginal utility and service below 10 percent of fair share for one sender; this is an equilibrium allocation failure, not an oscillation claim."
+    ],
+    "stateForLinearization": "x = [ell_1..ell_N, theta_1..theta_N, delta_1..delta_N, q_1..q_N scaled by C_eff*1s, CBR, directed z_ij for i!=j, all sample-and-hold registers, delay lines and fixed clock phases]. Packet descriptors are compressed to the current visible W_ij matrix only in the surrogate.",
+    "operatingPoint": {
+      "construction": "For each parameter cell, tile the final five seconds of its development trace, hold exogenous background load constant at the post-step value and iterate the smooth surrogate until max normalized state change per lifted period is below 1e-6 for 50 consecutive periods or 500 periods are reached.",
+      "fixedPointFailure": "No convergence by 500 periods is recorded as predicted nonconvergence; it is not assigned an arbitrary equilibrium Jacobian.",
+      "clippingGuard": "If any operating state lies within 2*epsilon of a clip boundary or relaxed threshold switch, compute left and right Jacobians and retain a spectral-radius envelope; do not quote a single differentiable Jacobian."
+    },
+    "liftedJacobian": {
+      "map": "Phi maps the full state from immediately before one repeating controller schedule to the corresponding point one schedule later. The lift period T_phi is the least common multiple of semantic and BME periods on the 50 ms parameter lattice; fixed asynchronous phases are part of the schedule.",
+      "definition": "J_ab = [Phi_a(x_star + eps_b*e_b) - Phi_a(x_star - eps_b*e_b)]/(2*eps_b).",
+      "perturbation": "eps_b = 1e-4*max(1,abs(x_star_b)) in normalized coordinates; repeat with eps_b/2 and 2*eps_b using identical exogenous traces and common random numbers.",
+      "derivativeAcceptance": "A column is reliable when both alternative step estimates differ from the central estimate by at most 5 percent in normalized L2 norm. More than 10 percent unreliable columns makes rho undefined for that cell.",
+      "analyticInteriorBlocks": [
+        "partial ell_i_next/partial m_i = eta_r*(r_max-r_min)*g_u*sigmoidPrime(g_u*(m_i-tau_u))/r_i_dem.",
+        "partial m_i/partial z_ij < 0 for visible overlap, and partial z_ij_next/partial ell_j = (1-a_z)*W_ij*T_phi*r_j*p_j*exp(-r_j*T_phi*p_j) plus the selected-fraction term.",
+        "partial delta_i_next/partial CBR = -beta_c inside clips, and partial CBR_next/partial ell_j is proportional to r_j*P_j/C_eff inside the unsaturated service region.",
+        "For B_i>0 and inactive clips, partial theta_i_next/partial delta_i = -beta_theta*L_i*C_eff*T_i/B_i^2 and partial theta_i_next/partial ell_i = beta_theta*L_i*delta_i*C_eff*T_i/B_i^2."
+      ],
+      "interpretation": "The first two blocks are the semantic off-diagonal loop; the latter blocks are the shared load and threshold-period loop. All four derivatives belong to the experimental model even when their base updates adapt prior work."
+    },
+    "spectralRadiusCriterion": {
+      "theory": "For an interior period-one orbit of the discrete lifted surrogate, rho(J)<1 is the local asymptotic stability criterion and rho(J)>1 predicts local instability. No global stability is inferred.",
+      "predictedStable": "upper spectral-radius envelope <=0.95",
+      "predictedUnstable": "lower spectral-radius envelope >=1.05",
+      "indeterminate": "envelope intersects (0.95,1.05) or the Jacobian is undefined",
+      "oscillatoryMode": "The leading eigenvalue is negative real or a complex-conjugate pair and its argument predicts a period within 25 percent of the hard-model dominant oscillation period.",
+      "loadOnlyComparator": "Recompute J after setting all W_ij=0 and removing semantic rate feedback; also report alpha_c+N*beta_c for the normalized LIMERIC sanity case."
+    },
+    "couplingIdentification": {
+      "intervention": "At a development operating point, perturb one sender j by ell_j plus or minus log(1.02) for two seconds while freezing all other controller states and using the same event-indexed random draws.",
+      "estimate": "G_ij = [mean m_i under plus perturbation - mean m_i under minus perturbation]/[2*log(1.02)] after the causal receipt delay.",
+      "practicalNonzero": "At least one directed pair has median G_ij<=-0.02 across the 10 development seeds with the same sign in at least 8 seeds, and ||G_offdiag||_F/||G||_F>=0.10.",
+      "negativeControl": "In zero-overlap traces, max absolute off-diagonal G_ij must be below 0.005; otherwise the matching or bookkeeping path is contaminated."
+    },
+    "starvationEquilibriumPrediction": "For predicted-stable cells, solve the hard active set at the surrogate equilibrium. Predict sender i starvation only when mu_i_plus>=u_pos and its modeled delivered service is below 0.10 of the contemporaneous equal share. This prediction is frozen before confirmation episodes."
+  },
+  "operationalDefinitions": {
+    "persistentOscillation": {
+      "primarySignal": "per-sender semantic rate r_i in Hz",
+      "windows": {
+        "early": [
+          40,
+          50
+        ],
+        "late": [
+          50,
+          60
+        ]
+      },
+      "amplitude": "A_i(W)=quantile95(r_i in W)-quantile05(r_i in W).",
+      "episodeRule": "Persistent oscillation is present when at least max(2,ceil(0.2*N)) active senders have A_i(late)>0.20*(r_max-r_min), median_i A_i(late)/max(A_i(early),1e-9)>=0.90, at least four mean-crossings in the final 20 s, and a non-DC periodogram peak between 2*max(T_sem,T_bme) and 10 s explains at least 30 percent of residual variance.",
+      "secondaryNetworkOscillation": "Report separately when CBR quantile95-quantile05 exceeds 0.10 with the same no-decay and periodicity rules. CBR-only oscillation cannot satisfy the semantic-rate primary outcome.",
+      "reason": "This retains the dossier's final-20-second, 20-percent-range and non-decay requirements while excluding a single load step or white noise."
+    },
+    "semanticStarvation": {
+      "positiveDemand": "mu_i_plus(t)>=u_pos=0.20 after normalizing utility-per-byte by that trace profile's development-set 95th percentile, and at least one omitted or queued positive-utility object exists.",
+      "fairShare": "F(t)=max(CBR_target*C_eff-backgroundDeliveredRate(t),0)/N_active(t), where N_active counts positive-demand senders in the same one-second window.",
+      "serviceRatio": "s_i(t)=senderDeliveredBytesPerSecond/F(t); undefined when F(t)=0.",
+      "episodeRule": "Sender i is starved when positiveDemand is true and s_i(t)<0.10 for every one-second rolling window spanning at least five continuous seconds after t=20 s. An episode has starvation if any sender satisfies this rule.",
+      "exclusions": "A sender with no omitted or queued positive-utility content, or a period with zero residual fair-share capacity, is not labelled starved."
+    },
+    "fairness": {
+      "primaryDomain": "Only homogeneous matched-demand cells with counterfactual eligible-byte coefficient of variation <=0.05 across senders.",
+      "metric": "Jain = (sum_i x_i)^2/(N*sum_i x_i^2), where x_i is delivered airtime in the final 20 s and only positive-demand senders are included.",
+      "fair": "Jain>=0.90",
+      "unfairEquilibrium": "No persistent oscillation, bounded queue, all senders positive-demand and Jain<0.80.",
+      "indeterminate": "0.80<=Jain<0.90 or the matched-demand precondition fails.",
+      "heterogeneousReporting": "For heterogeneous traces, report raw Jain and Jain of delivered-to-eligible utility satisfaction as descriptive metrics only; do not call unequal utility-aware rates unfair."
+    },
+    "boundedQueue": {
+      "rule": "No overflow drops, aggregate queue 95th percentile below 1.0 second of service, and final-20-second Theil-Sen slope of Q_norm <=0.01 service-seconds per wall-clock second.",
+      "hiddenCongestion": "Any overflow, slope above 0.01, or queue-area increase above 10 percent versus the paired control while mean CBR falls is classified as congestion displacement."
+    },
+    "equilibrium": "During the final 10 s, every controller state's 95-to-5 percentile range is below 2 percent of its admissible range and boundedQueue holds.",
+    "load": {
+      "offeredLoad": "pre-queue controlled plus background bytes divided by C_eff over each 200 ms window",
+      "carriedLoad": "served bytes divided by C_eff over each 200 ms window",
+      "comparisonRule": "Offered load, carried load and queue must be reported together; CBR alone cannot establish load equivalence."
+    },
+    "episodeClassification": "Each episode receives separate binary oscillation and starvation labels plus fairness and queue states; labels are not collapsed into one score."
+  },
+  "parameterGrid": {
+    "fixedParameters": {
+      "cbrTarget": 0.68,
+      "cbrSmoothingNewSampleWeight": 0.5,
+      "bmeAlpha": 0.1,
+      "bmeBeta": 0.006666666666666667,
+      "bmePeriodMs": 200,
+      "cbrMeasurementPeriodMs": 200,
+      "deltaMin": 0.0001,
+      "deltaMax": 0.2,
+      "deltaInitial": "0.68/N",
+      "thetaInitial": 0.5,
+      "thetaAlpha": 0.1,
+      "thetaBeta": 0.05,
+      "thetaStepBounds": [
+        -0.1,
+        0.1
+      ],
+      "semanticPressureCenter": 0.5,
+      "semanticRateSmoothing": 0.5,
+      "semanticPeriodMs": 200,
+      "rMinHz": 1,
+      "rMaxHz": 10,
+      "fixedOverheadBytes": 127,
+      "peerProcessingDelayMs": 20,
+      "peerCacheHorizonMs": 2000,
+      "peerNoveltyDecayMs": 1000,
+      "nominalIntegrationStepMs": 10,
+      "episodeSeconds": 60,
+      "preStepLoad": 0.5,
+      "postStepLoad": 0.9,
+      "packetLossProbability": 0,
+      "queueFeedbackKappa": 0
+    },
+    "traceProfiles": [
+      {
+        "id": "zero-overlap",
+        "description": "No payload-visible descriptor pair can exceed K=0.01 across senders; negative control."
+      },
+      {
+        "id": "balanced-overlap",
+        "description": "Symmetric current-visible overlap with median pairwise K in [0.4,0.6] and matched local demand; primary mechanism profile."
+      },
+      {
+        "id": "asymmetric-overlap",
+        "description": "Sparse, medium and dense sender groups follow QoQ-compatible object-count and score profiles with directed median K spanning [0.1,0.9]; starvation stress profile."
+      }
+    ],
+    "developmentCoreGrid": {
+      "nodeCount": [
+        5,
+        15
+      ],
+      "semanticGainGu": [
+        2,
+        6,
+        12
+      ],
+      "cbrFeedbackDelayMs": [
+        0,
+        200,
+        500
+      ],
+      "updateMode": [
+        "synchronous",
+        "asynchronous-fixed-phase"
+      ],
+      "traceProfile": "balanced-overlap",
+      "postStepLoad": 0.9,
+      "semanticPeriodMs": 200,
+      "seedsPerCell": 10,
+      "cellCount": 36,
+      "episodeCount": 360
+    },
+    "oneFactorExtensions": [
+      {
+        "factor": "nodeCount",
+        "values": [
+          2,
+          5,
+          10,
+          15
+        ],
+        "anchor": "g_u=6, delay=200 ms, asynchronous, balanced-overlap, post-load=0.90"
+      },
+      {
+        "factor": "semanticPeriodMs",
+        "values": [
+          100,
+          200,
+          500
+        ],
+        "anchor": "N in {5,15}, g_u=6, delay=200 ms, asynchronous"
+      },
+      {
+        "factor": "postStepLoad",
+        "values": [
+          0.68,
+          0.9,
+          1.05
+        ],
+        "anchor": "N in {5,15}, g_u=6, delay=200 ms, asynchronous"
+      },
+      {
+        "factor": "traceProfile",
+        "values": [
+          "zero-overlap",
+          "balanced-overlap",
+          "asymmetric-overlap"
+        ],
+        "anchor": "N in {5,15}, g_u=6, delay=200 ms, asynchronous"
+      },
+      {
+        "factor": "bmeBeta",
+        "values": [
+          0.0033333333333333335,
+          0.006666666666666667,
+          0.013333333333333334
+        ],
+        "anchor": "N=15, g_u=6, delay=200 ms, balanced-overlap"
+      },
+      {
+        "factor": "peerProcessingDelayMs",
+        "values": [
+          20,
+          200,
+          500
+        ],
+        "anchor": "N=15, g_u=6, CBR delay=200 ms, balanced-overlap"
+      },
+      {
+        "factor": "queueFeedbackKappa",
+        "values": [
+          0,
+          0.05,
+          0.2
+        ],
+        "anchor": "Only after a CBR-only boundary cell is frozen; queue-feedback is a stabilizer arm, not part of boundary discovery."
+      }
+    ],
+    "confirmationCellSelection": {
+      "rule": "Using development traces but no observed oscillation or starvation labels, compute each cell's spectral-radius envelope. For each nodeCount in {5,15} and updateMode, choose the lexicographically first cell closest to but not above stable upper rho=0.95, closest to rho=1.00, and closest to but not below unstable lower rho=1.05. Exclude undefined Jacobians and record every exclusion.",
+      "starvationCells": "For each of N=5 and N=15 in asymmetric-overlap, choose the predicted-stable cell with the smallest predicted service ratio and a matched predicted-no-starvation neighbor differing by one semantic-gain grid step.",
+      "tieBreak": "absolute distance to target rho, then lower gain, lower delay, shorter period, lexical cellId",
+      "freezeArtifact": "The selected cell IDs, predicted labels, Jacobian hashes and all controller constants are signed before confirmation seeds are generated."
+    },
+    "confirmationRuns": {
+      "seedsPerCell": 30,
+      "freshSeeds": true,
+      "pairedArms": [
+        "full coupling",
+        "semantic-feedback-off load-matched",
+        "fixed-period QoQ",
+        "load-only LIMERIC",
+        "half-step full coupling"
+      ],
+      "extraQuarterStep": "Run only when nominal versus half-step classification disagrees or a continuous metric differs beyond its tolerance; it adjudicates but cannot rescue a nonconvergent result by selective reporting."
+    }
+  },
+  "baselines": [
+    {
+      "id": "fixed-equal",
+      "definition": "Equal fixed 100 ms or load-calibrated common period, fixed theta=0.5, no adaptive delta-to-threshold or utility-to-rate feedback.",
+      "purpose": "open-loop traffic and fairness reference"
+    },
+    {
+      "id": "etsi-quantity-plus-limeric",
+      "definition": "Use the same visible utility ranking, include descending utility-per-byte until B_i is exhausted, update delta with the load-only LIMERIC/A-DCC equation, and keep period fixed at 100 ms.",
+      "purpose": "quantity selector with classical congestion control"
+    },
+    {
+      "id": "qoq-fixed-period",
+      "definition": "Reproduce QoQ B, L, rho, threshold and CBR equations with fixed 100 ms CPM period; no peer utility feedback into BME or period.",
+      "purpose": "closest semantic-content baseline",
+      "qualification": "Equation-level reproduction must pass an independent transcription check before results are compared."
+    },
+    {
+      "id": "weighted-limeric",
+      "definition": "Use beta_i proportional to a frozen sender demand weight derived from the trace profile before the episode; no instantaneous peer novelty or future outcome determines the weight.",
+      "purpose": "heterogeneous but non-semantic adaptive resource baseline"
+    },
+    {
+      "id": "fabric-alpha1",
+      "definition": "Maximize sum_i log(r_i) under the same C_eff and [r_min,r_max] bounds using the published FABRIC price and projected or sign-scaled update; payload and trace are held identical.",
+      "purpose": "utility-fair decentralized rate baseline",
+      "qualification": "If the published update cannot be reproduced against its one-hop equilibrium, label this baseline unavailable; do not replace it with an unnamed heuristic."
+    },
+    {
+      "id": "candidate-full-coupling",
+      "definition": "Visible peer-cache novelty, adaptive theta, adaptive period and shared delayed CBR as defined in stateModel.",
+      "purpose": "tested experimental mechanism"
+    }
+  ],
+  "controls": [
+    {
+      "id": "semantic-feedback-off",
+      "intervention": "Set all cross-sender similarity weights W_ij and online peer-cache novelty effects to zero while preserving local base utility and every other equation."
+    },
+    {
+      "id": "load-matched-off",
+      "intervention": "On development seeds only, choose one rate-center offset for each stratum by bisection so semantic-feedback-off matches full-coupling mean offered bytes within 2 percent. Freeze the offset; confirmation is identifying only if mean offered bytes differ by <=5 percent, mean CBR by <=0.02, and per-sender episode offered bytes by <=10 percent."
+    },
+    {
+      "id": "anonymous-load-shadow",
+      "intervention": "Replay the full-coupling aggregate 200 ms offered-load series as anonymous exogenous traffic with controlled sender rates frozen. Use only to test whether queue and CBR oscillations can be produced by the load trace itself; do not compare sender-rate oscillation in this arm."
+    },
+    {
+      "id": "fixed-marginal-utility",
+      "intervention": "Freeze m_i to the causal local-only trace series measured before peer receipt and retain adaptive congestion control; isolates the utility feedback state."
+    },
+    {
+      "id": "zero-overlap",
+      "intervention": "Use the zero-overlap trace profile with identical local demand and bytes; off-diagonal semantic derivatives must vanish."
+    },
+    {
+      "id": "asynchronous-phase",
+      "intervention": "Replace common controller phases by seed-fixed independent phases without changing periods, delays or traces."
+    },
+    {
+      "id": "half-step",
+      "intervention": "Repeat the same confirmation episode at 5 ms with event-indexed random draws, physical control clocks and packet timestamps unchanged."
+    },
+    {
+      "id": "queue-accounting",
+      "intervention": "Report offered bytes, carried bytes, q_i, aggregate Q, queue-area, service delay and overflow for every arm; lower CBR with larger unresolved queue is not stabilization."
+    },
+    {
+      "id": "minimum-service",
+      "intervention": "Experimental safeguard: impose delta_i>=0.01 and r_i>=1 Hz only while positiveMarginalUtility is true; compare with the otherwise identical candidate and retain all queue checks."
+    },
+    {
+      "id": "step-limited",
+      "intervention": "Experimental safeguard: cap each semantic update at absolute Delta ell_i<=0.10; no gain is retuned after confirmation begins."
+    }
+  ],
+  "independentUnits": {
+    "unit": "one complete 60-second simulation episode identified by parameter cell and master seed",
+    "notIndependent": [
+      "packets",
+      "objects",
+      "time steps",
+      "senders within the same episode",
+      "multiple metrics from the same episode"
+    ],
+    "developmentSeeds": [
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010
+    ],
+    "confirmationSeeds": [
+      20001,
+      20002,
+      20003,
+      20004,
+      20005,
+      20006,
+      20007,
+      20008,
+      20009,
+      20010,
+      20011,
+      20012,
+      20013,
+      20014,
+      20015,
+      20016,
+      20017,
+      20018,
+      20019,
+      20020,
+      20021,
+      20022,
+      20023,
+      20024,
+      20025,
+      20026,
+      20027,
+      20028,
+      20029,
+      20030
+    ],
+    "substreamRule": "Derive trace, phase, payload-size, loss and tie-break substreams from SHA-256(candidateId|cellId|masterSeed|component). Random draws are keyed by event identity, never by integration-step count.",
+    "pairing": "All controller arms for a cell share the same master seed and exogenous trace but use disjoint intervention-labelled controller streams where required.",
+    "failureRule": "A crashed or invariant-violating seed is reported and rerun only with the same seed after a global fix. It is never replaced by a new favorable seed.",
+    "noPooling": "Development episodes select cells and freeze nuisance choices; they are never pooled into confirmation intervals or success counts."
+  },
+  "analysisPlan": {
+    "gateOrder": [
+      {
+        "gate": "G0-equation-provenance",
+        "action": "An independent reader checks every prior-work equation against the cited version and marks every adaptation; failure stops comparative claims."
+      },
+      {
+        "gate": "G1-causal-observability",
+        "action": "Run timestamp lineage checks and forbidden-field scans on utility inputs; any leakage stops the entire run family."
+      },
+      {
+        "gate": "G2-model-invariants",
+        "action": "Verify byte conservation, queue conservation, fixed-load calibration, bounds, simultaneous commit semantics and zero-overlap G_offdiag."
+      },
+      {
+        "gate": "G3-development",
+        "action": "Run all development seeds, estimate G and J, select confirmation cells by the label-blind spectral rule, and freeze the manifest."
+      },
+      {
+        "gate": "G4-confirmation",
+        "action": "Run fresh seeds and paired controls without tuning."
+      },
+      {
+        "gate": "G5-numerical-and-load-controls",
+        "action": "Complete half-step, load-matched, feedback-off and queue checks before any semantic interpretation."
+      }
+    ],
+    "developmentAnalysis": [
+      "Estimate directed G_ij interventions and verify the zero-overlap negative control.",
+      "Construct the lifted smooth-surrogate equilibrium, finite-difference Jacobian, spectral envelope, leading eigenmode and load-only comparator for every valid cell.",
+      "Use labels only for diagnostic plots and to verify that the chosen grid spans outcomes; labels do not alter operational thresholds or confirmation cell selection.",
+      "Freeze load-calibration constants, baseline parameters, utility normalizers, cell IDs and all code hashes before confirmation seed generation."
+    ],
+    "confirmationAnalysis": {
+      "episodeOutcomes": [
+        "persistent oscillation",
+        "semantic starvation",
+        "unfair equilibrium where eligible",
+        "bounded or hidden queue congestion"
+      ],
+      "cellSummary": "Report count/30 and Wilson 95 percent interval for each binary outcome; report median and seed-bootstrap 95 percent interval for amplitude, dominant period, CBR, queue-area, delivered utility and Jain fairness.",
+      "boundaryAccuracy": "For valid rho<=0.95 and rho>=1.05 cells, compute balanced accuracy, AUROC and Brier score for rho(J). Compare against mean post-step offered load, mean CBR and the load-only Jacobian using the same held-out cells.",
+      "boundaryLocation": "Within each ordered gain or delay sweep that brackets a transition, compare the predicted rho=1 crossing with the empirical 50 percent oscillation crossing; interpolate only between adjacent preregistered grid points.",
+      "starvationPrediction": "Compare the frozen equilibrium starved-sender set with confirmation events at sender level, but bootstrap and infer at episode level."
+    },
+    "pairedCausalComparisons": [
+      "full coupling minus load-matched semantic-feedback-off oscillation incidence",
+      "full coupling minus zero-overlap oscillation incidence at matched local demand",
+      "synchronous minus asynchronous oscillation incidence",
+      "nominal-step minus half-step classification and continuous metrics",
+      "unstabilized minus minimum-service or step-limited starvation and queue burden"
+    ],
+    "uncertainty": "Use seed-level paired bootstrap with 10000 resamples for continuous and incidence differences and Wilson intervals for single-arm proportions. Report effect sizes and intervals; no packet-level p-values are allowed.",
+    "primaryMultiplicity": "The three primary families are coupling existence, oscillation boundary prediction and feedback-specific attribution. Apply Holm correction only if null-hypothesis p-values are additionally reported; threshold-based success criteria remain primary.",
+    "missingData": "No imputation. A cell with fewer than 30 valid confirmation episodes after global fixes is incomplete and cannot satisfy success criteria.",
+    "indeterminateCells": "Cells with undefined Jacobian, failed load matching, F(t)=0 for starvation, or half-step disagreement are shown explicitly and excluded only from the metric they cannot identify; exclusions are never silently dropped.",
+    "reporting": [
+      "Publish all cell manifests, including stable, unstable, indeterminate and failed cells.",
+      "Show rate, theta, delta, CBR, queue and m_i trajectories for the same preregistered representative seeds: smallest confirmation seed in each selected cell.",
+      "Report both full J and semantic-off J spectra and the leading eigenvector sender support.",
+      "Do not convert a stable null envelope into a positive controller-performance claim."
+    ]
+  },
+  "successCriteria": {
+    "couplingMechanism": [
+      "The practicalNonzero G criterion holds in balanced-overlap or asymmetric-overlap traces.",
+      "The zero-overlap maximum absolute off-diagonal derivative is below 0.005.",
+      "At least one leading-mode path contains both a nonzero semantic off-diagonal block and the shared congestion or threshold-period block."
+    ],
+    "stabilityBoundary": [
+      "Across held-out valid cells, rho(J) has AUROC>=0.80 and balanced accuracy>=0.75 for persistent oscillation using the frozen 0.95 and 1.05 margins.",
+      "Predicted-stable cells have oscillation in at most 6 of 30 episodes and predicted-unstable cells in at least 24 of 30 episodes for at least three of the four nodeCount-by-updateMode strata that contain both labels.",
+      "The rho=1 crossing is within one preregistered gain or delay grid step of the empirical 50 percent crossing in at least three strata.",
+      "rho(J) improves AUROC by at least 0.10 or Brier score by at least 0.05 over both mean offered load and the load-only Jacobian comparator."
+    ],
+    "causalAttribution": [
+      "In at least one matched boundary stratum, full coupling oscillation incidence exceeds load-matched semantic-feedback-off by at least 0.30 and the seed-level paired 95 percent interval excludes zero.",
+      "When full coupling has oscillation in at least 24 of 30 episodes, load-matched feedback-off has it in at most 6 of 30 episodes or the semantic claim is rejected.",
+      "The effect remains directionally consistent under asynchronous phases and has no hiddenCongestion classification."
+    ],
+    "halfStep": [
+      "Nominal and half-step episode classifications agree for at least 27 of 30 paired seeds per decisive cell.",
+      "Median oscillation amplitude, dominant period, mean CBR and queue-area differ by at most 5 percent; Jain differs by at most 0.02 absolute.",
+      "Any quarter-step adjudication converges toward the half-step result; otherwise the cell is numerical and cannot support a claim."
+    ],
+    "starvationClaim": [
+      "A starvation claim is made only in a predicted-stable cell with bounded queue and no oscillation.",
+      "The frozen equilibrium predictor reaches episode-level precision>=0.75 and recall>=0.75 for whether any sender starves across the selected asymmetric-overlap confirmation cells.",
+      "The same sender has positiveMarginalUtility throughout the five-second interval; low service caused solely by no eligible demand is excluded."
+    ],
+    "stabilizerClaim": [
+      "A safeguard reduces starvation or oscillation incidence by at least 0.50 absolute and the paired 95 percent interval excludes zero.",
+      "It increases mean CBR by no more than 0.02, queue-area by no more than 10 percent, overflow by zero bytes and delivered visible utility loss by no more than 5 percent relative to the unstabilized arm.",
+      "It does not satisfy the criterion merely by pinning all senders at r_min or theta_max."
+    ],
+    "boundedNull": "If all controls and Jacobian checks pass but no valid cell reaches the unstable or starvation definitions, report the largest tested N, gain, delay, period, overlap and load as a stable null envelope; the positive stability-boundary claim is not supported."
+  },
+  "killCriteria": [
+    {
+      "condition": "Any online utility input uses a future timestamp, analysis-only identity, future packet outcome or perception/safety label.",
+      "action": "Invalidate all affected run families and stop the semantic claim until the dataflow is rebuilt and rerun from untouched seeds."
+    },
+    {
+      "condition": "No directed pair meets the practical nonzero off-diagonal G criterion in balanced or asymmetric overlap.",
+      "action": "Kill the cross-sender semantic coupling claim; retain only a load-controller protocol study."
+    },
+    {
+      "condition": "Zero-overlap produces max absolute off-diagonal G>=0.005.",
+      "action": "Stop for association, random-stream or state-leakage contamination."
+    },
+    {
+      "condition": "Persistent oscillation or starvation remains unchanged under semantic-feedback-off at successfully matched load.",
+      "action": "Attribute the effect to load-only, scheduler or numeric dynamics and kill the semantic-specific claim."
+    },
+    {
+      "condition": "Confirmation load matching exceeds any declared tolerance in the decisive cell.",
+      "action": "Mark the cell nonIdentifying; no post hoc offset or capacity retuning is allowed."
+    },
+    {
+      "condition": "Nominal and half-step classifications agree in fewer than 27 of 30 seeds, or quarter-step does not converge toward half-step.",
+      "action": "Kill claims from that boundary as a discretization artifact."
+    },
+    {
+      "condition": "More than 10 percent of Jacobian columns fail perturbation convergence, or all candidate boundary cells are clip-dominated and have no valid spectral envelope.",
+      "action": "Do not make a local spectral-boundary claim; report the hard-model outcome as descriptive only."
+    },
+    {
+      "condition": "rho(J) fails both AUROC and balanced-accuracy thresholds or does not beat load-only comparators by the preregistered margin.",
+      "action": "Kill the predictive-boundary claim even if selected trajectories look oscillatory."
+    },
+    {
+      "condition": "A proposed stabilizer lowers CBR while increasing queue-area above 10 percent, creates overflow, or suppresses delivered visible utility by more than 5 percent.",
+      "action": "Classify it as congestion displacement or service suppression, not stabilization."
+    },
+    {
+      "condition": "A result requires treating senders, packets, objects or time steps as independent samples.",
+      "action": "Reject the result for pseudoreplication."
+    },
+    {
+      "condition": "The QoQ, LIMERIC or FABRIC baseline equations fail independent transcription or their own sanity equilibrium checks.",
+      "action": "Stop comparative claims involving that baseline; never substitute an undocumented approximation under the same name."
+    },
+    {
+      "condition": "A confirmation constant, utility normalizer, cell choice or operational threshold is changed after any confirmation outcome is viewed.",
+      "action": "Treat all later runs as exploratory and issue a new versioned preregistration before confirmation restarts."
+    }
+  ],
+  "knownLimitations": [
+    "The primary model is a deliberately small single-collision-domain abstraction with fluid service; it cannot reproduce CSMA contention, hidden terminals, capture, fading or real radio scheduling.",
+    "The smooth surrogate is not the hard event model. Its Jacobian is a local diagnostic whose validity must be earned out of sample and may fail near threshold, clip, queue-empty or packet-completion discontinuities.",
+    "The Artery-derived local utility terms are protocol metadata proxies, not measured receiver perception gain. Multiplying them by a visible redundancy proxy does not make them neural-task utility.",
+    "Payload-visible association can be wrong because CPM object IDs are sender-scoped and pseudonym changes break continuity; oracle identities are intentionally withheld online.",
+    "QoQ v1 uses abstract channel scaling and synthetic VoI distributions, has no verified paper-specific code in the audited materials and fixes CPM generation at 100 ms; this protocol's adaptive period is a new experimental model.",
+    "LIMERIC's alpha+K*beta<2 condition applies to its normalized load-only linear model and is not sufficient for this delayed nonlinear hybrid system.",
+    "FABRIC's convergence guarantee concerns its NUM assumptions and sufficiently small step; a trace-driven utility and finite queue can violate those assumptions.",
+    "Artery commit e0ddd8c was source-inspected but not compiled in the audited host, so no result may be described as an Artery reproduction until that separate gate is completed.",
+    "Equal-share starvation and Jain thresholds are operational choices. Heterogeneous utility-aware allocation is therefore reported separately and not forced into an equal-rate fairness claim.",
+    "The 60-second horizon can miss slower modes. A mode with predicted period above 10 seconds is marked horizon-limited rather than stable.",
+    "The protocol cannot support C-V2X, real perception-quality or road-safety claims without separate transport and perception-trace validation."
+  ],
+  "implementationContract": {
+    "status": "protocol-only; no implementation is supplied by this artifact",
+    "singleSourceOfTruth": "A future implementation must parse this JSON or a hash-locked transcription of it; duplicated constants in code must be machine-compared against the manifest.",
+    "requiredModules": [
+      "causal trace reader with online and analysis-only field separation",
+      "sender-local base utility and peer-cache novelty calculator",
+      "QoQ threshold and budget controller",
+      "experimental semantic rate controller",
+      "shared CBR and finite per-sender FIFO service model",
+      "synchronous pre-state commit and asynchronous fixed-phase scheduler",
+      "smooth lifted surrogate and finite-difference Jacobian tool",
+      "episode-level metric and control checker"
+    ],
+    "requiredEventLogFields": [
+      "protocolVersion",
+      "codeHash",
+      "cellId",
+      "masterSeed and component substream IDs",
+      "simTimeUs and eventPriority",
+      "senderId",
+      "trace input event IDs and availableAt times",
+      "local candidate count and bytes",
+      "peer cache input IDs and receiveComplete times",
+      "v_io, n_io, u_io, utilityPerByte, m_i and mu_i_plus",
+      "theta_i, delta_i, B_i, L_i, rho_i, r_i and T_i",
+      "selected object count and payload bytes",
+      "offered, enqueued, served, dropped and delivered bytes",
+      "q_i, head residual, aggregate Q, CBR_raw and CBR",
+      "controller clock phase, sampled feedback timestamp and update mode"
+    ],
+    "machineCheckedInvariants": [
+      "No input timestamp exceeds its decision cutoff.",
+      "No analysis-only field reaches online utility or controller functions.",
+      "For every sender and step: previousQueue + admittedBytes - servedBytes - droppedBytes = newQueue within 1e-9 normalized bytes.",
+      "Total served bytes never exceed C_eff*h and CBR remains in [0,1].",
+      "Same-time synchronous updates read identical pre-event snapshots.",
+      "Changing h from 10 ms to 5 ms preserves all physical event times and event-indexed random draws.",
+      "Every confirmation cell and seed has all preregistered paired arms or is marked incomplete."
+    ],
+    "reproducibilityManifest": [
+      "SHA-256 of this preregistration",
+      "source and dependency commits",
+      "trace generator and trace file hashes",
+      "utility field allowlist and analysis-only denylist",
+      "all controller constants and units",
+      "capacity calibration outputs from development only",
+      "development and confirmation seed lists",
+      "selected confirmation cell IDs and predicted labels",
+      "Jacobian operating points, perturbation steps and matrix hashes",
+      "raw event-log hashes and analysis command"
+    ],
+    "prohibitedShortcuts": [
+      "No future-label or full-trace normalization in online utility.",
+      "No oracle global object identity for cross-sender matching.",
+      "No tuning on confirmation outcomes or replacing failed seeds.",
+      "No packet, object, sender or time-step pseudoreplication.",
+      "No controller-specific capacity calibration after the common stratum constant is frozen.",
+      "No silent queue reset, packet deletion or clipping without a logged drop event.",
+      "No calling an approximate baseline QoQ, LIMERIC, FABRIC or Artery unless its stated equation and execution gate is met.",
+      "No aggregate CBR plot without offered-load, carried-load and queue traces."
+    ],
+    "preExecutionAcceptance": "Before any confirmation run, an independent reviewer must verify equation provenance, the observability dataflow, seed disjointness, label-blind cell selection and load-calibration freeze. This is a protocol acceptance gate, not a candidate score."
+  }
+}

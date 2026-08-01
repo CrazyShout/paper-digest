@@ -1,0 +1,53 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb32-330c-7a62-add9-1c00bd35be00",
+  "reviewedAt": "2026-08-01T03:10:58Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "VLADriveBench 已在同一 ORION/Alpamayo 1.5 模型对上直接建立了观察对齐与语义干预因果效应相反的核心现象，Lost in Fog 又已把推理一致性作为轨迹失效监测信号；因此“制度反转”和“reasoning monitor”两个组成部分都不是空白。尚未被这些一手证据覆盖的是：用独立标定的因果制度解释冻结监测器的跨模型校准、排序与条件伤害，并构造观察等价的匹配反例。这个残差真实但更像两个最近结果的严谨组合与下游审计，且当前只有两个自然 checkpoint，审稿人很可能认为概念增量有限。",
+    "feasibility": "ORION 固定提交确有推理配置、Bench2Drive/CARLA 开闭环入口，论文也给出 selfsplice 与语义干预协议；档案对 split、伤害标签、监测特征、阈值和止损定义得较具体。主要执行风险仍很大：两模型传感器契约不同，Alpamayo 在 CARLA 上是 OOD，需运行大量多干预闭环样本并实现固定权重理由通道脱钩，而且本轮无法从 Hugging Face 独立核验两个固定权重资产。160 个路线-种子单元/模型还可能不足以同时满足每制度 20 个自然 harm-positive 和 80 个共同支持匹配单元。",
+    "success-probability": "VLADriveBench 使两个自然模型落入不同预注册制度的前半项有直接先验支持，但核心监测假设没有同等证据：自然输出上的伤害事件可能稀少，观察监测分数的共同支持可能不足，失准也可能完全由模型身份或 CARLA 域偏移解释。成功标准还同时要求显著 AUROC/ECE 差异、至少 10% Brier 改善、至少 15% 风险次序反转以及同 checkpoint 脱钩复现，多个必要条件使完整成功概率处于中等偏低水平。",
+    "impact": "若能在模型身份不变的机制对照中证明理由因果制度改变同一观察监测分数的安全含义，将直接影响 reasoning-enabled driving 的监测器验证、校准和部署边界，并给出比再次测量 CoT 忠实度更有决策价值的结果。影响上限受两点限制：自然模型仅两个，且主要世界是受控 CARLA、Alpamayo 对该环境为 OOD，因此不能直接外推真实道路或其他 VLA 家族。",
+    "comparison-readiness": "档案已列出 VLADriveBench 指标、faithfulness 指标、trajectory-only、pooled、model-ID、regime-aware 和每模型 oracle，且预算、支持门、共同支持匹配、置信区间与明确 kill criteria 基本齐全。重要缺口是未把最相邻的 Lost in Fog consistency monitor 明确列为复现基线；更根本的是两个自然模型下 causal regime 与 model ID 完全共线，制度方法和模型特定校准只有依赖单 checkpoint 脱钩对照才能区分。当前样本量也缺少针对 harm prevalence、AUROC/ECE 与匹配后有效样本量的功效论证。"
+  },
+  "strongestObjection": "最强反对意见是因果制度在自然数据中只是两个已被 VLADriveBench 刻画过的模型身份标签：一个 coupled、一个 decoupled 时，任何所谓 regime-aware 校准都可被等价解释为普通 per-model calibration；Lost in Fog 又已展示 reasoning consistency 的监测价值。若固定权重、同模型的制度改变不能在观察分数匹配后复现校准或风险排序改变，该工作将退化为把两个最近工作的结论拼接到同一基准中。",
+  "requiredExperiment": "先做决定性同-checkpoint实验：在 Alpamayo 1.5 固定权重、相同路线族、输入、随机数流和解码器下，对比原生 coupled 通道与预注册的理由通道脱钩版本；在独立 calibration 路线上用语义干预确认前者满足 coupled、后者满足 decoupled，再只用自然输出和独立 CARLA 几何伤害，在场景协变量与监测分数共同支持区配对。测试时同时比较 pooled、model-ID、regime-interaction、每模型 oracle、trajectory-only 及 Lost in Fog consistency 基线，并预先保证每条件至少 20 个独立 harm-positive 和足够匹配单元。只有在 model ID 恒定时仍出现预注册方向的 ECE/Brier 或条件伤害反转，且 bootstrap 区间排除零，才足以回答最强撞题质疑；否则按档案 kill criterion 停止机制主张。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2606.12706",
+      "finding": "VLADriveBench 已在 ORION 与 Alpamayo 1.5 上并列做观察指标和 CoT 干预：ORION 的高观察对齐伴随无方向或长度/token 驱动的效应，Alpamayo 1.5 则呈现方向正确的语义制动与加速效应。它直接占据模型对及制度反转本身，但没有做自然伤害上的跨制度监测校准。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.29114",
+      "finding": "ReasonBreak 报告针对 Alpamayo 推理链的攻击可达到很高 reasoning attack success，并能在闭环操纵轨迹；这证明文本理由通道具有行为可达性，但研究对象是人工攻击而非自然运行中的监测器迁移与校准。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.17268",
+      "finding": "该工作在 Alpamayo R1 的 300 次推理、100 个场景上报告有限的实体/动作忠实度、reasoning-action 不一致和 silent failure，并把低 fidelity 与更大规划误差关联；它是观察型 fidelity 基线，但没有跨模型因果制度或独立伤害校准。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.21446",
+      "finding": "Lost in Fog 在约 1996 个场景和约 1.8 万次传感器扰动试验中，用 reasoning consistency 预测轨迹偏移，并在部分噪声条件下取得较高 AUROC；论文边界是成对 clean-versus-perturbed 的开放环分析，并未建立跨自然因果制度的可部署监测器。"
+    },
+    {
+      "url": "https://github.com/xiaomi-mlab/Orion/tree/657f3cf09b745d3972affb84d68f7e376140b221",
+      "finding": "固定提交包含 ORION 推理/CoT 配置以及 Bench2Drive/CARLA 开闭环代理入口，支持协议落地；README 同时显示依赖栈、数据准备和显存需求较重，因此只能证明资产存在，不能证明 8-10 周全量研究已去风险。"
+    },
+    {
+      "url": "https://huggingface.co/poleyzdk/Orion/blob/a7918cb501932b1b5b1167217115fdf03959f2d8/Orion.pth",
+      "finding": "本轮重开页面及固定 revision API 均因网络超时未能取得文件元数据，故未独立确认 dossier 所列文件大小或 SHA-256；该权重资产仍是 feasibility 的未关闭证据缺口。"
+    },
+    {
+      "url": "https://huggingface.co/nvidia/Alpamayo-1.5-10B/tree/089866afb4cfa2231fa7822c67e1e8bc91eed46f",
+      "finding": "本轮工具未能取回该固定 revision 页面，因而未独立复核模型卡中的推理接口、硬件与许可证信息；对公开可执行性的判断只能依赖已重开的论文协议，不能把该资产视为已完成 smoke test。"
+    }
+  ],
+  "overall": 6
+}

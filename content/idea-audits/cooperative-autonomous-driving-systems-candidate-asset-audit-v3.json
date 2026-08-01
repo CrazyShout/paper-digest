@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-systems-candidate-assets-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "mode": "read-only-primary-source-audit",
+  "quantitativeRatingPerformed": false,
+  "rankingPerformed": false,
+  "searchExhaustiveness": "bounded-not-exhaustive",
+  "candidates": [
+    {
+      "candidateId": "receiver-burst-isolation",
+      "title": "Multi-sender receive-side CPU, PCIe, and GPU burst isolation",
+      "assetConclusion": "true-online-vertical-slice-hard-blocked",
+      "officialAssets": [
+        {
+          "name": "QuantV2X",
+          "repository": "https://github.com/ucla-mobility/QuantV2X",
+          "commit": "de0d482ac23d8dadf4ce5bc37ab47fa37f4f5aa3",
+          "status": "code-verified",
+          "verifiedCapabilities": [
+            "Training and offline inference paths for V2X-Real, OPV2V, and DAIR-V2X.",
+            "Codebook quantization utilities and a TensorRT export/inference path.",
+            "A cached path that serializes complete code tensors through NumPy and pickle."
+          ],
+          "missingCapabilities": [
+            "No verified ROS subscriber, live multi-sender receive queue, or sender-isolated network receiver in the audited commit.",
+            "No verified official checkpoint bound to the audited commit and configuration."
+          ]
+        },
+        {
+          "name": "V2X-ReaLO",
+          "paper": "https://arxiv.org/abs/2503.10034",
+          "status": "paper-contract-only",
+          "verifiedCapabilities": [
+            "The paper specifies ROS receipt, parsing or deserialization, CPU-to-GPU transfer, decompression, and a feature bank."
+          ],
+          "missingCapabilities": [
+            "No verified official source commit or downloadable ROS bag was found in the frozen audit."
+          ]
+        }
+      ],
+      "licenses": {
+        "QuantV2X": "UCLA Academic Software License; academic or nonprofit research only and redistribution constraints apply.",
+        "V2XReaLO": "not-verified"
+      },
+      "instrumentation": [
+        {
+          "stage": "offline-payload-boundary",
+          "hook": "opencood/tools/inference_mc_codebook_encdec_cached.py",
+          "use": "Construct fixed per-sender payloads and separate pickle deserialization from host-to-device transfer.",
+          "boundary": "This is disk-backed batch replay, not a live receiver."
+        },
+        {
+          "stage": "pcie-and-gpu-stream",
+          "hook": "opencood/tools/inference_onnx_dump_calibration.py",
+          "use": "Add NVTX and CUDA-event timing around H2D, engine enqueue, kernel work, D2H, and synchronization.",
+          "boundary": "The public utility uses one stream and has no multi-sender scheduler."
+        }
+      ],
+      "minimumSmoke": {
+        "status": "not-executable-with-current-verified-official-assets",
+        "hardPreconditions": [
+          "A checkpoint, configuration, and hashes that reproduce the baseline model.",
+          "At least three independently replayable non-ego sender payloads with controlled arrival phases.",
+          "A clear statement that offline replay is an independent reimplementation unless the official ROS receiver and bags are obtained."
+        ],
+        "procedure": [
+          "Keep model, payload bytes, sender set, and decoded tensors fixed.",
+          "Compare synchronous burst, deterministic stagger, and randomized stagger arrivals.",
+          "Instrument deserialize, allocation, H2D, CUDA queueing, decode, fusion, and ego-output completion.",
+          "Compare FIFO or one-stream reception with bounded queues, preallocated pinned buffers, separated copy streams, ego-priority streams, and admission control.",
+          "Report p50, p95, p99, maximum, repeated-run intervals, and stage attribution."
+        ],
+        "passContract": [
+          "A synchronous burst reproducibly increases p99 ego completion time.",
+          "The increase is attributable to at least one measured receiver stage.",
+          "Isolation reduces p99 without dropping senders, changing payload bytes, or changing model outputs."
+        ]
+      },
+      "collisionBoundary": {
+        "exactDirectCollisionFound": false,
+        "closest": [
+          "V2X-ReaLO measures receiver-side stages and resource contention but does not establish the proposed multi-sender burst and p99 isolation contract.",
+          "Cooperative Infrastructure Perception reports end-to-end p99 on a single-GPU multi-LiDAR system but not intermediate-feature receive isolation.",
+          "ARC reports scalable cooperative point-cloud processing but not the stated deserialize, H2D, CUDA-queueing causal decomposition."
+        ],
+        "allowedClaim": "A fixed-payload multi-sender receive-burst benchmark with stage-level attribution and an ego-deadline isolation mechanism.",
+        "forbiddenClaims": [
+          "A new cooperative perception model or compression method.",
+          "First general GPU scheduling mechanism.",
+          "A V2X-ReaLO reproduction without official code and bags.",
+          "A tail-latency result inferred from average inference time."
+        ]
+      }
+    },
+    {
+      "candidateId": "progressive-message-contract",
+      "title": "A self-delimiting CodeFilling wire contract with legal decoding at every byte prefix",
+      "assetConclusion": "parser-unit-study-possible-end-to-end-vertical-slice-hard-blocked",
+      "officialAssets": [
+        {
+          "name": "CodeFilling",
+          "repository": "https://github.com/PhyllisH/CodeFilling",
+          "commit": "57f83ccc7d8457da74f06424811c130c3020e19e",
+          "status": "code-verified",
+          "verifiedCapabilities": [
+            "PyTorch selection, quantization, tensor reconstruction, and fusion paths.",
+            "A communication mask whose reported rate is the selected spatial-cell fraction."
+          ],
+          "missingCapabilities": [
+            "No working wire serialization baseline: EntropyCoder initialization is commented out while compress and decompress still reference it.",
+            "No framing, packet, stream cursor, partial-record state, or actual byte-rate measurement.",
+            "The official checkpoint folder returned HTTP 403 to anonymous access and its files, commit binding, and hashes remain unverified.",
+            "The paper's OPV2VH+ release was not located as a versioned public asset."
+          ]
+        }
+      ],
+      "licenses": {
+        "rootLicense": "UCLA Academic Software License",
+        "setupMetadata": "MIT",
+        "status": "conflict-hard-gate-until-rightsholder-clarifies"
+      },
+      "minimumSmoke": {
+        "status": "parser-conformance-possible-only-after-implementation",
+        "preconditions": [
+          "Define a versioned self-delimiting schema, model or codebook identity, tensor shape, coordinate metadata, and integrity behavior.",
+          "Use a checkpoint and sample only for an end-to-end CodeFilling claim; a synthetic quantizer can validate only the parser.",
+          "For prefixes shorter than the complete header, return need-more or ego-only unless the required schema was negotiated before the message."
+        ],
+        "contract": [
+          "Records are transmitted in a frozen utility order and contain enough metadata to be decoded independently.",
+          "An incomplete trailing record is ignored, never partially interpreted.",
+          "Every prefix deterministically returns ego-only, need-more, or features produced from complete records only.",
+          "No decoder reads beyond the supplied prefix or raises an unhandled error.",
+          "The complete byte stream reproduces the legacy tensor path within a declared tolerance."
+        ],
+        "tests": [
+          "Enumerate every byte truncation point for one complete two-agent message.",
+          "Fuzz zero-length feed, fragmented feed, repeated feed, truncated headers, truncated records, and corrupted lengths.",
+          "Require fragmentation-independent results and nested complete-record sets.",
+          "Do not call separately re-optimized non-nested budget messages one progressive stream."
+        ]
+      },
+      "collisionBoundary": {
+        "exactDirectCollisionFound": false,
+        "closest": [
+          "RDcomm occupies layered vector quantization, utility priority, variable-length Huffman codes, and coarse-to-fine binary strings.",
+          "CoDS occupies digital bitstreams, channel coding and decoding, and reliability filtering.",
+          "ReVQom occupies multi-level residual vector quantization and successive reconstruction.",
+          "JigsawComm occupies utility-ranked units and one-model operation under varying budgets."
+        ],
+        "allowedClaim": "A versioned, self-delimiting, fragmentation-independent CodeFilling record protocol plus exhaustive every-prefix conformance tests.",
+        "forbiddenClaims": [
+          "New codebooks, residual quantization, Huffman coding, or digital cooperative-perception bitstreams.",
+          "First utility ranking or arbitrary-budget collaborative perception.",
+          "Monotonic AP improvement for every added byte without direct evidence."
+        ]
+      }
+    }
+  ],
+  "sharedHardBlocks": [
+    "No anonymously verifiable official checkpoint with configuration and checksum is available for either audited commit.",
+    "Neither candidate can establish its full real-network claim directly from the current public repository.",
+    "Both candidates require license review before redistributing a modified or derivative implementation."
+  ],
+  "primarySources": [
+    {
+      "title": "QuantV2X official repository",
+      "url": "https://github.com/ucla-mobility/QuantV2X/commit/de0d482ac23d8dadf4ce5bc37ab47fa37f4f5aa3"
+    },
+    {
+      "title": "V2X-ReaLO",
+      "url": "https://arxiv.org/abs/2503.10034"
+    },
+    {
+      "title": "CodeFilling official repository",
+      "url": "https://github.com/PhyllisH/CodeFilling/commit/57f83ccc7d8457da74f06424811c130c3020e19e"
+    },
+    {
+      "title": "Communication-Efficient Collaborative Perception via Information Filling with Codebook",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Hu_Communication-Efficient_Collaborative_Perception_via_Information_Filling_with_Codebook_CVPR_2024_paper.html"
+    },
+    {
+      "title": "RDcomm",
+      "url": "https://arxiv.org/abs/2509.21994"
+    },
+    {
+      "title": "CoDS",
+      "url": "https://arxiv.org/abs/2512.22513"
+    },
+    {
+      "title": "ReVQom",
+      "url": "https://arxiv.org/abs/2509.21464"
+    },
+    {
+      "title": "JigsawComm",
+      "url": "https://arxiv.org/abs/2511.17843"
+    }
+  ]
+}

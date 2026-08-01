@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "agentic-driving",
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "stage": "pre-review",
+  "title": "LaMPilot 的策略记忆归因：同状态改写究竟测到语言泛化，还是取回了已学策略",
+  "hook": "把官方 exact-ID 排除拆成 sample、seed 与策略来源三层冷启动对照，第一次定量区分语言理解、跨状态泛化和同状态策略复用对驾驶成功率的各自贡献。",
+  "output": "评测审计与分组协议",
+  "effort": "中等，主要是评测适配与可复算追踪",
+  "timeline": "6 至 8 周完成最小研究，完整多模型复核不超过 12 周",
+  "whyNow": "LaMPilot 已公开完整 benchmark、human-feedback runner 和持久策略库；固定提交同时暴露 sample、command、seed 与策略检索接口，使此前混在一个总分里的记忆复用效应可以在不改驾驶任务的前提下被直接识别。",
+  "keyProblem": "LaMPilot 的 human-feedback 协议先用精确 demo ID 迭代出成功策略并写入持久库，再只跳过这些精确 ID 评测其余条目。同一 simulator sample 和 seed 会与多个命令改写形成不同 ID，因此非 demo 改写可能读取在同一初始状态上学到的策略。当前分数无法判断成功来自语言改写泛化、一般策略记忆，还是同状态策略复用。",
+  "currentLimitations": "官方论文把策略存储与复用作为系统能力，公开代码也提供 exact-ID 去重，但没有 scenario/sample/seed 分组冷启动、检索来源追踪或同库内容下的定向屏蔽对照。简单清空策略库又会同时移除所有跨任务记忆，无法把同状态复用与一般检索价值分开；把性能下降直接称为数据泄漏也会误伤系统本来就要研究的记忆能力。",
+  "hypothesis": "在固定模型、提示、任务与 simulator seed 后，官方 exact-ID 协议的部分收益可由同 sample 或同 seed 策略的实际检索解释；只屏蔽同组策略会使至少一类任务的成功或安全指标出现可重复变化，并可能改变模型排序。若检索追踪显示同组策略极少被使用，或屏蔽后差异被紧窄置信区间排除，则官方协议可被正面验证为主要测量语言与跨状态泛化。",
+  "claimBoundary": "研究对象仅是固定提交中的 human-feedback 加持久策略库评测路径，不指控不当行为，也不外推到 README 默认展示的 stateless zero-shot/few-shot test_icl 结果。策略复用是预期功能；本文审计的是性能归因与报告粒度。",
+  "estimands": [
+    "语言改写泛化：在相同 sample 与 seed 上，不允许读取任何该 sample 或 seed 产生的策略时，命令改写相对原始命令的性能。",
+    "一般策略记忆收益：允许读取异 sample 且异 seed 的历史策略，相对每条评测前清空仓库的性能变化。",
+    "同状态策略复用收益：保持策略库其余内容、生成模型和当前测试条目不变，仅屏蔽同 sample 或同 seed 来源策略时的配对性能变化。"
+  ],
+  "noveltyClaims": [
+    "贡献不是把常见 group split 套到一个新数据集，而是定义并识别持久策略记忆 benchmark 中的三种混合 estimand：语言改写、跨状态记忆和同状态记忆；检索来源 trace 使差异能归因到实际被消费的策略，而不只归因到数据划分名称。",
+    "提出内容保持不变的定向策略屏蔽对照：仓库中异组策略、模型上下文和评测状态全部保持一致，只拒绝来自当前 sample/seed 的候选，从而比全库 reset 更窄地检验同状态复用。",
+    "把负结果写成可行动的 benchmark 保证：若同组检索率和效应上界都足够小，后续工作可继续使用 exact-ID 协议，但必须连同该上界、策略来源分布和适用的 human-feedback 路径一起报告。"
+  ],
+  "closestWorkDifference": [
+    "LaMPilot 正式论文建立 language-model program benchmark 与策略库，但没有报告 exact-ID、sample-group、seed-group 和定向策略屏蔽之间的性能分解。",
+    "DiLu 等驾驶语言 Agent 已证明经验记忆与反思是有价值的系统模块；本研究不再提出一个记忆模块，而是审计记忆型 benchmark 是否把同状态复用计入了语言泛化。",
+    "Code as Policies 提供 stateless language-model program 基线；本研究利用它来界定无持久策略记忆时的能力，而不是把代码生成本身作为新方法。"
+  ],
+  "method": [
+    "先从官方配置构造 scenario、sample、seed 和 command 的规范组键，并在至少三个任务族中核对 sample-command 笛卡尔展开、demo ID 与真实 simulator seed；任何无法恢复稳定组键的条目在查看性能前排除。",
+    "在 PolicyRepository 外包一层只读 provenance tracer，记录每次 query 返回的策略 ID、来源组键、相似度、进入提示的顺序与最终是否被生成器消费；追踪层不得修改 query、候选文本或模型调用。",
+    "对同一组冻结测试条目运行六个预注册条件：官方 exact-ID 持久库、仅屏蔽同 sample、仅屏蔽同 seed、严格 sample-group 冷启动、每条前全库 reset、stateless ICL；再加 retrieved-but-hidden placebo 区分检索事件与上下文消费。",
+    "固定模型精确版本、temperature、系统提示、embedding 模型、仓库初始 bytes、模拟器 seed 和任务顺序；随机交换对照执行顺序，并在每个条目上复用同一缓存或同一组生成随机种子。",
+    "以 sample 或 seed 组为聚类单位 bootstrap 配对差值，分别报告任务内效应、跨任务随机效应、模型排序稳定性以及检索率对性能差的中介关联，不把 command 行当作独立样本。"
+  ],
+  "reusableAssets": [
+    "LaMPilot 固定提交 ba4564e28a32935f2a5de7b1b85bed7289fcebdb 的 DbLv1 dataset、demo runner、HumanFeedbackCGAgent 和 Chroma PolicyRepository。",
+    "官方 highway-env 场景配置、任务 evaluator 与 zero-shot/few-shot test_icl 路径。",
+    "仓库中 32 类场景和 4,900 个 sample-command 条目的规范 ID 及配置文件。"
+  ],
+  "modulesToBuild": [
+    "scenario/sample/seed 分组索引和分组划分生成器。",
+    "可复算的策略来源 trace、同组 denylist 与 retrieved-but-hidden 代理层。",
+    "冻结仓库快照、顺序随机化、聚类 bootstrap 和排名敏感性分析脚本。"
+  ],
+  "implementationPath": [
+    "固定 LaMPilot commit、Python 与 highway-env 依赖、支持的 LLM 精确 revision、embedding 模型和 Chroma 版本；保存 lockfile、提示哈希、仓库初始快照与一次官方 smoke run。",
+    "实现组键检查器并对 left_overtake seed 271 以及至少一个纵向控制和一个变道任务人工复核 sample-command 展开，输出不可变 grouping manifest。",
+    "实现 PolicyRepository facade，在不改变相似度计算的情况下写出 retrieval trace，并支持 same-sample、same-seed、all-memory 三种过滤以及 retrieved-but-hidden placebo。",
+    "先用一个固定模型和三个任务族完成顺序交换的小样本执行门，验证 simulator、生成缓存、仓库 reset 和策略屏蔽的确定性与互不污染。",
+    "扩展到预注册的完整任务子集和至少两个能力层级不同的模型，按组导出 success、collision、TTC、效率、代码执行失败与策略来源明细。",
+    "发布原始 trace 的去密钥版本、group manifest、分析脚本和环境哈希，使其他 memory-augmented driving agent 可以复用该评测协议。"
+  ],
+  "minimumStudy": [
+    "Gate 0：在三个预注册任务族中运行官方 human-feedback 路径，确认非 demo 改写是否实际检索并消费同 sample 或同 seed 的 demo 策略；若事件为零，停止效果主张并报告检索率上界。",
+    "Gate 1：在同一冻结测试条目上比较官方 exact-ID、same-sample denylist、same-seed denylist 与 retrieved-but-hidden placebo，确认追踪和定向屏蔽只改变允许进入上下文的策略来源。",
+    "Gate 2：加入严格 sample-group、seed-group、每条 reset 与 stateless ICL，估计三种预定义 estimand，并以 sample/seed 为聚类单位给出配对置信区间。",
+    "Gate 3：至少复核第二个模型，检验效应是否只属于单一服务版本，并报告方法排序在不同划分下是否反转。"
+  ],
+  "strongBaselines": [
+    "官方 exact-ID 排除并保留持久策略库的 human-feedback 协议。",
+    "每个测试条目前清空策略库的 cold-start human-feedback 协议。",
+    "严格 sample-group 与 seed-group holdout，而不是仅排除精确 command ID。",
+    "保持检索发生但不把策略放入生成上下文的 retrieved-but-hidden placebo。",
+    "官方 stateless zero-shot 与 few-shot test_icl 路径。",
+    "允许异 sample/异 seed 记忆、只拒绝当前组策略的定向 denylist。"
+  ],
+  "metrics": [
+    "同 sample、同 seed、异组策略的检索率、进入提示率、相似度和来源覆盖率。",
+    "任务成功率、碰撞率、最小 TTC、时间效率、速度稳定性和代码生成/执行失败率。",
+    "官方协议相对各组 holdout 的组级配对差、95% 聚类 bootstrap 置信区间和预声明最小有意义效应。",
+    "不同协议下的模型排名、任务族排名与 Kendall rank correlation。",
+    "同组策略被消费与结果改善之间的分层关联，并明确不把该关联单独解释为因果中介。"
+  ],
+  "successCriteria": [
+    "Gate 0 在至少两个预注册任务族观察到可核验的同 sample 或同 seed 策略消费，且定向屏蔽通过内容与执行隔离检查。",
+    "same-group denylist 相对官方 exact-ID 在至少一个预注册主要指标上达到事先冻结的最小有意义差异，95% 组级置信区间排除零，并在第二模型或第二任务族复现。",
+    "严格 group holdout 改变方法排序，或三项 estimand 的分解足以改变 benchmark 对语言泛化能力的结论和推荐报告协议。"
+  ],
+  "killCriteria": [
+    "完整预注册子集中没有非 demo 条目实际消费同 sample 或同 seed 策略，或检索事件少到无法估计效应，只能报告发生率上界。",
+    "定向屏蔽、严格 group holdout 与官方 exact-ID 的主要指标差异均被紧窄置信区间限制在预声明等效界内，且模型排序保持不变。",
+    "组键、仓库状态或外部 LLM revision 无法冻结，导致同一条件的 no-op 与 order-swap 差异大于待测协议差异。"
+  ],
+  "negativeResultConsequence": "若 kill 条件中的稳健性结果成立，项目不再主张混淆，而是发布 exact-ID 协议的适用范围和效应上界，并建议官方 human-feedback 结果附带策略来源分布；若执行噪声无法低于待测效应，则停止科学比较并只保留工程复现报告。",
+  "risks": [
+    "性能下降可能只是预期记忆能力被拿走，而不是 benchmark 错误；因此标题、结论和图表必须使用归因、组 holdout 和协议敏感性措辞，不能把所有差异都称为 leakage。",
+    "外部 LLM、embedding 服务与 Chroma 版本会引入不可控漂移；必须固定 revision、temperature、提示、缓存和仓库 bytes，并把无法冻结的服务降为次级复核。",
+    "同 seed 不一定代表完全相同后续轨迹，因为语言策略会改变闭环状态；主要归因只针对共同初始状态与已消费策略来源，不把整段 rollout 称为重复样本。",
+    "三个任务族可能不足以代表 32 类场景；最小研究只判断候选是否值得扩展，最终结论需要完整预注册子集和任务层级异质性。"
+  ],
+  "impact": "该研究把 memory-augmented driving agent 的总分拆成可解释的能力账本，避免把同状态策略复用误读为语言泛化，也避免因笼统的 leakage 指控而否定有价值的长期记忆。若效应存在，它会直接改变 LaMPilot 类 benchmark 的 split、报告和模型排名；若效应被排除，它为 exact-ID 协议提供一份可复算的稳健性保证。分组策略来源追踪还可迁移到检索增强 VLA、反思记忆和技能库型驾驶 Agent。",
+  "evidence": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "role": "本地已读论文证明当前方向需要把 Agent 的路由、验证与最终任务分数拆开报告；它提供评测分解语境，但不是 LaMPilot 同状态复用的直接证据。",
+      "localPaperId": "cognitive-dual-process-driving",
+      "localLink": "papers/cognitive-dual-process-driving/"
+    },
+    {
+      "title": "LaMPilot: An Open Benchmark Dataset for Autonomous Driving with Language Model Programs",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Ma_LaMPilot_An_Open_Benchmark_Dataset_for_Autonomous_Driving_with_Language_CVPR_2024_paper.html",
+      "role": "正式论文界定 language-model program benchmark、策略库设计和原始实验主张，是比较协议与边界陈述的一手依据。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "LaMPilot official benchmark and policy-memory code at fixed commit",
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "role": "固定代码直接证明 sample-command 展开、精确 demo ID、demo-before-test、持久 Chroma 策略库与 resume 路径，并提供可插入 trace 和 denylist 的接口。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DiLu: A Knowledge-Driven Approach to Autonomous Driving with Large Language Models",
+      "url": "https://openreview.net/forum?id=OqTMUPuLuC",
+      "role": "最近的驾驶语言 Agent 先例表明经验记忆和反思是预期能力，约束本研究只能主张性能归因与评测残差，不能把记忆复用本身当作缺陷。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Code as Policies: Language Model Programs for Embodied Control",
+      "url": "https://arxiv.org/abs/2209.07753",
+      "role": "提供无持久驾驶策略库的 language-model program 方法谱系和 stateless 对照，帮助区分代码生成能力与跨条目记忆贡献。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T02:31:56.099Z"
+}

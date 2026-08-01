@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-provenance-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "workingTitle": "协同消息时钟溯源与单向时龄可识别区间",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb743-c4bb-75a2-bac7-edfe17c3acaa",
+    "role": "standards-formal-identifiability-and-open-asset-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "identifiabilityModel": {
+    "clockModel": "C_s(t)=a_s t+b_s and C_r(t)=a_r t+b_r",
+    "observations": "x=C_s(g) at generation and y=C_r(g+d) at receipt",
+    "minimalCounterexample": "Even with a_s=a_r=1, y-x=d+(b_r-b_s). Delay 20 ms with receiver offset 100 ms and delay 120 ms with offset 0 ms produce the same observed difference but opposite truth under a 50 ms deadline.",
+    "primaryTheory": [
+      {
+        "title": "Fundamentals of Large Sensor Networks: Connectivity, Capacity, Clocks, and Computation",
+        "url": "https://doi.org/10.1109/TAC.2010.2089210",
+        "role": "Clock offset and directed one-way delay are not jointly identified from the relevant timestamp observations."
+      },
+      {
+        "title": "RFC 7679: A One-Way Delay Metric for IPPM",
+        "url": "https://datatracker.ietf.org/doc/html/rfc7679",
+        "role": "One-way delay measurement requires synchronized source and destination clocks and explicit clock uncertainty and timestamping boundaries."
+      }
+    ]
+  },
+  "verifiedFieldContracts": [
+    {
+      "source": "ETSI TS 103 324 V2.1.1 CPM",
+      "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+      "finding": "CPM provides a referenceTime and per-object measurementDeltaTime but not receiver clock identity, synchronization state, or mapping-error bounds."
+    },
+    {
+      "source": "ETSI CDD and CAM",
+      "url": "https://www.etsi.org/deliver/etsi_ts/102800_102899/10289402/01.03.01_60/ts_10289402v010301p.pdf",
+      "finding": "TimestampIts uses an ITS epoch while CAM generationDeltaTime is modulo 65536; the numeric field alone does not prove a common sender and receiver time basis."
+    },
+    {
+      "source": "SAE J2735 and USDOT BSM sample contract",
+      "url": "https://data.transportation.gov/Automobiles/Tampa-CV-Pilot-Basic-Safety-Message-BSM-Sample/nm7w-nvbm",
+      "finding": "BSM secMark is milliseconds within a minute and requires external minute and clock-source context for cross-host age."
+    },
+    {
+      "source": "3GPP TS 38.331 V18.8.0",
+      "url": "https://www.etsi.org/deliver/etsi_ts/138300_138399/138331/18.08.00_60/ts_138331v180800p.pdf",
+      "finding": "Sidelink synchronization fields describe radio-frame synchronization references, not application capture, host receipt, or their error bounds."
+    },
+    {
+      "source": "ROS 2 Clock and Time design",
+      "url": "https://design.ros2.org/articles/clock_and_time.html",
+      "finding": "ROS distinguishes System, Steady, and ROS time and permits jumps under simulated time, while the ordinary serialized Header does not carry clock type."
+    },
+    {
+      "source": "MCAP specification",
+      "url": "https://mcap.dev/spec",
+      "finding": "Messages carry log_time and publish_time, but publish_time may equal log_time when unavailable and the specification does not assign a clock-domain meaning."
+    },
+    {
+      "source": "IEEE 1588-2019 and IEEE 802.1AS",
+      "url": "https://standards.ieee.org/ieee/1588/6825/",
+      "finding": "PTP and generalized PTP expose domain, grandmaster, time-base changes, and asymmetry handling that can support provenance, but configuration presence does not bind every application timestamp to that state."
+    }
+  ],
+  "nearestWorkBoundary": [
+    {
+      "work": "Age of Information",
+      "url": "https://doi.org/10.1561/1300000060",
+      "occupiedSpace": "AoI assumes generation and current time can be compared on a meaningful common axis."
+    },
+    {
+      "work": "CoBEVFlow",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/5a829e299ebc1c1615ddb09e98fb6ce8-Abstract-Conference.html",
+      "occupiedSpace": "Asynchronous feature compensation under comparable continuous timestamps."
+    },
+    {
+      "work": "Clock-synchronization-aware cooperative perception, 2026",
+      "url": "https://arxiv.org/html/2602.13439",
+      "occupiedSpace": "Joint clock offset, skew, path-asymmetry, AoI, and fusion handling; a new synchronization or AoI-compensation model is not claimed here."
+    },
+    {
+      "work": "TAP: Time-aware provenance",
+      "url": "https://www.usenix.org/conference/tapp11/tap-time-aware-provenance-distributed-systems",
+      "occupiedSpace": "Time-aware provenance for distributed state, not a V2X field contract and one-way-age identified set."
+    }
+  ],
+  "noveltyBoundary": [
+    "Audit each frozen V2X, ROS, or MCAP timestamp for event semantics, producer, clock domain, synchronization generation, timestamping plane, and mapping-error interval.",
+    "Compute an identified interval for capture-to-use age instead of introducing a new synchronization model or forcing a point estimate.",
+    "Return fresh, stale, or uncertain according to a deadline and explicitly refuse an unidentifiable verdict.",
+    "Separate sensor capture, feature ready, publish, wire transmit and receive, host receive, log, replay publish, fusion use, and inference finish."
+  ],
+  "provenanceContract": [
+    "event_semantics",
+    "producer_id",
+    "clock_domain_id",
+    "timescale_epoch",
+    "timestamping_plane",
+    "sync_protocol_profile_domain",
+    "grandmaster_identity",
+    "time_base_indicator",
+    "sync_state",
+    "offset_interval_ns",
+    "rate_ratio_interval",
+    "valid_from_and_to",
+    "jump_or_relock_counter",
+    "transform_id",
+    "provenance_parent"
+  ],
+  "intervalRule": {
+    "definition": "If sender and receiver events map to reference-time intervals [L_s(x),U_s(x)] and [L_r(y),U_r(y)], then A(x,y)=[L_r(y)-U_s(x), U_r(y)-L_s(x)] intersect [0,infinity).",
+    "decision": [
+      "Upper bound at or below D means certainly fresh.",
+      "Lower bound above D means certainly stale.",
+      "Otherwise report uncertain."
+    ]
+  },
+  "openAssets": [
+    {
+      "asset": "CooperScene MCAP",
+      "url": "https://github.com/UCR-CISL/CooperScene/tree/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+      "use": "Audit log and publish times and available synchronization provenance; the public take audit does not establish an independent latency or sync-state channel."
+    },
+    {
+      "asset": "DAIR-V2X",
+      "url": "https://github.com/AIR-THU/DAIR-V2X/tree/c885c54af0c34bc515fa9ca8b5e8fda76a15462c",
+      "use": "Contrast image_timestamp, pointcloud_timestamp, and system_error_offset with missing clock-source and relock provenance."
+    },
+    {
+      "asset": "NIST C-V2X PCAP and PDML",
+      "url": "https://catalog.data.gov/dataset/c-v2x-interoperability-testing-datasets",
+      "use": "Validate message and capture timestamp boundaries without assuming capture clocks are synchronized to senders."
+    },
+    {
+      "asset": "OpenCDA and CDASim",
+      "url": "https://github.com/ucla-mobility/OpenCDA/releases/tag/v0.1.2",
+      "use": "Inject offset, drift, and relock while fixing the network process; a shared simulation clock is not treated as physical multi-host evidence."
+    }
+  ],
+  "twoWeekMinimum": [
+    "Freeze standard versions, repository commits, one CooperScene take, and a synthetic ROS 2 MCAP; build a producer, event, clock-domain, and timestamping-plane ledger.",
+    "Construct observationally identical dual-world traces while preserving message content, order, and service process.",
+    "Inject offset 0, plus or minus 20, 100, and 500 ms; drift plus or minus 10, 50, and 100 ppm; one step or relock; and deadlines 50, 100, and 200 ms.",
+    "Implement a read-only replay age gate and compare naive subtraction, MCAP log-minus-publish, RTT over two, PTP point estimate, oracle common clock, and interval provenance.",
+    "Release the field ledger, counterexample pairs, identified-set calculator, sidecar schema, and reproducible manifest without training a perception model."
+  ],
+  "sixWeekStudy": [
+    "Extend the field audit and sidecar to CooperScene, DAIR-V2X, NIST packet captures, and ROS 2 or MCAP.",
+    "Use linuxptp ptp4l and phc2sys to generate calibrated software synchronization states without generalizing them to automotive radio or hardware timestamping.",
+    "Insert the age gate before one runnable public cooperative-perception pipeline and measure how incorrect freshness decisions propagate to task output without adding a compensation network.",
+    "Independently recompute coverage, false-fresh, false-stale, uncertainty, overhead, and release hashes."
+  ],
+  "falsifiableClaims": [
+    "Without clock-domain and synchronization evidence, observationally identical parameter worlds can have opposite one-way-age and deadline truth.",
+    "When valid synchronization intervals cover the true mappings, the age interval attains preregistered coverage and produces no false-fresh event outside that interval.",
+    "At least one frozen public path directly subtracts timestamps across unproven clock domains and changes freshness behavior under offset, drift, or relock with an otherwise fixed network process.",
+    "If every audited path proves a common time source and valid bounds, naive and oracle verdicts remain equivalent within those bounds."
+  ],
+  "metrics": [
+    "Age absolute error",
+    "Interval coverage and width",
+    "False-fresh and false-stale rate",
+    "Uncertain-decision rate",
+    "Count of identical observations with opposite deadline truth",
+    "Relock detection and event-attribution accuracy",
+    "Sidecar byte and CPU overhead",
+    "Optional frozen-model AP or trajectory difference"
+  ],
+  "killCriteria": [
+    "The frozen release cannot be parsed or event semantics cannot be assigned.",
+    "The counterexample changes payload, message order, or the network service process.",
+    "No calibrated truth is available for coverage validation.",
+    "The interval contract fails its preregistered coverage.",
+    "The observed discrepancy reduces to a parser bug.",
+    "Every target timestamp is proven to share one time basis with a valid uncertainty bound and no observationally equivalent counterexample remains."
+  ],
+  "claimGuardrails": [
+    "A PTP configuration or deployment statement is not per-message timestamp provenance.",
+    "ROS Header, packet capture time, MCAP publish time, host receive time, and sensor capture time are not interchangeable.",
+    "Any result is limited to the named standard version, repository commit, dataset take, and timestamping plane."
+  ]
+}

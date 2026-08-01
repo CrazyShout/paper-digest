@@ -1,0 +1,659 @@
+{
+  "schemaVersion": "1.1",
+  "directionId": "cooperative-autonomous-driving",
+  "auditId": "cooperative-autonomous-driving-trace-methodology",
+  "title": "CooperScene 定向吞吐率轨迹回放与协同感知因果实验方法论",
+  "evidenceRevision": {
+    "status": "throughput-only",
+    "reason": "官方完整 take 9 MCAP 的 Range 读取和首 chunk 解析表明，可执行网络观测仅为 12 条定向 pairwise throughput channel。方法论因此严格降级为 throughput-derived completion replay。",
+    "consequence": "实验不再构造或估计任何需要未发布网络指标、逐包事件或状态丢包模型的条件；允许的派生量仅来自定向 throughput 服务过程、消息载荷和生成时刻。"
+  },
+  "verifiedClaims": [
+    {
+      "id": "take9-range-audit",
+      "claim": "已对官方完整 take 9 MCAP 执行 HTTP Range 读取并解析首个可用 chunk；该文件包含 25 个 channel。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit"
+      ],
+      "scope": "该结论直接适用于已解析的 take 9；其余可下载 take 必须逐个执行同构 schema 审计后才能合并。"
+    },
+    {
+      "id": "take9-directed-throughput-channels",
+      "claim": "take 9 的 25 个 channel 中有 12 条定向 pairwise throughput channel，topic 形式为 /<receiver>_Throughput_from_agent_<sender>，消息类型为 foxglove.Vector3，可执行数值位于 Vector3.x。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit",
+        "foxglove-vector3-schema"
+      ],
+      "scope": "topic 中的 receiver 和 sender 映射必须由实际 topic 解析，不得从数组顺序推断。Vector3.y 和 Vector3.z 不进入实验，除非未来独立证据核实其语义。"
+    },
+    {
+      "id": "take9-throughput-only",
+      "claim": "take 9 的实际 MCAP channel 中没有可执行的其他网络性能 channel；当前可复现实验只能使用 12 条定向 throughput 序列。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit"
+      ],
+      "scope": "论文和项目页对更多网络指标的资料性描述不能替代发布 artifact 中不存在的可执行 channel。"
+    },
+    {
+      "id": "mini-no-mcap",
+      "claim": "CooperScene mini 发布物不包含 MCAP，不能用于轨迹回放、schema 验证或网络时间相关性实验。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit",
+        "cooperscene-repository"
+      ],
+      "scope": "mini 只能用于感知数据管线 smoke test，不能作为独立网络 take。"
+    },
+    {
+      "id": "downloadable-take-count",
+      "claim": "当前共有 14 个可下载的完整 take MCAP。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit"
+      ],
+      "scope": "14 是可下载 artifact 数量和独立样本上限，不是通过完整性、时间对齐和 12 链路覆盖检查后的最终可用样本量。"
+    },
+    {
+      "id": "throughput-unit-inference",
+      "claim": "Vector3.x 的 schema 本身没有声明 Mbps 单位；Mbps 仅由官方仓库中的 cv2x_throughput 配置、变量命名、README 和相关计算代码推断。",
+      "evidenceSourceIds": [
+        "take9-mcap-range-audit",
+        "cooperscene-repository",
+        "cooperscene-coop-dataset-code",
+        "cooperscene-table2-script"
+      ],
+      "scope": "所有绝对 completion time、AoI 和 deadline miss 结果必须标注 assumed-Mbps；在单位没有独立确认前，不能把这些派生量描述为 MCAP 直接测量值。"
+    },
+    {
+      "id": "cooperscene-sampling",
+      "claim": "官方论文说明感知标注频率为 10 Hz，C-V2X 测量服务器以 100 ms 间隔报告指标。",
+      "evidenceSourceIds": [
+        "cooperscene-paper"
+      ],
+      "scope": "实际 replay 的时间增量必须从每个 MCAP 消息时间戳计算；不能无条件把所有相邻消息强制设为 100 ms。"
+    },
+    {
+      "id": "official-benchmark-network-model",
+      "claim": "官方公开 cv2x 评估路径使用 share_size_mb 和 cv2x_throughput 计算异步延迟，默认吞吐率为 1.6 Mbps，并按 100 ms 感知帧量化延迟；公开代码没有读取 MCAP throughput channel。",
+      "evidenceSourceIds": [
+        "cooperscene-repository",
+        "cooperscene-coop-dataset-code",
+        "cooperscene-table2-script"
+      ],
+      "scope": "throughput-derived completion replay 是对官方评估的可审计扩展，不等同于官方 Table 2 的原始网络实现。"
+    },
+    {
+      "id": "record-replay-risk",
+      "claim": "蜂窝网络 record-and-replay 可能因测量工作负载与回放工作负载不一致而产生评估偏差，因此读取真实 throughput 序列并不自动保证 completion replay 准确。",
+      "evidenceSourceIds": [
+        "cellreplay"
+      ],
+      "scope": "CooperScene 缺少与所有 cooperative payload 一一匹配的在线重放真值时，结果只能解释为基于记录服务过程的受控反事实。"
+    }
+  ],
+  "primarySources": [
+    {
+      "id": "take9-mcap-range-audit",
+      "title": "CooperScene Full Take 9 MCAP Range and First-Chunk Audit",
+      "type": "direct-artifact-audit",
+      "method": "HTTP Range 读取、MCAP header/channel schema 解析和首个可用 chunk 检查",
+      "verifiedArtifacts": [
+        "25 channels",
+        "12 directed pairwise throughput topics",
+        "topic pattern /<receiver>_Throughput_from_agent_<sender>",
+        "foxglove.Vector3.x payload",
+        "no other executable network-performance channel in the parsed take",
+        "mini has no MCAP",
+        "14 downloadable full-take MCAP artifacts"
+      ],
+      "relevance": "本方法论的数据可执行性最高优先级证据。"
+    },
+    {
+      "id": "cooperscene-paper",
+      "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+      "type": "official-paper",
+      "venue": "ECCV 2026",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "relevance": "数据采集背景、10 Hz 感知频率、100 ms 网络报告间隔、设备配置和公开限制。"
+    },
+    {
+      "id": "cooperscene-repository",
+      "title": "UCR-CISL/CooperScene",
+      "type": "official-code",
+      "url": "https://github.com/UCR-CISL/CooperScene",
+      "relevance": "数据布局、MCAP 独立分发方式、模型、agent setting 和吞吐率参数语义。"
+    },
+    {
+      "id": "cooperscene-coop-dataset-code",
+      "title": "CooperScene CoopDataset Network Delay Implementation",
+      "type": "official-code",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/main/models/cooperative/datasets/coop_dataset.py",
+      "relevance": "cv2x_throughput 的 Mbps 注释、载荷到完成时间的换算和 100 ms 帧量化。"
+    },
+    {
+      "id": "cooperscene-table2-script",
+      "title": "CooperScene Table 2 Evaluation Script",
+      "type": "official-code",
+      "url": "https://github.com/UCR-CISL/CooperScene/blob/main/tools/run_table2.sh",
+      "relevance": "公开基准的模型、agent setting、share size 和吞吐率配置。"
+    },
+    {
+      "id": "foxglove-vector3-schema",
+      "title": "Foxglove Vector3 Message Schema",
+      "type": "official-schema-document",
+      "url": "https://docs.foxglove.dev/docs/visualization/message-schemas/vector3",
+      "relevance": "核实 Vector3 仅提供通用 x、y、z 数值分量，不自带 throughput 单位语义。"
+    },
+    {
+      "id": "cellreplay",
+      "title": "CellReplay: Towards Accurate Record-and-Replay for Cellular Networks",
+      "type": "peer-reviewed-paper",
+      "venue": "NSDI 2025",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+      "relevance": "蜂窝轨迹回放的工作负载敏感性、准确性校准和评估偏差。"
+    },
+    {
+      "id": "mahimahi",
+      "title": "Mahimahi: Accurate Record-and-Replay for HTTP",
+      "type": "peer-reviewed-paper",
+      "venue": "USENIX ATC 2015",
+      "url": "https://www.usenix.org/conference/atc15/technical-session/presentation/netravali",
+      "relevance": "受控网络 record-and-replay、隔离和可复现性原则。"
+    },
+    {
+      "id": "theiler-surrogates",
+      "title": "Testing for Nonlinearity in Time Series: The Method of Surrogate Data",
+      "type": "peer-reviewed-method-paper",
+      "url": "https://doi.org/10.1016/0167-2789(92)90102-S",
+      "relevance": "通过明确零假设和受约束 surrogate 构造可检验的时间序列对照。"
+    },
+    {
+      "id": "kunsch-block-bootstrap",
+      "title": "The Jackknife and the Bootstrap for General Stationary Observations",
+      "type": "peer-reviewed-method-paper",
+      "url": "https://doi.org/10.1214/aos/1176347265",
+      "relevance": "依赖观测的分块重采样基础。"
+    },
+    {
+      "id": "politis-romano-stationary-bootstrap",
+      "title": "The Stationary Bootstrap",
+      "type": "peer-reviewed-method-paper",
+      "url": "https://doi.org/10.1080/01621459.1994.10476870",
+      "relevance": "弱依赖平稳观测的标准误和置信区间构造。"
+    },
+    {
+      "id": "holm-1979",
+      "title": "A Simple Sequentially Rejective Multiple Test Procedure",
+      "type": "peer-reviewed-method-paper",
+      "url": "https://doi.org/10.2307/4615733",
+      "relevance": "预注册次级比较的 family-wise error 控制。"
+    }
+  ],
+  "prerequisites": {
+    "artifactInventory": [
+      "对全部 14 个可下载完整 take 执行 Range 级 MCAP header、schema、channel 和首 chunk 审计。",
+      "逐 take 保存 channel 总数、12 条期望定向 throughput topic 的存在性、消息类型、消息数、起止时间和解析错误。",
+      "只有 schema 兼容且时间覆盖可比较的 take 才能进入联合分析；最终样本量记为 K_usable，且 K_usable 不得大于 14。",
+      "mini 不进入任何网络实验，也不计入 K_usable。",
+      "如果其他 take 的 topic、消息类型或有效数值位置不同，必须按版本或 schema 分层，不能静默拼接。"
+    ],
+    "throughputSemantics": [
+      "唯一允许进入调度器的网络观测是每条已核实定向 topic 的 foxglove.Vector3.x。",
+      "receiver 和 sender 从 topic 字符串解析，并保存为显式 directed-link key。",
+      "Vector3.y 和 Vector3.z 视为语义未知，不进入建模、插值、筛选或质量判断。",
+      "Mbps 是仓库配置支持的单位推断，不是 foxglove.Vector3 schema 自述；数据列必须命名为 throughput_x_assumed_mbps，而不是 measured_mbps。",
+      "每条消息的有效持续时间由相邻核实时间戳差值决定；采用分段常数服务过程时必须在方法中明示。",
+      "NaN、无穷、负值、重复时间戳、非单调时间和异常长间隔的处理规则必须仅用网络数据预注册。",
+      "对 absolute completion 结果执行 assumed-Mbps 比例敏感性分析，但比例敏感性不能替代单位核实。"
+    ],
+    "completionReplay": [
+      "对方向 sender 到 receiver 的消息，只能使用对应 /<receiver>_Throughput_from_agent_<sender> topic。",
+      "在 assumed-Mbps 解释下，区间可服务比特数为 Vector3.x 乘以 1000000 再乘以该消息覆盖的秒数。",
+      "消息在生成时刻进入对应定向链路队列；累计服务比特首次达到冻结的 payload_bits 时记为 completion。",
+      "调度器采用 work-conserving fluid-service 模型；该模型不添加任何 MCAP 中不存在的额外网络随机变量。",
+      "message generation period、payload_bits、队列策略、过期策略和同一发送方的消息覆盖规则必须在查看感知结果前冻结。",
+      "AoI 定义为接收端当前使用消息的源生成时间与当前感知时刻之差。",
+      "deadline miss 定义为 completion time 超过预注册 deadline；它是 throughput 和 payload 的派生事件，不是 MCAP 直接观测。",
+      "采用 latest-completed-message 作为主策略，采用 100 ms hard deadline 作为敏感性策略。"
+    ],
+    "replayCalibration": [
+      "以代码中的静态 data_size/throughput 公式作为单元测试：恒定 throughput 输入必须产生解析解一致的 completion time。",
+      "对每个 take 和链路核对 throughput_x 的积分、消息完成顺序、队列守恒和单调性。",
+      "先用网络层合成 payload 完成 replay，不运行感知模型；所有算子通过保存和破坏约束后才进入感知阶段。",
+      "相同感知输入、checkpoint、cooperator set 和预计算 feature 在所有网络条件中保持固定。",
+      "ego-only 和 unlimited 是实现负控制；throughput intervention 不得改变其输出。"
+    ],
+    "dataPartition": [
+      "take 是唯一独立实验单位，禁止按帧、消息或链路随机拆分。",
+      "block 长度、异常规则、deadline、payload 选择、MDE 和 outcome 阈值只能用开发 take。",
+      "最终测试 take 在所有方法选择完成前保持封存。",
+      "由于最多只有 14 个可下载 take，优先采用 take-wise out-of-fold cross-fitting，使每个可用 take 都由未见该 take 的感知模型或调参流程产生评估结果。",
+      "如果官方 checkpoint 的训练 take 与可下载 MCAP take 重叠且无法审计，最终结论必须标注 checkpoint-exposure 风险。"
+    ]
+  },
+  "interventions": [
+    {
+      "id": "exact-throughput-replay",
+      "name": "Exact directed-throughput replay",
+      "construction": "按核实时间戳，把同一 take 的 12 条定向 throughput_x 序列组成多链路服务矩阵，并与消息生成时间及感知序列对齐。",
+      "preserves": [
+        "每条定向链路的 throughput_x 经验分布",
+        "链路内时间顺序和自相关",
+        "同一时刻的跨链路相关性",
+        "throughput 服务过程与真实场景时间的对齐"
+      ],
+      "changes": [],
+      "validUse": "得到 assumed-Mbps、fluid-service 条件下的 completion、AoI、deadline miss 和协同感知结果。",
+      "invalidInference": "这些派生量不是 MCAP 直接测量；exact 与 iid 的差异也不能单独归因于时间相关性。"
+    },
+    {
+      "id": "circular-throughput-shift",
+      "name": "Circular scene-time shift",
+      "construction": "将完整 12 链路 throughput 矩阵相对感知序列循环平移；平移量大于开发数据上冻结的最大相关窗口，并屏蔽首尾拼接敏感区。",
+      "preserves": [
+        "各链路 throughput_x 边际分布",
+        "链路内完整时间结构",
+        "同一时刻的跨链路相关性"
+      ],
+      "changes": [
+        "throughput 服务过程与真实交通场景时刻的对齐"
+      ],
+      "validUse": "识别 throughput 动态与场景时刻耦合的影响。",
+      "invalidInference": "不能解释为移除了 throughput 时间相关性。"
+    },
+    {
+      "id": "synchronous-throughput-iid",
+      "name": "Synchronous iid throughput shuffle",
+      "construction": "在每个 take 内对包含 12 条链路 throughput_x 的完整时间行使用同一个随机排列。",
+      "preserves": [
+        "每条链路的 throughput_x 经验边际分布",
+        "同一时间行的跨链路联合关系"
+      ],
+      "changes": [
+        "链路内时间顺序和自相关",
+        "throughput 与场景时间的对齐"
+      ],
+      "validUse": "作为无时间记忆但保留同时跨链路结构的 throughput surrogate。",
+      "invalidInference": "与 exact 的差异同时包含时间顺序和场景对齐变化。"
+    },
+    {
+      "id": "independent-link-throughput-iid",
+      "name": "Independent-link iid throughput shuffle",
+      "construction": "在每个 take 内对 12 条定向 throughput_x 序列分别使用独立随机排列。",
+      "preserves": [
+        "每条链路的 throughput_x 经验边际分布"
+      ],
+      "changes": [
+        "链路内时间顺序和自相关",
+        "同一时刻的跨链路相关性",
+        "throughput 与场景时间的对齐"
+      ],
+      "validUse": "与 synchronous iid 对比，识别跨链路共同吞吐波动对 completion 和感知的影响。",
+      "invalidInference": "不能替代真实链路过程，也不能用于单独估计场景对齐。"
+    },
+    {
+      "id": "throughput-block-shuffle",
+      "name": "Circular throughput block shuffle",
+      "construction": "把完整 12 链路 throughput 矩阵切分为连续块后随机排列，块内顺序不变；候选块长为 0.2、0.5、1 和 2 秒，主块长只能用开发 take 冻结。",
+      "preserves": [
+        "各链路 throughput_x 经验边际分布",
+        "块内链路时间结构",
+        "块内跨链路相关性"
+      ],
+      "changes": [
+        "块间长程顺序",
+        "throughput 与完整场景时间的对齐"
+      ],
+      "validUse": "与 synchronous iid 对比，在共同破坏全局场景对齐的条件下识别块尺度内 throughput 时间相关性。",
+      "invalidInference": "不得在最终测试结果出现后选择效果最大的块长。"
+    },
+    {
+      "id": "matched-throughput-link-swap",
+      "name": "Matched directed-link throughput swap",
+      "construction": "仅在同一 take、相同已核实 directed-link 类别内交换完整 throughput_x 序列，不改变序列内部时间结构。",
+      "preserves": [
+        "被交换 throughput 序列的边际和时间结构"
+      ],
+      "changes": [
+        "throughput 轨迹与具体 sender-receiver 身份及场景几何的对应"
+      ],
+      "validUse": "作为链路身份和场景几何耦合的 placebo 或异质性检验。",
+      "invalidInference": "不能用于证明 throughput 时间相关性的因果作用；没有可靠链路类型映射时禁止执行。"
+    }
+  ],
+  "causalEstimands": [
+    {
+      "id": "throughput-temporal-local",
+      "formula": "tau_temporal(b) = E_take[U(throughput_block_shuffle_b) - U(synchronous_throughput_iid)]",
+      "interpretation": "两组都破坏全局场景对齐并保留各链路 throughput 边际和同时跨链路关系，主要差异为块尺度 b 内的局部 throughput 时间相关性。",
+      "primaryStatus": true,
+      "requiredChecks": [
+        "两组每条链路 throughput_x 边际分布在数值精度内一致",
+        "block 组在目标滞后内保留预定 ACF",
+        "iid 组消除相同滞后的时间结构",
+        "completion/AoI/deadline miss 和感知 outcome 使用相同 payload、调度器与单位假设",
+        "结果在独立 take 上达到预注册实际意义阈值"
+      ]
+    },
+    {
+      "id": "throughput-scene-alignment",
+      "formula": "tau_alignment = E_take[U(exact_throughput_replay) - U(circular_throughput_shift)]",
+      "interpretation": "保留 throughput 边际、链路内时间结构和跨链路相关性，仅改变服务过程与场景时刻的对齐。",
+      "primaryStatus": false,
+      "requiredChecks": [
+        "平移量在查看感知结果前冻结",
+        "首尾拼接区域不驱动结果",
+        "多个合法平移量给出方向一致的敏感性结果"
+      ]
+    },
+    {
+      "id": "throughput-cross-link-dependence",
+      "formula": "tau_cross_link = E_take[U(synchronous_throughput_iid) - U(independent_link_throughput_iid)]",
+      "interpretation": "在单链路 throughput 边际和无链路内时间记忆条件下，估计同一时刻跨链路共同吞吐波动的作用。",
+      "primaryStatus": false,
+      "requiredChecks": [
+        "synchronous iid 保留原始同时跨链路相关结构",
+        "independent-link iid 消除该结构",
+        "各链路 throughput_x 边际在两组间一致"
+      ]
+    },
+    {
+      "id": "throughput-link-identity",
+      "formula": "tau_link_identity = E_take[U(exact_throughput_replay) - U(matched_throughput_link_swap)]",
+      "interpretation": "估计 throughput 轨迹与具体 sender-receiver 链路身份或场景几何匹配的作用。",
+      "primaryStatus": false,
+      "requiredChecks": [
+        "交换仅发生在相同已核实链路类别内",
+        "topic 到 sender-receiver 的映射已经逐 take 验证",
+        "不将该估计解释为时间相关性效应"
+      ]
+    },
+    {
+      "id": "exact-versus-iid-composite",
+      "formula": "delta_composite = E_take[U(exact_throughput_replay) - U(synchronous_throughput_iid)]",
+      "interpretation": "综合诊断真实 throughput 顺序、时间结构和场景对齐共同产生的差异。",
+      "primaryStatus": false,
+      "requiredChecks": [
+        "报告明确说明该对比不识别单一机制",
+        "不得用该对比单独声称 throughput 时间相关性的因果影响"
+      ]
+    }
+  ],
+  "experimentMatrix": {
+    "phase0AllTakeArtifactAudit": {
+      "population": "14 个当前可下载完整 take MCAP",
+      "tasks": [
+        "逐 take 执行 Range schema/channel 审计。",
+        "验证 12 条定向 throughput topic、foxglove.Vector3 类型和 x 分量可解析性。",
+        "记录消息数、起止时间、相邻时间增量、缺失窗口、异常值和跨链路共同覆盖区间。",
+        "计算 K_usable；任何统计功效计算都使用 K_usable 而不是固定写死 14。"
+      ],
+      "exclusions": [
+        "mini",
+        "缺少必要定向 throughput topic 的 take",
+        "时间戳无法排序或无法与感知序列对齐的 take",
+        "schema 与 take 9 不兼容且无法可靠转换的 take"
+      ],
+      "deliverable": "14 take artifact ledger、schema fingerprint、directed-link coverage matrix 和 K_usable。"
+    },
+    "phase1ThroughputProcessValidation": {
+      "conditions": [
+        "exact-throughput-replay",
+        "circular-throughput-shift",
+        "synchronous-throughput-iid",
+        "independent-link-throughput-iid",
+        "throughput-block-shuffle",
+        "满足匹配条件的 matched-throughput-link-swap"
+      ],
+      "rawTraceMetrics": [
+        "每条定向链路 throughput_x 的经验分布",
+        "预注册滞后上的 ACF",
+        "throughput_x 的零值或低服务持续窗口",
+        "跨链路相关矩阵",
+        "多链路同时低服务概率",
+        "每 take、每链路的累计 throughput_x 时间积分"
+      ],
+      "derivedSchedulerMetrics": [
+        "message completion time",
+        "Age of Information",
+        "deadline miss rate",
+        "consecutive deadline-miss duration",
+        "queue backlog",
+        "latest completed message age"
+      ],
+      "requirements": [
+        "iid 和 block 条件必须满足其 throughput 边际保存约束。",
+        "block 条件必须在冻结窗口内保留目标 ACF。",
+        "synchronous 和 independent iid 的差异必须局限于跨链路共同结构。",
+        "恒定 throughput 的 completion 必须与 data_size/throughput 解析解一致。",
+        "所有绝对派生指标必须携带 assumed-Mbps 标记。"
+      ]
+    },
+    "phase2AnchorPerceptionStudy": {
+      "models": [
+        {
+          "id": "cosdh",
+          "role": "官方低分享载荷代表"
+        },
+        {
+          "id": "v2xvit-or-cobevt",
+          "role": "官方中等分享载荷代表，在开发阶段固定其中一个"
+        },
+        {
+          "id": "v2vnet",
+          "role": "官方高分享载荷代表"
+        }
+      ],
+      "agentSettings": [
+        "V+V",
+        "V+I",
+        "V+2V+I"
+      ],
+      "networkConditions": [
+        "exact-throughput-replay",
+        "circular-throughput-shift",
+        "synchronous-throughput-iid",
+        "independent-link-throughput-iid",
+        "throughput-block-shuffle",
+        "满足匹配条件的 matched-throughput-link-swap"
+      ],
+      "scheduler": {
+        "serviceObservation": "foxglove.Vector3.x from the exact directed throughput topic",
+        "unitLabel": "assumed Mbps inferred from repository configuration",
+        "serviceModel": "work-conserving piecewise-constant fluid service",
+        "serviceBitsFormula": "service_bits = throughput_x_assumed_mbps * 1000000 * delta_time_seconds",
+        "completionRule": "累计服务比特首次达到冻结的 payload_bits",
+        "aoiRule": "当前感知时刻减去接收端正在使用消息的源生成时刻",
+        "primaryAvailabilityPolicy": "latest completed message",
+        "sensitivityAvailabilityPolicy": "100 ms hard deadline"
+      },
+      "fixedControls": [
+        "相同 perception checkpoint",
+        "相同输入帧和 cooperator set",
+        "相同预计算 agent feature",
+        "相同 payload_bits 和消息生成周期",
+        "ego-only 负控制",
+        "unlimited 负控制",
+        "确定性推理设置和软件版本"
+      ]
+    },
+    "phase3Replication": {
+      "trigger": "phase2 的预注册主效应达到统计和实际意义条件，所有 trace-operator 约束及负控制通过，且 K_usable 达到预注册功效要求。",
+      "tasks": [
+        "扩展到官方其余 cooperative detection 方法。",
+        "在其他合法 agent setting 上复核异质性。",
+        "报告 model-by-throughput-condition 交互和方法排名区间。",
+        "复核 assumed-Mbps 比例敏感性，但不得通过比例选择放大主效应。"
+      ]
+    },
+    "outcomes": {
+      "primaryPerceptionOutcome": {
+        "metric": "每个 take 的 Car recall@IoU 0.5，检测分数阈值在开发 take 按固定误报预算锁定",
+        "reason": "take 级可聚合，适合在最多 14 个独立单元上进行成对推断。"
+      },
+      "secondaryPerceptionOutcomes": [
+        "AP30",
+        "AP50",
+        "AP70",
+        "最差连续 1 秒窗口 recall",
+        "连续感知失败时长",
+        "相对 ego-only 和 unlimited 的效用差",
+        "方法排名反转及其不确定性"
+      ],
+      "primaryMechanismOutcomes": [
+        "completion time",
+        "Age of Information",
+        "deadline miss rate",
+        "consecutive deadline-miss duration",
+        "queue backlog"
+      ],
+      "causalEvidenceRule": "只有 throughput 算子满足其保存和破坏约束、调度器固定、输入与模型固定、负控制通过且预注册 estimand 在独立 take 上成立时，才能将差异归因于对应 throughput 干预。"
+    }
+  },
+  "powerAndInference": {
+    "independentUnit": "full-take MCAP",
+    "downloadableTakeUpperBound": 14,
+    "analysisTakeCount": "K_usable <= 14",
+    "takeCountRule": "K_usable 是完成 12 链路 schema、时间覆盖、感知对齐和数值质量检查后的 take 数；每排除一个 take 都必须重新计算功效。",
+    "nonIndependentUnits": [
+      "同一 take 内的感知帧",
+      "同一 take 内的 12 条定向链路",
+      "同一 take 内的 throughput 消息",
+      "同一原始 take 产生的 surrogate"
+    ],
+    "deterministicReplay": {
+      "rule": "每个 take 的 exact replay 只计一个独立观测。",
+      "repeatPolicy": "额外运行两次仅验证确定性；重复推理不增加样本量。"
+    },
+    "surrogateReplicates": {
+      "initialPerTakeCondition": 32,
+      "adaptiveSequence": [
+        32,
+        64,
+        128,
+        256
+      ],
+      "stoppingCriterion": "当 take 内条件均值的 Monte Carlo standard error 不超过预注册 MDE 的 10%，或不超过 take 间标准误的 20% 时停止增加 surrogate；达到 256 仍不满足时报告 Monte Carlo 不确定性。",
+      "warning": "增加 surrogate 只能降低随机排列误差，不能突破 14 个独立 take 的上限。"
+    },
+    "minimumDetectableEffect": {
+      "selectionData": "开发 take，不使用封存 outcome",
+      "recommendedPracticalThreshold": "delta 取绝对 recall 变化 0.02 与开发数据 exact-unlimited gap 的 20% 中较大者，并在最终测试前冻结。",
+      "pairedDifferenceSd": "s_d 从 take-wise out-of-fold 开发结果的成对差异估计。",
+      "sampleSizeApproximation": "K >= ((z_(1-alpha_star/2) + z_0.90) * s_d / delta)^2",
+      "targetPower": 0.9,
+      "examples": [
+        {
+          "alphaStar": 0.01,
+          "usableTakeCount": 10,
+          "approximateMinimumStandardizedEffect": 1.22
+        },
+        {
+          "alphaStar": 0.01,
+          "usableTakeCount": 12,
+          "approximateMinimumStandardizedEffect": 1.11
+        },
+        {
+          "alphaStar": 0.01,
+          "usableTakeCount": 14,
+          "approximateMinimumStandardizedEffect": 1.03
+        },
+        {
+          "alphaStar": 0.05,
+          "usableTakeCount": 14,
+          "approximateMinimumStandardizedEffect": 0.87
+        }
+      ],
+      "interpretation": "即使 14 个 take 全部可用，90% 功效下也主要能检测较大的成对效应；中等或小效应的未显著结果不能解释为不存在 throughput 时间相关性影响。",
+      "underpoweredAction": "若 K_usable 或 s_d 表明无法检测预注册 delta，研究降级为估计性或探索性分析，报告效应量和区间，不进行确认性通过声明。"
+    },
+    "primaryInference": {
+      "aggregation": "先对每个 take 和条件聚合 outcome，再计算同一 take 内的预注册 contrast。",
+      "confidenceInterval": "以 take 为簇进行 10000 次 studentized bootstrap，报告 95% 置信区间，并明确 K_usable 较小时区间本身不稳定。",
+      "sensitivityAnalyses": [
+        "leave-one-take-out",
+        "预冻结的相邻 block 长度",
+        "latest-completed-message 与 100 ms hard deadline",
+        "assumed-Mbps 比例 0.5、1 和 2 的派生 completion 敏感性",
+        "按预注册场景类别描述异质性但不伪增样本"
+      ]
+    },
+    "multiplicity": {
+      "primaryFamily": "一个主 perception outcome 和 throughput-temporal-local 主 estimand。",
+      "secondaryFamilyControl": "模型级、agent-setting 级和其他次级 contrast 使用 Holm procedure 控制 family-wise error。",
+      "prohibition": "不得在查看封存结果后改变检验族、主 outcome、block 长度、deadline、Mbps 比例或 alpha。"
+    }
+  },
+  "stopRules": [
+    {
+      "id": "cross-take-schema-mismatch",
+      "condition": "某 take 缺少期望的定向 throughput topic、不是 foxglove.Vector3、x 无法解析，或时间范围无法与感知序列对齐。",
+      "action": "该 take 不进入 pooled analysis；记录排除原因并以新的 K_usable 重算功效。"
+    },
+    {
+      "id": "insufficient-directed-link-coverage",
+      "condition": "目标 agent setting 所需 sender-receiver throughput topic 在有效时间窗口内缺失或覆盖不足。",
+      "action": "停止该 take 与该 agent setting 的 completion replay，不得用其他链路平均值静默填补。"
+    },
+    {
+      "id": "unresolved-throughput-unit",
+      "condition": "仓库配置支持的 Mbps 解释与 artifact 数值量级、静态公式或校准检查明显矛盾。",
+      "action": "停止 absolute completion、AoI 和 deadline miss 主张；仅保留无单位的 throughput 形状、排序和相关性分析，直到单位得到独立确认。"
+    },
+    {
+      "id": "failed-fluid-service-calibration",
+      "condition": "恒定 throughput 输入不能复现 data_size/throughput 解析解，或队列积分不守恒、completion 不单调。",
+      "action": "停止感知阶段并修复调度器。"
+    },
+    {
+      "id": "invalid-throughput-surrogate",
+      "condition": "iid、block、shift 或 link-swap 没有满足声明的 throughput 边际、自相关或跨链路保存与破坏约束。",
+      "action": "丢弃该 intervention 和对应 estimand，不得根据感知结果反向调整算子。"
+    },
+    {
+      "id": "negative-control-failure",
+      "condition": "throughput 条件改变 ego-only 或 unlimited 输出，或相同条件重复推理不确定。",
+      "action": "判定实现存在泄漏或非确定性，停止所有因果比较。"
+    },
+    {
+      "id": "insufficient-power-with-14-take-cap",
+      "condition": "K_usable、成对差异方差和预注册 delta 表明在最多 14 个 take 下无法达到目标功效。",
+      "action": "不得用帧、链路或 surrogate 伪增样本；降级为探索性效应估计，或增加新的独立实测 take。"
+    },
+    {
+      "id": "single-take-dominance",
+      "condition": "leave-one-take-out 后效应方向反转，或总体结果由单个 take 主导。",
+      "action": "停止总体因果主张，转为 take 级异质性描述。"
+    },
+    {
+      "id": "no-practical-primary-effect",
+      "condition": "预注册主 contrast 的 95% 置信区间包含零，或效应未达到预注册 MDE。",
+      "action": "报告没有足够证据支持具有实际意义的 throughput 时间相关性效应，不继续搜索有利子组或调整 block 长度。"
+    },
+    {
+      "id": "post-test-tuning",
+      "condition": "需要查看封存结果才能决定阈值、block 长度、模型、场景子组、Mbps 比例或主 outcome。",
+      "action": "当前封存结果只能作为新开发证据；确认性检验需要新的独立 take。"
+    }
+  ],
+  "extrapolationBoundary": {
+    "supportedScope": [
+      "通过逐 take schema 和时间覆盖审计的 CooperScene 完整 MCAP，最多 14 个独立 take。",
+      "topic 形式为 /<receiver>_Throughput_from_agent_<sender> 的 12 条定向 pairwise throughput 序列。",
+      "foxglove.Vector3.x 的原始数值、时间相关性、跨链路相关性和场景时间对齐。",
+      "在 assumed-Mbps、分段常数、work-conserving fluid-service 和冻结 payload 条件下派生的 completion、AoI、deadline miss 与 queue backlog。",
+      "CooperScene 官方 cooperative detection 模型、agent setting 和固定 checkpoint 下的开放环感知评估。",
+      "take-wise 独立性和最多 14 个独立单元约束下的日志内 throughput 干预效应。"
+    ],
+    "unsupportedClaims": [
+      "不能把论文或项目页描述但未出现在可执行 MCAP channel 中的网络指标加入 replay。",
+      "不能从 throughput_x 推断未观测的逐包事件、重传过程、传播时延、排队时延组成、无线资源调度、信号强度或干扰根因。",
+      "不能把 completion、AoI 或 deadline miss 描述为 MCAP 直接测量；它们是 assumed-Mbps 与 fluid-service 模型下的派生量。",
+      "Mbps 单位目前来自官方仓库配置推断，不是 foxglove.Vector3 schema 自述。",
+      "不能把 take 9 的 schema 自动外推到其余 13 个可下载 take；必须逐 take 核实。",
+      "不能把 mini 当作网络轨迹样本，因为 mini 不含 MCAP。",
+      "不能外推到未下载 take、其他 C-V2X 或 NR-V2X 设备与配置、不同网络负载、道路、地区、车流密度或参与者规模。",
+      "不能把开放环 detection 指标直接解释为闭环规划安全、碰撞率或真实道路风险。",
+      "不能把 exact-throughput 与 iid 的综合差异单独解释为 throughput 时间相关性的因果影响。",
+      "最多 14 个独立 take 对中小效应功效有限；未显著结果不能作为等效或无影响证据。"
+    ]
+  }
+}

@@ -1,0 +1,301 @@
+{
+  "reviewedAt": "2026-08-01T01:28:48+08:00",
+  "reviewerAgentId": "codex-independent-outsider-veto-causal-reviewer-v10",
+  "estimandAudit": {
+    "candidateId": "coalition-outsider-counterfactual-veto",
+    "reviewScope": "Independent review of causal identification and statistical design only. This audit does not score the candidate, infer an acceptance threshold, or write idea-center content.",
+    "currentClaimStatus": "The current proposal does not yet identify a real-world outsider-harm effect. It can identify a simulator-conditional policy effect only after the message intervention, coalition and nonparticipant rosters, reactive actor policies, random tapes, follow-up window, and evaluation model are frozen as specified below.",
+    "messageMaskedIntervention": {
+      "finding": "Conditionally legal, but not as currently underspecified.",
+      "legalInterpretation": "At a pre-message time zero, clone the complete simulator and planner state, including recurrent state and caches, then assign one fully specified, deployable closed-loop policy for the entire follow-up: unshielded cooperation, outsider-veto cooperation, or ego-only fallback. All actors may react after assignment. Under that construction, masking is an intervention on an executable information-and-control policy, not merely a deletion in a predictor input.",
+      "illegalInterpretations": [
+        "Masking messages after any planner, predictor, cache, recurrent state, or coalition action has already consumed them.",
+        "Masking only the evaluated tensor while retaining cooperative hidden state or the cooperative candidate trajectory.",
+        "Holding nonparticipant trajectories fixed to their cooperative-branch behavior after changing the ego or coalition action; this creates a cross-world hybrid and removes the very post-treatment response that defines the externality.",
+        "Calling an ego-only message drop a no-cooperation intervention while peer vehicles continue to execute message-conditioned cooperative policies. That is a controlled intervention on ego information access, not removal of coalition cooperation.",
+        "Using a masked state that the fallback planner was never trained, validated, or runtime-guarded to handle. A simulator can numerically emit such a branch, but the result is extrapolation outside the deployable policy support.",
+        "Comparing a one-step masked prediction with a closed-loop cooperative rollout. The treatment versions and follow-up policies differ in more than message availability."
+      ],
+      "requiredChoice": "The study must choose and name one treatment: either ego message access with peer policies unchanged, or a system-level cooperative-policy assignment. It may not switch between those interpretations when defining the branch contrast and the veto effect."
+    },
+    "targetTrial": {
+      "targetPopulation": "Conflict episodes in a prespecified operational domain, sampled within prespecified route-template blocks, with a pre-message state, intended coalition roster, exogenous noncoalition actor roster, spawn schedule, route goals, and human-response uncertainty draw.",
+      "timeZero": "The last checkpoint before the first candidate cooperative message can affect any planner, predictor, recurrent state, control action, or actor-visible behavior.",
+      "policyArms": {
+        "unshieldedCooperation": "The frozen cooperative policy executes without the outsider veto for the complete follow-up.",
+        "outsiderVeto": "A frozen screening model compares legal closed-loop candidate branches at admission time, applies the fixed veto rule, and then executes the selected deployable policy for the complete follow-up.",
+        "egoOnlyFallback": "The documented deployable fallback executes from time zero for the complete follow-up. It is a premise comparator, not a substitute for evaluating the veto against unshielded cooperation."
+      },
+      "assignment": "Run every arm on the same pre-treatment episode specification and the same keyed exogenous random tape. Episode specifications are independent across seeds. The policy assignment, not the downstream actor trajectory, is the treatment.",
+      "followUp": "Use a route-template-specific horizon fixed before outcomes and identical across arms. Successful route exit is an absorbing completed state. Collision is an observed competing safety event, never a reason to delete or shorten an arm."
+    },
+    "estimands": {
+      "screeningQuantity": "The branch predictor's outsider-burden contrast is a policy input and calibration target. It is not evidence that the deployed veto reduces realized outsider harm.",
+      "premiseContrast": "Within each independent outer-evaluation episode, compare unshielded cooperation with ego-only fallback. The candidate premise exists only when independently rolled-out cooperation yields participant benefit together with outsider deterioration in the prespecified endpoint family.",
+      "primaryPolicyEffect": "For policies pi_veto and pi_coop, define actor-level restricted braking burden B_ej^pi over the fixed horizon, then D_B,e(pi_veto, pi_coop) = max over frozen outsiders j of [B_ej^pi_veto - B_ej^pi_coop]. Estimate its route-weighted episode expectation and uncertainty. This max of within-actor paired contrasts answers whether any frozen outsider is made worst-off; the candidate's current difference of two branch maxima can switch actor identity and does not answer that question.",
+      "secondaryPolicyEffect": "Define restricted conflict-zone wait W_ej^pi over the same fixed horizon and estimate D_W,e(pi_veto, pi_coop) = max over the same frozen outsiders j of [W_ej^pi_veto - W_ej^pi_coop]. Analyze route completion and collision as separate mandatory endpoints rather than allowing either to censor wait.",
+      "participantTradeoff": "Estimate the paired participant-utility and route-completion effects of pi_veto versus both pi_coop and pi_fallback on the same outer episodes. A lower outsider score with universal fallback or failed routes is not a successful veto.",
+      "modelConditionalScope": "These are causal effects inside the fully specified structural simulator and human-response distribution. Same-seed twins do not transport them to real human drivers without an explicit model-validity and transport argument."
+    },
+    "independentUnit": {
+      "unit": "One pre-treatment conflict episode specification, including route block, initial state, actor roster, exogenous spawn schedule, keyed random tape, and one externally justified response-model draw or one repeated-model sensitivity bundle.",
+      "interference": "Actor-level SUTVA is false by design because actors react to one another. The whole episode is the cluster and the unit of resampling and inference.",
+      "notIndependent": [
+        "actors within an episode",
+        "frames or planner timesteps",
+        "overlapping receding horizons",
+        "policy arms paired on one episode",
+        "multiple human-response models rerun on the same base episode"
+      ]
+    },
+    "identificationConclusion": "The admissible claim after repair is a route-weighted, simulator-conditional effect of a fully specified veto policy under reactive closed-loop actor behavior. A one-state message-mask score, a fixed log replay, or repeated outcomes from the same response model cannot identify the claimed outsider causal effect."
+  },
+  "identificationThreats": [
+    {
+      "id": "treatment-version-ambiguity",
+      "finding": "The candidate alternates between masking peer messages at one downstream planner and comparing cooperative versus fallback maneuvers. Those are different interventions if peers, predictors, caches, or recurrent state have already used the messages.",
+      "consequence": "Consistency fails because the treatment does not map to one executable policy version.",
+      "requiredRepair": "Set time zero before first message exposure, clone complete state, clear all message-dependent state in the masked arm, and specify every controlled agent's policy through the fixed horizon."
+    },
+    {
+      "id": "unsupported-masked-branch",
+      "finding": "A planner output under an input mask is not automatically in the support of its trained or deployable policy. Missing-message handling may invoke states and action sequences absent from training and runtime validation.",
+      "consequence": "The contrast may be a model extrapolation rather than the effect of an available fallback.",
+      "requiredRepair": "Use a documented fallback that is trained and validated under the exact mask semantics, record fallback invocation support by route and state, and kill the candidate if either branch is not executable under the same runtime contract."
+    },
+    {
+      "id": "post-treatment-actor-response",
+      "finding": "Nonparticipant braking and wait are caused partly by their reactions to the changed coalition trajectory. Freezing their cooperative trajectories, replaying logs, or conditioning on their post-treatment choices removes or distorts the mediated effect.",
+      "consequence": "The resulting world is physically possible only under an additional intervention that forces actor trajectories, so it cannot support the advertised total policy effect.",
+      "requiredRepair": "Roll every arm closed-loop with reactive actors. Treat response differences as outcomes. If a controlled-direct-effect analysis with forced trajectories is retained, label it separately and do not use it for the veto verdict."
+    },
+    {
+      "id": "post-treatment-cohort-definition",
+      "finding": "The proposed nonparticipant definition includes actors who 'do not choose the coalition action.' Choice and message consumption can occur after treatment and can differ by branch.",
+      "consequence": "Actor membership can become a treatment-induced collider or produce different denominators across arms.",
+      "requiredRepair": "Before time zero, freeze the intended coalition roster from protocol assignment and freeze nonparticipants from actor IDs, route eligibility, map-connected interaction envelope, and the exogenous spawn schedule. Do not use realized proximity, realized harm, message consumption, route completion, or post-treatment opt-in behavior to change membership."
+    },
+    {
+      "id": "same-seed-is-not-identification",
+      "finding": "A shared seed is a common-random-numbers variance-reduction device. Branch-specific code paths can also desynchronize a global pseudorandom stream.",
+      "consequence": "Pairing does not cure simulator misspecification, nonreactive actors, unsupported actions, or transport to humans; naive same-seed code may not even preserve the intended exogenous shocks.",
+      "requiredRepair": "Use event-keyed random tapes for each exogenous source, actor, and time step; verify tape equality across arms; generate independent tapes across episodes; and report model validity separately from Monte Carlo precision."
+    },
+    {
+      "id": "human-model-pseudoreplication",
+      "finding": "Running several human-response models or parameterizations on one base episode does not create several independent human episodes.",
+      "consequence": "Pooling them as repeated samples understates uncertainty and lets an arbitrary simulator mix determine the sign.",
+      "requiredRepair": "Use externally calibrated response-model families as an uncertainty axis. Pair policies within each model and parameter draw, resample base episodes rather than model reruns, report model-specific effects and an uncertainty envelope, and pool across models only if external data justify fixed mixture weights."
+    },
+    {
+      "id": "extreme-outcome-and-actor-set-distortion",
+      "finding": "Worst-actor outcomes grow with actor count, can switch actor identity between arms, and are sensitive to entry and exit rules. The candidate currently uses a difference of maxima for braking but a maximum of actor-level differences for wait.",
+      "consequence": "The two endpoints answer different questions and can change sign from actor-set composition rather than policy harm.",
+      "requiredRepair": "Freeze one actor roster, compute actor-level restricted outcomes first, use the same max-of-within-actor-contrast operator for both endpoints, record the maximizing actor and actor count, and retain route-blocked actor-count sensitivity as a robustness analysis."
+    },
+    {
+      "id": "horizon-completion-and-collision-censoring",
+      "finding": "Ending an arm at route completion or collision can mechanically reduce accumulated braking and wait. Complete-case travel time additionally conditions on a post-treatment event.",
+      "consequence": "A crashing or noncompleting policy can appear to impose less outsider burden merely because observation stopped.",
+      "requiredRepair": "Use a fixed treatment-invariant horizon within route block, preserve successful completion as an absorbing state, retain collision and noncompletion as observed endpoints, and never estimate braking or wait only among collision-free or completed arms."
+    },
+    {
+      "id": "screen-evaluate-leakage",
+      "finding": "The veto is defined by a predicted harm model. Evaluating it with the same model, same fitted response function, or outcomes used to choose the model guarantees improvement on the selection criterion up to optimization error.",
+      "consequence": "The headline result becomes the tautology that selecting a lower predicted score lowers that same predicted score, not evidence of lower realized outsider harm.",
+      "requiredRepair": "Freeze the screen inside each training fold and evaluate complete deployed policies on independent outer episodes with realized trajectory outcomes from an evaluator not used to fit, tune, choose, or calibrate the screen. An alternate reactive simulator or held-out response-model family is required for any claim beyond within-model self-consistency."
+    },
+    {
+      "id": "route-selection-and-generalization",
+      "finding": "A handful of fixed negotiation routes are blocks, not independent draws from all mixed-traffic routes. Repeated seeds within one route do not establish route-level transport.",
+      "consequence": "A pooled episode bootstrap can be precise for the sampled routes while the claimed operational-domain effect remains unsupported.",
+      "requiredRepair": "Predeclare route blocks and target weights. Report inference conditional on fixed routes; claim broader route transport only if route templates themselves were sampled and route-level uncertainty is estimable."
+    },
+    {
+      "id": "multiple-endpoint-selection",
+      "finding": "Braking, wait, collision, completion, and participant utility can disagree, and searching endpoints or horizons after rollout can manufacture a favorable story.",
+      "consequence": "An unadjusted favorable endpoint is not a policy verdict.",
+      "requiredRepair": "Freeze endpoint definitions, hierarchy, horizon, contrasts, and missing-event conventions before confirmatory rollout; use simultaneous paired uncertainty or a prespecified closed testing procedure; report every endpoint regardless of sign."
+    },
+    {
+      "id": "power-and-null-interpretation",
+      "finding": "No sample-size justification is tied to paired episode variance, route blocks, rare collisions, multiplicity, or a scientifically meaningful effect.",
+      "consequence": "A null result may be uninformative, while a noisy extreme maximum may look repeatable after selective reruns.",
+      "requiredRepair": "Estimate nuisance variance and event rates only on a separate design pilot, set the smallest effect and noninferiority margins from external safety or operational requirements before confirmatory data, and compute route-stratified paired power with the planned multiplicity correction. If no defensible margin exists, report precision and do not issue a go claim."
+    }
+  ],
+  "requiredProtocol": {
+    "name": "Nested paired closed-loop target-trial protocol",
+    "minimalSteps": [
+      "Freeze the operational domain, route blocks and weights, route-specific horizon, actor eligibility envelope, intended coalition roster, exogenous nonparticipant roster and spawn schedule, policy implementations, outcome code, endpoint hierarchy, and decision logic before opening confirmatory outcomes.",
+      "Create time zero before first cooperative-message exposure. Snapshot all planner, predictor, simulator, recurrent, cache, and communication state. Verify by instrumentation that the fallback clone has no post-treatment message residue.",
+      "Validate that both cooperative and masked fallback policies are executable under the same runtime contract. Record unsupported states and kill the experiment rather than extrapolating through them.",
+      "For each independent base episode, generate event-keyed exogenous random tapes. Run ego-only fallback, unshielded cooperation, outsider veto, and all required direct baselines as complete closed-loop policies on the same tape, allowing every nonparticipant to react.",
+      "Separate policy construction from policy evaluation. In each outer route-aware fold, fit and tune the branch predictor and freeze the veto using only inner data. Evaluate the frozen policies on unseen outer episodes. Keep driver identities, source trajectories, and calibrated response cohorts from leaking across folds.",
+      "Use realized simulator states and controls, not the screening model's predicted burden, to compute outer outcomes. Repeat the outer evaluation in at least one reactive response-model family or simulator not used to fit or select the screen; otherwise label the result within-simulator self-consistency only.",
+      "Compute actor-level braking and restricted wait over the fixed horizon for every frozen outsider, then compute the prespecified max of within-actor paired contrasts. Preserve collision, route noncompletion, participant utility, and maximizing actor identity as separate episode-level data.",
+      "Analyze paired episode contrasts within route blocks. Preserve all arms and endpoints when resampling; do not resample frames, actors, horizons, or response-model reruns as independent observations.",
+      "Run the frozen decision rule once on the confirmatory outer predictions and report all outcomes. Any later change to model, horizon, actor set, endpoint, baseline, or decision rule requires a new outer evaluation."
+    ],
+    "nonparticipantFreeze": {
+      "coalitionRule": "Membership is the protocol-assigned sender and receiver roster at time zero, not the set of messages eventually consumed or actors that eventually cooperate.",
+      "outsiderRule": "N_e is the set of noncoalition actor IDs on the predeclared map-connected routes or exogenous spawn roster eligible to enter the interaction envelope during the fixed horizon. The rule may use pre-sampled route and spawn information but no treatment-dependent trajectory, response, harm, completion, collision, or opt-in decision.",
+      "newActors": "Actors not present at time zero may enter only through the same pre-sampled exogenous spawn schedule in every arm. Treatment-dependent actor creation or removal invalidates the pair.",
+      "membershipAudit": "Persist and compare coalition and outsider ID hashes for every arm. Any mismatch is a protocol failure, not a removable outlier."
+    },
+    "humanResponseUncertainty": {
+      "role": "Human-response models define alternative structural assumptions, not replicate humans.",
+      "minimumTreatment": "Use independently calibrated heterogeneous parameter draws and at least one structurally different reactive model family. Calibration data and driver identities must be separated from outer evaluation episodes.",
+      "pairing": "Within a model and parameter draw, reuse the keyed exogenous tape across policy arms. Across base episodes, draw independent tapes. When every model is run on the same episode, keep the model dimension nested within that episode.",
+      "reporting": "Report each model-family estimate, the direction of effect by route, and the envelope across justified models. A sign that exists only in the screening model is a failed transport check, not extra positive evidence."
+    },
+    "outcomeContract": {
+      "braking": "B_ej^pi is the integral of negative longitudinal acceleration for frozen actor j during its active time within the fixed horizon. The exact signal, filtering, units, and treatment of successful exit must be frozen before evaluation.",
+      "wait": "W_ej^pi is restricted conflict-zone wait accumulated through the same horizon. Noncompletion remains at risk through the horizon and is also reported as its own endpoint; completion time is not analyzed by complete cases.",
+      "collision": "Record outsider collision and any collision separately. Do not delete collision episodes, stop their paired record, or interpret lower post-collision impulse as benefit. Continuous burden is accumulated only under the frozen convention, and a harm-reduction claim is barred if the prespecified collision guardrail is not met.",
+      "routeCompletion": "Record completion by the fixed horizon for participants and relevant outsiders. Successful exit is absorbing and contributes no later burden; early simulation termination is forbidden.",
+      "maxOperator": "Use max_j of the within-actor policy contrast for both braking and wait. Also report route-blocked distributions and the maximizing actor identity so an actor-count or actor-switch artifact is visible.",
+      "participantOutcome": "Report participant utility, completion, and delay under veto, unshielded cooperation, and fallback. Do not combine them with outsider endpoints using an outcome-tuned scalar score."
+    },
+    "evaluationSeparation": {
+      "innerLoop": "Fit response predictors, choose features, calibrate uncertainty, and freeze the admission rule using only inner-route and inner-driver data.",
+      "outerLoop": "On unseen episode clusters, deploy the frozen veto and comparators in closed loop. The outer evaluator computes outcomes directly from realized trajectories and cannot provide gradients, labels, thresholds, or model-selection feedback to the inner loop.",
+      "preferredIndependentRollout": "Use a frozen reactive rollout engine or human-response family that did not generate screening labels. Hold route templates or scenario families out where feasible, while retaining route-blocked reporting.",
+      "fallbackIfIndependentEngineUnavailable": "Nested held-out episodes with independently calibrated response parameters identify only a within-simulator effect. The report must not call this a real-human causal effect and must retain model-family sensitivity as unresolved uncertainty.",
+      "forbiddenEvidence": "A reduction in the screening model's own predicted worst burden, even on a new random seed, is not an outcome and cannot satisfy the positive-result condition."
+    },
+    "analysisPlan": {
+      "blocking": "Estimate paired contrasts within each route template and aggregate using weights fixed from the target operational domain. Treat route as fixed when the templates were deliberately selected.",
+      "bootstrap": "Use a route-stratified paired cluster bootstrap over independent base episodes. Each resampled cluster carries all policy arms, all outsiders, all endpoints, and all repeated response-model runs. If routes are genuinely sampled from a route population, add a route-level resampling stage; otherwise do not simulate route generalization.",
+      "multipleEndpoints": "Predeclare collision and route completion as mandatory guardrail endpoints, braking as the primary outsider burden, wait as the key secondary burden, and participant utility as the tradeoff endpoint. Use simultaneous paired bootstrap intervals or another prespecified familywise procedure across every claim-bearing contrast.",
+      "power": "Before confirmatory rollout, use a separate design pilot to estimate paired episode variance, route heterogeneity, event rates, and cross-endpoint dependence. Obtain the smallest scientifically important effect and safety or completion noninferiority margins from external requirements, then size independent episodes per route for the planned paired and multiplicity-adjusted analysis. Do not derive these margins from the candidate outcomes. Zero rare events without adequate precision cannot establish safety.",
+      "reporting": "Report paired effect distributions, simultaneous uncertainty intervals, route-specific signs, actor counts, veto frequency, unsupported-branch frequency, model-family sensitivity, collisions, noncompletion, and all baseline comparisons. Avoid frame-level p-values and pooled pseudo-replicates."
+    },
+    "decisionLogic": {
+      "positiveResultChangesConclusion": "A positive result requires independent outer rollouts to establish all of the following: unshielded cooperation has participant benefit and outsider deterioration versus fallback in the target route blocks; the frozen veto reduces realized outsider burden versus unshielded cooperation; collision and route-completion guardrails are satisfied using externally set margins; some participant benefit remains; the effect survives model-family and route-block scrutiny; and the direct SVO, minimal-disruption, and all-actor-welfare baselines do not explain or dominate it. The conclusion would be limited to proceeding with a simulator-conditional admission policy and external validation, not declaring a real-world causal effect.",
+      "negativeResultChangesConclusion": "If the premise contrast is absent, the screen fails to predict outer realized harm, the effect reverses under plausible reactive response models, the veto worsens collision or completion, or a simpler direct baseline matches it, abandon the membership-conditioned veto for the tested domain and prefer the simpler policy. If only the same screen-and-evaluator model is favorable, classify the result as evaluation leakage and do not continue the causal claim.",
+      "inconclusiveResult": "An interval too imprecise for the externally defined effect or guardrail margin is inconclusive, not evidence for or against the veto. The remedy is additional independent episodes under the frozen protocol, not endpoint or horizon changes.",
+      "killCriteria": [
+        "The message mask cannot be applied at a pre-treatment checkpoint without residual message-conditioned state.",
+        "The fallback branch is outside its documented training or runtime support in the target episodes.",
+        "Coalition or outsider membership differs across paired arms under the frozen roster rule.",
+        "Reactive actor rollouts are unavailable, leaving only log replay or forced cooperative trajectories.",
+        "Unshielded cooperation does not jointly produce participant benefit and outsider deterioration versus fallback on independent outer episodes.",
+        "The screening contrast does not predict the sign or ordering of independently realized outsider burden.",
+        "The apparent benefit disappears or reverses in justified held-out human-response families or route blocks.",
+        "Collision or route noncompletion creates the apparent braking or wait reduction, or the prespecified guardrail is not met.",
+        "A direct socially compatible, minimal-disruption, or all-actor-welfare baseline matches or dominates the veto on the same outer protocol.",
+        "Confirmatory power or precision cannot resolve the externally defined scientifically important effect without changing the frozen protocol."
+      ],
+      "antiTautologyRule": "The scientific result is the effect of the deployed veto on independently realized closed-loop outcomes. The mechanically expected fact that a constraint chooses the branch with lower predicted outsider harm cannot be reported as either the positive result or the main contribution."
+    }
+  },
+  "evidenceReopened": [
+    {
+      "id": "local:candidate-pool-v9:coalition-outsider-counterfactual-veto",
+      "title": "Cooperative autonomous driving mixed-traffic candidate pool v9",
+      "primaryUrl": "content/idea-audits/cooperative-autonomous-driving-mixed-traffic-candidate-pool-v9.json",
+      "sha256": "1b70cc277f29dea97a110a2a3d9fe1128a4d8ad8169d74dae25c152de10f1477",
+      "reopenedClaim": "The candidate defines the coalition by consumed messages, the outsider set partly by not choosing the coalition action, a same-seed masked fallback, worst-actor braking and wait, and a veto evaluated against unshielded cooperation.",
+      "auditUse": "These definitions were treated as claims to audit, not as verified identification."
+    },
+    {
+      "id": "hernan-robins-causal-inference-what-if",
+      "title": "Causal Inference: What If",
+      "primaryUrl": "https://content.sph.harvard.edu/wwwhsph/sites/1268/2018/12/hernanrobins_v1.10.37.pdf",
+      "reopenedClaim": "Meaningful causal contrasts require sufficiently well-defined intervention versions, consistency, and support for the compared treatment levels.",
+      "auditUse": "Supports rejecting an ambiguous one-tensor mask as a causal treatment and requiring a complete executable policy version from a pre-treatment checkpoint.",
+      "boundary": "The source gives general identification conditions; it does not validate this driving simulator or message intervention."
+    },
+    {
+      "id": "doi:10.3982/ECTA15732",
+      "title": "Policy Learning With Observational Data",
+      "primaryUrl": "https://arxiv.org/abs/1702.02896",
+      "reopenedClaim": "Policy learning requires causally grounded policy-value estimation and separates value identification from policy optimization.",
+      "auditUse": "Supports defining the deployed-policy value as the estimand rather than treating a predictor's branch score as the effect.",
+      "boundary": "Its observational-data guarantees do not transfer automatically to simulator-generated interactive trajectories."
+    },
+    {
+      "id": "arxiv:2209.07074",
+      "title": "On the Reuse Bias in Off-Policy Reinforcement Learning",
+      "primaryUrl": "https://arxiv.org/abs/2209.07074",
+      "reopenedClaim": "Reusing evaluation data for policy optimization can overestimate the objective and produce reuse bias.",
+      "auditUse": "Directly motivates separating the veto's screening-model fit and selection from outer policy evaluation.",
+      "boundary": "The paper studies off-policy importance-sampling reuse, not this simulator; the audit applies the documented selection-bias mechanism by analogy."
+    },
+    {
+      "id": "jmlr:v11:cawley10a",
+      "title": "On Over-fitting in Model Selection and Subsequent Selection Bias in Performance Evaluation",
+      "primaryUrl": "https://www.jmlr.org/papers/v11/cawley10a.html",
+      "reopenedClaim": "Optimizing a finite-sample model-selection criterion can overfit that criterion and bias subsequent performance evaluation; model selection must be repeated independently inside each outer trial.",
+      "auditUse": "Supports nested route-aware evaluation when the same predictor family proposes the veto and would otherwise judge it.",
+      "boundary": "The experiments concern supervised model selection, so the driving protocol must still handle closed-loop dependence and episode clustering."
+    },
+    {
+      "id": "doi:10.1287/mnsc.34.1.65",
+      "title": "Analyzing Simulation Experiments with Common Random Numbers",
+      "primaryUrl": "https://doi.org/10.1287/mnsc.34.1.65",
+      "reopenedClaim": "Common random numbers, replication, and model validity are distinct components of simulation error analysis.",
+      "auditUse": "Supports same-tape pairing as variance reduction while rejecting the claim that a same seed alone identifies the causal effect or validates the human model.",
+      "boundary": "The paper does not address adaptive multi-agent driving or pseudorandom-stream desynchronization."
+    },
+    {
+      "id": "cvpr:2023:mixsim",
+      "title": "MixSim: A Hierarchical Framework for Mixed Reality Traffic Simulation",
+      "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2023/html/Suo_MixSim_A_Hierarchical_Framework_for_Mixed_Reality_Traffic_Simulation_CVPR_2023_paper.html",
+      "reopenedClaim": "Nonreactive open-loop replay cannot expose consequences of changed autonomous-system actions; reactive closed-loop digital twins are introduced for same-condition what-if evaluation.",
+      "auditUse": "Supports treating outsider responses as post-treatment outcomes and forbidding fixed log-replay trajectories for the total veto effect.",
+      "boundary": "MixSim's learned twin is still a model and does not by itself establish real-human transport."
+    },
+    {
+      "id": "corl:2024:ctrl-sim",
+      "title": "CtRL-Sim: Reactive and Controllable Driving Agents with Offline Reinforcement Learning",
+      "primaryUrl": "https://arxiv.org/abs/2403.19918",
+      "reopenedClaim": "Logged traffic agents are nonreactive, motivating controllable reactive multi-agent behavior models for counterfactual rollouts.",
+      "auditUse": "Supports the requirement for reactive outer rollouts and explicit response-model sensitivity.",
+      "boundary": "A controllable model can generate behavior beyond logged support, so its outputs remain model-conditional and require validity checks."
+    },
+    {
+      "id": "arxiv:2003.11919",
+      "title": "Counterfactual Policy Evaluation for Decision-Making in Autonomous Driving",
+      "primaryUrl": "https://arxiv.org/abs/2003.11919",
+      "reopenedClaim": "A prior autonomous-driving policy gate creates multiple worlds from the same initial state, changes other-agent policies, rolls worlds forward, and evaluates the gated policy in separate actual-world episodes.",
+      "auditUse": "It is a direct prior for counterfactual admission and shows that worlds must evolve after intervention; it also makes independent realized evaluation a required collision comparison.",
+      "boundary": "Its counterfactual worlds and actor policies are simulated and do not identify real-human effects; it does not define coalition outsiders."
+    },
+    {
+      "id": "arxiv:2605.10904",
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "primaryUrl": "https://arxiv.org/abs/2605.10904",
+      "reopenedClaim": "MDrive reports that negotiation can harm planning in complex dense scenarios and argues that open-loop evaluation misses closed-loop driving behavior.",
+      "auditUse": "Supports a scenario family and the need for closed-loop evaluation, but not the outsider-specific sign, causal treatment, or veto effectiveness.",
+      "boundary": "Aggregate planning degradation is not evidence that excluded actors are harmed or that a message mask is the relevant intervention."
+    },
+    {
+      "id": "arxiv:2404.15533",
+      "title": "Designing, Simulating, and Performing the 100-AV Field Test for the CIRCLES Consortium",
+      "primaryUrl": "https://arxiv.org/abs/2404.15533",
+      "reopenedClaim": "The CIRCLES program uses controlled automated vehicles, calibrated simulation, and a large open-road experiment to study traffic-level effects in surrounding traffic.",
+      "auditUse": "Supports the plausibility of traffic externalities and the need to validate simulation against field patterns.",
+      "boundary": "It does not identify event-level V2X coalition outsiders, message masking, or the proposed veto."
+    },
+    {
+      "id": "arxiv:2008.04351",
+      "title": "Leveraging Vehicle Connectivity and Autonomy to Stabilize Flow in Mixed Traffic Conditions: Accounting for Human-driven Vehicle Driver Behavioral Heterogeneity and Perception-reaction Time Delay",
+      "primaryUrl": "https://arxiv.org/abs/2008.04351",
+      "reopenedClaim": "Human-driver heterogeneity and perception-reaction delay materially change a CAV controller's mixed-traffic stabilization capability.",
+      "auditUse": "Supports treating response-model structure and parameters as a causal-model uncertainty axis rather than multiplying the nominal sample size.",
+      "boundary": "The study is a specific longitudinal stabilization model, not an empirical distribution for coalition-maneuver human responses."
+    },
+    {
+      "id": "arxiv:1710.05465",
+      "title": "Flow: A Modular Learning Framework for Mixed Autonomy Traffic",
+      "primaryUrl": "https://arxiv.org/abs/1710.05465",
+      "reopenedClaim": "Mixed-autonomy policies can alter system-level traffic outcomes in modular simulation with modeled human-driven vehicles.",
+      "auditUse": "Supports mixed-traffic spillover as a plausible simulator object while keeping conclusions conditional on the chosen human-driving dynamics and scenario distribution.",
+      "boundary": "System-level velocity gains under Flow do not establish an outsider-specific event effect, route transport, or real-human validity."
+    }
+  ],
+  "strongestObjection": "The current design can guarantee only that a veto built from a harm predictor selects actions that look less harmful to that same predictor. If message masking occurs after message-conditioned state exists, if cooperative actor trajectories are held fixed, or if the same human-response model both screens and evaluates, the apparent counterfactual combines incompatible worlds and mechanically rewards its own selection rule. Same-seed pairing makes that tautology more precise; it does not turn it into an identified outsider effect.",
+  "verdict": "revise"
+}

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-periodic-fanin-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "periodic-sensor-incast-phase-leases",
+  "workingTitle": "周期性多源 fan-in 的相位租约与服务隔离",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb740-d2fc-7923-b02f-12f276d45600",
+    "role": "standards-nearest-work-and-simulator-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "verifiedFacts": [
+    {
+      "source": "ETSI TS 103 900 V2.3.1",
+      "url": "https://www.etsi.org/deliver/etsi_ts/103900_103999/103900/02.03.01_60/ts_103900v020301p.pdf",
+      "finding": "CAM generation checks begin from a random instant and must not synchronize to real-time clocks; compliant CAM traffic cannot be presumed phase-aligned."
+    },
+    {
+      "source": "ETSI TS 103 324 V2.1.1",
+      "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+      "finding": "CPM has periodic generation, configurable frequency and content, and may emit multiple segments; this does not prove cross-vehicle phase alignment."
+    },
+    {
+      "source": "ETSI TR 104 073 V2.2.1",
+      "url": "https://www.etsi.org/deliver/etsi_tr/104000_104099/104073/02.02.01_60/tr_104073v020201p.pdf",
+      "finding": "The RRM study models queue overflow, drop, and timeout and reports that synchronized DCC states can create strong channel-busy-ratio oscillation.",
+      "boundary": "DCC-state synchronization is not evidence of receiver-side perception incast."
+    },
+    {
+      "source": "SEE-V2X",
+      "url": "https://cisl.ucr.edu/SEE-V2X/",
+      "finding": "The public campaign includes four concurrent commercial C-V2X participants, 4,000-byte per 20 ms perception-like flows, 128-byte per 100 ms safety messages, and timestamps at multiple layers.",
+      "boundary": "Concurrency does not establish cross-sender phase alignment, and the feature flow is not an ETSI CPM."
+    },
+    {
+      "source": "Harbor",
+      "url": "https://ry4nzhu.github.io/publication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication/boosting_collaborative_vehicular_perception_on_the_edge_with_v2v_communication.pdf",
+      "finding": "The system assumes synchronized point-cloud capture and uses merge deadlines, MAC priority, and local fallback.",
+      "boundary": "It does not isolate synchronized capture as a receiver-queue cause."
+    }
+  ],
+  "mechanismSeparation": [
+    "Sender queueing after application generation and before DCC or radio access",
+    "Wireless collision, reselection, or half-duplex loss before successful reception",
+    "Receiver queueing in socket, deserialization, local dynamic map, or fusion service"
+  ],
+  "claimGuardrail": "Use periodic fan-in burst as the neutral hypothesis. Use receiver incast only after successful-reception timestamps and an observed receiver service queue localize the delay to the third mechanism.",
+  "nearestWorkBoundary": [
+    {
+      "work": "GoT",
+      "url": "https://arxiv.org/abs/2402.15876",
+      "occupiedSpace": "Generation aligned to DCC gate timing."
+    },
+    {
+      "work": "SCPA",
+      "url": "https://arxiv.org/abs/2310.04813",
+      "occupiedSpace": "Joint cooperative-source, update-period, and offset selection for area AoI."
+    },
+    {
+      "work": "Variable-size CPM scheduling",
+      "url": "https://arxiv.org/abs/2606.26746",
+      "occupiedSpace": "Dynamic scheduling and SPS for variable-size CPM."
+    },
+    {
+      "work": "Agentic-V2X",
+      "url": "https://arxiv.org/abs/2607.04290",
+      "occupiedSpace": "Deadline-aware multi-service weighting, tail latency, and violations."
+    },
+    {
+      "work": "Update the Unseen Only",
+      "url": "https://arxiv.org/abs/2607.20967",
+      "occupiedSpace": "Joint AoI and mAP evaluation for collaborative perception."
+    }
+  ],
+  "potentialNoveltyBoundary": [
+    "The receiver estimates actual multi-source fan-in phase and grants expiring application-release leases without reserving radio slots.",
+    "The sender combines the lease with service isolation and class-internal deadline, AoI, or value scheduling.",
+    "The evaluation separates every pipeline stage and tests join, leave, clock drift, and lost-control-message recovery."
+  ],
+  "publicStack": {
+    "name": "VaN3Twin",
+    "url": "https://github.com/DriveX-devs/VaN3Twin",
+    "capabilities": [
+      "ns-3 and SUMO",
+      "CAM, CPM, and DCC",
+      "802.11p, LTE-V2X Mode 4, and NR-V2X Mode 2"
+    ],
+    "exampleCommands": [
+      "./ns3 run \"v2v-congestion-80211p\"",
+      "./ns3 run \"v2v-80211p-gps-tc-dcc\"",
+      "./ns3 run \"v2v-congestion-nrv2x\"",
+      "./ns3 run \"v2v-simple-cam-exchange-80211p\""
+    ]
+  },
+  "twoWeekGoNoGo": [
+    "Analyze SEE-V2X application, MAC, SCI, and receive timestamps for repeatable cross-sender phase concentration without calling the flow CPM.",
+    "Add five-stage timestamps and a configurable FusionSink service queue to a fixed VaN3Twin commit.",
+    "At equal offered load, compare synchronized, standard random start, uniform static phase, and random jitter for 2, 4, 8, and 16 senders.",
+    "Cross shared FIFO, existing DCC or priority, and service-aware DRR plus class-internal EDF.",
+    "Proceed only if a receiver queue, not only sender gating or radio collision, contributes a repeatable tail-delay effect."
+  ],
+  "sixWeekStudy": [
+    "Implement expiring receiver-feedback leases with random fallback and control-loss recovery.",
+    "Run a phase-policy by queue-policy factorial study under vehicle churn, clock drift, variable payloads, and at least two access technologies.",
+    "Map delivered, late, and expired feature traces to a frozen OpenCOOD model only after the network mechanism is localized.",
+    "Report both network and task metrics with paired seeds and confidence intervals."
+  ],
+  "falsifiableClaims": [
+    "At equal load, phase alignment increases arrival concentration and a specifically localized p99 queueing delay.",
+    "Feedback leases outperform static uniform phase and random phase under churn and clock drift.",
+    "Service isolation reduces safety-message age without starving perception deadlines.",
+    "Network tail-delay improvement increases timely useful remote features and changes a frozen perception outcome."
+  ],
+  "killCriteria": [
+    "No receiver queue accumulation can be localized.",
+    "Static uniform phase remains equivalent to feedback leases under every churn and drift condition.",
+    "Standard DCC, RRM, or value-based content control explains the entire effect.",
+    "Service isolation only transfers loss between services.",
+    "Perception outcomes remain equivalent despite the network change; restrict any output to V2X queueing."
+  ]
+}

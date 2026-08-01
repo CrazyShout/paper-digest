@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "dossierVersion": "v1",
+  "preparedAt": "2026-07-31",
+  "reviewInstructions": {
+    "scope": "Evaluate each bounded candidate exactly as written. Do not grant credit for extensions that are not in the minimum study.",
+    "evidenceRule": "Reopen primary papers and official repositories when a score depends on a factual claim. Treat unchecked author promises as unavailable.",
+    "independenceRule": "Do not seek or use another reviewer's scores."
+  },
+  "sharedAssetFacts": [
+    "MDrive official commit 9e08377042b8f2e2860bb00de2416b3ebcfa3be4 was shallow-audited.",
+    "The audited tree contains exactly 46 InterDrive, 112 Interaction, and 67 V2XPnP scenario leaves; all 278 JSON and 6603 active XML files parsed.",
+    "MDrive exposes four perception_swap detector variants under a common planner interface, pose-error and latency variants, per-tick prediction dumps, AP/ADE/FDE/predicted-collision metrics, and closed-loop driving scores.",
+    "MDrive requires CARLA 0.9.12, external checkpoints, and planner-specific environments; HEAL-backed variants are budgeted at roughly 16 GB GPU memory.",
+    "MDrive's current --openloop help text and runtime behavior disagree: the runtime keeps normal closed-loop control unless CUSTOM_EGO_LOG_REPLAY=1 is explicitly set.",
+    "MDrive documents unequal native AP visibility filters across CoDriving and perception_swap; comparisons must either stay inside one interface family or use --no-visibility-filter.",
+    "RCP-Bench commit bf999089d1a56265cdfc1238ef4d065fb74602fa was statically audited; it is academic-only and uses a legacy CUDA stack.",
+    "No CUDA inference or CARLA rollout was claimed during this audit."
+  ],
+  "candidates": [
+    {
+      "candidateId": "single-decision-message-trial",
+      "title": "单决策点安全随机消息试验与可证伪离策略评估",
+      "hook": "不从相关日志猜哪条 V2X 消息有用，而是在每条路线只随机一次、记录真实倾向概率，并用独立随机 rollout 检验离线估计到底可信不可信。",
+      "boundedResearchQuestion": "在预先声明的 MDrive 场景、一个消息区域和固定三秒结果窗内，安全筛选后的 admit/drop 随机试验能否识别该消息对规划风险的条件效应，并判断直接模型、IPW 与 doubly robust 估计何时可以替代额外在线 rollout？",
+      "noveltyBoundary": [
+        "Select2Drive、Defer to Plan 与 receiver-centric communication 已研究哪些信息值得融合，但没有公开记录随机消息处理、行为倾向概率和独立随机策略验证的闭环协议。",
+        "UECP 与 RCP-Bench 能描述不确定性或负协作，却不能从自适应融合日志识别同一消息未发送时的规划结果。",
+        "Self-Supervised Relevance Modelling 通过合成反事实数据学习目标相关性；本候选改为真实随机处理日志、固定结果窗和可审计 OPE 误差。",
+        "本候选不声称解决多步自适应通信，也不声称给真实道路安全保证。贡献边界是单决策、受筛选场景中的可识别消息效应与 OPE 有效性协议。"
+      ],
+      "preciseClaim": "For one preregistered communication decision per episode and a deterministic pre-treatment safety screen, exact logged propensities plus cross-fitted doubly robust estimation can produce confidence intervals whose empirical coverage and policy-value error are validated against held-out randomized MDrive rollouts. The study publishes failure regions when overlap or effective sample size is inadequate.",
+      "identificationDesign": [
+        "Treatment unit is one region-time message at the first preregistered occlusion trigger; no later message decision is evaluated, removing sequential-treatment and post-treatment-policy ambiguity.",
+        "The deterministic screen excludes states where dropping the message violates a conservative TTC or braking-envelope rule. The estimand is explicitly conditional on states that pass this screen.",
+        "Within the retained population, admit/drop is Bernoulli with a fixed probability logged before delivery. Propensity, payload hash, serialized bytes, send/receive timestamps, planner state, map, route, actors, network trace, and perturbation seed are immutable log fields.",
+        "The result window is fixed at three seconds. Primary outcomes are collision indicator and minimum TTC; route progress, comfort, violations, actual bytes, and end-to-end latency are secondary outcomes.",
+        "Nuisance models are cross-fitted by complete scenario family. Direct, IPW, self-normalized IPW, and doubly robust estimates are compared with fresh randomized-policy rollouts not used to fit any model.",
+        "The candidate succeeds scientifically whether OPE is valid only in a narrow overlap region or fails broadly, because both outcomes establish an executable decision rule for when logged cooperative-driving evidence is insufficient."
+      ],
+      "minimumStudy": {
+        "duration": "10-12 weeks after a one-scenario MDrive smoke test passes",
+        "compute": "One CUDA GPU with at least 24 GB memory; CARLA scenario-pool use is optional and not required for the pilot.",
+        "systems": [
+          "MDrive perception_swap_attfuse_behavior as the primary cooperative stack",
+          "MDrive perception_swap_fcooper_behavior as a held-out fusion-family replication",
+          "MDrive V2XPnP and Interaction scenario families"
+        ],
+        "samplePlan": [
+          "Pilot 20 scenario families spanning occlusion, crossing, merge, and braking mechanisms.",
+          "Four independent initial seeds per family, two treatment arms, two cooperative stacks, and three declared network/pose strata.",
+          "Increase seeds only if the preregistered confidence-width and effective-sample-size calculation requires it; do not select sample size after seeing the treatment effect."
+        ],
+        "baselines": [
+          "ego-only and always-admit policies",
+          "fixed detector-confidence threshold",
+          "uncertainty-weighted admission patterned after UECP",
+          "direct outcome model",
+          "IPW and self-normalized IPW",
+          "doubly robust estimator"
+        ],
+        "metrics": [
+          "Coverage and absolute error of policy-value confidence intervals against held-out randomized rollouts",
+          "Effective sample size, propensity overlap, weight-tail diagnostics, and disagreement among estimators",
+          "Collision, minimum TTC, progress, comfort, violations, serialized bytes, and end-to-end latency",
+          "Transfer error on the second fusion family and held-out perturbation stratum"
+        ]
+      },
+      "negativeControls": [
+        "Sham randomization changes a log flag but not delivery.",
+        "Pre-message placebo outcome is measured before treatment.",
+        "Messages from empty or planner-irrelevant regions are randomized.",
+        "Within-scene payload permutation preserves byte count and delivery timing.",
+        "Equal-compute ego-only inference controls for latency and scheduling effects.",
+        "A deliberately reconstructed rather than logged propensity tests whether hidden policy inference creates false confidence."
+      ],
+      "successCriteria": [
+        "Every reported estimand names its screened population, treatment, horizon, and available pre-treatment variables.",
+        "At least one estimator has preregistered interval coverage and value error that agree with held-out randomized evaluation in the supported strata.",
+        "Unsupported strata are rejected by overlap or effective-sample-size diagnostics rather than assigned a policy value.",
+        "The second fusion family preserves the qualitative validity verdict, even if the estimated treatment effect differs.",
+        "Actual serialization and latency accounting do not reverse the reported validity conclusion."
+      ],
+      "killCriteria": [
+        "A one-scenario smoke test cannot log exact pre-treatment propensities, payload hashes, and synchronized outcomes.",
+        "Safety screening leaves no informative treatment variation in occlusion or conflict states.",
+        "Held-out randomized outcomes fall outside claimed intervals after the preregistered sample expansion.",
+        "Estimator validity depends on post-treatment variables, future frames, oracle actor state, or reconstruction of unlogged propensities.",
+        "The protocol cannot reproduce its own result from the released immutable log."
+      ],
+      "implementationMilestones": [
+        "Week 1-2: environment lockfile, checkpoint hashes, one-scenario smoke test, and message interception point.",
+        "Week 3: preregistered trigger, screen, schema, estimand, sample rule, and negative controls.",
+        "Week 4-6: randomized logging over the pilot set and deterministic integrity checks.",
+        "Week 7-8: cross-fitted estimators, overlap diagnostics, and held-out randomized validation.",
+        "Week 9-10: second fusion-family replication and perturbation holdout.",
+        "Week 11-12: rerun from clean logs, package artifacts, and write positive or negative result."
+      ],
+      "primaryEvidence": [
+        {
+          "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+          "url": "https://arxiv.org/abs/2605.10904",
+          "role": "Shows the open-loop/closed-loop gap and supplies the audited closed-loop substrate.",
+          "provenance": "local-corpus",
+          "localPaperId": "mdrive-closed-loop-cooperative-driving"
+        },
+        {
+          "title": "Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications",
+          "url": "https://arxiv.org/abs/2501.12040",
+          "role": "Direct communication-selection competitor without randomized logging/OPE validation.",
+          "provenance": "local-corpus",
+          "localPaperId": "select2drive-pragmatic-communications"
+        },
+        {
+          "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+          "url": "https://arxiv.org/abs/2607.19774",
+          "role": "Recent planning-conditioned fusion collision boundary.",
+          "provenance": "local-corpus",
+          "localPaperId": "defer-to-plan-v2x-driving"
+        },
+        {
+          "title": "UECP: Uncertainty-Enhanced Collaborative Perception",
+          "url": "https://arxiv.org/abs/2606.23046",
+          "role": "Uncertainty baseline and evidence that correlation-based contribution scores are already crowded.",
+          "provenance": "external"
+        },
+        {
+          "title": "RCP-Bench: Benchmarking Robustness for Collaborative Perception Under Diverse Corruptions",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+          "role": "Defines negative collaboration metrics and controlled perturbations, but not causal message effects.",
+          "provenance": "external"
+        },
+        {
+          "title": "Self-Supervised Relevance Modelling in Autonomous Driving via Counterfactual Analysis",
+          "url": "https://arxiv.org/abs/2606.10688",
+          "role": "Closest counterfactual relevance work; uses a synthetic causal dataset rather than logged randomized V2X treatment.",
+          "provenance": "external"
+        },
+        {
+          "title": "Doubly Robust Off-policy Value Evaluation for Reinforcement Learning",
+          "url": "https://proceedings.mlr.press/v48/jiang16.html",
+          "role": "Primary estimator foundation and warning about variance/support limits.",
+          "provenance": "external"
+        }
+      ]
+    },
+    {
+      "candidateId": "executable-verdict-transfer-audit",
+      "title": "可执行实验契约下的回放—闭环 verdict 迁移审计",
+      "hook": "不再把不同代码、过滤器和指标下的榜单数字硬做相关性，而是在同一场景、同一接口、同一检查点上测量一个方法从回放到闭环时是否真正翻转结论。",
+      "boundedResearchQuestion": "在 MDrive 的 perception_swap 统一接口与同一 V2XPnP 场景中，固定实现和 evaluator 后，协同感知方法在纯回放预测指标上的相对 verdict 能否迁移到闭环 ego 控制；若不能，哪些可观测变量解释 sign/rank inversion？",
+      "noveltyBoundary": [
+        "MDrive 已指出 perception sharing 不总能转化为 planning gain，也提供每 tick 预测和闭环输出；它没有给出冻结实现、配对场景、反转概率和可执行可比性契约。",
+        "RCP-Bench 比较受控腐败下的感知鲁棒性，但不研究同一实现从回放到闭环的 verdict 迁移。",
+        "CooperScene 和 V2X-ReaLO 提供更真实通信或在线证据，却不能替代同场景、同检查点的闭环干预。",
+        "本候选只对 audited MDrive modes 与指定方法族作结论，不把 V2XPnP 回放称为真实道路闭环，也不声称所有 benchmark 都存在排序反转。"
+      ],
+      "preciseClaim": "An executable comparison contract that freezes code, checkpoints, visibility filtering, sensor inputs, message serialization, scenario identity, and metric definitions can support paired estimation of replay-to-closed-loop sign and rank inversion for four cooperative perception swaps. The contract must distinguish true ego replay from closed-loop control despite the current CLI documentation/runtime mismatch.",
+      "comparisonContract": [
+        "Store repository commit, container or environment lock, CARLA build hash, checkpoint hashes, planner alias, fusion alias, sensor suite, map, route XML hashes, actor manifest hashes, random seeds, and GPU type.",
+        "Use only perception_swap_{fcooper,attfuse,disco,cobevt}_behavior in the primary matrix so the local planner and AP collection path are shared.",
+        "Force one declared visibility policy for every method. Native-filter and no-filter results are separate strata, never pooled.",
+        "Log serialized payload bytes and measured end-to-end latency rather than feature-mask size.",
+        "Define playback explicitly with CUSTOM_EGO_LOG_REPLAY=1 and closed-loop explicitly without it; assert the effective environment in every run artifact.",
+        "Freeze all choices before opening closed-loop outcomes. A contract checker rejects cells with mismatched hashes or evaluator settings."
+      ],
+      "minimumStudy": {
+        "duration": "10-12 weeks after all four methods pass one-scene smoke tests",
+        "compute": "One or more CUDA GPUs with at least 24 GB; the primary matrix may be serialized if no scenario pool is available.",
+        "methods": [
+          "perception_swap_fcooper_behavior",
+          "perception_swap_attfuse_behavior",
+          "perception_swap_disco_behavior",
+          "perception_swap_cobevt_behavior"
+        ],
+        "levels": [
+          "L0 true ego replay: controls discarded with CUSTOM_EGO_LOG_REPLAY=1; report AP, ADE, FDE, and predicted collision rate.",
+          "L1 closed-loop ego on the same V2XPnP route and recorded actors with the documented intelligent guard; report the same per-tick metrics plus driving score, success, infractions, and realized collision.",
+          "L2 reactive replication on matched MDrive Interaction mechanisms; used only for external-validity direction, not treated as a paired real-log level."
+        ],
+        "samplePlan": [
+          "Select 20 V2XPnP scenes before outcome inspection, stratified by occlusion, crossing, merge, braking, and infrastructure availability.",
+          "Run four independent seeds per method and level; use paired bootstrap by scene family and seed.",
+          "Replicate the most stable and most unstable method pair on 20 matched Interaction scenarios.",
+          "Expand only under a preregistered confidence-width rule."
+        ],
+        "metrics": [
+          "Probability of pairwise sign inversion for cooperative gain versus an ego-only ablation built through the same perception_swap path",
+          "Posterior or bootstrap probability of rank inversion across methods",
+          "Failure-set Jaccard overlap and per-scene verdict agreement",
+          "AP, ADE, FDE, predicted collision, realized collision, minimum TTC, progress, success, infractions, bytes, and latency",
+          "Sensitivity to visibility policy, actor guard, pose error, latency, and checkpoint variation"
+        ]
+      },
+      "negativeControls": [
+        "Duplicate one checkpoint under a second method label; the contract should report no genuine method effect.",
+        "Shuffle scene pairings before transfer analysis; apparent transportability should degrade.",
+        "Intentionally mix native visibility filters; the checker must reject the comparison.",
+        "Change only the documented mode label while preserving the effective environment; the checker must detect no level change.",
+        "Allow per-level retuning as a deliberately biased comparator but exclude it from the primary verdict.",
+        "Replace actual bytes with feature-mask size to quantify the invalid shortcut."
+      ],
+      "successCriteria": [
+        "Every primary comparison cell passes the executable contract and can be regenerated from a manifest.",
+        "The study reports uncertainty over every sign/rank inversion, not a correlation of copied headline metrics.",
+        "At least one independent rerun reproduces a selected transfer cell from hashes and manifests.",
+        "A negative result with narrow intervals is accepted: stable rankings within the bounded scope are as informative as a confirmed inversion.",
+        "Sensitivity analysis separates evaluator/filter changes from genuine replay-to-closed-loop interactions."
+      ],
+      "killCriteria": [
+        "Fewer than four methods pass the shared-interface smoke test.",
+        "The ego-only ablation cannot be implemented through the same ground-truth and planner path.",
+        "Mode, checkpoint, visibility filter, message serialization, or metric definitions cannot be frozen and fingerprinted.",
+        "V2XPnP cells cannot be paired at scene/seed level or the resulting intervals remain uninformative after preregistered expansion.",
+        "Observed inversions disappear once evaluator mismatches are removed, in which case the result is published only as an evaluator-confound audit and not as evidence-level transfer."
+      ],
+      "implementationMilestones": [
+        "Week 1-2: four one-scene smoke tests, ego-only ablation, and contract schema.",
+        "Week 3: mode assertions, visibility-policy assertions, checkpoint and scenario fingerprints.",
+        "Week 4-6: paired V2XPnP L0/L1 matrix.",
+        "Week 7: inversion statistics, duplicate-checkpoint and shuffled-pair controls.",
+        "Week 8-9: pose, latency, guard, and filter sensitivity.",
+        "Week 10: Interaction replication on two selected method pairs.",
+        "Week 11-12: clean rerun, independent cell replication, and artifact release."
+      ],
+      "primaryEvidence": [
+        {
+          "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+          "url": "https://arxiv.org/abs/2605.10904",
+          "role": "Direct problem evidence and the sole primary implementation substrate.",
+          "provenance": "local-corpus",
+          "localPaperId": "mdrive-closed-loop-cooperative-driving"
+        },
+        {
+          "title": "MDrive official repository",
+          "url": "https://github.com/ucla-mobility/MDrive",
+          "role": "Audited source for scenario counts, modes, method aliases, metrics, and implementation constraints.",
+          "provenance": "external"
+        },
+        {
+          "title": "RCP-Bench: Benchmarking Robustness for Collaborative Perception Under Diverse Corruptions",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+          "role": "Closest controlled-robustness benchmark and source of positive/negative collaboration metrics.",
+          "provenance": "external"
+        },
+        {
+          "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+          "url": "https://arxiv.org/abs/2606.31219",
+          "role": "Real-link external-validity evidence kept outside the bounded paired claim.",
+          "provenance": "local-corpus",
+          "localPaperId": "cooperscene-cv2x-benchmark"
+        },
+        {
+          "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+          "url": "https://arxiv.org/abs/2503.10034",
+          "role": "Shows the online-realism axis but lacks the same closed-loop paired contract.",
+          "provenance": "external"
+        },
+        {
+          "title": "A Deployed Hybrid Vehicle-in-the-Loop Platform for Validating Cooperative Perception",
+          "url": "https://arxiv.org/abs/2607.13806",
+          "role": "Highest evidence-level reference, explicitly excluded from the minimum study.",
+          "provenance": "local-corpus",
+          "localPaperId": "deployed-vil-cooperative-perception"
+        },
+        {
+          "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+          "url": "https://arxiv.org/abs/2607.19774",
+          "role": "Recent closed-loop fusion competitor and motivation for planner-conditioned evaluation.",
+          "provenance": "local-corpus",
+          "localPaperId": "defer-to-plan-v2x-driving"
+        }
+      ]
+    }
+  ]
+}

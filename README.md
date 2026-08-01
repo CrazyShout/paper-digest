@@ -396,6 +396,15 @@ npm run email:review-update
 
 正式发送前，脚本会要求所有方向通过独立复核，并核对线上综述中心的内容指纹；日期或方向数量相同但正文仍是旧版本时也会拒绝发信。批量收件人仅放在 BCC 中，错误日志不会回显服务器返回的收件人地址。
 
+Idea 中心完成全方向检索、候选盲评和全局终审并部署后，可发送本轮审计与界面更新通知：
+
+```bash
+npm run email:idea-update:preview
+npm run email:idea-update
+```
+
+Idea 更新允许全局终审得出“不通过”，但要求所有方向均已完成候选检索、至少两名独立评审和一次全局终审。正式发送前还会核对线上 Idea 中心的完整内容指纹，避免在 Pages 尚未部署时提前通知用户。
+
 ## References
 
 - [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/)

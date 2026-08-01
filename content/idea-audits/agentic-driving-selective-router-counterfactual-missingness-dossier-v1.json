@@ -1,0 +1,456 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "directionId": "agentic-driving",
+  "dossierVersion": 1,
+  "createdAt": "2026-08-01",
+  "reviewMode": "evidence-dossier-no-scoring",
+  "title": "别让路由器只学会看起来复杂：驾驶快慢推理的反事实收益审计",
+  "hook": "同一个场景是否值得走慢路径，不应由它看起来多复杂决定，而应由慢思考相对快路径是否真正改善安全与任务效用决定；只执行所选分支的日志恰好看不到这个逐场景差值。",
+  "output": "驾驶快慢分支配对收益账本、选择性日志审计基准与预算约束路由评测协议",
+  "effort": "中高",
+  "timeline": "8-10 周",
+  "whyNow": "AutoVLA 已公开双思考模式的代码、checkpoint 和 NAVSIM 评测链，Cognitive Dual-Process 又把视觉复杂度 Arbiter、强制快路径后果、静态 Fast/Slow 对照和长尾漏路由放进同一研究问题。公开结果同时出现慢路径在平均上优于快路径、全程慢推理又劣于动态路由，以及长尾子集路由假阴性上升，说明慢思考价值具有明显异质性。现在首次具备用同一模型、同一驾驶输入和同一任务评测器建立逐场景配对账本的条件；但 AISTATS 的因果延期框架和成熟 OPE 文献已经占据一般潜在结果、IPW 与 DR 方法，因此本候选只能以驾驶特有的收益错配、时延语义和路由排序后果立项。",
+  "keyProblem": "部署中的选择性路由器每次只执行快路径或慢路径之一，因而日志只保留被选分支的结果。若路由器随后用这些日志学习，它可能把场景复杂度、置信度或历史选择倾向误当成慢思考的个体净收益。真正需要估计的是同一驾驶状态下慢路径相对快路径的安全-任务-计算增量，而不是场景是否被人工标为复杂。确定性路由还会造成支持缺失，使未探索区域中的反事实回报无法由 IPW 或 DR 凭空恢复。",
+  "currentLimitations": "这个问题的宽泛表述并不新。上下文 bandit、反事实风险最小化、离线策略评估和 learning-to-defer 已系统研究只观察所选动作或专家结果时的选择偏差；AISTATS 2025 更直接用潜在结果评价延期系统，并区分双侧预测可得与只观察被延期结果两种情形。驾驶侧的 Cognitive Dual-Process 也不是纯粹从选择性日志训练：它用冻结规划器强制运行快路径来计算后果项，并报告全局 Fast-Plan、Slow-Think 和动态路由结果。因此不能声称首次发现反事实缺失，也不能把 IPW、DR、SWITCH、回归不连续或普通 benefit predictor 包装为新机制。剩余缺口是：现有驾驶工作没有发布逐场景的快慢净收益、没有证明视觉复杂度与慢分支收益一致、没有在固定计算预算下审计路由器排序，也没有统一处理慢推理耗时导致的动作生效时刻变化。另一个限制是公开 AutoVLA 的自适应模式由提示、输出格式和采样设置共同决定，必须先固定可复现的分支合同；静态 NAVSIM 配对可以识别单场景规划差值，但不能直接替代交互闭环中的世界演化。",
+  "hypothesis": "在固定模型、固定快慢分支合同和同一驾驶输入上，逐场景慢路径净收益与视觉复杂度分数并不等价；用配对收益监督或评价路由，会在相同慢路径调用预算下减少安全相关漏路由与有害过度推理，并可能改变复杂度路由、置信度路由和 learning-to-defer 路由的相对排序。若配对收益与复杂度近似单调且所有路由排序稳定，则核心假设被推翻。",
+  "noveltyClaims": [
+    "把研究对象从场景复杂度分类改为驾驶特有的逐场景慢推理净收益：收益同时保留 PDMS 安全分量、进度、轨迹有效性和实际推理时延，不以是否生成 CoT 或标签是否复杂作替代。",
+    "建立同一公开 VLA、同一不可变观测和同一 NAVSIM metric cache 上的快慢分支配对账本，并用它直接标记 beneficial-slow、harmful-overreasoning、both-fail 和 branch-equivalent 四类驾驶状态；新意若成立，来自这些自然状态及其系统后果，而不是潜在结果记号。",
+    "用完整配对账本作为不可见真值，主动遮蔽未选分支来审计确定性日志、随机探索日志和不同 OPE/L2D 路由器的排序误差；IPW、DR、SWITCH 和 post-hoc defer 只作为成熟基线。",
+    "把慢分支的输出时间纳入驾驶动作语义：静态阶段报告零世界演化下的纯分支差值，闭环扩展则要求在共同初态的独立模拟器分支中执行等待期间的明确保底动作，避免把冻结世界的慢推理收益外推到真实控制。"
+  ],
+  "method": [
+    "定义可审计 Branch Contract：同一 checkpoint、图像序列、车辆状态、导航命令、动作 tokenizer 和五秒预测时域；快路径必须直接输出动作 token，慢路径必须先输出固定结构的理由再输出同格式动作 token，并记录 prompt hash、解码参数、随机种子、token 数和墙钟时延。",
+    "在 NAVSIM 非反应式评测中对每个样本从同一不可变输入分别运行快慢分支，随机化执行顺序并复用同一 metric cache，形成包含两条轨迹、两个 PDMS 分解、有效性和时延的 full-information paired ledger。",
+    "预注册安全优先和预算约束两种决策规则，不用单一任意加权总分掩盖碰撞/TTC：先比较安全硬约束，再在安全可接受集合中比较进度与时延；另报告一组预注册权重的敏感性曲线。",
+    "从完整账本生成多种选择性日志：复杂度确定性路由、置信度路由和带已知探索概率的随机路由。用完整账本计算真实策略价值，再比较 direct method、IPS、DR、SWITCH、CRM 和 post-hoc learning-to-defer 的估计偏差、支持诊断和方法排序。",
+    "只在静态阶段发现稳定收益错配后，才实现可选闭环分支：从同一 CARLA 状态快照建立两个独立实例，慢路径计算期间执行预注册保底控制，并用 common random numbers 与 no-op/no-op 复现测试隔离模拟器随机性。"
+  ],
+  "implementationPath": [
+    {
+      "type": "reusable",
+      "asset": "AutoVLA official code and checkpoint",
+      "work": "固定仓库提交 ba34eed74ce6729e7986592d0e66cbaca397b4fa，复用 Qwen2.5-VL-3B、动作 codebook、公开 checkpoint、AutoVLAAgent 和 NAVSIM PDM 入口。",
+      "boundary": "公开 `use_cot=true` 提示允许模型自行决定是否推理，不等于强制慢路径；需要自建严格 branch adapter。"
+    },
+    {
+      "type": "reusable",
+      "asset": "AutoVLA bundled NAVSIM evaluator",
+      "work": "复用 token 级场景输入、metric cache、PDM simulator/scorer 和逐样本结果分解；先用 navmini 完成 smoke test，再扩展到预注册样本。",
+      "boundary": "NAVSIM 是非反应式或伪模拟评测，适合识别同一观测下的规划差值，不识别推理期间真实环境变化。"
+    },
+    {
+      "type": "reusable",
+      "asset": "Cognitive Dual-Process branch specification",
+      "work": "复用论文中 Fast-Plan、Slow-Think、视觉复杂度 Arbiter、强制快路径后果项和长尾漏路由定义作为直接竞品。",
+      "boundary": "截至审计日未在论文记录中发现官方代码或 checkpoint，不能把其表格当作可直接执行资产。"
+    },
+    {
+      "type": "self-built",
+      "asset": "ForcedBranchAdapter",
+      "work": "在同一 AutoVLA checkpoint 上实现 fast-direct 与 slow-structured 两个明确提示入口，统一动作解码、最大动作 token 数和错误处理；输出模式不合规时显式失败，不静默补成合法轨迹。",
+      "acceptanceCheck": "在首批样本上证明快路径无长理由、慢路径包含预定义结构，且两者都输出相同数量和时域的动作 token；不满足时停止主实验并修订合同。"
+    },
+    {
+      "type": "self-built",
+      "asset": "PairedBranchRunner",
+      "work": "缓存一次输入预处理结果，为两个分支设置独立生成器和固定种子，随机化执行顺序，保存原始 token、轨迹、时延、显存峰值、metric cache hash 和异常。",
+      "acceptanceCheck": "同一分支 no-op/no-op 重复运行在确定性设置下必须输出一致；交换执行顺序不能改变结果。"
+    },
+    {
+      "type": "self-built",
+      "asset": "BenefitLedger and RouteEvaluator",
+      "work": "按样本保存两分支 PDMS 分解、轨迹有效性、token/时延成本、复杂度代理和 slow-minus-fast 差值；提供固定预算策略价值、危险漏路由、有害过度推理和 scene-level bootstrap。",
+      "acceptanceCheck": "所有扫描样本必须由成功、分支失败或评测失败三类完整对账，不只保留路由反转案例。"
+    },
+    {
+      "type": "self-built",
+      "asset": "SelectiveLogAuditor",
+      "work": "从完整账本按预注册 logging policy 遮蔽另一分支，记录真实 propensity，并实现 DM、IPS、DR、SWITCH、CRM 与 L2D 基线；估计结果与完整账本真值逐项比较。",
+      "acceptanceCheck": "对确定性日志必须明确报告 positivity failure，不允许用裁剪权重或模型外推伪装为已识别。"
+    },
+    {
+      "type": "self-built",
+      "asset": "OptionalClosedLoopTwinRunner",
+      "work": "若获得可运行的同模型闭环入口，从同一世界快照创建快慢两个独立实例，显式执行 slow-compute 期间的 hold-last-safe 或最小风险动作，并验证 common-random-number replay。",
+      "acceptanceCheck": "no-op/no-op 双实例轨迹未在容差内重合时，不解释任何闭环差异。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Compute",
+      "work": "需要能加载 Qwen2.5-VL-3B 与十二帧视频输入的 GPU；官方未给出该 checkpoint 的最低推理显存，第一周必须实测单样本显存、快慢时延和全量预算。",
+      "boundary": "训练新视觉骨干不属于最小研究；若单 GPU 不足，可只做分支串行配对，不改变识别目标。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Data and metric cache",
+      "work": "需要合法取得 nuPlan/NAVSIM 地图、传感器数据和 metric cache，并固定 split、token 清单与数据版本。",
+      "boundary": "navmini 只用于执行门；研究结论至少需要数百个预注册样本和独立测试划分。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Licensing and redistribution",
+      "work": "AutoVLA 代码为限学术或非营利研究的定制许可证且禁止再转移衍生软件；Hugging Face model card 缺少完整 YAML 许可证元数据。实验前需核验 checkpoint 使用条款，发布时只提交适配器、索引和统计，不重新分发受限权重或数据。",
+      "boundary": "许可证限制不阻止内部最小实验，但会约束复现实物的发布方式。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "stage": "branch-contract-smoke",
+      "duration": "第 1 周",
+      "protocol": "在 navmini 或等价小样本上固定 AutoVLA commit、checkpoint revision、processor、action codebook 和确定性生成设置，完成 fast-direct、slow-structured 与 no-op 重复运行。",
+      "decision": "若两个模式不能在同一 checkpoint 上稳定产生可比较的固定时域轨迹，候选保持 revise，不能用不同模型或不同任务结果拼接。"
+    },
+    {
+      "stage": "full-information-paired-ledger",
+      "duration": "第 2-4 周",
+      "protocol": "按场景簇和难度分层预注册 300-1000 个 NAVSIM 样本；同一不可变输入分别执行两个分支，记录完整 PDMS 分量、轨迹有效性、token 数、时延和 branch outcome。样本划分按 log 或 scene 隔离。",
+      "decision": "先回答慢分支净收益是否存在异质性，以及复杂度/置信度是否能预测该差值；这一阶段不需要训练新路由器。"
+    },
+    {
+      "stage": "missingness-ground-truth-audit",
+      "duration": "第 4-6 周",
+      "protocol": "从完整账本构造复杂度确定性日志和具有已知探索概率的随机日志，遮蔽未选分支；以完整账本为真值比较 naive selected-only、DM、IPS、DR、SWITCH 和 CRM 的策略价值、置信区间、有效样本量与排序错误。",
+      "decision": "若选择性日志没有造成可测偏差或方法排序变化，则不再把 missingness 作为驾驶研究贡献，只保留复现附录。"
+    },
+    {
+      "stage": "budget-matched-router-test",
+      "duration": "第 6-8 周",
+      "protocol": "在训练划分上拟合简单 benefit predictor 或 post-hoc defer router，在完全隔离测试集上与复杂度 Arbiter、置信度、随机路由比较；所有方法使用相同慢路径调用率或相同平均算力预算。",
+      "decision": "核心结论看安全相关漏路由、有害过度推理和策略价值，不以 router 网络结构的新颖性为贡献。"
+    },
+    {
+      "stage": "optional-temporal-validation",
+      "duration": "第 9-10 周",
+      "protocol": "仅在获得可信闭环入口且 no-op twin determinism 通过后，选择预注册事件从同一模拟器初态分叉；环境不因推理而冻结，慢路径等待期间执行明确保底动作。",
+      "decision": "未完成该阶段时，结论严格限于 NAVSIM 同观测规划与路由评价；不得声称真实闭环安全收益。"
+    }
+  ],
+  "strongBaselines": [
+    {
+      "name": "always-fast",
+      "role": "给出最低计算成本和快路径安全/任务下界。"
+    },
+    {
+      "name": "always-slow",
+      "role": "给出慢路径全调用的性能、时延与有害过度推理参照。"
+    },
+    {
+      "name": "random budget-matched routing",
+      "role": "在相同慢路径调用率下检验任何学习路由是否超越随机分配。"
+    },
+    {
+      "name": "Cognitive Dual-Process style complexity routing",
+      "role": "以视觉复杂度、固定阈值和风险加权假阴性损失作为最直接驾驶竞品。"
+    },
+    {
+      "name": "confidence or entropy routing",
+      "role": "检验收益路由是否只是普通不确定性选择。"
+    },
+    {
+      "name": "post-hoc learning-to-defer error-cost router",
+      "role": "比较成熟的基础模型错误概率与专家成本差路由目标。"
+    },
+    {
+      "name": "full-information oracle benefit router",
+      "role": "在固定慢路径预算下选择真实 slow-minus-fast 收益最大的样本，作为不可部署上界。"
+    },
+    {
+      "name": "DM, IPS, DR, SWITCH and CRM",
+      "role": "作为选择性日志评价与学习基线；这些统计工具不属于候选新颖性。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "paired branch benefit",
+      "definition": "逐样本报告 slow-minus-fast 的 PDMS、collision、TTC、progress、comfort 和 trajectory-validity 差值，不先压成一个总分。",
+      "unit": "scene/token paired difference"
+    },
+    {
+      "name": "dangerous false routing",
+      "definition": "慢路径在预注册安全分量上显著更优但 router 选择快路径的比例与场景分布。",
+      "unit": "scene-level rate"
+    },
+    {
+      "name": "harmful over-reasoning",
+      "definition": "慢路径相对快路径降低安全分量、产生无效轨迹或在无安全收益时显著增加时延的比例。",
+      "unit": "scene-level rate"
+    },
+    {
+      "name": "budgeted policy value",
+      "definition": "在相同慢路径调用率、平均 GPU 时间或尾时延预算下的安全优先策略价值，并报告 Pareto 前沿。",
+      "unit": "held-out scene mean with cluster bootstrap interval"
+    },
+    {
+      "name": "router regret",
+      "definition": "相对 full-information oracle benefit router 的策略价值差，按天气、交互密度、信号与长尾类别分层。",
+      "unit": "scene-level regret"
+    },
+    {
+      "name": "complexity-benefit alignment",
+      "definition": "视觉复杂度分数与配对净收益的秩相关、校准曲线，以及相同复杂度区间内收益符号翻转率。",
+      "unit": "held-out sample and subgroup"
+    },
+    {
+      "name": "off-policy estimation error",
+      "definition": "各 estimator 相对完整账本真值的绝对误差、区间覆盖率、方法排序错误率和 propensity 有效样本量。",
+      "unit": "logging-policy replicate"
+    },
+    {
+      "name": "runtime contract",
+      "definition": "首 token、最终动作、总生成时延、token 数、峰值显存和 p50/p95/p99；闭环阶段另报告等待期间保底动作暴露时长。",
+      "unit": "inference call"
+    }
+  ],
+  "successCriteria": [
+    "在完全隔离测试集和至少两个场景子群中，复杂度或置信度相近的样本出现稳定的 slow-minus-fast 收益符号分裂，且该分裂不是无效 token、随机采样或单一 prompt 措辞造成。",
+    "在相同慢路径调用预算下，收益感知评价或路由相对最强复杂度/L2D 基线显著减少安全相关漏路由或有害过度推理，并且 scene-cluster bootstrap 区间不跨零。",
+    "选择性日志审计至少改变一个实质结论：路由区域、策略价值判断、方法排序或是否部署；只显示已知的 IPS 方差膨胀不算成功。",
+    "负结果也必须有决策后果：若复杂度充分预测净收益，应给出支持低成本复杂度监督的误差上界和适用域，而不是仅报告相关系数。"
+  ],
+  "killCriteria": [
+    "固定分支合同后，快慢输出无法在同一 checkpoint 和同一预测时域上稳定比较，或差异主要由 prompt 格式、动作 token 丢失、采样随机性和非法轨迹造成。",
+    "配对净收益与复杂度/置信度近似单调，复杂度路由在相同预算下达到 oracle 可实现收益，且方法排序在完整账本与选择性日志校正后保持不变。",
+    "所有选择偏差结论都可由 Palomba 等人的通用 deferral 潜在结果框架或标准 CRM/OPE 例程直接复现，没有新的驾驶反例、时延边界或系统决策后果。",
+    "公开数据或许可证最终无法支持合法的数百样本配对评测，且没有同等任务指标的替代公开栈；此时最小实验不能识别主张。"
+  ],
+  "risks": [
+    {
+      "risk": "直接先例碰撞",
+      "detail": "因果延期系统已经覆盖潜在结果与缺失专家预测，contextual bandit/OPE 已覆盖 propensity 校正和离线策略学习。",
+      "mitigation": "贡献只保留驾驶特有的自然收益错配、分支合同、时延语义和路由排序后果；若没有实证反例则淘汰。"
+    },
+    {
+      "risk": "分支处理不纯",
+      "detail": "AutoVLA 的快慢模式可能同时改变提示、采样温度、输出长度和动作 token 数，无法把差异单独归因于 reasoning。",
+      "mitigation": "固定同一 checkpoint、输入、动作解码和时域，报告两套合同敏感性；模式不合规显式失败。"
+    },
+    {
+      "risk": "静态评测外推",
+      "detail": "NAVSIM 同观测配对不会让世界在慢推理期间演化，可能高估慢路径部署价值。",
+      "mitigation": "主张限于规划与路由评价；闭环仅在独立状态克隆和保底动作合同通过后扩展。"
+    },
+    {
+      "risk": "positivity failure",
+      "detail": "确定性复杂度路由在部分场景对某一分支的 propensity 为零，IPW/DR 无法识别这些区域。",
+      "mitigation": "明确报告 unsupported strata；只在预注册随机探索日志中做无偏 OPE，不用模型外推替代支持。"
+    },
+    {
+      "risk": "效用任意性",
+      "detail": "把安全、进度和时延线性加权可能人为制造慢路径收益。",
+      "mitigation": "采用安全硬约束加预算匹配的主分析，并报告多权重敏感性与 Pareto 前沿。"
+    },
+    {
+      "risk": "生成随机性与统计功效",
+      "detail": "同一分支随机采样方差可能大于快慢差值，且慢分支双执行成本限制样本量。",
+      "mitigation": "先做确定性主分析，再用小规模多 seed 稳健性；按 scene 聚类，不把重复生成当独立场景。"
+    },
+    {
+      "risk": "资产与许可证",
+      "detail": "AutoVLA 代码限制再分发，模型卡许可证元数据不完整，reasoning data 仍标为待发布。",
+      "mitigation": "实验前留存条款快照；不依赖未发布 reasoning data，不重新分发权重、数据或受限衍生物。"
+    }
+  ],
+  "impact": "若假设成立，这项工作会把驾驶 Agent 的路由目标从模糊的复杂度或置信度改成可审计的分支增量，并提供一个能揭示危险漏路由、有害过度推理和离线方法排序偏差的公开评测协议；它还会要求后续快慢系统记录 propensity、分支合同和支持诊断。若假设不成立，结果同样有价值：它将证明廉价的复杂度监督在明确域内足以近似慢思考收益，避免投入更复杂的因果路由器。无论正负，影响限于所测公开栈和评价协议，不能直接外推真实道路安全。",
+  "evidence": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "sourceOrigin": "local-corpus",
+      "localPaperId": "cognitive-dual-process-driving",
+      "localLink": "papers/cognitive-dual-process-driving/",
+      "role": "最直接驾驶竞品：定义视觉复杂度 Arbiter、Fast-Plan/Slow-Think 分支、强制快路径后果和长尾漏路由。",
+      "verifiedFinding": "论文在 574 个手工核验 NAVSIM 样本上报告 Fast-Plan 73.87%、Slow-Think 77.87%、Dual-Process 80.14% 规划准确率；六个长尾子集平均路由 FNR 为 25.10%。",
+      "boundary": "它已有部分反事实设计和静态双模式结果，但未报告逐样本 slow-minus-fast 净收益、支持诊断或预算匹配的收益路由。"
+    },
+    {
+      "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+      "year": 2025,
+      "venue": "NeurIPS",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "sourceOrigin": "external",
+      "role": "公开可复现的双思考 VLA 任务来源。",
+      "verifiedFinding": "快路径直接生成动作 token，慢路径先生成 CoT；论文报告平均推理时延约 1.072 秒与 10.518 秒，并用 GRPO 的驾驶奖励减 CoT 长度惩罚促进自适应模式。",
+      "boundary": "论文未把每个场景的两分支结果同时作为路由监督，也没有 propensity、OPE 或逐样本净收益分析。"
+    },
+    {
+      "title": "AutoVLA Official Repository",
+      "year": 2026,
+      "venue": "Official code and model release",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "sourceOrigin": "external",
+      "role": "最小实验的固定代码资产。",
+      "verifiedFinding": "提交 ba34eed74ce6729e7986592d0e66cbaca397b4fa 包含 `use_cot` 提示开关、公开 checkpoint 链接、动作 tokenizer、AutoVLAAgent、NAVSIM PDM 评测脚本和 navmini 配置。",
+      "boundary": "需要自建强制分支 adapter、配对 runner 和日志 evaluator；reasoning data 仍标为待批准发布，代码许可证限制再分发。"
+    },
+    {
+      "title": "A Causal Framework for Evaluating Deferring Systems",
+      "year": 2025,
+      "venue": "AISTATS",
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "sourceOrigin": "external",
+      "role": "提供最高强度的新颖性边界与因果识别直接碰撞。",
+      "verifiedFinding": "工作已经用潜在结果定义延期系统的个体因果效应，并区分双侧预测可得时的直接识别与只观察延期结果时的回归不连续识别。",
+      "boundary": "它不处理驾驶 VLA 的推理时延、动作时域、PDMS 安全分量或复杂度标签与慢分支净收益的错配；但一般因果框架已被占据。"
+    },
+    {
+      "title": "Counterfactual Risk Minimization: Learning from Logged Bandit Feedback",
+      "year": 2015,
+      "venue": "ICML",
+      "url": "https://proceedings.mlr.press/v37/swaminathan15.html",
+      "sourceOrigin": "external",
+      "role": "选择性日志与离线策略学习的直接方法碰撞。",
+      "verifiedFinding": "工作形式化了只观察历史策略所选动作反馈时的偏差与不完整性，并用 propensity scoring 和方差正则化学习新策略。",
+      "boundary": "CRM 是本候选的强基线，不是可声明的新机制；驾驶贡献必须来自新的可复查问题和后果。"
+    },
+    {
+      "title": "Optimal and Adaptive Off-policy Evaluation in Contextual Bandits",
+      "year": 2017,
+      "venue": "ICML",
+      "url": "https://proceedings.mlr.press/v70/wang17a.html",
+      "sourceOrigin": "external",
+      "role": "IPW/DR 与支持-方差边界的直接方法碰撞。",
+      "verifiedFinding": "工作给出 contextual bandit OPE 的难度结果，并比较 IPS、DR 与 SWITCH 的偏差-方差权衡。",
+      "boundary": "这些 estimator 只能在相应支持和模型假设下识别策略价值，不能从确定性驾驶路由日志恢复从未探索的分支。"
+    },
+    {
+      "title": "Post-hoc Estimators for Learning to Defer to an Expert",
+      "year": 2022,
+      "venue": "NeurIPS",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/bc8f76d9caadd48f77025b1c889d2e2d-Abstract-Conference.html",
+      "sourceOrigin": "external",
+      "role": "快模型向昂贵专家或大模型路由的直接目标碰撞。",
+      "verifiedFinding": "工作把 adaptive inference 写成精度-成本延期问题，并以后验方式在基础模型错误概率超过专家成本时学习 deferral。",
+      "boundary": "它不覆盖驾驶场景中慢推理可能同时有益、有害或因时延过期的轨迹后果，但普通 error-cost router 已不能作为本候选新意。"
+    }
+  ],
+  "closestWorkMatrix": [
+    {
+      "work": "Cognitive Dual-Process Planning (2026)",
+      "collisionType": "direct-driving-router",
+      "alreadyCovers": "视觉特征上的独立复杂度 Arbiter、Fast-Plan/Slow-Think、强制快路径后果、静态全快/全慢对照、阈值曲线和长尾 FNR。",
+      "doesNotCover": "逐样本完整快慢收益、个体收益标签、positivity、选择性日志校正和固定预算下的 router ranking。",
+      "consequenceForCandidate": "不能声称首次做快慢反事实或首次发现漏路由；只能检验复杂度与净收益是否发生可重复错配。"
+    },
+    {
+      "work": "AutoVLA (NeurIPS 2025)",
+      "collisionType": "direct-dual-mode-vla",
+      "alreadyCovers": "同一 VLA 内的 trajectory-only 快思考、CoT 慢思考、GRPO 驾驶奖励、CoT 成本惩罚和公开 NAVSIM 评测链。",
+      "doesNotCover": "固定分支潜在结果账本、已知 propensity、收益监督路由和选择偏差造成的方法排序。",
+      "consequenceForCandidate": "提供可信实验载体，但自适应推理或节省 CoT 本身已无新意。"
+    },
+    {
+      "work": "A Causal Framework for Evaluating Deferring Systems (AISTATS 2025)",
+      "collisionType": "direct-causal-formulation",
+      "alreadyCovers": "潜在结果、个体延期效应、双侧结果可得和被选结果缺失两种识别场景。",
+      "doesNotCover": "驾驶轨迹、安全分量、推理延迟导致的动作生效时间和真实快慢 VLA 的复杂度-收益反例。",
+      "consequenceForCandidate": "一般 missing-counterfactual 叙述已被直接覆盖；没有驾驶特有反例与决策后果就应 reject。"
+    },
+    {
+      "work": "Counterfactual Risk Minimization (ICML 2015) and Contextual-bandit OPE",
+      "collisionType": "direct-statistical-tooling",
+      "alreadyCovers": "logged bandit feedback、propensity、选择偏差、离线策略学习、IPS/DR/SWITCH 及支持不足下的方差问题。",
+      "doesNotCover": "如何为真实驾驶快慢分支定义可比较 treatment、同场景双执行和安全优先效用。",
+      "consequenceForCandidate": "IPW/DR/CRM 只能作为识别与审计工具，不能计入方法新颖性。"
+    },
+    {
+      "work": "Post-hoc Learning to Defer (NeurIPS 2022)",
+      "collisionType": "direct-routing-objective",
+      "alreadyCovers": "基础模型向昂贵专家或大模型延期的精度-成本路由和后验 rejector。",
+      "doesNotCover": "慢路径对驾驶安全可能为负、轨迹时域与计算时延耦合，以及完整配对账本上的路由排序审计。",
+      "consequenceForCandidate": "普通 benefit/error-cost predictor 不足以形成贡献，必须与该基线公平比较并展示驾驶特有失效。"
+    },
+    {
+      "work": "Learning to Defer with Limited Expert Predictions (AAAI 2023)",
+      "collisionType": "missing-branch-prediction",
+      "alreadyCovers": "专家预测稀缺时先拟合 expertise predictor，再补全未标注样本供 defer learner 使用。",
+      "doesNotCover": "可通过同一 VLA 双执行直接观察分支结果的驾驶场景，也不处理序列安全和时延。",
+      "consequenceForCandidate": "不能把 reward-model imputation 作为新解法；完整双执行子集应作为其更强校准对照。"
+    }
+  ],
+  "assetChecks": [
+    {
+      "asset": "Cognitive Dual-Process paper v2",
+      "url": "https://arxiv.org/html/2607.19194v2",
+      "status": "verified-paper-only",
+      "checked": "已核验 Arbiter 在语言解码前路由；fast/slow 使用独立提示；复杂样本风险项由强制快路径相对 GT 与规则违规计算；测试报告静态 Fast/Slow 与动态模式。",
+      "gap": "未发现官方代码、checkpoint 或逐样本输出；不能作为第一阶段可执行栈。"
+    },
+    {
+      "asset": "AutoVLA repository",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "status": "verified-fixed-commit",
+      "checked": "固定提交包含 `models/autovla.py`、`dataset_utils/sft_dataset.py`、AutoVLAAgent、动作 codebook、NAVSIM scripts 和 checkpoint 链接；`use_cot` 控制提示，推理输出动作 token 后由同一 tokenizer 解码。",
+      "gap": "现有 true 分支提示仍允许自适应选择，强制快慢合同与 paired logger 需要自建。"
+    },
+    {
+      "asset": "AutoVLA checkpoint",
+      "url": "https://huggingface.co/Zewei-Zhou/AutoVLA",
+      "status": "public-needs-smoke",
+      "checked": "模型卡标注 NeurIPS 2025 AutoVLA checkpoint，并链接论文与官方代码。",
+      "gap": "模型卡缺少完整 YAML metadata，未声明最低显存与明确权重许可证；必须固定 revision、校验文件 hash 并完成单样本推理。"
+    },
+    {
+      "asset": "NAVSIM evaluation path bundled with AutoVLA",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa/navsim",
+      "status": "verified-code-path",
+      "checked": "`run_pdm_score_cot.py` 对每个 token 加载固定 metric cache，调用 agent 生成轨迹后运行 PDM scorer；同一 token 可在不改变世界的情况下重复评分快慢轨迹。",
+      "gap": "非反应式评测不能观察推理时延期间的环境演化；数据和 metric cache 仍需按官方流程准备。"
+    },
+    {
+      "asset": "AutoVLA closed-loop claim",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "status": "paper-result-not-released-runner",
+      "checked": "论文报告 Bench2Drive/CARLA 闭环结果。",
+      "gap": "固定官方提交中未发现对应 CARLA/Bench2Drive agent、checkpoint 和可重放闭环入口；闭环 twins 只能作为可选自建阶段，不能作为当前 ready 证据。"
+    },
+    {
+      "asset": "Licenses",
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/LICENSE",
+      "status": "verified-restricted",
+      "checked": "代码许可限 academic/nonprofit research，并禁止进一步转移软件及衍生物；bundled NAVSIM 自身代码另有 Apache-2.0 文件，但不覆盖 AutoVLA 权重和数据。",
+      "gap": "需要在发布适配器前做许可边界核对，避免把受限代码复制进本库。"
+    },
+    {
+      "asset": "Paired execution feasibility",
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/navsim/navsim/planning/script/run_pdm_score_cot.py",
+      "status": "credible-self-built-path",
+      "checked": "静态最小实验可以从同一个 JSON input 和 metric cache 串行运行两种分支，且无需重训视觉骨干；随机化执行顺序可检查状态污染。",
+      "gap": "若扩展到交互闭环，必须另行实现状态快照、双实例、common random numbers 和慢计算期间保底动作。"
+    }
+  ],
+  "claimBoundary": {
+    "coreContributionIfValidated": [
+      "一个真实公开驾驶 VLA 上可复查的复杂度-慢分支净收益错配现象。",
+      "一个同时保留安全分量、轨迹有效性、推理时延和固定预算的逐场景配对评测协议。",
+      "选择性路由日志会改变驾驶 router 结论或方法排序的实证证据，以及可复现的支持诊断。"
+    ],
+    "matureToolsNotClaimed": [
+      "潜在结果和个体处理效应定义。",
+      "IPW/IPS、doubly robust、SWITCH、CRM、回归不连续和普通 outcome regression。",
+      "learning-to-defer、error-cost routing、置信度路由或 contextual bandit 本身。"
+    ],
+    "minimumStudyIdentifies": [
+      "在固定 AutoVLA checkpoint、分支合同和 NAVSIM 样本上，慢路径相对快路径的配对规划与计算差值。",
+      "已知 logging policy 下，遮蔽未选分支对策略价值估计和 router 排序的影响。",
+      "复杂度/置信度与慢分支净收益在所测分布上的一致或错配程度。"
+    ],
+    "doesNotIdentify": [
+      "真实道路中慢推理的总体安全因果效应。",
+      "所有 VLA 架构或所有快慢系统的通用规律。",
+      "在确定性日志无支持区域中的真实反事实回报。",
+      "没有环境继续演化和保底动作建模时的闭环时延后果。",
+      "CoT 文本本身是否是动作改善的唯一因果中介。"
+    ],
+    "requiredBeforeBlindReview": [
+      "完成公开 checkpoint 的 branch-contract smoke，并保存版本、hash、提示和输出样例。",
+      "在预注册配对样本上证明复杂度-收益错配不是生成噪声，且至少改变一种预算约束路由结论。",
+      "将 Palomba 2025、CRM/OPE 与 L2D 写成直接先例，删除任何把 IPW/DR 或潜在结果当新方法的表述。",
+      "冻结主张为静态同观测评价，或补齐可重复的闭环 twin 与等待期动作合同。"
+    ]
+  },
+  "verdict": "revise",
+  "verdictRationale": "问题有意义，公开资产足以在限定周期内完成可证伪配对实验，也不能因需要自建双分支 runner 或 evaluator 而淘汰。但候选当前的广义因果表述已被 AISTATS deferral 框架、contextual bandit OPE 和 learning-to-defer 直接覆盖；Cognitive Dual-Process 还已做部分强制分支评估。只有先实证发现驾驶特有的复杂度-收益错配，并证明它改变固定预算下的安全路由或方法排序，才存在不可替代的研究残差。在此之前不应送入评分盲评。"
+}

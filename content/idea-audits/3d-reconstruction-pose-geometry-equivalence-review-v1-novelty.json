@@ -1,0 +1,51 @@
+{
+  "candidateId": "unposed-pose-geometry-task-equivalence-break",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:12:39.294Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 4,
+    "success-probability": 3,
+    "impact": 6,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "DGGT、DynamicVGGT、MoRe、UFO-4D 与 FF3R 已覆盖无位姿联合 camera/geometry/motion 或 semantic reconstruction；它们主要评价单解准确率，没有直接审计 matched-photometric 自然解对的任务等价类。该审计对象有一定新意，但 bootstrap、删帧、改 window 或输入顺序本质上改变了观测集或接口条件，若不能构成同一信息条件下的多解，结果更像输入敏感性测试而非 pose-geometry 不可辨识性证据。",
+    "feasibility": "重复推理、缓存解、事后 Sim(3) 对齐和冻结任务比较在工程上可做；困难是官方模型是否支持全部自然变换、是否输出可度量 geometry，以及两个数据域中能否产生足量 photometric-matched pairs。每个 clip 至少 12 解和二域 checkpoint 评测的成本可控，但前置发生性完全未验证。",
+    "success-probability": "强模型可能对合法 order/window 变换相当稳定；不稳定时也可能只因删帧降低信息量、相机顺序超出训练接口或扩散后处理随机性。要同时满足 photometric match、Sim(3) 后 geometry divergence 和 task divergence，事件率很可能低于预设 25% clips。",
+    "impact": "正结果会提醒无位姿资产不能只凭 observed-view fit 准入，但其影响取决于反例是否跨模型、跨数据域并改变真实 metric-offset 或任务决策。单一 DGGT checkpoint 的数值不稳定只会形成诊断报告，难以成为广泛研究结论。",
+    "comparison-readiness": "identical-input 底噪、photometric-best、无 GT 几何一致性选择和 posed 上界是合理基线。仍缺少跨模型复现和信息量匹配控制：删帧/window 变换必须与等量随机子集及官方支持的 order invariance 分开，否则 closest-work 对比不能排除普通输入退化。"
+  },
+  "strongestObjection": "候选把由不同帧子集、不同 window 或可能未声明的输入顺序产生的不同预测称为同一观测等价类；这些运行并非同一信息集的多个可行解，因而即使任务输出分裂，也不能证明 pose-geometry 等价类破裂，只能证明模型对输入采样敏感。",
+  "requiredExperiment": "先在 DGGT 和至少一个独立无位姿前馈模型上完成零 GT 预检：仅使用官方允许且信息量严格匹配的 view-subset/order 变换，预注册匹配容差，并以 identical-input 和等量随机删帧为双控制；只有两个模型、两个数据域都出现 photometric-matched pairs，且 Sim(3) 后的 geometry-plus-task break 显著高于删帧控制，才保留等价类主张。",
+  "evidenceReopened": [
+    {
+      "title": "DGGT: Feedforward 4D Reconstruction of Dynamic Driving Scenes using Unposed Images",
+      "url": "https://arxiv.org/abs/2512.03004",
+      "finding": "联合输出相机参数和动态 Gaussian，并跨 Waymo、nuScenes、Argoverse2 评价，但没有多自然解稳定性审计。"
+    },
+    {
+      "title": "DynamicVGGT: Learning Dynamic Point Maps for 4D Scene Reconstruction in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2603.08254",
+      "finding": "在共享参考系联合预测当前/未来 point maps 与动态 Gaussian，形成跨模型直接基线。"
+    },
+    {
+      "title": "MoRe: Motion-aware Feed-forward 4D Reconstruction Transformer",
+      "url": "https://arxiv.org/abs/2603.05078",
+      "finding": "直接处理动态对象污染相机位姿估计并强调时序一致性，但仍以单解重建质量为目标。"
+    },
+    {
+      "title": "FF3R: Feedforward Feature 3D Reconstruction from Unconstrained views",
+      "url": "https://arxiv.org/abs/2604.09862",
+      "finding": "无位姿地统一 geometry 和 semantic reasoning，并评价语义与深度任务，压缩了仅连接几何和任务输出的主张。"
+    },
+    {
+      "title": "Beyond Visual Reconstruction Quality: Object Perception-aware 3D Gaussian Splatting for Autonomous Driving",
+      "url": "https://iclr.cc/virtual/2026/poster/10009644",
+      "finding": "正式会议页面确认视觉质量与对象感知目标的分离已被直接研究，但没有自然多解对。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "87c6fe2f6f24c1acc961ebac03d9626adc92ba1ad1ab825a52647ed6f9c2855b"
+}

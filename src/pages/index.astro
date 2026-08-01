@@ -1,44 +1,64 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import Sidebar from "../components/Sidebar.astro";
-import SearchHeader from "../components/SearchHeader.astro";
-import NotesDrawer from "../components/NotesDrawer.astro";
+import NotebookDocs from "../components/NotebookDocs.jsx";
+import DigestContent from "../components/DigestContent.astro";
 import ResearchLandscape from "../components/ResearchLandscape.astro";
 import ReviewCenterPreview from "../components/ReviewCenterPreview.astro";
-import { getResearchLandscape, getReviewCenter } from "../lib/content.js";
+import { markdownToHtml } from "../lib/content.js";
+import { getNotebookData } from "../lib/navigation.js";
 
-const [researchLandscape, reviewCenter] = await Promise.all([
-  getResearchLandscape(),
-  getReviewCenter()
-]);
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const latestDigest = notebook.digests[0];
+const latestDigestHtml = markdownToHtml(latestDigest.body, { headingIds: true });
+const toc = [
+  { depth: 2, title: "方向覆盖与近期信号", url: "#directionCoverageTitle" },
+  { depth: 2, title: "趋势判断", url: "#trendTitle" },
+  { depth: 2, title: "当前热点", url: "#hotspotTitle" },
+  { depth: 2, title: "值得立项验证的问题", url: "#opportunityTitle" },
+  { depth: 2, title: "各方向研究建议", url: "#directionAdviceTitle" },
+  { depth: 2, title: "综述中心", url: "#reviewPreviewTitle" },
+  { depth: 2, title: "最新一期简报", url: "#digestArticle" },
+  { depth: 2, title: "阅读讨论", url: "#discussion" }
+];
 ---
 
 <BaseLayout
   title="Paper Digest · 论文简报与研究态势"
-  description={researchLandscape.summary}
+  description={notebook.landscape.summary}
   canonicalPath=""
 >
-  <div class="site-shell">
-    <Sidebar />
-
-    <main class="reader">
-      <SearchHeader />
-      <section
-        class="search-results"
-        id="searchResults"
-        aria-live="polite"
-        aria-busy="false"
-        hidden
-      ></section>
-      <ReviewCenterPreview center={reviewCenter} />
-      <ResearchLandscape landscape={researchLandscape} />
-      <article class="issue" id="digestArticle"></article>
-    </main>
-
-    <NotesDrawer />
-  </div>
-
-  <script is:inline src="assets/runtime-config.js"></script>
-  <script is:inline src="assets/data.js"></script>
-  <script is:inline src="assets/site.js"></script>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title="全库研究态势"
+    description={notebook.landscape.summary}
+    eyebrow={`Research Landscape · 更新于 ${notebook.landscape.updatedAt}`}
+    toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    notes={{
+      digestId: latestDigest.id,
+      issueLabel: latestDigest.displayDate || latestDigest.date,
+      seedNotes: latestDigest.notes || [],
+      commentsEndpoint: notebook.runtime.commentsEndpoint
+    }}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <ResearchLandscape landscape={notebook.landscape} embedded />
+    <ReviewCenterPreview center={notebook.reviewCenter} />
+    <section class="doc-section">
+      <header>
+        <p class="eyebrow">Latest Digest · {latestDigest.displayDate || latestDigest.date}</p>
+        <h2 class="doc-section-title">{latestDigest.title}</h2>
+        <p>{latestDigest.summary}</p>
+      </header>
+      <DigestContent
+        digest={latestDigest}
+        basePath={notebook.base}
+        bodyHtml={latestDigestHtml}
+        headingLevel={3}
+      />
+    </section>
+  </NotebookDocs>
 </BaseLayout>

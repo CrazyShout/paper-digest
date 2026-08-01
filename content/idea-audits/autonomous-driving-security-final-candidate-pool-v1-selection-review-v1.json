@@ -1,0 +1,95 @@
+{
+  "selectionAgentId": "019fbbe7-eb0c-7931-95b6-6553d39073da",
+  "selectedAt": "2026-08-01T06:09:16Z",
+  "directionId": "autonomous-driving-security",
+  "candidatePoolPath": "content/idea-audits/autonomous-driving-security-final-candidate-pool-v1.json",
+  "selectedCandidateIds": [
+    "adaptive-detector-fallback-hazard-budget",
+    "signed-semantic-update-differential-admission",
+    "autovla-fail-open-action-token-alias-v2"
+  ],
+  "candidateDecisions": [
+    {
+      "candidateId": "adaptive-detector-fallback-hazard-budget",
+      "decision": "shortlist",
+      "reason": "AD2 提供可实现视觉攻击与四类检测器，Bench2Drive-Robust 提供独立故障和部署退化对照，UN R157 则要求把检测后的最小风险机动计入车辆后果。联合优化绕过、误触发和回退状态利用，并在固定路线与输入预算下比较 continue、否决和独立 MRM，可识别 detector 与 fallback 单独评估遗漏的风险，同时报告 clean 误回退和后车代价。"
+    },
+    {
+      "candidateId": "signed-semantic-update-differential-admission",
+      "decision": "shortlist",
+      "reason": "UN R156 与 ISO 24089 只保证版本、完整性和更新流程，Architectural Backdoors、BadDreamer 与多类驾驶后门则证明合法构建链内可携带触发行为。对同一 AutoVLA 基础版本构造 benign、signed malicious 和随机回归三臂，在触发与无触发配对场景比较车辆级差分、误拒与回滚代价，能明确隔离语义供应链攻击而不把普通版本回归混称攻击。"
+    },
+    {
+      "candidateId": "autovla-fail-open-action-token-alias-v2",
+      "decision": "shortlist",
+      "reason": "固定 AutoVLA 代码确认低于 action_start_id 的 token 会解码为动作 0，生成不足也会以零 token 补齐；ReasonBreak 只覆盖文本扰动到轨迹，没有审计该静默接口。以同 checkpoint、scene 和 seed 比较目标化输入、随机文本、自然 early-stop、直接 token fault，并切换 current alias、strict reject 和 MRM，可闭合攻击特异性与车辆后果链。"
+    },
+    {
+      "candidateId": "attack-propagation-bottleneck-mediation",
+      "decision": "reject",
+      "reason": "MA2T 已按模块注入并做自适应攻击，BADControl 与 DejaVu 也给出跨栈传播案例。逐层替换 clean state 是通用 mediation 或 module-swap 归因，决定性产物属于测试协议；对端到端 VLA 还难保证中间状态可交换。当前没有攻击特异的新 estimand，无法与一般故障归因公平区分。"
+    },
+    {
+      "candidateId": "common-clock-multimodal-correlated-failure",
+      "decision": "reject",
+      "reason": "DejaVu 已通过 ROS2 节点冒充、车载以太网 HIL 与 Autoware/AWSIM 完成时间错位攻击，并追到碰撞、幽灵制动和路沿碰撞。共享时间源导致多模态共同失效的威胁、注入路径和车辆后果均已被直接覆盖；再次增加模态或 detector 不构成独立攻击对象。"
+    },
+    {
+      "candidateId": "shared-training-multimodal-correlated-failure",
+      "decision": "reject",
+      "reason": "共同训练或数据供应链触发多模态相关失效，与 signed-semantic-update 候选使用同一攻击者访问、clean/backdoored 版本配对和车辆级准入实验。Architectural Backdoors 与 BadDreamer 已提供威胁证据；保留为单独候选只会按模型类型拆分同一语义更新机制，因此并入版本差分方案。"
+    },
+    {
+      "candidateId": "reasonbreak-clean-rollout-empirical-null",
+      "decision": "reject",
+      "reason": "同场景多 seed 的 clean rollout 零分布能把自然随机漂移与文本攻击 excess risk 分开，是公平攻击实验必须包含的对照。但它不提供新攻击面、检测器、回退决策或车辆控制机制，单独发表只能得到基线校准；应作为两个入选闭环攻击候选的实验组成，而非独立研究。"
+    },
+    {
+      "candidateId": "attack-fault-natural-fingerprint-detector",
+      "decision": "reject",
+      "reason": "Experimental Evaluation of Security Attacks on Self-Driving Car Platforms 已在两类硬件平台对五类攻击报告控制、计算与响应 fingerprint。扩展到 CARLA 或全尺寸栈只是规模迁移；针对 detector 的自适应绕过和误回退残差已经由 detector-fallback 候选覆盖，不能再以相同 fingerprint 分类主张重复保留。"
+    },
+    {
+      "candidateId": "drivelm-vla-challenge-closed-loop-transfer",
+      "decision": "reject",
+      "reason": "CVPR AdvML challenge 的可操作输入是多视图图像与文本 suffix，目标是 DriveLM 风格 QA 偏离；它没有规划、控制或车辆状态，也未证明真实车载接口允许相同权限。直接把挑战攻击接到驾驶 VLA 仍是应用域迁移，若不重新定义可实现通道和车辆级对照，不能形成新的安全攻击。"
+    },
+    {
+      "candidateId": "cooperative-fully-untrusted-adaptive-defense",
+      "decision": "reject",
+      "reason": "MVIG 和 All Vehicles Can Lie 已在 CVPR 2026 直接覆盖自适应协同消息攻击与全不可信车辆防御，研究对象是跨车信任和协同感知。剩余车辆级规划后果应由 cooperative-autonomous-driving 独立承接；在 security 池再保留会同时碰撞正式竞品和跨方向唯一归属。"
+    },
+    {
+      "candidateId": "low-level-controller-dynamic-trigger-backdoor",
+      "decision": "reject",
+      "reason": "BADControl 已以供应链投毒、邻车动态机动和道路触发攻击 ACC/LKC，并在 CARLA 与实体小车追到碰撞和越线，Zenodo artifact 还提供 Matlab、CARLA 与机器人代码。威胁模型、实现、对照和车辆后果均被正式工作完整覆盖，重做没有不可替代差异。"
+    },
+    {
+      "candidateId": "trustvla-defense-transfer-to-driving",
+      "decision": "reject",
+      "reason": "TrustVLA 已在机器人 VLA 上完成机制引导检测、定位与 inpainting，直接迁移到 AutoVLA 只是应用域替换；其未覆盖的语义触发、自适应模仿和车辆回退代价，已被 detector-fallback 候选的联合攻击与 MRM 账本吸收。单独保留无法隔离新机制与 hidden-state adapter 工程。"
+    },
+    {
+      "candidateId": "minimum-risk-stoppability-monitor-transfer",
+      "decision": "reject",
+      "reason": "safe-stoppable envelope 与最小风险机动本身没有主动对手，EMRM 和 UN R157 已提供邻近控制与法规语境。CARLA 中学习何时停车可形成一般 MRM 验证，但决定性变量是状态覆盖和回退代价，归 autonomous-driving-testing；在本方向只作为 detector-fallback 候选的独立组件。"
+    },
+    {
+      "candidateId": "online-map-asymmetry-common-mode-attack",
+      "decision": "reject",
+      "reason": "Asymmetry Vulnerability and Physical Attacks on Online Map Construction 已把相机致盲、物理补丁和在线地图共享错误直接绑定。接入 planner 能补充车辆后果，却不会改变攻击入口和共同地图根因；针对 map monitor 的自适应绕过也属于通用 detector-fallback 扩展，核心攻击已被直接工作占据。"
+    },
+    {
+      "candidateId": "natural-fog-reasoning-fragility-as-attack",
+      "decision": "reject",
+      "reason": "Lost in Fog 与 Bench2Drive-Robust 证明雾、光照和噪声会造成 reasoning 或轨迹退化，但这些输入没有主动对手、攻击目标或可控访问路径。它们适合作为自然退化对照，不能被重新命名为攻击；研究鲁棒性与回退成本应归一般测试方向。"
+    },
+    {
+      "candidateId": "world-model-backdoor-admission-gate",
+      "decision": "reject",
+      "reason": "BadDreamer 已提供视频世界模型训练后门与 waypoint 后果，所需 clean/backdoored 版本配对、触发差分、合法更新误拒和 planner 回退，与 signed-semantic-update 候选完全共用。世界模型只是受信语义更新的一种实例，拆成独立 gate 会重复威胁模型和决定性实验。"
+    }
+  ],
+  "crossDirectionFinding": "autovla-fail-open-action-token-alias-v2 与 reasonbreak-clean-rollout-empirical-null 也出现在 agentic 汇总池；前者只在 security 保留，因为决定性实验包含恶意输入、strict reject 和 MRM，后者在两处都仅作为对照而不独立保留。attack-propagation 与 stoppability 被路由为 testing，对全不可信车辆的攻击被路由为 cooperative；shared-training 与 world-model backdoor 则合并到唯一的 signed-semantic-update 候选，避免按组件重复。",
+  "candidatePoolSnapshotFingerprint": "c3fe6477c0f081d07ce217b10c5ccc8d1157b58b936550920fccaec2f56f101b"
+}

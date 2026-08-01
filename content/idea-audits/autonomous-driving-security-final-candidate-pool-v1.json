@@ -1,0 +1,1126 @@
+{
+  "reviewerAgentId": "019fbb5e-4b60-7242-a1eb-2f6ad4b9d965",
+  "searchedAt": "2026-08-01T03:40:42Z",
+  "reviewMode": "unscored-retrieval-and-objective-jury",
+  "scope": {
+    "direction": "autonomous-driving-security",
+    "cutoffDate": "2026-08-01",
+    "baselineReview": "content/reviews/autonomous-driving-security.json",
+    "baselineReviewLastUpdated": "2026-07-28",
+    "baselineReviewReviewedAt": "2026-07-29",
+    "workflowContract": "config/idea-exploration-workflow.json",
+    "routingContract": "content/idea-audits/cross-direction-candidate-routing-v1.json",
+    "retrievalPrompt": "npm run idea:prompt -- autonomous-driving-security retrieve",
+    "reviewedLocalPaperReports": [
+      "maat-e2e-adversarial-training",
+      "revisiting-adversarial-attacks",
+      "reasonbreak-vla-vulnerability-driving",
+      "bench2drive-robust-deployment-perturbations",
+      "baddreamer-world-model-backdoor",
+      "world-model-simulator-admissibility"
+    ],
+    "blindReviewConsumed": false,
+    "scoreProduced": false,
+    "taskBoundary": "检索、机械去重、新颖性碰撞与无评分客观 jury；未读取 Idea reviewer 报告或评分，也未产生 1-10 分。",
+    "threatClassPolicy": {
+      "maliciousAttack": "必须存在主动对手、可实现访问或物理路径、攻击目标与车辆级后果；能合成注入只证明可测试性。",
+      "naturalDegradation": "天气、光照、普通分布偏移和未受对手控制的模型误差单列为自然退化，不称为攻击。",
+      "deviceFault": "帧丢失、定位误差、时延、硬件异常和随机比特/解码错误单列为设备或软件故障。",
+      "randomPerturbation": "与攻击预算匹配但不优化攻击目标的随机扰动只作攻击特异性对照。"
+    },
+    "requiredCausalBoundary": "输入或更新路径 -> 感知/定位/VLA/融合 -> 规划 -> 控制 -> 车辆状态；检测器方案还必须继续追踪回退触发、最小风险状态、误报和回退代价。",
+    "primaryDirectionPolicy": "按研究对象和决定性实验确定唯一 primaryDirection；一般评测协议归 autonomous-driving-testing，协同多车对象归 cooperative-autonomous-driving，只有主动对手与安全屏障交互的对象留在 autonomous-driving-security。"
+  },
+  "searchAudit": {
+    "cutoffDate": "2026-08-01",
+    "queryRuns": [
+      {
+        "familyId": "local-security-wide-scan",
+        "query": "rg -l -i '攻击|防御|adversarial|security|backdoor|spoof|poison|attack' content/papers，并以 autonomous-driving-security 标签和 revisionOf 去重",
+        "source": "local-corpus",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 19,
+        "rawHitCount": 24,
+        "scopeRationale": "先用本库作为候选线索；24 个文件命中，按方向标签与修订关系归并为 19 个本地方向候选，本轮只把动态综述已引用的 6 篇作为本库 verified references。",
+        "canonicalIdSample": [
+          "arxiv:2409.07321",
+          "arxiv:2605.29114",
+          "arxiv:2605.18059",
+          "arxiv:2606.21172"
+        ]
+      },
+      {
+        "familyId": "recent-arxiv-cutoff-refresh",
+        "query": "site:arxiv.org autonomous driving adversarial attack security VLA closed-loop July 2026; site:arxiv.org/abs/2607 driving VLA adversarial backdoor defense",
+        "source": "arxiv",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 9,
+        "scopeRationale": "补检综述截止日附近的新预印本，并专门检查 2026-07-28 之后是否出现功能等价工作；最新直接碰撞包括 2607.25479、2607.12571 和 2607.11560。",
+        "canonicalIdSample": [
+          "arxiv:2607.25479",
+          "arxiv:2607.12571",
+          "arxiv:2607.11560",
+          "arxiv:2603.14124"
+        ]
+      },
+      {
+        "familyId": "camera-lidar-gnss-temporal-fusion-attacks",
+        "query": "autonomous driving camera LiDAR GNSS temporal synchronization sensor fusion attack physical hardware in loop Autoware",
+        "source": "arxiv-and-publisher",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 11,
+        "scopeRationale": "核验攻击者视距、节点身份、时间同步、带宽和移动目标约束，并追到融合、规划和车辆后果。",
+        "canonicalIdSample": [
+          "arxiv:2507.09095",
+          "usenix:sec20-shen",
+          "usenix:sec22-hallyburton",
+          "usenix:sec23-cao"
+        ]
+      },
+      {
+        "familyId": "driving-vla-reasoning-attacks",
+        "query": "autonomous driving VLA textual corruption adversarial multimodal challenge backdoor action token closed loop 2026",
+        "source": "arxiv-and-cvf-proceedings",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 10,
+        "scopeRationale": "区分 DriveLM/VQA 输出偏离、机器人 VLA 方法迁移和真正执行到驾驶轨迹的攻击，并检查解析器与动作 token 接口。",
+        "canonicalIdSample": [
+          "arxiv:2605.29114",
+          "arxiv:2607.11560",
+          "arxiv:2506.13757",
+          "arxiv:2404.12916"
+        ]
+      },
+      {
+        "familyId": "model-and-update-supply-chain",
+        "query": "autonomous driving signed model update backdoor OTA semantic behavior drift admission VLM supply chain representation steering",
+        "source": "arxiv-publisher-and-standards",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 9,
+        "scopeRationale": "检查不破坏签名但在授权供应链内植入恶意行为的威胁模型，并将密码完整性与车辆行为完整性分开。",
+        "canonicalIdSample": [
+          "arxiv:2607.25479",
+          "usenix:sec26-burbano",
+          "unece:r156:2021",
+          "iso:24089:2023"
+        ]
+      },
+      {
+        "familyId": "detector-adaptive-fallback-cost",
+        "query": "autonomous driving adversarial detector adaptive attack fallback minimum risk condition false positive clean performance",
+        "source": "cvf-arxiv-and-official-regulation",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 8,
+        "scopeRationale": "专查攻击者了解检测器时的绕过、检测后控制动作、最小风险状态和正常场景误报代价；AD2 与 TrustVLA 均留下自适应或恢复边界。",
+        "canonicalIdSample": [
+          "cvf:wacv2026:sahu-ad2",
+          "arxiv:2607.12571",
+          "unece:r157:2021",
+          "arxiv:2604.26050"
+        ]
+      },
+      {
+        "familyId": "attack-fault-natural-random-separation",
+        "query": "autonomous driving attack fault natural corruption distinguish detector deployment perturbation matched random baseline",
+        "source": "arxiv-and-local-corpus",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 7,
+        "scopeRationale": "建立恶意攻击、自然退化、设备故障和等预算随机扰动四臂对照，防止将自然雾、时延或注入 fixture 冒充攻击。",
+        "canonicalIdSample": [
+          "arxiv:2605.18059",
+          "cvf:cvprw2026:priyadershi-lost-in-fog",
+          "arxiv:2603.14124",
+          "doi:10.1109/dsn-w65791.2025.00071"
+        ]
+      },
+      {
+        "familyId": "cross-stack-causal-propagation",
+        "query": "autonomous driving attack propagation perception prediction planning control causal intervention bottleneck not ASR",
+        "source": "arxiv-usenix-and-cvf",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 10,
+        "scopeRationale": "查找跨模块因果链与直接竞品，判断中间表示替换/模块注入是否产生攻击特异的新识别对象，而不是普通模块消融。",
+        "canonicalIdSample": [
+          "arxiv:2409.07321",
+          "usenix:sec26-burbano",
+          "usenix:sec24-lou",
+          "arxiv:2509.06071"
+        ]
+      },
+      {
+        "familyId": "correlated-multimodal-common-root",
+        "query": "autonomous driving multimodal correlated attack shared map shared time source shared training camera LiDAR GNSS fusion",
+        "source": "arxiv-usenix-and-cvf",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 8,
+        "scopeRationale": "检查多模态冗余的独立性假设；时间同步、在线地图和共同训练供应链分别核验，避免把宽泛相关性重新命名为新攻击。",
+        "canonicalIdSample": [
+          "arxiv:2507.09095",
+          "arxiv:2509.06071",
+          "doi:10.1109/sp40001.2021.00076",
+          "usenix:sec22-hallyburton"
+        ]
+      },
+      {
+        "familyId": "formal-2026-proceedings-refresh",
+        "query": "site:openaccess.thecvf.com/content/CVPR2026 autonomous driving adversarial; site:usenix.org/conference/usenixsecurity26 autonomous vehicle backdoor; VehicleSec 26 technical sessions",
+        "source": "formal-proceedings",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 12,
+        "scopeRationale": "用 CVPR/WACV/USENIX 正式页校验出版状态与并发直接竞品，重点覆盖 AD2、MVIG、PRBI 和 BADControl。",
+        "canonicalIdSample": [
+          "cvf:wacv2026:sahu-ad2",
+          "cvf:cvpr2026:tao-mvig",
+          "cvf:cvpr2026:yu-prbi",
+          "usenix:sec26-burbano"
+        ]
+      },
+      {
+        "familyId": "vehicle-standards-and-minimum-risk",
+        "query": "UNECE R156 R157 software update minimum risk manoeuvre; ISO 24089 ISO 21448 ISO/SAE 21434 official",
+        "source": "official-standards",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 6,
+        "scopeRationale": "核验更新版本、验证义务、SOTIF、网络安全生命周期和最小风险机动；标准只界定义务，不替代攻击或恢复实证。",
+        "canonicalIdSample": [
+          "unece:r156:2021",
+          "unece:r157:2021",
+          "iso:24089:2023",
+          "iso:21448:2022"
+        ]
+      },
+      {
+        "familyId": "official-assets-and-fixed-revisions",
+        "query": "official GitHub and Zenodo assets for Bench2Drive-Robust AD2 AutoVLA CARLA 0.9.15 BADControl; inspect commit tree license entrypoint and decoder path",
+        "source": "official-code-and-data",
+        "executedAt": "2026-08-01T03:40:42Z",
+        "resultCount": 5,
+        "scopeRationale": "固定 commit、release 或 digest，并实际查看入口、依赖和许可证；仓库存在本身不视为可执行证据。",
+        "canonicalIdSample": [
+          "git:Thinklab-SJTU/Bench2Drive-Robust@ae1b5867324710bf0574cba797062280d9d97105",
+          "git:ishan-sahu/av-attack-detection@4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb",
+          "git:ucla-mobility/AutoVLA@ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+          "doi:10.5281/zenodo.17932677"
+        ]
+      }
+    ],
+    "deduplication": {
+      "key": "优先 DOI/正式 proceedings ID，其次 arXiv ID，再次标准号或固定软件版本；同一论文的 arXiv 与正式页合并到正式记录并保留直接 URL。",
+      "localExternalSeparation": "本库 paper report 只标 provenance=local-corpus；外部一手记录标 provenance=external-primary。相同 canonicalId 不重复计数。",
+      "candidatePolicy": "先按功能对象、决定性实验和 primaryDirection 机械去重，再做直接竞品碰撞；合并项仍保留 rejected 记录说明去向。"
+    },
+    "referenceCounts": {
+      "total": 34,
+      "localCorpus": 6,
+      "externalPrimary": 28,
+      "recentSince2024": 23,
+      "standards": 5
+    },
+    "latestDelta": "相对 2026-07-28/29 动态综述，补入 2026-07-28 的 VLM 架构供应链后门、2026 CVPR 的协同感知自适应攻击与全不可信车辆防御、USENIX Security 2026 BADControl、TrustVLA、VLA 攻击挑战报告、自然雾对照、更新和最小风险标准。截止 2026-08-01 未找到比这些记录更晚且直接覆盖三项 shortlist 决定性实验的一手工作。",
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv-and-publisher",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv-and-cvf-proceedings",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv-publisher-and-standards",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "cvf-arxiv-and-official-regulation",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv-and-local-corpus",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "arxiv-usenix-and-cvf",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "formal-proceedings",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "official-standards",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "official-code-and-data",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      },
+      {
+        "sourceFamily": "external-primary",
+        "attempted": true,
+        "result": "This source family is evidenced by the frozen query-run and verified-reference ledger in this audit; counts and retained records remain in those fields."
+      }
+    ]
+  },
+  "verifiedReferences": [
+    {
+      "canonicalId": "arxiv:2409.07321",
+      "title": "Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving",
+      "year": 2024,
+      "provenance": "local-corpus",
+      "localPaperId": "maat-e2e-adversarial-training",
+      "url": "https://arxiv.org/abs/2409.07321",
+      "verifiedUse": "直接竞品：模块级攻击与自适应对抗训练覆盖攻击、自然腐蚀和 CARLA，但不执行 detector-triggered fallback hazard accounting。"
+    },
+    {
+      "canonicalId": "doi:10.1109/dsn-w65791.2025.00071",
+      "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems",
+      "year": 2025,
+      "provenance": "local-corpus",
+      "localPaperId": "revisiting-adversarial-attacks",
+      "url": "https://doi.org/10.1109/DSN-W65791.2025.00071",
+      "verifiedUse": "OpenPilot/YOLO 防御复评说明 clean performance、实时性和任务覆盖必须单列，不能把单一感知任务外推为整车恢复。"
+    },
+    {
+      "canonicalId": "arxiv:2605.29114",
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "year": 2026,
+      "provenance": "local-corpus",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "verifiedUse": "文本扰动可传播到推理、轨迹和闭环安全；未隔离 AutoVLA 无效动作 token 的 fail-open 解析路径。"
+    },
+    {
+      "canonicalId": "arxiv:2605.18059",
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "year": 2026,
+      "provenance": "local-corpus",
+      "localPaperId": "bench2drive-robust-deployment-perturbations",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "verifiedUse": "提供帧丢失、局部观测、GPS/速度误差和控制时延的非恶意闭环对照；这些是设备/部署扰动，不是攻击。"
+    },
+    {
+      "canonicalId": "arxiv:2606.21172",
+      "title": "BadDreamer: Transferable Backdoor Attacks against Video World Models for Autonomous Driving",
+      "year": 2026,
+      "provenance": "local-corpus",
+      "localPaperId": "baddreamer-world-model-backdoor",
+      "url": "https://arxiv.org/abs/2606.21172",
+      "verifiedUse": "训练时后门可污染未来表征并影响 waypoint，是语义更新准入候选的直接攻击证据；不等于真实 OTA 链已被攻破。"
+    },
+    {
+      "canonicalId": "arxiv:2607.07196",
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "year": 2026,
+      "provenance": "local-corpus",
+      "localPaperId": "world-model-simulator-admissibility",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "verifiedUse": "约束闭环世界模型证据等级；仿真 verdict 必须声明动作响应和有效包络，不能直接外推现实车辆。"
+    },
+    {
+      "canonicalId": "cvf:wacv2026:sahu-ad2",
+      "title": "AD2: Analysis and Detection of Adversarial Threats in Visual Perception for End-to-End Autonomous Driving Systems",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://openaccess.thecvf.com/content/WACV2026/html/Sahu_AD2_Analysis_and_Detection_of_Adversarial_Threats_in_Visual_Perception_WACV_2026_paper.html",
+      "verifiedUse": "正式 WACV 闭环攻击与时空检测直接竞品；代码是四类检测器，没有控制回退、最小风险状态或误报回退代价。"
+    },
+    {
+      "canonicalId": "usenix:sec26-burbano",
+      "title": "BADControl: Backdoor Attacks Against Control Systems",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity26/presentation/burbano",
+      "verifiedUse": "正式 USENIX 工作已用供应链投毒与动态物理触发攻击 ACC/LKC，并在 CARLA 和实体小车追到碰撞/越线，直接淘汰低层控制后门重做。"
+    },
+    {
+      "canonicalId": "arxiv:2607.25479",
+      "title": "Architectural Backdoors in Vision-Language Model Supply Chains via Representation Steering",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2607.25479",
+      "verifiedUse": "截至日附近的新工作证明可执行模型架构本身可携带 dormant backdoor，且 clean utility 保持；支持密码完整与语义完整分离。"
+    },
+    {
+      "canonicalId": "arxiv:2607.12571",
+      "title": "TrustVLA: Mechanism-Guided Inference-Time Defense Against Vision-Language-Action Backdoors",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2607.12571",
+      "verifiedUse": "机器人 VLA 防御直接报告 clean utility 与恢复，但语义/非视觉触发和模仿 evidence 的自适应攻击仍在边界外，不能直接迁移成驾驶新贡献。"
+    },
+    {
+      "canonicalId": "arxiv:2607.11560",
+      "title": "Technical Report on the CVPR 2026@AdvML Workshop Challenge",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2607.11560",
+      "verifiedUse": "多视图 DriveLM 风格 VLA 攻击挑战覆盖图像和文本 suffix、黑盒迁移，但目标仍是 QA 偏离，不能冒充车辆级闭环攻击。"
+    },
+    {
+      "canonicalId": "cvf:cvpr2026:tao-mvig",
+      "title": "Learning Mutual View Information Graph for Adaptive Adversarial Collaborative Perception",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Tao_Learning_Mutual_View_Information_Graph_for_Adaptive_Adversarial_Collaborative_Perception_CVPR_2026_paper.html",
+      "verifiedUse": "正式 CVPR 直接覆盖协同感知自适应攻击与检测绕过；多车研究对象应路由 cooperative-autonomous-driving。"
+    },
+    {
+      "canonicalId": "cvf:cvpr2026:yu-prbi",
+      "title": "All Vehicles Can Lie: Efficient Adversarial Defense in Fully Untrusted-Vehicle Collaborative Perception via Pseudo-Random Bayesian Inference",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yu_All_Vehicles_Can_Lie_Efficient_Adversarial_Defense_in_Fully_Untrusted-Vehicle_CVPR_2026_paper.html",
+      "verifiedUse": "正式 CVPR 全不可信车辆防御直接竞品；报告感知恢复和计算验证次数，但不是 detector-to-MRM 车辆控制研究。"
+    },
+    {
+      "canonicalId": "cvf:cvprw2026:priyadershi-lost-in-fog",
+      "title": "Lost in Fog: Sensor Perturbations Expose Reasoning Fragility in Driving VLAs",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026W/SAIAD/html/Priyadershi_Lost_in_Fog_Sensor_Perturbations_Expose_Reasoning_Fragility_in_Driving_CVPRW_2026_paper.html",
+      "verifiedUse": "高强度雾、光照和 Gaussian noise 揭示 reasoning/trajectory 自然退化；没有主动对手，必须作为对照而非攻击贡献。"
+    },
+    {
+      "canonicalId": "arxiv:2507.09095",
+      "title": "Temporal Misalignment Attacks against Multimodal Perception in Autonomous Driving",
+      "year": 2025,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2507.09095",
+      "verifiedUse": "DejaVu 已通过 ROS2 节点冒充、汽车以太网 HIL 与 Autoware/AWSIM 展示共同时间源攻击传播到碰撞、幽灵制动和路沿碰撞。"
+    },
+    {
+      "canonicalId": "arxiv:2509.06071",
+      "title": "Asymmetry Vulnerability and Physical Attacks on Online Map Construction for Autonomous Driving",
+      "year": 2025,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2509.06071",
+      "verifiedUse": "在线地图构建的相机致盲和物理补丁攻击直接覆盖共同地图根因，不宜重命名为宽泛 correlated multimodal attack。"
+    },
+    {
+      "canonicalId": "arxiv:2603.14124",
+      "title": "Experimental Evaluation of Security Attacks on Self-Driving Car Platforms",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2603.14124",
+      "verifiedUse": "JetRacer/Yahboom 五类攻击呈现控制、计算和响应 fingerprint；直接碰撞攻击指纹分类候选，但平台和 13 秒协议边界清楚。"
+    },
+    {
+      "canonicalId": "unece:r156:2021",
+      "title": "UN Regulation No. 156: Software Update and Software Update Management System",
+      "year": 2021,
+      "provenance": "external-primary",
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-156-software-update-and-software-update",
+      "verifiedUse": "要求更新版本可识别、验证、兼容和安全交付；它不验证学习模型触发行为或车辆级语义安全边界。"
+    },
+    {
+      "canonicalId": "iso:24089:2023",
+      "title": "ISO 24089:2023 Road vehicles - Software update engineering",
+      "year": 2023,
+      "provenance": "external-primary",
+      "url": "https://www.iso.org/standard/77796.html",
+      "verifiedUse": "定义车辆软件更新工程组织与项目要求，但明确不覆盖车辆功能软件开发，也不规定具体语义准入技术。"
+    },
+    {
+      "canonicalId": "iso:sae21434:2021",
+      "title": "ISO/SAE 21434:2021 Road vehicles - Cybersecurity engineering",
+      "year": 2021,
+      "provenance": "external-primary",
+      "url": "https://www.iso.org/standard/70918.html",
+      "verifiedUse": "给出车辆 E/E 全生命周期网络安全风险管理框架；过程合规不能替代具体模型更新行为测试。"
+    },
+    {
+      "canonicalId": "iso:21448:2022",
+      "title": "ISO 21448:2022 Road vehicles - Safety of the intended functionality",
+      "year": 2022,
+      "provenance": "external-primary",
+      "url": "https://www.iso.org/standard/77490.html",
+      "verifiedUse": "SOTIF 要求处理功能不足和复杂传感处理的验证，支持把自然退化与恶意攻击并列但不混同。"
+    },
+    {
+      "canonicalId": "unece:r157:2021",
+      "title": "UN Regulation No. 157: Automated Lane Keeping Systems",
+      "year": 2021,
+      "provenance": "external-primary",
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-157-automated-lane-keeping-systems-alks",
+      "verifiedUse": "提供 minimum risk manoeuvre 的正式车辆语境；检测触发后的安全性不能只记检测率，必须评估实际机动及周围交通风险。"
+    },
+    {
+      "canonicalId": "usenix:sec20-shen",
+      "title": "Drift with Devil: Security of Multi-Sensor Fusion based Localization in High-Level Autonomous Driving under GPS Spoofing",
+      "year": 2020,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity20/presentation/shen",
+      "verifiedUse": "GNSS 欺骗直接竞品，绑定渐进漂移、融合定位和道路后果；不能由随机 GPS 噪声替代其威胁模型。"
+    },
+    {
+      "canonicalId": "usenix:sec22-hallyburton",
+      "title": "Security Analysis of Camera-LiDAR Fusion Against Black-Box Attacks on Autonomous Vehicles",
+      "year": 2022,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity22/presentation/hallyburton",
+      "verifiedUse": "frustum 黑盒攻击已针对相机-LiDAR 冗余与融合上下文；硬件、离线改写和 LGSVL 后果仍是分层证据。"
+    },
+    {
+      "canonicalId": "usenix:sec23-cao",
+      "title": "You Can't See Me: Physical Removal Attacks on LiDAR-based Autonomous Vehicles Driving Frameworks",
+      "year": 2023,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity23/presentation/cao",
+      "verifiedUse": "移动 LiDAR 移除攻击直接检查物理同步和跟踪；实体只证明移除，严重碰撞仍来自 LGSVL。"
+    },
+    {
+      "canonicalId": "usenix:sec24-lou",
+      "title": "A First Physical-World Trajectory Prediction Attack via LiDAR-induced Deceptions in Autonomous Driving",
+      "year": 2024,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity24/presentation/lou",
+      "verifiedUse": "攻击传播到轨迹预测的直接竞品；物理测试和轨迹相交代理不等于开放道路碰撞率。"
+    },
+    {
+      "canonicalId": "usenix:sec24-zhang-qingzhao",
+      "title": "On Data Fabrication in Collaborative Vehicular Perception: Attacks and Countermeasures",
+      "year": 2024,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity24/presentation/zhang-qingzhao",
+      "verifiedUse": "协同感知消息伪造及仿真安全后果直接竞品；多车对象不应与车内多模态冗余混为一候选。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3503161.3548171",
+      "title": "Physical Backdoor Attacks to Lane Detection Systems in Autonomous Driving",
+      "year": 2022,
+      "provenance": "external-primary",
+      "url": "https://doi.org/10.1145/3503161.3548171",
+      "verifiedUse": "训练数据访问与双交通锥物理触发直接支持供应链后门威胁，但不覆盖签名更新后的版本差分准入。"
+    },
+    {
+      "canonicalId": "arxiv:2404.12916",
+      "title": "Physical Backdoor Attack can Jeopardize Driving with Vision-Large-Language Models",
+      "year": 2024,
+      "provenance": "external-primary",
+      "url": "https://icml.cc/virtual/2024/38112",
+      "verifiedUse": "正式 ICML 工作证明驾驶 VLM 训练/微调后门；物理证据停留在物体照片触发动作建议，没有车辆执行。"
+    },
+    {
+      "canonicalId": "arxiv:2505.06413",
+      "title": "Natural Reflection Backdoor Attack on Vision Language Model for Autonomous Driving",
+      "year": 2025,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2505.06413",
+      "verifiedUse": "自然反射外观的训练后门是供应链候选的直接竞品；自然外观不等于自然发生，攻击仍依赖投毒访问。"
+    },
+    {
+      "canonicalId": "usenix:sec21-sato",
+      "title": "Dirty Road Can Attack: Security of Deep Learning based Automated Lane Centering under Physical-World Attack",
+      "year": 2021,
+      "provenance": "external-primary",
+      "url": "https://www.usenix.org/conference/usenixsecurity21/presentation/sato",
+      "verifiedUse": "展示局部视觉偏差的时序放大；缩比补丁、Camry 轨迹注入和仿真碰撞不可拼成单一实体闭环证据。"
+    },
+    {
+      "canonicalId": "doi:10.1109/sp40001.2021.00076",
+      "title": "Invisible for both Camera and LiDAR: Security of Multi-Sensor Fusion based Perception in Autonomous Driving Under Physical-World Attacks",
+      "year": 2021,
+      "provenance": "external-primary",
+      "url": "https://doi.org/10.1109/SP40001.2021.00076",
+      "verifiedUse": "直接挑战模态独立性并联合攻击相机和 LiDAR；全尺寸 LiDAR、缩比联合感知和仿真碰撞证据分层。"
+    },
+    {
+      "canonicalId": "arxiv:2506.13757",
+      "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+      "year": 2025,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2506.13757",
+      "verifiedUse": "公开 checkpoint 与动作 token 化路径使 fail-open 接口可做最小复现；论文没有声称该解析行为安全。"
+    },
+    {
+      "canonicalId": "arxiv:2604.26050",
+      "title": "Risk Assessments for Evasive Emergency Maneuvers in Autonomous Vehicles",
+      "year": 2026,
+      "provenance": "external-primary",
+      "url": "https://arxiv.org/abs/2604.26050",
+      "verifiedUse": "提供车辆 evasive minimum-risk maneuver 的 V&V 邻近工作；不是攻击检测器面对自适应对手的联合评估。"
+    }
+  ],
+  "assetChecks": [
+    {
+      "assetId": "bench2drive-robust-fixed",
+      "name": "Bench2Drive-Robust official benchmark",
+      "url": "https://github.com/Thinklab-SJTU/Bench2Drive-Robust/tree/ae1b5867324710bf0574cba797062280d9d97105",
+      "fixedCommit": "ae1b5867324710bf0574cba797062280d9d97105",
+      "entrypoint": "leaderboard/scripts/run_evaluation_multi_*_robust.sh; leaderboard/leaderboard/envs/sensor_interface_with_perturbations/; tools/compute_rd.py",
+      "license": "CC-BY-NC-ND-4.0",
+      "verifiedCapability": "固定初始提交含 GPS noise、speed noise、cached burst frame drop、partial observation 和 FIFO action latency 的闭环注入入口，可提供 fault/natural comparator。",
+      "boundary": "需要 CARLA 0.9.15 和各 agent checkpoint；许可证禁止派生分发，新增攻击/回退模块应在独立包装层实现，不能把仓库存在视为攻击发生证据。",
+      "type": "code"
+    },
+    {
+      "assetId": "ad2-code-fixed",
+      "name": "AD2 official attack and detector code",
+      "url": "https://github.com/ishan-sahu/av-attack-detection/tree/4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb",
+      "fixedCommit": "4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb",
+      "entrypoint": "experiments/scripts/local_evaluation.sh; detector/new_model/evaluate_detector_model.py; detector/new_model/detector_model.py",
+      "license": "BSD-3-Clause",
+      "verifiedCapability": "固定提交提供 CARLA 0.9.10.1 下 TransFuser/InterFuser 攻击回放、四类时空检测器训练与样本数据入口。",
+      "boundary": "评估脚本包含作者本地绝对路径且 checkpoint 需另取；检测器输出四类标签，没有自适应攻击、控制否决、fallback 或 MRM 实现。",
+      "type": "code"
+    },
+    {
+      "assetId": "autovla-code-checkpoint-fixed",
+      "name": "AutoVLA official code and checkpoint release",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "fixedCommit": "ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "entrypoint": "models/action_tokenizer.py; models/autovla.py; navsim/navsim/agents/autovla_agent.py",
+      "license": "UCLA Academic Software License",
+      "verifiedCapability": "固定 checkpoint release 提供动作 codebook、生成和 NAVSIM/CARLA 评测入口；代码把低于 action_start_id 的 token 解码为 action 0，生成不足时也以零 token 补齐。",
+      "boundary": "只许可学术/非营利研究且禁止再次转移软件或派生物；需在独立测试包装器中注入/记录 token，不把代码路径本身写成已发生的现实攻击。",
+      "type": "code-and-data"
+    },
+    {
+      "assetId": "carla-0915-fixed",
+      "name": "CARLA simulator release 0.9.15",
+      "url": "https://github.com/carla-simulator/carla/releases/tag/0.9.15",
+      "version": "0.9.15",
+      "fixedCommit": "d7b45c1e159e6d13296f7a3a4e8b13e6c2d62c18",
+      "entrypoint": "PythonAPI/examples/; client-server simulator used by Bench2Drive-Robust and BADControl",
+      "license": "MIT",
+      "verifiedCapability": "固定 annotated tag 解析到 commit d7b45c1e...，与 Bench2Drive-Robust 和 BADControl 声明的 CARLA 版本一致。",
+      "boundary": "仿真碰撞、MRM 与回退代价只支持受控闭环证据；未经过现实车辆锚定时不得外推开放道路发生率。",
+      "type": "simulator"
+    },
+    {
+      "assetId": "badcontrol-zenodo-v1",
+      "name": "BADControl artifact",
+      "url": "https://doi.org/10.5281/zenodo.17932677",
+      "version": "BADControl_v1.zip",
+      "digest": "md5:f328e51653889f91264a8dcd0275c54d",
+      "entrypoint": "BADControl_v1.zip contains Matlab controller poisoning, CARLA attack implementation and physical-robot deployment code",
+      "license": "Zenodo metadata CC-BY-4.0; paper states project MIT, so downstream use must resolve this mismatch",
+      "verifiedCapability": "Zenodo published record exposes a 68,733,933-byte archive with immutable DOI and checksum, matching the paper artifact section.",
+      "boundary": "实体复现仍需 BARC-style vehicles and hardware; the artifact directly covers low-level controller backdoors, so that candidate is rejected as already done.",
+      "type": "code"
+    }
+  ],
+  "candidateLedger": [
+    {
+      "candidateId": "adaptive-detector-fallback-hazard-budget",
+      "canonicalClaim": "当攻击、设备故障与自然退化在 detector 表征上重叠时，最优安全策略不能由检测率单独决定；自适应对手可在绕过检测和诱发错误回退之间分配预算，使 detector+fallback 的车辆级风险高于任一组件单独评估所预测的风险。",
+      "sourceShard": "detector-adaptive-fallback-cost",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "shortlist",
+      "checks": {
+        "threatModelRealizability": "攻击者能操纵 AD2 已实例化的视觉输入路径并了解 detector；故障/自然 shift 由 Bench2Drive-Robust 产生，四者不混称。",
+        "closestWork": "AD2、MA2T、TrustVLA、UN R157 和 EMRM；前两者不执行最小风险回退，TrustVLA 明示自适应模仿 evidence 在边界外。",
+        "attackSpecificity": "同场景比较目标化 attack、匹配预算 random、device fault、natural shift，并报告条件于 detector 输出的 excess vehicle risk。",
+        "closedLoopCausalChain": "输入操纵 -> detector 分数 -> continue/否决/MRM 决策 -> 控制时延与轨迹 -> 碰撞、TTC、越线和后车风险。",
+        "identifiableMinimumExperiment": "固定 CARLA 路线、agent 和 detector，随机交叉四类输入与三种回退策略；同初态重放并只改变 detector/fallback 决策。",
+        "adaptiveAttack": "联合优化 driving harm、detector evasion 和 fallback-state exploitation；与不看 detector 的攻击分开。",
+        "cleanAndFallbackCost": "报告 clean driving score、false fallback 率、route completion、jerk、制动距离、MRM 后暴露时间和后车碰撞代理。",
+        "credibleBuildPath": "复用 AD2 BSD 代码、CARLA 0.9.15 和 Bench2Drive-Robust comparator，自建独立 MRM controller、联合攻击器与风险账本。",
+        "crossDirectionOwnership": "决定性变量是主动对手与安全屏障的联合作用，故归 security，而不是一般 testing。",
+        "functionalEquivalence": "未发现工作在同一闭环中同时优化 detector 绕过/误触发并核算实际 fallback hazard budget。"
+      }
+    },
+    {
+      "candidateId": "signed-semantic-update-differential-admission",
+      "canonicalClaim": "对密码签名、版本号和兼容性均合法的自动驾驶模型更新，旧版/新版配对的触发行为与车辆安全边界差分能识别供应链内语义后门，而传统 OTA 完整性检查不能。",
+      "sourceShard": "model-and-update-supply-chain",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "shortlist",
+      "checks": {
+        "threatModelRealizability": "攻击者控制受信模型供应商、训练/导出环节或签名前构建系统，但不伪造签名、不劫持传输；与普通版本回归分开。",
+        "closestWork": "R156、ISO 24089、Architectural Backdoors、BADControl、lane backdoor、BadVLMDriver 和 BadDreamer。",
+        "attackSpecificity": "三臂版本差分：benign update、malicious signed update、随机权重/数据回归；只有目标触发下的定向 excess hazard 计为攻击证据。",
+        "closedLoopCausalChain": "授权模型包 -> 版本加载 -> trigger-conditional representation/action -> planner/control -> vehicle-level safety boundary。",
+        "identifiableMinimumExperiment": "同一 AutoVLA 基础 checkpoint 构造 clean 更新与小比例 backdoor 更新，用相同本地签名流程封装；旧/新版本在配对场景、触发/无触发和 CARLA 闭环下比较。",
+        "adaptiveAttack": "攻击者同时约束 clean differential、静态模型审计指标和触发车辆后果；以未见 trigger family 检查准入器过拟合。",
+        "cleanAndFallbackCost": "记录 clean PDMS/闭环分数、误拒合法更新、回滚版本性能、准入计算成本和触发后的 MRM 可达性。",
+        "credibleBuildPath": "复用 AutoVLA 学术资产、CARLA、公开 backdoor 机制；自建签名 manifest、版本配对 runner、行为差分选择器和回滚控制。",
+        "crossDirectionOwnership": "对象是受信供应链内的恶意语义行为，而非普通回归测试；primaryDirection 为 security。",
+        "functionalEquivalence": "现有标准验证更新流程，现有后门工作验证攻击存在；未找到把两者合并成车辆级、版本配对且攻击自适应的准入实验。"
+      }
+    },
+    {
+      "candidateId": "autovla-fail-open-action-token-alias-v2",
+      "canonicalClaim": "AutoVLA 的无效或缺失动作 token 会被静默映射/补齐为 codebook 动作 0；在可实现的恶意语言输入下，这一 fail-open 接口可产生超出自然解码错误的定向车辆风险，而显式拒绝加最小风险回退可切断该链。",
+      "sourceShard": "driving-vla-reasoning-attacks",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "shortlist",
+      "checks": {
+        "threatModelRealizability": "恶意上游导航/语言服务或有权限的 prompt 通道只能影响模型输入，不能任意写内存；自然 early-stop/解码错误作为独立 comparator。",
+        "closestWork": "AutoVLA 论文与固定代码、ReasonBreak、CVPR 2026 AdvML challenge；前两项分别提供接口和文本攻击，但没有审计静默动作别名。",
+        "attackSpecificity": "固定无效 token 数/位置，比较目标化文本攻击、随机文本腐蚀、自然 early-stop 和直接 token fault；安全主张只取目标化 excess risk。",
+        "closedLoopCausalChain": "文本/视觉输入 -> 生成非动作或不足 token -> zero alias/padding -> codebook trajectory -> NAVSIM/CARLA 执行 -> 碰撞、越线或停车风险。",
+        "identifiableMinimumExperiment": "同一 checkpoint/scene/seed 下切换 current alias、strict reject+MRM、masked constrained decoding；逐 token 插入并闭环复跑。",
+        "adaptiveAttack": "黑盒或灰盒搜索能诱导危险 action-0 序列同时保持表面 reasoning 正常，并针对 token-validity monitor 优化。",
+        "cleanAndFallbackCost": "报告 clean invalid-token frequency、strict decoding 的 route completion/latency、误回退和 MRM 风险，而非只报告 attack success。",
+        "credibleBuildPath": "固定 AutoVLA commit 和已发布 checkpoint 足以复现 parser；自建 instrumentation、约束解码与 CARLA/NAVSIM fallback adapter。",
+        "crossDirectionOwnership": "跨方向路由已保留给 autonomous-driving-security；核心是恶意输入利用 fail-open 安全接口。",
+        "functionalEquivalence": "ReasonBreak 测文本扰动到轨迹，AutoVLA 测规划性能；均未把无效 token 静默别名作为因果安全对象。"
+      }
+    },
+    {
+      "candidateId": "attack-propagation-bottleneck-mediation",
+      "canonicalClaim": "通过攻击/干净中间状态互换定位感知、预测、规划与控制之间第一个不可恢复瓶颈，可比 ASR 更准确解释车辆后果。",
+      "sourceShard": "cross-stack-causal-propagation",
+      "primaryDirection": "autonomous-driving-testing",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "可复用 MA2T、AD2、DejaVu 或 BADControl 的已实现攻击。",
+        "closestWork": "MA2T 已按模块注入并做 adaptive attack；BADControl 和 DejaVu 已给出跨栈传播案例。",
+        "attackSpecificity": "可加入 fault/natural/random 对照，但互换本身是一般因果消融。",
+        "closedLoopCausalChain": "可以完整追踪，但贡献对象是评测归因协议。",
+        "identifiableMinimumExperiment": "固定 attacked rollout 并逐模块替换 clean state。",
+        "adaptiveAttack": "可以针对被识别瓶颈再优化，但不改变归因协议的通用性。",
+        "cleanAndFallbackCost": "需要报告，当前 claim 未产生新的 fallback 决策。",
+        "credibleBuildPath": "模块化 stack 可做；端到端 VLA 的中间状态可交换性较弱。",
+        "crossDirectionOwnership": "决定性实验是评测归因，primaryDirection 应为 autonomous-driving-testing。",
+        "functionalEquivalence": "属于成熟 mediation/module swap 迁移，未给出攻击特异的不可替代 estimand。"
+      }
+    },
+    {
+      "candidateId": "common-clock-multimodal-correlated-failure",
+      "canonicalClaim": "共享时间源可让相机、LiDAR、GNSS 的冗余同时失效。",
+      "sourceShard": "correlated-multimodal-common-root",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "ROS2/DDS 节点冒充和消息重放已有实现。",
+        "closestWork": "DejaVu 直接以延迟但内容有效的消息攻击时间同步。",
+        "attackSpecificity": "DejaVu 已区别攻击消息与普通同步误差的路径。",
+        "closedLoopCausalChain": "DejaVu 已追到 Autoware 碰撞、幽灵制动和 curb collision。",
+        "identifiableMinimumExperiment": "重做只会复现 DejaVu。",
+        "adaptiveAttack": "可增强 detector evasion，但应并入 detector+fallback 候选。",
+        "cleanAndFallbackCost": "DejaVu 未完整报告，残余并不足以形成独立 common-clock 新攻击。",
+        "credibleBuildPath": "Autoware/AWSIM 可用。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "被 arxiv:2507.09095 直接覆盖。"
+      }
+    },
+    {
+      "candidateId": "shared-training-multimodal-correlated-failure",
+      "canonicalClaim": "共同预训练或共同数据供应链使表面多模态冗余具有可被单一后门触发的相关失效。",
+      "sourceShard": "correlated-multimodal-common-root",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "只有攻击者控制共同训练/导出供应链时才是攻击；自然相关误差不是攻击。",
+        "closestWork": "Architectural Backdoors、Invisible Camera+LiDAR、BadDreamer。",
+        "attackSpecificity": "需与自然 shared-representation correlation 区分。",
+        "closedLoopCausalChain": "可通过更新准入候选追到 action 和车辆后果。",
+        "identifiableMinimumExperiment": "同一多模态 checkpoint 的 clean/backdoored 版本配对。",
+        "adaptiveAttack": "可优化绕过版本差分。",
+        "cleanAndFallbackCost": "属于语义更新准入的必要指标。",
+        "credibleBuildPath": "需训练多模态 backdoor，路径可信但对象过宽。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "与 signed-semantic-update-differential-admission 功能等价并已合并。"
+      }
+    },
+    {
+      "candidateId": "reasonbreak-clean-rollout-empirical-null",
+      "canonicalClaim": "重复 clean 闭环 rollout 的经验零分布可区分自然随机偏离与文本攻击 excess risk。",
+      "sourceShard": "attack-fault-natural-random-separation",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "ReasonBreak 文本攻击和 clean stochastic rollout 均可执行。",
+        "closestWork": "ReasonBreak 与 Bench2Drive-Robust。",
+        "attackSpecificity": "正是其价值，但只是一项 baseline obligation。",
+        "closedLoopCausalChain": "能给 excess collision/risk null，不能单独定位防护机制。",
+        "identifiableMinimumExperiment": "同 scene 多 seed clean 与 attacked paired runs。",
+        "adaptiveAttack": "未包含 detector-aware adaptation。",
+        "cleanAndFallbackCost": "可估 clean variance，不处理 fallback。",
+        "credibleBuildPath": "低成本。",
+        "crossDirectionOwnership": "路由已保留给 security。",
+        "functionalEquivalence": "作为 AutoVLA fail-open 与 detector+fallback shortlist 的必备对照合并；单独发表触发 negative-result-needs-consequence。"
+      }
+    },
+    {
+      "candidateId": "attack-fault-natural-fingerprint-detector",
+      "canonicalClaim": "控制、计算与响应 fingerprint 可区分感知攻击、DoS、设备故障和自然退化。",
+      "sourceShard": "attack-fault-natural-random-separation",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "五类攻击已在 JetRacer/Yahboom 硬件平台实现。",
+        "closestWork": "Experimental Evaluation of Security Attacks on Self-Driving Car Platforms。",
+        "attackSpecificity": "直接工作已报告可分 fingerprint。",
+        "closedLoopCausalChain": "只覆盖短时低成本平台控制偏差。",
+        "identifiableMinimumExperiment": "扩到 CARLA/全尺寸 stack 可做但只是规模迁移。",
+        "adaptiveAttack": "可针对 fingerprint detector，但新对象应并入 detector+fallback。",
+        "cleanAndFallbackCost": "原工作不完整；残余为 shortlist 的子问题。",
+        "credibleBuildPath": "代码/平台可自建。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "核心 fingerprint claim 已被 arxiv:2603.14124 覆盖。"
+      }
+    },
+    {
+      "candidateId": "drivelm-vla-challenge-closed-loop-transfer",
+      "canonicalClaim": "把 CVPR AdvML 多模态 DriveLM 攻击迁移到 driving VLA 闭环可形成新攻击。",
+      "sourceShard": "driving-vla-reasoning-attacks",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "挑战允许图像与文本 suffix，但不等于车载接口允许同等操纵。",
+        "closestWork": "CVPR 2026@AdvML challenge 与 ReasonBreak。",
+        "attackSpecificity": "目标是 QA 偏离，缺少 matched natural/fault controls。",
+        "closedLoopCausalChain": "挑战没有规划、控制和车辆状态。",
+        "identifiableMinimumExperiment": "需要重定义可执行输入通道后才能闭环。",
+        "adaptiveAttack": "黑盒迁移已有；未针对车辆 safety shield。",
+        "cleanAndFallbackCost": "未报告。",
+        "credibleBuildPath": "可迁移，但当前只是方法迁移。",
+        "crossDirectionOwnership": "若仅 benchmark 应归 testing。",
+        "functionalEquivalence": "QA 攻击迁移不能冒充新车辆攻击，命中 method-transfer-is-not-novelty。"
+      }
+    },
+    {
+      "candidateId": "cooperative-fully-untrusted-adaptive-defense",
+      "canonicalClaim": "全不可信车辆协同感知需要同时面对自适应消息攻击和低成本检测。",
+      "sourceShard": "formal-2026-proceedings-refresh",
+      "primaryDirection": "cooperative-autonomous-driving",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "恶意协同车辆可发送特征/消息。",
+        "closestWork": "MVIG 和 All Vehicles Can Lie/PRBI 均为 CVPR 2026 直接工作。",
+        "attackSpecificity": "两篇工作直接按 adversarial vehicle 评估。",
+        "closedLoopCausalChain": "现有主要到 perception precision，车辆级残余可另开协同方向。",
+        "identifiableMinimumExperiment": "应在 cooperative shard 做规划后果。",
+        "adaptiveAttack": "MVIG 已是 adaptive attack。",
+        "cleanAndFallbackCost": "PRBI 报计算验证次数但非车辆 MRM。",
+        "credibleBuildPath": "OPV2V/Adv-OPV2V 可用。",
+        "crossDirectionOwnership": "研究对象是跨车协同信任，归 cooperative-autonomous-driving。",
+        "functionalEquivalence": "本方向重复会与正式 CVPR 竞品和跨方向路由冲突。"
+      }
+    },
+    {
+      "candidateId": "low-level-controller-dynamic-trigger-backdoor",
+      "canonicalClaim": "数据驱动 ACC/LKC 控制器可被供应链投毒，并由邻车动态机动或道路补丁触发。",
+      "sourceShard": "model-and-update-supply-chain",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "BADControl 明确给出数据 logger/供应商投毒和邻车/道路触发路径。",
+        "closestWork": "BADControl USENIX Security 2026。",
+        "attackSpecificity": "同一 trigger 对 clean controller 不造成事故，已做攻击特异对照。",
+        "closedLoopCausalChain": "已追到 CARLA crash、lane invasion 和实体小车 crash。",
+        "identifiableMinimumExperiment": "官方 artifact 可复现。",
+        "adaptiveAttack": "现有工作还含 robust optimization defense；再做 detector 可并入 shortlist。",
+        "cleanAndFallbackCost": "已有 clean controller 对照。",
+        "credibleBuildPath": "Zenodo v1 提供 Matlab、CARLA 和机器人代码。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "核心 claim 被正式 USENIX 2026 完整覆盖。"
+      }
+    },
+    {
+      "candidateId": "trustvla-defense-transfer-to-driving",
+      "canonicalClaim": "把 TrustVLA 的机制引导检测、局部定位与 inpainting 迁移到驾驶 VLA 可形成防御。",
+      "sourceShard": "detector-adaptive-fallback-cost",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "视觉 trigger backdoor 可存在，但驾驶系统 hidden-state、自托管和 compact footprint 条件未核验。",
+        "closestWork": "TrustVLA 已在 OpenVLA/LIBERO 与 pi0.5 上完成机制防御。",
+        "attackSpecificity": "其 semantic/non-visual trigger 与 adaptive mimicry 明示在边界外。",
+        "closedLoopCausalChain": "没有驾驶 planner/control/MRM。",
+        "identifiableMinimumExperiment": "迁移到 AutoVLA 可测，但不能仅凭应用域构成新贡献。",
+        "adaptiveAttack": "关键自适应攻击未覆盖。",
+        "cleanAndFallbackCost": "报告机器人 clean utility，不是车辆回退代价。",
+        "credibleBuildPath": "需要 hidden-state adapter 和 inpainting。",
+        "crossDirectionOwnership": "若无新安全机制只是 method transfer。",
+        "functionalEquivalence": "命中 method-transfer-is-not-novelty；残余自适应/fallback 已纳入 shortlist。"
+      }
+    },
+    {
+      "candidateId": "minimum-risk-stoppability-monitor-transfer",
+      "canonicalClaim": "学习车辆的 safe-stoppable envelope 可决定 detector 何时触发最小风险回退。",
+      "sourceShard": "detector-adaptive-fallback-cost",
+      "primaryDirection": "autonomous-driving-testing",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "stoppability 是控制/安全对象，本身没有主动对手。",
+        "closestWork": "EMRM、UN R157 和机器人 safe-stoppability monitor 邻近工作。",
+        "attackSpecificity": "没有攻击特异变量。",
+        "closedLoopCausalChain": "可追到停车状态，但不识别攻击。",
+        "identifiableMinimumExperiment": "CARLA 状态采样和 fallback controller 可执行。",
+        "adaptiveAttack": "缺失。",
+        "cleanAndFallbackCost": "正是测试对象。",
+        "credibleBuildPath": "可自建，但属于一般 MRM V&V。",
+        "crossDirectionOwnership": "应归 autonomous-driving-testing。",
+        "functionalEquivalence": "方法迁移且无新攻击贡献；仅作为 adaptive-detector-fallback shortlist 的组件。"
+      }
+    },
+    {
+      "candidateId": "online-map-asymmetry-common-mode-attack",
+      "canonicalClaim": "相机致盲或补丁利用在线地图构建不对称性，使下游多模块共享错误地图。",
+      "sourceShard": "correlated-multimodal-common-root",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "物理 camera blinding/patch 路径已有设计。",
+        "closestWork": "Asymmetry Vulnerability and Physical Attacks on Online Map Construction。",
+        "attackSpecificity": "直接工作已将攻击与地图构建脆弱性绑定。",
+        "closedLoopCausalChain": "残余车辆控制证据可加强，但不改变攻击对象。",
+        "identifiableMinimumExperiment": "重放公开攻击并接 planner。",
+        "adaptiveAttack": "可针对 map monitor，但归 detector+fallback 扩展。",
+        "cleanAndFallbackCost": "现有不足不能单独构成新攻击。",
+        "credibleBuildPath": "需在线 map stack 和物理/数字攻击。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "核心攻击已由 arxiv:2509.06071 直接覆盖。"
+      }
+    },
+    {
+      "candidateId": "natural-fog-reasoning-fragility-as-attack",
+      "canonicalClaim": "雾、光照和 Gaussian noise 导致驾驶 VLA reasoning/trajectory 退化，因此可称为攻击。",
+      "sourceShard": "attack-fault-natural-random-separation",
+      "primaryDirection": "autonomous-driving-testing",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "扰动自然可发生，但没有主动对手或攻击目标。",
+        "closestWork": "Lost in Fog 与 Bench2Drive-Robust。",
+        "attackSpecificity": "没有；属于自然/设备鲁棒性。",
+        "closedLoopCausalChain": "Lost in Fog 主要测 reasoning 与 trajectory deviation。",
+        "identifiableMinimumExperiment": "可作为攻击四臂实验的 natural comparator。",
+        "adaptiveAttack": "不存在。",
+        "cleanAndFallbackCost": "可测，但不是 security attack。",
+        "credibleBuildPath": "公开模型/场景可做。",
+        "crossDirectionOwnership": "归 autonomous-driving-testing。",
+        "functionalEquivalence": "把自然退化重新命名为攻击违反 threat-class policy 和 injectability-is-not-occurrence。"
+      }
+    },
+    {
+      "candidateId": "world-model-backdoor-admission-gate",
+      "canonicalClaim": "对视频世界模型更新执行触发一致性和下游 waypoint 风险准入可阻断 BadDreamer 类后门。",
+      "sourceShard": "model-and-update-supply-chain",
+      "primaryDirection": "autonomous-driving-security",
+      "disposition": "rejected",
+      "checks": {
+        "threatModelRealizability": "攻击者需污染 world-model 训练/微调数据。",
+        "closestWork": "BadDreamer 与 world-model simulator admissibility。",
+        "attackSpecificity": "需区分自然 object permanence 错误和目标触发擦除。",
+        "closedLoopCausalChain": "future representation -> waypoint -> vehicle risk。",
+        "identifiableMinimumExperiment": "clean/backdoored world-model 版本配对。",
+        "adaptiveAttack": "可优化绕过 trigger scan。",
+        "cleanAndFallbackCost": "需报告合法版本误拒和 planner fallback。",
+        "credibleBuildPath": "公开 world-model pipeline 加自建 admission harness。",
+        "crossDirectionOwnership": "security。",
+        "functionalEquivalence": "是 signed-semantic-update-differential-admission 的单模型实例，已合并避免重复候选。"
+      }
+    }
+  ],
+  "shortlist": [
+    {
+      "candidateId": "adaptive-detector-fallback-hazard-budget",
+      "canonicalClaim": "当攻击、设备故障与自然退化在 detector 表征上重叠时，自适应对手可在绕过检测和诱发错误回退之间分配预算，使 detector+fallback 的车辆级风险不能由检测率单独预测。",
+      "closestWorkDelta": "AD2 在 CARLA 闭环中检测三类视觉攻击但官方代码只输出四类标签；MA2T 做 adaptive attack/自然腐蚀而不执行回退；TrustVLA 明示 adaptive evidence mimicry 在边界外。差异是把攻击者、detector、continue/否决/MRM 和误报成本放进同一闭环风险 estimand。",
+      "decisiveExperiment": "在固定 CARLA 0.9.15 路线和 TransFuser/InterFuser agent 上，交叉 attack/fault/natural/random 四类输入、non-adaptive/adaptive 两类攻击与 continue/fail-stop/MRM 三策略；同初态重放，比较碰撞、最低 TTC、越线、route completion、jerk、false fallback 和后车风险，并验证联合策略是否发生风险排序反转。",
+      "feasibilityBoundary": "可复用 AD2 BSD detector、CARLA 和 Bench2Drive-Robust 注入器；需自建 detector-aware optimizer、独立 MRM controller 和风险账本。Bench2Drive-Robust 为 CC-BY-NC-ND，扩展必须放在不分发其派生代码的独立包装层。首个可证伪实验只需一个 agent、两条路线和四类各 20 个配对 rollout。",
+      "primaryDirection": "autonomous-driving-security",
+      "hardGateEvidence": {
+        "threatModel": "攻击者了解 detector 并可操纵已验证的视觉输入路径；自然 shift 和设备 fault 不是攻击。",
+        "irreducibleResidual": "未找到同时核算 detector 自适应绕过、错误回退和实际 MRM 后果的直接工作。",
+        "killCondition": "若所有 adaptive attacks 在等攻击预算下都不能改变 detector+fallback 相对 continue/MRM 的车辆风险排序，且误报回退代价可由普通 clean accuracy/latency 完全预测，则不成立。"
+      },
+      "dossierNeeds": [
+        "固定 detector threshold、MRM controller、ODD、攻击预算和同初态重放协议。",
+        "预注册 hazard budget：攻击未检出风险、真阳性回退风险、假阳性回退风险和检测时延暴露风险。",
+        "将 detector 本身、fallback controller 和 attacker 三者的实现/失败分开归因。"
+      ]
+    },
+    {
+      "candidateId": "signed-semantic-update-differential-admission",
+      "canonicalClaim": "对签名、版本号和兼容性均合法的自动驾驶模型更新，旧/新版本配对的触发行为与车辆安全边界差分能识别供应链内语义后门，而传统 OTA 完整性检查不能。",
+      "closestWorkDelta": "R156/ISO 24089 要求版本、兼容和验证但不规定学习行为准入；Architectural Backdoors 证明架构供应链可携带 dormant behavior；BADControl、lane backdoor、BadVLMDriver 和 BadDreamer 证明车辆相关供应链后门。差异是对授权签名的新旧模型做车辆级版本差分，并让攻击者针对准入器自适应。",
+      "decisiveExperiment": "从同一 AutoVLA checkpoint 产生 benign signed update 与 backdoored signed update，固定 manifest/签名/硬件/ODD；对旧/新版本运行 clean、自然 shift、随机回归和 held-out trigger 场景，比较行为差分选择器与只验 hash/version 的基线，再在 CARLA 验证被接受更新的碰撞/TTC/越线和回滚结果。",
+      "feasibilityBoundary": "不需要攻破真实 OEM OTA；本地签名只证明 cryptographically valid authorized artifact 与 semantic behavior 可分。可复用 AutoVLA 学术代码/checkpoint 和 CARLA，自建轻量投毒或 architecture steering、manifest、paired runner 和 admission selector。若合法更新 checkpoint 无法依法再分发，只发布适配器、配置和摘要统计。",
+      "primaryDirection": "autonomous-driving-security",
+      "hardGateEvidence": {
+        "threatModel": "受信供应商或签名前构建链被控制；攻击者不需要伪造签名或劫持传输。",
+        "irreducibleResidual": "现有标准、供应链后门与车辆后果文献分别覆盖三段，但未形成攻击自适应的车辆级版本差分准入。",
+        "killCondition": "若 benign 与 malicious update 在 held-out trigger family 上不可分，或任何可分指标都等价于普通 clean regression 且不能改善车辆风险选择，则淘汰。"
+      },
+      "dossierNeeds": [
+        "明确供应链访问、签名者身份、旧/新 checkpoint lineage 和本地签名不代表现实 OEM 流程。",
+        "预注册 benign update、malicious update 与随机 regression 的构造及相同 clean utility 约束。",
+        "报告误拒合法更新、回滚暴露、准入计算成本和 adaptive held-out trigger。"
+      ]
+    },
+    {
+      "candidateId": "autovla-fail-open-action-token-alias-v2",
+      "canonicalClaim": "AutoVLA 的无效或缺失动作 token 会被静默映射/补齐为 codebook 动作 0；在可实现的恶意语言输入下，这一 fail-open 接口可产生超出自然解码错误的定向车辆风险，而 strict reject+MRM 可切断该链。",
+      "closestWorkDelta": "固定 AutoVLA 提交中 `decode_token_ids_to_trajectory` 把低于 action_start_id 的 token 置为 0，`generate_sample` 也以零补足动作序列；ReasonBreak 已证明文本扰动可影响 reasoning/trajectory，CVPR AdvML challenge 已测多模态黑盒攻击。差异是把静默 alias 本身隔离为安全接口，并比较目标攻击、自然 early-stop、随机 token fault 和 strict fail-safe。",
+      "decisiveExperiment": "固定 AutoVLA commit/checkpoint 与场景，逐位置注入无效 token/early EOS，并用黑盒文本搜索诱导危险 action-0 序列；同 seed 比较 current alias、constrained decoding、strict reject+MRM，报告 token validity、轨迹差分、PDMS、CARLA 碰撞/TTC/越线、误回退、route completion 和解码时延。",
+      "feasibilityBoundary": "核心路径已由固定代码直接核验，checkpoint 已发布；需自建 instrumentation、恶意输入搜索、strict decoder 和 fallback adapter。UCLA Academic Software License 允许学术/非营利研究但禁止软件及派生物再转移，因此实验代码须保持独立且不包含上游代码/checkpoint。现实威胁结论只限有权限语言输入或被攻陷上游服务。",
+      "primaryDirection": "autonomous-driving-security",
+      "hardGateEvidence": {
+        "threatModel": "攻击者只能影响被系统接受的语言/导航输入；自然 corruption 与直接 token fault 单列，不以任意注入证明现实攻击。",
+        "irreducibleResidual": "现有论文未把动作 token parser 的 fail-open alias 与车辆级 MRM 因果链作为研究对象。",
+        "killCondition": "若 action 0 在所有公开 checkpoint/场景均为保守安全动作，目标文本攻击不能显著超过 matched random/natural invalid-token 风险，或 strict reject 的收益完全被误回退抵消，则淘汰。"
+      },
+      "dossierNeeds": [
+        "固定 tokenizer/action_start_id/codebook/checkpoint revision，并公开 action 0 的实际轨迹语义。",
+        "验证训练、GRPO sample 与 inference agent 的解析路径是否一致，避免只测未执行的训练代码。",
+        "将生成失败、parser alias、planner 执行和 fallback 失败分层报告。"
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "candidateId": "attack-propagation-bottleneck-mediation",
+      "category": "method-transfer-and-cross-direction",
+      "reasons": [
+        "中间状态互换/模块消融是成熟归因方法；MA2T 已按模块注入，BADControl 与 DejaVu 已展示跨栈链，当前没有攻击特异的新 estimand。",
+        "决定性实验是评测归因协议，应归 autonomous-driving-testing；可作为 detector+fallback shortlist 的诊断工具。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2409.07321"
+    },
+    {
+      "candidateId": "common-clock-multimodal-correlated-failure",
+      "category": "directly-covered",
+      "reasons": [
+        "DejaVu 已以 ROS2 节点冒充和延迟有效消息攻击共同时间同步，并在汽车以太网 HIL 与 Autoware/AWSIM 追到车辆后果。",
+        "追加 detector evasion/fallback 属于 shortlisted adaptive-detector-fallback-hazard-budget，而不是新的 common-clock attack。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2507.09095"
+    },
+    {
+      "candidateId": "shared-training-multimodal-correlated-failure",
+      "category": "merged-functional-equivalent",
+      "reasons": [
+        "没有供应链攻击访问时，共同训练产生的相关误差是自然模型退化，不是攻击。",
+        "有供应链攻击访问时，它是 signed-semantic-update-differential-admission 的多模态实例，单列会重复功能对象。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2607.25479"
+    },
+    {
+      "candidateId": "reasonbreak-clean-rollout-empirical-null",
+      "category": "merged-baseline-obligation",
+      "reasons": [
+        "clean stochastic null 是区分自然偏离和攻击 excess risk 的必要对照，但本身没有新的攻击机制或安全决策。",
+        "已并入 AutoVLA fail-open 与 detector+fallback 两个 shortlist；单独发布会触发 negative-result-needs-consequence。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2605.29114"
+    },
+    {
+      "candidateId": "attack-fault-natural-fingerprint-detector",
+      "category": "directly-covered-and-merged",
+      "reasons": [
+        "2026 硬件平台工作已报告五类攻击在控制、计算和响应维度的可分 fingerprint。",
+        "扩展到自适应攻击和实际 fallback 的残余已纳入 shortlist，单纯换平台不构成新贡献。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2603.14124"
+    },
+    {
+      "candidateId": "drivelm-vla-challenge-closed-loop-transfer",
+      "category": "no-vehicle-level-chain",
+      "reasons": [
+        "CVPR AdvML 挑战的目标是 DriveLM 风格 QA 偏离，输入权限和目标函数不能直接代表车辆攻击。",
+        "没有规划、控制和车辆状态证据；把图像/文本攻击迁移到闭环但不产生新机制命中 method-transfer-is-not-novelty。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2607.11560"
+    },
+    {
+      "candidateId": "cooperative-fully-untrusted-adaptive-defense",
+      "category": "cross-direction-and-directly-covered",
+      "reasons": [
+        "MVIG 已做协同感知自适应攻击，PRBI 已做全不可信车辆低成本防御，均为 CVPR 2026 正式直接竞品。",
+        "研究对象是跨车协同信任，应路由 cooperative-autonomous-driving；本池不重复发布。"
+      ],
+      "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2026/html/Tao_Learning_Mutual_View_Information_Graph_for_Adaptive_Adversarial_Collaborative_Perception_CVPR_2026_paper.html"
+    },
+    {
+      "candidateId": "low-level-controller-dynamic-trigger-backdoor",
+      "category": "directly-covered",
+      "reasons": [
+        "BADControl 已给出供应链投毒、邻车动态/道路补丁触发、CARLA 碰撞与越线、实体小车和防御。",
+        "官方 Zenodo artifact 固定了 Matlab、CARLA 与机器人实现，重做没有新颖性。"
+      ],
+      "primaryUrl": "https://www.usenix.org/conference/usenixsecurity26/presentation/burbano"
+    },
+    {
+      "candidateId": "trustvla-defense-transfer-to-driving",
+      "category": "method-transfer",
+      "reasons": [
+        "TrustVLA 已在机器人 VLA 上完成机制检测、定位和 inpainting；换成驾驶 VLA 不自动产生新贡献。",
+        "其语义/非视觉 trigger 和 adaptive evidence mimicry 明示在边界外，车辆级 fallback 也未实现；残余已进入 shortlist。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2607.12571"
+    },
+    {
+      "candidateId": "minimum-risk-stoppability-monitor-transfer",
+      "category": "cross-direction-method-transfer",
+      "reasons": [
+        "safe-stoppability/MRM 是一般安全控制与 V&V 对象，没有主动对手或攻击特异变量。",
+        "应归 autonomous-driving-testing，并仅作为 detector+fallback shortlist 的控制组件。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2604.26050"
+    },
+    {
+      "candidateId": "online-map-asymmetry-common-mode-attack",
+      "category": "directly-covered",
+      "reasons": [
+        "在线地图构建不对称性、相机致盲和物理补丁攻击已由 arxiv:2509.06071 直接提出。",
+        "接 planner 或 detector 只能加强证据链，当前没有区别于直接竞品的新攻击对象。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2509.06071"
+    },
+    {
+      "candidateId": "natural-fog-reasoning-fragility-as-attack",
+      "category": "threat-model-hard-stop",
+      "reasons": [
+        "Lost in Fog 的雾、光照和 Gaussian noise 是自然/随机传感扰动，没有主动对手、攻击目标或可控发生路径。",
+        "可作为 natural comparator，但不能冒充新攻击贡献。"
+      ],
+      "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2026W/SAIAD/html/Priyadershi_Lost_in_Fog_Sensor_Perturbations_Expose_Reasoning_Fragility_in_Driving_CVPRW_2026_paper.html"
+    },
+    {
+      "candidateId": "world-model-backdoor-admission-gate",
+      "category": "merged-functional-equivalent",
+      "reasons": [
+        "BadDreamer 已直接覆盖视频世界模型触发擦除和 waypoint 传播。",
+        "对其做版本准入是 signed-semantic-update-differential-admission 的一个实例，严格去重后合并。"
+      ],
+      "primaryUrl": "https://arxiv.org/abs/2606.21172"
+    }
+  ],
+  "conclusion": {
+    "status": "completed-unscored",
+    "summary": "截至 2026-08-01 的补检保留 3 个无评分 shortlist：自适应 detector+fallback hazard budget、签名合法更新的语义版本差分准入、AutoVLA 无效动作 token fail-open。其余 13 个候选因直接竞品、方法迁移、威胁模型不成立、跨方向归属或功能等价合并而淘汰。",
+    "queryFamilyCount": 12,
+    "verifiedReferenceCount": 34,
+    "localReferenceCount": 6,
+    "externalReferenceCount": 28,
+    "fixedAssetCount": 5,
+    "generatedCandidateCount": 16,
+    "shortlistedCount": 3,
+    "rejectedCount": 13,
+    "shortlistedCandidateIds": [
+      "adaptive-detector-fallback-hazard-budget",
+      "signed-semantic-update-differential-admission",
+      "autovla-fail-open-action-token-alias-v2"
+    ],
+    "partitionCheck": "shortlist 与 rejected 无交集，且二者并集严格等于 candidateLedger。",
+    "scoreBoundary": "未读取 blind/Idea reviewer 报告，未产生或转述任何 1-10 分。",
+    "nextStep": "只有在后续 dossier 固定 checkpoint、ODD、攻击权限、同初态闭环协议、adaptive objective、clean/fault/natural/random 四臂对照和 MRM controller 后，才进入独立 blind review；本候选池不构成接受或评分。"
+  },
+  "retrievalAgentIds": [
+    "019fbb5e-4b60-7242-a1eb-2f6ad4b9d965"
+  ]
+}

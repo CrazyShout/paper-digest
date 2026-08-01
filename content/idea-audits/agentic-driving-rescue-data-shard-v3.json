@@ -1,0 +1,551 @@
+{
+  "shard_id": "agentic-driving-r2-natural-pathology-eval-blindspot-2026-08-01",
+  "reviewerAgentId": "019fbad4-33e9-7952-9e5d-8425edcce647",
+  "searchedAt": "2026-08-01T00:00:00+08:00",
+  "searched_queries": [
+    {
+      "scope": "local-dedup",
+      "query": "读取四个 agentic-driving candidate-pool-v1，检索 denominator/paraphrase/success-conditioned/interpolation/weather/reset/trajectory-noise/clean-rollout 等机制",
+      "result": "四池实际为 13+15+16+17=61 个候选；虽然任务描述称 58 个，本轮按 61 个全部去重，并避开已淘汰机制。"
+    },
+    {
+      "scope": "DriveLM",
+      "query": "官方 train_sample.json 中原生跨 QA 冲突；evaluation.py 中 predicted graph 对有效题目集合和分母的影响",
+      "result": "定位到两个可由固定样本与评测代码直接复现的盲点。"
+    },
+    {
+      "scope": "LaMPilot",
+      "query": "DbLv1 command/sample 展开、demo IDs、policy repository resume、成功样本条件均值、OvertakeEval 完成条件",
+      "result": "固定到 seed 271、10 个同状态改写、成功条件聚合公式和前缀式超车成功判据。"
+    },
+    {
+      "scope": "BDD-X",
+      "query": "官方 Sample.csv 行为边界、视频标注时间戳、未同步传感器日志插值、后续 BDD-X 评测协议",
+      "result": "确认短暂动作边界与插值遥测可能发生因果错位。"
+    },
+    {
+      "scope": "VLA4CoDrive",
+      "query": "clearNoon/clearNight/hardRainNoon 同 town-scene-vehicle-window 的 action/language JSON、episode 起点遥测",
+      "result": "确认跨天气窗口的首尾轨迹数值复用，以及起点异常加速度/档位记录。"
+    },
+    {
+      "scope": "CoVLA",
+      "query": "公开样本、ground-truth caption 对 ADE/FDE 的影响、rule-based motion words、补充材料轨迹过滤误差",
+      "result": "确认 caption 含动作侧信道，并确认过滤后仍有 2.6% 无效轨迹。"
+    },
+    {
+      "scope": "ReasonBreak",
+      "query": "clean reference、closed-loop simulator stochasticity、seed/repeat/null distribution、ASR denominator",
+      "result": "论文明确承认干净 rollout 会因模拟器随机性和闭环不稳定而偏离，但公开协议未说明重复 clean null 或 seed 配对。"
+    }
+  ],
+  "verified_primary_sources": [
+    {
+      "source_id": "drivelm-official",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://github.com/OpenDriveLab/DriveLM",
+      "verified": [
+        "官方样本 QA 图",
+        "预测图控制后续题目是否进入评测",
+        "0.4/0.2/0.2/0.2 复合分数"
+      ]
+    },
+    {
+      "source_id": "lampilot-official",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot",
+      "verified": [
+        "4,900 条由 sample×command 展开",
+        "策略库可持久复用",
+        "成功条件聚合和超车判据"
+      ]
+    },
+    {
+      "source_id": "bddx-official",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://openaccess.thecvf.com/content_ECCV_2018/html/Jinkyu_Kim_Textual_Explanations_for_ECCV_2018_paper.html",
+      "verified": [
+        "动作区间带时间戳",
+        "标注员可前后浏览完整视频",
+        "未同步传感器测量通过插值得到"
+      ]
+    },
+    {
+      "source_id": "vla4codrive-official",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://github.com/SayedPedramHaeri/VLA4CoDrive",
+      "verified": [
+        "公开 Action/Language JSON",
+        "跨天气同场景窗口",
+        "逐帧车辆状态和轨迹"
+      ]
+    },
+    {
+      "source_id": "covla-official",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Arai_CoVLA_Comprehensive_Vision-Language-Action_Dataset_for_Autonomous_Driving_WACV_2025_paper.html",
+      "verified": [
+        "ground-truth caption ADE/FDE 为 0.814/1.655，predicted caption 为 0.955/2.239",
+        "caption 中动作词与轨迹误差直接相关"
+      ]
+    },
+    {
+      "source_id": "covla-supplement",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://openaccess.thecvf.com/content/WACV2025/supplemental/Arai_CoVLA_Comprehensive_Vision-Language-Action_WACV_2025_supplemental.pdf",
+      "verified": [
+        "400 个样本中人工发现 43 个无效轨迹",
+        "过滤器 precision 0.64、recall 0.75",
+        "过滤后无效率仍为 2.6%"
+      ]
+    },
+    {
+      "source_id": "reasonbreak-local",
+      "provenance": "local-corpus",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "verified": [
+        "195 个开环样本和 50 个 NuRec 闭环片段",
+        "clean rollout 存在模拟器随机漂移",
+        "单条 benign output 被用作参考的公开公式"
+      ]
+    },
+    {
+      "source_id": "captionqa-2026",
+      "provenance": "external",
+      "localPaperId": null,
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Yang_CaptionQA_Is_Your_Caption_as_Useful_as_the_Image_Itself_CVPR_2026_paper.html",
+      "verified": [
+        "caption 应按下游信息效用评估"
+      ],
+      "residual_for_this_shard": "未检查驾驶 caption 是否携带本应预测的动作目标。"
+    }
+  ],
+  "pinned_assets": [
+    {
+      "asset_id": "drivelm-sample-evaluator",
+      "version": "1de72a74b257e5373400fa68239e99bd5d20580a",
+      "urls": [
+        "https://raw.githubusercontent.com/OpenDriveLab/DriveLM/1de72a74b257e5373400fa68239e99bd5d20580a/challenge/data/train_sample.json",
+        "https://raw.githubusercontent.com/OpenDriveLab/DriveLM/1de72a74b257e5373400fa68239e99bd5d20580a/challenge/evaluation.py"
+      ]
+    },
+    {
+      "asset_id": "lampilot-benchmark-code",
+      "version": "ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "urls": [
+        "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb/projects/lampilot"
+      ]
+    },
+    {
+      "asset_id": "bddx-sample",
+      "version": "740a397b77592522dd04ad69c1c6eb7b3a5fa337",
+      "url": "https://raw.githubusercontent.com/JinkyuKimUCB/explainable-deep-driving/740a397b77592522dd04ad69c1c6eb7b3a5fa337/data/Sample.csv"
+    },
+    {
+      "asset_id": "bddx-dataset-doc",
+      "version": "b93cc0f4e13aa2012a251bda9afb12b56e817189",
+      "url": "https://github.com/JinkyuKimUCB/BDD-X-dataset/tree/b93cc0f4e13aa2012a251bda9afb12b56e817189"
+    },
+    {
+      "asset_id": "vla4codrive-json",
+      "version": "d8d6b290b7acfe1ae89b75f2d72fc8f94deeef61",
+      "url": "https://github.com/SayedPedramHaeri/VLA4CoDrive/tree/d8d6b290b7acfe1ae89b75f2d72fc8f94deeef61"
+    },
+    {
+      "asset_id": "covla-public-sample",
+      "version": "dataset-card-checked-2026-08-01",
+      "url": "https://huggingface.co/datasets/turing-motors/CoVLA-Dataset"
+    },
+    {
+      "asset_id": "reasonbreak-protocol",
+      "version": "arXiv:2605.29114v1",
+      "url": "https://arxiv.org/html/2605.29114v1"
+    }
+  ],
+  "candidates": [
+    {
+      "dedup_key": "drivelm-predicted-graph-dependent-denominator",
+      "natural_occurrence_evidence": {
+        "class": "evaluation-protocol",
+        "evidence": "evaluation.py 先用每帧第一题的预测与 GT 匹配得到 self.graph；后续问题只有在问题中的坐标全部存在于预测图时才进入评测。公开样本 f0f120.../d9075... 含三个关键对象及大量对象依赖题。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "比较官方动态分母分数与固定 GT 分母、coverage-adjusted 分数；反例是少报关键对象可让相应难题消失，只承担 20% graph-match 损失，可能换取其余 80% 分量。",
+      "closest_work_and_residual": "DriveLM 已有 graph match，但没有把被预测图删掉的题作为漏答计入固定分母；现有 61 个候选没有该数据依赖分母机制。",
+      "two_week_public_path": {
+        "minimum_validation": "先对 2 个官方 frame 和两组真实模型输出重放官方 evaluator，再实现不改变模型的固定分母 wrapper。",
+        "dependencies": [
+          "DriveLM JSON",
+          "evaluation.py",
+          "两种公开 VLM 或公开预测文件"
+        ],
+        "engineering_risk": "公开 leaderboard 预测可能缺失，可在 50 个样本上运行两个开放 VLM；无需现成专用 checkpoint。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "官方复合分数",
+        "固定 GT 分母",
+        "coverage penalty",
+        "graph-match 与下游 QA 分开报告"
+      ],
+      "success/kill": {
+        "success": "至少一对方法的顺序或安全 QA 结论因固定分母而改变，且变化可归因于对象覆盖率。",
+        "kill": "真实输出覆盖率近似一致，固定分母后顺序和结论均在置信区间内不变。"
+      },
+      "positive/negative consequence": {
+        "positive": "暴露通过少报对象获得高分的选择性评测偏差。",
+        "negative": "若无顺序变化，则只形成一个 evaluator 健全性检查，不构成方法方向。"
+      }
+    },
+    {
+      "dedup_key": "drivelm-native-action-constraint-conflict",
+      "natural_occurrence_evidence": {
+        "class": "released-annotation",
+        "samples": [
+          "f0f120e4d4b0441da90ec53b16ee169d/d9075c2a5f864a2b8abf41e703f4cf1c: safe='keep same speed and brake suddenly'",
+          "f0f120e4d4b0441da90ec53b16ee169d/dfb8d8959b9944d69dcec6d05e419f04: safe 包含 keep/accelerate，但备注要求因雨水减速",
+          "54cdaaae372d421fa4734d66f51a8c48/0dd14c14cea14dc1b0c0c9b0c9c7c4c3: target=stationary，safe=brake to stop"
+        ],
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "建立同帧 target/safe/dangerous/behavior 的动作约束一致率，并比较官方文本分数与约束一致分数；允许语义正确但不复述矛盾 GT 的模型获得合理评价。",
+      "closest_work_and_residual": "ReasonBreak 和既有候选研究推理—动作耦合，但没有审计原生 DriveLM 标注图内部的动作约束冲突。",
+      "two_week_public_path": {
+        "minimum_validation": "把 2 个已定位 frame 映射到 stop/brake/maintain/accelerate/turn 动作本体并双人复核，再扫描全量 planning QA。",
+        "dependencies": [
+          "官方 JSON",
+          "轻量动作解析器",
+          "人工复核"
+        ],
+        "engineering_risk": "自然语言动作存在多义性，需保留 unknown 而非强制归类。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "官方 BLEU/CIDEr/GPT judge",
+        "规则约束检查器",
+        "双人动作标注",
+        "仅评估无冲突子集"
+      ],
+      "success/kill": {
+        "success": "冲突不止孤立笔误，并能改变至少一种模型的安全判断或相对表现。",
+        "kill": "复核后仅剩单个明显笔误，或移除冲突样本不影响任何结论。"
+      },
+      "positive/negative consequence": {
+        "positive": "把原生标签冲突与模型不安全区分开。",
+        "negative": "若规模过小，只能提交数据勘误。"
+      }
+    },
+    {
+      "dedup_key": "lampilot-same-seed-paraphrase-policy-leakage",
+      "natural_occurrence_evidence": {
+        "class": "released-benchmark-structure",
+        "evidence": "left_overtake sample0 固定 seed=271，并与 10 个命令改写笛卡尔展开为 s0_c0…s0_c9；demo 使用 s0_c0，成功策略写入持久库，完整测试只跳过精确 demo ID，仍保留同状态 c1…c9。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "以 scenario/sample/seed 为组的冷启动泛化，对比当前 exact-ID 排除；反例是模型在相同仿真状态上仅换一句话便可检索 demo 策略。",
+      "closest_work_and_residual": "LaMPilot 支持 resume 与 policy retrieval，并避免精确 ID 重跑，但没有语义等价状态的 group holdout。",
+      "two_week_public_path": {
+        "minimum_validation": "在 left_overtake seed 271 和另两个任务上比较 exact-ID、sample-group、seed-group 三种划分。",
+        "dependencies": [
+          "LaMPilot",
+          "highway-env",
+          "任一支持的 LLM 或固定生成策略"
+        ],
+        "engineering_risk": "需写 split adapter 和重置 policy repo；这属于允许的实验搭建，不是淘汰理由。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "当前 HF protocol",
+        "每条测试前清空 repo",
+        "sample-group holdout",
+        "seed-group holdout",
+        "stateless ICL"
+      ],
+      "success/kill": {
+        "success": "持久策略方法在当前协议的优势在 group holdout 下显著缩小或顺序改变。",
+        "kill": "c1…c9 未实际读取 demo 策略，或严格 group holdout 后优势保持。"
+      },
+      "positive/negative consequence": {
+        "positive": "区分语言泛化与同状态策略记忆。",
+        "negative": "若无泄漏影响，则为 LaMPilot split 的正面验证。"
+      }
+    },
+    {
+      "dedup_key": "lampilot-success-conditioned-quality-selection",
+      "natural_occurrence_evidence": {
+        "class": "evaluation-code",
+        "evidence": "compute_final_results 只在 success=true 的 episodes 上计算 TTC、速度方差、时间效率与 overall 均值，再用 success_rate*overall_score-collision_rate*500 合成 driving_score；零成功时均值为 NaN。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "估计无条件 episode utility、失败尾部风险与成功选择机制；一个只在容易样本成功的方法可能获得较高条件质量均值。",
+      "closest_work_and_residual": "官方分数已乘 success rate，但失败样本的质量与风险从 overall 均值中完全缺失，没有报告选择条件造成的顺序稳定性。",
+      "two_week_public_path": {
+        "minimum_validation": "直接对已有 result JSON 重算，无需模型；若结果文件不可得，运行每方法 20 个公开场景。",
+        "dependencies": [
+          "LaMPilot result schema"
+        ],
+        "engineering_risk": "失败 episode 的部分指标可能为空，需要预注册失败效用而非事后挑选。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "官方 driving_score",
+        "失败赋零的无条件均值",
+        "success/collision 字典序",
+        "episode-level CVaR",
+        "bootstrap rank interval"
+      ],
+      "success/kill": {
+        "success": "至少一对方法因失败选择偏差改变顺序，且差异集中在特定任务难度。",
+        "kill": "所有方法成功集合相近，合理失败效用定义下顺序稳定。"
+      },
+      "positive/negative consequence": {
+        "positive": "避免把选择性成功误读为平滑、安全。",
+        "negative": "失败效用若无法达成领域共识，结论只能报告敏感性区间。"
+      }
+    },
+    {
+      "dedup_key": "lampilot-overtake-prefix-completion-shortcut",
+      "natural_occurrence_evidence": {
+        "class": "evaluation-code-and-public-scenario",
+        "evidence": "OvertakeEval 在 ego 位于目标车道且领先原前车两个车长时立即 success；不要求回到原车道、保持安全间距或持续若干步。seed 271 可直接重放。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "比较“越过前车的前缀成功”与“通过、拉开安全距离、回归原车道并稳定保持”的完整 maneuver completion。",
+      "closest_work_and_residual": "官方已有 TTC、碰撞和效率分数，但成功事件本身在完整超车结束前触发；既有安全 shield 候选不处理任务完成标签。",
+      "two_week_public_path": {
+        "minimum_validation": "实现只读 evaluator wrapper，在 seed 271 上比较留在左道、提前切回、完整超车三种真实 rollout。",
+        "dependencies": [
+          "LaMPilot simulator"
+        ],
+        "engineering_risk": "道路规则可能允许持续占用目标车道，需分别报告任务语义而非强行判错。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "官方 OvertakeEval",
+        "有限状态 pass-return evaluator",
+        "安全间距 hold-window",
+        "碰撞/TTC-only"
+      ],
+      "success/kill": {
+        "success": "存在官方 success 但完整 maneuver 失败的自然 rollout，并改变方法表现或效率结论。",
+        "kill": "任务说明明确只要求变道并超过，或所有真实策略自然完成回归且结论不变。"
+      },
+      "positive/negative consequence": {
+        "positive": "防止策略利用提前终止获得高效率。",
+        "negative": "若任务语义确实是单向超越，则只能建议拆分两个任务。"
+      }
+    },
+    {
+      "dedup_key": "bddx-unsynchronized-telemetry-boundary-smearing",
+      "natural_occurrence_evidence": {
+        "class": "real-data-timing",
+        "evidence": "BDD-X 论文说明传感器日志与视频时间戳未同步时使用插值；Sample.csv 中 06d54ae6-bf7ed032.mov 在 22–23 秒为 pothole abrupt slowing、23–27 秒为 yellow-light stop，01b0505f-5f564e84.mov 在 16 秒从 red-stop 切到 green-acceleration。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "估计带时间偏移不确定区间的 control–explanation alignment，而不是假定单点同步；检查模型顺序对 ±0.25/0.5/1 秒合理偏移是否稳定。",
+      "closest_work_and_residual": "BDD-X 使用插值，后续方法对变长片段做均匀采样，但没有把同步误差传播到解释忠实度或控制预测的置信区间。",
+      "two_week_public_path": {
+        "minimum_validation": "下载上述 2 个公开视频与遥测，画出动作边界两侧速度/航向并估计视觉—遥测滞后，再扩展到 50 个转折事件。",
+        "dependencies": [
+          "BDD-X 学术数据",
+          "公开 annotations/telemetry"
+        ],
+        "engineering_risk": "原始时钟元数据可能有限，需要用交通灯变化和速度导数做多证据对齐。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "原插值对齐",
+        "互相关估计滞后",
+        "interval-censored alignment",
+        "边界样本剔除",
+        "shift-sensitivity curve"
+      ],
+      "success/kill": {
+        "success": "一个或两个真实样本先证实动作标签跨越不同控制状态，扩大后导致解释/控制方法顺序或安全结论变化。",
+        "kill": "公开视频与遥测在可接受误差内同步，且偏移敏感性不影响结论。"
+      },
+      "positive/negative consequence": {
+        "positive": "把时间同步误差与模型因果解释错误分开。",
+        "negative": "若仅影响极短片段，可退化为数据质量报告。"
+      }
+    },
+    {
+      "dedup_key": "vla4codrive-reset-transient-physics-invalid-labels",
+      "natural_occurrence_evidence": {
+        "class": "released-simulator-log",
+        "evidence": "clearNoon/Vehicle_1/scene001_win01 frame 0 记录 gear=neutral、vEgo≈1.96、aEgo≈6457.66；Vehicle_3 同位置 aEgo≈8057.66 且 brake=1。异常已存在于官方日志，并非本轮注入；其物理单位语义仍需核验。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "评估包含与排除 episode-reset transient 时的动作误差、安全阈值和方法顺序，并单独报告 start-window exposure。",
+      "closest_work_and_residual": "普通异常值清洗不会回答这些标签是否改变 VLA 方法或安全结论；原工作未提供 physics-valid start mask 与顺序稳定性。",
+      "two_week_public_path": {
+        "minimum_validation": "先检查该窗口前 3 帧及另一个 scene 的字段定义和差分关系，再全库扫描 neutral-moving、加速度跳变和 brake/trajectory 冲突。",
+        "dependencies": [
+          "VLA4CoDrive JSON",
+          "CARLA 字段定义"
+        ],
+        "engineering_risk": "aEgo 可能不是 SI 单位或首帧导数未初始化，必须先核验语义。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "原始全帧评测",
+        "固定前 K 帧 mask",
+        "物理约束 mask",
+        "robust loss",
+        "仅稳定窗口评测"
+      ],
+      "success/kill": {
+        "success": "字段语义确认后异常仍物理不可行，且不同方法受 reset frames 影响不同或安全告警结论改变。",
+        "kill": "字段单位/编码可完整解释数值，或排除起点后所有结论稳定。"
+      },
+      "positive/negative consequence": {
+        "positive": "避免学习和奖励仿真重置伪动作。",
+        "negative": "若只需修正文档单位，不形成研究问题。"
+      }
+    },
+    {
+      "dedup_key": "vla4codrive-cross-weather-action-window-twins",
+      "natural_occurrence_evidence": {
+        "class": "released-simulator-log",
+        "evidence": "Vehicle_1/Town10HD scene001 win01 在 clearNoon、clearNight、hardRainNoon 的 frame 0 与 frame 29 上，vEgo、aEgo 和已检查轨迹点数值一致，而语言分别给出不同天气相关解释；尚未把两点核验外推为整文件完全相同。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "按 town/scene/vehicle/window 家族分组的跨天气泛化，以及 weather-conditioned action responsiveness；先全序列 hash，再判断随机划分是否泄漏。",
+      "closest_work_and_residual": "原数据以天气增加视觉多样性，但没有公开证明动作目标在天气版本间独立，也没有场景家族 holdout 的盲点审计。",
+      "two_week_public_path": {
+        "minimum_validation": "对三份公开 JSON 做全序列 hash 和差异定位；再扫描所有天气家族并建立 group split，训练轻量 trajectory baseline 即可。",
+        "dependencies": [
+          "VLA4CoDrive"
+        ],
+        "engineering_risk": "仓库体积大且需恢复隐含 scene-family key；无需专用 VLA checkpoint。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "随机 frame/window split",
+        "scene-family group split",
+        "weather-held-out split",
+        "无图像 ID/nearest-neighbor baseline",
+        "caption-only baseline"
+      ],
+      "success/kill": {
+        "success": "确认完整动作目标重复并跨训练/测试家族泄漏，简单 ID 基线异常强或方法顺序改变。",
+        "kill": "完整序列并不重复，或官方划分已严格按场景家族隔离且结论稳定。"
+      },
+      "positive/negative consequence": {
+        "positive": "区分天气感知能力与重复轨迹记忆。",
+        "negative": "若仅首尾巧合，则候选立即终止。"
+      }
+    },
+    {
+      "dedup_key": "covla-caption-side-channel-future-motion",
+      "natural_occurrence_evidence": {
+        "class": "real-data-and-protocol",
+        "evidence": "HF 公开 frame_id=329 同时给出 aEgo=0.463、60 点未来轨迹和 caption 中的 'with acceleration'；论文 ground-truth caption 条件显著优于 predicted caption，并专门报告 deceleration/acceleration/left/turning 等词缺失时 ADE/FDE 上升。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "区分视觉语义帮助与由规则/CAN 生成的动作词侧信道：比较原 caption、去运动词 caption、只含运动词、past-only lagged caption 和 vision+speed。",
+      "closest_work_and_residual": "CoVLA 证明 caption 可改善轨迹；CaptionQA 研究下游 caption 效用，但二者都未估计 caption 是否携带本应由模型预测的动作信息。",
+      "two_week_public_path": {
+        "minimum_validation": "先在公开样本做字段来源图，再获学术访问后抽取 1,000 帧训练轻量 caption-only 与 motion-token-only 回归器。",
+        "dependencies": [
+          "CoVLA 点击同意后的学术数据",
+          "caption parser"
+        ],
+        "engineering_risk": "需要追溯 caption 每个子句的生成时间窗；数据准备和 adapter 工作不构成淘汰理由。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "vision+speed",
+        "caption-only",
+        "motion-token-only",
+        "motion-masked caption",
+        "past-lagged caption",
+        "predicted caption"
+      ],
+      "success/kill": {
+        "success": "运动词单独即可预测大量未来轨迹，或去除/滞后后所谓 language gain 消失并改变方法结论。",
+        "kill": "生成管线证明 caption 仅使用严格因果的输入时刻信息，且消融后 gain 与顺序保持。"
+      },
+      "positive/negative consequence": {
+        "positive": "澄清语言推理收益是否来自目标侧信道。",
+        "negative": "若动作词只是合法当前状态，研究结论应转为信息预算而非泄漏指控。"
+      }
+    },
+    {
+      "dedup_key": "covla-residual-trajectory-label-noise-rank-interval",
+      "natural_occurrence_evidence": {
+        "class": "real-gnss-pathology",
+        "evidence": "官方补充材料在 400 个真实样本中发现 43 个跳变/反向振动轨迹；启发式过滤器 precision=0.64、recall=0.75，过滤后估计仍有 2.6% 无效轨迹。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "在标签有效性不确定下给 ADE/FDE 和方法差值建立识别区间，而不是把过滤后标签视为无误；重点检查 0.141 ADE 的 caption 条件差值是否越过噪声区间。",
+      "closest_work_and_residual": "官方工作完成过滤并公开误差率，但没有把过滤器误判和残余无效标签传播到模型顺序或 caption 收益置信度。",
+      "two_week_public_path": {
+        "minimum_validation": "人工复核 100–200 个高影响测试轨迹，结合官方 detector score 做 inverse-probability/partial-identification 重算。",
+        "dependencies": [
+          "CoVLA 学术访问",
+          "补充材料中的过滤定义"
+        ],
+        "engineering_risk": "不能重新发布受限数据；只发布索引、统计和评测代码。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "官方过滤后 ADE/FDE",
+        "人工 gold subset",
+        "trimmed/Huber displacement",
+        "worst-case label-validity bounds",
+        "过滤器置信加权"
+      ],
+      "success/kill": {
+        "success": "合理标签有效性区间重叠或改变方法顺序/ground-truth-caption 优势结论。",
+        "kill": "人工 gold 与鲁棒估计均显示差值远大于残余噪声且顺序稳定。"
+      },
+      "positive/negative consequence": {
+        "positive": "把真实 GNSS 病灶传播到结论不确定性，而非停留在清洗。",
+        "negative": "若差值稳健，结果主要增强原论文可信度。"
+      }
+    },
+    {
+      "dedup_key": "reasonbreak-clean-rollout-empirical-null",
+      "natural_occurrence_evidence": {
+        "class": "clean-closed-loop-variability",
+        "evidence": "ReasonBreak 明确写明即使 benign rollouts 也会因 simulator stochasticity 和 rollout instability 偏离；公开公式用 perturbed deviation 减单条 benign deviation，HTML 中未检索到 seed 配对或 repeated-clean null 的说明。此处不把文本攻击视作自然发生。",
+        "synthetic_occurrence_claim": false
+      },
+      "new_estimand_or_counterexample": "用 repeated clean-vs-clean 的经验零分布校准 excess-deviation 和 contiguous-window ASR，估计未加扰动时的假阳性安全事件率。",
+      "closest_work_and_residual": "ReasonBreak 已做 benign subtraction 和连续窗口，优于单点阈值；残余是单 clean trace 是否足以覆盖随机闭环分布。既有候选因缺少现成单栈闭环而可能过早排除此问题。",
+      "two_week_public_path": {
+        "minimum_validation": "在 2 个公开 NuRec clips 上各跑至少 5 次 clean rollout，先做 clean-vs-clean 伪攻击；随后扩到 10–20 clips 并与原阈值比较。",
+        "dependencies": [
+          "公开 Alpamayo 权重或推理入口",
+          "AlpaSim",
+          "NuRec clips"
+        ],
+        "engineering_risk": "环境搭建较重且随机源需控制；按新口径这是工程风险，不是自动淘汰条件。",
+        "falsifiable": true
+      },
+      "strong_baselines": [
+        "单 benign subtraction",
+        "同 seed paired rollout",
+        "多 seed empirical null",
+        "permutation calibration",
+        "block bootstrap"
+      ],
+      "success/kill": {
+        "success": "clean-vs-clean 在原阈值下产生非零且模型相关的假 ASR，校准后 Alpamayo1/1.5 的相对鲁棒或安全结论改变。",
+        "kill": "配对 clean rollouts 的经验零分布远低于阈值，校准不改变 ASR、模型比较或安全结论。"
+      },
+      "positive/negative consequence": {
+        "positive": "把自然闭环噪声与攻击造成的额外风险分离。",
+        "negative": "若模拟器近乎确定性，则只验证原协议。"
+      }
+    }
+  ]
+}

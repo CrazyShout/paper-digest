@@ -1,0 +1,483 @@
+{
+  "auditId": "cooperative-autonomous-driving-clock-receipt-novelty-closure-v7",
+  "candidateId": "clock-receipt-semantic-migration",
+  "reviewerAgentId": "codex-independent-novelty-collision-auditor",
+  "reviewedAt": "2026-07-31",
+  "claimAudited": {
+    "narrowClaim": "For two fixed cooperative-driving freshness paths, explicitly distinguish source-event-age from time-since-local-receipt; require provenance, clock-domain, epoch, validity, and relock evidence with fail-closed handling; and provide source-bound applicable patches plus mutation-kill evidence through a minimal C++ contract.",
+    "fixedPaths": [
+      {
+        "repository": "autowarefoundation/autoware_universe",
+        "commit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+        "logicalPath": "virtual traffic light state timeout"
+      },
+      {
+        "repository": "usdot-fhwa-stol/carma-platform",
+        "commit": "1c774df099ce23e77394758969bf86b0e5f40863",
+        "logicalPath": "localization manager GNSS timeout"
+      }
+    ],
+    "included": [
+      "The semantic distinction between source-event-age and time-since-local-receipt.",
+      "A fail-closed evidence obligation over origin, clock domain, timescale or epoch, validity interval, relock generation, and bounded clock relation.",
+      "A minimal C++17 type contract, two source-bound migration patches, patch applicability at fixed commits, and mutation-kill evidence."
+    ],
+    "excluded": [
+      "Automatic AST extraction, automatic repair synthesis, or whole-repository detection.",
+      "Complete Autoware or CARMA build, link, ROS 2 integration, deployment, or upstream acceptance.",
+      "Safety benefit, vulnerability, incident prevalence, field clock conditions, or a new clock-synchronization model."
+    ],
+    "decisionQuestion": "Does this narrow bundle contain a non-obvious, generalizable research contribution, or is it a source-specific bug fix and type-level semantic wrapper assembled from established mechanisms?",
+    "reviewIndependence": "The required v6 file was used only as a search and evidence seed. Its verdict was not adopted, and no additional reviewer conclusion was read; the decision was recomputed from the specified executable artifacts and primary sources."
+  },
+  "closestWorks": [
+    {
+      "id": "OMG-DDS-1.4-LIFESPAN",
+      "title": "Data Distribution Service 1.4, Lifespan QoS",
+      "year": 2015,
+      "primarySourceType": "OMG standard",
+      "url": "https://www.omg.org/spec/DDS/1.4",
+      "functionalCollision": "Defines stale-sample expiration from a source timestamp and permits reception-time treatment when clock synchronization cannot be established and that condition is detectable. This is the closest direct collision with choosing source age versus receiver-local residence time according to clock evidence.",
+      "residualDifference": "It specifies middleware behavior rather than patches for the two audited source paths."
+    },
+    {
+      "id": "OTEL-LOG-DATA-MODEL",
+      "title": "OpenTelemetry Logs Data Model",
+      "year": 2026,
+      "primarySourceType": "official specification",
+      "url": "https://opentelemetry.io/docs/specs/otel/logs/data-model/",
+      "functionalCollision": "Separates Timestamp, when the event occurred according to the source, from ObservedTimestamp, when the collection system observed it. This directly preempts novelty in the two timestamp meanings and their provenance.",
+      "residualDifference": "It does not prescribe the audited driving-source migration or threshold action."
+    },
+    {
+      "id": "ROS2-RMW-MESSAGE-INFO",
+      "title": "ROS 2 rmw_message_info_s",
+      "year": 2026,
+      "primarySourceType": "official ROS 2 API documentation",
+      "url": "https://docs.ros.org/en/rolling/p/rmw/generated/structrmw__message__info__s.html",
+      "functionalCollision": "Exposes source_timestamp and received_timestamp as separate middleware metadata, directly colliding with the claimed source-versus-receipt distinction in the same software ecosystem.",
+      "residualDifference": "It supplies metadata but does not force a particular freshness decision."
+    },
+    {
+      "id": "ROS2-CLOCK-AND-TIME",
+      "title": "Clock and Time",
+      "year": 2018,
+      "primarySourceType": "official ROS 2 design document",
+      "url": "https://design.ros2.org/articles/clock_and_time.html",
+      "functionalCollision": "Distinguishes SystemTime, SteadyTime, and ROSTime, reserves steady time for monotonic local measurements, and defines handling for discontinuous ROS time through jump notifications.",
+      "residualDifference": "It is a clock abstraction design, not a provenance-complete freshness contract."
+    },
+    {
+      "id": "RCLCPP-CLOCK-JUMPS",
+      "title": "rclcpp::Clock API",
+      "year": 2023,
+      "primarySourceType": "official ROS 2 API documentation",
+      "url": "https://docs.ros.org/en/iron/p/rclcpp/generated/classrclcpp_1_1Clock.html",
+      "functionalCollision": "Provides clock-type-specific now operations and ROS-time jump callbacks with thresholds, preempting the generic idea that jumps and clock source must be made explicit before elapsed-time decisions.",
+      "residualDifference": "It leaves application freshness semantics to callers."
+    },
+    {
+      "id": "WG21-N4950-CHRONO",
+      "title": "Working Draft, Standard for Programming Language C++ (chrono time_point and Clock requirements)",
+      "year": 2023,
+      "primarySourceType": "WG21 working draft",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf",
+      "functionalCollision": "time_point subtraction is parameterized by one Clock type, and Clock requirements define epoch and steadiness. A minimal C++ wrapper that rejects unlike clock types is therefore an application of an established standard type discipline.",
+      "residualDifference": "The standard does not encode event origin, relation validity, or the audited application action."
+    },
+    {
+      "id": "RFC-7679",
+      "title": "A One-Way Delay Metric for IP Performance Metrics",
+      "year": 2016,
+      "primarySourceType": "IETF standards-track RFC",
+      "url": "https://www.rfc-editor.org/rfc/rfc7679.html",
+      "functionalCollision": "Defines one-way delay from source and destination timestamps while explicitly accounting for clock synchronization error, resolution, and time-varying uncertainty. This preempts bare cross-clock subtraction as a valid measurement method.",
+      "residualDifference": "It is a measurement specification rather than an application migration."
+    },
+    {
+      "id": "RFC-4656",
+      "title": "A One-way Active Measurement Protocol (OWAMP)",
+      "year": 2006,
+      "primarySourceType": "IETF standards-track RFC",
+      "url": "https://www.rfc-editor.org/rfc/rfc4656.html",
+      "functionalCollision": "Carries sender and receiver timestamps with per-timestamp error estimates and synchronization indication, and rejects malformed timestamp error metadata. It functionally collides with provenance, bounded relation evidence, and fail-closed validation.",
+      "residualDifference": "It does not define driving-message freshness actions."
+    },
+    {
+      "id": "RFC-8877",
+      "title": "Guidelines for Defining Packet Timestamps",
+      "year": 2021,
+      "primarySourceType": "IETF best current practice RFC",
+      "url": "https://www.rfc-editor.org/rfc/rfc8877.html",
+      "functionalCollision": "Requires timestamp specifications to define reference clock, measurement point, format, and error properties, preempting generic novelty in demanding timestamp provenance and clock context.",
+      "residualDifference": "It is guidance rather than a static type or repair artifact."
+    },
+    {
+      "id": "IETF-TIM-DRAFT",
+      "title": "Temporal Integrity Metadata",
+      "year": 2026,
+      "primarySourceType": "IETF Internet-Draft",
+      "url": "https://datatracker.ietf.org/doc/draft-ackerman-temporal-integrity-metadata/",
+      "functionalCollision": "Defines event, emission, and ingestion time separately and carries temporal reference domain, synchronization state, and uncertainty. It also constrains cross-domain correlation when relation evidence is absent.",
+      "residualDifference": "It is an individual draft and does not provide the two source patches or C++ mutation evidence."
+    },
+    {
+      "id": "IEEE-1588-2019",
+      "title": "IEEE 1588-2019 Precision Clock Synchronization Protocol",
+      "year": 2019,
+      "primarySourceType": "IEEE standard",
+      "url": "https://standards.ieee.org/ieee/1588/6825/",
+      "functionalCollision": "Standardizes clock identity, synchronization domains, grandmaster selection, timescales, and offset/delay correction. It preempts treating clock domain and synchronization relation as a new application-level concept.",
+      "residualDifference": "It supplies synchronization semantics, not source-event versus receipt-age policy."
+    },
+    {
+      "id": "IEEE-802.1AS-2025",
+      "title": "IEEE 802.1AS-2025 Timing and Synchronization for Time-Sensitive Applications",
+      "year": 2025,
+      "primarySourceType": "IEEE standard",
+      "url": "https://standards.ieee.org/ieee/802.1AS/11968/",
+      "functionalCollision": "Defines synchronized time over bridged local-area networks and time-aware systems, supplying established domain and clock-relation machinery relevant to validity after synchronization changes.",
+      "residualDifference": "It does not define the application freshness threshold or patch."
+    },
+    {
+      "id": "AUTOSAR-STBM-R24-11",
+      "title": "AUTOSAR Classic Platform Synchronized Time-Base Manager",
+      "year": 2024,
+      "primarySourceType": "AUTOSAR specification",
+      "url": "https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_SynchronizedTimeBaseManager.pdf",
+      "functionalCollision": "Manages synchronized time bases, status, validation, loss or restoration of synchronization, and time progression, preempting novelty in carrying clock validity state into decisions.",
+      "residualDifference": "The direct PDF body was not retrievable in this environment, so this audit relies only on the official indexed scope and does not claim a clause-level exact match."
+    },
+    {
+      "id": "AUTOSAR-ETH-TSYN-R24-11",
+      "title": "AUTOSAR Classic Platform Time Synchronization over Ethernet",
+      "year": 2024,
+      "primarySourceType": "AUTOSAR specification",
+      "url": "https://www.autosar.org/fileadmin/standards/R24-11/CP/AUTOSAR_CP_SWS_TimeSyncOverEthernet.pdf",
+      "functionalCollision": "Applies PTP-style global time domains, grandmaster time, propagation delay, and rate-ratio handling in automotive software, preempting novelty in the underlying clock-domain relation machinery.",
+      "residualDifference": "It does not decide whether a particular application should use event age or local receipt age."
+    },
+    {
+      "id": "AOI-MULTIPLE-SOURCES",
+      "title": "The Age of Information: Real-Time Status Updating by Multiple Sources",
+      "year": 2016,
+      "primarySourceType": "author paper",
+      "url": "https://arxiv.org/abs/1608.08622",
+      "functionalCollision": "Formalizes information freshness as current time minus generation time of the most recently delivered update. This preempts source-event-age as a new freshness quantity and highlights that it is not receiver residence time.",
+      "residualDifference": "It optimizes communication policies and does not provide clock-provenance repairs."
+    },
+    {
+      "id": "DAPPER-2010",
+      "title": "Dapper, a Large-Scale Distributed Systems Tracing Infrastructure",
+      "year": 2010,
+      "primarySourceType": "Google research paper",
+      "url": "https://research.google/pubs/dapper-a-large-scale-distributed-systems-tracing-infrastructure/",
+      "functionalCollision": "Uses host-local timestamped annotations, causal send/receive structure, and clock-skew correction rather than assuming raw timestamps from different hosts are directly comparable.",
+      "residualDifference": "It concerns trace reconstruction, not message timeout migration."
+    },
+    {
+      "id": "PHYSFRAME-2021",
+      "title": "PhysFrame: Type Checking Physical Frames of Reference for Robotic Systems",
+      "year": 2021,
+      "primarySourceType": "author paper",
+      "url": "https://arxiv.org/abs/2106.11266",
+      "functionalCollision": "Demonstrates static inference and type checking of semantic domains in ROS software across a corpus, preempting a broad claim that domain-tagged types or ROS source checking are themselves novel.",
+      "residualDifference": "It checks spatial frames rather than clock provenance and freshness."
+    },
+    {
+      "id": "COCCINELLE-2008",
+      "title": "Documenting and Automating Collateral Evolutions in Linux Device Drivers",
+      "year": 2008,
+      "primarySourceType": "authors' EuroSys paper",
+      "url": "https://coccinelle.gitlabpages.inria.fr/website/papers/eurosys08.pdf",
+      "functionalCollision": "Semantic patches match and transform source-code patterns for bug fixes and API migrations. This preempts source-bound patch generation as a generic research contribution absent a new analysis or repair method.",
+      "residualDifference": "The audited artifact explicitly does not claim an automatic semantic-patch or AST tool."
+    },
+    {
+      "id": "MULL-2019",
+      "title": "Mull: An LLVM-based Mutation Testing Framework",
+      "year": 2019,
+      "primarySourceType": "authors' tool paper",
+      "url": "https://arxiv.org/abs/1908.01540",
+      "functionalCollision": "Establishes compiled C and C++ mutation testing and mutant-kill evidence as an existing validation technique.",
+      "residualDifference": "The seven audited mutants are domain-specific fixtures, but their use is evidence quality rather than conceptual novelty."
+    },
+    {
+      "id": "AUTOSAR-SECOC-R25-11",
+      "title": "AUTOSAR Classic Platform Secure Onboard Communication",
+      "year": 2025,
+      "primarySourceType": "AUTOSAR specification",
+      "url": "https://www.autosar.org/fileadmin/standards/R25-11/CP/AUTOSAR_CP_SWS_SecureOnboardCommunication.pdf",
+      "functionalCollision": "Defines freshness values and receiver-side verification for anti-replay, showing that automotive message freshness already has established metadata and fail-closed vocabulary.",
+      "residualDifference": "Its freshness is anti-replay state, not physical source-event age or local residence time; conflating them would be incorrect."
+    },
+    {
+      "id": "ROS2-QOS-LIFESPAN",
+      "title": "ROS 2 Quality of Service Settings",
+      "year": 2022,
+      "primarySourceType": "official ROS 2 documentation",
+      "url": "https://docs.ros.org/en/humble/Concepts/Intermediate/About-Quality-of-Service-Settings.html",
+      "functionalCollision": "Documents Lifespan as the duration after which published samples are considered stale or expired, placing freshness expiration in the existing ROS 2 and DDS middleware model.",
+      "residualDifference": "It does not encode the audited provenance tuple in application types."
+    },
+    {
+      "id": "SPANNER-TRUETIME",
+      "title": "Spanner: Google's Globally-Distributed Database",
+      "year": 2012,
+      "primarySourceType": "Google research paper",
+      "url": "https://research.google/pubs/spanner-googles-globally-distributed-database-2/",
+      "functionalCollision": "Represents time as an uncertainty interval and makes protocol decisions only after accounting for that uncertainty, preempting the general pattern of replacing an unjustified point subtraction with bounded temporal evidence.",
+      "residualDifference": "It supplies a synchronization service and database protocol, which the audited claim expressly excludes."
+    }
+  ],
+  "exactCollisionSearch": {
+    "cutoffDate": "2026-07-31",
+    "searchStoppedAtUserDirection": true,
+    "functionalEquivalenceRule": "A collision was counted when a primary source implemented or specified the same semantic operation even if it used different terminology: separate event and observation timestamps; choose source versus reception time based on synchronization evidence; forbid or qualify cross-clock subtraction; carry synchronization validity or uncertainty; migrate a source expression; or validate the migration with type checks and mutants.",
+    "queryFamilies": [
+      "Exact phrases and variants for source-event-age, time-since-local-receipt, observed timestamp, reception timestamp, local residence time, and freshness.",
+      "Typed clocks, clock-domain types, epoch-safe time points, provenance types, and compile-time rejection of mixed clocks.",
+      "Distributed tracing timestamp provenance, event time versus observed or ingestion time, and clock-skew correction.",
+      "ROS 2 source_timestamp versus received_timestamp, SystemTime, SteadyTime, ROSTime, clock jumps, QoS Lifespan, and message metadata.",
+      "AUTOSAR synchronized time bases, validation and status, Ethernet time synchronization, SecOC freshness, and end-to-end sequence freshness.",
+      "IEEE 1588 and IEEE 802.1AS domains, clock identity, grandmaster, timescale, discontinuity, and synchronization status.",
+      "Age of Information, one-way delay, sender and receiver timestamps, uncertainty bounds, and synchronization error.",
+      "Message expiration and freshness using source timestamps, reception timestamps, fallback behavior, and anti-replay semantics.",
+      "ROS static semantic checking, semantic patches, source-to-source migration, automated repair, and C++ mutation testing.",
+      "Exact fixed-repository expressions, proposed receipt fields, commits, paths, and issue or pull-request terms for Autoware and CARMA."
+    ],
+    "exactTermResult": "No primary source was found that used the candidate's exact compound label, named both fixed commits, and supplied the same patch and mutant set.",
+    "functionalResult": "The absence of an exact phrase collision is not probative. DDS Lifespan, OpenTelemetry Timestamp and ObservedTimestamp, ROS 2 source_timestamp and received_timestamp, RFC one-way-delay uncertainty, ROS/C++ clock typing, and automotive synchronization standards collectively and in several cases individually preempt the semantic and mechanism-level pieces. DDS Lifespan is the strongest single functional collision because it expressly connects source-timestamp expiration, clock synchronization, and reception-time fallback.",
+    "repositoryChecks": [
+      {
+        "repository": "autowarefoundation/autoware_universe",
+        "url": "https://github.com/autowarefoundation/autoware_universe/blob/main/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+        "result": "The inspected main-branch path still used the source stamp subtraction; no exact proposed receipt-field or matching issue result was found. This supports source-specific patch distinctness, not research novelty."
+      },
+      {
+        "repository": "usdot-fhwa-stol/carma-platform",
+        "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/develop/localization_manager/src/LocalizationManager.cpp",
+        "result": "The inspected develop-branch path still used the GNSS header stamp subtraction; no exact proposed receipt-field or matching issue result was found. This supports source-specific patch distinctness, not research novelty."
+      }
+    ],
+    "networkLimits": [
+      "One search-service request failed transiently; subsequent primary-source retrieval continued and the major source families were covered.",
+      "Direct AUTOSAR PDF retrieval encountered a backend or certificate failure. AUTOSAR findings are therefore limited to official indexed document scope and URLs, with no unsupported clause-level quotation.",
+      "IEEE public pages exposed standard identity, status, and abstract-level scope; this audit does not imply access to every paywalled normative clause.",
+      "The search was stopped immediately on user instruction. It is broad but not exhaustive over proprietary code, closed standards text, every patent family, or material after the cutoff date."
+    ],
+    "boundary": "The search establishes functional collisions sufficient for this narrow research-contribution decision; it does not certify worldwide legal novelty or patentability."
+  },
+  "preemptedPieces": [
+    {
+      "piece": "Explicitly distinguishing source-event time from receiver observation or receipt time",
+      "preemptedBy": [
+        "OMG-DDS-1.4-LIFESPAN",
+        "OTEL-LOG-DATA-MODEL",
+        "ROS2-RMW-MESSAGE-INFO"
+      ],
+      "finding": "Directly preempted in both middleware and telemetry data models."
+    },
+    {
+      "piece": "Rejecting bare subtraction across clocks or requiring a bounded clock relation",
+      "preemptedBy": [
+        "RFC-7679",
+        "RFC-4656",
+        "RFC-8877",
+        "SPANNER-TRUETIME"
+      ],
+      "finding": "Preempted as a standard measurement and uncertainty-handling requirement."
+    },
+    {
+      "piece": "Clock-domain, timescale, epoch, synchronization-state, validity, and relock context",
+      "preemptedBy": [
+        "IEEE-1588-2019",
+        "IEEE-802.1AS-2025",
+        "AUTOSAR-STBM-R24-11",
+        "AUTOSAR-ETH-TSYN-R24-11",
+        "IETF-TIM-DRAFT"
+      ],
+      "finding": "The exact field tuple is locally packaged, but its semantic components and fail-closed motivation are established."
+    },
+    {
+      "piece": "Using a process-local monotonic clock for time since receipt",
+      "preemptedBy": [
+        "ROS2-CLOCK-AND-TIME",
+        "WG21-N4950-CHRONO",
+        "OMG-DDS-1.4-LIFESPAN"
+      ],
+      "finding": "This is established clock-selection practice and an ordinary implementation repair."
+    },
+    {
+      "piece": "Treating age since generation as information freshness",
+      "preemptedBy": [
+        "AOI-MULTIPLE-SOURCES",
+        "ROS2-QOS-LIFESPAN",
+        "OMG-DDS-1.4-LIFESPAN"
+      ],
+      "finding": "Source-event-age and expiration are established quantities; the candidate does not introduce a new metric."
+    },
+    {
+      "piece": "Using semantic types and source analysis to prevent domain misuse",
+      "preemptedBy": [
+        "WG21-N4950-CHRONO",
+        "PHYSFRAME-2021"
+      ],
+      "finding": "The minimal contract is a useful specialization but not a new type-system result."
+    },
+    {
+      "piece": "Producing source-bound migration patches and mutation-kill evidence",
+      "preemptedBy": [
+        "COCCINELLE-2008",
+        "MULL-2019"
+      ],
+      "finding": "Patch applicability and killed mutants strengthen engineering evidence; they do not by themselves create algorithmic or methodological novelty."
+    },
+    {
+      "piece": "Calling automotive anti-replay freshness the same construct as physical message age",
+      "preemptedBy": [
+        "AUTOSAR-SECOC-R25-11"
+      ],
+      "finding": "Preempted terminology exists, but it denotes a different quantity; the candidate correctly must keep it out of the claimed physical-age semantics."
+    }
+  ],
+  "unpreemptedIntegration": {
+    "literalSurvivors": [
+      "No located source names the same two fixed repository revisions and supplies the same unified diffs.",
+      "No located source bundles the exact local field vocabulary, the same C++ fixtures, and the same declared mutant set in one artifact.",
+      "The Autoware Newest polling adjustment is specifically bound to avoiding cached planner-cycle receipt refresh in that path."
+    ],
+    "assessment": "These survivors are artifact identity and repository-specific integration. They do not add a new temporal model, type rule, analysis algorithm, repair algorithm, theorem, or cross-project empirical result. Combining known timestamp provenance, monotonic receipt timing, fail-closed checks, source patches, and mutation tests is technically competent but expected engineering once the bug semantics are stated.",
+    "classification": "Unpreempted as an exact two-path implementation package; not unpreempted as a research contribution."
+  },
+  "evidenceActuallyEarned": {
+    "localVerification": {
+      "command": "node --test test/clock-freshness-obligation-v7.test.mjs test/clock-receipt-migration.test.mjs",
+      "date": "2026-07-31",
+      "tests": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    "sourceBoundPatches": [
+      {
+        "caseId": "POS-01-AUTOWARE-VTL",
+        "earned": "Fixed source hashes and anchors matched; the generated patch applied with git apply --check and git apply to a temporary snapshot; only four declared module files changed; source-stamp subtraction was replaced by steady-clock receipt elapsed time; cached polling replay was addressed with polling_policy::Newest."
+      },
+      {
+        "caseId": "POS-02-CARMA-GNSS",
+        "earned": "Fixed source hashes and anchors matched; the generated patch applied with git apply --check and git apply to a temporary snapshot; only two declared localization-manager files changed; GNSS header-stamp subtraction was replaced by steady-clock callback-receipt elapsed time."
+      }
+    ],
+    "typedContract": [
+      "The C++17 header compiled same-domain receipt and bounded cross-domain positive cases.",
+      "Compile-negative fixtures rejected bare cross-domain subtraction, private raw-field arithmetic, source-event-as-receipt, wrong-domain receipt, and wrong relation direction.",
+      "Checked wide-intermediate overflow handling was exercised under the recorded compiler configuration."
+    ],
+    "mutationEvidence": [
+      "The generic obligation pilot killed six guard mutants per fixed case for domain, timescale, validity, relock, comparator, and negative age.",
+      "The source-bound C++17 migration harness ran PASS:13 and killed all seven declared mutants: source stamp, wrong clock, missing receipt, inclusive comparator, replay overwrite, negative age, and overflow."
+    ],
+    "semanticEvidence": [
+      "The artifacts demonstrate that the visible original operands alone do not establish cross-domain source-event-age.",
+      "The patches implement time-since-local-receipt and intentionally do not preserve or estimate source-event-age."
+    ],
+    "notEarned": [
+      "The actual Autoware and CARMA patches do not carry explicit source identity, runtime clock-domain identity, epoch or relock generation, relation-validity interval, or bounded offset evidence.",
+      "The migration harness models wrong clock and epoch or relock mismatch, but those modeled fields are not mechanically present in the patched upstream source. The source-bound patches therefore earn receipt semantics, not the full claimed obligation integration.",
+      "The minimal C++ receipt operation relies on same Clock template types and does not independently enforce a runtime relock-generation equality for the local-receipt path.",
+      "Neither full project was built, linked, or run; no ROS 2 transition machinery, ABI compatibility, deployment reachability, or upstream acceptance was verified.",
+      "The bounded source-age witnesses are constructed test inputs, not calibrated field clock relations.",
+      "No prevalence estimate, independent project corpus, safety effect, performance result, or automatic detection or repair capability was established."
+    ]
+  },
+  "researchContributionBoundary": {
+    "researchContributionEarned": false,
+    "acceptedClassification": "Source-specific semantic bug fix, defensive C++ type wrapper, and reproducible patch-validation artifact.",
+    "smallestDefensibleClaim": "At two fixed revisions, the recorded patches apply to temporary source snapshots and migrate two timeout decisions from remote source-stamp subtraction to process-local steady-clock receipt elapsed time while preserving the strict comparison boundary; the accompanying isolated harness kills the declared mutants.",
+    "rejectedClassification": "A novel clock type system, timestamp-provenance model, synchronization model, general static analysis, automatic repair technique, driving-safety result, or general cooperative-driving freshness methodology.",
+    "reason": "The semantic distinction and supporting mechanisms are directly present in prior specifications and systems. What remains unique is the selection and repair of two source sites. Under the expressly narrow scope, there is no new abstraction with demonstrated generality or non-obvious technical result beyond ordinary bug repair and type encapsulation.",
+    "routeToAResearchClaim": [
+      "Define and prove a genuinely new temporal obligation or soundness property not reducible to established timestamp provenance plus uncertainty checks.",
+      "Implement a general analyzer and repair procedure, then evaluate it on an independently selected multi-project corpus against relevant baselines.",
+      "Mechanically bind every claimed provenance, epoch, validity, and relock guard into real source patches and test them in project-level execution rather than only a generated policy harness."
+    ]
+  },
+  "remainingBlockers": [
+    {
+      "id": "B1",
+      "blocker": "The full fail-closed provenance obligation and the two real patches are separate artifacts.",
+      "consequence": "The combined narrow claim overstates what is actually source-bound; only receipt semantics is implemented in the patches."
+    },
+    {
+      "id": "B2",
+      "blocker": "Runtime epoch, relock, validity, source identity, and bounded-relation fields are absent from the patched paths.",
+      "consequence": "Mutation kills for those concepts in a generic or generated harness cannot establish their enforcement in Autoware or CARMA."
+    },
+    {
+      "id": "B3",
+      "blocker": "Only two hand-selected fixed paths are evaluated, with no automatic analysis or independently sampled corpus.",
+      "consequence": "There is no evidence of generality, prevalence, recall, precision, repair coverage, or transfer beyond the examples."
+    },
+    {
+      "id": "B4",
+      "blocker": "No full Autoware or CARMA build and no ROS 2 runtime test was performed.",
+      "consequence": "This is outside the narrow claim but prevents promotion from patch applicability to integrated software behavior."
+    },
+    {
+      "id": "B5",
+      "blocker": "The source-event-age relation uses constructed offset bounds rather than measured or certified synchronization evidence.",
+      "consequence": "The artifact cannot claim an operational cross-domain source-age solution."
+    },
+    {
+      "id": "B6",
+      "blocker": "The primary-source search is broad but bounded by transient retrieval failures, inaccessible normative text, the user-directed stop, and the 2026-07-31 cutoff.",
+      "consequence": "The result is a research-contribution collision judgment, not exhaustive worldwide novelty or patent clearance."
+    }
+  ],
+  "killConditions": [
+    {
+      "id": "K1",
+      "condition": "Prior primary sources explicitly distinguish source timestamps from receiver observation or receipt timestamps and condition expiration or measurement on clock evidence.",
+      "status": "met",
+      "effect": "Kills novelty of the core semantic distinction."
+    },
+    {
+      "id": "K2",
+      "condition": "Clock-domain typing, epoch or synchronization status, uncertainty bounds, and jump handling are established mechanisms rather than a new formal system.",
+      "status": "met",
+      "effect": "Kills novelty of the proposed metadata and fail-closed ingredients considered separately."
+    },
+    {
+      "id": "K3",
+      "condition": "The only exact survivor is a pair of hand-authored repository patches and a minimal wrapper, with no general analysis, theorem, or corpus result.",
+      "status": "met",
+      "effect": "Kills the bundle as a research contribution while retaining its engineering value."
+    },
+    {
+      "id": "K4",
+      "condition": "The claimed epoch, validity, and relock obligation is not present in the actual source-bound patches.",
+      "status": "met",
+      "effect": "Kills the claim that the two patches instantiate the complete obligation."
+    },
+    {
+      "id": "K5",
+      "condition": "Any declared fixed-source anchor, patch applicability check, strict-boundary check, base harness assertion, or required mutant kill fails on reproduction.",
+      "status": "not met in the audited local run",
+      "effect": "Would kill even the narrow engineering-evidence claim."
+    },
+    {
+      "id": "K6",
+      "condition": "Either full project fails to compile or runtime receipt storage is not reached as assumed.",
+      "status": "untested and outside the stated claim",
+      "effect": "Would kill any later claim of integrated applicability or behavior, but is not needed for the present research-novelty rejection."
+    },
+    {
+      "id": "K7",
+      "condition": "The artifact is described as preserving source-event-age, providing network anti-replay, proving safety, or introducing a synchronization model.",
+      "status": "excluded by the audited boundary",
+      "effect": "Any such expansion would be unsupported and should be rejected immediately."
+    }
+  ],
+  "verdict": "reject",
+  "rationale": "Reject as a research contribution. The exact two-path implementation package was not found verbatim, and its patch applicability and mutant kills are real, useful engineering evidence. However, primary sources already expose the source-versus-receipt timestamp distinction, source- versus reception-time expiration, typed clock separation, jump and synchronization state, bounded cross-clock uncertainty, semantic source migration, and mutation testing. The actual patches implement only local steady-clock receipt age and do not instantiate the claimed provenance, epoch, validity, and relock obligation. With automatic analysis, project builds, deployment, safety claims, and a new synchronization model expressly excluded, the residue is an ordinary source-specific bug fix plus type encapsulation rather than a novel, generalizable research result."
+}

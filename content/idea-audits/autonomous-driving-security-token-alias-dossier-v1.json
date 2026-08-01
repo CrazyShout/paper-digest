@@ -1,0 +1,309 @@
+{
+  "candidateId": "autovla-fail-open-action-token-alias-v2",
+  "directionId": "autonomous-driving-security",
+  "dossierVersion": 1,
+  "createdAt": "2026-08-01",
+  "reviewMode": "evidence-dossier-no-scoring",
+  "title": "先证明它真的会执行：AutoVLA 无效动作 token alias 的路径、语义与 excess-risk 审计",
+  "hook": "源码中的低 ID 到 action 0 映射只有在无效 token 真正到达执行 decoder、action 0 在该 codebook/ODD 中并非保守动作、且恶意语言比自然或随机失败更危险时，才构成可发表的 fail-open 安全链。",
+  "output": "固定版本执行路径证明、action-0 语义卡、恶意语言 excess-risk 基准与 strict reject+MRM 对照",
+  "effort": "中高",
+  "timeline": "8-10 周",
+  "whyNow": "AutoVLA 已公开固定代码、动作 codebook 创建流程、checkpoint 和 NAVSIM evaluator；其 `ActionTokenizer.decode_token_ids_to_trajectory` 会把低于 `action_start_id` 的输入映射到 codebook action 0，GRPO `generate_sample` 在动作 token 不足时还会补 literal zero。ReasonBreak 已证明文本扰动可影响驾驶 VLA 的推理、轨迹和闭环指标，CVPR 2026 AdvML challenge 也提供图像/文本黑盒攻击设计。与此同时，固定公开推理路径 `AutoVLAAgent.compute_trajectory -> AutoVLA.predict` 会先筛出合法 action token，再调用 decoder，和训练采样路径并不相同。现在可以做严谨路径审计，但不能在运行证据前把 helper 代码、训练补齐或任意 token 注入写成已发生的车辆攻击。",
+  "keyProblem": "生成式驾驶模型必须把语言 token、EOS、缺失动作和离散 action codebook 连接到可执行轨迹。若接口静默把非法或不足输出变成某个合法 codebook 动作，错误就可能从显式拒绝变成 fail-open 控制；但如果公开 agent 在 decoder 前已经过滤非法 token，或短序列直接异常退出，则低 ID alias 可能只存在于训练/辅助路径。即使 alias 可达，action 0 也可能代表停车或其他保守轨迹。最终还要证明只有具备可实现语言输入权限的目标攻击能比自然 early-stop、普通解码失败、直接 token fault 和等预算随机文本产生更高车辆风险。三个门缺一不可。",
+  "currentLimitations": "AutoVLA 论文提出动作 token 化与统一生成，但没有给 action 0 安全语义或无效输出安全合同。固定代码中，decoder helper 对低 ID token 使用 codebook index 0；GRPO 训练采样在动作不足时补零再解码；然而官方 NAVSIM agent 的公开推理调用 `predict`，它在解码前保留 `token >= action_start_id` 的输出，并未使用同一补齐分支。因而“公开部署推理静默 alias”目前只是待证假设。ReasonBreak 已覆盖黑盒文本扰动到推理/轨迹/闭环传播，但没有隔离 AutoVLA parser；AdvML challenge 覆盖 suffix-only 文本与黑盒迁移，目标仍是 DriveLM QA 偏离而非动作执行。不可替代 residual 仅是固定 checkpoint 上的实际执行路径、codebook action 0 车辆语义、恶意语言诱发 parser/fill 分支的 excess risk，以及 strict reject+独立 MRM 是否切断该链。若只做直接 token 注入、只发现训练代码补零，或目标文本不超过 natural/random，候选不成立。",
+  "hypothesis": "条件于公开 AutoVLA checkpoint 的实际 agent 执行路径确实存在可达的无效/不足动作 fail-open 分支，且重复 action 0 在限定 ODD 中产生非保守轨迹，则只能影响被系统接受语言/导航输入的 query-limited 攻击者，可以比 matched random text、自然 early-stop 和直接 token fault 更频繁地诱发该分支及危险车辆后果；强制 action grammar、长度不变量与 strict reject+独立 MRM 会降低该 excess risk，同时把 clean false fallback 和延迟控制在预注册上限。",
+  "threatModel": {
+    "attackerCapability": "主攻击者是被攻陷的上游导航/语言服务或具有受控 prompt 权限的调用方，只能提交系统实际接受的 driving-command 字符串；不能修改图像、token buffer、模型权重、action_start_id、codebook、进程内存、低层控制或模拟器状态。",
+    "attackerKnowledge": "主分析采用黑盒攻击：攻击者知道接口允许的命令语义和查询返回的文本/轨迹或失败状态，不读 logits；最多使用固定查询预算。灰盒补充知道 tokenizer 与 action grammar，但仍不能直接注入生成 token。",
+    "budget": "每个 scene 最多 64 次模型查询；恶意命令相对原始导航意图最多增加 8 个 tokenizer tokens、字符编辑距离不超过 16，并须通过独立 route-intent parser 保持原方向。matched-random 文本复用相同编辑长度、token 数、位置和查询数。",
+    "inputPath": "唯一攻击入口是 `driving_command` 进入 AutoVLA prompt 的受支持字符串通道；实验必须先证明上游接口允许该字符串而非固定枚举。任意在 decoder 前直接写 token 的实验只标为 fault injection/组件诊断。",
+    "target": "诱导动作 token 数不足、非法 action phase、可达的 zero alias/padding 或危险 action-0 序列，同时保持表面导航意图和非动作文本基本正常；攻击不能直接指定 codebook index。",
+    "odd": "执行门和自然频率阶段限定固定 AutoVLA commit/checkpoint、processor、codebook 与 NAVSIM/nuPlan scene；车辆后果阶段仅在桥接通过后扩展到 CARLA 0.9.15 白天干燥城市路线、限速不高于 50 km/h。真实车载导航权限、开放道路和其他 checkpoint 在范围外。",
+    "comparators": {
+      "attack": "query-limited 目标化语言搜索，通过实际输入接口诱发 fail-open 分支和危险 action-0 轨迹；不能使用 token 写权限。",
+      "fault": "逐位置低 ID token、forced EOS、截断输出和 codebook mismatch 的直接注入，用于定位 parser/decoder 因果链，不算现实攻击。",
+      "natural": "未编辑的合法命令在固定解码配置下自然出现的 early EOS、非动作输出或短序列；自然语言 typo/corruption 只有在有来源分布时才计入，不凭合成器宣称发生率。",
+      "random": "与攻击编辑和查询预算匹配的随机 suffix/typo，以及与 fault 位置、数量匹配的随机非法 token；无目标搜索。"
+    }
+  },
+  "executionPathAudit": {
+    "staticObservation": "固定提交的 `decode_token_ids_to_trajectory` 会把低于 `action_start_id` 的输入改为 codebook index 0；GRPO `generate_sample` 先过滤合法 action token，再用 literal zero 补到 `num_poses`。",
+    "inferenceBoundary": "固定提交的 `AutoVLAAgent.compute_trajectory` 调用 `AutoVLA.predict`；`predict` 会先筛选 `outputs_trimmed >= action_start_id` 再调用 decoder，没有显式使用 GRPO 的 zero-padding 分支。",
+    "requiredProof": "用运行时 hooks 记录 agent caller、原始 completion、过滤后 token、decoder 参数、codebook index、trajectory 和外层异常处理，证明哪一个公开评测/执行入口会让 invalid/short output 成为 action 0。",
+    "claimBoundary": "在 requiredProof 完成前，只能声称存在可审计的 helper/training 容错行为，不能声称官方推理已 fail-open、自然系统会发生该错误或车辆已受攻击。"
+  },
+  "noveltyClaims": [
+    "把静态 helper、GRPO training sample 和 NAVSIM inference agent 三条路径分开，要求以运行时 call trace 证明 alias/padding 位于实际执行路径；代码存在不再等同于 exploitability。",
+    "为固定 checkpoint/codebook 发布 action-0 语义卡：逐步轮廓、累计位移、航向、曲率、隐含速度/减速度、重复 action 0 和不同起始状态下的车辆后果，而不把 index 0 先验解释为 stop。",
+    "以恶意语言相对 natural early-stop、matched random text 和直接 token fault 的 paired excess risk 为攻击主张；直接 token 注入只用于组件因果定位。",
+    "比较 current behavior、grammar-constrained decoding、retry-once、strict reject+非 fail-stop MRM 和命令 allowlist，把 parser 修复、输入准入与车辆回退的决策边界分开。"
+  ],
+  "method": [
+    "固定 AutoVLA commit ba34eed74ce6729e7986592d0e66cbaca397b4fa、checkpoint revision、config hash、processor、action_start_id、codebook digest、解码参数和 evaluator；对所有调用入口建立静态 call graph 与运行时 token trace。",
+    "在官方 AutoVLAAgent、`predict` 和 GRPO `generate_sample` 三条路径分别注入 forced EOS、低 ID、合法短序列和正常序列，记录每个边界的 token 数、过滤、补齐、decoder 输入、异常和最终 trajectory；只有 agent 实际执行的路径可支撑攻击。",
+    "加载固定 codebook 原始数组，单独解码 action 0、重复 action 0 和相邻 codebook actions，计算几何/运动学语义并在 NAVSIM/CARLA 对照场景中执行；不得用 token 编号或可视化印象定义安全。",
+    "在至少 300 个唯一 clean scenes 上运行固定确定性设置与小规模多 seed 采样，估计自然 early EOS、短动作、非法输出和外层异常频率；scene 是主要单位，生成 seed 嵌套，零事件只报告上置信界。",
+    "构造只能修改 accepted driving-command 的黑盒搜索，联合目标为可达 parser/fill 分支、action-0 占比和车辆 hazard；每个 scene 同时运行 matched random suffix、自然命令、direct-token fault 与未编辑 clean。",
+    "从同一 scene/seed 对比 current parser、masked/grammar-constrained decoding、retry-once、strict length validation+MRM 和 input allowlist；strict reject 后的 MRM 使用独立状态输入，执行车道稳定、限 jerk 减速和可达安全停车，不能只是返回零轨迹。",
+    "用 scene/initial-state block 做 paired McNemar、风险差、TTC/trajectory 差和 cluster bootstrap；查询、token、帧、搜索迭代与同场景多生成不作为独立统计单位。"
+  ],
+  "implementationPath": [
+    {
+      "type": "reusable",
+      "asset": "AutoVLA official code and checkpoint",
+      "work": "固定提交 ba34eed74ce6729e7986592d0e66cbaca397b4fa，复用公开 checkpoint、ActionTokenizer、AutoVLA.predict、GRPO generate_sample、AutoVLAAgent 和 NAVSIM PDM evaluator。",
+      "boundary": "UCLA Academic Software License 仅允许学术/非营利研究并禁止进一步转移软件及衍生物；不得分发上游代码、权重、修改版或派生 checkpoint，只能发布独立测试包装器、配置、hash 和统计。"
+    },
+    {
+      "type": "reusable",
+      "asset": "CARLA 0.9.15",
+      "work": "固定 release 0.9.15 与提交 d7b45c1e159e6d13296f7a3a4e8b13e6c2d62c18，仅在执行路径和 action-0 门通过后用于同初态闭环车辆后果。",
+      "boundary": "MIT 许可；官方 AutoVLA 固定 README 未提供开箱即用的本候选 CARLA parser/fallback harness，自建桥接必须单独验证，仿真不提供现实发生率。"
+    },
+    {
+      "type": "self-built",
+      "asset": "ExecutionPathTracer",
+      "work": "以 monkey-patch/hook 形式记录每个公开入口的 completion IDs、action filter、padding、decoder 参数、返回轨迹和异常传播，不复制上游方法体。",
+      "acceptanceCheck": "trace 必须显示 agent 实际执行到哪条分支；只命中训练路径或人工调用 helper 时，部署 alias 主张立即进入 kill。"
+    },
+    {
+      "type": "self-built",
+      "asset": "ActionZeroSemanticAuditor",
+      "work": "从固定 config/codebook 解析 index 0 的 6x4x2 几何序列，测单次/重复 rollout 的位移、航向、曲率、速度代理、可控性和场景后果，并和相邻/stop-like token 比较。",
+      "acceptanceCheck": "发布 codebook digest 与数值语义；在完成前不使用 safe、stop、brake 或 dangerous 给 action 0 命名。"
+    },
+    {
+      "type": "self-built",
+      "asset": "AcceptedLanguageAttackSearcher",
+      "work": "实现最多 64 查询的 suffix/编辑搜索，只经 driving-command 接口调用模型；记录每次 edit、route-intent 检查、completion validity、trajectory 和查询成本。",
+      "acceptanceCheck": "若接口只接受固定枚举或攻击需要直接 token/logit 写权限，则现实语言攻击路径失败；相关实验只保留为 fault audit。"
+    },
+    {
+      "type": "self-built",
+      "asset": "StrictActionContract",
+      "work": "要求 action phase 只能出现合法 codebook token、数量严格等于 horizon、EOS 时机合法；支持 constrained decoding、一次重试和显式 reject，绝不静默补 index 0。",
+      "acceptanceCheck": "clean 输入与合法 completion 必须与原实现轨迹逐 token 一致；所有非法/短输出产生可审计状态而非空轨迹或隐式 alias。"
+    },
+    {
+      "type": "self-built",
+      "asset": "IndependentFallbackAdapter",
+      "work": "strict reject 后在 CARLA 执行独立 lane stabilization、rear-aware bounded deceleration、safe-stop hold，并记录回退暴露；NAVSIM 阶段只报告拒绝与轨迹代理。",
+      "acceptanceCheck": "MRM 与 immediate fail-stop/zero trajectory 分开；若只返回空轨迹、全零控制或最大制动，不得声称已完成 MRM。"
+    },
+    {
+      "type": "self-built",
+      "asset": "PairedTokenRiskLedger",
+      "work": "按 scene 保存输入 provenance、原始/过滤 token、action-0 占比、parser 状态、轨迹、PDMS、CARLA hazard、时延和所有失败，提供 paired excess-risk 与 bootstrap。",
+      "acceptanceCheck": "所有 clean/natural/random/fault/attack 查询完整对账；不能只保存成功诱发 invalid token 的搜索轨迹。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Data, model artifacts and license review",
+      "work": "需要合法取得 AutoVLA checkpoint、codebook、nuPlan/NAVSIM 数据与 metric cache，固定 Hugging Face revision 和各文件 digest；checkpoint 条款若与仓库许可证不同须单独解决。",
+      "boundary": "README 的 checkpoint release 只证明资产存在，不证明本机可加载、codebook 对应或许可证允许任何再分发。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Compute and schedule",
+      "work": "预计 2-4 张 24GB 以上 GPU 运行 Qwen2.5-VL-3B 多视图推理，16-32 CPU cores 支持 CARLA；第 1-2 周路径/action0 smoke，第 3-4 周自然基率，第 5-7 周攻击搜索，第 8-10 周防御和复跑。",
+      "boundary": "训练新 backbone 不属于最小研究；若 64-query 搜索成本过高，缩小场景并重算功效，不能把查询当独立样本。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "stage": "execution-path-and-action-zero-smoke",
+      "duration": "第 1-2 周",
+      "protocol": "在 20 个 navmini 或等价 scenes 上，对 AutoVLAAgent/predict/GRPO 三入口做正常、forced EOS、低 ID 和合法短序列 trace；加载固定 codebook，输出 action 0 单次/重复轨迹数值和 digest。",
+      "decision": "只有公开 agent 执行路径把非法/不足输出变成 action 0，且 action 0 在至少一个预注册 ODD 场景不是保守安全动作，才继续攻击主实验；否则原 token-alias vehicle attack 主张被 kill 或降为训练/组件 bug。"
+    },
+    {
+      "stage": "accepted-input-and-natural-baseline",
+      "duration": "第 3-4 周",
+      "protocol": "验证 driving-command 接口是否接受自由字符串，再在至少 300 个唯一 scenes、每 scene 最多 3 个解码 seeds 上测 clean natural early EOS/short/invalid 与异常处理；报告 scene-cluster incidence 和 95% 区间。",
+      "decision": "接口仅支持固定枚举时，恶意语言路径不可实现；自然零事件只给上置信界，不能写成不会发生。"
+    },
+    {
+      "stage": "paired-excess-risk-study",
+      "duration": "第 5-7 周",
+      "protocol": "在至少 240 个隔离 scene/initial-state blocks 上运行 64-query targeted language、matched random text、natural clean 与 direct-token fault；从同一初态比较 current、constrained、retry 和 strict reject。",
+      "decision": "pilot 后仿真功效须达到双侧 alpha 0.05、至少 80% 功效检测 attack 相对 matched random/natural 的 0.10 绝对危险结果差或 0.20 标准差最低 TTC 差，并至少有 30 个 discordant pairs；不足则不作 excess-risk 主张。"
+    },
+    {
+      "stage": "closed-loop-mrm-and-held-out-audit",
+      "duration": "第 8-10 周",
+      "protocol": "仅当前三门通过后，在 CARLA 隔离路线从同一快照比较 current alias/failure、immediate fail-stop、strict reject+MRM、allowlist 和 constrained decoding；攻击模板、场景与 seed 隔离。",
+      "decision": "若 strict reject 的车辆收益被 false fallback、延迟或 MRM 风险抵消，则不推荐 MRM；可以只采用 parser invariant、allowlist 或 retry。"
+    }
+  ],
+  "strongBaselines": [
+    {
+      "name": "unchanged official AutoVLAAgent inference",
+      "role": "固定公开执行合同，包含合法 token filtering 与现有异常行为；不能用 GRPO training path 代替。"
+    },
+    {
+      "name": "direct invalid-token and forced-EOS fault injection",
+      "role": "定位 parser/decoder 因果链和每个位置的 action-0 后果，但明确不作为可实现语言攻击。"
+    },
+    {
+      "name": "natural clean decoding failures",
+      "role": "未编辑命令下的 early EOS、短序列、非动作输出和异常率，为 attack-specific excess risk 提供自然基线。"
+    },
+    {
+      "name": "budget-matched random language edits",
+      "role": "匹配 suffix 长度、编辑距离、位置与 64-query 预算，检验目标搜索是否超越普通文本敏感性。"
+    },
+    {
+      "name": "grammar-constrained action decoding",
+      "role": "在 action phase mask 非 action token 并强制固定长度，检验无需车辆回退即可消除路径。"
+    },
+    {
+      "name": "retry-once and command allowlist",
+      "role": "分别代表低成本生成恢复和输入准入；若足够，不应默认部署复杂 MRM。"
+    },
+    {
+      "name": "strict reject plus independent MRM",
+      "role": "非法或短输出显式拒绝后执行非 fail-stop 车辆回退，报告 clean false fallback、后车风险和时延。"
+    },
+    {
+      "name": "oracle valid-token completion",
+      "role": "用匹配 clean 场景的真实合法 action token 补足序列，作为不可部署上界并分离生成失败与 codebook/控制风险。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "executed alias reachability",
+      "definition": "实际 AutoVLAAgent 调用中，非法/不足输出是否到达 decoder、被映射/补为 index 0 并进入 evaluator/controller；training/helper 单独报告。",
+      "unit": "public execution entrypoint and scene"
+    },
+    {
+      "name": "action-zero semantic profile",
+      "definition": "固定 codebook index 0 的单步/重复位移、航向、曲率、隐含速度/减速度、轨迹可行性及不同初态下的安全裕度。",
+      "unit": "codebook revision by initial-state stratum"
+    },
+    {
+      "name": "attack-specific invalid-output excess",
+      "definition": "targeted accepted-language attack 相对 natural 和 matched random 导致可达 invalid/short/alias 状态的配对概率差。",
+      "unit": "unique scene/initial-state block"
+    },
+    {
+      "name": "vehicle excess risk",
+      "definition": "在同 scene/seed 下 attack 相对 natural/random 的 collision、最低 TTC、越线、route completion 和 PDMS 安全分量差；direct token fault 不计攻击发生率。",
+      "unit": "paired scene block"
+    },
+    {
+      "name": "strict-contract safety and utility",
+      "definition": "current、constrained、retry、allowlist、strict reject+MRM 的 hazard、false reject/fallback、route completion、解码时延和 GPU 成本。",
+      "unit": "scene block with cluster interval"
+    },
+    {
+      "name": "natural failure incidence",
+      "definition": "clean accepted command 下 early EOS、短动作、非动作 completion、空轨迹和异常的 scene-cluster 比例；零事件报告 95% 上界。",
+      "unit": "unique clean scene"
+    },
+    {
+      "name": "attack cost and transfer",
+      "definition": "成功攻击查询数、编辑/token 成本、route-intent 保持率，以及跨 scene、checkpoint seed 和 held-out prompt template 的转移。",
+      "unit": "scene-level attack attempt"
+    }
+  ],
+  "successCriteria": [
+    "运行时 trace 证明固定公开 agent 执行路径会把由模型生成的非法/不足动作变成 codebook index 0 或等价 fail-open 轨迹；只在 helper 或 GRPO training 路径出现不算成功。",
+    "固定 codebook 数值审计证明 action 0 在至少一个预注册 ODD stratum 中不是保守安全动作，并由同初态车辆执行产生可重复安全裕度损失；token 编号本身不算证据。",
+    "在至少 240 个独立 scene blocks 和功效门下，只经 accepted language input 的 targeted attack 相对 matched random text 与 natural decoding failures 产生显著 invalid/alias 与车辆 excess risk，95% 配对区间不跨零。",
+    "constrained decoding 或 strict reject+MRM 在 held-out attack 上降低 excess hazard，且 clean false fallback、route completion 和延迟没有越过预注册上限，从而支持明确 parser、输入准入或回退决策。",
+    "负结果必须改变防御：路径不可达时只加 invariant/assertion 并终止攻击主张；action 0 保守时保留显式合同但不部署攻击专用 MRM；语言攻击不超 random/natural 时按普通 robustness/fault 处理。"
+  ],
+  "killCriteria": [
+    "公开 AutoVLAAgent 推理在 decoder 前始终删除低 ID token，短序列只显式失败且外层不会静默执行 action 0；alias 仅存在于 GRPO training/helper 路径。",
+    "固定 checkpoint/codebook 的 action 0 在所有预注册 ODD 初态中都是保守停车/低风险轨迹，或任何危险只来自人工重复注入而非模型可生成路径。",
+    "恶意语言输入需要未授权自由文本、直接 token/logit 写权限或超过预算查询，不能通过系统实际接受的 command path 实现。",
+    "targeted language 在足够功效下不比 matched random text、natural early-stop 或普通 token fault 增加 invalid/alias 和车辆风险。",
+    "strict reject+MRM 的收益被误回退、后车风险、延迟或 route completion 损失完全抵消，且 constrained decoding/retry/allowlist 已足够。"
+  ],
+  "risks": [
+    {
+      "risk": "静态路径被误当执行证据",
+      "detail": "decoder helper 和 GRPO padding 存在，但官方 agent inference 会先过滤合法 action token。",
+      "mitigation": "第一阶段必须给出运行时 caller-to-controller trace；未命中实际执行立即 kill，不用复制函数体 fixture 过门。"
+    },
+    {
+      "risk": "action 0 语义先验错误",
+      "detail": "index 0 只是聚类 codebook 顺序，可能是停车、直行或其他轨迹，且随 revision 变化。",
+      "mitigation": "固定 digest 后读取数值 codebook 并执行单次/重复轨迹；所有命名等审计后再给。"
+    },
+    {
+      "risk": "任意 token 注入冒充语言攻击",
+      "detail": "直接写 completion buffer 只证明组件可被测试，不证明导航输入能诱发同一状态。",
+      "mitigation": "攻击主分析只允许 driving-command 字符串；direct token injection 永久标为 fault/diagnostic。"
+    },
+    {
+      "risk": "natural/random 基线过弱",
+      "detail": "随机字符或单次 clean decode 可能低估普通生成失败。",
+      "mitigation": "匹配 edit/query budget，至少 300 unique scenes 测自然 incidence，多 seed 嵌套并报告上置信界。"
+    },
+    {
+      "risk": "NAVSIM 到 CARLA 桥接",
+      "detail": "静态/伪模拟轨迹评分不能证明闭环 MRM，桥接还可能引入额外 parser 和控制错误。",
+      "mitigation": "NAVSIM 只回答路径和规划；CARLA 需 base/base 同初态复现与独立 adapter 验收，不通过则收缩车辆主张。"
+    },
+    {
+      "risk": "许可证限制复现发布",
+      "detail": "AutoVLA 禁止进一步转移软件及衍生物，checkpoint 条款还需按 revision 核验。",
+      "mitigation": "发布独立 hooks、测试协议、hash、数值摘要和统计，不分发上游代码、权重、codebook 或派生文件。"
+    }
+  ],
+  "impact": "若三道门全部成立，结果会要求生成式驾驶栈把动作 grammar、固定长度和显式 reject 作为安全接口，并在无法重试时进入独立 MRM，而不是静默把解析失败变成合法 codebook 动作。若任一门失败，决策同样明确：路径不可达则修代码合同但终止攻击论文；action 0 保守则不把 index 0 当危害源；目标语言不超过 natural/random 则采用普通输入 allowlist、constrained decoding 或 reliability testing。所有结论绑定固定代码、checkpoint、codebook、输入权限和仿真 ODD，不提供自然攻击发生率或现实道路安全证据。",
+  "evidence": [
+    {
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving",
+      "localLink": "papers/reasonbreak-vla-vulnerability-driving/",
+      "role": "本地一手论文笔记对应的最近文本攻击竞品：覆盖 reasoning、trajectory 和闭环传播，但没有隔离 AutoVLA parser 或 action-0 alias。"
+    },
+    {
+      "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+      "year": 2025,
+      "venue": "NeurIPS",
+      "url": "https://arxiv.org/abs/2506.13757",
+      "sourceOrigin": "external",
+      "role": "模型与动作 token 化的一手论文，定义统一推理/规划对象，但没有声称 invalid-token 映射安全或给出 action 0 语义。"
+    },
+    {
+      "title": "AutoVLA official code and checkpoint release at fixed commit",
+      "year": 2026,
+      "venue": "Official GitHub repository",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "sourceOrigin": "external",
+      "role": "决定性固定资产：提供 decoder helper、GRPO padding、官方 agent inference、codebook/checkpoint 和许可证边界，必须由运行时证明实际执行分支。"
+    },
+    {
+      "title": "Technical Report on the CVPR 2026@AdvML Workshop Challenge",
+      "year": 2026,
+      "venue": "CVPR AdvML Workshop",
+      "url": "https://arxiv.org/abs/2607.11560",
+      "sourceOrigin": "external",
+      "role": "最近多模态黑盒竞品：覆盖 suffix-only 文本成本与隐藏模型迁移，但目标是 DriveLM QA 偏离，不是动作 parser 和车辆执行。"
+    },
+    {
+      "title": "CARLA simulator release 0.9.15",
+      "year": 2022,
+      "venue": "Official GitHub release",
+      "url": "https://github.com/carla-simulator/carla/releases/tag/0.9.15",
+      "sourceOrigin": "external",
+      "role": "固定闭环执行资产，仅在路径和 action-0 门通过后测车辆后果；MIT simulator 结果不等于道路证据。"
+    },
+    {
+      "title": "UN Regulation No. 157: Automated Lane Keeping Systems",
+      "year": 2021,
+      "venue": "UNECE",
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-157-automated-lane-keeping-systems-alks",
+      "sourceOrigin": "external",
+      "role": "minimum risk manoeuvre 的正式车辆语境，约束 strict reject 后必须评估真实机动而非空轨迹、零 token 或立即 fail-stop。"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:15:14.784Z"
+}

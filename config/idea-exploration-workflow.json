@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "name": "evidence-first-blind-idea-exploration",
+  "requiredSkills": [
+    {
+      "name": "research-lit",
+      "scope": "all"
+    },
+    {
+      "name": "comm-lit-review",
+      "scope": "communications"
+    },
+    {
+      "name": "idea-creator",
+      "scope": "all"
+    },
+    {
+      "name": "novelty-check",
+      "scope": "all"
+    },
+    {
+      "name": "citation-audit",
+      "scope": "all"
+    }
+  ],
+  "stages": [
+    "scope",
+    "retrieve-fanout",
+    "deduplicate",
+    "verify-primary-sources",
+    "inspect-open-assets",
+    "generate-candidates",
+    "novelty-collision",
+    "blind-panel-review",
+    "revise-or-reject",
+    "global-independent-review",
+    "publish"
+  ],
+  "sourceFamilies": [
+    "local-corpus",
+    "arxiv",
+    "publisher-and-venue",
+    "semantic-scholar",
+    "openalex",
+    "official-project",
+    "official-code-and-data"
+  ],
+  "requirements": {
+    "minQueryFamilies": 6,
+    "minVerifiedReferences": 14,
+    "minRecentReferences": 7,
+    "recentSinceYear": 2024,
+    "minLocalReferences": 2,
+    "minExternalReferences": 8,
+    "minOfficialCodeOrDataAssets": 2,
+    "minGeneratedCandidates": 8,
+    "minRejectedCandidates": 3,
+    "minPublishedIdeas": 2,
+    "maxPublishedIdeas": 4,
+    "minEvidencePerIdea": 4,
+    "maxEvidencePerIdea": 7,
+    "minBlindReviewersPerIdea": 5,
+    "maxPilotWeeks": 12
+  },
+  "feasibilityPolicy": {
+    "definition": "可行表示存在可信、可分解的实现路径和能够推翻核心假设的可证伪最小实验；不要求已有开箱即用代码、固定 checkpoint 或完整现成闭环。",
+    "requiredChecks": [
+      "列出可复用资产与必须自行实现的模块，并明确两者边界。",
+      "说明接口、数据、算力、依赖、工程里程碑和首个可证伪实验。",
+      "区分资产未核验、资产缺失和必须研究性实现三种风险，不把它们混为一谈。",
+      "只有关键数据依法不可得、核心干预不可观测、最小实验不能识别主张或周期超过上限时，才能因可行性直接淘汰。"
+    ],
+    "nonRejectionRule": "不得仅因需要自行实现适配器、模型模块、评测器、数据处理或实验闭环而淘汰高潜力 Idea。"
+  },
+  "candidateHardStops": [
+    {
+      "id": "injectability-is-not-occurrence",
+      "rule": "公开代码能够合成注入某类故障，只能证明可测试性；没有自然事件、真实发布记录或可信发生机制时，不得据此宣称问题真实存在。"
+    },
+    {
+      "id": "method-transfer-is-not-novelty",
+      "rule": "把成熟统计、控制、安全或系统方法应用到单一数据集，不自动构成新贡献；必须产生新的识别对象、机制边界、反例或可迁移结论。"
+    },
+    {
+      "id": "repository-is-not-executability",
+      "rule": "官方仓库存在不等于方案可行；应核验可用版本、许可证、数据或 checkpoint、依赖和入口，并把缺失部分写成可信的自建计划。没有开箱即用代码或完整现成闭环本身不得作为淘汰理由。"
+    },
+    {
+      "id": "fixture-is-not-task-evidence",
+      "rule": "合成 fixture、复制的方法体或结构合法的 mock 只能通过执行门，不能替代真实模型、数据、协议栈或任务指标证据。"
+    },
+    {
+      "id": "negative-result-needs-consequence",
+      "rule": "可预期或由实验设计直接推出的无信息负结果不单独发布；负结果必须改变方法排序、系统决策、评测结论或后续数据采集。"
+    }
+  ],
+  "evaluation": {
+    "publicationScore": 10,
+    "scale": {
+      "min": 1,
+      "max": 10,
+      "anchors": [
+        {
+          "range": "1-3",
+          "meaning": "核心论点不可核验、问题已被覆盖，或最小实验不可执行。"
+        },
+        {
+          "range": "4-6",
+          "meaning": "方向有价值，但存在会改变结论的重大新颖性、识别或工程缺口。"
+        },
+        {
+          "range": "7-8",
+          "meaning": "候选可信且值得继续打磨，但仍有至少一项重要风险没有被实验闭环覆盖。"
+        },
+        {
+          "range": "9",
+          "meaning": "证据和研究闭环很强，只剩一个边界清楚、可补齐的次要不确定性。"
+        },
+        {
+          "range": "10",
+          "meaning": "在候选明确限定的范围内，一手证据、不可替代差异、实现路径、对比协议和止损条件均无实质性缺口。"
+        }
+      ]
+    },
+    "dimensions": [
+      {
+        "id": "novelty",
+        "label": "新颖性",
+        "question": "问题定义、机制或验证对象是否明显超出最近直接竞品，而不是改名、换骨干或简单组合？"
+      },
+      {
+        "id": "feasibility",
+        "label": "实现可行性",
+        "question": "公开数据、代码、算力和工程依赖是否支持在限定周期内实现并完成关键消融？"
+      },
+      {
+        "id": "success-probability",
+        "label": "成功率",
+        "question": "核心假设是否有直接证据支撑，并且最小实验有合理概率产生明确的正或负结论？"
+      },
+      {
+        "id": "impact",
+        "label": "影响力",
+        "question": "无论结果正负，是否会改变真实系统设计、科学认识、评测协议或后续研究投入？"
+      },
+      {
+        "id": "comparison-readiness",
+        "label": "前人实验可对比性",
+        "question": "是否存在可复现的直接竞品、公开基线、数据和指标，能够支持公平且有说服力的比较？"
+      }
+    ],
+    "reviewerLenses": [
+      {
+        "id": "novelty-reviewer",
+        "focus": "功能等价的最近工作、并发工作与审稿人撞题风险"
+      },
+      {
+        "id": "implementation-reviewer",
+        "focus": "代码、数据、算力、依赖、工程周期与最小实现路径"
+      },
+      {
+        "id": "empirical-reviewer",
+        "focus": "核心假设、成功概率、指标、消融、统计功效与止损条件"
+      },
+      {
+        "id": "impact-reviewer",
+        "focus": "问题意义、潜在影响、负结果价值与真实系统外推边界"
+      },
+      {
+        "id": "benchmark-reviewer",
+        "focus": "强基线、公平比较、数据泄漏、评价协议与前人实验可复现性"
+      }
+    ],
+    "promptPolicy": [
+      "每位评估者必须独立给出全部五个维度的 1-10 分、逐项证据和最强反对意见。",
+      "评估者不得看到其他评估者的结果。",
+      "评估提示不得包含、暗示或要求猜测主流程的接受阈值。",
+      "实现可行性依据可信实现路径与可证伪最小实验判断，不以是否已有开箱即用代码或完整现成闭环作替代判断。",
+      "10 分只表示候选在其明确限定范围内不存在实质性未解决缺口，不代表领域问题已永久解决。",
+      "主流程只能依据评估者实际返回的分数和证据作出接受、修订或淘汰决定。"
+    ],
+    "sequentialReviewPolicy": "任一独立评估者在任一维度或总体分上未达到发布分时，候选已不可能通过本轮全体一致门槛，可立即标记 early-rejected；只有此前评估均达到发布分的候选才继续补齐全部 reviewer lenses。已发布候选仍必须满足完整五视角和最少评估者数量。",
+    "reviewerReusePolicy": "同一盲评者可以在 dossier 全部冻结后，以同一个固定 lens 评估多个候选或多个方向，以保持判断尺度一致；不得切换 lens，不得参与任何候选的检索、筛选或方案撰写，也不得读取其他盲评结果。每个候选仍至少由两个不同身份评估，只有全满分候选才补齐五个 lens。",
+    "snapshotPolicy": "候选盲评必须记录 dossierSnapshotFingerprint，且 reviewedAt 不得早于 dossier frozenAt；全局终审必须绑定中心快照和包含候选池、dossier、盲评报告在内的逐方向 artifact 快照。任何内容变更都会使既有评审失效。"
+  },
+  "directionQuerySource": "config/literature-review-workflow.json#directions",
+  "artifactContract": {
+    "localEvidenceMarker": "localPaperId",
+    "externalEvidenceMarker": "sourceOrigin=external",
+    "requiredDirectionFields": [
+      "searchAudit",
+      "assetAudit",
+      "candidateLedger",
+      "explorationRun",
+      "problemSignals",
+      "ideas"
+    ],
+    "requiredIdeaFields": [
+      "keyProblem",
+      "currentLimitations",
+      "hypothesis",
+      "noveltyClaims",
+      "method",
+      "implementationPath",
+      "minimumStudy",
+      "strongBaselines",
+      "metrics",
+      "successCriteria",
+      "killCriteria",
+      "risks",
+      "impact",
+      "evidence",
+      "blindReview"
+    ]
+  }
+}

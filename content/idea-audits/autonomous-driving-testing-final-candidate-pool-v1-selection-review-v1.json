@@ -1,0 +1,95 @@
+{
+  "selectionAgentId": "019fbbe7-eb0c-7931-95b6-6553d39073da",
+  "selectedAt": "2026-08-01T06:09:16Z",
+  "directionId": "autonomous-driving-testing",
+  "candidatePoolPath": "content/idea-audits/autonomous-driving-testing-final-candidate-pool-v1.json",
+  "selectedCandidateIds": [
+    "paired-execution-layer-verdict-set",
+    "versioned-regression-evidence-inheritance",
+    "episodewise-risk-budget-for-sequential-verification"
+  ],
+  "candidateDecisions": [
+    {
+      "candidateId": "paired-execution-layer-verdict-set",
+      "decision": "shortlist",
+      "reason": "Digital Siblings、Formal Scenario-Based Testing、Cam2Sim 与实车扰动研究都显示执行层间存在事件级不一致，但尚未控制把下层 pass 映射成现实 pass 的 false-safe 风险。以同一 scenario-version-seed 为单位记录各层 verdict、missing 和 abstain，并显式报告物理执行选择偏差，可在固定 coverage 下与单 simulator、固定一致规则公平比较；Cam2Sim 足以完成可证伪 pilot。"
+    },
+    {
+      "candidateId": "versioned-regression-evidence-inheritance",
+      "decision": "shortlist",
+      "reason": "FSE 2022、DETOUR 和 coverage-guided 工作主要优化 suite reduction、APFD 或历史失败命中，ISO 24089 与 UN R156 只要求版本可追溯。候选改为同场景版本对上的 false-inheritance 与 unknown mass，并用一次全量新版执行提供 oracle；分层旧 pass、旧 fail、边界与自然日志后，能公平检验 change descriptor 是否真正减少错误继承。"
+    },
+    {
+      "candidateId": "episodewise-risk-budget-for-sequential-verification",
+      "decision": "shortlist",
+      "reason": "DriveVer 与 TOAD 已实例化多候选 verifier 和 test-time 搜索，一般 conformal 工作只给决策或序列覆盖。候选把统计单位固定为完整 episode，记录所有已选与未选 proposal，并随机化候选数和停止时刻，以 any-unsafe-accept 事件检验逐步校准是否在闭环中失真；公开 mini routes 加自建轻量 verifier 即可完成最小实验。"
+    },
+    {
+      "candidateId": "failure-hit-rate-to-natural-exposure",
+      "decision": "reject",
+      "reason": "AST、fuzzing 或生成器有意富集失败，通常又没有可计算 proposal density 和完整支持；其 hit-rate 因而不能识别自然 ODD 的暴露率。已有 accelerated evaluation、NADE 和 Deep-PrAE 已说明所需自然分布与权重条件，若补齐这些条件便退化为直接路线，否则现实事故率不可证伪。"
+    },
+    {
+      "candidateId": "black-box-generator-weight-calibration-without-support",
+      "decision": "reject",
+      "reason": "黑盒生成器遗漏的自然尾部 support mass 无法由已生成样本上的事后 density ratio 恢复，训练数据与 guidance 造成的缺失也不是随机。已有黑盒稀有事件证书、统计现实性和抽样补偿方法直接覆盖可行部分；没有独立自然日志和 support audit 时，所谓校准风险不可识别。"
+    },
+    {
+      "candidateId": "multi-oracle-majority-single-label",
+      "decision": "reject",
+      "reason": "碰撞、规则、舒适、责任和 criticality oracle 对应不同损失与语义，且常共享同一简化动力学或参数，不能视为独立投票者。Digital Siblings 的一致规则只针对同一 failure 目标；跨语义多数票没有现实 ground truth，强制单标签反而掩盖分歧，应由 verdict set 与 abstain 处理。"
+    },
+    {
+      "candidateId": "technical-responsibility-as-legal-liability",
+      "decision": "reject",
+      "reason": "CARS、RSS、ISO 指南与 NHTSA 事故报告都把技术 attribution、规范要求和法律调查分开。法律责任依赖法域、主体义务、证据规则及完整事实，统计单位也应是案件而非仿真 episode；技术 oracle 的 responsible 输出无法识别 liability，继续实验只会越界扩大结论。"
+    },
+    {
+      "candidateId": "single-dataset-conformal-abstention",
+      "decision": "reject",
+      "reason": "Conformal Decision Theory 与 online conformal 已提供一般风险或序列覆盖工具，把现成方法应用到一个驾驶 benchmark 只能证明迁移。若仍按 frame 或随机 split 评估，还与安全 episode 和自适应候选选择不对齐；真正的驾驶残差已被 episode-wise verifier 风险候选明确表达。"
+    },
+    {
+      "candidateId": "historical-failure-nearest-neighbor-retest",
+      "decision": "reject",
+      "reason": "DETOUR、coverage-guided selection 和 Apollo reduction 已直接按道路结构、覆盖与历史失败做优先或缩减。最近邻重测会系统忽略旧 pass 到新 fail 以及新失效机制，仍只优化 APFD 或失败保留率；有效残差是未测证据的 false-inheritance，已由版本证据继承候选取代。"
+    },
+    {
+      "candidateId": "drivelm-predicted-graph-dependent-denominator",
+      "decision": "reject",
+      "reason": "固定 DriveLM evaluator 确实允许首个预测图决定后续问题是否进入分母，original 与 fixed-denominator 回放可揭示排名偏差。但当前只有一个 graph benchmark 和一处 evaluator patch，缺少跨基准共同机制或闭环后果；两天可完成的维护修复不足以成为独立研究候选。"
+    },
+    {
+      "candidateId": "lampilot-success-conditioned-quality-selection",
+      "decision": "reject",
+      "reason": "LaMPilot 固定 evaluator 已确认 success=false 时 quality 直接为零，重算全 episode 的 success-quality 联合分布能够修正选择偏差。但证据仍局限单个 highway-env benchmark；在没有多个 instruction-following benchmark 的同类排名反转前，这只是评分定义修复而非不可替代研究问题。"
+    },
+    {
+      "candidateId": "lampilot-overtake-prefix-completion-shortcut",
+      "decision": "reject",
+      "reason": "官方 overtake evaluator 在进入目标车道并超过前车时即终止，增加返回原车道、稳定和完整时域条件可直接修补。然而该问题只涉及一个 maneuver 的 completion 定义，尚未证明其他任务共享同一捷径或方法排序会稳定反转，适合作为 benchmark validity audit 案例而非独立候选。"
+    },
+    {
+      "candidateId": "simulator-injection-capability-as-occurrence",
+      "decision": "reject",
+      "reason": "Bench2Drive-Robust 的 frame drop、GPS noise 与 delay 入口只证明受控注入和后果可执行，不提供现实 ODD 中的自然发生分母。Real-World Perturbation Testing 同样是干预而非现场抽样；没有遥测或公开部署记录时，不能从模拟器能力推出高频现实风险。"
+    },
+    {
+      "candidateId": "world-model-fidelity-as-verdict-transfer",
+      "decision": "reject",
+      "reason": "世界模型准入研究已实证视觉质量与动作跟随排名可反转，Cam2Sim 也只提供有限的行为配对。FVD、感知相似度或 photorealism 没有同场景 policy outcome，无法识别现实 verdict；有效残差已转化为跨执行层的 paired false-safe 与 abstain，而不是继续使用视觉代理。"
+    },
+    {
+      "candidateId": "aggregate-ranking-as-failure-set-validity",
+      "decision": "reject",
+      "reason": "多策略平均总分的 Spearman 排名可以被大量容易场景主导，并不决定逐事件 failure-set precision、recall 或 false-safe。Digital Siblings、Cam2Sim 与实车扰动均提示平台或层级间解耦；若没有 scenario-policy-version 配对，聚合排名无法支持现实失败集合预测。"
+    },
+    {
+      "candidateId": "crash-report-narrative-as-causal-replay",
+      "decision": "reject",
+      "reason": "NHTSA 事故叙述可能字段未知、重复或后续修订，且达到报告门槛的事故本身经过选择；语义相似的 MetaDrive 场景缺少 EDR、完整轨迹和干预真值，不能复现原事故因果或责任。官方固定仓库还只有 README，因此目前最多支持 narrative-to-scenario fidelity 数据研究。"
+    }
+  ],
+  "crossDirectionFinding": "episodewise-risk-budget、DriveLM denominator 及两项 LaMPilot evaluator 候选也出现在 agentic 汇总池；本文件仅保留 episode 风险对象，后三项因单 benchmark 局部性在两处都拒绝。paired-execution-layer 与 3D trajectory admission、world-model statewise admission 的单位分别是跨层现实事件、重建轨迹和同状态动作对；versioned evidence inheritance 处理普通版本漂移，也与 security 的恶意 signed update 准入保持清楚边界。",
+  "candidatePoolSnapshotFingerprint": "5072100bafa5769c88d653367c49325fd1e0893c25916b89a445b59ca51d0065"
+}

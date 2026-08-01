@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-semantic-contract-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "runtime-semantic-checkers-for-fusion-contracts",
+  "workingTitle": "跨资产协同感知语义契约图与差分执行",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb740-61c8-7eb2-ade8-0f22696fd781",
+    "role": "primary-source-and-open-asset-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "scope": "Build a cooperative-perception-specific contract intermediate representation that links paper claims, release manifests, converters, configuration, loaders, checkpoints, and evaluators, then tests semantic invariants through structure-aware linting and differential execution.",
+  "verifiedContractDrifts": [
+    {
+      "asset": "CooperScene",
+      "primaryUrls": [
+        "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/tools/dataset_converters/coop_data_converter.py",
+        "https://data.ucr.edu/datasets/cooperscene/mini.zip",
+        "https://arxiv.org/html/2606.31219v1"
+      ],
+      "finding": "CRC-verified released mini indexes contain four ego projections and metainfo.dataset=OPV2V, while every public converter version and the paper protocol define three vehicle ego projections and the current converter writes metainfo.dataset=CooperScene.",
+      "claimBoundary": "This does not identify which index produced a paper table or establish any metric effect."
+    },
+    {
+      "asset": "V2XScenes",
+      "primaryUrls": [
+        "https://openaccess.thecvf.com/content/ICCV2025/html/Wang_V2XScenes_A_Multiple_Challenging_Traffic_Conditions_Dataset_for_Large-Range_Vehicle-Infrastructure_ICCV_2025_paper.html",
+        "https://github.com/ADVRC-Wangbw/V2XScenes/blob/2f5a6840449d9d169b7d7d7ad9aed544242b6820/opencood/hypes_yaml/v2xscenes/v2xsences_where2comm.yaml",
+        "https://github.com/ADVRC-Wangbw/V2XScenes/blob/2f5a6840449d9d169b7d7d7ad9aed544242b6820/opencood/data_utils/datasets/basedataset/v2xscenes_basedataset.py"
+      ],
+      "finding": "The paper describes an 80/20 sequence split, while two fixed public configurations list identical train and test scenario sets and the loader selects those lists directly.",
+      "claimBoundary": "Without authorized data enumeration, call this a static paper-versus-public-configuration protocol drift, not proven sample leakage or paper-result contamination."
+    },
+    {
+      "asset": "Co-MTP",
+      "primaryUrls": [
+        "https://github.com/xiaomiaozhang/Co-MTP/blob/8d0937faec0cfb929a9d50dd921d39f0837a84f0/preprocess/preprocess_v2x.py",
+        "https://github.com/xiaomiaozhang/Co-MTP/blob/8d0937faec0cfb929a9d50dd921d39f0837a84f0/training/dataset_v2x_road.py",
+        "https://arxiv.org/abs/2502.16589"
+      ],
+      "finding": "The fixed public producer writes other_fut_* keys while the training loader requires other_label, other_auxiliary_label, and other_label_mask, alongside independently audited entrypoint and mode inconsistencies.",
+      "claimBoundary": "No released checkpoint or intermediate artifact establishes that an internal unpublished pipeline had the same mismatch."
+    },
+    {
+      "asset": "CodeFilling",
+      "primaryUrls": [
+        "https://github.com/PhyllisH/CodeFilling/commit/57f83ccc7d8457da74f06424811c130c3020e19e",
+        "https://openaccess.thecvf.com/content/CVPR2024/html/Hu_Communication-Efficient_Collaborative_Perception_via_Information_Filling_with_Codebook_CVPR_2024_paper.html"
+      ],
+      "finding": "The fixed public path exposes a selected-cell proxy but no complete executable framing and byte-accounting path, while the paper reports communication volume and transmitted integer codes.",
+      "claimBoundary": "The public artifact cannot independently verify proxy-to-wire-byte equivalence; this does not establish that the paper's communication values are wrong."
+    }
+  ],
+  "nearestWorkBoundary": [
+    {
+      "work": "JSON Schema 2020-12",
+      "url": "https://json-schema.org/draft/2020-12/json-schema-validation",
+      "occupiedSpace": "Types, required fields, and local structural constraints."
+    },
+    {
+      "work": "TensorFlow Data Validation",
+      "url": "https://proceedings.mlsys.org/paper_files/paper/2019/hash/928f1160e52192e3e0017fb63ab65391-Abstract.html",
+      "occupiedSpace": "Data anomalies and training-serving skew."
+    },
+    {
+      "work": "T2C",
+      "url": "https://www.usenix.org/conference/osdi25/presentation/lou",
+      "occupiedSpace": "Deriving runtime semantic checkers from tests; test-to-checker is not a contribution here."
+    },
+    {
+      "work": "Basilisk",
+      "url": "https://www.usenix.org/conference/osdi25/presentation/zhang-tony",
+      "occupiedSpace": "Provenance invariants and protocol-safety proofs."
+    },
+    {
+      "work": "RCP-Bench",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+      "occupiedSpace": "Sensor corruption and temporal-misalignment robustness, not cross-artifact release semantics."
+    }
+  ],
+  "noveltyBoundary": [
+    "The research object is a cross-asset provenance graph, not one repository's bug list.",
+    "The invariant vocabulary is cooperative-perception-specific: ego and agent roles, transform direction, clock domain, agent order, physical-event identity, cohort, payload identity, and proxy-versus-wire communication units.",
+    "The validation method combines structure-aware extraction with semantic-preserving metamorphic transforms and paired differential execution.",
+    "Every violation carries an evidence boundary that separates static contract drift, runtime behavior, and unidentified metric impact."
+  ],
+  "twoWeekMinimum": [
+    "Freeze four official commits and construct a read-only artifact graph spanning paper claim, YAML, converter, release index, loader, checkpoint metadata, and evaluator.",
+    "Parse Python AST, YAML, restricted pickle manifests, and state_dict key and shape metadata without regex-based binary interpretation.",
+    "Run four CPU-first differentials: CooperScene release versus converter; V2XScenes train versus test selectors; Co-MTP producer versus consumer key sets; CodeFilling proxy rate versus a reference serialization boundary.",
+    "Inject paired semantic mutants for ego role, transform direction, unit, agent order, timestamp provenance, physical-event cohort, and checkpoint-config binding.",
+    "Emit a machine-readable violation ledger with commit, path, observed value, expected invariant, minimum counterexample, and claim boundary."
+  ],
+  "sixWeekStudy": [
+    "Add read-only instrumentation at loader, packer, fusion, and evaluator boundaries for ego, agent lineage, frame, age, payload identity, and cohort.",
+    "On one license-compatible runnable stack, freeze a model or train a clearly labeled lightweight baseline and compare original, normalized, and injected-fault paired replay.",
+    "Port the shared rules to two additional frameworks and measure shared-rule coverage, repository-specific rules, false positives, localization, and overhead.",
+    "Release the contract schema, mutant corpus, paired outputs, provenance ledger, license inventory, and reproducible commands."
+  ],
+  "falsifiableClaims": [
+    {
+      "claim": "One shared contract IR detects the verified drift classes across at least three independent frameworks.",
+      "falsifier": "Rules reduce to repository names and fixed key special cases, or structural schema baselines detect the same complete set."
+    },
+    {
+      "claim": "At least one structurally valid contract drift changes evaluator cohort or a frozen model output before an exception is raised.",
+      "falsifier": "Every tested drift is explicitly rejected by the original implementation or no paired output difference is observable."
+    },
+    {
+      "claim": "Semantic-preserving normalization is stable under agent permutation, frame round trip, and unit-preserving transformations.",
+      "falsifier": "Clean legal transformations produce unexplained output differences beyond preregistered numeric tolerances."
+    }
+  ],
+  "baselines": [
+    "JSON Schema or Pydantic structural validation",
+    "Original repository assertions",
+    "File and configuration hash binding",
+    "TFDV-style field statistics",
+    "Final-metric-only comparison",
+    "Manual README-to-code audit"
+  ],
+  "metrics": [
+    "Verified-drift and injected-mutant detection rate",
+    "Clean-run false-positive rate",
+    "Shared-rule coverage across repositories",
+    "First correctly localized artifact layer",
+    "Detection lead time before model or evaluator failure",
+    "Paired cohort and model-output difference",
+    "Per-frame latency and peak memory overhead"
+  ],
+  "killCriteria": [
+    "Fewer than three independently verified cross-asset instances survive primary-source rechecking.",
+    "The shared IR degenerates into repository-specific key lists.",
+    "Every target drift is already caught by an original assertion or a structural schema baseline.",
+    "No licensed runnable model path exists by the end of the metadata prototype; drop model-impact claims.",
+    "Actual serialized payload boundaries remain unavailable; drop proxy-to-wire communication claims."
+  ],
+  "assetBoundary": [
+    "CooperScene code is MIT and the mini release has an official checksum and manifest; data derivatives remain under the official CC BY-NC-SA terms.",
+    "V2XScenes requires authorized data access and has no verified commit-bound paper checkpoint.",
+    "Co-MTP and V2X-Seq lack a verified public checkpoint and clear redistribution contract in the audited assets.",
+    "CodeFilling license metadata is inconsistent; use the stricter repository license and restrict the first prototype to parser and tensor semantics."
+  ]
+}

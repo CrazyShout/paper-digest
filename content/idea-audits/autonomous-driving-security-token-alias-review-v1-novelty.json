@@ -1,0 +1,42 @@
+{
+  "candidateId": "autovla-fail-open-action-token-alias-v2",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb8d-1ebc-7382-8a02-fd58dc793777",
+  "reviewedAt": "2026-08-01T04:33:23.300Z",
+  "scores": {
+    "novelty": 3,
+    "feasibility": 7,
+    "success-probability": 2,
+    "impact": 4,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "对固定 AutoVLA 提交做 parser/action-codebook 路径审计很具体，但 action grammar、长度检查、显式 reject 和 fail-safe fallback 是生成式控制接口的常规安全合同；ReasonBreak 又已覆盖语言扰动到驾驶 VLA 轨迹与闭环 hazard 的传播。剩余贡献完全依赖一个 AutoVLA 特定 alias 是否存在于正式执行路径，更接近高质量实现审计或漏洞报告，而不是可泛化的新研究命题。",
+    "feasibility": "静态 call graph、运行时 hooks、empty/short/invalid completion smoke 和 action-0 codebook 数值审计都能在较短时间完成，且 dossier 的第一道 kill gate正确。只有在该门通过后，240-scene 攻击、NAVSIM/CARLA 桥接与独立 MRM 才会变重；因此验证前提本身可行，但完整主张未必可执行。",
+    "success-probability": "固定提交的公开 `AutoVLA.predict` 在调用 decoder 前执行 `outputs_trimmed[outputs_trimmed >= action_start_id]`，而 literal-zero padding 只出现在 GRPO `generate_sample`。官方 `AutoVLAAgent.compute_trajectory` 直接调用 `predict`。因此低 ID token 不会在正式 agent 路径映射为 action 0；短或空 action 序列更可能返回空轨迹或触发下游形状/合同失败，而非静默执行 codebook index 0。核心 vehicle attack 前提很可能在第一周被 kill。",
+    "impact": "若运行时证明与静态路径相反，确有外层组件把空/短轨迹重新解释为 action 0，漏洞会有实际修复价值；但当前证据更支持增加断言、固定长度约束和错误传播测试，而不是部署复杂 MRM。单仓库、单提交、单 codebook 的 parser bug 对一般驾驶 VLA 的外推有限。",
+    "comparison-readiness": "dossier 正确区分 official inference、training helper、direct-token fault、natural failure、matched random text、constrained decoding、retry、allowlist 与 MRM，也明确了 kill 条件。仍需先把 empty action tensor 在 `decode_token_ids_to_trajectory`、`Trajectory` 构造和 evaluator 中的真实传播结果作为零号基线；在这一步前，任何 attack baseline 或 CARLA 比较都没有共同的可执行 estimand。"
+  },
+  "strongestObjection": "候选最关键的 alias 前提已经被所引用固定提交的公开调用链实质反驳：正式 `predict` 先过滤所有低于 `action_start_id` 的 token，且不使用 GRPO 的补零逻辑；`AutoVLAAgent` 又直接调用该 `predict`。除非运行时证明另一个公开执行入口会把空/短结果静默转成 action 0，否则这里只存在 helper/training 容错行为和一个应加断言的空输出合同问题。",
+  "requiredExperiment": "不做攻击搜索，先在固定 checkpoint 的官方 `AutoVLAAgent.compute_trajectory` 上以 hook 强制四类 completion：全低 ID、EOS-only、一个合法 action token、少于 horizon 的合法 action tokens。逐边界记录原始输出、过滤后 token、decoder 输入、返回数组形状、`Trajectory` 构造和 evaluator/controller 行为。只有低 ID 或不足输出在不修改下游代码时确实成为执行中的 action 0，才继续语言攻击；否则立即终止 token-alias vehicle-attack 主张并仅提交 parser contract 修复。",
+  "evidenceReopened": [
+    {
+      "url": "https://raw.githubusercontent.com/ucla-mobility/AutoVLA/ba34eed74ce6729e7986592d0e66cbaca397b4fa/models/autovla.py",
+      "finding": "固定提交的 `predict` 在解码前只保留 `outputs_trimmed >= action_start_id`，随后直接把筛选结果交给 decoder；同文件中的 literal-zero padding 位于 GRPO `generate_sample`，不是该 inference 方法。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ucla-mobility/AutoVLA/ba34eed74ce6729e7986592d0e66cbaca397b4fa/navsim/navsim/agents/autovla_agent.py",
+      "finding": "官方 `AutoVLAAgent.compute_trajectory` 构造 features 后直接调用 `self.autovla.predict(features)`，没有显示另一条把短输出补成 action 0 的公开 agent 分支。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ucla-mobility/AutoVLA/ba34eed74ce6729e7986592d0e66cbaca397b4fa/models/action_tokenizer.py",
+      "finding": "decoder helper 的确把直接传入的低 ID 映射为 codebook index 0，但这一事实只证明 helper 行为；由于正式 `predict` 先过滤低 ID，它不能单独证明部署路径 alias。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.29114",
+      "finding": "ReasonBreak 已在 reasoning-enabled driving VLA 上用受限黑盒文本扰动评估 reasoning、trajectory 和 closed-loop safety，报告最高 72% 的闭环轨迹操纵 ASR；本候选不能把语言到车辆 hazard 的传播本身作为新贡献。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "7a24fb422f25e793fac8987be258a40f31f0a09560e16524f875215fa631b03f"
+}

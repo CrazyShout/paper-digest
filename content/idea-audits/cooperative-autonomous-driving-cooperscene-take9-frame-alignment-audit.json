@@ -1,0 +1,1207 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditId": "cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "purpose": "Determine, without downloading the complete scene ZIP or full MCAP, whether official scene-9 ZIP frame names can be mapped verifiably to official scene-9 LiDAR timestamps.",
+  "auditConclusion": {
+    "mappingClass": "none",
+    "passed": false,
+    "scope": "No exact all-frame mapping passes the audit standard. The ordinal rule is independently supported at 12 first/middle/last YAML anchors, three per agent, but the remaining 149 frame ordinals per agent were not independently pose-anchored and no publisher-supplied filename-to-MCAP sidecar or converter contract was found.",
+    "ordinalCandidateRule": "For agent a and ZIP frame f in 540600..540760, candidate ordinal i=f-540600 selects the i-th strictly increasing /a_LIDAR message. At the 12 audited anchors, YAML lidar_pose -> MCAP /tf translation -> exact /tf-to-LiDAR timestamp/frame_id verifies this candidate.",
+    "candidateResults": {
+      "exact": false,
+      "offset": false,
+      "affine": false,
+      "ordinal": false,
+      "none": true
+    },
+    "ordinalCandidateEvidence": [
+      "For moving agents 1, 2, and 3, all nine sampled YAML translations uniquely match the expected /tf ordinal within 1e-9 m; the largest observed component error is 4.973799150320701e-14 m.",
+      "For every agent and all 161 records, the /tf record and corresponding LiDAR record have exactly equal MCAP log_time and exactly equal protobuf timestamp; every LiDAR frame_id is <agent>_base_link.",
+      "Agent 0 has a static, non-unique pose. The official converter groups equal filename stems across agents, and all 161 agent-0 and agent-1 MCAP log_time values are exactly equal, so the uniquely pose-anchored agent-1 ordinal disambiguates agent 0.",
+      "ZIP filename sequences and MCAP timestamps are both strictly monotone and duplicate-free."
+    ],
+    "strictBlockingPoint": "The 12 anchors do not exclude an unobserved dropped, duplicated, or shifted filename-to-MCAP association inside the unsampled intervals. Accepting all 161 rows from equal counts and sorted order would violate the audit prohibition.",
+    "minimumUnblockAction": "Range-read only the remaining small YAML members for moving agents 1, 2, and 3, match every lidar_pose translation uniquely to that agent's /tf records, bridge static agent 0 through the official same-stem grouping plus its exact 161-row log_time equality with agent 1, then emit and validate a 644-row sidecar with per-row ZIP member hash, agent/frame key, MCAP log_time, protobuf timestamp, frame_id, pose residual, uniqueness count, and missing/duplicate/monotonicity checks. No PCD, PNG, full ZIP, or full-MCAP payload download is required.",
+    "notClaimed": [
+      "No exact, constant-offset, or exact affine numeric conversion from filename integer to protobuf timestamp exists.",
+      "The sampled ordinal evidence is not reported as a strict all-frame mapping.",
+      "No offset or affine parameters were selected from perception-model results.",
+      "No full ZIP or full MCAP was downloaded."
+    ]
+  },
+  "inputs": [
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-throughput-stats.json",
+      "sha256": "d0d17212e2b7e5ca6c0998cc1fba240a40e31fa3a1b8274939771dd1dd44678a"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "sha256": "04e82964588ea1834964e3dc0a981f8721f96f3e0852c4a6b28210ecc2e82634"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-cooperscene-trace-audit.json",
+      "sha256": "3769a34409f6b3b9d0c93801e4e686b9085a9340c0506c5d4068ffd30251fa2d"
+    },
+    {
+      "path": "/tmp/cooperscene-config.json",
+      "sha256": "d87b221699a87246306e1e657b22fd0581a121d5f868addb69cad419c16ac243",
+      "scene9ZipUrl": "https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+      "scene9FullMcapUrl": "https://data.ucr.edu/datasets/cooperscene/mcap/9.mcap",
+      "scene9PreviewMcapUrl": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/9.mcap"
+    }
+  ],
+  "officialZipAudit": {
+    "url": "https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+    "contentLength": 2501028472,
+    "contentType": "application/zip",
+    "etag": "\"6a32e97b-9512aa78\"",
+    "lastModified": "Wed, 17 Jun 2026 18:37:47 GMT",
+    "rangeUsable": true,
+    "rangeValidation": "Every retained request returned HTTP 206 with an exact Content-Range total of 2501028472 and the expected response byte count.",
+    "baseRangeEvidence": [
+      {
+        "purpose": "Establish object length and Range behavior.",
+        "requestedRange": "bytes=0-0",
+        "responseContentRange": "bytes 0-0/2501028472",
+        "httpStatus": 206,
+        "bytesRead": 1,
+        "sha256": "5c62e091b8c0565f1bafad0dad5934276143ae2ccef7a5381e8ada5b1a8d26d2",
+        "responseDate": "Fri, 31 Jul 2026 04:53:29 GMT"
+      },
+      {
+        "purpose": "Read the ZIP EOCD without a complete archive download.",
+        "requestedRange": "bytes=-64",
+        "responseContentRange": "bytes 2501028408-2501028471/2501028472",
+        "httpStatus": 206,
+        "bytesRead": 64,
+        "sha256": "cd39f6571312856a47493bdfe98d3bce51656120b2d23c4b7c70dd493d6d98b9",
+        "responseDate": "Fri, 31 Jul 2026 04:53:58 GMT"
+      },
+      {
+        "purpose": "Read the exact central directory identified by the EOCD.",
+        "requestedRange": "bytes=2500874462-2501028449",
+        "responseContentRange": "bytes 2500874462-2501028449/2501028472",
+        "httpStatus": 206,
+        "bytesRead": 153988,
+        "sha256": "51ed3860c7e433158d96ba4b85000ae560b0112663571e5c74556e6fcb32523c",
+        "responseDate": "Fri, 31 Jul 2026 04:54:32 GMT"
+      }
+    ],
+    "endOfCentralDirectory": {
+      "eocdOffsetInSuffixRange": 42,
+      "diskEntryCount": 1780,
+      "totalEntryCount": 1780,
+      "centralDirectoryOffset": 2500874462,
+      "centralDirectoryBytes": 153988,
+      "commentBytes": 0
+    },
+    "centralDirectory": {
+      "parsedBytes": 153988,
+      "entryCount": 1780,
+      "sha256": "51ed3860c7e433158d96ba4b85000ae560b0112663571e5c74556e6fcb32523c",
+      "entryCounts": {
+        "directories": 5,
+        "pcd": 644,
+        "yaml": 644,
+        "png": 483,
+        "json": 4
+      },
+      "agentFrameInventory": [
+        {
+          "agentId": "0",
+          "yamlCount": 161,
+          "pcdCount": 161,
+          "pngCount": 0,
+          "firstFrame": 540600,
+          "lastFrame": 540760,
+          "contiguous": true
+        },
+        {
+          "agentId": "1",
+          "yamlCount": 161,
+          "pcdCount": 161,
+          "pngCount": 161,
+          "firstFrame": 540600,
+          "lastFrame": 540760,
+          "contiguous": true
+        },
+        {
+          "agentId": "2",
+          "yamlCount": 161,
+          "pcdCount": 161,
+          "pngCount": 161,
+          "firstFrame": 540600,
+          "lastFrame": 540760,
+          "contiguous": true
+        },
+        {
+          "agentId": "3",
+          "yamlCount": 161,
+          "pcdCount": 161,
+          "pngCount": 161,
+          "firstFrame": 540600,
+          "lastFrame": 540760,
+          "contiguous": true
+        }
+      ],
+      "namingContractObserved": {
+        "yaml": "9/<agent>/<frame>.yaml",
+        "lidar": "9/<agent>/<frame>.pcd",
+        "cameraForAgents1To3": "9/<agent>/<frame>_camera0.png",
+        "frameSet": "Every agent has exactly the same contiguous numeric frame stems 540600..540760.",
+        "centralDirectoryOrder": "Not chronological and not used for alignment."
+      }
+    },
+    "yamlSampling": {
+      "strategy": "For each agent, request only frame 540600, 540680, and 540760. Each request starts at the central-directory local-header offset and includes the compressed member plus a 256-byte header allowance, permitting one request per member.",
+      "sampleCount": 12,
+      "rangeBytesRead": 14604,
+      "responseOverreadBytes": 2736,
+      "crcVerifiedCount": 12,
+      "yamlParser": "Ruby Psych YAML.safe_load, followed by a recursive key match for timestamp, frame_id, pose, sensor, or path.",
+      "fieldSummary": {
+        "rootKeysInEverySample": [
+          "lidar_pose",
+          "vehicles"
+        ],
+        "timestampFieldCount": 0,
+        "frameIdFieldCount": 0,
+        "sensorFieldCount": 0,
+        "pathFieldCount": 0,
+        "poseFieldCount": 12,
+        "posePath": "lidar_pose",
+        "interpretation": "The filename supplies the dataset frame stem. YAML supplies a six-value LiDAR pose and object labels, but no absolute or MCAP timestamp."
+      },
+      "samples": [
+        {
+          "agentId": "0",
+          "frameIdFromFilename": 540600,
+          "memberName": "9/0/540600.yaml",
+          "numericAdjacentYamlNames": [
+            "9/0/540601.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/0/540600.pcd",
+            "9/0/540600.yaml"
+          ],
+          "requestedRange": "bytes=20091545-20092233",
+          "httpStatus": 206,
+          "bytesRead": 689,
+          "rangeBodySha256": "25556f75dbf297b548b6b56a10ce2283b05627bd90d74f3af95a501ffacc36d8",
+          "compressedBytes": 388,
+          "uncompressedBytes": 974,
+          "crc32": "3b758a2c",
+          "decodedYamlSha256": "515f7466a4af3c4f6f0821eb26b3538a383860b1ae7cb8e94283918df74dd8b3",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  -25.3159626816,
+                  15.5479987833,
+                  2.736852717,
+                  0.45532571310322584,
+                  -115.40295589953142,
+                  -7.567024299776185
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "0",
+          "frameIdFromFilename": 540680,
+          "memberName": "9/0/540680.yaml",
+          "numericAdjacentYamlNames": [
+            "9/0/540679.yaml",
+            "9/0/540681.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/0/540680.pcd",
+            "9/0/540680.yaml"
+          ],
+          "requestedRange": "bytes=9738494-9739102",
+          "httpStatus": 206,
+          "bytesRead": 609,
+          "rangeBodySha256": "13994a0d05bcaf83007ae75c701de89912f1311455ab9f53be920682ee8ebb96",
+          "compressedBytes": 308,
+          "uncompressedBytes": 696,
+          "crc32": "43707958",
+          "decodedYamlSha256": "be95d0fcd6b4bf43e16197744967455f5e6aada02104476cf1e12627e98e1b73",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  -25.3159626816,
+                  15.5479987833,
+                  2.736852717,
+                  0.45532571310322584,
+                  -115.40295589953142,
+                  -7.567024299776185
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "0",
+          "frameIdFromFilename": 540760,
+          "memberName": "9/0/540760.yaml",
+          "numericAdjacentYamlNames": [
+            "9/0/540759.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/0/540760.pcd",
+            "9/0/540760.yaml"
+          ],
+          "requestedRange": "bytes=18947990-18948598",
+          "httpStatus": 206,
+          "bytesRead": 609,
+          "rangeBodySha256": "d7029d5f0b7a017aa33fdb461c177a6dabaaf4adbbb76b4354f135370c1416cd",
+          "compressedBytes": 308,
+          "uncompressedBytes": 699,
+          "crc32": "8a42a6e5",
+          "decodedYamlSha256": "0a4e61963bc8230b6f2e8b4a0ca3bda972161175da10c5fd6af2d26cf7e93438",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  -25.3159626816,
+                  15.5479987833,
+                  2.736852717,
+                  0.45532571310322584,
+                  -115.40295589953142,
+                  -7.567024299776185
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "1",
+          "frameIdFromFilename": 540600,
+          "memberName": "9/1/540600.yaml",
+          "numericAdjacentYamlNames": [
+            "9/1/540601.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/1/540600.pcd",
+            "9/1/540600.yaml",
+            "9/1/540600_camera0.png"
+          ],
+          "requestedRange": "bytes=1426015539-1426016391",
+          "httpStatus": 206,
+          "bytesRead": 853,
+          "rangeBodySha256": "3ed247b16381e7c76a73aa56836663242513afb58a094235c7e33506fce69909",
+          "compressedBytes": 552,
+          "uncompressedBytes": 1539,
+          "crc32": "2557db2c",
+          "decodedYamlSha256": "2f1a693f2b6615f97411f66359096e7a36e7dbd5151522c264583c2370dcc705",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  79.25966436357142,
+                  4.4258206352396625,
+                  4.370405928913139,
+                  0.1878232582094811,
+                  -171.82195671170217,
+                  -1.850714199845476
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "1",
+          "frameIdFromFilename": 540680,
+          "memberName": "9/1/540680.yaml",
+          "numericAdjacentYamlNames": [
+            "9/1/540679.yaml",
+            "9/1/540681.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/1/540680.pcd",
+            "9/1/540680.yaml",
+            "9/1/540680_camera0.png"
+          ],
+          "requestedRange": "bytes=921264101-921265516",
+          "httpStatus": 206,
+          "bytesRead": 1416,
+          "rangeBodySha256": "82ba0c611e5ee12b8dd7b5289afb66820a06eb4a643a8edd46117f0a832688ad",
+          "compressedBytes": 1115,
+          "uncompressedBytes": 3475,
+          "crc32": "51110d0c",
+          "decodedYamlSha256": "1f6524b782fe2c866d4461115ae42d35b060c1e2007056700af4f86c0edcc90c",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  51.284865852128284,
+                  0.3859596779383736,
+                  3.5460572588982706,
+                  1.285240587216248,
+                  -177.3422301977764,
+                  -1.5701810368570295
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "1",
+          "frameIdFromFilename": 540760,
+          "memberName": "9/1/540760.yaml",
+          "numericAdjacentYamlNames": [
+            "9/1/540759.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/1/540760.pcd",
+            "9/1/540760.yaml",
+            "9/1/540760_camera0.png"
+          ],
+          "requestedRange": "bytes=1477461038-1477462127",
+          "httpStatus": 206,
+          "bytesRead": 1090,
+          "rangeBodySha256": "47ea0d4cfcae8fd94602330e4620a04b59fab163cb886e4809691febcf6fc3c8",
+          "compressedBytes": 789,
+          "uncompressedBytes": 2376,
+          "crc32": "a2d424f9",
+          "decodedYamlSha256": "fe819fdf7d94c796bce848f35d081d3ea241d6b552348d939f0de96d799b8930",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  50.005285491855965,
+                  0.35661307807035425,
+                  3.502703368872175,
+                  1.3661131859649207,
+                  -177.73729110575212,
+                  -1.441706749077547
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "2",
+          "frameIdFromFilename": 540600,
+          "memberName": "9/2/540600.yaml",
+          "numericAdjacentYamlNames": [
+            "9/2/540601.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/2/540600.pcd",
+            "9/2/540600.yaml",
+            "9/2/540600_camera0.png"
+          ],
+          "requestedRange": "bytes=2239291895-2239293479",
+          "httpStatus": 206,
+          "bytesRead": 1585,
+          "rangeBodySha256": "77e0dd2aa4e96c6ac7ff3560da8a0b7852c017c3d50b587f360806c75a8f4742",
+          "compressedBytes": 1284,
+          "uncompressedBytes": 4052,
+          "crc32": "1858d0c7",
+          "decodedYamlSha256": "d2a4e791b89b468e6bd7264129148147181d77e899aaf62409fa76693fa77d27",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  1.5958000951405555,
+                  -34.40212047019244,
+                  1.5202619517435048,
+                  0.4598439846114386,
+                  89.21185714249289,
+                  -0.9923221839165804
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "2",
+          "frameIdFromFilename": 540680,
+          "memberName": "9/2/540680.yaml",
+          "numericAdjacentYamlNames": [
+            "9/2/540679.yaml",
+            "9/2/540681.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/2/540680.pcd",
+            "9/2/540680.yaml",
+            "9/2/540680_camera0.png"
+          ],
+          "requestedRange": "bytes=1879405244-1879407070",
+          "httpStatus": 206,
+          "bytesRead": 1827,
+          "rangeBodySha256": "88c72967945b6301772a2479faea1826a0eb99e3129c64c610bd76eb0e443e60",
+          "compressedBytes": 1526,
+          "uncompressedBytes": 4895,
+          "crc32": "d43c18d1",
+          "decodedYamlSha256": "078a826c9ac29aa75447d4615e8801e39b8d7c6ddd2df82b102eb2ef1e9f6fcb",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  1.7209790160748506,
+                  -18.658718997744938,
+                  1.4708339141474653,
+                  1.6440072846775782,
+                  90.14651826893741,
+                  -0.2947638178599056
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "2",
+          "frameIdFromFilename": 540760,
+          "memberName": "9/2/540760.yaml",
+          "numericAdjacentYamlNames": [
+            "9/2/540759.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/2/540760.pcd",
+            "9/2/540760.yaml",
+            "9/2/540760_camera0.png"
+          ],
+          "requestedRange": "bytes=2207455976-2207457067",
+          "httpStatus": 206,
+          "bytesRead": 1092,
+          "rangeBodySha256": "146c3068c8a137d2870027f5738c3afc634517d6277b99ca45588b1513069f9f",
+          "compressedBytes": 791,
+          "uncompressedBytes": 2368,
+          "crc32": "deb937cb",
+          "decodedYamlSha256": "89d687a7a00c4050883dfbb7db5232d446ec3c9b5fbed33cfe5d2a1a7b9623fc",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  3.1466781559897004,
+                  45.78081317716077,
+                  1.9806204389546511,
+                  0.5739241700752731,
+                  88.0789756561361,
+                  -0.19900101518328112
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "3",
+          "frameIdFromFilename": 540600,
+          "memberName": "9/3/540600.yaml",
+          "numericAdjacentYamlNames": [
+            "9/3/540601.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/3/540600.pcd",
+            "9/3/540600.yaml",
+            "9/3/540600_camera0.png"
+          ],
+          "requestedRange": "bytes=59996843-59998186",
+          "httpStatus": 206,
+          "bytesRead": 1344,
+          "rangeBodySha256": "e7c643c6eb8373b8f4cc5f3cb7a3053c8bcb10ca77127fd598df21a3c7bc4663",
+          "compressedBytes": 1043,
+          "uncompressedBytes": 3213,
+          "crc32": "cf15fcc2",
+          "decodedYamlSha256": "4396d164069cef90694a9044744810dc45efa8010a7c8905598e434c8016b71a",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  28.72730954273391,
+                  3.8122733288661257,
+                  3.020936160357386,
+                  1.1281812261593054,
+                  -179.78142837100327,
+                  -4.079486772609454
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "3",
+          "frameIdFromFilename": 540680,
+          "memberName": "9/3/540680.yaml",
+          "numericAdjacentYamlNames": [
+            "9/3/540679.yaml",
+            "9/3/540681.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/3/540680.pcd",
+            "9/3/540680.yaml",
+            "9/3/540680_camera0.png"
+          ],
+          "requestedRange": "bytes=434724193-434726021",
+          "httpStatus": 206,
+          "bytesRead": 1829,
+          "rangeBodySha256": "bb7f4781ec9ca541be1ee137666e533ab5ae8fb95a189060845637bc668d3ca3",
+          "compressedBytes": 1528,
+          "uncompressedBytes": 4888,
+          "crc32": "88bfb0af",
+          "decodedYamlSha256": "58b33a9c559166b3176bc669e00b00f6eeb98be8e4c69b3adc7267cec8c9293c",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  16.93373458862064,
+                  3.872175215357003,
+                  2.2157177136016895,
+                  0.9443444590682397,
+                  179.9891571221393,
+                  -3.926204202269937
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        },
+        {
+          "agentId": "3",
+          "frameIdFromFilename": 540760,
+          "memberName": "9/3/540760.yaml",
+          "numericAdjacentYamlNames": [
+            "9/3/540759.yaml"
+          ],
+          "sameFrameMemberNames": [
+            "9/3/540760.pcd",
+            "9/3/540760.yaml",
+            "9/3/540760_camera0.png"
+          ],
+          "requestedRange": "bytes=103251985-103253645",
+          "httpStatus": 206,
+          "bytesRead": 1661,
+          "rangeBodySha256": "7eb7fb96d3b39df788ddb91d46ce59ce070b70d03e33be5ca7471d7401b746ac",
+          "compressedBytes": 1360,
+          "uncompressedBytes": 4327,
+          "crc32": "e2914b25",
+          "decodedYamlSha256": "6a5e4528a168052ee3bde16d7c8ad6025f0a3c229a8f7e62ef9c756b0f1db6d1",
+          "matchedFields": {
+            "timestamp": [],
+            "frame_id": [],
+            "pose": [
+              {
+                "path": "lidar_pose",
+                "value": [
+                  16.9266621040421,
+                  3.8777604477083365,
+                  2.2051466942249176,
+                  0.9306470152477044,
+                  -179.98247115852064,
+                  -3.9431821960652975
+                ]
+              }
+            ],
+            "sensor": [],
+            "path": []
+          }
+        }
+      ]
+    }
+  },
+  "previewMcapAudit": {
+    "officialUrl": "https://data.ucr.edu/datasets/cooperscene/mcap_preview/9.mcap",
+    "localPath": "/tmp/cooperscene-preview9.mcap",
+    "bytes": 230732201,
+    "sha256": "1a40858739ce8d00da3595c093d4f1dad8fe25e7ac8fd32ca14eabf17438350b",
+    "completeLocalObject": true,
+    "parser": {
+      "topLevelRecordCount": 4650,
+      "chunkCount": 242,
+      "chunkCrcVerifiedCount": 242,
+      "zstdExecutable": "/Users/atlas/miniforge3/bin/zstd",
+      "method": "Parse top-level MCAP records, zstd-decompress each Chunk, verify every non-zero chunk CRC, parse inner records, decode the protobuf FileDescriptorSet, and retain /tf plus four LiDAR channels."
+    },
+    "pointCloudDescriptor": {
+      "schemaName": "foxglove.PointCloud",
+      "schemaDataBytes": 1364,
+      "schemaDataSha256": "21e5132dfed31e57ddeb694d78a58034b34b644bc555622b5c387d57dbed1102",
+      "timestampFieldNumber": 1,
+      "frameIdFieldNumber": 2,
+      "poseFieldNumber": 3,
+      "timestampSecondsFieldNumber": 1,
+      "timestampNanosFieldNumber": 2,
+      "observation": "PointCloud pose is present as an empty/default message in the bounded first-frame inspection; the independently useful world pose is carried by /tf."
+    },
+    "channels": [
+      {
+        "topic": "/0_LIDAR",
+        "messageCount": 161,
+        "frameId": "0_base_link",
+        "logTimeStrictlyIncreasing": true,
+        "protobufTimestampStrictlyIncreasing": true,
+        "logTimeDuplicateCount": 0,
+        "protobufTimestampDuplicateCount": 0,
+        "maxAbsProtobufMinusLogNs": 48477952,
+        "samples": [
+          {
+            "position": "first",
+            "ordinalIndex": 0,
+            "candidateZipFrameId": 540600,
+            "sequence": 0,
+            "logTimeNs": "1759096860056822016",
+            "publishTimeNs": "1759096860056822016",
+            "protobufTimestampNs": "1759096860104823552",
+            "protobufSeconds": 1759096860,
+            "protobufNanos": 104823552,
+            "frameId": "0_base_link"
+          },
+          {
+            "position": "middle",
+            "ordinalIndex": 80,
+            "candidateZipFrameId": 540680,
+            "sequence": 0,
+            "logTimeNs": "1759096868056817920",
+            "publishTimeNs": "1759096868056817920",
+            "protobufTimestampNs": "1759096868105285376",
+            "protobufSeconds": 1759096868,
+            "protobufNanos": 105285376,
+            "frameId": "0_base_link"
+          },
+          {
+            "position": "last",
+            "ordinalIndex": 160,
+            "candidateZipFrameId": 540760,
+            "sequence": 0,
+            "logTimeNs": "1759096876056815104",
+            "publishTimeNs": "1759096876056815104",
+            "protobufTimestampNs": "1759096876104958208",
+            "protobufSeconds": 1759096876,
+            "protobufNanos": 104958208,
+            "frameId": "0_base_link"
+          }
+        ]
+      },
+      {
+        "topic": "/1_LIDAR",
+        "messageCount": 161,
+        "frameId": "1_base_link",
+        "logTimeStrictlyIncreasing": true,
+        "protobufTimestampStrictlyIncreasing": true,
+        "logTimeDuplicateCount": 0,
+        "protobufTimestampDuplicateCount": 0,
+        "maxAbsProtobufMinusLogNs": 23484928,
+        "samples": [
+          {
+            "position": "first",
+            "ordinalIndex": 0,
+            "candidateZipFrameId": 540600,
+            "sequence": 0,
+            "logTimeNs": "1759096860056822016",
+            "publishTimeNs": "1759096860056822016",
+            "protobufTimestampNs": "1759096860078545408",
+            "protobufSeconds": 1759096860,
+            "protobufNanos": 78545408,
+            "frameId": "1_base_link"
+          },
+          {
+            "position": "middle",
+            "ordinalIndex": 80,
+            "candidateZipFrameId": 540680,
+            "sequence": 0,
+            "logTimeNs": "1759096868056817920",
+            "publishTimeNs": "1759096868056817920",
+            "protobufTimestampNs": "1759096868079230976",
+            "protobufSeconds": 1759096868,
+            "protobufNanos": 79230976,
+            "frameId": "1_base_link"
+          },
+          {
+            "position": "last",
+            "ordinalIndex": 160,
+            "candidateZipFrameId": 540760,
+            "sequence": 0,
+            "logTimeNs": "1759096876056815104",
+            "publishTimeNs": "1759096876056815104",
+            "protobufTimestampNs": "1759096876080178432",
+            "protobufSeconds": 1759096876,
+            "protobufNanos": 80178432,
+            "frameId": "1_base_link"
+          }
+        ]
+      },
+      {
+        "topic": "/2_LIDAR",
+        "messageCount": 161,
+        "frameId": "2_base_link",
+        "logTimeStrictlyIncreasing": true,
+        "protobufTimestampStrictlyIncreasing": true,
+        "logTimeDuplicateCount": 0,
+        "protobufTimestampDuplicateCount": 0,
+        "maxAbsProtobufMinusLogNs": 61263872,
+        "samples": [
+          {
+            "position": "first",
+            "ordinalIndex": 0,
+            "candidateZipFrameId": 540600,
+            "sequence": 0,
+            "logTimeNs": "1759096860008969472",
+            "publishTimeNs": "1759096860008969472",
+            "protobufTimestampNs": "1759096860069456128",
+            "protobufSeconds": 1759096860,
+            "protobufNanos": 69456128,
+            "frameId": "2_base_link"
+          },
+          {
+            "position": "middle",
+            "ordinalIndex": 80,
+            "candidateZipFrameId": 540680,
+            "sequence": 0,
+            "logTimeNs": "1759096868008967936",
+            "publishTimeNs": "1759096868008967936",
+            "protobufTimestampNs": "1759096868069123584",
+            "protobufSeconds": 1759096868,
+            "protobufNanos": 69123584,
+            "frameId": "2_base_link"
+          },
+          {
+            "position": "last",
+            "ordinalIndex": 160,
+            "candidateZipFrameId": 540760,
+            "sequence": 0,
+            "logTimeNs": "1759096876008967168",
+            "publishTimeNs": "1759096876008967168",
+            "protobufTimestampNs": "1759096876069352192",
+            "protobufSeconds": 1759096876,
+            "protobufNanos": 69352192,
+            "frameId": "2_base_link"
+          }
+        ]
+      },
+      {
+        "topic": "/3_LIDAR",
+        "messageCount": 161,
+        "frameId": "3_base_link",
+        "logTimeStrictlyIncreasing": true,
+        "protobufTimestampStrictlyIncreasing": true,
+        "logTimeDuplicateCount": 0,
+        "protobufTimestampDuplicateCount": 0,
+        "maxAbsProtobufMinusLogNs": 23224576,
+        "samples": [
+          {
+            "position": "first",
+            "ordinalIndex": 0,
+            "candidateZipFrameId": 540600,
+            "sequence": 0,
+            "logTimeNs": "1759096860065923072",
+            "publishTimeNs": "1759096860065923072",
+            "protobufTimestampNs": "1759096860088905728",
+            "protobufSeconds": 1759096860,
+            "protobufNanos": 88905728,
+            "frameId": "3_base_link"
+          },
+          {
+            "position": "middle",
+            "ordinalIndex": 80,
+            "candidateZipFrameId": 540680,
+            "sequence": 0,
+            "logTimeNs": "1759096868065923072",
+            "publishTimeNs": "1759096868065923072",
+            "protobufTimestampNs": "1759096868088338688",
+            "protobufSeconds": 1759096868,
+            "protobufNanos": 88338688,
+            "frameId": "3_base_link"
+          },
+          {
+            "position": "last",
+            "ordinalIndex": 160,
+            "candidateZipFrameId": 540760,
+            "sequence": 0,
+            "logTimeNs": "1759096876065923328",
+            "publishTimeNs": "1759096876065923328",
+            "protobufTimestampNs": "1759096876087904256",
+            "protobufSeconds": 1759096876,
+            "protobufNanos": 87904256,
+            "frameId": "3_base_link"
+          }
+        ]
+      }
+    ],
+    "tfToLidarJoin": {
+      "joinRule": "Within each agent, pair /tf child_frame_id=<agent>_base_link to /<agent>_LIDAR frame_id=<agent>_base_link by exact protobuf timestamp and exact MCAP log_time.",
+      "perAgent": [
+        {
+          "agentId": "0",
+          "tfCount": 161,
+          "lidarCount": 161,
+          "uniqueTfTranslations": 1,
+          "allLogTimesExact": true,
+          "allProtobufTimestampsExact": true,
+          "allFrameIdsExact": true
+        },
+        {
+          "agentId": "1",
+          "tfCount": 161,
+          "lidarCount": 161,
+          "uniqueTfTranslations": 161,
+          "allLogTimesExact": true,
+          "allProtobufTimestampsExact": true,
+          "allFrameIdsExact": true
+        },
+        {
+          "agentId": "2",
+          "tfCount": 161,
+          "lidarCount": 161,
+          "uniqueTfTranslations": 161,
+          "allLogTimesExact": true,
+          "allProtobufTimestampsExact": true,
+          "allFrameIdsExact": true
+        },
+        {
+          "agentId": "3",
+          "tfCount": 161,
+          "lidarCount": 161,
+          "uniqueTfTranslations": 161,
+          "allLogTimesExact": true,
+          "allProtobufTimestampsExact": true,
+          "allFrameIdsExact": true
+        }
+      ],
+      "timestampJoinMaximumErrorNs": 0,
+      "poseAnchorToleranceMeters": 1e-9,
+      "sampledPoseAnchorMaximumErrorMeters": 4.973799150320701e-14,
+      "sampledMovingAgentAnchorCount": 9,
+      "sampledMovingAgentUniqueMatchCount": 9,
+      "sampledAgent0AnchorCount": 3,
+      "sampledAgent0MatchesPerAnchor": 161,
+      "agent0Bridge": {
+        "agent0PoseAloneUnique": false,
+        "all161Agent0AndAgent1LogTimesExact": true,
+        "crossAgentFrameGroupingEvidence": "The official converter groups (scenario, filename-stem timestamp) across agent directories before producing samples.",
+        "result": "The uniquely pose-anchored agent-1 ordinal plus exact agent-0/agent-1 log_time disambiguates the static agent-0 pose."
+      },
+      "anchorSummary": [
+        {
+          "agentId": "0",
+          "zipFrameId": 540600,
+          "ordinal": 0,
+          "poseMatchCount": 161,
+          "maxAbsTranslationErrorMeters": 0,
+          "lidarProtobufTimestampNs": "1759096860104823552"
+        },
+        {
+          "agentId": "0",
+          "zipFrameId": 540680,
+          "ordinal": 80,
+          "poseMatchCount": 161,
+          "maxAbsTranslationErrorMeters": 0,
+          "lidarProtobufTimestampNs": "1759096868105285376"
+        },
+        {
+          "agentId": "0",
+          "zipFrameId": 540760,
+          "ordinal": 160,
+          "poseMatchCount": 161,
+          "maxAbsTranslationErrorMeters": 0,
+          "lidarProtobufTimestampNs": "1759096876104958208"
+        },
+        {
+          "agentId": "1",
+          "zipFrameId": 540600,
+          "ordinal": 0,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 4.973799150320701e-14,
+          "lidarProtobufTimestampNs": "1759096860078545408"
+        },
+        {
+          "agentId": "1",
+          "zipFrameId": 540680,
+          "ordinal": 80,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 3.552713678800501e-14,
+          "lidarProtobufTimestampNs": "1759096868079230976"
+        },
+        {
+          "agentId": "1",
+          "zipFrameId": 540760,
+          "ordinal": 160,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 3.3639757646142243e-14,
+          "lidarProtobufTimestampNs": "1759096876080178432"
+        },
+        {
+          "agentId": "2",
+          "zipFrameId": 540600,
+          "ordinal": 0,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 2.7533531010703882e-14,
+          "lidarProtobufTimestampNs": "1759096860069456128"
+        },
+        {
+          "agentId": "2",
+          "zipFrameId": 540680,
+          "ordinal": 80,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 1.4654943925052066e-14,
+          "lidarProtobufTimestampNs": "1759096868069123584"
+        },
+        {
+          "agentId": "2",
+          "zipFrameId": 540760,
+          "ordinal": 160,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 3.863576125695545e-14,
+          "lidarProtobufTimestampNs": "1759096876069352192"
+        },
+        {
+          "agentId": "3",
+          "zipFrameId": 540600,
+          "ordinal": 0,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 2.3092638912203256e-14,
+          "lidarProtobufTimestampNs": "1759096860088905728"
+        },
+        {
+          "agentId": "3",
+          "zipFrameId": 540680,
+          "ordinal": 80,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 1.509903313490213e-14,
+          "lidarProtobufTimestampNs": "1759096868088338688"
+        },
+        {
+          "agentId": "3",
+          "zipFrameId": 540760,
+          "ordinal": 160,
+          "poseMatchCount": 1,
+          "maxAbsTranslationErrorMeters": 1.509903313490213e-14,
+          "lidarProtobufTimestampNs": "1759096876087904256"
+        }
+      ]
+    }
+  },
+  "mappingCandidateAudit": {
+    "testTarget": "Numeric ZIP frame stem versus PointCloud protobuf timestamp_ns, separately for each agent.",
+    "exact": {
+      "passed": false,
+      "counterexample": {
+        "agentId": "0",
+        "zipFrameId": 540600,
+        "protobufTimestampNs": "1759096860104823552"
+      }
+    },
+    "offset": {
+      "definition": "protobuf_timestamp_ns = numeric_filename + b, with b fixed by the first independently anchored pair.",
+      "passed": false,
+      "maximumResidualNsAcrossChannels": "16001632864",
+      "failureReason": "The timestamp advances by about 100 million ns per frame while the filename integer advances by one."
+    },
+    "affine": {
+      "definition": "protobuf_timestamp_ns = a * numeric_filename + b, with a and b fixed by the independently anchored first and last pairs; every one of the 161 records must have zero residual.",
+      "passed": false,
+      "perChannel": [
+        {
+          "topic": "/0_LIDAR",
+          "slopeNsPerFrame": 100000841.6,
+          "maximumResidualNs": 394496,
+          "maximumResidualOrdinal": 80,
+          "middleAnchorResidualNs": 394496
+        },
+        {
+          "topic": "/1_LIDAR",
+          "slopeNsPerFrame": 100010206.4,
+          "maximumResidualNs": 690857.6,
+          "maximumResidualOrdinal": 94,
+          "middleAnchorResidualNs": -130944
+        },
+        {
+          "topic": "/2_LIDAR",
+          "slopeNsPerFrame": 99999350.4,
+          "maximumResidualNs": 851366.4,
+          "maximumResidualOrdinal": 116,
+          "middleAnchorResidualNs": -280576
+        },
+        {
+          "topic": "/3_LIDAR",
+          "slopeNsPerFrame": 99993740.8,
+          "maximumResidualNs": 579609.6,
+          "maximumResidualOrdinal": 58,
+          "middleAnchorResidualNs": -66304
+        }
+      ],
+      "maximumResidualNsAcrossChannels": 851366.4,
+      "failureCounterexample": "For /0_LIDAR, first/last-derived affine prediction at ZIP frame 540680 is 1759096868104890880 ns, but the observed protobuf timestamp is 1759096868105285376 ns, a +394496 ns residual."
+    },
+    "ordinal": {
+      "passed": false,
+      "candidateSupportedAtSampledAnchors": true,
+      "strictFailureReason": "Only 12 of 644 agent-frame rows have independent YAML-pose anchors. The unanchored rows cannot be accepted from equal counts and ordering alone.",
+      "sameCountOrSortAloneUsed": false,
+      "monotonicity": {
+        "zipFramesStrictlyIncreasing": true,
+        "mcapLogTimesStrictlyIncreasingPerChannel": true,
+        "mcapProtobufTimestampsStrictlyIncreasingPerChannel": true
+      },
+      "uniqueness": {
+        "zipAgentFrameTuplesUnique": true,
+        "mcapAgentProtobufTimestampTuplesUnique": true,
+        "movingAgentSampledPoseAnchorsUnique": true,
+        "agent0PoseAnchorsUnique": false,
+        "agent0ResolvedByCrossAgentBridge": true
+      },
+      "maximumErrors": {
+        "tfToLidarTimestampJoinNs": 0,
+        "sampledYamlToTfTranslationMeters": 4.973799150320701e-14
+      },
+      "failureOrBoundaryExamples": [
+        "Agent 0 lidar_pose is constant and matches all 161 agent-0 /tf records; pose-only matching is therefore non-unique and is prohibited.",
+        "The YAML has no absolute timestamp or frame_id field, so filename-to-time cannot be accepted without the /tf pose evidence.",
+        "Endpoint affine fits fail at interior records, so approximate 10 Hz timing is not promoted to an exact conversion."
+      ],
+      "minimumUnblockAction": "Pose-anchor every remaining moving-agent YAML member by bounded Range reads and validate the resulting complete sidecar; do not download PCD/PNG members."
+    }
+  },
+  "officialConverterNamingAudit": {
+    "repository": "https://github.com/UCR-CISL/CooperScene",
+    "commit": "0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+    "file": "tools/dataset_converters/coop_data_converter.py",
+    "fileSha256": "679453ec927e86a21d60acc8ad9eebc6490b81d943f2d75b34c93e40b2ad9e68",
+    "sourceUrl": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/tools/dataset_converters/coop_data_converter.py",
+    "observedCodeFacts": [
+      "Lines 125-150 form groups keyed by (scenario, filename stem) across agent directories.",
+      "Lines 139-141 define timestamp as the YAML filename with .yaml removed.",
+      "Lines 170-206 derive PCD/BIN paths from the same filename stem.",
+      "Line 260 writes float(timestamp) to the generated sample record.",
+      "The converter does not read an MCAP or write an MCAP timestamp."
+    ],
+    "evidenceBoundary": "The converter establishes cross-agent same-stem grouping and explains why the numeric filename is called timestamp. It does not by itself prove an absolute filename-to-MCAP-time conversion; that proof comes from the sampled YAML pose and binary /tf-to-LiDAR evidence."
+  },
+  "fullMcapEscalationDecision": {
+    "trigger": "Read additional full-MCAP summary/index/chunk ranges only if preview temporal downsampling prevents strict alignment.",
+    "triggered": false,
+    "reason": "The local official preview has 161 messages on each of four LiDAR channels and 161 matching /tf records per agent. The already-audited full-MCAP summary also reports exactly 161 messages on each LiDAR channel. Preview geometry is smaller, but its temporal coverage and pose/timestamp join are sufficient for this audit.",
+    "preexistingFullMcapEvidence": {
+      "url": "https://data.ucr.edu/datasets/cooperscene/mcap/9.mcap",
+      "contentLength": 2404378457,
+      "summaryRequestedRange": "bytes=2404308733-2404378419",
+      "summaryBytes": 69687,
+      "summarySha256": "15acebd0a5b9d4037bed3ca57237fb88051858a0179c15ff9645431847a16ee8",
+      "lidarMessageCountPerChannel": 161
+    },
+    "newFullMcapRemoteBytesRead": 0
+  },
+  "byteAccounting": {
+    "zipProbeBytes": 1,
+    "zipEocdBytes": 64,
+    "zipCentralDirectoryBytes": 153988,
+    "zipYamlMemberRangeBytes": 14604,
+    "totalRemoteBytesReadThisAudit": 168657,
+    "remoteBytesAsPercentOfZip": 0.0067435057972422795,
+    "yamlMemberBytesAsPercentOfZip": 0.0005839197819416108,
+    "newPreviewMcapRemoteBytesRead": 0,
+    "newFullMcapRemoteBytesRead": 0,
+    "localPreviewObjectBytesInspected": 230732201,
+    "hashRule": "Every Range sha256 is over the exact HTTP response body for that request. decodedYamlSha256 is over the inflated member content, not the Range body."
+  },
+  "reproducibility": {
+    "tools": {
+      "node": "v24.14.0",
+      "ruby": "ruby 2.6.10p210",
+      "yaml": "Psych 3.1.0",
+      "curl": "curl 8.7.1",
+      "jq": "jq-1.7.1-apple",
+      "zstd": "v1.5.7"
+    },
+    "curlTemplate": "curl --fail --silent --show-error --location --retry 2 --retry-delay 1 --retry-all-errors --connect-timeout 15 --max-time 120 --max-filesize <expected-bytes> --header 'Accept-Encoding: identity' --range <range> --dump-header <headers> --output <body> https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+    "zipRangesInExecutionOrder": [
+      "0-0",
+      "-64",
+      "2500874462-2501028449",
+      "20091545-20092233",
+      "9738494-9739102",
+      "18947990-18948598",
+      "1426015539-1426016391",
+      "921264101-921265516",
+      "1477461038-1477462127",
+      "2239291895-2239293479",
+      "1879405244-1879407070",
+      "2207455976-2207457067",
+      "59996843-59998186",
+      "434724193-434726021",
+      "103251985-103253645"
+    ],
+    "commands": [
+      "curl --fail --silent --show-error --location --retry 2 --retry-delay 1 --retry-all-errors --connect-timeout 15 --max-time 120 --max-filesize 1 --header 'Accept-Encoding: identity' --range 0-0 --dump-header /tmp/cooperscene-align-zip-byte0.headers --output /tmp/cooperscene-align-zip-byte0.bin https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+      "curl --fail --silent --show-error --location --retry 2 --retry-delay 1 --retry-all-errors --connect-timeout 15 --max-time 120 --max-filesize 64 --header 'Accept-Encoding: identity' --range -64 --dump-header /tmp/cooperscene-align-zip-eocd.headers --output /tmp/cooperscene-align-zip-eocd.bin https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+      "curl --fail --silent --show-error --location --retry 2 --retry-delay 1 --retry-all-errors --connect-timeout 15 --max-time 120 --max-filesize 153988 --header 'Accept-Encoding: identity' --range 2500874462-2501028449 --dump-header /tmp/cooperscene-align-zip-central.headers --output /tmp/cooperscene-align-zip-central.bin https://data.ucr.edu/datasets/cooperscene/train/9.zip",
+      "ruby -ryaml -rjson -rzlib -rdigest -e '<parse central-directory local offsets; inflate each retained member with raw DEFLATE; verify size and CRC32; YAML.safe_load; recursively select timestamp|frame_id|pose|sensor|path>'",
+      "node -e '<parse MCAP records; zstd-decompress 242 chunks; verify CRC32; decode protobuf descriptor and /tf plus /[0-3]_LIDAR payloads; run exact, offset, endpoint-affine, and pose-anchored ordinal tests>'",
+      "jq empty content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json"
+    ],
+    "parserContracts": {
+      "zip": "EOCD fields are read little-endian; every central-directory record must have signature 0x02014b50; local member records must have signature 0x04034b50; compressed/uncompressed sizes and CRC32 come from the central directory.",
+      "yaml": "Only safe YAML loading is used. Matching is by key name, case-insensitive, over the complete parsed object.",
+      "mcap": "MCAP record lengths are little-endian uint64. Chunk records are zstd decompressed and CRC checked. Protobuf field numbers are resolved from the embedded FileDescriptorSet rather than assumed from comments.",
+      "affine": "a and b are fixed by first and last independently anchored pairs; no fitting, tolerance optimization, or model-output selection is allowed.",
+      "ordinal": "Equal counts and sorting are necessary but not sufficient. The sampled YAML-to-/tf pose matches support the candidate but do not pass a strict all-frame audit; every remaining row must be independently anchored before acceptance."
+    }
+  },
+  "prohibitions": [
+    "Do not treat central-directory order as frame order.",
+    "Do not accept a mapping solely because both sides contain 161 records.",
+    "Do not fit or select an offset using perception-model output.",
+    "Do not call the rejected approximate affine timing relation exact.",
+    "Do not use agent-0 static pose as a unique join key.",
+    "Do not claim a complete persistent 644-row sidecar until every row is emitted and checked for missing, duplicate, monotonicity, and uniqueness failures."
+  ]
+}

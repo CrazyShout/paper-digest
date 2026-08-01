@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 2,
+  "directionId": "cooperative-autonomous-driving",
+  "dossierVersion": "v2",
+  "preparedAt": "2026-07-31",
+  "reviewScope": {
+    "instruction": "Evaluate the two bounded candidates exactly as written. Do not add unlisted methods, data, hardware, or claims when judging them.",
+    "evidenceRule": "Reopen the cited primary papers, official repositories, and local audit artifacts whenever a factual premise affects a score. Treat author promises without a working public artifact as unavailable.",
+    "independenceRule": "Do not seek, infer, or use another reviewer's assessment.",
+    "claimRule": "A transport-only result must not be promoted to a packet-level, physical-radio, perception, planning, or road-safety result."
+  },
+  "sharedAuditedFacts": [
+    {
+      "fact": "The official CooperScene release currently exposes 14 intersection takes. Independent HTTP Range audits completed the MCAP summary for all 14 takes: every take has 25 channels, 12 directed throughput channels, four LiDAR channels, and the same five schema signatures.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json"
+    },
+    {
+      "fact": "The directed throughput channels use foxglove.Vector3 and the official layout plots only x. No independent latency, packet-loss, jitter, retransmission, queue, or MAC-scheduling channel was found. Mbps is supported by project configuration, code, and paper text, but is not embedded in the Vector3 schema.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-trace-audit.json"
+    },
+    {
+      "fact": "The public dataset path computes delay from a nominal payload size and one scalar throughput, floors it to 100 ms frames, initializes prior_encoding.time_delay to zero, clamps history before take start to the first frame, and may silently retain the synchronized collaborator after a delayed lookup failure.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json"
+    },
+    {
+      "fact": "The paper describes Iperf2 clients targeting 5 Mbps with 100 ms reports for trace collection, while the paper's Table 2 physical-radio latency uses 2100-byte chunks sent at 1 ms intervals. Replaying arbitrary model payloads over the released throughput therefore requires an explicit workload-transfer and calibration boundary.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json"
+    },
+    {
+      "fact": "A CPU-only take-9 pilot decoded 1,932 directed-link samples and validated 35,451 metric rows. Exact-order completion ranged from 94.62 percent for a 0.0595 MB payload to 63.82 percent for a 0.500 MB payload; a 10 MB payload never completed within the 16.06 second take. The public constant-1.6-Mbps abstraction overestimated completion for several payloads.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json"
+    },
+    {
+      "fact": "On take 9, per-link means and several time surrogates were much closer to exact-order completion rate than the global 1.6 Mbps scalar, while completion-time quantiles still shifted by tens to hundreds of milliseconds. This is a single-take pilot and is not population evidence.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json"
+    },
+    {
+      "fact": "A strict take-9 filename-to-MCAP frame mapping has not yet passed. Twelve pose anchors support an ordinal candidate, but all 644 agent-frame rows must be independently anchored before any frame-level perception claim is allowed.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json"
+    },
+    {
+      "fact": "The official CooperScene code, model repository, checkpoints, dataset archives, and MCAP objects are public. The code license is MIT and the dataset license is CC BY-NC-SA 4.0.",
+      "evidenceFile": "content/idea-audits/cooperative-autonomous-driving-asset-audit.json"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "trace-structure-sufficiency-certificate",
+      "title": "最简但不失真：CooperScene 定向吞吐网络抽象的充分性证书",
+      "hook": "不是再造一个网络模拟器，而是回答公开基准到底需要保留哪些时间与跨链路结构，才能在模型载荷和截止时间改变时仍不改写运输结论。",
+      "boundedResearchQuestion": "在 CooperScene 当前公开的 14 个定向吞吐 take、预先声明的载荷和截止时间支持上，哪一类最小网络抽象能够在带不确定性的等价界内保留吞吐积分得到的完成率、完成时间分布、截止时间成功率和链路排序？",
+      "preciseClaim": {
+        "primary": "For the finite released CooperScene traces, a preregistered hierarchy of global, per-link, marginal-temporal, block-temporal, cross-link-synchronous, and exact directed-trace abstractions can identify the least structured abstraction whose transport-level estimands remain practically equivalent to exact directed-trace replay over a declared payload and deadline support.",
+        "secondaryOnlyAfterCalibration": "If the replay implementation reproduces the paper's physical Table 2 latency measurements within preregistered margins for the matching payload and radio workload, the study may additionally report calibrated sensitivity for those measured operating points.",
+        "forbidden": [
+          "Do not call throughput-derived service completion measured end-to-end latency, packet delivery, packet loss, jitter, retransmission, or MAC behavior.",
+          "Do not claim that one abstraction is sufficient for C-V2X generally, for unobserved workloads, or outside the 14 released takes.",
+          "Do not report perception or method-ranking conclusions before a complete frame-alignment sidecar and frozen-model run pass their own gates.",
+          "Do not call a failure to reject a difference an equivalence certificate."
+        ]
+      },
+      "noveltyBoundary": [
+        "CADET and Harbor establish that trace-driven cooperative-autonomy evaluation matters; CellReplay shows that record-and-replay fidelity depends on workload and emulator assumptions. None of the audited primary sources supplies a CooperScene-specific, nested sufficiency test that removes temporal and cross-link structure one component at a time and certifies the least complex equivalent abstraction.",
+        "The CooperScene paper and public code use real throughput evidence but do not test whether the global 1.6 Mbps scalar, per-link means, marginal shuffles, block shuffles, or synchronized cross-link structure preserve completion conclusions.",
+        "The contribution is the falsifiable abstraction certificate, equivalence contract, and failure map. Trace decoding, completion replay, cross-link correlation, directionality, release consistency, and payload normalization are necessary substudy components rather than separate novelty claims.",
+        "A null result is publishable only as a bounded simplification certificate: for example, per-link means may be sufficient for a specified payload/deadline range even when the global scalar is not."
+      ],
+      "preRegisteredAbstractionLadder": [
+        {
+          "level": "A0-global-scalar",
+          "definition": "One 1.6 Mbps scalar for every directed link and time, matching the public evaluation script."
+        },
+        {
+          "level": "A1-per-link-mean",
+          "definition": "One mean service rate per directed sender-receiver link and take; direction is retained, time is removed."
+        },
+        {
+          "level": "A2-per-link-marginal-iid",
+          "definition": "Each link preserves its empirical marginal distribution but independently permutes time."
+        },
+        {
+          "level": "A3-synchronous-marginal",
+          "definition": "All 12 links share one common time permutation, retaining same-time cross-link vectors while removing order."
+        },
+        {
+          "level": "A4-block-temporal",
+          "definition": "Declared 0.5, 1, 2, and 5 second blocks are permuted; within-block order and cross-link synchronization are retained."
+        },
+        {
+          "level": "A5-directed-swap-controls",
+          "definition": "Matched sender-receiver direction swaps quantify whether apparently similar reverse links can be substituted."
+        },
+        {
+          "level": "A6-exact-directed-trace",
+          "definition": "Original timestamps, directed link identity, and sample order; this is the reference abstraction, not physical packet truth."
+        }
+      ],
+      "transportContract": [
+        "Convert Vector3.x to a declared service-rate unit and publish unit sensitivity at 0.5x, 1x, and 2x because the protobuf schema itself carries no unit.",
+        "Use sample-and-hold as the primary interpolation and linear interpolation as a sensitivity analysis.",
+        "Define FIFO serialization per directed link as the primary queue rule. Report no-queue independent-message and bounded-concurrency alternatives separately.",
+        "Integrate service until exact runtime serialized payload bits are served. Static tensor-size calculations are sensitivity values only.",
+        "Preserve right-censoring at trace end; never replace an unfinished message with maximum latency.",
+        "Hash every MCAP object, model payload manifest, parser, abstraction seed, and result table."
+      ],
+      "minimumStudy": {
+        "duration": "8-10 weeks for the transport certificate; up to 12 weeks only if the optional physical-measurement calibration is executable",
+        "compute": "CPU-only for the primary transport study; less than 500 GB local storage if all official MCAP and required model artifacts are cached",
+        "data": [
+          "All 14 official CooperScene MCAP takes as 14 independent acquisition units",
+          "Exact runtime serialized payload distributions from at least four released CooperScene model families spanning small, medium, and large messages",
+          "Paper-listed payload values and the shipped static calculator only as sensitivity controls"
+        ],
+        "executionPlan": [
+          "Week 1: freeze object hashes, decode every throughput channel, validate units and timestamps, and reproduce the take-9 pilot.",
+          "Week 2: instrument actual serialization for four released model families without running perception evaluation.",
+          "Week 3-4: execute the abstraction ladder over payload, deadline, interpolation, queue, and unit-sensitivity cells.",
+          "Week 5: independently reimplement a stratified subset of the integrator and verify completion ledgers.",
+          "Week 6-7: take-level equivalence analysis, leave-one-take-out stability, and anomaly analysis for take 1.",
+          "Week 8: package the abstraction certificate, counterexamples, manifests, and executable tests.",
+          "Week 9-10: optional calibration against the Table 2 physical-radio measurements only if the matching workload can be reproduced.",
+          "Week 11-12: reserved for one clean rerun; no new research claim may be added."
+        ]
+      },
+      "estimandsAndStatistics": [
+        "Primary estimands are per-take completion-rate difference, restricted mean completion time, deadline-success difference, and pairwise directed-link ordering over the declared payload/deadline support.",
+        "Take, not frame, link, start time, or random permutation, is the independent acquisition unit. Report all 14 take effects and take-clustered or hierarchical intervals.",
+        "Predefine practical equivalence margins separately for completion rate, restricted mean completion time, deadline success, and link-order agreement.",
+        "Surrogate randomizations quantify Monte Carlo uncertainty but never inflate the biological or acquisition sample size.",
+        "Because 14 takes may only resolve large effects, an underpowered cell remains descriptive finite-release evidence and cannot receive an equivalence certificate.",
+        "Select the least structured abstraction only when every more structured comparison inside the declared support satisfies the complete family of margins; otherwise publish the smallest counterexample."
+      ],
+      "baselinesAndComparators": [
+        "CooperScene public 1.6 Mbps scalar and 100 ms integer-frame delay path",
+        "Exact directed trace order",
+        "Per-link mean, independent marginal permutation, synchronous permutation, and block permutation",
+        "CellReplay's workload-fidelity principles as an external-validity comparator rather than a directly interchangeable emulator",
+        "CADET and Harbor trace-driven evaluation contracts as systems comparators",
+        "A unit-scale sensitivity and an equalized-payload control"
+      ],
+      "negativeControls": [
+        "Duplicate one exact trace under another label; the analysis must certify identity.",
+        "Reverse a directed pair with a known asymmetric mean; the directionality test must detect the intervention.",
+        "Replace every link by the same global scalar; link-order agreement must collapse by construction.",
+        "Inject one missing throughput interval and one malformed unit; the parser must fail closed rather than infer zero delay.",
+        "Move the trace end while retaining the same prefix; completed messages must stay unchanged while censoring bounds update.",
+        "Run a shuffled take label analysis; it must not create extra independent samples."
+      ],
+      "successCriteria": [
+        "All 14 take summaries, 12 directed channels per take, object hashes, units, interpolation, queue rules, payload manifests, and completion ledgers are reproducible from a clean environment.",
+        "The study either certifies one least structured abstraction over a declared support or produces a reproducible counterexample that proves more structure is required.",
+        "Equivalence or non-equivalence conclusions are stable under leave-one-take-out analysis or are explicitly limited to the influential takes.",
+        "Runtime serialized payloads replace static nominal sizes in every primary result.",
+        "The Table 2 calibration either passes its preregistered margin or the paper stays explicitly at released-benchmark-abstraction level.",
+        "No frame-level, packet-level, or road-deployment claim appears without the corresponding evidence gate."
+      ],
+      "killCriteria": [
+        "The 14 released MCAP objects cannot be decoded consistently enough to establish directed throughput units and timestamps.",
+        "Actual runtime serialized payloads cannot be instrumented for at least four released model families.",
+        "Completion results change qualitatively under every plausible unit, interpolation, or queue assumption, leaving no bounded support for a certificate.",
+        "The only observed difference is a parser defect that disappears after correction and all remaining intervals are too wide for either non-equivalence or equivalence.",
+        "A primary source published before the frozen search already provides the same nested CooperScene sufficiency certificate and estimands."
+      ],
+      "risksAndMitigations": [
+        {
+          "risk": "Iperf2 throughput may not transfer to arbitrary perception workloads.",
+          "mitigation": "Keep the primary result on the released abstraction, calibrate only matching Table 2 operating points, and never claim physical-radio fidelity after failed calibration."
+        },
+        {
+          "risk": "Fourteen takes provide weak population power.",
+          "mitigation": "Treat the release as a finite benchmark population, show all take-level effects, use equivalence only where intervals support it, and avoid frame-level pseudoreplication."
+        },
+        {
+          "risk": "Per-link means may already be sufficient, reducing method novelty.",
+          "mitigation": "That is the planned bounded negative result: a reusable simplification certificate with explicit payload/deadline support."
+        },
+        {
+          "risk": "The study can look like a trace parser contribution.",
+          "mitigation": "Center the paper on controlled abstraction removal, formal equivalence, workload boundaries, and counterexamples; publish the parser only as the executable substrate."
+        }
+      ],
+      "primaryEvidence": [
+        {
+          "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+          "url": "https://arxiv.org/abs/2606.31219",
+          "role": "Defines the benchmark, trace collection, model payloads, and physical-radio comparison.",
+          "provenance": "local-corpus",
+          "localPaperId": "cooperscene-cv2x-benchmark"
+        },
+        {
+          "title": "UCR-CISL/CooperScene official repository",
+          "url": "https://github.com/UCR-CISL/CooperScene",
+          "role": "Supplies the audited scalar-delay implementation, model configurations, and serialization instrumentation points.",
+          "provenance": "external"
+        },
+        {
+          "title": "CADET: A Modular Platform for Evaluating Distributed Cooperative Autonomy in Connected Autonomous Vehicles",
+          "url": "https://arxiv.org/abs/2606.04072",
+          "role": "Closest recent trace-driven cooperative-autonomy system and novelty boundary.",
+          "provenance": "external"
+        },
+        {
+          "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+          "url": "https://doi.org/10.1145/3666025.3699328",
+          "role": "Harbor supplies the closest deadline-aware real-network systems comparison.",
+          "provenance": "external"
+        },
+        {
+          "title": "CellReplay: Towards accurate record-and-replay for cellular networks",
+          "url": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+          "role": "Primary evidence that trace replay fidelity must be checked across workload and emulator assumptions.",
+          "provenance": "external"
+        },
+        {
+          "title": "SEE-V2X: C-V2X Direct Communication Dataset",
+          "url": "https://cisl.ucr.edu/SEE-V2X/",
+          "role": "Independent real C-V2X trace resource for discussing what lower-layer evidence CooperScene does and does not expose.",
+          "provenance": "external"
+        },
+        {
+          "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+          "url": "https://arxiv.org/abs/2503.10034",
+          "role": "Online cooperative-perception comparator and external-validity boundary.",
+          "provenance": "external"
+        }
+      ],
+      "reviewerChecks": [
+        "Is the exact contribution more than replaying a trace?",
+        "Can the primary transport result stand without the unresolved frame mapping?",
+        "Are the workload-transfer and unit assumptions narrow enough to prevent a physical-radio overclaim?",
+        "Does the equivalence design make a null result informative rather than inconclusive?",
+        "Can four payload families and 14 takes be completed inside the stated budget?"
+      ]
+    },
+    {
+      "candidateId": "transport-availability-state-contract",
+      "title": "未完成消息不是旧帧：运输可用性状态契约与评测偏差审计",
+      "hook": "把“当前帧已到、只能用历史帧、截止时仍未完成、轨迹结束而右删失、数据本身缺失”分开，再测量静默替换究竟会不会改写模型优劣。",
+      "boundedResearchQuestion": "在完成全帧时间映射、运行时载荷测量和冻结模型之后，CooperScene 公开实现中的静默首帧夹取或同步帧保留，与显式 drop、latest-completed 和模型原生 age-aware 策略相比，会在多大程度上改变检测指标、成对胜负和方法排序？",
+      "preciseClaim": {
+        "primary": "A CooperScene-specific tagged availability-and-observability contract, driven by one shared throughput-derived completion ledger and paired frozen-policy counterfactuals, can identify how silent fallback semantics alter benchmark metrics and method verdicts without introducing a new learned compensation model.",
+        "negativeResult": "If all common policies are practically equivalent within preregistered margins under adequate non-current-state exposure, the result supports a bounded simplification of the evaluator, not a universal claim that availability semantics never matter.",
+        "forbidden": [
+          "Do not claim the first deadline-aware, latest-message, asynchronous, or trace-driven cooperative-perception system.",
+          "Do not call throughput-derived completion measured application delivery.",
+          "Do not conflate deadline noncompletion, trace-end right censoring, take-start left truncation, or missing trace.",
+          "Do not infer a method-ranking effect from the take-9 transport pilot alone.",
+          "Do not add a learned temporal adapter and still call the study a frozen-policy counterfactual."
+        ]
+      },
+      "noveltyBoundary": [
+        "Harbor already implements deadline/drop or local fallback; CoInfra uses latest available history; V2X-ReaLO selects recent messages; LRCP, TraF-Align, CATNet, and related methods compensate asynchronous features. Those functions are explicit precedents, not novelty.",
+        "The surviving contribution is their use inside one CooperScene-specific, evidence-typed contract that separates transport availability from observability, preserves censoring, uses exact runtime payload and directed trace integration, changes only fallback policy under a frozen model, and reports verdict/rank stability with equivalence margins.",
+        "The audited public path silently clamps missing history or can retain synchronized data after delayed lookup failure. The project is not a code-bug report: it must show state prevalence, paired metric effects, method-ordering stability, and reusable evaluator tests.",
+        "The take-9 pilot shows that noncompletion is not automatically rare: right-censoring is about 24.64 percent for a 0.338 MB payload, 31.00 percent for 0.423 MB, 36.18 percent for 0.500 MB, and 100 percent for 10 MB. This only establishes a go signal for full-release state analysis."
+      ],
+      "taggedStateContract": {
+        "availability": [
+          "current-complete: intended source-frame payload completed by the decision deadline",
+          "historical-complete: intended payload is unavailable but an older completed payload exists; age is explicit",
+          "incomplete-at-deadline: intended payload has not completed at decision time while later trace support remains",
+          "right-censored: payload has not completed when observable trace service ends",
+          "take-start-unknown: requested history precedes the take and is left-truncated or warm-start unknown"
+        ],
+        "observability": [
+          "trace-valid: directed link, unit, time alignment, and required samples are present",
+          "trace-missing-or-invalid: transport state is not identifiable and the evaluator fails closed"
+        ],
+        "policyActions": [
+          "silent-public-fallback: reproduce first-frame clamp and synchronized-frame retention as separate audited public behaviors",
+          "drop-or-local-only: exclude unavailable collaborator input",
+          "latest-completed: use only the newest payload completed before the deadline and log its age",
+          "age-aware-native: pass completion-derived age only to an unchanged model that already documents such an input; unsupported cells remain absent"
+        ]
+      },
+      "hardPreInferenceGates": [
+        {
+          "gate": "G1-complete-frame-sidecar",
+          "requirement": "Range-read and pose-anchor every remaining moving-agent YAML frame, bridge static agent 0 through the official same-stem grouping, and validate a 644-row take-9 sidecar before the first model-output comparison. Extend the same contract to every evaluated take.",
+          "currentStatus": "not-passed; 12 sampled anchors support an ordinal candidate but strict all-frame mapping is currently none",
+          "failureAction": "Stop all perception and ranking claims. Publish only the mapping audit or merge transport-state prevalence into the first candidate."
+        },
+        {
+          "gate": "G2-runtime-payload",
+          "requirement": "Instrument exact serialized bytes at the actual communication boundary for every method and frame; compare against but do not replace them with the static calculator.",
+          "currentStatus": "instrumentation hook audited, values not yet collected",
+          "failureAction": "Stop because fallback exposure cannot be attributed to the evaluated model workload."
+        },
+        {
+          "gate": "G3-frozen-input-identity",
+          "requirement": "For every paired policy cell, freeze checkpoint, preprocessing, ego frame, candidate collaborator frames, trace segment, payload encoding, scene, and seed; hash collaborator tensors and state lineage.",
+          "currentStatus": "design specified, execution pending",
+          "failureAction": "Reject any cell whose non-policy inputs differ."
+        },
+        {
+          "gate": "G4-state-prevalence",
+          "requirement": "Before opening task metrics, report per-take and steady-state exposure to every tagged state for each model payload and deadline.",
+          "currentStatus": "take-9 transport pilot supports nontrivial exposure; full release pending",
+          "failureAction": "If non-current states are negligible or confined to warmup, merge the project into the transport sufficiency study."
+        }
+      ],
+      "minimumStudy": {
+        "duration": "10-12 weeks, conditional on all hard gates passing by the end of week 3",
+        "compute": "One CUDA GPU with at least 24 GB memory, approximately 400 GB local storage, and CPU workers for MCAP decoding and ledger generation",
+        "methods": [
+          "Four released CooperScene model families selected before metric inspection to span at least three payload regimes and more than one fusion family",
+          "Ego-only or no-collaborator path through the same detector as the common fallback reference",
+          "Age-aware-native policy only for a released model whose unchanged code consumes a documented age input"
+        ],
+        "data": [
+          "All released validation and test takes for primary inference",
+          "Training takes only for configuration and preregistered smoke tests, never for choosing a favorable policy after seeing test metrics",
+          "Every evaluated take must have a complete frame sidecar, directed trace ledger, exact payload manifest, and object hashes"
+        ],
+        "executionPlan": [
+          "Week 1: complete the 644-row take-9 sidecar, test all public fallback paths, and freeze the tagged-union schema.",
+          "Week 2: extend sidecars and trace validation to selected validation/test takes; instrument exact serialization for four models.",
+          "Week 3: run state-prevalence, warmup/steady-state, unit, interpolation, and queue sensitivities without opening task metrics; execute the go/no-go gates.",
+          "Week 4-6: paired frozen-policy inference for silent fallback, drop/local-only, and latest-completed across all four models.",
+          "Week 7: model-native age-aware cells where genuinely supported; no retrofit adapter.",
+          "Week 8: equalized-payload and public-scalar controls to separate transport load from fallback semantics.",
+          "Week 9: Harbor-style deadline/drop and CoInfra-style latest-history functional comparisons under the common evaluator.",
+          "Week 10: take-clustered metric, verdict, and ranking analysis with state-stratified attribution.",
+          "Week 11: equivalence analysis, leave-one-take-out sensitivity, and one independent rerun from manifests.",
+          "Week 12: artifact packaging and claim audit; no scope expansion."
+        ]
+      },
+      "estimandsAndStatistics": [
+        "Primary policy effect is the paired per-take change in the official task metric under a frozen model and identical underlying scene/trace inputs.",
+        "Benchmark-verdict estimands are pairwise winner sign, top-method agreement, rank inversion count, Kendall tau, and Spearman rho under each policy.",
+        "Report actual-payload and equalized-payload strata separately so model size is not misattributed to fallback semantics.",
+        "Report warmup and steady-state strata separately; take-start unknown is never pooled with right-censored transport.",
+        "Take is the acquisition unit. Use take-clustered or hierarchical intervals and show every take effect; frames, links, objects, and seeds do not inflate the sample size.",
+        "Predefine practical equivalence margins for the task metric and rank agreement. A non-significant difference is not equivalence.",
+        "State-stratified associations are descriptive unless the paired policy intervention identifies the contrast."
+      ],
+      "baselinesAndComparators": [
+        "Audited CooperScene silent first-frame clamp",
+        "Audited synchronized-frame retention after delayed lookup failure",
+        "Drop or local-only fallback, matching Harbor's broad policy class",
+        "Latest-completed fallback, matching CoInfra and V2X-ReaLO's broad policy class without claiming their predictors are reproduced",
+        "Supported model-native age-aware path",
+        "Public scalar 1.6 Mbps delay and exact directed-trace completion",
+        "RCP-Bench random drop as a corruption control, not transport ground truth",
+        "Equalized-payload and ego-only controls"
+      ],
+      "negativeControls": [
+        "A current-complete cell must produce identical collaborator tensors under all policies.",
+        "A take-start request must be tagged unknown; no policy may silently call it right-censored.",
+        "A missing directed trace must fail closed rather than become zero delay or synchronized data.",
+        "Duplicate one checkpoint under a second method name; policy changes must not create a genuine method difference.",
+        "Permute policy labels after inference; the paired estimator must recover no systematic effect.",
+        "Use equal payloads across methods to test whether a ranking change was driven by transport load.",
+        "Hash and compare the underlying ego and candidate collaborator frames in every paired cell."
+      ],
+      "successCriteria": [
+        "Every evaluated frame has a validated frame sidecar, exact runtime payload, completion-ledger row, tagged availability and observability state, policy action, and tensor lineage.",
+        "The full-release state audit demonstrates adequate non-current-state exposure beyond warmup, or the standalone project is explicitly collapsed.",
+        "Paired frozen-policy results either identify a reproducible metric/verdict/ranking sensitivity or certify practical equivalence within declared support.",
+        "The same completion ledger feeds every model and policy; no method receives a favorable transport reconstruction.",
+        "Actual-payload and equalized-payload controls separate fallback semantics from communication volume.",
+        "A clean manifest-driven rerun reproduces at least one complete take-method-policy matrix.",
+        "Claims remain at benchmark-validity level unless separate physical-radio calibration passes."
+      ],
+      "killCriteria": [
+        "The complete frame sidecar cannot be established without using model outputs or an unverifiable ordering assumption.",
+        "Exact runtime payload or collaborator tensor identity cannot be logged at the evaluated communication boundary.",
+        "Non-current states are negligible after excluding warmup and malformed traces.",
+        "Policy cells cannot be paired because preprocessing, checkpoints, scene inputs, or model code change.",
+        "Observed ranking changes disappear after equalizing payload and correcting evaluator mismatches, leaving intervals too wide for equivalence.",
+        "A pre-existing primary source already combines the same CooperScene state contract, frozen-policy counterfactual, censoring treatment, and verdict/ranking analysis."
+      ],
+      "risksAndMitigations": [
+        {
+          "risk": "Reviewers may see the project as a repackaging of Harbor or CoInfra.",
+          "mitigation": "Treat their policy classes as direct precedents and center the novelty on evidence-typed transport states, one audited completion ledger, censoring, frozen counterfactual isolation, and ranking-equivalence analysis."
+        },
+        {
+          "risk": "The unresolved frame mapping could invalidate feasibility.",
+          "mitigation": "Make it a week-1 hard gate with a bounded Range-read solution; prohibit all model-output claims until every row passes."
+        },
+        {
+          "risk": "Short takes create heavy right censoring.",
+          "mitigation": "Use restricted completion estimands, preserve lower bounds, report support by take and payload, and never impute take-end latency."
+        },
+        {
+          "risk": "Age-aware support differs by model.",
+          "mitigation": "Keep drop and latest-completed as the common comparison; include age-aware-native only in documented, unchanged implementations."
+        },
+        {
+          "risk": "Policy effects may be payload effects.",
+          "mitigation": "Report both actual and equalized payloads, then decompose exposure and policy contrasts."
+        }
+      ],
+      "primaryEvidence": [
+        {
+          "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+          "url": "https://arxiv.org/abs/2606.31219",
+          "role": "Supplies the benchmark, public trace, model families, and audited fallback substrate.",
+          "provenance": "local-corpus",
+          "localPaperId": "cooperscene-cv2x-benchmark"
+        },
+        {
+          "title": "UCR-CISL/CooperScene official repository",
+          "url": "https://github.com/UCR-CISL/CooperScene",
+          "role": "Primary source for the silent clamp, delayed lookup, prior encoding, and implementation hooks.",
+          "provenance": "external"
+        },
+        {
+          "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+          "url": "https://doi.org/10.1145/3666025.3699328",
+          "role": "Harbor is the strongest deadline/drop or local-fallback functional precedent.",
+          "provenance": "external"
+        },
+        {
+          "title": "CoInfra: A Communication-Aware Cooperative Perception System for CAVs",
+          "url": "https://arxiv.org/abs/2507.02245",
+          "role": "Strongest latest-history and communication-aware fallback precedent.",
+          "provenance": "external"
+        },
+        {
+          "title": "V2X-ReaLO: An Open Online Framework and Dataset for Cooperative Perception in Reality",
+          "url": "https://arxiv.org/abs/2503.10034",
+          "role": "Recent-message online framework and real-system external-validity comparator.",
+          "provenance": "external"
+        },
+        {
+          "title": "Latency Robust Cooperative Perception using Asynchronous Feature Fusion",
+          "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+          "role": "Direct age/asynchrony compensation baseline that prevents a broad novelty claim.",
+          "provenance": "external"
+        },
+        {
+          "title": "RCP-Bench: Benchmarking Robustness for Collaborative Perception Under Diverse Corruptions",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+          "role": "Controlled drop and negative-collaboration comparator, but not transport ground truth.",
+          "provenance": "external"
+        }
+      ],
+      "reviewerChecks": [
+        "Does the proposal credit Harbor, CoInfra, V2X-ReaLO, and asynchronous fusion strongly enough?",
+        "Is the surviving contribution a scientific contract rather than a bug fix?",
+        "Are frame mapping, runtime payload, state prevalence, and frozen-input identity real stop gates?",
+        "Can the common policy comparisons stay fair across models with different payloads and age interfaces?",
+        "Would either a ranking change or a bounded equivalence result alter benchmark practice?"
+      ]
+    }
+  ],
+  "crossCandidateBoundary": {
+    "sharedSubstrate": "Both candidates may share the trace decoder, exact runtime payload instrumentation, service-completion integrator, object manifests, and take-level uncertainty utilities.",
+    "nonDuplication": [
+      "Candidate 1 asks which network structure must be preserved for transport estimands and remains valid without perception inference.",
+      "Candidate 2 assumes one chosen transport contract, then asks whether explicit availability and fallback semantics change frozen-model benchmark conclusions.",
+      "Candidate 2 may proceed only after its frame, payload, identity, and prevalence gates pass; otherwise its transport-only evidence is merged into Candidate 1."
+    ],
+    "publicationRule": "If both proceed, shared implementation is reported once and each study keeps a separate estimand, novelty claim, success condition, and negative-result contract."
+  },
+  "auditArtifacts": [
+    "content/idea-audits/cooperative-autonomous-driving-search-audit-2026-07-31.json",
+    "content/idea-audits/cooperative-autonomous-driving-asset-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-candidate-pool-v2.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-novelty-collision-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-availability-contract-novelty-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-trace-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-throughput-stats.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-completion-pilot.json",
+    "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-frame-alignment-audit.json",
+    "content/idea-audits/cooperative-autonomous-driving-trace-methodology.json"
+  ]
+}

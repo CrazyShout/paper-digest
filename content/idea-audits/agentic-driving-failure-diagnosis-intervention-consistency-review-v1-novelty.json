@@ -1,0 +1,58 @@
+{
+  "candidateId": "failure-diagnosis-intervention-consistency",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbc39-f019-7320-a6c7-aed57bf62008",
+  "reviewedAt": "2026-08-01T07:39:21Z",
+  "dossierSnapshotFingerprint": "71b38c0dbccf68ee0f9f22896f1d28326ea1e4b311c86de026a41899cbdba0c2",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "The broad diagnose-then-correct pattern is already crowded: Feedback-Guided Driving, ELF-VLA, CF-VLA, SERA, FLARE, D2R-RAG, and the July 2026 RedFlow paper all connect failure evidence to some corrective mechanism. The genuinely distinct residual is narrower but real: estimating whether a fixed semantic label predicts the better repair under a frozen-state, matched-budget label-by-repair cross, with label permutation and cross-generator confirmation. I found no reopened source that isolates that estimand, so the contribution is novel as a causal evaluation protocol rather than as a new failure-repair architecture.",
+    "feasibility": "A paired open-loop study on public rollouts is implementable, and the proposed controls are technically conventional. The difficult parts are obtaining 120 genuinely independent and deterministically replayable failures, making two repair families equally expressive rather than merely equal in calls or tokens, and adapting multiple public VLAs without hidden state or release gaps. A meaningful closed-loop subset and two-generator replication make the proposed 8-to-12-week schedule plausible only with working checkpoints and replay assets already in hand.",
+    "success-probability": "The central effect may be small. Planning, reasoning, perception, and trajectory-execution labels are coarse and correlated, while a strong generic reflection or globally best repair may absorb most recoverable gain. Shared-teacher style and confidence leakage can also create apparent label value that disappears with a second generator. The protocol can still produce an informative null result, but the stated positive pattern across labels, repair structures, generators, and task clusters has roughly even odds at best.",
+    "impact": "A clean positive result would establish an evidence standard missing from current failure-feedback driving papers: diagnostic categories would earn operational meaning only when they predict differential intervention benefit. A precise null result would also constrain causal language around structured feedback and redirect effort toward direct search or verification. Impact is limited by the fixed ontology, public-model scope, and the fact that frozen open-loop repair utility may not transfer to closed-loop or real-road safety.",
+    "comparison-readiness": "The dossier is unusually comparison-ready: no-op and repeated no-op, generic reflection, permuted labels, random and majority-best repair, a matched-budget oracle upper bound, per-state auditing, a held-out confirmation set, and clustered inference directly target the main confounds. Readiness would be stronger with named model and checkpoint versions, executable definitions of each editable field, a power calculation, and explicit reproductions of the newest action-level correction baseline RedFlow alongside ELF-VLA and CF-VLA approximations."
+  },
+  "strongestObjection": "After the reopened prior work, this can be dismissed as a rigorous missing ablation rather than a standalone research contribution: prior systems already diagnose failures and produce targeted corrections, and D2R-RAG already selects repairs under resource budgets. The residual claim survives only if the study demonstrates a label-by-repair interaction that cannot be explained by the discovery-set mapping, repair-family capacity, free-text leakage, severity, or one shared teacher, and that interaction transfers to an independently implemented repair generator.",
+  "requiredExperiment": "Run a preregistered full factorial on an untouched frozen-state set: for every state, strip free-text diagnosis to a fixed label token and execute every label crossed with every repair family under identical candidate, call, token, editable-field, seed, and evaluation budgets. Learn the label-to-repair mapping only by cross-fitting the discovery set, then compare the held-out label-directed policy against state-level label permutation, random repair, majority-best repair, generic reflection, no-op, and a matched-search upper bound. Estimate the label-by-repair interaction and repair-ranking accuracy with route-cluster bootstrap, repeat the complete test with an independently authored generator that never saw the diagnostic prompts, and verify the same direction on a second VLA plus a preregistered closed-loop safety subset. Without that cross-generator interaction, the residual novelty is not established.",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2607.27782",
+      "finding": "RedFlow, submitted July 30, 2026, identifies failure-inducing VLA actions and retrieves context-matched successful alternatives as action-level corrective targets. It is the latest directly overlapping failure-to-correction work found; it narrows novelty to semantic labels' incremental repair-selection value because it does not run a label-by-repair factorial."
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.12598",
+      "finding": "HINT, submitted July 14, 2026, maps autonomous-driving failure recordings through module diagnosis to code-level localization and reports 77.8% end-to-end Class@5 on real bugs. It blocks broad claims of novel driving failure diagnosis but does not choose or evaluate local policy repairs by downstream driving outcome."
+    },
+    {
+      "url": "https://arxiv.org/abs/2603.01063",
+      "finding": "ELF-VLA generates structured planning, reasoning, and trajectory-level diagnostic feedback and jointly uses it for feedback-guided refinement and RL re-injection. Its component and training ablations do not randomize labels across matched repair families, so reported system gains do not identify the proposed conditional label-action estimand."
+    },
+    {
+      "url": "https://arxiv.org/abs/2512.24426",
+      "finding": "CF-VLA diagnoses unsafe time-segmented meta-actions, revises them before trajectory generation, and reports gains in trajectory and collision metrics. Its rollout-filter-label pipeline selects scenes using trajectory disagreement and couples diagnosis to one meta-action correction path rather than testing whether labels predict differential benefit across repair families."
+    },
+    {
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Zhang_Feedback-Guided_Autonomous_Driving_CVPR_2024_paper.html",
+      "finding": "Feedback-Guided Autonomous Driving already uses fine-grained language about what failed and why to improve a sensorimotor driving policy, with open- and closed-loop gains. It is strong earlier prior art for failure-reason-guided correction, but its training comparison does not isolate label semantics through repair crossover or permutation."
+    },
+    {
+      "url": "https://arxiv.org/abs/2505.22067",
+      "finding": "SERA analyzes autonomous-driving performance logs, retrieves semantically aligned scenarios, and fine-tunes on them to repair failure patterns. Its intervention is training-distribution repair rather than a matched local policy-repair choice on the same frozen state."
+    },
+    {
+      "url": "https://proceedings.mlr.press/v318/hashemifar26a.html",
+      "finding": "D2R-RAG derives interpretable failure signatures and selects among corrective actions under explicit latency and VRAM budgets. This is a close cross-domain collision with the diagnose-to-repair and budget-aware framing, leaving domain-specific causal isolation of a driving label's action value as the main distinct contribution."
+    },
+    {
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Zhao_FLARE_A_Failure-Aware_Framework_for_Autonomous_Correction_and_Recovery_in_CVPR_2026_paper.html",
+      "finding": "FLARE uses multimodal failure analysis and an online monitor to arbitrate between task execution and learned reset skills, with reset and human-instruction ablations. It demonstrates diagnosis-linked recovery routing in a VLA setting, but not matched label permutation, repair-family crossover, or driving-domain transfer."
+    }
+  ],
+  "overall": 7
+}

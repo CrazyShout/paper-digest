@@ -1,0 +1,38 @@
+{
+  "candidateId": "signed-semantic-update-differential-admission",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb9a-72bc-7db0-8803-7d066c608a96",
+  "reviewedAt": "2026-08-01T05:21:31.483Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 2,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "密码完整性不等于模型语义完整性已被供应链后门工作覆盖，普通回归、差分测试和回滚也不是新组件。可保留的 residual 是以独立 update lineage 为统计单位，比较 ordinary regression 与 trigger-conditional paired semantic admission，并把接受决定接到车辆级回滚后果。",
+    "feasibility": "AutoVLA 固定仓库提供公开推理与训练骨架，但 reasoning data 仍待批准，NAVSIM/nuPlan 数据与 metric cache 需外部准备，公开 Hugging Face 只有一个约 16.3 GB checkpoint 且 dossier 未固定其 revision SHA。主研究要求 benign、malicious、fault、random 各 12 个独立 lineage、每个至少 120 个 paired scenes，再做 CARLA 接入和回滚；48 个 LoRA lineage 加至少 5760 个 old/new 场景对超出 4-8 张 GPU 在 10-12 周内的可信最小研究。",
+    "success-probability": "语义 gate 相对签名检查显然可能发现行为差异，但成功标准要求恶意更新先通过很强的 ordinary regression，再由 held-out trigger family 被专用 gate 稳定拒绝且不误拒 benign update。当前没有现成 lineage 数据、攻击生成器或在线回滚桥，成功高度依赖自建恶意更新是否既隐蔽又可复现。",
+    "impact": "若在自然更新和恶意更新的独立 lineage 上成立，会把模型更新准入从制品签名推进到行为证据并影响回滚策略，安全意义高；但学术许可、模拟闭环和研究 signer 限制了直接部署外推。",
+    "comparison-readiness": "普通 clean/natural/fault/random regression、签名验证、语义 gate、继续、拒绝和回滚的层次清晰，且 dossier 正确要求 update-level 而非 scene-level 推断。比较设计成熟，主要问题是计划规模与资产链，而不是缺少强基线。"
+  },
+  "strongestObjection": "最小主张依赖 48 个真正独立且预算匹配的更新 lineage，但公开资产只有单一大 checkpoint、外部数据依赖和受限再分发许可；在同一 10-12 周内训练这些 lineage、完成数千次多视图 VLA 配对推理并接入 CARLA 回滚，不是可信周期。若缩成少数手工恶意 adapter，统计单位又不足以支持供应链更新准入结论。",
+  "requiredExperiment": "把第一阶段压缩为 12 个 update-level 单元：benign、malicious、fault、random 各 3 个独立训练 seed，统一固定 base checkpoint revision、文件摘要、LoRA rank、训练步数和数据预算；每个 lineage 先在 30 个 paired NAVSIM scenes 上运行。只有当 malicious lineage 中至少两个在 clean non-inferiority 和最强 ordinary regression 下被接受，而预先冻结、完全 held-out trigger family 的 semantic gate 又稳定拒绝它们，同时 benign false rejection 未增加超过 0.10，才估算扩展所需 lineage 数；否则停止 CARLA 和 48-lineage 主研究。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "finding": "固定提交包含 AutoVLA/NAVSIM 推理、动作 codebook 和训练配置，但 README 的 reasoning data 仍标记等待批准，NAVSIM 数据和 metric cache 需另行准备；评测示例也包含待替换路径。"
+    },
+    {
+      "url": "https://huggingface.co/Zewei-Zhou/AutoVLA/tree/main",
+      "finding": "公开模型仓库当前列出一个约 16.3 GB 的 AutoVLA checkpoint；模型卡没有明确许可证元数据，且 dossier 未指定不可变 Hugging Face revision。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/blob/ba34eed74ce6729e7986592d0e66cbaca397b4fa/LICENSE",
+      "finding": "代码采用 UCLA Academic Software License，仅限学术或非营利研究，并禁止进一步转移软件及衍生物；这不阻止内部实验，但会限制 lineage checkpoint 和修改版 harness 的发布方式。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "b00919edc6372fe0fa7581a9093312de427d95d90adc859ebb045b7ec0ad175c"
+}

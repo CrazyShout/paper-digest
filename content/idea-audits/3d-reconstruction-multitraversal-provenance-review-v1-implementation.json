@@ -1,0 +1,38 @@
+{
+  "candidateId": "multitraversal-current-state-provenance",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbc0-f9cd-7293-8632-441a239393a2",
+  "reviewedAt": "2026-08-01T13:24:22+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 3,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "current/stale/unknown 的集合值来源契约确实超出 shared-static、latest-only 和普通 recency 地图，尤其把 visibility-supported absence 与未知分开；但算法层可能被强 recency-plus-visibility baseline 大幅吸收。",
+    "feasibility": "MTGS 固定提交提供 Apache-2.0 代码、checkpoint、nuPlan 多遍历预处理和多 GPU pipeline，3DGM 也有 Mapverse 多遍历资产；然而 MTGS 明确仍未发布 simulation environment，GaME 公开数据是 Flat/Aria，且 README 承认 rasterizer 非确定。没有一项资产直接提供驾驶场景的目标时刻 current/stale/unknown 真值、真实部分重访 mask 与 object-level change ledger。",
+    "success-probability": "公开多遍历数据主要为重建与外观变化设计，真实结构加入/移除和可见但缺失的冲突事件可能很稀少。100 个独立 object-region-time 单元并不等于足够的 scene/traversal clusters；若标注依赖方法输出或人工 timeline，核心 estimand 会失真。",
+    "impact": "若能在真实长期地图维护中区分 stale 与 unknown，并降低 false-keep/false-drop，会直接改善下游定位、感知和规划资产的可审计性，潜在影响高。",
+    "comparison-readiness": "MTGS、3DGM 与 GaME 都有公开方法描述，其中 MTGS 最可执行；但 3DGM 与 GaME 的许可证边界不清，数据域、输入传感器和输出表示不同，构造同 raw observations、公平 coverage 与统一 object/region truth 的 adapter 工作量大。"
+  },
+  "strongestObjection": "核心自然冲突语料目前不存在于锁定资产的公开接口中：MTGS/Mapverse 主要建模重复遍历下的稳定环境和短时 ephemeral 对象，GaME 的公开 Flat/Aria 又不是驾驶多遍历；在没有独立时间匹配真值和 visibility-supported absence 的情况下，current/stale/unknown 标签既不可观测，也容易被方法自己的 change detector 循环定义。",
+  "requiredExperiment": "Gate 0 只做 corpus audit：从 Mapverse/nuPlan 与 MTGS 公开 manifest 随机抽取至少 20 个地点，按时间顺序盲标结构新增、结构移除、短时占据和未覆盖四类机会，并为每个标签保存原始帧、pose、visibility 与双人仲裁记录。不得运行 proposed method 参与标注。若不能达到 20 个独立 scene/traversal clusters、每类至少 20 个可判定事件，或 unknown 不能与 stale 可靠区分，立即停止主张。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/OpenDriveLab/MTGS/tree/7ab67a3e386e5a4830017819324922a7bb9f26f7",
+      "finding": "固定提交 README 说明代码 Apache-2.0、数据基于 nuPlan 且为 CC-BY-NC-SA 4.0，提供 checkpoint 和自动多 GPU 重建；TODO 明确 simulation environment 尚未发布。"
+    },
+    {
+      "url": "https://github.com/VladimirYugay/GaME/tree/1c971d65d29952789fa4a2ebb342580d41acbbff",
+      "finding": "固定提交提供 run.py、Flat 与 Aria 数据入口以及 stale geometry 移除流程；公开示例不是驾驶多遍历，README 说明差分 rasterizer 非确定，且页面未给出清晰标准许可证。"
+    },
+    {
+      "url": "https://github.com/NVlabs/3DGM",
+      "finding": "官方仓库说明 Mapverse 含 40 个地点、467 段多遍历视频和 35,304 张图，目标是 persistent environment 与 ephemeral segmentation；没有目标时刻三状态真值或部分重访冲突协议。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "f51f6a69c728c41248b532ee1479bc7a72ed42411d7c7d9d1b38a3bd89474e81"
+}

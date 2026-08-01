@@ -1,0 +1,88 @@
+{
+  "candidateId": "geolocation-controlled-retrieval-surplus",
+  "auditedAt": "2026-08-01",
+  "auditType": "official-code-and-paper-boundary-check",
+  "claimBoundary": "This audit establishes that geographic images are selected from ego location and enter the released planning model, and that a location-controlled image-surplus experiment is implementable. It does not establish that geographic images add no value beyond location priors.",
+  "officialAssets": [
+    {
+      "name": "SpatialRetrievalAD Dataset Devkit",
+      "type": "dataset-devkit",
+      "url": "https://github.com/SpatialRetrievalAD/SpatialRetrievalAD-Dataset-Devkit/tree/2e772f42a2dd7cd9866fa8b685f85ab67c6cecef",
+      "fixedCommit": "2e772f42a2dd7cd9866fa8b685f85ab67c6cecef",
+      "verifiedFiles": [
+        "nuscenes_geoext/nugeo.py",
+        "nuscenes_geoext/download_pano.py",
+        "nuscenes_geoext/utils/transform.py",
+        "nuscenes_geoext/utils/sat.py"
+      ]
+    },
+    {
+      "name": "SpatialRetrievalAD End-to-End Planning",
+      "type": "code-and-checkpoint",
+      "url": "https://github.com/SpatialRetrievalAD/End2End-Planning/tree/af4631fd13fee73ff4af7351b6bca9ba9a0ca236",
+      "fixedCommit": "af4631fd13fee73ff4af7351b6bca9ba9a0ca236",
+      "verifiedFiles": [
+        "projects/configs/VAD_Geo/VAD_Geo.py",
+        "projects/mmdet3d_plugin/VAD/VAD.py",
+        "projects/mmdet3d_plugin/VAD/modules/geo_reliability.py",
+        "projects/mmdet3d_plugin/datasets/nuscenes_vad_dataset.py",
+        "tools/merge_data.py"
+      ]
+    },
+    {
+      "name": "Spatial Retrieval Augmented Autonomous Driving",
+      "type": "formal-paper",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Jia_Spatial_Retrieval_Augmented_Autonomous_Driving_CVPR_2026_paper.pdf",
+      "version": "CVPR-2026-pages-17787-17797"
+    }
+  ],
+  "verifiedObservations": [
+    {
+      "id": "gps-indexed-retrieval",
+      "evidence": "The official paper defines retrieval from current images, ego pose, geographic images, and their global coordinates. The devkit derives latitude/longitude from nuScenes ego poses and retrieves or crops the nearest geographic image for each frame."
+    },
+    {
+      "id": "location-enters-fusion",
+      "evidence": "The released planning model consumes street-view and satellite tensors plus spatial metadata. Geographic features are fused through cross-attention with 3D positional encoding, while the reliability gate also uses GPS distance."
+    },
+    {
+      "id": "planning-branch-is-public",
+      "evidence": "The official End2End-Planning repository releases VAD+Geo configs, inference code, nuScenes evaluation scripts, and a checkpoint destination. The geographic inputs can be disabled or replaced at the dataset/model boundary without substituting another driving stack."
+    },
+    {
+      "id": "reported-full-split-margin-is-small",
+      "evidence": "The released model table reports equal average planning L2 for VAD and VAD+Geo on the full split, with small long-horizon and collision differences; the night subset shows a larger collision difference but remains open-loop nuScenes planning evaluation."
+    },
+    {
+      "id": "existing-robustness-is-not-location-control",
+      "evidence": "The paper drops geographic images or replaces them with random incorrect images to test the reliability gate for online mapping. That intervention changes both image content and location consistency and therefore does not identify image value conditional on GPS, route, or road identity."
+    }
+  ],
+  "missingControl": {
+    "estimand": "The incremental planning value of retrieved geographic pixels after holding ego GPS, route/map priors, current onboard observations, and geographic identity constant.",
+    "notFoundInPaper": [
+      "GPS-only or route-prior-only planning baseline",
+      "same-location temporal image mismatch",
+      "distance-matched wrong-location image control",
+      "geographic-tile-disjoint train/test ranking analysis"
+    ]
+  },
+  "credibleBuildPath": [
+    "Freeze the released VAD+Geo checkpoint and its official nuScenes planning evaluator.",
+    "Add input adapters at the released streetview/satellite boundary for real retrieval, zero image, same-location temporal mismatch, and distance-matched wrong-location retrieval while preserving all pose metadata.",
+    "Train only a lightweight GPS/route prior control if the released VAD branch does not expose an equivalent location input; keep the main VAD+Geo weights frozen for the paired image interventions.",
+    "Split evaluation by geographic tiles or scene families and bootstrap at the scene level so nearby frames cannot dominate uncertainty.",
+    "Report planning L2, collision rate, map/road-stratum effects, reliability-gate output, and method-rank stability."
+  ],
+  "minimumFalsification": {
+    "sample": "Start with 200-500 official nuScenes validation samples spanning at least two locations and a held-out geographic-tile partition.",
+    "success": "Real retrieved pixels retain a stable advantage over GPS/route priors and all location-matched image controls on unseen tiles.",
+    "kill": "GPS/route priors match the released geographic-image branch, or the image advantage disappears under geographic-tile separation and location-matched controls."
+  },
+  "remainingRisks": [
+    "The official checkpoint and full nuScenes/Google-derived imagery are large and license-constrained, although the released interfaces are sufficient to implement the experiment.",
+    "A GPS-only prior may require a new lightweight branch, so the claim must separate frozen paired image interventions from any learned-prior comparison.",
+    "Open-loop nuScenes collision metrics are not a substitute for closed-loop safety; a positive result would still need a later closed-loop confirmation."
+  ],
+  "verdict": "credible-build-path"
+}

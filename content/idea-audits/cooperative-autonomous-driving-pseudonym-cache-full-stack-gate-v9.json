@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "gateType": "van3twin-full-stack-execution-closure",
+  "generatedAt": "2026-07-31T23:32:24+08:00",
+  "candidateId": "pseudonym-rotation-perception-cache-continuity",
+  "fixedCommit": {
+    "asset": "VaN3Twin",
+    "repository": "https://github.com/DriveX-devs/VaN3Twin.git",
+    "commit": "e722a8d34cb4f5003bc6972bad4b9a456f366731",
+    "remote": "hk-wsl",
+    "path": "/tmp/van3twin-pseudonym-cache-v8-fixed",
+    "verificationCommand": "git -C /tmp/van3twin-pseudonym-cache-v8-fixed rev-parse HEAD",
+    "verificationExitCode": 0,
+    "verificationOutput": "e722a8d34cb4f5003bc6972bad4b9a456f366731",
+    "worktreeCommand": "git -C /tmp/van3twin-pseudonym-cache-v8-fixed status --short --branch",
+    "worktreeExitCode": 0,
+    "worktreeOutput": "## HEAD (no branch)"
+  },
+  "environment": {
+    "host": "hk-wsl",
+    "hostname": "Atlas",
+    "os": "Ubuntu 22.04",
+    "kernel": "Linux 6.6.87.2-microsoft-standard-WSL2 x86_64 GNU/Linux",
+    "logicalCpuCount": 24,
+    "filesystemAtClosure": "/dev/sdd 1007G total, 898G used, 59G available, 94% used",
+    "privilege": "no passwordless sudo; no system package installation or system-file modification was attempted",
+    "network": "available but low-throughput during the gRPC submodule checkout",
+    "toolVersions": {
+      "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0",
+      "systemCmake": "3.22.1",
+      "systemNinja": "1.10.1",
+      "condaCmake": "4.2.3",
+      "condaNinja": "1.13.2",
+      "systemOpenSSLFoundByCmake": "3.0.2",
+      "condaOpenCV": "4.13.0"
+    },
+    "preexistingOfficialAssembly": {
+      "path": "/tmp/van3twin-pseudonym-cache-v8-build/ns-3-dev",
+      "provenance": "The v8 gate records a successful run of the fixed-commit sandbox_builder.sh without its sudo dependency-install branch. The builder assembled ns-3-dev-v2x-v0.2 plus nr-v2x-dev and copied the fixed VaN3Twin tree into it.",
+      "currentTurnUse": "reused as the official ns-3 configure target; the fixed repository itself remained unchanged"
+    }
+  },
+  "attempts": [
+    {
+      "id": "path-1-official-ns3-with-existing-user-prefix",
+      "pathType": "repository-supported ./ns3 configure path using an already available user-directory OpenCV prefix",
+      "timeBox": "one configure invocation; stopped at the first required dependency failure",
+      "commands": [
+        {
+          "command": "pkg-config --modversion opencv4",
+          "workingDirectory": "/tmp",
+          "exitCode": 1,
+          "result": "No system opencv4 pkg-config record."
+        },
+        {
+          "command": "python3 -c \"import cv2; print(cv2.__version__); print(cv2.getBuildInformation().splitlines()[0])\"",
+          "workingDirectory": "/tmp",
+          "exitCode": 0,
+          "result": "Python cv2 reported 5.0.0, but this was not used as the C++ dependency."
+        },
+        {
+          "command": "find /usr/local /opt /home -type f -name OpenCVConfig.cmake -o -name opencv-config.cmake",
+          "workingDirectory": "/tmp",
+          "exitCode": 0,
+          "result": "Found /home/atlas/miniforge3/envs/dl/lib/cmake/opencv4/OpenCVConfig.cmake."
+        },
+        {
+          "command": "env -C /tmp/van3twin-pseudonym-cache-v8-build/ns-3-dev CMAKE_PREFIX_PATH=/home/atlas/miniforge3/envs/dl PATH=/home/atlas/miniforge3/envs/dl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ./ns3 configure --build-profile=debug --enable-tests --disable-python --disable-werror",
+          "workingDirectory": "/tmp/van3twin-pseudonym-cache-v8-build/ns-3-dev",
+          "exitCode": 1,
+          "result": "CMake processed src/automotive, found OpenSSL 3.0.2 and OpenCV 4.13.0, then stopped in src/carla/CMakeLists.txt because gRPCConfig.cmake or grpc-config.cmake was absent. No build command was run."
+        }
+      ],
+      "officialDependencyFinding": "src/automotive/CMakeLists.txt links libcarla unconditionally; src/carla/CMakeLists.txt requires protobuf and gRPC CONFIG. Supplying only the available OpenCV user prefix cannot configure libautomotive.",
+      "outcome": "blocked-before-generation"
+    },
+    {
+      "id": "path-2-user-prefix-official-builder-dependencies",
+      "pathType": "no-sudo user prefix using Ubuntu 22.04 dependency archives plus the official builder's pinned gRPC v1.60.0 source path",
+      "timeBox": "one 600-second gRPC submodule synchronization and one continuation; the continuation was interrupted immediately when closure was requested",
+      "commands": [
+        {
+          "command": "mkdir -p /tmp/van3twin-pseudonym-cache-v9-deps/debs /tmp/van3twin-pseudonym-cache-v9-deps/prefix",
+          "workingDirectory": "/tmp",
+          "exitCode": 0,
+          "result": "Created isolated dependency directories."
+        },
+        {
+          "command": "env -C /tmp/van3twin-pseudonym-cache-v9-deps/debs apt-get download libgrpc++-dev libgrpc++1 libgrpc-dev libgrpc10 libprotobuf-dev libprotobuf23 libprotobuf-lite23 libabsl-dev libabsl20210324 libc-ares-dev libc-ares2 libre2-dev libre2-9 libboost1.74-dev zlib1g-dev",
+          "workingDirectory": "/tmp/van3twin-pseudonym-cache-v9-deps/debs",
+          "exitCode": 0,
+          "result": "Downloaded 15 Ubuntu Jammy archives, 17.6 MB total, without installation."
+        },
+        {
+          "command": "find /tmp/van3twin-pseudonym-cache-v9-deps/debs -name \"*.deb\" -exec dpkg-deb -x {} /tmp/van3twin-pseudonym-cache-v9-deps/prefix ;",
+          "workingDirectory": "/tmp",
+          "exitCode": 1,
+          "result": "Shell transport removed the find terminator; find reported 'missing argument to -exec'. No package was changed by this command."
+        },
+        {
+          "command": "find /tmp/van3twin-pseudonym-cache-v9-deps/debs -name \"*.deb\" -exec dpkg-deb -x {} /tmp/van3twin-pseudonym-cache-v9-deps/prefix +",
+          "workingDirectory": "/tmp",
+          "exitCode": 1,
+          "result": "The remote shell again reported 'missing argument to -exec'. No package was changed by this command."
+        },
+        {
+          "command": "dpkg-deb -x <each-downloaded-deb> /tmp/van3twin-pseudonym-cache-v9-deps/prefix",
+          "workingDirectory": "/tmp",
+          "exitCode": 255,
+          "result": "A 15-command parallel extraction batch completed 13 archives; SSH reset two commands for libre2-9 and libgrpc++-dev. Both were retried separately."
+        },
+        {
+          "command": "dpkg-deb -x /tmp/van3twin-pseudonym-cache-v9-deps/debs/libre2-9_20220201+dfsg-1_amd64.deb /tmp/van3twin-pseudonym-cache-v9-deps/prefix",
+          "workingDirectory": "/tmp",
+          "exitCode": 0,
+          "result": "Retry succeeded."
+        },
+        {
+          "command": "dpkg-deb -x /tmp/van3twin-pseudonym-cache-v9-deps/debs/libgrpc++-dev_1.30.2-3build6_amd64.deb /tmp/van3twin-pseudonym-cache-v9-deps/prefix",
+          "workingDirectory": "/tmp",
+          "exitCode": 0,
+          "result": "Retry succeeded."
+        },
+        {
+          "command": "env -C /tmp/van3twin-pseudonym-cache-v9-deps timeout 300 git clone --depth 1 --branch v1.60.0 https://github.com/grpc/grpc.git",
+          "workingDirectory": "/tmp/van3twin-pseudonym-cache-v9-deps",
+          "exitCode": 0,
+          "result": "Checked out gRPC tag v1.60.0 at commit 0ef13a7555dbaadd4633399242524129eef5e231."
+        },
+        {
+          "command": "env -C /tmp/van3twin-pseudonym-cache-v9-deps/grpc timeout 600 git submodule update --init --depth 1",
+          "workingDirectory": "/tmp/van3twin-pseudonym-cache-v9-deps/grpc",
+          "exitCode": 124,
+          "result": "Timed out after 600 seconds. abseil-cpp, benchmark, and bloaty reached their pinned commits; the remaining 12 submodules were cloned but still showed commit mismatches."
+        },
+        {
+          "command": "env -C /tmp/van3twin-pseudonym-cache-v9-deps/grpc timeout 300 git submodule update --init --depth 1",
+          "workingDirectory": "/tmp/van3twin-pseudonym-cache-v9-deps/grpc",
+          "exitCode": 255,
+          "result": "Interrupted on the user's immediate-closure instruction. No gRPC configure, gRPC build, ns-3 reconfigure, libautomotive build, or driver build followed."
+        }
+      ],
+      "outcome": "timeboxed-dependency-bootstrap-incomplete"
+    }
+  ],
+  "executedPath": {
+    "status": "not-executed",
+    "requiredChain": [
+      "real ETSI CollectivePerceptionMessage ASN.1 object",
+      "UPER encode",
+      "ns-3 Packet/BTPDataIndication",
+      "CPBasicService::receiveCpm",
+      "asn1cpp::uper::decodeASN",
+      "m_CPReceiveCallback",
+      "cooperativePerception::receiveCPM",
+      "cooperativePerception::translateCPMdata",
+      "LDM::insert",
+      "scheduled LDM::deleteOlderThan cleanup"
+    ],
+    "reached": [
+      "fixed VaN3Twin source verification",
+      "official sandbox assembly from the prior gate",
+      "official ns-3 CMake processing of src/automotive",
+      "successful discovery of OpenSSL and user-directory OpenCV"
+    ],
+    "notReached": [
+      "CMake generation",
+      "libautomotive compilation",
+      "official automotive object production",
+      "minimal linked driver compilation",
+      "ASN.1 UPER round trip",
+      "CPBasicService callback invocation",
+      "receiveCPM to translateCPMdata to LDM execution",
+      "timeout cleanup execution"
+    ],
+    "officialObjectEvidence": {
+      "query": "find /tmp/van3twin-pseudonym-cache-v8-build/ns-3-dev/build -type f -path '*automotive*' -name '*.o' -o -path '*automotive*' -name '*.so'",
+      "queryExitCode": 0,
+      "objects": [],
+      "objectHashes": [],
+      "finding": "No automotive object or shared library existed, so there is no official-object hash to report."
+    }
+  },
+  "results": {
+    "fullStackTraceRuns": 0,
+    "buildResult": "No successful libautomotive build.",
+    "traceValidity": {
+      "intendedPrimaryCondition": "one CPM sender with synchronized stationId, PerceivedObject.objectId, and SensorInformation.sensorId rotation",
+      "receiverVisibleFields": [
+        "current frame stationId",
+        "current frame objectId",
+        "current frame sensorId",
+        "current frame CPM kinematics and timestamp"
+      ],
+      "forbiddenOracleFields": [
+        "oldStationId-newStationId map",
+        "stable actor ID",
+        "cav_id",
+        "truth track ID",
+        "simulator node pointer"
+      ],
+      "oldNewOracleProvided": false,
+      "synchronizedIdChangeDefined": true,
+      "asn1ConstraintsValidated": false,
+      "uperEncoded": false,
+      "officialDecoderAccepted": false,
+      "callbackDelivered": false,
+      "status": "not valid as a full-stack execution trace because no wire round trip or official callback path ran"
+    },
+    "immediateAfterRotation": {
+      "executed": false,
+      "duplicate": null,
+      "ghost": null,
+      "missing": null
+    },
+    "afterMoreThanOneSecond": {
+      "executed": false,
+      "duplicate": null,
+      "ghost": null,
+      "missing": null,
+      "cleanupObserved": false
+    },
+    "staticTimeoutEvidence": {
+      "cleanerIntervalSeconds": 0.5,
+      "deleteOlderThanSeconds": 1,
+      "comparison": "strictly greater than one second",
+      "source": "src/automotive/model/Facilities/LDM.h:17-18 and LDM.cc:76,232-273",
+      "executionStatus": "source-audited-only"
+    },
+    "excludedPriorEvidence": "The v8 direct harness copied official method bodies into an adapter and did not use real ASN.1, CPBasicService, full translateCPMdata, official linked objects, or scheduled cleanup. Its duplicate/ghost outputs are excluded from this v9 execution result."
+  },
+  "dependencyEvidence": {
+    "officialDocumentation": [
+      {
+        "source": "README.md:13-18,33-78",
+        "finding": "Ubuntu 22.04 is supported; the documented path is sandbox_builder.sh, then ./ns3 configure and ./ns3 build.",
+        "sha256": "9b66e022311ec48d87ef0c5c87d847b28edc92b343bb1d14d418a35f3564b7a3"
+      },
+      {
+        "source": "sandbox_builder.sh:3,28-69,108-147",
+        "finding": "The builder identifies ns-3 3.35, installs dependencies with sudo when requested, pins gRPC v1.60.0, builds OpenCV from source, and checks out ns-3-dev-v2x-v0.2 plus nr-v2x-dev.",
+        "sha256": "941961e43e3501b8eacdab221067302376434a6e8c3da8b01385397539f81dcb"
+      },
+      {
+        "source": "src/automotive/CMakeLists.txt:1-6,5859-5878",
+        "finding": "OpenSSL and OpenCV are required and automotive links libcarla.",
+        "sha256": "10cc9843014df561820435c358110fc87c3aafa0db69a961dfab998942ba4f14"
+      },
+      {
+        "source": "assembled ns-3 src/carla/CMakeLists.txt:1-8,30",
+        "finding": "libcarla requires protobuf and gRPC CONFIG.",
+        "sha256": "aa3cf2f034b56ab0584631dce23da18de6eb53fc03568007c847f0399bf775a2"
+      }
+    ],
+    "downloadedUserPrefixPackages": [
+      "libgrpc++-dev 1.30.2-3build6",
+      "libgrpc++1 1.30.2-3build6",
+      "libgrpc-dev 1.30.2-3build6",
+      "libgrpc10 1.30.2-3build6",
+      "libprotobuf-dev 3.12.4-1ubuntu7.22.04.6",
+      "libprotobuf23 3.12.4-1ubuntu7.22.04.6",
+      "libprotobuf-lite23 3.12.4-1ubuntu7.22.04.6",
+      "libabsl-dev 0~20210324.2-2ubuntu0.3",
+      "libabsl20210324 0~20210324.2-2ubuntu0.3",
+      "libc-ares-dev 1.18.1-1ubuntu0.22.04.3",
+      "libc-ares2 1.18.1-1ubuntu0.22.04.3",
+      "libre2-dev 20220201+dfsg-1",
+      "libre2-9 20220201+dfsg-1",
+      "libboost1.74-dev 1.74.0-14ubuntu3",
+      "zlib1g-dev 1:1.2.11.dfsg-2ubuntu9.2"
+    ],
+    "grpcSource": {
+      "tag": "v1.60.0",
+      "commit": "0ef13a7555dbaadd4633399242524129eef5e231",
+      "path": "/tmp/van3twin-pseudonym-cache-v9-deps/grpc",
+      "submoduleStateAtClosure": "3 of 15 top-level submodules at pinned commits; 12 present at non-pinned commits after the timed-out synchronization"
+    },
+    "officialSourceHashes": [
+      {
+        "path": "src/automotive/model/Facilities/cpBasicService.cc",
+        "sha256": "4954027b0cfe3f58a04b89daac09793917f37483a3db7f4d076cb0c6903b67fa"
+      },
+      {
+        "path": "src/automotive/model/Facilities/cpBasicService.h",
+        "sha256": "e0f4c68579c2df2edd6def84cda8019046bb9f46e33b6628e6bdb2aa121ce439"
+      },
+      {
+        "path": "src/automotive/model/Applications/cooperativePerception.cc",
+        "sha256": "65778ea7bae031b86b313b2c0a1996a364213ecf8876aa6ffb355aa99a3fc329"
+      },
+      {
+        "path": "src/automotive/model/Applications/cooperativePerception.h",
+        "sha256": "f5a876ea862e1f66c8db33dafaa34a3fd278c1f6d48032ae3260a6ee77a5dda0"
+      },
+      {
+        "path": "src/automotive/model/Facilities/LDM.cc",
+        "sha256": "fba07900a0d2631a066ef650c32d228422d7e5a96447de50f3576f15e703e9e0"
+      },
+      {
+        "path": "src/automotive/model/Facilities/LDM.h",
+        "sha256": "f6062638d8bef60802e7b342274b17adeff7db1ca4e9714e6a7f3057bacc0d22"
+      },
+      {
+        "path": "src/automotive/model/ASN1/full-v1-v2/CollectivePerceptionMessage.c",
+        "sha256": "f34f4322f5dc32a77ba0fb08cfeb72685a6c7f699dc49438b348de6c25b5511a"
+      },
+      {
+        "path": "src/automotive/model/ASN1/full-v1-v2/CollectivePerceptionMessage.h",
+        "sha256": "0fce86d0bd08ea1178995147128193c78fb89b33865f95895c37081c89d9741e"
+      },
+      {
+        "path": "src/automotive/model/ASN1/asn1cpp/Encoding.hpp",
+        "sha256": "5b301050d46b81f357d270a0bd62cb58ece954156ad0fc2a155d5ed1b14b47e2"
+      },
+      {
+        "path": "src/automotive/model/ASN1/full-v1-v2/uper_decoder.c",
+        "sha256": "24a021ed719e39bbdcf5352c8679ec075f9a22eaeb7b1c449d4fb72e02f03791"
+      },
+      {
+        "path": "src/automotive/model/ASN1/full-v1-v2/uper_encoder.c",
+        "sha256": "d464be8f436ee9a0e01989feda2c1d5a08c7003a5f9b475c12a5a719c23edced"
+      }
+    ],
+    "objectHashFinding": "No official automotive object was produced; reporting a copied-method harness binary hash would violate this gate."
+  },
+  "limitations": [
+    "The required full stack was not compiled or executed, so immediate and greater-than-one-second duplicate, ghost, and missing values are unknown.",
+    "The existing v8 field-level trace was never ASN.1 constrained, UPER encoded, decoded by CPBasicService, or delivered through its callback.",
+    "Path 1 proved that the user OpenCV prefix works but exposed an unconditional libcarla to gRPC configure dependency.",
+    "Path 2 did not finish the official builder's gRPC source dependency inside the bounded download window; no conclusion about later source compatibility or link success is supported.",
+    "No old-new oracle was supplied, but this control alone cannot validate an unexecuted trace.",
+    "Remote /tmp artifacts were retained as requested; the fixed repository was not edited."
+  ],
+  "verdict": "revise",
+  "verdictRationale": {
+    "executionClosure": "reject-current-execution-as-pass-evidence",
+    "reason": "Neither allowed dependency path produced libautomotive or ran the mandated ASN.1 decoder-to-callback-to-LDM-to-timeout chain. The candidate therefore cannot receive a go verdict from this execution gate, and the v8 adapter result is insufficient by the stated rules.",
+    "publicAssetTwoWeekExecutability": {
+      "candidateCanStillMeet": true,
+      "assessment": "conditional-yes-not-demonstrated-on-this-host",
+      "basis": "The fixed public repository, ns-3 tag, gRPC tag, ASN.1 sources, Ubuntu packages, and documented Ubuntu 22.04 path are all publicly available. The observed block is dependency provisioning and download completion rather than a missing receiver implementation. A pre-provisioned disposable Ubuntu 22.04 environment following the official dependency contract can reasonably execute this public path within two weeks, but this audit did not demonstrate that execution and makes no performance claim."
+    }
+  },
+  "nextActions": [
+    "Keep the candidate at revise and do not use v8 adapter metrics as full-stack evidence.",
+    "Only a future rerun in a pre-provisioned Ubuntu 22.04 environment may reopen the gate; it must produce official automotive object hashes and execute the exact ASN.1/CPBasicService/receiveCPM/translateCPMdata/LDM/timeout chain without an old-new oracle.",
+    "Do not change the runner, tests, or idea-center from this closure."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "candidateId": "adaptive-detector-fallback-hazard-budget",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb8d-1ebc-7382-8a02-fd58dc793777",
+  "reviewedAt": "2026-08-01T04:33:23.129Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "车辆级 detector-fallback 联合风险账本是可识别的窄 residual，但不是全新的安全架构。Simplex/RTA 已把监测、切换和备用控制结合起来，2025 年针对 ACC 的运行时隐蔽感知攻击也已显式考虑在安全机制或驾驶员介入前制造 hazard；近期 MRM 工作又已覆盖 fallback 指标与周围交通影响。真正剩余的新意是让攻击者同时适应特定视觉 detector 与处置状态机，并在同初态下检验 continue、fail-stop、MRM 的风险排序反转，而不是 detector、fallback 或 hazard metric 本身。",
+    "feasibility": "AD2、CARLA 和公开 fallback/RTA 思路使最小实验可以搭建，dossier 也给出了明确的输入 hook、配对单位和 kill gate。但把 AD2 从其固定环境迁移到 CARLA 0.9.15、实现与被攻击视觉链真正独立的 MRM、进行 detector-aware 多目标优化，并完整跑完 input provenance 与三种处置的交叉组合，工程量显著高于 10 至 12 周的普通论文原型。",
+    "success-probability": "最可能得到的是 detector-aware attack 改变 detector score 或部分 TTC 指标，而不一定在足够独立的 route-seed blocks 上稳定改变车辆 hazard 或三种处置的排序。攻击目标中的 harm、evasion 和 false-trigger exploitation 彼此冲突，且 privileged simulator-state MRM 可能过强，使核心 rank-reversal 假设难以成立或只在狭窄阈值成立。",
+    "impact": "若确实证明常用检测阈值在考虑误回退、检测时延和后车风险后会反转系统选择，结果能纠正只报 AUROC/ASR 的防御评估，并给出明确 ODD 与回退决策。影响仍受数字白盒输入、CARLA、单 detector/agent 合同和 privileged-state MRM 限制，不能直接外推道路部署。",
+    "comparison-readiness": "dossier 已包含 continue、detector-only、immediate fail-stop、independent MRM、oracle trigger、robust agent 及 attack/fault/natural/random 对照，统计单位也合理。仍需把 2025 年运行时隐蔽 ACC 攻击、Simplex-Drive/RTA 和正式 MRM safety-evaluation framework 加入直接比较或明确排除，否则容易把已有的 monitor-intervention 联合评估重新包装成新范式。"
+  },
+  "strongestObjection": "最接近工作已经分别甚至部分联合覆盖了自适应运行时攻击、安全机制介入、monitor-to-fallback 切换和 MRM 风险评估；若论文只是把 AD2 接到一个自建 MRM 并报告更多车辆指标，它是高质量工程整合，而不是新的研究命题。必须证明 detector-aware attacker 会产生普通攻击、普通 RTA 和普通 MRM 研究都无法预测的处置排序反转。",
+  "requiredExperiment": "先做一个预注册的小型交叉试验：在至少 40 个独立 route-traffic seeds 上，用同一视觉预算比较 non-adaptive 与 detector-aware attack，并对每个 seed 从同一快照执行 continue、immediate fail-stop、Simplex-style safety fallback 和所提 rear-aware MRM。主要判据不是攻击成功率，而是 detector-aware 条件是否产生相对 non-adaptive 的显著 excess hazard，并至少一次稳定改变四种处置的风险排序；若没有排序反转或增量效应可被触发时延单独解释，停止把它定位为新安全命题。",
+  "evidenceReopened": [
+    {
+      "url": "https://openaccess.thecvf.com/content/WACV2026/html/Sahu_AD2_Analysis_and_Detection_of_Adversarial_Threats_in_Visual_Perception_WACV_2026_paper.html",
+      "finding": "AD2 的一手页面确认其在 CARLA 中闭环评估三类视觉攻击并提出时空攻击检测器，但贡献仍停留在攻击影响与 detector 效率，没有把检测输出接入可执行 fallback/MRM。"
+    },
+    {
+      "url": "https://doi.org/10.1145/3708821.3710832",
+      "finding": "2025 AsiaCCS 的运行时隐蔽感知攻击已联合考虑攻击时机、ACC 控制危害以及在驾驶员或安全机制检测/干预前规避缓解，直接压缩了 detector-aware hazard 这一广义主张的新颖性。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2606.06996",
+      "finding": "2026 mission-level RTA 已实现 monitor、fallback controller 与 controller switching，并报告 false rejection 和 fallback 失败，说明 monitor-to-fallback 联合评估本身已有直接邻近工作。"
+    },
+    {
+      "url": "https://doi.org/10.1109/IAVVC61942.2025.11219609",
+      "finding": "IAVVC 2025 已提出 DDT fallback 的 MRM safety-evaluation framework，覆盖场景扩展、安全指标以及仿真、试验场和道路验证，因此候选的贡献必须来自 adversarial joint optimization 与风险排序，而非 MRM 指标集合。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "6bfb8252994de7b1ee3a5d49d8fd5b4023956528a06f8fb4225b3acf4d647dec"
+}

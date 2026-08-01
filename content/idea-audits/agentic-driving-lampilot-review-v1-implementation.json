@@ -1,0 +1,51 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb33-3818-7f42-94b4-b912855dc4c7",
+  "reviewedAt": "2026-08-01T10:55:49+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 8,
+    "success-probability": 7,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "group split、检索消融和记忆审计本身并不新，LaMPilot 与 DiLu 也把经验/策略记忆作为预期能力。本候选的有效残差是把官方 human-feedback 总分拆成语言改写、异状态记忆和同初始状态策略复用三个 estimand，并用实际进入提示的策略来源而非 split 名称完成归因。固定内容的 same-group denylist 与 retrieved-but-hidden placebo 对该 benchmark 是具体且可复查的新协议。",
+    "feasibility": "固定 LaMPilot 提交直接暴露 32 类配置、4,900 个 sample-command 笛卡尔条目、精确 ID、demo-before-test 顺序、highway-env seed、Chroma PolicyRepository 和 evaluator。核心 adapter 只需在 policy commit 时增加 source iid/sample/seed 元数据，在 retrieve 时 trace、denylist 或 hidden，不需 GPU 或训练模型；MIT 许可证也允许发布。主要工程风险是 requirements 仅给宽松下界、LangChain/Chroma/OpenAI API 已明显漂移，官方 demo feedback/commit 是交互式人工输入，且当前 repository 只保存 name/code/description，旧仓库无法事后恢复来源，必须从零构建并冻结 source-annotated snapshot。",
+    "success-probability": "代码结构直接支持问题存在：DbLv1DemoDataset 每个任务挑一个 exact ID，test_hf 先把成功 demo 写入持久库，随后完整 dataset 仅按 iid 跳过已评条目；同 sample/seed 的其余命令改写拥有不同 iid，而检索 query 只使用 command 文本。对同任务近义改写实际取回 demo policy 的概率高。仍不确定的是定向屏蔽是否显著改变成功/安全指标、是否跨第二模型复现，以及是否足以改变全 benchmark 排名，因此未给 8 以上。",
+    "impact": "结果会直接修正 LaMPilot human-feedback 路径的性能归因与报告协议，并可迁移到带持久技能库的驾驶 Agent。它不会否定策略记忆，也不影响 stateless ICL 主结果；LaMPilot 规模和年代限制了直接影响面，但可复算的 provenance 审计模式具有更广用途。",
+    "comparison-readiness": "官方 exact-ID、same-sample、same-seed、严格 group holdout、逐条 reset、stateless ICL 与 retrieved-but-hidden placebo 已覆盖主要替代解释，且以 sample/seed 聚类而不是把命令行当独立样本。组键可从固定配置确定，left_overtake_s0_c0 确认对应 seed 271，十条命令共享该样本。缺口是官方库没有 provenance、demo 反馈不确定、same-sample 与 same-seed 在当前配置中可能高度重合，需在 manifest 中先报告可识别性而不是强行估计两个相同对比。"
+  },
+  "strongestObjection": "当前 PolicyRepository 的向量元数据只有 program name，policies.json 也只有 code 和 description；生成策略的 iid、sample、seed、command 与反馈记录全部缺失，而且 demo 的 success/commit 由交互式人工决定。因此不能对现有仓库做可信的事后 same-sample/seed 屏蔽。若为每个条件分别重建仓库，LLM 与人工反馈变化又会破坏配对归因。",
+  "requiredExperiment": "在任何性能比较前，从同一次 12 个官方 demo 运行构建一个 source-annotated、反馈记录完整、bytes 冻结的策略库，并用该同一快照派生所有条件。先选 left_overtake_s0_c0/seed 271、一个纵向控制 demo 和一个变道 demo，对各自其余九个同 sample 改写记录候选、相似度、顺序和实际入 prompt；随后逐条配对运行 official exact-ID、same-sample denylist、same-seed denylist 与 retrieved-but-hidden placebo，并做 no-op facade、order-swap 和 repeated-official 噪声检查。若同组策略实际消费为零，或屏蔽效应落在预声明等效界内，立即停止效果主张；通过后才扩展任务和第二模型。",
+  "evidenceReopened": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "finding": "为该候选独立重开论文页；其结果支持把路由、推理和任务结果分开报告，但不提供 LaMPilot 同状态策略复用的直接证据。"
+    },
+    {
+      "title": "LaMPilot: An Open Benchmark Dataset for Autonomous Driving with Language Model Programs",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Ma_LaMPilot_An_Open_Benchmark_Dataset_for_Autonomous_Driving_with_Language_CVPR_2024_paper.html",
+      "finding": "重开 CVPR 2024 正式页及其官方 arXiv 版本，确认 benchmark 以语言命令生成可执行驾驶策略并由交互模拟器/evaluator 评分，论文主张是 language-model program 能力与 benchmark，不含 sample/seed provenance 分解。"
+    },
+    {
+      "title": "LaMPilot official benchmark and policy-memory code at fixed commit",
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "finding": "重开固定提交的 DbLv1 loader、test_hf、PolicyRepository、HumanFeedbackCGAgent、evaluator、配置与 MIT 许可证。ID 是 config_s{sample}_c{command}；demo 先迭代至成功并可写库，完整测试只排除已有 iid；Chroma query 只接收 command，元数据只保存 policy name。left_overtake 的十条改写共享 sample 0 与 seed 271，直接形成可证伪通道。"
+    },
+    {
+      "title": "DiLu: A Knowledge-Driven Approach to Autonomous Driving with Large Language Models",
+      "url": "https://openreview.net/forum?id=OqTMUPuLuC",
+      "finding": "重新访问一手 OpenReview 页面，但当前来源要求浏览器 challenge，未能取得正文；本评分未据此增加任何实现或数值主张，只保留 dossier 已限定的比较角色：驾驶记忆是预期能力。"
+    },
+    {
+      "title": "Code as Policies: Language Model Programs for Embodied Control",
+      "url": "https://arxiv.org/abs/2209.07753",
+      "finding": "重开 v4 论文页确认 stateless few-shot language-model programs、层级代码生成与机器人控制先例；它适合作为无持久策略库边界，不覆盖 LaMPilot 的跨条目来源归因。"
+    }
+  ],
+  "overall": 7,
+  "dossierSnapshotFingerprint": "f19b3fb2c5b25e697a331f3cf24a94485d7fe771a999944b7681bc2306deb1d7"
+}

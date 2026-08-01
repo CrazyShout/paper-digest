@@ -1,0 +1,51 @@
+{
+  "candidateId": "verifier-selection-winners-curse",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbbad-612b-7a81-8e34-b9edd13a6c10",
+  "reviewedAt": "2026-08-01T05:30:33.377Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 6,
+    "success-probability": 6,
+    "impact": 8,
+    "comparison-readiness": 9
+  },
+  "rationales": {
+    "novelty": "best-of-N 或连续优化会选择代理奖励误差尾部，已经由 reward-model overoptimization、inference-time reward hacking 和 ensemble mitigation 直接研究。TOAD 也明确指出固定词表 scorer 在搜索区间外失真会使性能下降，并用 trust region 防止 reward hacking。因此机制并不新；保留的新意是把驾驶中的 verifier-call budget、动力学支持、独立反应式后果和首个稳定反转预算 b* 绑定成可复现 estimand。",
+    "feasibility": "TOAD、DriveVer、NAVSIM 和公开规划器提供候选、评分与几何评价入口；缓存最大候选池再取嵌套前缀可以公平扫描 N。难点是训练两个不刻意做弱的 verifier、构造真正未参与训练或选择的 oracle，以及把有限 HUGSIM/Bench2Drive 场景的随机反应与选择偏差分开。整体是中等规模、可分阶段执行的审计。",
+    "success-probability": "通用文献和 TOAD 的 scorer 失败已经说明现象机制真实存在，扩大搜索预算后出现 proxy-oracle gap 的概率不低。但 TOAD 的 anchor、comfort regularization 和 support-aware scorer 可能把自然搜索限制在可靠区间；若反转只在越出 proposal support 或人为削弱 verifier 后出现，就不能支持候选主张。",
+    "impact": "一旦在公开驾驶栈中得到稳定 b*，结果可直接决定候选数量、CEM 迭代、trust region、ensemble 和 abstention 的部署预算，比单纯提高平均 benchmark 分更接近安全决策。反之，严格负结果也能给测试时扩展提供经验边界。",
+    "comparison-readiness": "N=1、random-of-N、嵌套 best-of-N、公平 verifier calls、受限 CEM、support constraint、calibration、ensemble 和 oracle upper bound 均已列出，并计划同时报告 proxy、独立几何与反应式后果。比较设计接近完整；必须确保 NAVSIM component oracle 不复用 verifier 的标签生成逻辑，且闭环验证不只挑选已知失败场景。"
+  },
+  "strongestObjection": "候选的核心现象不是新的驾驶机制，而是成熟的 proxy overoptimization/Goodhart 现象迁移；更直接地，TOAD 已展示某些 scorer 经搜索后显著伤害 NAVSIM 结果，并把 off-support reward hacking 作为设计动机。只有当反转发生在预注册的有效动力学与 proposal support 内、由与 verifier 训练标签去耦的反应式 oracle 复现，并产生可迁移的预算边界时，工作才超出已有观察。",
+  "requiredExperiment": "固定一个公开 proposal generator，在至少 100 个 held-out scenes 和两个独立 verifier seeds 上缓存每场景同一最大候选池，以嵌套前缀构造 N=1/2/4/8/16/32；CEM 另用相同 verifier-call 与墙钟预算。预注册 support 半径并剔除非法轨迹，选择端不得访问独立几何/NAVSIM oracle。主结果报告 verifier 与 oracle 对 log2(N) 的配对斜率差、false acceptance 和 b*；仅当两 verifier seeds 均出现 in-support 反转时，才在固定而非事后挑选的 HUGSIM/Bench2Drive 场景上复核碰撞、最低 TTC、越线和进度，并与 calibration、ensemble 和 trust region 公平比较。",
+  "evidenceReopened": [
+    {
+      "title": "Test-Time Trajectory Optimization for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.07170",
+      "finding": "TOAD 已把 learned scorer 作为 CEM 奖励并设置 planner-based trust region；论文直接报告某些 scorer 经搜索后性能下降，且指出搜索区间外评分失真会导致 reward hacking。"
+    },
+    {
+      "title": "DriveVer: Lightweight Trajectory Evaluator as Test-Time Verifier for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2607.00399",
+      "finding": "DriveVer 已实现轻量轨迹安全评分与测试时修正，证明驾驶 verifier 与候选选择接口现实存在，但未报告随 N 增长的独立 oracle 反转曲线。"
+    },
+    {
+      "title": "Scaling Laws for Reward Model Overoptimization",
+      "url": "https://proceedings.mlr.press/v202/gao23h.html",
+      "finding": "该 ICML 工作直接研究 best-of-N 和 RL 优化下 proxy reward 上升而 gold reward 受损，并给出随优化强度变化的经验规律，覆盖了候选的通用机制。"
+    },
+    {
+      "title": "Reward Model Ensembles Help Mitigate Overoptimization",
+      "url": "https://arxiv.org/abs/2310.02743",
+      "finding": "该工作已在 best-of-N 和 PPO 下系统比较 ensemble conservative objectives，并表明 ensemble 能显著缓解 overoptimization，因此 ensemble 不是本候选可声明的新方法。"
+    },
+    {
+      "title": "Inference-Time Reward Hacking in Large Language Models",
+      "url": "https://arxiv.org/abs/2506.19248",
+      "finding": "该工作直接把推理时扩大候选和优化代理导致真实质量下降作为研究对象，进一步限制本候选只能主张驾驶特有的发生边界与后果。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "90901a27d519a38ee933544dcaccfd2a69a5c40423819dc88911e13748c1f490"
+}

@@ -1,0 +1,205 @@
+{
+  "candidateId": "geolocation-controlled-retrieval-surplus",
+  "title": "位置条件化后的地理图像真实规划增量",
+  "hook": "把地理检索从相关性增益改写成条件增量实验：GPS、路线和道路身份都相同后，图像像素还剩多少可迁移的规划价值？",
+  "output": "地理输入配对干预协议、tile-disjoint 评测集、条件增量曲线与地理图像准入边界报告。",
+  "effort": "1 名研究者，1-2 张 24-48GB 显存 GPU，并需要依法取得 nuScenes 与地理图像访问权限。",
+  "timeline": "总周期 5-8 周；Gate 0/1 最多 2 周，冻结模型审计与锁定实验 3-6 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未证明地理图像在控制 GPS、路线、道路身份和空间元数据后仍有规划增量；该结论只由 Gate 0/主实验决定。",
+    "尚未运行 SpatialRetrievalAD、VAD+Geo checkpoint、nuScenes 地理图像或本 dossier 中的配对输入适配器。",
+    "不把仓库公开、可随机替换图像或夜间子集增益写成未见地理 tile 上的因果证据，也不外推为闭环道路安全提升。"
+  ],
+  "whyNow": "Spatial Retrieval Augmented Autonomous Driving 已把 GPS 对齐的街景和卫星图像接入检测、地图、占据、规划和世界模型，并公开 VAD+Geo 路径；剩余关键问题不再是检索能否接入，而是图像内容是否提供超越位置、路线和道路身份先验的条件增量。官方 devkit、checkpoint 接口和规划 evaluator 使这一混杂首次可以用冻结模型和配对输入直接审计。",
+  "keyProblem": "地理图像的检索键、可靠性门控和道路场景本身都与 ego 位置强相关。若真实图像、GPS、路线、道路身份和相邻帧相关性同时变化，规划增益无法归因于图像像素；只有保持非像素空间信息不变并在未见 tile 上验证，才能判断检索模态是否值得部署成本。",
+  "problemEvidence": [
+    "Spatial Retrieval AD 已报告地理图像增强和可靠性门控，但其图像丢弃或随机错误图像对照同时改变内容与位置一致性，不能识别位置条件化后的像素 surplus。",
+    "官方 devkit 从 nuScenes ego pose 推导经纬度并获取街景或卫星图像，说明 GPS、道路身份和图像内容在数据生成链中结构性耦合。",
+    "NAVSIM 和公开规划 evaluator 可提供统一的轨迹质量代理，但 non-reactive 评价不是现实安全真值，因此本候选只主张输入模态的条件规划增量。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "Spatial Retrieval Augmented Autonomous Driving",
+      "overlap": "已经完成地理图像检索、GPS distance reliability gate、图像 drop、随机错误图像和 VAD+Geo 规划实验。",
+      "unreplacedResidual": "未联合比较 GPS/route-only、same-location temporal mismatch、distance-matched wrong-location、zero image 和 geographic-tile-disjoint，从而隔离图像像素的条件增量。"
+    },
+    {
+      "work": "OpenDriveVLA",
+      "overlap": "提供开放式视觉、语言和动作统一建模近邻，可作为额外上下文输入是否真正帮助规划的对照背景。",
+      "unreplacedResidual": "不使用地理检索，也没有位置先验与像素信息的配对识别实验。"
+    },
+    {
+      "work": "NAVSIM 与 Bench2Drive",
+      "overlap": "分别提供公开规划评分和反应式闭环能力，可承载冻结规划结果与后续边界验证。",
+      "unreplacedResidual": "它们是评价接口而非地理像素增量方法，没有定义位置匹配的输入干预。"
+    }
+  ],
+  "currentLimitations": "最近工作已经证明地理检索可接入并能在若干任务或子集上带来收益，因此本候选不能把增加地理图像、随机错配对照或 reliability gate 作为新颖性。唯一保留的 residual 是：在当前车载观测、GPS、路线、道路身份和空间元数据固定时，真实地理像素相对所有位置匹配控制在 held-out geographic tiles 上仍产生稳定、可解释的规划增量。",
+  "residualClaim": "只识别地理图像内容的条件增量与适用边界；不提出新的通用检索网络，不声称地理图像是道路真值，也不以同城相邻帧相关性或单一夜间子集结果支持部署结论。",
+  "estimand": {
+    "targetPopulation": "依法可用的 nuScenes validation 场景中，按 geographic tile 严格分离且能够构造五种配对地理输入的样本。",
+    "statisticalUnit": "独立 scene 是推断单位；同一 scene 的帧、多个相机和多个地理输入分支是配对重复测量。",
+    "outcome": "冻结 VAD+Geo 规划输出在真实地理图像分支相对位置匹配控制分支的 collision、L2/PDMS component 和可靠性排序差异。",
+    "primaryEstimand": "Delta_geo=Y_real-image-max(Y_zero-image,Y_same-location-mismatch,Y_distance-matched-wrong-location,Y_GPS-route-only)，在 held-out tiles 上按 scene 聚合。",
+    "secondaryEstimands": "昼夜、天气、道路类型和检索距离分层下的条件增量，以及 reliability gate 对真实增量的排序校准。"
+  },
+  "hypothesis": "在冻结当前相机、ego state、GPS、路线、道路身份、checkpoint 和 evaluator 后，真实地理图像相对 zero image、同位置时序错配、等距离错位置与 GPS/route-only 控制，在未见 geographic tiles 上仍能产生可重复的规划或碰撞代理改善；若不能，则已报告收益主要由位置先验或数据相关性解释。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 数据许可与条件可识别性",
+      "state": "not-run",
+      "pass": "两日内确认 nuScenes、街景/卫星图像和官方 checkpoint 可依法用于研究，并能为至少 200 个样本构造 GPS/route/road identity 保持不变的五分支配对输入及 geographic-tile-disjoint split。",
+      "fail": "地理图像访问或使用条款不允许该实验，关键非像素元数据无法固定，或 tile 身份不能从数据链中可靠重建时停止，不用随机图像替代条件识别。"
+    },
+    {
+      "gate": "Gate 1 - 固定资产与测量链",
+      "state": "not-run",
+      "pass": "固定 commit 的 devkit、VAD+Geo 配置、checkpoint 接口和 evaluator 能生成输入 provenance、模型输出与指标三联记录，且五个分支除预注册干预外完全一致。",
+      "fail": "checkpoint 不可获得、配置与论文不一致、输入分支同时改变 GPS/route metadata，或只有 mock/fixture 能跑通时停止主实验。"
+    }
+  ],
+  "dataPreflight": [
+    "记录 SpatialRetrievalAD Dataset Devkit commit 2e772f42a2dd7cd9866fa8b685f85ab67c6cecef 与 End2End-Planning commit af4631fd13fee73ff4af7351b6bca9ba9a0ca236，重新核对仓库许可证、checkpoint 条款、nuScenes 许可及地理图像服务的下载和再分发限制。",
+    "从 ego pose、route 与地图建立 geographic tile、road identity 和检索距离 ledger；在查看规划结果前锁定 train/validation/held-out tile split，禁止相邻 frame 或同一道路片段跨 split。",
+    "对 200-500 个样本生成 real、zero、same-location temporal mismatch、distance-matched wrong-location 和 GPS/route-only 五个分支，逐字段 diff 确认当前相机、ego state、GPS、route 与空间 metadata 未被意外改变。",
+    "确认 released VAD+Geo checkpoint 和 planning evaluator 可复现原始输入路径；若只可重新训练，冻结审计与训练型 GPS prior 分开报告。",
+    "Gate 0/1 通过前不训练新检索器，不查看 held-out tile 主结果，也不声称地理像素存在条件增量。"
+  ],
+  "noveltyClaims": [
+    "新识别对象是控制 GPS、route、road identity 和空间元数据后的地理像素 conditional surplus，而不是地理检索本身。",
+    "以同位置时序错配和等距离错位置图像分别拆开内容新鲜度与位置一致性，补足随机错误图像无法回答的混杂。",
+    "以 geographic tile 为外推单位，要求增量离开同城相邻帧相关性后仍成立，并同时审计 reliability gate 是否真的识别像素价值。"
+  ],
+  "method": [
+    "冻结 VAD+Geo checkpoint、当前车载观测和全部非像素地理输入，仅用 paired-input adapter 替换地理图像张量或追加隔离的 GPS/route-only 支路。",
+    "构造 real、zero、same-location temporal mismatch、distance-matched wrong-location 与 GPS/route-only 五分支；每个分支保存 tile、道路身份、时间差、检索距离和字段 diff。",
+    "在 scene 与 geographic tile 双重隔离的 split 上运行同一 planning evaluator，按 scene 聚合 collision 与轨迹质量差异。",
+    "把 reliability gate 输出与各样本 real-image 相对最强控制的实际增量做校准和排序分析，检查门控是否只是距离代理。",
+    "仅在冻结输入审计显示像素 surplus 后，训练等容量 GPS/route prior 作为强对照；其结果不得与纯干预结果混写。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1 周）：完成许可证、数据访问、checkpoint、容器和 tile/road identity ledger，执行 Gate 0。",
+    "阶段 B（第 2 周）：固定两个官方 commit，实现输入字段 diff 与确定性重放，完成 Gate 1。",
+    "阶段 C（第 3-4 周）：实现五分支 paired geographic-input adapter、tile-disjoint splitter 和 scene-level 结果 ledger。",
+    "阶段 D（第 5-6 周）：锁定分析后运行全量冻结审计、分层 bootstrap 与 reliability calibration。",
+    "阶段 E（第 7-8 周，仅当前述通过）：加入等容量 GPS/route prior、第二 evaluator 或小规模反应式敏感性分析，不扩大为真实道路安全主张。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "SpatialRetrievalAD Dataset Devkit",
+        "revision": "2e772f42a2dd7cd9866fa8b685f85ab67c6cecef",
+        "reuse": "ego pose 到经纬度、street-view/satellite 获取与坐标变换。",
+        "licenseBoundary": "代码许可、nuScenes 条款和外部地理图像服务条款必须分别复核；devkit 公开不等于图像可下载或再分发。"
+      },
+      {
+        "asset": "SpatialRetrievalAD End2End-Planning",
+        "revision": "af4631fd13fee73ff4af7351b6bca9ba9a0ca236",
+        "reuse": "VAD+Geo 配置、street/satellite 输入、GPS distance gate、checkpoint 接口和规划 evaluator。",
+        "licenseBoundary": "Gate 1 重新记录代码与权重许可；checkpoint 缺失时只能走可信自建训练路径，不能声称复现论文结果。"
+      },
+      {
+        "asset": "NAVSIM",
+        "revision": "0a380a9063d7162ec93d0f51e9990ebac585f720",
+        "reuse": "可选 planning component evaluator 与 agent 接口，用于第二层代理敏感性。",
+        "licenseBoundary": "需要 nuPlan 数据且环境 non-reactive，只能作为规划代理，不是真实安全真值。"
+      }
+    ],
+    "selfBuiltModules": [
+      "paired geographic-input adapter 与逐字段不变量检查器",
+      "geographic tile/road identity splitter 与跨 split 泄漏审计器",
+      "GPS/route-only 等容量控制支路",
+      "scene-clustered conditional-surplus 与 reliability calibration 报告器"
+    ],
+    "compute": "Gate 0/1 以 CPU 和单 GPU 检查 200-500 样本；主冻结审计预算 1-2 张 24-48GB GPU、约 1-2 GPU-weeks，不训练基础模型。",
+    "interfaces": "保持 VAD+Geo 原始 tensor schema、ego state、route/GPS metadata 和 evaluator API；新增适配器只暴露地理图像分支与 provenance ledger。",
+    "cycle": "5-8 周上限；数据许可、关键 checkpoint 或条件不变量任一无法闭合即停止。"
+  },
+  "minimumStudy": [
+    "完成 Gate 0：取得合法数据访问，锁定至少 200 个样本、独立 scene、geographic tile 与道路身份，并证明五分支可在非像素输入不变时构造。",
+    "完成 Gate 1：固定代码、checkpoint、配置、容器与 evaluator 摘要，对同一输入重复运行得到可追踪一致结果。",
+    "在 held-out tiles 上运行五分支冻结审计；同一 scene、道路片段或相邻帧不得跨 split，缺失图像按预注册失败处理。",
+    "以 real image 相对最强位置匹配控制的配对差为主结果，按 scene cluster bootstrap，并报告昼夜、道路类型和检索距离分层。",
+    "对 reliability gate 做实际增量排序与校准分析；若它只复现距离或道路身份，不包装为图像价值识别。",
+    "只有主增量通过后才运行学习型 GPS/route prior 与可选第二 evaluator，所有新增训练与冻结干预结果分表报告。"
+  ],
+  "strongBaselines": [
+    "VAD without geographic images，保留相同当前相机、ego state 与路线输入。",
+    "released VAD+Geo real-image 分支，作为待解释的直接方法基线。",
+    "zero geographic image with metadata preserved，隔离网络是否只使用非像素支路或偏置。",
+    "same-location temporal mismatch，保持道路身份与位置一致但破坏内容新鲜度。",
+    "distance-matched wrong-location image，保持检索距离分布但破坏道路身份一致性。",
+    "lightweight GPS/route-only prior，使用相同训练 split 和受限容量，检验图像增益是否可由位置先验替代。"
+  ],
+  "metrics": [
+    "主指标：held-out tile 上 real image 相对最强位置匹配控制的 scene-level planning collision 差与平均规划 L2/PDMS component 差。",
+    "识别指标：same-location、distance-matched 与 GPS/route-only 三类控制下的 conditional surplus、95% scene-cluster bootstrap 区间和效果方向一致率。",
+    "门控指标：reliability score 对样本级真实增量的 Spearman 排序、AUROC/PR-AUC 和 calibration error。",
+    "外推指标：未见 tile、昼夜、天气、道路类型和检索距离 strata 的最坏组差异，不用帧数虚增样本量。",
+    "系统指标：地理图像存储/检索延迟、失败率和带宽；只作为部署成本，不替代规划结果。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "scene 是独立推断单位；frame、camera 和输入分支为配对重复测量，按 geographic tile 分层并以 scene cluster bootstrap。",
+    "comparison": "预注册 real image 对每个控制及最强控制的配对比较；先检验 conditional surplus，再分析分层和门控，使用 Holm 校正。",
+    "missingness": "图像获取失败、metadata 不一致或 evaluator 失败均保留在 ledger；主分析按最保守无增量处理，并报告 complete-case 敏感性。",
+    "powerGate": "Gate 0 以独立 scene 数和原方法效果量估算能否把主差异区间收窄到预注册实际等价界限；不足则停止而不使用相邻帧扩样。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，五分支除预注册图像干预外保持 GPS、route、road identity、空间 metadata、checkpoint 和 evaluator 一致。",
+    "real image 在 held-out tiles 上相对每个位置匹配控制和 GPS/route-only 的主规划指标均保留预注册的实用增量，95% scene-cluster 区间排除零或实际等价界。",
+    "增量不由单一城市、夜间子集或相邻帧驱动，且 reliability gate 对真实条件增量的排序优于单纯检索距离。"
+  ],
+  "killCriteria": [
+    "地理图像、nuScenes 或 checkpoint 许可/访问不允许合法复现，或无法构造 GPS/route/road identity 不变的配对分支。",
+    "GPS/route-only 或任一位置匹配控制在 held-out tiles 上达到实际等价结果，说明像素没有不可替代增量。",
+    "图像增量在 tile-disjoint 后消失、只由同城相邻帧或单一夜间 strata 驱动，或 reliability gate 只是检索距离代理。",
+    "测量链需要重训基础模型或额外数据才能识别主张，导致最小研究超过 8 周。"
+  ],
+  "risks": [
+    "外部地理图像服务条款可能限制下载与再分发；Gate 0 将合法访问设为硬前置，并只保存必要 provenance。",
+    "zero/mismatch 输入可能制造训练分布外伪影；same-location 和 distance-matched 双控制及 GPS-only 支路用于区分伪影与信息增量。",
+    "GPS/route-only 新支路需要训练，可能与冻结输入干预不公平；两类结果分开报告并限制模型容量。",
+    "nuScenes 与 non-reactive evaluator 限制现实外推；结论绑定数据、tile 和冻结 planner，不宣称真实闭环安全。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若条件增量成立，结果会给出何种 tile、时段和检索距离值得支付图像获取成本，并要求地理检索方法报告位置匹配控制。",
+    "negative": "若 GPS/route-only 或位置匹配控制等价，结果会否决把收益归因于地理像素，推动系统采用更便宜的空间先验或重新设计数据。",
+    "boundary": "两种结果都只解释冻结模型与声明数据包络，不证明任意城市、任意地理服务或真实道路安全后果。"
+  },
+  "impact": "正结果会把地理检索从平均收益演示推进到可审计的输入价值与部署准入；负结果同样有价值，因为它能识别位置混杂、避免昂贵图像管线，并改变后续论文必须采用的对照协议。",
+  "evidence": [
+    {
+      "title": "Spatial Retrieval Augmented Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Jia_Spatial_Retrieval_Augmented_Autonomous_Driving_CVPR_2026_paper.html",
+      "role": "最近直接工作：证明 GPS 对齐地理图像可接入多任务并公开 VAD+Geo，但未隔离位置先验后的像素增量。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "NAVSIM: Data-Driven Non-Reactive Autonomous Vehicle Simulation and Benchmarking",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/32768f7faf1995026ef9821c696f3404-Abstract-Datasets_and_Benchmarks_Track.html",
+      "role": "提供公开规划 evaluator 与组件分数，可作为第二评价接口；其 non-reactive 边界限制安全外推。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "OpenDriveVLA: Towards End-to-end Autonomous Driving with Large Vision Language Action Model",
+      "url": "https://doi.org/10.1609/aaai.v40i16.38386",
+      "role": "本库近邻说明视觉、语言和动作统一建模背景，但不识别地理像素相对 GPS/路线先验的价值。",
+      "localPaperId": "vla-end-to-end-driving",
+      "localLink": "papers/vla-end-to-end-driving/"
+    },
+    {
+      "title": "Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-To-End Autonomous Driving",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/017761f94a1cd66d01c041aff85492c4-Abstract-Datasets_and_Benchmarks_Track.html",
+      "role": "提供反应式闭环任务边界和可选敏感性接口，但不替代冻结输入下的条件增量识别。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "End-to-End Autonomous Driving: Challenges and Frontiers",
+      "url": "https://doi.org/10.1109/TPAMI.2024.3435937",
+      "role": "端到端驾驶挑战综述用于界定数据、评价和部署边界，不直接支持地理图像的因果收益。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T05:02:17.791Z"
+}

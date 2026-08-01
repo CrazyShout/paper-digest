@@ -1,0 +1,60 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb33-3818-7f42-94b4-b912855dc4c7",
+  "reviewedAt": "2026-08-01T10:55:49+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "VLADriveBench 已经直接展示 ORION 的高观察对齐与弱语义因果作用、Alpamayo 1.5 的较低观察对齐与强方向性因果作用。本候选仍有清楚残差：把独立标定的因果制度作为 observation-only runtime monitor 的迁移变量，并在自然输出、独立几何伤害和匹配共同支持上测量校准与排序，而不是再次测量 CoT 是否忠实。新意可信，但紧邻现有结果，最终必须证明制度变量带来的信息超出模型身份与普通模型特定校准。",
+    "feasibility": "两套固定代码路径都可分解：ORION 有 CoT 配置、四轮上下文累积和 Bench2Drive agent，Alpamayo 1.5 有公开推理入口及显式 KV-cache 到 diffusion action expert 的边界。困难不在是否能写 adapter，而在两套互不兼容环境、额外权重与数据、CARLA 场景重建、固定随机数、跨模型传感器契约以及自然 harm-positive 支持。ORION 固定栈是 Python 3.8、CUDA 11.8、Torch 2.4.1/Transformers 4.31，Alpamayo 固定栈是 Python 3.12、Torch 2.8/Transformers 4.57.1 且至少 24 GB VRAM；应按两个隔离环境执行。VLADriveBench 论文证明该类 splice 可实现，但 dossier 没有给出其可直接运行的工具仓库，故 8-10 周仍有重大集成风险。",
+    "success-probability": "预注册制度门大概率能复现论文中的方向差异，但主要监测结论要求每个制度至少 20 个自然 harm-positive、至少 80 个跨制度匹配单元、显著校准差、至少 10% Brier 改善，并由同 checkpoint 脱钩分支复现。160 个路线种子单元每模型仅留下约 120 个测试单元，按目标、距离、速度、显著性、CoT 长度和分数共同匹配后保留 80 对偏激进。Alpamayo 在 CARLA 的 OOD 停滞和幻觉还可能同时制造伤害与模型身份混淆，成功链条存在多个必须同时通过的门。",
+    "impact": "若观察型理由监测器的同一分数在不同因果制度下对应不同真实伤害，结果会直接约束驾驶 VLA 的运行时监测、跨模型校准与安全声明；负结果也能给出固定模型对上的迁移边界。影响受两模型固定配对、CARLA 受控场景和 Alpamayo OOD 输入限制，不能外推真实道路或一般架构。",
+    "comparison-readiness": "观察指标、trajectory-only monitor、pooled calibration、model-ID calibration、regime interaction 和单模型 oracle 均已列明，监测训练、制度标定和伤害测试按 route family 隔离，伤害标签不读取 CoT，且有明确支持门与止损条件。最关键的 model-ID 基线和同 checkpoint 脱钩对照已经进入合同，因此比较设计成熟；剩余风险是自然模型对中制度与模型身份完全共线，只有合成脱钩分支能打破该共线性。"
+  },
+  "strongestObjection": "自然数据里 semantic-coupled 等同于 Alpamayo 1.5、semantic-decoupled 等同于 ORION，同时 Alpamayo 又是 CARLA OOD，因此制度、模型身份、传感器接口和域偏移完全绑定。若 regime-aware monitor 不能稳定优于 model-ID calibration，或差异只在合成中性 CoT cache 分支出现，就不能把跨模型失准归因于理由进入动作链的方式。",
+  "requiredExperiment": "先完成一个不扩样的执行与识别门：在两个固定 revision 上各跑 24 个 native/selfsplice 路线种子单元，要求 Alpamayo KV cache 与轨迹复现、ORION 3 秒轨迹差低于 0.002 m 量级且 order-swap 不变；随后只在 Alpamayo 固定权重上建立 native 与长度风格匹配的 decoupled action-cache 分支，在独立路线族上比较 pooled、model-ID 和 regime-aware monitor。若制度项在同 checkpoint 内不能解释 held-out 几何伤害或校准误差，或 pilot 外推后无法达到每制度 20 个 harm-positive 与 80 个匹配单元，则按止损退出，不进入 160 单元全量实验。",
+  "evidenceReopened": [
+    {
+      "title": "VLADriveBench: Evaluating CoT-Action Relationship in VLA for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.12706",
+      "finding": "重开 v1 全文后确认 ORION 四轮上下文、Alpamayo CoT 边界与 KV-cache 注入、CARLA 0.9.15 场景、selfsplice 校验及自然观察/干预背离。论文报告 Alpamayo selfsplice cache bit-identical、ORION 3 秒差低于 0.002 m，并明确 Alpamayo 的 CARLA 评测为 OOD；evidence 未给出可直接执行的 toolkit 仓库链接。"
+    },
+    {
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "finding": "重开论文页确认文本推理扰动可改变理由与轨迹并进入闭环安全指标；这是通道可达性证据，不能替代自然发生率或自然伤害校准。"
+    },
+    {
+      "title": "Is VLA Reasoning Faithful? Probing Safety of Chain-of-Causation",
+      "url": "https://arxiv.org/abs/2605.17268",
+      "finding": "重开 v2 论文页确认 100 个 PhysicalAI-AV 场景、300 次 Alpamayo R1 推理中的实体遗漏、低 reasoning-action consistency 与轨迹脆弱性，可作为观察监测基线，但不是跨制度校准结果。"
+    },
+    {
+      "title": "Lost in Fog",
+      "url": "https://arxiv.org/abs/2605.21446",
+      "finding": "重开 v2 论文页确认约 1,996 场景、约 18,000 次扰动推理中理由一致性与轨迹偏移相关，支持 runtime monitor 的问题价值；其估计对象仍是传感器扰动下的相关性。"
+    },
+    {
+      "title": "ORION Official Repository at 657f3cf",
+      "url": "https://github.com/xiaomi-mlab/Orion/tree/657f3cf09b745d3972affb84d68f7e376140b221",
+      "finding": "重开固定提交的 README、requirements、stage3_cot、Orion detector 与 Bench2Drive agent。仓库有开放环、CoT 和闭环入口，但需要额外 q-former/vision 权重、Bench2Drive 数据与 CARLA；代码在每个 QA round 累积输出并在最终 waypoint token 上驱动规划，splice 插点可信但需自建。"
+    },
+    {
+      "title": "ORION Public Checkpoint at a7918cb",
+      "url": "https://huggingface.co/poleyzdk/Orion/blob/a7918cb501932b1b5b1167217115fdf03959f2d8/Orion.pth",
+      "finding": "重新访问了固定权重页；当前客户端未能展开该 revision 的大文件元数据，canonical model card 为空且无托管推理。未下载或执行 38.5 GB pickle 权重，因此 dossier 中的 hash 只能作为待 Phase 0 复核合同，不能视为已通过 smoke。"
+    },
+    {
+      "title": "Alpamayo 1.5 10B Public Model at 089866a",
+      "url": "https://huggingface.co/nvidia/Alpamayo-1.5-10B/tree/089866afb4cfa2231fa7822c67e1e8bc91eed46f",
+      "finding": "重开模型卡并核对其链接的固定官方代码：BF16 约 11B 参数、最低 24 GB VRAM、PyTorch 2.8、Transformers 4.57.1、默认四相机输入、6.4 秒轨迹输出、权重限非商业使用。官方代码明确保留 generated CoT 的 past_key_values 并交给 diffusion expert，但没有 CARLA adapter。"
+    }
+  ],
+  "overall": 6
+}

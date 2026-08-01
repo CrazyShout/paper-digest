@@ -1,0 +1,30 @@
+{
+  "candidateId": "statewise-counterfactual-verdict-admission",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "ACT-Bench 只测单动作兑现，ReactSim-Bench 测固定自车行为下的 NPC 反应，逐状态比较动作对风险排序并在 fixed coverage 下校准错误准入仍是清晰 residual；但它建立在已有 world-model admissibility 和策略偏好反转问题上，方法层更像严谨协议而非全新模型。",
+    "feasibility": "ReactSim 固定提交确有 2,636 个 nuPlan 场景、公开 checkpoints、新模型接口、显式 agents_history/future、地图和 traffic-light state；batch_update_sample 能在共享状态中逐步覆盖 ego trajectory 并重算 relations，状态哈希与动作对重放可实现。ACT-Bench 有 Apache-2.0 estimator 与 2,286 样本，Orbis 2 有 MIT 代码、L1/L2 权重和 trajectory steering。主要缺口是 ReactSim 仓库没有 LICENSE，且三类资产不共享统一 state/action schema。",
+    "success-probability": "在同一 learned simulator 内找到 ACT/ADE 与安全规则排序不一致并不难，但 dossier 的核心是 false admission 相对独立 reference branch。ReactSim 的 logged future 只对应实际自车动作，替代 action 没有真实 NPC 反事实；其 collision/map/kinematic metrics只能评价模拟 rollout 的内部后果。没有外部反事实真值时，错误准入可能只是两个模型或两个规则的分歧。",
+    "impact": "若能建立可信 reference branch，状态级准入会比平均 action controllability 分数更接近世界模型能否参与 planner 选择这一实际问题，并能给出 coverage-risk 边界；若不能，影响退化为 simulator disagreement benchmark。",
+    "comparison-readiness": "ACT-Estimator、ADE/support distance、ReactSim safety metrics、随机拒绝和 oracle 上界的接口大多公开；但所谓 full-information oracle 与第二 planner 的真实 counterfactual outcome 均不在资产中，Orbis 2 只输出像素 rollout，不能直接提供显式 NPC 风险 reference。"
+  },
+  "strongestObjection": "固定初态和覆盖 ego action 在 ReactSim 中可实现，但替代动作下的真实 NPC response 不存在于日志；使用同一个 behavior world model 生成 response、再用规则从该 response 计算风险，不是独立 oracle。没有可观测 counterfactual reference branch，false admission 和风险排序翻转无法被识别为世界模型错误。",
+  "requiredExperiment": "先从 30 个状态构造四动作 branch ledger，并为每个动作明确三种结果来源：target simulator、与其训练/架构独立的 reference simulator、以及可人工验证的硬事件。要求 state hash、地图、NPC 初态、traffic light、随机种子和动作轨迹完全一致；只在至少两个独立 simulator 对动作对风险符号有稳定共识时把共识当 reference。若只能获得 target rollout 和单一 logged future，应停止 false-admission 主张并降级为跨模拟器一致性研究。",
+  "evidenceReopened": [
+    "https://github.com/Thinklab-SJTU/ReactSim-Bench/tree/71e54fda7426678d0baee9b62b0d32b323725fb8",
+    "https://github.com/turingmotors/ACT-Bench/tree/e6c825519f27b3f1fd44c5b5d8b949fcb91fa5ee",
+    "https://github.com/lmb-freiburg/orbis2/tree/f8a0d6898689a20df10e9f71bcc0fa2abfdb7a8c",
+    "https://arxiv.org/abs/2606.14058"
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "e65c5cbd8b1201e1b419790b43a0f849ad10b39e4f5b5ea4e5c231a9cce832f0"
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-atomic-bundle-dossier-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "pose-feature-calibration-epoch-atomicity",
+  "workingTitle": "协同特征、位姿、标定与模型版本的原子快照",
+  "preparedAt": "2026-07-31",
+  "evidenceAgent": {
+    "agentId": "019fb743-8bc3-7fd1-b344-a1b41d1948a0",
+    "role": "implementation-contract-nearest-work-and-injection-dossier",
+    "rankedCandidates": false,
+    "scoredCandidate": false
+  },
+  "evidenceBoundary": {
+    "verified": "Public cooperative-perception implementations carry feature, delay, and transform objects separately without one common model and calibration epoch, and public robustness code provides a real cross-time object-tearing injection path.",
+    "unverified": "No audited paper, incident report, or public vehicle log demonstrates an actual feature generated under epoch E0 being fused with E1 pose, extrinsic, or decoder state."
+  },
+  "verifiedEntrypoints": [
+    {
+      "asset": "OpenCOOD",
+      "commit": "31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+      "url": "https://github.com/DerrickXuNu/OpenCOOD/tree/31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+      "finding": "Feature tensors, time_delay, and spatial_correction_matrix are constructed and consumed through separable fields, enabling controlled paired injection without proving a naturally occurring fault."
+    },
+    {
+      "asset": "RCP-Bench",
+      "commit": "bf999089d1a56265cdfc1238ef4d065fb74602fa",
+      "url": "https://github.com/LuckyDush/RCP-Bench/blob/bf999089d1a56265cdfc1238ef4d065fb74602fa/main/opencood/data_utils/datasets/basedataset/opv2vtemporalmis.py",
+      "finding": "The public temporal-misalignment corruption selects a non-ego camera file from another timestamp while retaining current YAML and LiDAR, providing a concrete cross-time tearing template."
+    },
+    {
+      "asset": "ROS 2 atomic parameters",
+      "url": "https://github.com/ros2/rcl_interfaces/blob/ce3f0f268ab5fb50d690be9a967acb7162773048/rcl_interfaces/srv/SetParametersAtomically.srv",
+      "finding": "Atomicity covers one node's parameter set, not feature, transform, model, and calibration state across nodes and topics."
+    },
+    {
+      "asset": "DDS 1.4 Presentation QoS",
+      "url": "https://www.omg.org/spec/DDS/1.4/PDF",
+      "finding": "Coherent sets provide a transport transaction primitive but do not establish model, calibration, coordinate, or schema compatibility."
+    },
+    {
+      "asset": "ETSI CPM V2.1.1",
+      "url": "https://www.etsi.org/deliver/etsi_ts/103300_103399/103324/02.01.01_60/ts_103324v020101p.pdf",
+      "finding": "The message provides reference time, position, sensor identity, and relative measurement time but no audited encoder version, extrinsic hash, or calibration epoch."
+    }
+  ],
+  "nearestWorkBoundary": [
+    {
+      "works": "SyncNet, FFNet, and LRCP",
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+      "occupiedSpace": "Temporal compensation and asynchronous fusion, not version identity."
+    },
+    {
+      "works": "CoAlign, FreeAlign, and spatial calibration",
+      "url": "https://siheng-chen.github.io/project/coalign/",
+      "occupiedSpace": "Estimation or tolerance of numeric transform errors, not pairing a feature with the configuration that produced it."
+    },
+    {
+      "works": "HEAL and STAMP",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2025/hash/87d91d52272c3166315ca20b18519b9e-Abstract-Conference.html",
+      "occupiedSpace": "Mapping known heterogeneous model domains through adapters, not transactionally binding rolling versions per feature packet."
+    }
+  ],
+  "candidateContract": [
+    "capture_time",
+    "pose_epoch",
+    "extrinsic_hash",
+    "encoder_hash",
+    "adapter_or_protocol_id",
+    "schema_version",
+    "bundle_id",
+    "payload_hash"
+  ],
+  "twoWeekGoNoGo": [
+    "Reproduce one clean OpenCOOD baseline and official asynchronous or localization-noise control before injecting version faults.",
+    "Construct E0 and E1 pose, extrinsic, and checkpoint states and add unguarded, epoch-equality, and oracle-compatible receivers.",
+    "Compare coherent-stale and torn bundles at identical feature age, transform-error norm, model pair, and network delay.",
+    "Run paired scene bootstrap and report accepted-but-worse-than-ego silent failures, rejection, coverage, and overhead.",
+    "Proceed only if bundle pairing has an incremental effect after the component magnitudes are controlled."
+  ],
+  "injectionAxes": [
+    "Time: 0, 100, 300, and 500 ms",
+    "Pose: translation up to 1 m and yaw up to 5 degrees",
+    "Extrinsic update: translation up to 10 cm and rotation up to 1 degree",
+    "Model: coherent M0 or M1 and crossed encoder-adapter or decoder pairs",
+    "Transport: ordered, reordered, or one missing bundle component"
+  ],
+  "baselines": [
+    "Ego-only",
+    "Clean atomic",
+    "Stale but coherent",
+    "Latest-value-cache torn",
+    "Timestamp-only gate",
+    "CoAlign or FreeAlign",
+    "SyncNet or LRCP",
+    "STAMP",
+    "Epoch and hash gate",
+    "Oracle compatibility manifest"
+  ],
+  "falsifiableClaims": [
+    "At controlled age, transform-error norm, and model pair, torn bundles cause larger paired loss than coherent-stale bundles.",
+    "An epoch and compatibility gate reduces silent failure without collapsing useful cooperation to ego-only.",
+    "Calibration-by-time or calibration-by-model interactions exceed the corresponding additive component effects.",
+    "Existing temporal or spatial correction leaves an identifiable incremental loss under epoch mismatch."
+  ],
+  "killCriteria": [
+    "The clean baseline cannot be reproduced within three working days.",
+    "Pairing has no incremental effect on two datasets and two fusion models after component controls.",
+    "Effects appear only beyond the preregistered perturbation range.",
+    "The guard gains safety only by rejecting nearly all cooperation.",
+    "Any broader real-deployment claim requires unavailable production version history or logs."
+  ]
+}

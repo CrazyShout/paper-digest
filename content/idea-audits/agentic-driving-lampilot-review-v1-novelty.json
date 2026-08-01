@@ -1,0 +1,51 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb32-330c-7a62-add9-1c00bd35be00",
+  "reviewedAt": "2026-08-01T02:54:13.954Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 6,
+    "success-probability": 6,
+    "impact": 6,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "固定提交的一手代码支持一个具体且非臆测的审计对象：DbLv1Dataset 对每个 sample 与多条 command 做笛卡尔展开，demo 列表包含 left_overtake_s0_c0，而同一 sample/seed 的 c1 至 c9 保留为不同 ID；test_hf.py 先生成 demo 策略，再以 resume=True 评测其余精确 ID；PolicyRepository 又按 command 相似度取回代码并放入生成提示。因此，把语言改写、异状态记忆和同状态策略复用拆开是有针对性的增量。降分原因是最近工作证据严重不足：所列 DiLu 已覆盖驾驶经验记忆、相似场景检索、跨环境泛化和记忆消融，Code as Policies 已覆盖策略代码复用谱系；候选真正新增的是分组归因审计与定向屏蔽，而不是新记忆机制。证据集没有系统覆盖 memory-agent benchmark contamination、grouped evaluation、retrieval provenance 或同状态反事实屏蔽的近邻与 2025-2026 并发工作；所列 2026 dual-process 论文与该问题并不功能等价。故“第一次”与不可替代差异均不可核验，撞题风险仍是重大缺口。",
+    "feasibility": "组键和暴露面可从固定提交恢复，runner、dataset、Chroma query 与提示注入位置都很集中，构建 same-sample denylist、冻结仓库快照和配对运行在工程上可行。主要缺口是当前 PolicyRepository 只保存 program_name、code 和 description，向量元数据也只有 name，没有 demo ID、sample 或 seed；来源追踪必须在策略创建期增加 sidecar 关联或修改写入路径，不能仅靠纯只读 query tracer 得到。其次，代码把全部仓库程序放入执行作用域，而提示只放入 top-k，所谓“最终被生成器消费”需要预先定义为函数引用、提示暴露或其他可观测事件，单靠 API trace 无法识别模型内部使用。六个条件、顺序交换、多个任务族和第二模型可做，但模型 revision、缓存等价性、Chroma 并发隔离以及 same-seed 组键范围仍缺少可执行规格。",
+    "success-probability": "同 sample 的命令是高度相似改写，且其 demo 策略在测试前进入持久库，因此 Gate 0 观察到同组策略被 top-k 检索并进入提示的概率可信。然而，只有 12 个 demo，检索到不等于因果使用；策略可能是跨 sample 通用代码，屏蔽后可由异组策略或基础 primitives 替代，主要指标和模型排序未必变化。更关键的是，正式论文描述 human-feedback 在 100 个 non-test 样本上进行并用 500 个 test 样本评测，而固定提交当前 runner 使用 12 个精确 ID demo。候选尚未证明论文表格、当前 README 工作流与待审计协议是同一个 estimand，所以成功发现可能只适用于当前 helper path。负结果仍可形成上界，但按候选要求的显著效应与跨模型复现，成功概率只能评为中等。",
+    "impact": "若定向屏蔽在组级配对分析中改变成功、安全指标或模型排序，结果会直接约束 LaMPilot 当前 human-feedback 路径的报告方式，并为带持久记忆的驾驶 Agent 提供有用审计模板。其边界陈述避免把预期的记忆能力笼统称为泄漏，这提升了可用性。影响上限仍受三点限制：正式论文的一手文本声称使用 non-test 学习集，尚未与固定提交 runner 对齐；研究不涉及公开的 stateless zero/few-shot 主路径；向更广泛 VLA、反思记忆和技能库迁移目前只有概念主张，没有第二 benchmark 证据。即使得到负结果，也主要是一个窄协议的稳健性保证。",
+    "comparison-readiness": "候选列出的 official exact-ID、same-sample、same-seed、严格 group holdout、逐条 reset、stateless ICL 与 retrieved-but-hidden placebo，已经能区分全库记忆移除和定向来源屏蔽，比较骨架较完整；按 sample/seed 聚类而非把 paraphrase 行视为独立样本也合理。仍有重大缺口：没有把论文所述 100 non-test/500 test 协议复现并映射到固定提交；没有给出“消费策略”的可判定规则；same-seed 是否必须与 scenario/sample 联合成键未定；最小有意义效应、样本量/功效、完整任务子集、模型精确版本和失败处理尚未冻结；也没有与任何功能等价的既有 benchmark-audit 方法做方法级比较。现有证据足以开工，但不足以支持已经 comparison-ready 的高分。"
+  },
+  "strongestObjection": "最强反对意见是候选可能审计了固定提交中的当前 helper runner，而没有证明它对应 LaMPilot 正式论文的 human-feedback 结果。论文明确写 human-feedback 在 100 个 non-test 样本上进行、测试集为 500 个样本；代码则先运行 12 个 exact-ID demo，再跳过已评测 ID。若两者不是同一实验协议，即使 same-seed paraphrase 复用在代码路径中成立，也不能据此重解释论文分数，影响和叙事都会显著收缩。与此同时，所给证据没有完成近邻审计文献搜索，无法排除分组泄漏审计或 retrieval provenance 的并发撞题。",
+  "requiredExperiment": "先做一个协议映射加因果最小实验：在固定 commit 上重建论文所述 100 non-test/500 test human-feedback 划分，并同时重建当前 12-demo exact-ID runner；为每个写入策略建立不可变的 source scenario/sample/seed sidecar。对预注册的三个任务族、至少两个模型，在完全相同的测试条目和仓库 bytes 上随机交错运行 official、same-sample denylist、same-seed denylist 与 retrieved-but-hidden 四条件，记录 top-k 来源、实际进入提示的代码以及生成代码对策略函数的静态或运行时引用。主要检验必须分别报告两套协议下的组级配对效应与置信区间；若只有 12-demo runner 出现效应，结论必须限定为当前代码工作流，不能外推正式论文分数。",
+  "evidenceReopened": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "checked": "重开 arXiv 摘要与全文 HTML；该工作拆分路由、推理一致性和任务指标，但不审计持久策略检索、同状态改写或 group holdout，不能充当功能等价近邻。"
+    },
+    {
+      "title": "LaMPilot: An Open Benchmark Dataset for Autonomous Driving with Language Model Programs",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Ma_LaMPilot_An_Open_Benchmark_Dataset_for_Autonomous_Driving_with_Language_CVPR_2024_paper.html",
+      "checked": "重开 CVF 页面、正式 PDF 与 arXiv 源文件；核对 4,900 条数据、500 条 test、human-feedback 在 100 个 non-test 样本上学习、Chroma 代码仓库和原始比较表。论文未给出 exact-ID/sample/seed 分解。"
+    },
+    {
+      "title": "LaMPilot official benchmark and policy-memory code at fixed commit",
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "checked": "重开固定 commit 的 dbl.py、test_hf.py、run.py、hf_agent.py、policy_repo.py、test_icl.py、README、runner 与 left_overtake 配置；确认 sample-command 笛卡尔 ID、12 个 demo、exact-ID 跳过、resume 持久库、command-only top-k 检索和同 sample/seed 改写暴露面，也确认仓库未保存来源组键。"
+    },
+    {
+      "title": "DiLu: A Knowledge-Driven Approach to Autonomous Driving with Large Language Models",
+      "url": "https://openreview.net/forum?id=OqTMUPuLuC",
+      "checked": "通过同一论文的官方 arXiv 全文副本重开方法与实验；确认相似场景经验检索、记忆累积、跨环境泛化以及成功/纠错记忆消融已存在，但没有同 sample/seed 来源屏蔽和语言改写归因。"
+    },
+    {
+      "title": "Code as Policies: Language Model Programs for Embodied Control",
+      "url": "https://arxiv.org/abs/2209.07753",
+      "checked": "重开 arXiv 摘要与 PDF；确认 few-shot instruction-to-code、层级函数生成和函数随时间累积的谱系。它不是 LaMPilot 同状态归因审计，也不能单独证明严格 stateless 对照。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "f19b3fb2c5b25e697a331f3cf24a94485d7fe771a999944b7681bc2306deb1d7"
+}

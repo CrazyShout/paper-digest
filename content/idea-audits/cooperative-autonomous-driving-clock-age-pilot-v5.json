@@ -1,0 +1,694 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-age-pilot-v5-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "preparedAt": "2026-07-31",
+  "purpose": "CPU pilot v5 implementing the required methodology repairs from cooperative-autonomous-driving-clock-pilot-methodology-audit-v4.json.",
+  "independenceAndRegistration": {
+    "executionOrder": [
+      "design-manifest-hashed-before-data",
+      "test-population-generated-and-deep-frozen",
+      "calibration-episodes-generated",
+      "calibration-fitted-after-test-freeze"
+    ],
+    "testDgpApi": "generateFrozenTestPopulation(testSeed) accepts no calibration artifact. Test residual support, lookback, deadline margins, and case difficulty are constants in TEST_DGP_CONFIG.",
+    "truthFirewall": "Non-oracle methods receive observation plus the fitted calibration artifact. Test age, one-way delay, sender-clock truth, and truth verdict remain evaluation-only.",
+    "registrationStatus": "The design/input hashes are recorded for reproducibility, but this run has no immutable pre-run commit and no external timestamp. The registration-evidence check therefore fails and the action remains stop.",
+    "seeds": {
+      "calibration": 2026073141,
+      "test": 2026073197
+    },
+    "episodeIds": {
+      "first": "v5-test-paired-counterexample-2026073197-0",
+      "last": "v5-test-relock-control-2026073197-251",
+      "includePassedTestSeed": true,
+      "alternativeSeedRule": "Every test record factory embeds the passed test seed in its episode ID; the test suite verifies disjoint IDs for seed 314159265."
+    }
+  },
+  "finitePopulation": {
+    "definition": "A finite seeded population containing every cell of the declared clock grid; all records are evaluated and no sampling CI is reported.",
+    "gridClusters": 252,
+    "records": 3276,
+    "clusterConfidenceIntervalsReported": false,
+    "calibrationFitUncertaintyIntegrated": false,
+    "interpretation": "All cluster rates are exact counts or fractions for this finite generated population. They are not confidence bounds for a deployment, an external trace distribution, or repeated calibration fits."
+  },
+  "methodologyDefinitions": {
+    "intervalCoverage": "A cluster is covered only if every record in that episode has a non-empty reported interval containing its true age.",
+    "eventErrors": "A false-fresh or false-stale cluster event occurs if any eligible record in that episode has the corresponding decision error.",
+    "emptyIntersection": "The method forms the raw age interval first. If its upper endpoint is below zero, its intersection with the nonnegative age domain is empty and the result is inconsistent-provenance/uncertain with intervalMs=null.",
+    "falseFreshGate": "Continuation requires estimate === 0, Number.isFinite(finitePopulationUpperBound), and the upper bound not exceeding the declared threshold.",
+    "pointMetrics": "Point methods report record MAE, nearest-rank absolute-error quantiles, exact-hit counts at tolerance 1e-9 ms, and decision-error counts. They never report interval coverage.",
+    "missingFieldBranches": "Deleting clock domain, validity, rate, or relock evidence is a branch test only and is reported separately from empirical ablations.",
+    "wrongButPresentAblations": "Empirical ablations retain fields while supplying a wrong domain, expired validity, a wrong rate over a 600000 ms lookback, or relock mismatch/recovery.",
+    "ratePropagation": "The affine anchor is independent of the message point. Changing ratePpm changes the mapped sender timestamp by the anchor-to-message delta.",
+    "pairedWorldBoundary": "Paired worlds keep the complete observation, observable RTT, payload/order, and declared queue, serialization, and receiver-processing specification fixed. Directional forward/reverse propagation changes between worlds."
+  },
+  "methods": [
+    {
+      "id": "naive-direct-subtraction",
+      "kind": "point",
+      "definition": "fusion_use in the receiver clock minus sender publish timestamp, assuming the numeric clocks are directly comparable"
+    },
+    {
+      "id": "mcap-log-minus-publish",
+      "kind": "point",
+      "definition": "MCAP log_time minus sender publish timestamp without a clock-domain binding"
+    },
+    {
+      "id": "rtt-half-point",
+      "kind": "point",
+      "definition": "RTT divided by two plus receiver-local receipt-to-use lag"
+    },
+    {
+      "id": "ptp-like-point",
+      "kind": "point",
+      "definition": "the affine sender-to-reference mapping point without uncertainty, validity, or identified-set reporting"
+    },
+    {
+      "id": "provenance-interval",
+      "kind": "interval",
+      "definition": "an affine age identified set using independently fitted mapping/rate bounds plus domain, validity, and relock checks"
+    },
+    {
+      "id": "oracle",
+      "kind": "oracle-point",
+      "definition": "the test truth age, used only as an evaluation reference"
+    }
+  ],
+  "execution": {
+    "date": "2026-07-31",
+    "command": "node scripts/idea-pilots/clock-age-identifiability-v5.mjs",
+    "testCommand": "node --test test/clock-age-identifiability-v5.test.mjs",
+    "runtime": {
+      "node": "v24.14.0",
+      "platform": "darwin",
+      "arch": "arm64"
+    },
+    "calibration": {
+      "calibrationSeed": 2026073141,
+      "calibrationEpisodeCount": 512,
+      "mappingHalfWidthMs": 19.993867883,
+      "rateHalfWidthPpm": 121.705907572,
+      "fitRule": "maximum absolute calibration residual plus a fixed guard",
+      "testPopulationUsed": false
+    },
+    "inputSha256": {
+      "designManifestSha256": "446a6cba1e3ca95b045aa81e203deae2a7d2732569d8c8b2abb3c5f11bc54453",
+      "testDgpConfigSha256": "f37e0805b848dfe4c2abcc36bbbe7e4ae45d46733718b157c463a2d76a68c309",
+      "calibrationEpisodesSha256": "174622a8adbaf7e7909e19bc7397aeb6581fe52d3cbf6c024122cb89d2d137d2",
+      "frozenTestPopulationSha256": "811c63a0600e811445c000712a755bdd9f1525290e6605492558dd0808da67db"
+    },
+    "outputSha256": {
+      "auditResultsSha256": "e56c286948840f9757bf7073f775adee7e195cda3116d470b5aa1691f8386ce5"
+    },
+    "sourceSha256": {
+      "scripts/idea-pilots/clock-age-identifiability-v5.mjs": "4602b273562f4bd2a30077a70437ae3b85f924f0604f3c1840e03616bd19404b",
+      "test/clock-age-identifiability-v5.test.mjs": "7af06692a8c53668bacec6e59c81517322d119c981f08861d531aa9607fc9557"
+    }
+  },
+  "pointMethodResults": {
+    "naive-direct-subtraction": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 157.849611,
+      "absoluteErrorQuantilesMs": {
+        "p50": 79.8,
+        "p90": 501.8,
+        "p95": 518,
+        "p99": 600.2,
+        "maximum": 602
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 669,
+        "falseStaleRecords": 480,
+        "totalDecisionErrorRecords": 1149,
+        "totalRecords": 3276
+      }
+    },
+    "mcap-log-minus-publish": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 158.14652,
+      "absoluteErrorQuantilesMs": {
+        "p50": 80,
+        "p90": 502.0458,
+        "p95": 520,
+        "p99": 602.2,
+        "maximum": 604
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 546,
+        "rate": 0.166667
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 678,
+        "falseStaleRecords": 468,
+        "totalDecisionErrorRecords": 1146,
+        "totalRecords": 3276
+      }
+    },
+    "rtt-half-point": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 4.530786,
+      "absoluteErrorQuantilesMs": {
+        "p50": 3.795374,
+        "p90": 12,
+        "p95": 12,
+        "p99": 12,
+        "maximum": 12
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 252,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 252,
+        "totalRecords": 3276
+      }
+    },
+    "ptp-like-point": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 16.673317,
+      "absoluteErrorQuantilesMs": {
+        "p50": 10.350405,
+        "p90": 44.938785,
+        "p95": 71.142387,
+        "p99": 99.432058,
+        "maximum": 113.305805
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 504,
+        "rate": 0.153846
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 451,
+        "falseStaleRecords": 199,
+        "totalDecisionErrorRecords": 650,
+        "totalRecords": 3276
+      }
+    },
+    "oracle": {
+      "records": 3276,
+      "meanAbsoluteErrorMs": 0,
+      "absoluteErrorQuantilesMs": {
+        "p50": 0,
+        "p90": 0,
+        "p95": 0,
+        "p99": 0,
+        "maximum": 0
+      },
+      "exactHit": {
+        "toleranceMs": 1e-9,
+        "records": 3276,
+        "rate": 1
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 3276
+      }
+    }
+  },
+  "intervalMethodResults": {
+    "boundedProvenance": {
+      "coverageEveryRecord": {
+        "successClusters": 219,
+        "failedClusters": 33,
+        "totalClusters": 252,
+        "estimate": 0.869048
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 1,
+        "noEventClusters": 251,
+        "eligibleClusters": 252,
+        "estimate": 0.003968,
+        "finitePopulationUpperBound": 0.003968
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 1,
+        "noEventClusters": 251,
+        "eligibleClusters": 252,
+        "estimate": 0.003968,
+        "finitePopulationUpperBound": 0.003968
+      },
+      "uncertainty": {
+        "records": 379,
+        "totalRecords": 504,
+        "rate": 0.751984
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 504,
+        "meanMs": 80.27175,
+        "p95Ms": 83.806244
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 1,
+        "falseStaleRecords": 1,
+        "totalDecisionErrorRecords": 2,
+        "totalRecords": 504
+      }
+    },
+    "rateStress": {
+      "coverageEveryRecord": {
+        "successClusters": 191,
+        "failedClusters": 61,
+        "totalClusters": 252,
+        "estimate": 0.757937
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "estimate": 0,
+        "finitePopulationUpperBound": 0
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 3,
+        "noEventClusters": 249,
+        "eligibleClusters": 252,
+        "estimate": 0.011905,
+        "finitePopulationUpperBound": 0.011905
+      },
+      "uncertainty": {
+        "records": 414,
+        "totalRecords": 504,
+        "rate": 0.821429
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 504,
+        "meanMs": 160.649786,
+        "p95Ms": 186.04943
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 3,
+        "totalDecisionErrorRecords": 3,
+        "totalRecords": 504
+      }
+    }
+  },
+  "negativeControls": {
+    "pairedObservationalEquivalence": {
+      "episodePairs": 252,
+      "identicalObservableOppositeTruthPairs": 252,
+      "identicalQueueSerializationProcessingPairs": 252,
+      "directionalPropagationVariesBetweenWorlds": true,
+      "intervalUncertainRecords": 504,
+      "totalIntervalRecords": 504
+    },
+    "unknownDomain": {
+      "episodeClusters": 252,
+      "uncertainRecords": 504,
+      "totalRecords": 504
+    },
+    "verifiedCommonClock": {
+      "episodeClusters": 252,
+      "decisionErrors": 0,
+      "totalRecords": 504
+    }
+  },
+  "missingFieldBranchControls": {
+    "clock-domain": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "clock-domain-unbound-or-mismatched"
+    },
+    "validity": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "outside-or-missing-validity"
+    },
+    "rate": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "rate-unavailable"
+    },
+    "relock": {
+      "fieldPresentAfterMutation": false,
+      "verdict": "uncertain",
+      "reason": "relock-generation-mismatch"
+    }
+  },
+  "wrongButPresentEmpiricalAblations": {
+    "wrongDomainPresent": {
+      "coverageEveryRecord": {
+        "successClusters": 252,
+        "failedClusters": 0,
+        "totalClusters": 252,
+        "estimate": 1
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "estimate": 0,
+        "finitePopulationUpperBound": 0
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "estimate": 0,
+        "finitePopulationUpperBound": 0
+      },
+      "uncertainty": {
+        "records": 504,
+        "totalRecords": 504,
+        "rate": 1
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 0,
+        "meanMs": null,
+        "p95Ms": null
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 504
+      }
+    },
+    "expiredValidityPresent": {
+      "coverageEveryRecord": {
+        "successClusters": 252,
+        "failedClusters": 0,
+        "totalClusters": 252,
+        "estimate": 1
+      },
+      "falseFreshAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "estimate": 0,
+        "finitePopulationUpperBound": 0
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 0,
+        "noEventClusters": 252,
+        "eligibleClusters": 252,
+        "estimate": 0,
+        "finitePopulationUpperBound": 0
+      },
+      "uncertainty": {
+        "records": 504,
+        "totalRecords": 504,
+        "rate": 1
+      },
+      "inconsistentProvenance": {
+        "records": 0,
+        "rate": 0
+      },
+      "intervalWidthMs": {
+        "finiteRecords": 0,
+        "meanMs": null,
+        "p95Ms": null
+      },
+      "decisionErrors": {
+        "falseFreshRecords": 0,
+        "falseStaleRecords": 0,
+        "totalDecisionErrorRecords": 0,
+        "totalRecords": 504
+      }
+    },
+    "wrongRateLongLookback": {
+      "lookbackReferenceMs": 600000,
+      "injectedRateDeltaPpm": 240,
+      "mappedTimestampShiftMs": {
+        "nonzeroRecords": 504,
+        "totalRecords": 504,
+        "minimumAbsolute": 143.903417,
+        "p50Absolute": 143.998939,
+        "maximumAbsolute": 144.099875
+      },
+      "nominalUncertainty": {
+        "coverageEveryRecord": {
+          "successClusters": 17,
+          "failedClusters": 235,
+          "totalClusters": 252,
+          "estimate": 0.06746
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 120,
+          "noEventClusters": 132,
+          "eligibleClusters": 252,
+          "estimate": 0.47619,
+          "finitePopulationUpperBound": 0.47619
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 161,
+          "noEventClusters": 91,
+          "eligibleClusters": 252,
+          "estimate": 0.638889,
+          "finitePopulationUpperBound": 0.638889
+        },
+        "uncertainty": {
+          "records": 223,
+          "totalRecords": 504,
+          "rate": 0.44246
+        },
+        "inconsistentProvenance": {
+          "records": 41,
+          "rate": 0.081349
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 463,
+          "meanMs": 149.748582,
+          "p95Ms": 186.04943
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 120,
+          "falseStaleRecords": 161,
+          "totalDecisionErrorRecords": 281,
+          "totalRecords": 504
+        }
+      },
+      "widenedRateUncertainty": {
+        "coverageEveryRecord": {
+          "successClusters": 220,
+          "failedClusters": 32,
+          "totalClusters": 252,
+          "estimate": 0.873016
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 252,
+          "eligibleClusters": 252,
+          "estimate": 0,
+          "finitePopulationUpperBound": 0
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 2,
+          "noEventClusters": 250,
+          "eligibleClusters": 252,
+          "estimate": 0.007937,
+          "finitePopulationUpperBound": 0.007937
+        },
+        "uncertainty": {
+          "records": 502,
+          "totalRecords": 504,
+          "rate": 0.996032
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 504,
+          "meanMs": 336.673685,
+          "p95Ms": 474.056527
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 2,
+          "totalDecisionErrorRecords": 2,
+          "totalRecords": 504
+        }
+      },
+      "widthErrorTradeoff": "The widened variant changes only the declared rate uncertainty bound; compare coverage/error counts with finite interval width."
+    },
+    "relockMismatchAndRecovery": {
+      "mismatch": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "estimate": 0,
+          "finitePopulationUpperBound": 0
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "estimate": 0,
+          "finitePopulationUpperBound": 0
+        },
+        "uncertainty": {
+          "records": 252,
+          "totalRecords": 252,
+          "rate": 1
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 0,
+          "meanMs": null,
+          "p95Ms": null
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 252
+        }
+      },
+      "recovery": {
+        "coverageEveryRecord": {
+          "successClusters": 252,
+          "failedClusters": 0,
+          "totalClusters": 252,
+          "estimate": 1
+        },
+        "falseFreshAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "estimate": 0,
+          "finitePopulationUpperBound": 0
+        },
+        "falseStaleAnyEvent": {
+          "eventClusters": 0,
+          "noEventClusters": 126,
+          "eligibleClusters": 126,
+          "estimate": 0,
+          "finitePopulationUpperBound": 0
+        },
+        "uncertainty": {
+          "records": 129,
+          "totalRecords": 252,
+          "rate": 0.511905
+        },
+        "inconsistentProvenance": {
+          "records": 0,
+          "rate": 0
+        },
+        "intervalWidthMs": {
+          "finiteRecords": 252,
+          "meanMs": 44.367933,
+          "p95Ms": 44.856459
+        },
+        "decisionErrors": {
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0,
+          "totalDecisionErrorRecords": 0,
+          "totalRecords": 252
+        }
+      }
+    }
+  },
+  "adversarialTests": [
+    {
+      "id": "partial-cluster-miss",
+      "expected": "A two-record cluster with one miss is a failed coverage cluster.",
+      "observed": "successClusters=1, failedClusters=1 over two test clusters."
+    },
+    {
+      "id": "one-false-fresh",
+      "expected": "One false-fresh event forces falseFreshGate=false even with a finite upper bound.",
+      "observed": "falseFreshGate=false for eventClusters=1 of 252."
+    },
+    {
+      "id": "nonfinite-false-fresh-upper",
+      "expected": "estimate=0 with a null/non-finite upper bound fails closed.",
+      "observed": "falseFreshGate=false."
+    },
+    {
+      "id": "empty-nonnegative-intersection",
+      "expected": "A raw interval entirely below zero is inconsistent/uncertain, not [0,0] fresh.",
+      "observed": "intervalMs=null, status=inconsistent-provenance, verdict=uncertain."
+    },
+    {
+      "id": "test-dgp-independence",
+      "expected": "Changing fitted calibration bounds cannot change the already frozen test population.",
+      "observed": "The frozen test-population SHA remains 811c63a0600e811445c000712a755bdd9f1525290e6605492558dd0808da67db."
+    }
+  ],
+  "stopCondition": {
+    "checks": {
+      "testDgpFrozenBeforeCalibrationFit": true,
+      "testDgpIndependentOfFittedBounds": true,
+      "completeFiniteGrid": true,
+      "everyRecordIntervalCoverage": false,
+      "falseFreshGate": false,
+      "boundedUncertainRecordRate": false,
+      "allPairedWitnesses": true,
+      "missingFieldBranchesFailClosed": true,
+      "wrongPresentDomainAndValidityFailClosed": true,
+      "rateErrorActuallyPropagates": true,
+      "relockMismatchAndRecovery": true,
+      "externalRegistrationEvidence": false
+    },
+    "observedAction": "stop-at-finite-population-methodology-audit",
+    "ifAnyCheckFails": "Stop at the finite-population methodology audit. Do not claim a usable bounded-age gate or proceed on the basis of this run.",
+    "ifAllChecksPass": "Continue only to a separately calibrated trace phase; this synthetic pilot would still not establish behavior in a real system."
+  },
+  "failures": [
+    "everyRecordIntervalCoverage",
+    "falseFreshGate",
+    "boundedUncertainRecordRate",
+    "externalRegistrationEvidence"
+  ],
+  "failureDetails": [
+    {
+      "id": "everyRecordIntervalCoverage",
+      "observed": "219 of 252 bounded-provenance clusters covered every record; 33 clusters had at least one miss.",
+      "consequence": "The finite-population interval-coverage gate fails."
+    },
+    {
+      "id": "falseFreshGate",
+      "observed": "One of 252 eligible bounded-provenance clusters contained a false-fresh event; estimate and exact finite-population upper bound are both 0.003968.",
+      "consequence": "The explicit estimate===0 requirement fails."
+    },
+    {
+      "id": "boundedUncertainRecordRate",
+      "observed": "379 of 504 bounded-provenance records were uncertain, rate 0.751984 versus the declared maximum 0.5.",
+      "consequence": "The finite-population utility gate fails."
+    },
+    {
+      "id": "externalRegistrationEvidence",
+      "observed": "No immutable pre-run commit and no external timestamp are available for this run.",
+      "consequence": "The run is reproducible from hashes but cannot be called externally timestamped preregistration."
+    }
+  ],
+  "claimBoundary": "This synthetic finite population CPU pilot establishes only executable behavior under the v5 generator: a paired observational-equivalence witness, branch behavior, and finite-grid method diagnostics. It does not establish a real vulnerability, timestamp misuse, safety defect, frequency, risk bound, or performance effect in any deployed cooperative-perception, ROS 2, MCAP, PTP, V2X, or autonomous-driving system. No confidence interval or external-population guarantee is reported. The shared calibration-fit uncertainty is not integrated, external preregistration evidence is absent, the observed stop action is stop, and no candidate, paper, asset, or system is scored."
+}

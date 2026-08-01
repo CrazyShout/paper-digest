@@ -1,0 +1,122 @@
+{
+  "candidateId": "temporal-dependence-cooperative-error-planner-effect",
+  "short": "error-burst",
+  "title": "固定边际错误负担下的协同错误时间聚集与规划效应",
+  "hook": "相同数量、类型和严重度的协同感知错误，如果集中出现在同一规划暴露窗口，是否会产生边际 AP 和错误计数无法预测的规划后果？",
+  "output": "因果回放审计与基准协议",
+  "effort": "6-10 周",
+  "timeline": "前两周只做资产、确定性和自然信号硬门；通过后再做固定边际配对回放、方法排序和第二栈复核。",
+  "whyNow": "ASE 2025 的开放闭环实证已经报告协同错误在违规前增多，CooperScene 又公开了真实链路随时间波动的直接信号，而 MDrive 说明感知改善不保证规划改善；这些一手证据首次让时间依赖的独立规划效应既有自然问题信号又有明确的公开闭环入口。",
+  "keyProblem": "现有协同评测主要报告帧级 AP、总错误数、平均时延或独立随机通信故障，因此无法判断相同边际错误负担在时间上聚集时是否更容易穿过规划器的记忆、制动或承诺窗口。",
+  "currentLimitations": "现有一手工作提供相关性、真实链路波动、腐化基准和闭环后果，但没有在固定错误类型、严重度、对象暴露、总量、路线前缀和规划器状态后，只改变错误时间依赖并测量规划输出；本轮也没有运行任何官方 checkpoint 或 CARLA 场景。",
+  "hypothesis": "在至少一个公开协同闭环栈中，保持自然观察到的协同错误多重集合及规划暴露不变时，将错误集中到连续决策窗口会比匹配的分散顺序产生更大的配对规划偏移、风险代理或方法排序变化；若固定边际后效应消失，则边际错误指标已足够，候选失败。",
+  "noveltyClaims": [
+    "研究对象是融合后、路线内的时间依赖对规划的增量效应，不是共享骨干或训练数据造成的跨车误差相关性，也不归因模型谱系。",
+    "干预固定完整错误多重集合、对象轨迹支持、错误严重度和规划暴露，只改变允许窗口内的聚集顺序；这区别于增加丢包率、比较平均时延或训练一个新的鲁棒融合器。",
+    "主要输出是边际指标充分性和方法排序的可证伪结论；不提出消息选择器、融合网络、Ghost 修复或 receiver-visible veto。"
+  ],
+  "method": [
+    "先在未经新注入的官方闭环运行中记录逐帧 cooperative-only error ledger，保留错误类型、对象身份、几何支持、持续时间、规划输入、动作和路线事件；只把这一步用于自然信号与可交换窗口估计。",
+    "在同一对象轨迹和预注册可交换窗口内构造 clustered 与 dispersed 配对顺序，严格保持错误记录多重集合、类型、严重度、总持续时间、模型、规划器、路线前缀和通信字节代理不变；人工重排只作为因果干预，不冒充自然发生率。",
+    "从同一序列化规划器前状态运行两条分支，先比较单步轨迹或控制，再在确定性门通过后扩展到固定 NPC 事件流的短闭环；每个完整路线或独立场景是统计单位，帧不是独立样本。",
+    "比较边际计数模型、时间相关模型和强鲁棒基线对 held-out 路线后果与方法排序的解释力；所有阈值、窗口和匹配规则在确认集前冻结。"
+  ],
+  "implementationPath": [
+    "资产门：在 Linux/CUDA 环境固定 MDrive 9e08377042b8f2e2860bb00de2416b3ebcfa3be4 或 V2X-Cooperative-Perception 8b4987a7a4de487b3e232b482f26755475b06696，下载其官方文档指向的确切 checkpoint，记录许可证、大小和 SHA-256，并完成同一路线两次基线运行；任一事实未闭合都记录为失败而不是能力。",
+    "插桩门：在 perception-to-planner handoff 记录逐帧 ego-only、cooperative、ground-truth diagnostic、对象匹配、planner input hash、planner memory hash、route cursor、随机状态和动作；若官方接口不能恢复相同前状态，则停止因果主张。",
+    "自然信号门：只用未注入的基线运行估计路线内错误持续长度、相邻依赖和规划暴露分布，并用路线或场景分块不确定性区分场景难度与时间依赖；不把配置的 latency 或 dropout 分布当自然数据。",
+    "配对回放：从自然 ledger 提取可移植的对象级误差扰动，在同一对象轨迹支持内生成聚集和分散顺序，拒绝跨对象、跨场景或改变可见性的非法匹配，并执行 no-op、order-swap 和 list-order placebo。",
+    "复核门：在冻结确认路线和新种子上比较至少两种协同模型；若第一栈成立，再尝试第二个固定官方栈，未复现时将结论限制为单栈反例。"
+  ],
+  "minimumStudy": [
+    "第一阶段只复现一个官方模型、一个官方路线配置和重复基线，证明模型、checkpoint、planner handoff、逐帧错误日志和结果文件真实可用；这不是 pilot 成功声明。",
+    "第二阶段从开发路线中选择至少两类非 Ghost 协同错误，构造错误多重集合完全相同的 clustered、dispersed、原始顺序和随机合法顺序四臂 planner replay，并验证每臂的输入哈希与唯一允许变化。",
+    "第三阶段冻结窗口、匹配和统计协议，在未用于调参的完整路线或独立场景上报告配对轨迹变化、控制变化、碰撞或违规代理、方法排序以及路线级区间；帧级结果只作描述。",
+    "仅在前状态恢复和短闭环重复性通过后执行闭环分支；否则输出开放环 planner-sensitivity 结果并明确不外推碰撞或道路安全。"
+  ],
+  "strongBaselines": [
+    "只使用总 cooperative error count、类型计数、平均 AP 和平均时延的边际模型",
+    "保持相同错误数的独立随机顺序与一阶 Markov burst-loss 顺序",
+    "原始自然顺序、完整随机合法顺序和不改变任何输入的 no-op replay",
+    "ego-only、always-cooperate 和同模型正常通信运行",
+    "V2X-INCOP 或 LRCP 类中断/时延鲁棒方法，在同一 checkpoint 和错误多重集合下可移植时比较",
+    "Defer to Plan 或当前官方 planning-aware fusion，在公共资产可复现且接口匹配时作为直接规划基线"
+  ],
+  "metrics": [
+    "路线内错误 run length、lag dependence、对象级连续暴露和按完整路线分块的区间",
+    "配对规划轨迹 ADE/FDE、最小预测间距、控制变化、制动或转向峰值和 planner action disagreement",
+    "闭环可运行时的 Driving Score、Route Completion、Infraction Score、碰撞和完成状态；不能运行时不得伪造这些指标",
+    "边际模型与时间依赖模型在 held-out 路线上的预测对数损失、校准和方法排序一致性",
+    "no-op floor、重复运行差异、状态哈希相等率和非法匹配拒绝率"
+  ],
+  "successCriteria": [
+    "在冻结确认路线的配对分析中，clustered 与 dispersed 顺序的规划后果差异具有路线级不确定性支持，并且不被错误类型、严重度、对象支持、总持续时间、场景和 planner exposure 的残余不平衡解释。",
+    "时间依赖至少改变一个有后果的评测结论：对 held-out planner outcome 的解释优于边际模型，或使至少一个协同方法相对强基线的排序发生可复核变化。",
+    "效应在 no-op、order-swap、list-order placebo 和重复运行噪声之外存在，并且不依赖 Ghost 事件；若只能由 Ghost 支持，则转交 Ghost 项目并终止本候选。"
+  ],
+  "killCriteria": [
+    "官方 checkpoint、路线和结果入口不能在前两周复现，或仓库许可证不允许所需使用且没有可替代的 Apache/MIT 路径。",
+    "无法序列化和恢复相同 planner 前状态，no-op 分支已产生与候选效应同量级差异，或 CARLA/NPC 事件流不能建立可接受的共同前缀。",
+    "未注入运行中没有可分离的非 Ghost 自然错误序列，或所谓时间聚集只来自人为 latency/dropout 配置、重复帧、滑窗伪重复或场景难度。",
+    "固定错误多重集合、对象支持和 planner exposure 后，时间顺序效应消失，或只剩通用丢包率、平均时延、receiver-visible 负迁移或 shared-lineage 相关性的旧结论。",
+    "结果不改变规划后果、方法排序、评测协议或后续数据采集，因而退化为无后果的时间序列诊断。"
+  ],
+  "risks": [
+    "V2X-Cooperative-Perception 和 V2Xverse 的根许可证在本轮 GitHub 元数据中未确认；首选 Apache-2.0 的 MDrive，任何跨仓库代码复用都必须先核对许可。",
+    "错误顺序可交换性可能只在很窄的同对象轨迹窗口成立，导致有效独立路线数不足；不足时报告不可识别，不扩大到帧级样本。",
+    "自然错误的时间聚集可能完全由场景难度或 planner 已改变的状态造成；必须先用共同前缀和固定状态回放隔离，不能把观察相关性写成因果。",
+    "MDrive 和 How Far Are We 的 checkpoint、依赖及长时 CARLA 运行均未在本轮执行，工程周期可能超过估计；两周硬门用于尽早停止。"
+  ],
+  "impact": "若固定边际后时间依赖仍改变规划或方法排序，协同基准就不能再用帧级 AP、总错误数和独立随机丢包代表闭环风险，数据发布也需要保留连续错误与消息时序；若严格配对后效应消失，则可反向证明现有边际指标在声明范围内已足够，避免投入新的 burst-aware 模型或调度器。",
+  "claimBoundary": {
+    "naturalOccurrence": "Primary evidence supports temporal concentration near violations and real link fluctuation as problem signals. It does not establish the candidate's fixed-marginal causal effect or prevalence.",
+    "assets": "Official code, data, route, and checkpoint destinations are statically verified and pinned where possible. No model, checkpoint, dataset, or CARLA route was executed in v14.",
+    "ghostSeparation": "Ghost provenance, deletion, and repair routing are excluded. Any result driven only by Ghost events kills this candidate.",
+    "sharedBackboneSeparation": "No claim is made about training lineage or cross-agent covariance. The estimand begins after fusion and concerns within-route temporal dependence."
+  },
+  "evidence": [
+    {
+      "title": "When Autonomous Vehicle Meets V2X Cooperative Perception: How Far Are We?",
+      "url": "https://doi.org/10.1109/ASE63991.2025.00101",
+      "role": "Direct problem signal and closest empirical prior: open closed-loop code, cooperative error taxonomy, pre-violation time bins, and online communication interventions; it reports association, not the fixed-marginal causal replay.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
+      "url": "https://arxiv.org/abs/2606.31219",
+      "role": "Direct real-link evidence that packet loss, latency, jitter, and throughput fluctuate over time; it is not a planner log and cannot by itself identify the proposed effect.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "role": "Direct closed-loop evidence and Apache-licensed asset path showing that perception or negotiation improvement need not monotonically improve planning.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "RCP-Bench: Benchmarking Robustness for Collaborative Perception Under Diverse Corruptions",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+      "role": "Strong corruption and negative-collaboration benchmark that prevents novelty claims based only on adding corruptions or measuring robustness.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Interruption-Aware Cooperative Perception for V2X Communication-Aided Autonomous Driving",
+      "url": "https://doi.org/10.1109/TIV.2024.3371974",
+      "role": "Strong interruption-recovery method baseline; the candidate must test temporal dependence beyond generic interruption robustness.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Learning to Evaluate Perception Models Using Planner-Centric Metrics",
+      "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Philion_Learning_to_Evaluate_Perception_Models_Using_Planner-Centric_Metrics_CVPR_2020_paper.html",
+      "role": "Direct planner-counterfactual prior that occupies generic object removal and planner sensitivity; the residual is matched temporal dependence across a sequence.",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "role": "Closest planning-aware fusion competitor and required guard against reframing the candidate as another evidence selector.",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T03:56:31.673Z"
+}

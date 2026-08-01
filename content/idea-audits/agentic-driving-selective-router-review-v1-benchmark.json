@@ -1,0 +1,33 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "lens": "benchmark-reviewer",
+  "reviewerAgentId": "019fbb51-b6f6-7223-b310-40ead534605c",
+  "reviewedAt": "2026-08-01T11:28:42+08:00",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 6,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "同一驾驶观测上建立完整快慢分支收益账本，并把安全分量、轨迹有效性、预算和动作延迟放进路由评价，具有明确的驾驶评测增量。一般潜在结果、选择性日志、CRM/OPE 和 learning-to-defer 已有直接先例，AutoVLA 也已定义快慢模式；因此新意只能来自真实驾驶 VLA 上复杂度与净收益的可复查错配及其系统后果，而不是反事实缺失或 estimator 本身。",
+    "feasibility": "AutoVLA checkpoint、动作 tokenizer、NAVSIM scorer 和 metric cache 提供了可复用主干，300-1000 个同观测配对样本不需要训练新视觉模型。困难在于官方源码的 `use_cot=true` prompt 仍写明必要时才推理，并非严格慢分支；ForcedBranchAdapter 必须新定义处理、失败和 token 合同，且数据下载、许可证、双分支生成成本与可选闭环 twin 都增加复现负担。",
+    "success-probability": "平均慢路径优于快路径而 always-slow 又不一定最优，使逐场景收益异质性有合理先验，完整账本也能直接测量路由错配。另一方面，异质性可能主要来自 prompt 格式、随机生成或非法 action token，复杂度/置信度基线也可能已捕获大部分可用信号；从完整账本人工遮蔽得到的 missingness 审计还可能只复现已知 OPE 结论而不改变驾驶方法排序。",
+    "impact": "正结果会把自适应驾驶推理的监督目标从复杂度标签转为预算约束下的分支增量，并要求公开 propensity、支持诊断和逐场景分支账本，对后续 router 设计和报告协议有直接价值。NAVSIM 是静态或伪模拟评价，一个 3B checkpoint 的 prompt-defined 分支不能代表真实控制中的等待期状态演化，故影响应限于规划评测，除非闭环 twin 合同通过。",
+    "comparison-readiness": "基线覆盖 always-fast、always-slow、预算匹配随机、直接复杂度竞品、置信度、post-hoc L2D、full-information oracle，以及 DM/IPS/DR/SWITCH/CRM；预算、尾时延和安全优先指标也能避免算力不公平。场景或 log 级隔离和聚类单位正确，但公平性仍取决于快慢 branch treatment 是否纯净，以及多次生成不能被误当独立场景。"
+  },
+  "strongestObjection": "待比较的快慢分支不是官方 checkpoint 暴露的稳定处理变量。官方 `use_cot=true` prompt 允许模型自行选择是否推理，而候选拟建的 fast-direct 与 slow-structured 会同时改变提示措辞、输出约束、文本长度、采样路径和非法 token 概率；由此得到的 slow-minus-fast 可能是 prompt-treatment 差，而不是慢思考的反事实收益。静态 NAVSIM 又冻结了生成期间的世界，因此把墙钟时延记入日志仍没有测到延迟动作的驾驶后果。",
+  "requiredExperiment": "先做一个 log-isolated 的 branch-contract factorial：对同一批场景和同一 checkpoint 交叉运行官方 adaptive prompt、至少两组语义等价的 forced-fast prompt、至少两组语义等价的 forced-slow prompt，并对每个 scene 使用多个配对生成 seed；动作 token 数、预测时域、解码器和失败计分完全一致。只有 slow-minus-fast 的符号和预算路由排序跨 prompt 变体稳定、分支内方差显著小于分支间差异、非法输出完整计入后，再与复杂度、置信度和 L2D 做相同预算比较；凡声称时延安全收益的结果还必须在 twin replay 中显式执行等待期保底动作。",
+  "evidenceReopened": [
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "finding": "正式论文确认 AutoVLA 在同一自回归模型中训练 trajectory-only fast thinking 与 CoT-enhanced slow thinking；固定提交源码进一步显示 `use_cot=true` 只提示模型在必要时推理，而不是强制慢分支。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "finding": "原文已用潜在结果评价延期系统，并区分双侧结果可得时的个体效应识别与只观察延期结果时的局部识别，确认一般因果延期框架不是本候选的新贡献。"
+    }
+  ],
+  "overall": 6
+}

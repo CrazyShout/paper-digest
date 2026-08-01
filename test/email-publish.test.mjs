@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  assertIdeaCenterReady,
   assertReviewCenterReady,
   buildBulkMailOptions,
   buildHtmlBody,
+  buildIdeaUpdateHtmlBody,
+  buildIdeaUpdateSubject,
+  buildIdeaUpdateTextBody,
   buildReviewUpdateHtmlBody,
   buildReviewUpdateSubject,
   buildReviewUpdateTextBody,
@@ -11,14 +15,18 @@ import {
   buildTransportOptions,
   explainSmtpError,
   getDigestNavUrl,
+  getIdeaCenterUrl,
   getReviewCenterUrl,
   isRetryableSmtpError,
   parseRecipientState,
   parseRecipientsConfig,
+  summarizeIdeaCenter,
   validateDelivery,
+  verifyPublishedIdeaCenter,
   verifyPublishedReviewCenter,
   withSmtpRetry
 } from "../scripts/email-publish.mjs";
+import { ideaArtifactSnapshotFingerprint } from "../src/lib/idea-fingerprint.js";
 import {
   reviewCenterFingerprint,
   reviewSnapshotFingerprint
@@ -236,6 +244,130 @@ test("review deployment fingerprint changes with direction content", () => {
   assert.notEqual(
     reviewCenterFingerprint(center),
     reviewCenterFingerprint(changed)
+  );
+});
+
+function sampleIdeaCenter() {
+  return {
+    version: 2,
+    updatedAt: "2026-08-01",
+    explorationStatus: "reviewed",
+    directions: [
+      {
+        id: "cooperative-autonomous-driving",
+        label: "协同自动驾驶",
+        status: "reviewed",
+        candidatePool: {
+          counts: {
+            queries: 12,
+            references: 40,
+            assets: 8,
+            candidates: 20
+          }
+        },
+        ideas: [
+          {
+            id: "clock-age",
+            reviewStatus: "rejected",
+            blindReview: {
+              reviewers: [{ lens: "novelty" }, { lens: "implementation" }]
+            }
+          }
+        ]
+      },
+      {
+        id: "world-models",
+        label: "世界模型",
+        status: "reviewed",
+        candidatePool: {
+          counts: {
+            queries: 9,
+            references: 37,
+            assets: 7,
+            candidates: 15
+          }
+        },
+        ideas: [
+          {
+            id: "rank-survival",
+            reviewStatus: "rejected",
+            blindReview: {
+              reviewers: [{ lens: "novelty" }, { lens: "implementation" }]
+            }
+          }
+        ]
+      }
+    ],
+    finalReview: {
+      status: "rejected",
+      report: {
+        status: "rejected",
+        overall: 6,
+        summary: "Evidence is not yet executable."
+      }
+    }
+  };
+}
+
+test("idea update email reports audit scale and honest gate outcome", () => {
+  const center = sampleIdeaCenter();
+  const stats = summarizeIdeaCenter(center);
+  const currentSiteUrl = "https://example.com/paper-digest";
+  const text = buildIdeaUpdateTextBody(center, currentSiteUrl);
+  const html = buildIdeaUpdateHtmlBody(center, currentSiteUrl);
+
+  assert.deepEqual(stats, {
+    directions: 2,
+    queryRuns: 21,
+    references: 77,
+    assets: 15,
+    candidates: 35,
+    reviewedIdeas: 2,
+    passedIdeas: 0,
+    globalStatus: "rejected",
+    globalScore: 6
+  });
+  assert.equal(
+    getIdeaCenterUrl(currentSiteUrl),
+    "https://example.com/paper-digest/ideas/index.html"
+  );
+  assert.match(buildIdeaUpdateSubject(center), /2026-08-01.*Idea 中心/);
+  assert.match(text, /逐维最低分/);
+  assert.match(text, /0 个候选达到全维度满分/);
+  assert.match(text, /未通过全局终审/);
+  assert.match(html, /Notebook 文档结构/);
+  assert.match(html, /0 个全维度满分通过/);
+});
+
+test("idea update publishing requires completed audits but permits rejection", () => {
+  const center = sampleIdeaCenter();
+  assert.doesNotThrow(() => assertIdeaCenterReady(center));
+
+  const incomplete = structuredClone(center);
+  incomplete.directions[0].ideas[0].blindReview.reviewers = [{ lens: "novelty" }];
+  assert.throws(() => assertIdeaCenterReady(incomplete), /未完成候选检索与独立盲评/);
+
+  const pending = structuredClone(center);
+  pending.finalReview.report = null;
+  assert.throws(() => assertIdeaCenterReady(pending), /尚未完成独立全局终审/);
+});
+
+test("idea update publishing verifies the deployed content fingerprint", async () => {
+  const center = sampleIdeaCenter();
+  const fingerprint = ideaArtifactSnapshotFingerprint(center);
+
+  await assert.doesNotReject(
+    verifyPublishedIdeaCenter(center, "https://example.com", async () => ({
+      ok: true,
+      text: async () => `<dl data-idea-version="2" data-idea-updated="2026-08-01" data-idea-directions="2" data-idea-fingerprint="${fingerprint}">`
+    }))
+  );
+  await assert.rejects(
+    verifyPublishedIdeaCenter(center, "https://example.com", async () => ({
+      ok: true,
+      text: async () => '<dl data-idea-version="2" data-idea-updated="2026-08-01" data-idea-directions="2" data-idea-fingerprint="stale">'
+    })),
+    /不是当前本地版本/
   );
 });
 

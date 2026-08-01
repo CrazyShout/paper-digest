@@ -1,0 +1,830 @@
+{
+  "reviewedAt": "2026-08-01T01:35:23+08:00",
+  "reviewerAgentId": "codex-gpt5-doppler-method-decisive-auditor-v10",
+  "searchAudit": {
+    "auditQuestion": "是否存在一个以车端/路侧 4D radar Doppler 物理量处理 V2X 异步、且不是 generic temporal alignment、benchmark audit、成熟单车/多雷达方程迁移或单项 ablation 的可执行新方法族？",
+    "protocolInputsRead": [
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-independent-rescue-audit-v10.json",
+        "section": "R02-v2x-radar-doppler-time-interaction",
+        "bindingFinding": "R02 只允许把 full-radar / Doppler-ablated / LiDAR 在受控 shift schedule 下的差分中差分解释为 synthetic shift model behavior；不得外推为自然时钟偏移或自然缺陷发生率。"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-joint-error-decisive-audit-v9.json",
+        "section": "joint-error reject",
+        "bindingFinding": "单向 V2X 时间戳不能分离 clock offset、queue/transport/processing delay；局部残差 r ~= J_t delta_t + J_p delta_xi_pose + J_e delta_xi_extrinsic，缺少独立锚点时联合估计不产生物理可识别性。"
+      },
+      {
+        "path": "content/idea-audits/cooperative-autonomous-driving-fresh-executable-ideas-v9.json",
+        "section": "radar-doppler-temporal-misalignment",
+        "bindingFinding": "此前候选因没有自然 clock-skew/Doppler harm 样本、checkpoint load 未闭环、无 compact split 而拒绝。"
+      },
+      {
+        "path": "config/idea-exploration-workflow.json",
+        "section": "candidateHardStops",
+        "bindingFinding": "本审计执行 injectability-is-not-occurrence、method-transfer-is-not-novelty、repository-is-not-executability、fixture-is-not-task-evidence、negative-result-needs-consequence。"
+      }
+    ],
+    "scopeRules": {
+      "scoresUsed": false,
+      "acceptanceThresholdGuessed": false,
+      "ideaCenterWritten": false,
+      "genericTemporalAlignmentAloneIsInScope": false,
+      "syntheticShiftNaturalOccurrenceClaimAllowed": false,
+      "primarySourcesRequired": true,
+      "functionalEquivalenceRule": "若单车或多雷达工作已使用同一观测方程、同一可识别对象和同一边界，而迁移到 V2X 只改变数据来源或通信路径，则直接淘汰；若 Doppler 部分只剩一个开关、权重或 ablation，也直接淘汰。"
+    },
+    "queryFormulations": {
+      "A-doppler-constrained-remote-radar-time-propagation": [
+        "site:arxiv.org 4D radar Doppler motion compensation ego motion radial velocity point cloud deskew",
+        "site:openaccess.thecvf.com 4D radar scene flow Doppler constraint radial velocity",
+        "site:ieeexplore.ieee.org automotive radar Doppler motion compensation asynchronous point cloud",
+        "site:arxiv.org continuous time radar odometry Doppler deskew 4D radar",
+        "site:arxiv.org dual Doppler radar full velocity arbitrary object radial velocity geometry"
+      ],
+      "B-multiview-doppler-clock-offset-estimation": [
+        "site:arxiv.org radar radar time synchronization Doppler clock offset calibration",
+        "site:ieeexplore.ieee.org multi radar temporal calibration Doppler velocity consistency",
+        "site:arxiv.org spatiotemporal calibration radar Doppler velocity time offset",
+        "site:arxiv.org targetless multi radar calibration ego velocity Doppler observability",
+        "site:arxiv.org continuous time radar inertial odometry online temporal offset calibration"
+      ],
+      "C-doppler-specific-abstention-interval-alignment": [
+        "site:openaccess.thecvf.com radar Doppler temporal aggregation uncertainty discard radial tangential ambiguity",
+        "site:arxiv.org 4D radar dynamic static classification Doppler ego motion compensation",
+        "site:arxiv.org radar scene flow radial velocity constraint uncertainty interval",
+        "site:arxiv.org cooperative 4D radar asynchronous temporal alignment V2X Radar CoInfra",
+        "site:openaccess.thecvf.com Doppler guided sparse cooperative perception radar uncertainty"
+      ],
+      "dataset-and-cooperative-baseline-coverage": [
+        "V2X-Radar cooperative 4D radar fixed commit model zoo asynchronous benchmark Doppler ablation",
+        "V2X-R cooperative LiDAR 4D radar fusion official paper",
+        "CoInfra cooperative infrastructure perception delay-aware synchronized dataset official paper",
+        "site:openaccess.thecvf.com cooperative perception asynchronous temporal alignment SyncNet CoBEVFlow TraF-Align LRCP CoST"
+      ]
+    },
+    "queryCoverage": {
+      "AQueryCount": 5,
+      "BQueryCount": 5,
+      "CQueryCount": 5,
+      "datasetAndBaselineQueryCount": 4,
+      "minimumFourPerCoreMechanismSatisfied": true
+    },
+    "sourceAttempts": [
+      {
+        "sourceFamily": "arXiv-primary-manuscripts",
+        "purpose": "雷达里程计、Doppler 运动补偿、连续时间标定、V2X-Radar/CoInfra 原文",
+        "result": "verified"
+      },
+      {
+        "sourceFamily": "CVF-Open-Access-primary-proceedings",
+        "purpose": "DoppDrive、Full-Velocity、CMFlow、TARS、异步协同感知和 cooperative radar 论文",
+        "result": "verified"
+      },
+      {
+        "sourceFamily": "IEEE-DOI-and-publisher-records",
+        "purpose": "多 Doppler radar ego-motion、雷达标定与 STCC 正式出版记录",
+        "result": "verified"
+      },
+      {
+        "sourceFamily": "official-GitHub-fixed-commit",
+        "purpose": "V2X-Radar 模型表、配置、入口、安装脚本、数据加载和 async 生成器源码",
+        "result": "verified-at-commit-1624751e31260c68d544e60599079d2104ee8a73"
+      },
+      {
+        "sourceFamily": "official-Hugging-Face-dataset-page",
+        "purpose": "V2X-Radar 数据集大小与许可证",
+        "result": "metadata-verified-without-large-download"
+      },
+      {
+        "sourceFamily": "Google-Drive-model-links-from-pinned-README",
+        "purpose": "12 个权重链接的存在性与响应头探测",
+        "result": "all-12-links-present-in-pinned-readme; all-12-header-probes-timed-out; no-byte-hash-or-load-verification"
+      }
+    ],
+    "deduplication": {
+      "canonicalKey": "DOI first, otherwise arXiv ID, otherwise official fixed-commit URL",
+      "verifiedPrimaryReferenceCount": 30,
+      "duplicatePublisherAndArxivRecordsCollapsed": true
+    },
+    "decisiveEquationTests": [
+      "远端点只沿视线传播是否与既有 radial-only Doppler aggregation 相同？",
+      "多视角是否产生新的可识别速度或时钟对象，还是只复用 stacked line-of-sight equations？",
+      "clock offset 对 Doppler residual 的导数在匀速/固定视线条件下是否非零？",
+      "时间偏移能否与 pose、extrinsic、association、queue/transport delay 由公开观测独立分离？",
+      "abstention/interval 是否超出既有 tangential-error bound、dynamic/static split 或 Doppler-confidence weighting？"
+    ]
+  },
+  "verifiedReferences": [
+    {
+      "id": "REF01",
+      "canonicalId": "arXiv:2411.10962v5",
+      "title": "V2X-Radar: A Multi-Modal Dataset with 4D Radar for Cooperative Perception",
+      "year": 2026,
+      "url": "https://arxiv.org/html/2411.10962v5",
+      "primarySource": true,
+      "verifiedFacts": "车端和路侧使用 PTP、PPS/ToD 与硬件触发同步；异步表使用 0/100/200/300/400 ms 人工延迟；Doppler ablation 是独立实验；论文承认时序覆盖有限，尚未支持 sequential/predictive tasks。",
+      "auditUse": "证明公开 benchmark 的 shift 是 synthetic schedule，不是自然 clock-offset 发生率，也没有 clock ground truth。"
+    },
+    {
+      "id": "REF02",
+      "canonicalId": "git:V2X-Radar@1624751e31260c68d544e60599079d2104ee8a73",
+      "title": "V2X-Radar official code repository at fixed commit",
+      "year": 2026,
+      "url": "https://github.com/yanglei18/V2X-Radar/tree/1624751e31260c68d544e60599079d2104ee8a73",
+      "primarySource": true,
+      "verifiedFacts": "固定提交 README 列出 12 个 cooperative model 链接和对应 YAML；源码可定位 test.py、setup.py、radar loader 与 gen_async.py。",
+      "auditUse": "资产核验的唯一代码基准。"
+    },
+    {
+      "id": "REF03",
+      "canonicalId": "hf:yanglei18/V2X-Radar",
+      "title": "V2X-Radar official Hugging Face dataset",
+      "year": 2025,
+      "url": "https://huggingface.co/datasets/yanglei18/V2X-Radar/tree/main",
+      "primarySource": true,
+      "verifiedFacts": "公开页面标示约 97.6 GB，许可证为 CC-BY-NC-ND-4.0。",
+      "auditUse": "确认完整数据可作为两周计划资产，但不等于 day-2 compact executable gate。"
+    },
+    {
+      "id": "REF04",
+      "canonicalId": "CVPR2025:V2X-R",
+      "title": "V2X-R: Cooperative LiDAR-4D Radar Fusion with Denoising Diffusion for 3D Object Detection",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Huang_V2X-R_Cooperative_LiDAR-4D_Radar_Fusion_with_Denoising_Diffusion_for_3D_CVPR_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "提出 cooperative LiDAR-4D radar fusion 与雷达噪声抑制，而非 Doppler clock-offset 估计。",
+      "auditUse": "cooperative radar 强资产/模型基线。"
+    },
+    {
+      "id": "REF05",
+      "canonicalId": "arXiv:2507.02245v3",
+      "title": "CoInfra: A Large-Scale Cooperative Infrastructure Perception System and Dataset for Vehicle-Infrastructure Cooperation in Adverse Weather",
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2507.02245",
+      "primarySource": true,
+      "verifiedFacts": "14 个路侧节点、商用 5G、同步多节点与 delay-aware fusion；公开数据是 camera/LiDAR，不含 4D radar。",
+      "auditUse": "可作真实通信系统参照，但不能作为 Doppler 方法的雷达观测证据。"
+    },
+    {
+      "id": "REF06",
+      "canonicalId": "ICCV2025:DoppDrive",
+      "title": "DoppDrive: Doppler-Driven Temporal Aggregation for Improved Radar Object Detection",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Haitman_DoppDrive_Doppler-Driven_Temporal_Aggregation_for_Improved_Radar_Object_Detection_ICCV_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "从 Doppler 减去 ego-motion 得动态径向速度，沿径向移动 radar points，并按 Doppler/角度给每点自适应聚合时长以约束 tangential error，超界点被排除。",
+      "auditUse": "直接覆盖 A1 与 C1 的核心方程和边界。"
+    },
+    {
+      "id": "REF07",
+      "canonicalId": "ICCV2021:Full-Velocity-Radar-Returns",
+      "title": "Full-Velocity Radar Returns by Radar-Camera Fusion",
+      "year": 2021,
+      "url": "https://openaccess.thecvf.com/content/ICCV2021/html/Long_Full-Velocity_Radar_Returns_by_Radar-Camera_Fusion_ICCV_2021_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "明确 radial-only 速度存在切向歧义，并用第二几何约束恢复 full point velocity。",
+      "auditUse": "否定把 tangential ambiguity 的发现或双约束求 full velocity 本身作为新颖对象。"
+    },
+    {
+      "id": "REF08",
+      "canonicalId": "CVPR2023:CMFlow",
+      "title": "Hidden Gems: 4D Radar Scene Flow Learning Using Cross-Modal Supervision",
+      "year": 2023,
+      "url": "https://openaccess.thecvf.com/content/CVPR2023/html/Ding_Hidden_Gems_4D_Radar_Scene_Flow_Learning_Using_Cross-Modal_Supervision_CVPR_2023_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "利用 4D radar 连续点云、径向速度约束、motion segmentation 与 ego-motion 学习逐点 3D scene flow。",
+      "auditUse": "A2/A3 的 full-motion 与动态传播已有成熟单车实现。"
+    },
+    {
+      "id": "REF09",
+      "canonicalId": "ICCV2025:TARS",
+      "title": "TARS: Traffic-Aware Radar Scene Flow Estimation",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Wu_TARS_Traffic-Aware_Radar_Scene_Flow_Estimation_ICCV_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "以 point-level 与 traffic rigidity constraints 估计 radar scene flow，并联合检测。",
+      "auditUse": "A3 若改成 object/traffic track propagation 仍是 scene-flow 迁移。"
+    },
+    {
+      "id": "REF10",
+      "canonicalId": "arXiv:2201.11944",
+      "title": "DICP: Doppler Iterative Closest Point Algorithm",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2201.11944",
+      "primarySource": true,
+      "verifiedFacts": "把 Doppler residual 与几何 registration objective 结合并处理动态点。",
+      "auditUse": "A4 的 Doppler factor 加几何因子不是 V2X 新方程。"
+    },
+    {
+      "id": "REF11",
+      "canonicalId": "doi:10.1109/LRA.2026.3669808",
+      "title": "Dynamic-ICP: Doppler-Aware Iterative Closest Point Registration for Dynamic Scenes",
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2511.20292",
+      "primarySource": true,
+      "verifiedFacts": "从逐点 Doppler 估 ego-motion，聚类动态物体，从 ego-compensated radial measurements 重建物体平移速度，以 constant-velocity 预测动态点，再联合几何和 Doppler residual。",
+      "auditUse": "直接覆盖 A3 的 object-wise Doppler propagation。"
+    },
+    {
+      "id": "REF12",
+      "canonicalId": "arXiv:2502.11461",
+      "title": "Doppler Correspondence: Non-Iterative Scan Matching With Doppler Velocity-Based Correspondence",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2502.11461",
+      "primarySource": true,
+      "verifiedFacts": "基于 Doppler velocity 建立 translation-invariant、small-rotation-robust 的 correspondence，用于非迭代 scan matching，并讨论 4D LiDAR/4D radar。",
+      "auditUse": "说明 Doppler-conditioned association/registration 不是 cooperative 场景独有。"
+    },
+    {
+      "id": "REF13",
+      "canonicalId": "arXiv:2405.09780",
+      "title": "EFEAR-4D: Ego-Velocity Filtering for Efficient and Accurate 4D Radar Odometry",
+      "year": 2024,
+      "url": "https://arxiv.org/abs/2405.09780",
+      "primarySource": true,
+      "verifiedFacts": "使用 Doppler ego-velocity prior 过滤动态点并完成 4D radar odometry。",
+      "auditUse": "覆盖 C2 的 static/dynamic routing。"
+    },
+    {
+      "id": "REF14",
+      "canonicalId": "arXiv:2303.13962",
+      "title": "4D iRIOM: 4D Imaging Radar Inertial Odometry and Mapping",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2303.13962",
+      "primarySource": true,
+      "verifiedFacts": "从单 scan Doppler 稳健估计 ego velocity，并与 IMU/registration 融合。",
+      "auditUse": "提供单车 Doppler ego-motion 和动态筛除强基线。"
+    },
+    {
+      "id": "REF15",
+      "canonicalId": "arXiv:2201.02437",
+      "title": "Continuous-Time Radar-Inertial Odometry for Automotive Radars",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2201.02437",
+      "primarySource": true,
+      "verifiedFacts": "以 continuous-time trajectory 处理多 radar 与 IMU 的异步测量。",
+      "auditUse": "A4 的 continuous-time asynchronous radar factor 已有单平台先验。"
+    },
+    {
+      "id": "REF16",
+      "canonicalId": "arXiv:2603.19958",
+      "title": "Radar-Inertial Odometry with Online Spatio-Temporal Calibration via Continuous-Time IMU Modeling",
+      "year": 2026,
+      "url": "https://arxiv.org/abs/2603.19958",
+      "primarySource": true,
+      "verifiedFacts": "在 continuous-time factor graph 内联合估计 radar-IMU temporal offset 与 extrinsic，并强调 motion excitation。",
+      "auditUse": "B3 的 joint clock/extrinsic Doppler calibration 已有相同估计结构。"
+    },
+    {
+      "id": "REF17",
+      "canonicalId": "arXiv:2211.01871",
+      "title": "Spatiotemporal Calibration of 3D Millimetre-Wavelength Radar-Camera Pairs",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2211.01871",
+      "primarySource": true,
+      "verifiedFacts": "利用 radar ego-velocity 对 radar-camera temporal offset 与 spatial transform 做 targetless calibration，并给出 identifiability 和必要运动激励。",
+      "auditUse": "B1/B3 的速度一致性估时差是直接功能等价 prior。"
+    },
+    {
+      "id": "REF18",
+      "canonicalId": "arXiv:2302.00660",
+      "title": "Extrinsic Calibration of 2D Millimetre-Wavelength Radar Pairs Using Ego-Velocity Estimates",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2302.00660",
+      "primarySource": true,
+      "verifiedFacts": "从两雷达 ego-velocity estimates 标定 yaw 与 translation axis，不要求共同视场，并分析系统可识别性与平台激励。",
+      "auditUse": "多雷达跨视角速度一致性与 identifiability 不是 V2X 新对象。"
+    },
+    {
+      "id": "REF19",
+      "canonicalId": "doi:10.1109/ICRA.2014.6907064",
+      "title": "Instantaneous Ego-Motion Estimation Using Multiple Doppler Radars",
+      "year": 2014,
+      "url": "https://doi.org/10.1109/ICRA.2014.6907064",
+      "primarySource": true,
+      "verifiedFacts": "至少两个 Doppler radar 的径向速度方程恢复完整 2D ego-motion，无需共同视场。",
+      "auditUse": "A2 的 stacked line-of-sight system 和 B1 的多 radar velocity consistency 有长期直接先验。"
+    },
+    {
+      "id": "REF20",
+      "canonicalId": "arXiv:2307.01444",
+      "title": "Static Background Removal in Automotive Radar Data",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2307.01444",
+      "primarySource": true,
+      "verifiedFacts": "根据 radar motion/Doppler 结构区分 static background 与动态返回。",
+      "auditUse": "C2 的静态/动态分路不是新方法边界。"
+    },
+    {
+      "id": "REF21",
+      "canonicalId": "CVPR2025:TraF-Align",
+      "title": "TraF-Align: Trajectory-Aware Feature Alignment for Asynchronous Multi-Agent Perception",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Song_TraF-Align_Trajectory-aware_Feature_Alignment_for_Asynchronous_Multi-agent_Perception_CVPR_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "以轨迹感知特征对齐处理 asynchronous cooperative perception。",
+      "auditUse": "作为 generic temporal alignment 强基线；本审计不把它本身当 Doppler novelty。"
+    },
+    {
+      "id": "REF22",
+      "canonicalId": "arXiv:2207.08560",
+      "title": "Latency-Aware Collaborative Perception",
+      "year": 2022,
+      "url": "https://arxiv.org/abs/2207.08560",
+      "primarySource": true,
+      "verifiedFacts": "SyncNet 类方法用历史信息补偿 cooperative perception latency。",
+      "auditUse": "generic asynchronous baseline。"
+    },
+    {
+      "id": "REF23",
+      "canonicalId": "arXiv:2309.16940",
+      "title": "CoBEVFlow: Flow-based Bird's Eye View Feature Alignment for Asynchronous Multi-Agent Perception",
+      "year": 2023,
+      "url": "https://arxiv.org/abs/2309.16940",
+      "primarySource": true,
+      "verifiedFacts": "用 BEV flow 对 asynchronous multi-agent features 做时间补偿。",
+      "auditUse": "A3 的 learned flow 版本必须超越的 cooperative baseline。"
+    },
+    {
+      "id": "REF24",
+      "canonicalId": "WACV2025:LRCP",
+      "title": "Latency Robust Cooperative Perception Using Asynchronous Feature Fusion",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "显式针对 latency 的 asynchronous feature fusion。",
+      "auditUse": "cooperative async 强基线。"
+    },
+    {
+      "id": "REF25",
+      "canonicalId": "ICCV2025:CoST",
+      "title": "CoST: Efficient Collaborative Perception From Unified Spatiotemporal Perspective",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Tang_CoST_Efficient_Collaborative_Perception_From_Unified_Spatiotemporal_Perspective_ICCV_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "统一处理 cooperative spatial-temporal misalignment。",
+      "auditUse": "约束本候选不能退化为 generic spatiotemporal alignment。"
+    },
+    {
+      "id": "REF26",
+      "canonicalId": "doi:10.1109/INFOCOM59046.2026.11571531",
+      "title": "STCC: Spatio-Temporal Collaborative Calibration for Cooperative Perception",
+      "year": 2026,
+      "url": "https://doi.org/10.1109/INFOCOM59046.2026.11571531",
+      "primarySource": true,
+      "verifiedFacts": "正式出版的 cooperative spatio-temporal calibration 方法。",
+      "auditUse": "B3 必须区分物理 clock estimand 与通用协同校准。"
+    },
+    {
+      "id": "REF27",
+      "canonicalId": "CVPR2026:CATNet",
+      "title": "CATNet: Collaborative Alignment and Transformation Network for Cooperative Perception",
+      "year": 2026,
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Chen_CATNet_Collaborative_Alignment_and_Transformation_Network_for_Cooperative_Perception_CVPR_2026_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "联合 collaborative alignment 与 feature transformation。",
+      "auditUse": "最新 generic alignment baseline。"
+    },
+    {
+      "id": "REF28",
+      "canonicalId": "ICCVW2025:SlimComm",
+      "title": "SlimComm: Doppler-Guided Sparse Queries for Bandwidth-Efficient Cooperative 3-D Perception",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/ICCV2025W/DriveX/html/Yazgan_SlimComm_Doppler-Guided_Sparse_Queries_for_Bandwidth-Efficient_Cooperative_3-D_Perception_ICCVW_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "已将 Doppler 用于 cooperative sparse-query selection 与带宽控制。",
+      "auditUse": "C3 若只做 Doppler confidence/query gating 会成为已有 cooperative ablation/selection。"
+    },
+    {
+      "id": "REF29",
+      "canonicalId": "CVPRW2026:4D-Radar-Meets-LiDAR-and-Camera",
+      "title": "4-D Radar Meets LiDAR and Camera: Cooperative Perception under Adverse Weather",
+      "year": 2026,
+      "url": "https://openaccess.thecvf.com/content/CVPR2026W/DriveX/html/Yazgan_4-D_Radar_Meets_LiDAR_and_Camera_Cooperative_Perception_under_Adverse_CVPRW_2026_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "评估 4D radar/LiDAR/camera cooperative perception 在恶劣天气下的互补性。",
+      "auditUse": "cooperative radar 任务基线，但不提供 clock-offset label。"
+    },
+    {
+      "id": "REF30",
+      "canonicalId": "ICCV2025:DLR-Fusion",
+      "title": "Doppler-Aware LiDAR-RADAR Fusion for Weather-Robust 3D Detection",
+      "year": 2025,
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Chae_Doppler-Aware_LiDAR-RADAR_Fusion_for_Weather-Robust_3D_Detection_ICCV_2025_paper.html",
+      "primarySource": true,
+      "verifiedFacts": "把 Doppler 作为 LiDAR-radar fusion 的物理 cue。",
+      "auditUse": "Doppler conditioning 本身不构成 temporal novelty。"
+    }
+  ],
+  "assetAudit": {
+    "asset": "V2X-Radar",
+    "fixedCommit": "1624751e31260c68d544e60599079d2104ee8a73",
+    "fixedCommitUrl": "https://github.com/yanglei18/V2X-Radar/tree/1624751e31260c68d544e60599079d2104ee8a73",
+    "auditMethod": "只读取固定提交的小源码文件、README、YAML、响应头与公开元数据；未下载大数据或权重。",
+    "licenses": {
+      "rootCodeLicense": "MIT",
+      "datasetLicense": "CC-BY-NC-ND-4.0",
+      "checkpointLicense": "not separately stated on the 12 pinned README links",
+      "sourceMetadataInconsistency": "CodeBase/OpenCOOD/setup.py 的文件头仍写 TDG-Attribution-NonCommercial-NoDistrib，而 setup metadata 与仓库根 LICENSE 写 MIT；实际使用前需由资产方澄清嵌入代码边界。"
+    },
+    "modelZoo": [
+      {
+        "id": "M01",
+        "modality": "camera",
+        "model": "Late Fusion",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/camera_only/collab_cameraonly_bevdepth_late.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1p_G_nHQE1Ttx93SamjHG7-3eiOgb2Yht/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M02",
+        "modality": "camera",
+        "model": "F-Cooper",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/camera_only/collab_cameraonly_bevdepth_fcooper.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1eeZ9R8ZqfwlEuX__eUNnQARtdxquEN0e/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M03",
+        "modality": "camera",
+        "model": "CoAlign",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/camera_only/collab_cameraonly_bevdepth_coalign.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1tA4bbcvrhZUo6JbSdWrf9C2XiMC1jDci/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M04",
+        "modality": "camera",
+        "model": "HEAL/Pyramid",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/camera_only/collab_cameraonly_bevdepth_pyramid.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1eDQ0amU7IjSzSFMAhyhZLSDcjRJiNCeX/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M05",
+        "modality": "lidar",
+        "model": "Late Fusion",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/lidar_only/collab_lidaronly_lidarpillarnet_late.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1L8gFb8_DAfa41POajwKb2dqvX_xGnIcW/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M06",
+        "modality": "lidar",
+        "model": "F-Cooper",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/lidar_only/collab_lidaronly_lidarpillarnet_fcooper.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1_WkYo43ZdTnjb59_q_5rpxlq3rkQ0YHT/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M07",
+        "modality": "lidar",
+        "model": "CoAlign",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/lidar_only/collab_lidaronly_lidarpillarnet_coalign.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1TQnRBV23z8PX6HWDoe19K-fFcWf8AQhg/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M08",
+        "modality": "lidar",
+        "model": "HEAL/Pyramid",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/lidar_only/collab_lidaronly_lidarpillarnet_pyramid.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1Tqqx5j61Hcd0nli1CgoUd0Yxq7v_vkw0/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M09",
+        "modality": "radar",
+        "model": "Late Fusion",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/radar_only/collab_radaronly_radarpillarnet_late.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1_U8tDDLwjQJLzqlMI24I0vuvlxfQ2gwg/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M10",
+        "modality": "radar",
+        "model": "F-Cooper",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/radar_only/collab_radaronly_radarpillarnet_fcooper.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1L82Y5yJmxeDWWIOQZQanwsdGQ1pF3OA_/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M11",
+        "modality": "radar",
+        "model": "CoAlign",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/radar_only/collab_radaronly_radarpillarnet_coalign.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1KWlMzoakT4rno_l5BdTPm3208-G8FGAu/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      },
+      {
+        "id": "M12",
+        "modality": "radar",
+        "model": "HEAL/Pyramid",
+        "config": "CodeBase/OpenCOOD/opencood/hypes_yaml/v2x-radar/radar_only/collab_radaronly_radarpillarnet_pyramid.yaml",
+        "configStatus": "pinned-raw-HTTP-200",
+        "weightUrl": "https://drive.google.com/file/d/1pBVCiSstwCFR_rv-EZPGLaqcqAS5WQbL/view?usp=drive_link",
+        "weightStatus": "link-present-in-pinned-README; 20s header probe timed out; bytes/hash/load not verified"
+      }
+    ],
+    "entryAudit": {
+      "correctWorkingDirectory": "CodeBase/OpenCOOD",
+      "correctEntry": "python opencood/tools/test.py --hypes_yaml ${CONFIG_FILE} --ckpt_path ${CHECKPOINT_PATH} --fusion_method ${FUSION_METHOD}",
+      "entryEvidence": "CodeBase/OpenCOOD/README.md and opencood/tools/test.py",
+      "topLevelReadmeRisk": "顶层 README 把 cooperative testing 指向 BEVHeight，而 12 个模型的配置和实际 test entry 位于 OpenCOOD；以嵌套 OpenCOOD README 为准。",
+      "installBlocker": "CodeBase/OpenCOOD/setup.py 无条件读取 docs/requirements.txt，但固定提交的 CodeBase/OpenCOOD/docs 中没有该文件，因此 README 的 python setup.py develop 不能在未修改源码时闭环。",
+      "checkpointLoadStatus": "test.py 接受 --ckpt_path，但 12 个 Drive 链接均未取得 bytes、hash 或成功 load 证据。",
+      "compactSplitStatus": "未发现固定、可哈希、可在 day-2 下载完成的 radar cooperative compact split manifest。"
+    },
+    "physicsDataPathAudit": {
+      "timestampFinding": "read_radar 返回 time=None；V2X-Radar loader 以 filename/frame index 充当时间键，没有保存可供 clock estimation 的 acquisition timestamp residual。",
+      "dopplerFinding": "raw PCD 的 Doppler channel 在 loader 中按车端与路侧不同常数归一化/裁剪，模型输入不保持统一物理单位；若要做方程实验必须读取 raw PCD 并核实单位。",
+      "asyncGeneratorFinding": "gen_async.py 通过固定 20-frame 文件复制制造 synthetic shift，同时保留当前 frame YAML；其文件循环内无条件 assert 'camera0' in filename 会在非 camera0 文件上失败，因此脚本按固定提交原样并非可执行 benchmark generator。",
+      "naturalOccurrenceFinding": "源码与数据说明未提供自然 clock offset、transport latency、processing delay 或其独立 ground truth。"
+    },
+    "weightsExistVsExecutableClosure": {
+      "weightLinksExist": true,
+      "allTwelveConfigPathsExistAtFixedCommit": true,
+      "weightBytesRetrieved": false,
+      "weightHashesRecorded": false,
+      "checkpointLoadsVerified": false,
+      "patchFreeInstallVerified": false,
+      "oneBatchRadarCooperativeInferenceVerified": false,
+      "executableClosure": false,
+      "decision": "权重链接存在不等于可执行闭环。"
+    },
+    "day2AssetGate": {
+      "deadline": "experiment day 2 before method implementation",
+      "requiredEvidence": [
+        "至少一个 radar-only cooperative checkpoint 成功下载，记录文件名、bytes、SHA-256 与独立许可证/授权说明。",
+        "固定提交或上游明确修复提交可无本地源码补丁安装；若必须补丁，先固定 patch 并把资产状态标为 fork-dependent。",
+        "固定 compact sequence manifest 可获取，并含 raw radar PCD、标定、ego pose、目标标注及可审计的采集/帧时间定义。",
+        "用原始物理 Doppler 单位完成 one-batch no-fusion 与 cooperative inference，保存完整命令、配置、checkpoint load log 和输出。",
+        "人工 shift transform 在 compact sequence 上可复现且不混淆 frame YAML/pose；明确该结果只代表 synthetic injection。"
+      ],
+      "failureAction": "任一项失败即停止两周方法实验，不以仓库存在、链接存在或 fixture 代替任务证据。"
+    }
+  },
+  "mechanismLedger": [
+    {
+      "id": "A1-radial-only-remote-return-propagation",
+      "family": "A",
+      "canonicalMechanism": "用远端 radial Doppler 在接收端视线方向外推动态 radar return，并显式标记未知切向分量。",
+      "equation": "d_dyn = d_meas - u_remote^T (v_ego_remote + omega_remote x r); p_hat(t_r) = p(t_s) + u_remote d_dyn (t_r-t_s); v_tangential remains set-valued.",
+      "noveltyBoundaryTest": "V2X 只把已有 radar point 的采集者从本车换成远端，观测对象、径向传播式和 tangential bound 均未变化。",
+      "directPriorCollision": ["REF06", "REF07"],
+      "identifiability": "单条 radial return 只能约束一维视线速度；切向速度在与 u_remote 正交的子空间内不可识别。",
+      "independentExperimentalUnit": "remote dynamic return or matched object track, not frame-level pseudo-replication",
+      "strongBaselines": ["unshifted oracle", "no compensation", "rigid ego-motion compensation", "DoppDrive radial propagation", "TraF-Align", "CoBEVFlow"],
+      "successCondition": "在相同 raw Doppler 与 association 下超过直接实现的 DoppDrive equation，并在可识别子空间外保持校准覆盖。",
+      "killCondition": "增益可由 DoppDrive radial shift 或 generic trajectory/flow alignment 复现。",
+      "positiveResultValue": "只会显示 radial physics 对 synthetic shift 有用，除非出现新的 V2X 可识别边界。",
+      "negativeResultValue": "建立 radial-only propagation 在 cross-view tangential ambiguity 下的失效图。",
+      "disposition": "rejected-functional-equivalence",
+      "reason": "DoppDrive 已执行同一径向外推与切向误差约束；V2X 迁移不产生新估计对象。"
+    },
+    {
+      "id": "A2-cross-view-full-velocity-triangulation",
+      "family": "A",
+      "canonicalMechanism": "把同一动态散射体在两端的径向速度堆叠，恢复 full velocity 后外推。",
+      "equation": "z = U v_obj + b_ego, U = [u_vehicle^T; u_roadside^T; ...]; v_hat = argmin ||W^(1/2)(U v - (z-b_ego))||^2; identifiable only if rank(U) covers the motion subspace.",
+      "noveltyBoundaryTest": "rank(U) 是经典多视线 Doppler 几何；V2X 仅提供更长 baseline，不改变线性观测方程。",
+      "directPriorCollision": ["REF07", "REF18", "REF19"],
+      "identifiability": "需要同一物体/散射体的可靠跨视角 association、近同时测量、非共线视线和已知 ego/extrinsic；异步本身又破坏这些前提。",
+      "independentExperimentalUnit": "matched object trajectory with at least two non-collinear line-of-sight observations",
+      "strongBaselines": ["single-view radial interval", "dual-Doppler least squares", "radar-camera full velocity", "CMFlow", "TARS"],
+      "successCondition": "必须证明一个 V2X 特有、先验多雷达方程没有的可识别对象或边界。",
+      "killCondition": "方法可写成标准 stacked line-of-sight least squares 加现成 association。",
+      "positiveResultValue": "可证明基础线几何改善 full velocity 条件数，但这是系统设计结果而非新方法。",
+      "negativeResultValue": "量化 association/time error 何时使 cross-view Doppler triangulation 退化。",
+      "disposition": "rejected-method-transfer",
+      "reason": "核心等于成熟 multi-Doppler/full-velocity equation；剩余差异只是把传感器分布到 V2X。"
+    },
+    {
+      "id": "A3-object-track-doppler-propagation",
+      "family": "A",
+      "canonicalMechanism": "先以 scene flow 或 object track 从 Doppler 恢复速度，再把远端动态物体传播到接收时刻。",
+      "equation": "x_k(t_r) = x_k(t_s) + v_k delta_t, with v_k estimated from geometry residuals plus u_i^T v_k = d_i and traffic/object rigidity.",
+      "noveltyBoundaryTest": "速度估计、动态聚类、constant-velocity prediction 与 radar scene flow 均已存在；cooperative 通信只是额外输入。",
+      "directPriorCollision": ["REF08", "REF09", "REF11", "REF23"],
+      "identifiability": "依赖跨时/跨视角 association；目标转动、加速度和散射中心迁移使 constant-velocity propagation 不闭合。",
+      "independentExperimentalUnit": "object trajectory, stratified by acceleration, view angle and occlusion",
+      "strongBaselines": ["Dynamic-ICP object velocity", "CMFlow", "TARS", "CoBEVFlow", "TraF-Align"],
+      "successCondition": "须有不可由现有 radar scene flow 加 V2X wrapper 获得的新物理约束。",
+      "killCondition": "Doppler 仅作为已有 tracker/flow 的额外特征或 loss。",
+      "positiveResultValue": "可能改善 synthetic asynchronous detection，但只构成系统组合。",
+      "negativeResultValue": "说明 Doppler track 在加速与散射中心变化下不稳。",
+      "disposition": "rejected-functional-equivalence",
+      "reason": "Dynamic-ICP、CMFlow、TARS 已覆盖 Doppler object velocity/scene flow/constant-velocity prediction；剩余是 cooperative ablation。"
+    },
+    {
+      "id": "A4-continuous-time-doppler-factor-propagation",
+      "family": "A",
+      "canonicalMechanism": "在 continuous-time factor graph 中联合 ego trajectory、远端 Doppler returns 与接收时间。",
+      "equation": "min_X sum_i rho(r_geom(X(t_i))^2 + lambda r_doppler(X_dot(t_i), d_i)^2), evaluated at t_i + delta_i.",
+      "noveltyBoundaryTest": "continuous-time asynchronous radar factors、Doppler registration 与在线时空标定均有直接先验。",
+      "directPriorCollision": ["REF10", "REF15", "REF16"],
+      "identifiability": "没有独立 clock/pose/extrinsic anchor 时，delta_i 与 trajectory/extrinsic 可沿相同残差方向补偿。",
+      "independentExperimentalUnit": "sequence with independent trajectory and timing instrumentation",
+      "strongBaselines": ["continuous-time RIO", "DICP", "online spatiotemporal RIO calibration", "STCC"],
+      "successCondition": "必须引入 V2X 特有且有独立观测的 factor，改变可识别集合。",
+      "killCondition": "只是把 remote radar factors 加进已有 continuous-time optimizer。",
+      "positiveResultValue": "可能是工程整合，不足以建立新方法族。",
+      "negativeResultValue": "可给出联合优化的 gauge/null-space 证据。",
+      "disposition": "rejected-method-transfer",
+      "reason": "没有新 estimand 或 V2X 独立锚点，属于成熟连续时间雷达估计迁移。"
+    },
+    {
+      "id": "B1-static-background-ego-doppler-clock-offset",
+      "family": "B",
+      "canonicalMechanism": "从两端静态背景 Doppler 各自估 ego velocity curve，以曲线一致性估相对 clock offset。",
+      "equation": "delta_hat = argmin_delta sum_t ||v_vehicle(t) - R v_roadside(t+delta) - omega(t+delta) x t_ext||_Sigma^2.",
+      "noveltyBoundaryTest": "这与 radar-camera temporal calibration 的 ego-velocity consistency 和 radar-pair calibration 使用同一速度曲线配准对象。",
+      "directPriorCollision": ["REF16", "REF17", "REF18", "REF19"],
+      "identifiability": "若速度/角速度恒定或周期重复，cost 对 delta 平坦或多峰；需要加减速/转弯激励、已知或独立约束的 extrinsic 和共同物理轨迹。固定路侧 radar 并不观测自身 ego velocity，因此跨平台版本还需共享目标或定位锚点。",
+      "independentExperimentalUnit": "instrumented drive segment with independent PPS/PTP residual ground truth",
+      "strongBaselines": ["cross-correlation of ego velocity", "Wise et al. spatiotemporal calibration", "continuous-time joint calibration", "timestamp-only alignment"],
+      "successCondition": "在独立 clock truth 上恢复 delta，并证明 V2X 观测方程多了新的可识别项。",
+      "killCondition": "匀速/固定角速度下 Fisher information for delta 为零，或估计由 extrinsic/pose 调整吸收。",
+      "positiveResultValue": "只能证明在特定激励和外部锚点下可标定。",
+      "negativeResultValue": "给出可重复的 excitation/null-space 边界。",
+      "disposition": "rejected-functional-equivalence-and-no-public-truth",
+      "reason": "直接 prior 已估 temporal offset；V2X-Radar 同步采集且没有相对 clock residual label。"
+    },
+    {
+      "id": "B2-moving-object-multiview-doppler-clock-offset",
+      "family": "B",
+      "canonicalMechanism": "用两端对同一运动目标的 Doppler/几何一致性直接估 clock offset。",
+      "equation": "r_j(delta) = d_j(t_j) - u_j(t_j)^T (v_obj(t_j+delta) - v_j(t_j)); dr_j/ddelta ~= -u_j^T a_obj - u_dot_j^T v_obj.",
+      "noveltyBoundaryTest": "只有 acceleration 或 bearing-rate excitation 使 delta 进入一阶可识别方向；这是一条边界，不是默认成立的新估计器。",
+      "directPriorCollision": ["REF07", "REF08", "REF17", "REF21"],
+      "identifiability": "constant velocity 且视线近固定时 dr/ddelta ~= 0；association、object acceleration、pose、extrinsic 与 offset 共同进入 residual。单向通信还不能分离 clock offset 与 transport/queue delay。",
+      "independentExperimentalUnit": "same-object trajectory with external clock truth and acceleration/bearing-rate strata",
+      "strongBaselines": ["oracle correspondence plus nonlinear least squares", "radar-camera temporal calibration", "TraF-Align", "SyncNet"],
+      "successCondition": "在 clock truth 下展示 excitation-conditioned identifiability，并与 transport delay 分离。",
+      "killCondition": "估计只在 synthetic shifted labels 上有效，或在 constant-velocity segments 与 pose/extrinsic 替代解不可区分。",
+      "positiveResultValue": "若有硬件真值，可形成有用的可观测性实验；当前公开资产不支持。",
+      "negativeResultValue": "明确证明 moving-object Doppler 并不普遍携带 clock offset 信息。",
+      "disposition": "rejected-unidentifiable-on-public-assets",
+      "reason": "关键导数需要特定激励和外部时间真值；V2X-Radar 不提供该真值，synthetic shift 不能证明自然 clock estimation。"
+    },
+    {
+      "id": "B3-joint-clock-pose-extrinsic-doppler-calibration",
+      "family": "B",
+      "canonicalMechanism": "联合优化 clock offset、车辆轨迹、V2X extrinsic 与 Doppler residual。",
+      "equation": "r ~= J_t delta_t + J_p delta_xi_pose + J_e delta_xi_extrinsic; estimate all variables in one batch factor graph.",
+      "noveltyBoundaryTest": "把变量放入同一 latent/factor graph 不会自动提高 rank 或产生物理可识别性。",
+      "directPriorCollision": ["REF16", "REF17", "REF18", "REF26"],
+      "identifiability": "缺少 PPS/PTP residual、双向四时间戳协议或独立 pose/extrinsic anchor 时存在 joint null space；communication delay 仍不可分。",
+      "independentExperimentalUnit": "hardware-instrumented message/trajectory with separate clock, transport, pose and extrinsic truth",
+      "strongBaselines": ["online spatiotemporal RIO calibration", "STCC", "oracle clock", "oracle extrinsic", "one-error-at-a-time calibration"],
+      "successCondition": "rank test 与独立真值必须证明每个物理原因可分，而非只降低 detection loss。",
+      "killCondition": "不同 delta/pose/extrinsic 组合产生等价 residual 或相同 downstream metric。",
+      "positiveResultValue": "若未来有硬件真值，可验证哪些 excitation/anchor 打破 gauge。",
+      "negativeResultValue": "可为 joint-error reject 提供方程级反例。",
+      "disposition": "rejected-joint-error-nonidentifiability",
+      "reason": "直接触发 joint-error reject；公开 V2X-Radar 资产没有分因真值。"
+    },
+    {
+      "id": "C1-tangential-error-interval-admission",
+      "family": "C",
+      "canonicalMechanism": "只在 radial propagation 的切向最坏误差区间小于容差时写入远端动态点，否则 abstain。",
+      "equation": "P(delta_t) = {p + (u d_dyn + v_perp) delta_t : v_perp in V_perp}; admit iff sup_{v_perp in V_perp} dist(P(delta_t), predicted support) <= epsilon.",
+      "noveltyBoundaryTest": "若 V_perp 用角度/Doppler 经验上界替代，即退化为 DoppDrive 的 per-point adaptive aggregation duration 与 discard rule。",
+      "directPriorCollision": ["REF06", "REF07"],
+      "identifiability": "没有 full velocity 或对象尺寸/速度上界时区间可任意宽；任何有限 admission 都依赖外加先验。",
+      "independentExperimentalUnit": "remote return with ground-truth full velocity and support geometry",
+      "strongBaselines": ["DoppDrive adaptive duration", "fixed temporal window", "radial-only propagation", "oracle full velocity"],
+      "successCondition": "需得到一个 V2X 特有、可校准且比 DoppDrive bound 更紧的物理可识别集合。",
+      "killCondition": "区间只由手调速度上界/置信度决定，或等价于 adaptive window/discard。",
+      "positiveResultValue": "可产生保守覆盖图，但不形成新方法。",
+      "negativeResultValue": "证明在典型 cross-view geometry 下 interval 过宽而必须 abstain。",
+      "disposition": "rejected-functional-equivalence",
+      "reason": "DoppDrive 已实现角度/Doppler 条件的时间区间和超界排除；V2X 版本只剩边界参数 ablation。"
+    },
+    {
+      "id": "C2-static-dynamic-split-alignment",
+      "family": "C",
+      "canonicalMechanism": "静态 returns 仅用 ego/extrinsic 刚体变换，动态且可识别 returns 用 Doppler 传播，不可识别动态点丢弃或单独编码。",
+      "equation": "route_i = static if |d_i + u_i^T v_ego| <= tau_s; dynamic-identifiable if rank/interval gate passes; otherwise abstain.",
+      "noveltyBoundaryTest": "static/dynamic Doppler residual split、动态移除和分路已是 radar odometry/scene flow 常规组件。",
+      "directPriorCollision": ["REF11", "REF13", "REF14", "REF20"],
+      "identifiability": "近零相对径向速度的横向动态目标会被误判静态；阈值不能解决 radial null space。",
+      "independentExperimentalUnit": "object trajectory with radial-null and non-null strata",
+      "strongBaselines": ["EFEAR-4D", "4D iRIOM", "Dynamic-ICP", "static background removal", "no routing"],
+      "successCondition": "必须证明新的 cooperative observable 改善 radial-null 分类。",
+      "killCondition": "只是把现有 static/dynamic mask 放在 fusion 前。",
+      "positiveResultValue": "可作为工程控制减少错误写入。",
+      "negativeResultValue": "展示 transverse movers 被错误路由的系统性反例。",
+      "disposition": "rejected-ablation-only",
+      "reason": "核心分路是成熟组件；放到 cooperative fusion 前只构成一项 ablation。"
+    },
+    {
+      "id": "C3-doppler-residual-weighted-abstention",
+      "family": "C",
+      "canonicalMechanism": "按跨视角 Doppler residual 或不确定度给远端 returns 降权/拒绝。",
+      "equation": "w_i = psi(|d_i - u_i^T v_hat| / sigma_i); fuse feature_i only if w_i passes a predeclared physical-consistency gate.",
+      "noveltyBoundaryTest": "Doppler confidence、dynamic filtering、sparse query selection 与 robust loss 均已有；若没有新 identifiable interval，只剩权重函数。",
+      "directPriorCollision": ["REF10", "REF13", "REF28", "REF30"],
+      "identifiability": "小 residual 可能来自错误 association、静态点或 pose/extrinsic 补偿；大 residual 也可能来自真实加速度。权重不能识别原因。",
+      "independentExperimentalUnit": "return/object with separately labeled association, motion and calibration status",
+      "strongBaselines": ["Huber/Tukey robust Doppler loss", "Doppler threshold", "SlimComm Doppler query gating", "oracle validity mask"],
+      "successCondition": "需有方程推导的 coverage guarantee，而非 detection AP 的调权增益。",
+      "killCondition": "贡献可由阈值、robust loss 或 query-gating ablation 复现。",
+      "positiveResultValue": "可能是实用 safety control，但不是独立新方法族。",
+      "negativeResultValue": "说明 residual 不能分因，拒绝规则会删掉高动态真目标。",
+      "disposition": "rejected-ablation-only",
+      "reason": "没有新的 estimand；仅为现有 Doppler confidence/gating 的 cooperative ablation。"
+    },
+    {
+      "id": "C4-clock-conditioned-set-valued-fusion",
+      "family": "C",
+      "canonicalMechanism": "把未知 clock offset 与未知 tangential velocity 联合成 set-valued reachable tube，仅融合所有可行状态共同支持的区域。",
+      "equation": "R = union_{delta in Delta, v_perp in V_perp} T_ego(delta)[p + (u d_dyn + v_perp) delta]; fuse intersection-supported occupancy, abstain elsewhere.",
+      "noveltyBoundaryTest": "set-valued 表达更诚实，但 Delta 与 V_perp 在公开资产上均无独立收缩观测；若用手工边界，方法退化为 uncertainty dilation/masking。",
+      "directPriorCollision": ["REF06", "REF21", "REF25", "REF27"],
+      "identifiability": "clock、pose、extrinsic 和 tangential ambiguity 的联合 reachable set 通常快速膨胀；没有硬件 clock anchor 或第二独立速度约束时不能从数据收缩。",
+      "independentExperimentalUnit": "message-object pair with independent clock interval and full-velocity truth",
+      "strongBaselines": ["DoppDrive interval", "fixed BEV dilation", "CoST", "CATNet", "oracle clock/full velocity"],
+      "successCondition": "须由公开观测得到严格小于手工先验的 data-dependent tube，并保持预注册 coverage。",
+      "killCondition": "tube 由人工 Delta/V_perp 决定，或融合结果等价于 morphology/dilation mask。",
+      "positiveResultValue": "可作为不确定性规范，但不支持当前方法主张。",
+      "negativeResultValue": "证明在真实可用先验下 tube 太宽，Doppler-specific alignment 应 abstain。",
+      "disposition": "rejected-no-identifiable-contraction",
+      "reason": "没有公开 clock/full-velocity 真值使集合从观测收缩；可执行部分只剩通用区间膨胀或 mask。"
+    }
+  ],
+  "survivors": [],
+  "rejected": [
+    {
+      "id": "A1-radial-only-remote-return-propagation",
+      "decisiveReason": "与 DoppDrive 的径向传播和切向误差门控同方程；V2X 迁移不产生新对象。"
+    },
+    {
+      "id": "A2-cross-view-full-velocity-triangulation",
+      "decisiveReason": "经典 multi-Doppler stacked line-of-sight equation；新增跨端部署，不新增可识别边界。"
+    },
+    {
+      "id": "A3-object-track-doppler-propagation",
+      "decisiveReason": "Dynamic-ICP/CMFlow/TARS 已覆盖 velocity reconstruction、scene flow 与 constant-velocity prediction。"
+    },
+    {
+      "id": "A4-continuous-time-doppler-factor-propagation",
+      "decisiveReason": "连续时间异步雷达 factor 与时空标定已有直接 prior，V2X 无新增独立 anchor。"
+    },
+    {
+      "id": "B1-static-background-ego-doppler-clock-offset",
+      "decisiveReason": "ego-velocity temporal calibration 已有直接 prior；公开资产无 clock residual truth。"
+    },
+    {
+      "id": "B2-moving-object-multiview-doppler-clock-offset",
+      "decisiveReason": "匀速/固定视线下一阶不可识别，且 association、pose、extrinsic、transport delay 混杂。"
+    },
+    {
+      "id": "B3-joint-clock-pose-extrinsic-doppler-calibration",
+      "decisiveReason": "触发 joint-error reject；联合优化不消除 null space。"
+    },
+    {
+      "id": "C1-tangential-error-interval-admission",
+      "decisiveReason": "等价于 DoppDrive adaptive per-point temporal window/discard。"
+    },
+    {
+      "id": "C2-static-dynamic-split-alignment",
+      "decisiveReason": "成熟 radar odometry routing，放入 cooperative pipeline 只剩 ablation。"
+    },
+    {
+      "id": "C3-doppler-residual-weighted-abstention",
+      "decisiveReason": "仅为 robust weighting/query gating ablation，不能分离物理原因。"
+    },
+    {
+      "id": "C4-clock-conditioned-set-valued-fusion",
+      "decisiveReason": "公开观测不能收缩 clock 与 tangential 联合集合；可执行部分退化为通用 dilation/masking。"
+    }
+  ],
+  "conclusion": {
+    "status": "empty-survivor-set-after-decisive-audit",
+    "canonicalMechanismVariantCount": 11,
+    "survivorCount": 0,
+    "maximumAllowedSurvivors": 2,
+    "decision": "A、B、C 当前均不保留。A 的物理传播被 DoppDrive、full-velocity、多 Doppler、scene flow 与 continuous-time radar prior 功能覆盖；B 没有公开独立 clock/transport 真值且在常见运动下不可识别；C 的可执行部分等价于既有 interval/discard、static-dynamic routing 或权重 ablation。",
+    "noveltyBoundary": "只有未来出现一个由 V2X 跨平台几何独有观测产生、且能在独立硬件时钟/全速度真值下证明 rank 增加的 estimand，才可重开；把成熟单车/多雷达方程搬到 cooperative dataset 不足以重开。",
+    "assetBoundary": "V2X-Radar 固定提交的 12 个配置和权重 URL 存在，但 checkpoint bytes/hash/load、patch-free install、compact radar split 和 one-batch cooperative inference 均未闭环，因此不能把 repository/model-link existence 写成 executability。",
+    "occurrenceBoundary": "V2X-Radar 的 0/100/200/300/400 ms 是人为 shift benchmark。任何后续结果只能陈述为 synthetic injection response，不能陈述自然 clock skew、网络延迟或错误发生率。",
+    "twoWeekPlanDecision": "没有 survivor，因此不启动 GPU/完整下载计划。若未来因新硬件真值重开，必须先通过 assetAudit.day2AssetGate，再以 object trajectory/message 为独立单位，与直接方程 prior、generic async 强基线和 oracle 分量做正负结果都有解释价值的最小实验。",
+    "scoresReported": false,
+    "acceptanceThresholdInferred": false,
+    "ideaCenterModified": false,
+    "otherRepositoryFilesModifiedByThisAudit": false
+  }
+}

@@ -2,7 +2,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getDigests, getReviewCenter } from "../src/lib/content.js";
+import { getDigests, getIdeaCenter, getReviewCenter } from "../src/lib/content.js";
+import { ideaArtifactSnapshotFingerprint } from "../src/lib/idea-fingerprint.js";
 import { reviewCenterFingerprint } from "../src/lib/review-fingerprint.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,8 @@ function usage() {
   console.error("       npm run email:welcome -- <digest-id>");
   console.error("       npm run email:review-update:preview");
   console.error("       npm run email:review-update");
+  console.error("       npm run email:idea-update:preview");
+  console.error("       npm run email:idea-update");
 }
 
 function normalizeString(value) {
@@ -528,6 +531,176 @@ export function buildReviewUpdateHtmlBody(center, currentSiteUrl) {
   `.trim();
 }
 
+export function getIdeaCenterUrl(currentSiteUrl) {
+  return `${currentSiteUrl}/ideas/index.html`;
+}
+
+export function summarizeIdeaCenter(center) {
+  const directions = Array.isArray(center?.directions) ? center.directions : [];
+  const pools = directions.map((direction) => direction?.candidatePool).filter(Boolean);
+  const ideas = directions.flatMap((direction) => (
+    Array.isArray(direction?.ideas) ? direction.ideas : []
+  ));
+  const total = (key) => pools.reduce((sum, pool) => {
+    const value = Number(pool?.counts?.[key]);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
+  const finalReview = center?.finalReview?.report || center?.finalReview || {};
+
+  return {
+    directions: directions.length,
+    queryRuns: total("queries"),
+    references: total("references"),
+    assets: total("assets"),
+    candidates: total("candidates"),
+    reviewedIdeas: ideas.length,
+    passedIdeas: ideas.filter((idea) => idea?.reviewStatus === "passed").length,
+    globalStatus: normalizeString(finalReview.status),
+    globalScore: Number.isFinite(Number(finalReview.overall)) ? Number(finalReview.overall) : null
+  };
+}
+
+export function assertIdeaCenterReady(center) {
+  if (!center || !Array.isArray(center.directions) || !center.directions.length) {
+    throw new Error("Idea 中心没有可发布的研究方向");
+  }
+
+  const incomplete = center.directions.filter((direction) => {
+    const ideas = Array.isArray(direction?.ideas) ? direction.ideas : [];
+    return direction?.status !== "reviewed"
+      || !direction?.candidatePool
+      || !ideas.length
+      || ideas.some((idea) => {
+        const reviewers = idea?.blindReview?.reviewers;
+        return !["passed", "rejected"].includes(idea?.reviewStatus)
+          || !Array.isArray(reviewers)
+          || reviewers.length < 2;
+      });
+  });
+  if (incomplete.length) {
+    throw new Error(`仍有 ${incomplete.length} 个方向未完成候选检索与独立盲评，禁止发送 Idea 中心更新`);
+  }
+
+  const finalReview = center.finalReview?.report;
+  if (center.explorationStatus !== "reviewed"
+    || !finalReview
+    || !["passed", "rejected"].includes(finalReview.status)
+    || !Number.isInteger(finalReview.overall)) {
+    throw new Error("Idea 中心尚未完成独立全局终审，禁止发送更新");
+  }
+}
+
+export async function verifyPublishedIdeaCenter(center, currentSiteUrl, fetchImpl = fetch) {
+  const fingerprint = ideaArtifactSnapshotFingerprint(center);
+  const verificationUrl = `${getIdeaCenterUrl(currentSiteUrl)}?verify=${encodeURIComponent(fingerprint)}`;
+  let response;
+  try {
+    response = await fetchImpl(verificationUrl, {
+      headers: {
+        "cache-control": "no-cache"
+      }
+    });
+  } catch (error) {
+    throw new Error(`无法核验线上 Idea 中心：${error.message}`);
+  }
+  if (!response?.ok) {
+    throw new Error(`线上 Idea 中心核验失败：HTTP ${response?.status || "unknown"}`);
+  }
+
+  const html = await response.text();
+  const markers = [
+    `data-idea-version="${center.version}"`,
+    `data-idea-updated="${center.updatedAt}"`,
+    `data-idea-directions="${center.directions.length}"`,
+    `data-idea-fingerprint="${fingerprint}"`
+  ];
+  if (markers.some((marker) => !html.includes(marker))) {
+    throw new Error("线上 Idea 中心仍不是当前本地版本，禁止发送更新通知");
+  }
+}
+
+export function buildIdeaUpdateSubject(center) {
+  return `[Paper Digest] ${center.updatedAt} Idea 中心与阅读框架完成更新`;
+}
+
+function ideaReviewResult(stats) {
+  if (stats.globalStatus === "passed") return "已通过全局终审";
+  if (stats.globalStatus === "rejected") return "未通过全局终审";
+  return "全局终审状态待确认";
+}
+
+export function buildIdeaUpdateTextBody(center, currentSiteUrl) {
+  const stats = summarizeIdeaCenter(center);
+  const centerUrl = getIdeaCenterUrl(currentSiteUrl);
+  const scoreText = stats.globalScore === null ? "未记录" : `${stats.globalScore}/10`;
+  const lines = [
+    "[Paper Digest] Idea 中心与网站阅读框架更新",
+    `更新日期：${center.updatedAt}`,
+    "",
+    "本次更新把网站整理为更紧凑的 Notebook 文档结构，并重新审计了 Idea 中心的全部研究方向。目录、全站搜索、方向综述、简报和单篇论文报告现在使用统一的阅读框架。",
+    "",
+    "Idea 中心本轮变化：",
+    "- 不再只依据站内已总结论文：每个方向先判断问题意义，再检索站外顶级论文、正式版本、预印本、标准和公开资产。",
+    "- 检索者、候选筛选者、档案作者和盲评者相互隔离；每个候选公开最近工作差分、证据、实现路径、决定性实验与淘汰理由。",
+    "- 评分采用所有独立评审中的逐维最低分，不取平均；只有所有维度与总体分都达到 10/10 才算通过。",
+    "- 未通过的候选也会保留，作为问题边界和下一轮实验依据，不包装成立项推荐。",
+    "",
+    "本轮审计规模：",
+    `- ${stats.directions} 个研究方向，${stats.queryRuns} 个查询运行`,
+    `- ${stats.references} 条一手证据，${stats.assets} 个固定版本资产`,
+    `- ${stats.candidates} 个去重候选，${stats.reviewedIdeas} 个进入独立盲评`,
+    `- ${stats.passedIdeas} 个候选达到全维度满分；全局终审 ${scoreText}（${ideaReviewResult(stats)}）`,
+    "",
+    "当前没有候选达到满分门槛。这不是空结果：页面明确给出了每个方向最有价值的剩余切口、最强反对意见，以及下一步必须先跑的零阶段实验。",
+    "",
+    `进入 Idea 中心：${centerUrl}`,
+    "",
+    `当前方向：${center.directions.map((direction) => direction.label).join(" / ")}`,
+    "",
+    `发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`
+  ];
+  return lines.join("\n");
+}
+
+export function buildIdeaUpdateHtmlBody(center, currentSiteUrl) {
+  const stats = summarizeIdeaCenter(center);
+  const centerUrl = getIdeaCenterUrl(currentSiteUrl);
+  const scoreText = stats.globalScore === null ? "未记录" : `${stats.globalScore}/10`;
+  const directionItems = center.directions
+    .map((direction) => {
+      const ideas = Array.isArray(direction.ideas) ? direction.ideas : [];
+      const passed = ideas.filter((idea) => idea?.reviewStatus === "passed").length;
+      return `<li style="margin:0 0 7px;"><strong>${escapeText(direction.label)}</strong>：${ideas.length} 个进入盲评，${passed} 个全项通过</li>`;
+    })
+    .join("");
+
+  return `
+    <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.65;color:#202b31;max-width:720px;margin:0 auto;">
+      <p style="margin:0 0 8px;color:#667178;font-size:13px;">PAPER DIGEST · ${escapeText(center.updatedAt)}</p>
+      <h2 style="margin:0 0 14px;font-size:25px;">Idea 中心与网站阅读框架完成更新</h2>
+      <p>本次更新把网站整理为更紧凑的 <strong>Notebook 文档结构</strong>，并重新审计了 Idea 中心的全部研究方向。目录、全站搜索、方向综述、简报和单篇论文报告现在使用统一的阅读框架。</p>
+      <h3 style="margin:22px 0 10px;">Idea 中心本轮变化</h3>
+      <ul style="padding-left:20px;margin:8px 0 20px;">
+        <li>每个方向从问题意义出发，检索站外顶级论文、正式版本、预印本、标准和公开资产。</li>
+        <li>检索、筛选、档案写作和盲评相互隔离，公开最近工作差分、证据、实现路径、决定性实验与淘汰理由。</li>
+        <li>采用所有独立评审中的逐维最低分；只有所有维度与总体分都达到 10/10 才算通过。</li>
+        <li>未通过候选继续保留为问题边界和下一轮实验依据，不包装成立项推荐。</li>
+      </ul>
+      <h3 style="margin:22px 0 10px;">本轮审计规模</h3>
+      <p>${stats.directions} 个方向 · ${stats.queryRuns} 个查询运行 · ${stats.references} 条一手证据 · ${stats.assets} 个固定版本资产</p>
+      <p>${stats.candidates} 个去重候选 · ${stats.reviewedIdeas} 个进入独立盲评 · ${stats.passedIdeas} 个全维度满分通过</p>
+      <p><strong>全局终审：</strong>${escapeText(scoreText)}（${escapeText(ideaReviewResult(stats))}）</p>
+      <p>当前没有候选达到满分门槛。页面明确给出了每个方向最有价值的剩余切口、最强反对意见，以及下一步必须先跑的零阶段实验。</p>
+      <p style="margin:22px 0 24px;">
+        <a href="${escapeAttr(centerUrl)}" style="display:inline-block;padding:10px 16px;background:#175b69;color:#fff;text-decoration:none;border-radius:4px;">进入 Idea 中心</a>
+      </p>
+      <h3 style="margin:0 0 10px;">方向审计</h3>
+      <ul style="padding-left:20px;margin:0 0 24px;">${directionItems}</ul>
+      <p style="font-size:12px;color:#78838a;">发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</p>
+    </div>
+  `.trim();
+}
+
 export function getDigestNavUrl(digestId, currentSiteUrl) {
   return `${currentSiteUrl}/index.html#${encodeURIComponent(digestId)}`;
 }
@@ -842,6 +1015,67 @@ async function publishReviewUpdate(options = {}) {
   console.error(`SMTP服务端已接受 ${acceptedCount} 位收件人的综述中心更新通知${messageId ? `（messageId: ${messageId}）` : ""}`);
 }
 
+async function publishIdeaUpdate(options = {}) {
+  const dryRun = Boolean(options.dryRun);
+  const [center, smtpConfig, recipientState] = await Promise.all([
+    getIdeaCenter(),
+    loadSmtpConfig(),
+    loadRecipientState()
+  ]);
+  const currentSiteUrl = siteUrl(smtpConfig);
+  const recipients = recipientState.recipients;
+  assertIdeaCenterReady(center);
+  const subject = buildIdeaUpdateSubject(center);
+  const text = buildIdeaUpdateTextBody(center, currentSiteUrl);
+  const html = buildIdeaUpdateHtmlBody(center, currentSiteUrl);
+  const from = smtpConfig.from || smtpConfig.user;
+
+  if (dryRun) {
+    const stats = summarizeIdeaCenter(center);
+    console.error(`Preview idea update: ${center.updatedAt}`);
+    console.error(`Recipients: ${recipients.length}`);
+    console.error(`Directions: ${stats.directions}`);
+    console.error(`Reviewed ideas: ${stats.reviewedIdeas}`);
+    console.error(`From: ${from || "<未设置>"}`);
+    console.error("----- Subject -----");
+    console.error(subject);
+    console.error("----- Body -----");
+    console.error(text);
+    return;
+  }
+
+  if (!from) {
+    throw new Error("请设置 EMAIL_FROM 或 SMTP_USER（用于发件人地址）");
+  }
+  if (!recipients.length) {
+    throw new Error("收件人列表为空");
+  }
+  await verifyPublishedIdeaCenter(center, currentSiteUrl);
+
+  let info;
+  try {
+    info = await withSmtpRetry(
+      () => withTransport(smtpConfig, (transporter) => transporter.sendMail(
+        buildBulkMailOptions({
+          from,
+          envelopeTo: smtpConfig.user || from,
+          recipients,
+          subject,
+          text,
+          html
+        })
+      )),
+      retryOptions(smtpConfig)
+    );
+  } catch (error) {
+    throw new Error(explainSmtpError(error, smtpConfig));
+  }
+
+  const acceptedCount = validateDelivery(info, recipients);
+  const messageId = normalizeString(info?.messageId);
+  console.error(`SMTP服务端已接受 ${acceptedCount} 位收件人的 Idea 中心更新通知${messageId ? `（messageId: ${messageId}）` : ""}`);
+}
+
 export async function main(argv = process.argv.slice(2)) {
   const [command, digestId] = argv;
 
@@ -852,6 +1086,11 @@ export async function main(argv = process.argv.slice(2)) {
 
   if (["review-update-preview", "review-update"].includes(command)) {
     await publishReviewUpdate({ dryRun: command === "review-update-preview" });
+    return;
+  }
+
+  if (["idea-update-preview", "idea-update"].includes(command)) {
+    await publishIdeaUpdate({ dryRun: command === "idea-update-preview" });
     return;
   }
 

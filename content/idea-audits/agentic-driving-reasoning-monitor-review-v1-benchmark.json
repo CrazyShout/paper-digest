@@ -1,0 +1,33 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "benchmark-reviewer",
+  "reviewerAgentId": "019fbb51-b6f6-7223-b310-40ead534605c",
+  "reviewedAt": "2026-08-01T11:28:42+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "将 CoT 因果耦合制度作为观察型安全监测器的迁移变量，并用独立几何伤害、校准误差和匹配后的排序反转来检验，较单纯的忠实度或文本干预评测前进了一步。新意主要在监测 transport 与 observational-equivalence estimand；VLADriveBench 已经在同一自然模型对上建立了观察指标与干预作用背离，因此模型选择、干预机制和基础现象本身都不是新的。",
+    "feasibility": "资产 revision、权重哈希、selfsplice、路线级 split、几何标签和提前退出门定义得较具体，且一手来源证明 ORION 与 Alpamayo 的 splice 入口和 CARLA 协议原则上可运行。但两套大模型、不同控制器、Alpamayo 的 CARLA OOD 输入、KV-cache 重建、闭环复核及多条件成组运行使 8-10 周偏紧；160 个路线-种子单元还要同时满足自然 harm-positive 与严格共同支持，执行和统计余量都不大。",
+    "success-probability": "来源支持一强一弱的语义耦合方向，因此制度标定门并非无依据；然而主效应还要求每个制度至少 20 个自然伤害阳性、80 个窄分数匹配单元、显著 AUROC/ECE 差、10% Brier 改善及同 checkpoint 脱钩复现，联合条件很苛刻。更根本的是自然数据中制度与模型身份完全共线，制度感知项很可能不能超越 model-ID calibration；少量路线簇上的 15-bin ECE、匹配与 bootstrap 也容易不稳定。",
+    "impact": "若能证明观察分数的安全含义随因果制度改变且超越模型身份解释，会直接影响 reasoning-enabled VLA 监测器的校准、适用域声明和部署审计。影响受限于两个 checkpoint、受控 CARLA、模型特定传感器和不同控制器；一手来源还明确指出 Alpamayo 在 CARLA 中 OOD，效应量不能直接外推真实道路或其他架构。",
+    "comparison-readiness": "对照覆盖 VLADriveBench 指标、faithfulness 指标、trajectory-only monitor、pooled calibration、model-ID calibration、逐模型 oracle 和制度交互，能够检验语言特征是否有增量价值以及收益是否只是增加自由度。伤害标签不读 CoT，按路线族隔离和聚类，且分别报告事件而非只给复合分，比较框架较成熟；仍需 cross-fitting 或独立 monitor/regime calibration 子集，并明确匹配是否允许复用及其依赖校正。"
+  },
+  "strongestObjection": "自然模型对中 causal regime 是 model ID 的确定函数：ORION 只提供 decoupled，Alpamayo 1.5 只提供 coupled。因此任何自然测试上的 regime main effect 或 interaction 都与模型专属相机、训练数据、架构、控制器和 OOD 程度不可分，且在二元模型对上不会比 model-ID calibration 多提供可识别信息。Alpamayo 的中性 CoT cache 脱钩分支是人工改变动作通道的干预分布，并不能自动把跨模型自然差异识别为可迁移的制度效应。",
+  "requiredExperiment": "在主实验前做预注册的同-checkpoint crossover：至少对 Alpamayo 1.5 在完全相同路线、输入、原生 CoT、解码随机数和动作接口下运行 native-coupled、selfsplice sham 与语义通道因果消融三条件，监测器始终只能看到原生观察特征；按路线簇隔离拟合与测试，并与含饱和 model-ID/condition 项的基线比较。只有 regime-by-monitor 交互在同一 checkpoint 内仍改善 held-out Brier 和风险排序、sham 为零、且匹配不复用或按匹配组聚类时，才扩展到跨模型 transport 结论；否则结果只能解释为固定模型对的校准差异。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2606.12706",
+      "finding": "原文确认 ORION 的高观察对齐与非语义 CoT 作用、Alpamayo 1.5 的方向性语义作用、24 次 selfsplice 检查，以及 Alpamayo 在 CARLA 中的 OOD 上界限制；附录还显示两者使用不同控制管线。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.29114",
+      "finding": "原文确认 ReasonBreak 研究的是现实文本输入扰动下的 reasoning 与 trajectory manipulation，并报告闭环攻击和安全指标；这支持推理通道可被操纵，但不提供自然运行时监测失准的发生率。"
+    }
+  ],
+  "overall": 6
+}

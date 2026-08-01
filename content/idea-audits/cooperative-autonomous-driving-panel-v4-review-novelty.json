@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "panelId": "cooperative-autonomous-driving-finalist-panel-v4",
+  "round": 1,
+  "reviewerAgentId": "019fb773-9511-75a1-a164-b5c18f4844f1",
+  "freshContext": true,
+  "thresholdDisclosed": false,
+  "reviewedAt": "2026-07-31T17:34:38+08:00",
+  "lens": "novelty-reviewer",
+  "candidates": [
+    {
+      "candidateId": "runtime-semantic-checkers-for-fusion-contracts",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 7,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 8
+      },
+      "rationales": {
+        "novelty": "跨论文、清单、转换器、配置、权重和评测器的协同感知契约图尚未被所列近作整体覆盖；但数据验证、运行时语义检查器和溯源不变量分别已由 [TFDV](https://proceedings.mlsys.org/paper_files/paper/2019/hash/928f1160e52192e3e0017fb63ab65391-Abstract.html)、[T2C](https://www.usenix.org/conference/osdi25/presentation/lou) 和 [Basilisk](https://www.usenix.org/conference/osdi25/presentation/zhang-tony) 占位，近期 ML 系统也已使用语义契约和扰动测试。因此可守住的是协同感知专用跨资产 IR、留一仓库仍有效的共享规则及其差分执行能力，而不是契约、溯源或变形测试本身。",
+        "feasibility": "四类静态漂移已有冻结入口，AST、YAML、受限 pickle 和 state_dict 元数据解析可在短期完成；资产审计又提供了公开 CoSDH 配置、111360914 字节权重及 LFS SHA-256。主要风险是权重尚未端到端执行，多个其他栈缺权重或受许可限制，跨框架动态插桩明显难于元数据原型。",
+        "success-probability": "发现静态不一致的概率高，但核心成功条件要求共享 IR 不退化为仓库专用键表，并证明至少一个结构合法漂移在原始断言前改变 cohort 或模型输出；现有证据尚未证明这两点。",
+        "impact": "若能提前定位静默协议漂移，可显著提高协同感知发布物的可复现性与结果可信度；但当前漂移与论文指标或部署风险之间仍未识别，影响上限取决于运行时差分结果。",
+        "comparison-readiness": "结构 schema、原仓库断言、哈希绑定、字段统计、最终指标和人工审计基线齐全，检测率、误报、定位、提前量和开销指标也清楚。缺口主要是尚无冻结的盲标漂移语料和跨仓库泛化协议。"
+      },
+      "strongestObjection": "这可能只是把成熟的数据验证、溯源和差分测试技术包装成协同感知词汇表；四个已知问题若都需仓库专用规则，核心新颖性即消失。",
+      "requiredExperiment": "在至少三个冻结仓库上建立盲标语料，执行留一仓库规则开发：仅用其余仓库形成共享 IR 和变形规则，再检测被留仓库的真实漂移与预注册语义 mutants；与 JSON Schema、原断言、哈希绑定和字段统计逐项比较，并要求 CoSDH 上至少一个结构合法漂移在异常前产生可复现的 cohort 或输出差异，同时报告干净运行误报。",
+      "overall": 7
+    },
+    {
+      "candidateId": "cooperative-benchmark-cohort-missingness",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 6,
+        "success-probability": 5,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "三路 fallback、按原生角色与可用性分组、相对 ego-only 的有害协作风险以及 cluster-aware 支持拒绝形成了可守住的应用边界；但 [SRA-CP](https://arxiv.org/abs/2511.17461) 已进行风险驱动的何时及与谁协作，[RCP-Bench](https://github.com/LuckyDush/RCP-Bench) 已量化负协作，而 [SCoRE](https://arxiv.org/abs/2603.24704) 已提供一般选择性预测风险控制。候选目前更像这些方法与组条件校准在协同感知上的严谨组合，方法不可替代性尚未建立。",
+        "feasibility": "公开 CoSDH 权重使 CooperScene 的短周期配对回放可行，但 mini 仅有 30 个物理事件，难以支持多层 cohort 的同时风险界；完整数据、独立 take 数和第二模型仍需实跑确认。V2X-Real [官方 issue](https://github.com/ucla-mobility/V2X-Real/issues/7) 仍无权重，不能承担短周期的第二基准复现。",
+        "success-probability": "成功信号要求全局 selector 在有支持的 cohort 失效、层级策略恢复界限且保留更多合作，并跨模型或基准复现；小样本、宽区间、cohort 稀疏及真实合作未必有害都可能直接产生有界零结果。",
+        "impact": "若能以部署可见特征给出分组风险控制，其价值高于新增 grouped AP 表，并可直接指导回退；但交换性、混合漂移和注入缺失与自然缺失的差异限制了部署外推。",
+        "comparison-readiness": "估计量、独立单位、配对事件、同时单侧界、混合重加权和多数 selector 基线已定义。仍缺少 safer-degraded 动作的可执行定义、delta 的领域依据以及满足每个叶 cohort 的最低独立支持数。"
+      },
+      "strongestObjection": "核心方法可能等价于把通用选择性 conformal 风险控制按角色做 Mondrian 分组，再把 abstain 改名为 ego-only 或 degraded fallback；若层级策略不优于简单分组 SCoRE，方法新颖性不足。",
+      "requiredExperiment": "在完整 CooperScene 上冻结 CoSDH 和另一公开模型，按完整 take 划分校准与测试并预注册 delta、风险上限、同时置信水平、最小独立支持数和 degraded 动作；比较全局 SCoRE、每组 SCoRE、独立叶阈值和候选层级策略，在完全匹配的 coop、ego-only、degraded 输出上报告各 cohort 风险与覆盖。任一关键 cohort 支持不足必须拒绝保证，而非使用帧数补足。",
+      "overall": 6
+    },
+    {
+      "candidateId": "clock-domain-provenance-age-identifiability",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 8,
+        "success-probability": 7,
+        "impact": 7,
+        "comparison-readiness": 8
+      },
+      "rationales": {
+        "novelty": "单向时延与时钟偏移不可共同识别并非新理论，[RFC 7679](https://datatracker.ietf.org/doc/html/rfc7679) 已要求源宿同步并计入时钟及 wire-to-host 不确定性；并发的[同步与 AoI 协同感知工作](https://arxiv.org/html/2602.13439)也直接处理 offset、skew、非对称和融合不确定性。可守住的新边界是逐时间戳事件及 clock-domain 溯源、映射区间和 honest fresh/stale/uncertain 门，而不是同步、AoI 或非识别性本身。",
+        "feasibility": "两周最小实验不依赖训练模型，双世界反例、区间计算器和回放 gate 都可直接实现。[ROS 2](https://design.ros2.org/articles/clock_and_time.html) 明确区分 System、Steady 和 ROS time 并允许跳变，[MCAP](https://mcap.dev/spec) 又允许 publish_time 缺失时等于 log_time，提供了真实的字段语义压力点。主要风险是公开数据未必保留足够同步真值来验证有限区间覆盖。",
+        "success-probability": "数学反例几乎确定成立，但候选还必须证明至少一个冻结公共路径实际跨未证明时钟域做减法，并产生错误 freshness 决策；CooperScene 声称 PTP 与 GNSS 同步，可能使最直接目标成为负例而非漏洞。",
+        "impact": "对审计、回放和 deadline gate 有明确价值，可阻止把数字相减误当作可识别时龄；但高不确定率可能让系统频繁拒绝，且没有模型输出或闭环证据时影响主要停留在测量正确性。",
+        "comparison-readiness": "naive subtraction、MCAP 差值、RTT/2、PTP 点估计、oracle common clock 和区间方法形成完整梯度；覆盖、区间宽度、false-fresh、false-stale、uncertain rate 与开销均可直接比较。"
+      },
+      "strongestObjection": "候选可能只是将既有的一向时延误差分析、区间传播和时间溯源字段应用到 V2X；若公共路径都具有有效共同时间基及界限，或区间几乎总是跨 deadline，其研究增量和实用性都会很小。",
+      "requiredExperiment": "用具有硬件或仿真真值的双主机 ROS 2/MCAP 路径生成观测完全相同但真实 age 位于 deadline 两侧的成对轨迹，覆盖 offset、skew、非对称、跳变和 relock；比较 naive、RTT/2、PTP 点估计与候选区间 gate，并在一个冻结协同感知回放路径中要求区间达到预注册覆盖、区间外零 false-fresh 且 uncertain rate 低于止损阈值，同时展示至少一个由持久化字段不足导致的实际错误 verdict。",
+      "overall": 7
+    },
+    {
+      "candidateId": "coupled-adaptive-rate-controller-stability",
+      "scores": {
+        "novelty": 8,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "并发的 [Quality over Quantity](https://arxiv.org/html/2607.18495v1) 已实现自适应 VoI 阈值与共享负载控制框架，因此语义选择或率控本身不能主张新颖；但该论文明确把 BME 收敛、阈值与周期交互及自适应 CPM 周期留作未来工作，正好留下增益、延迟、节点数稳定域和 semantic starvation 的窄而清晰边界。经典 LIMERIC/FABRIC 稳定性仍使其带有控制理论迁移风险。",
+        "feasibility": "Artery 已有 CPM 与 LIMERIC 入口，协议级仿真无需先训练感知模型；但冻结栈尚未编译，直接并发方法无公开实现，边际语义效用与冗余耦合尚未冻结，且没有 Artery-OpenCOOD adapter。两周内完成复现、控制器实现和大规模 sweep 风险较高。",
+        "success-probability": "耦合环可能确有振荡或饥饿，但也可能只出现原有网络控制振荡、数值步长伪影或稳定零结果。证明 Jacobian 边界能跨负载、延迟和节点数预测现象，比发现单个振荡轨迹更难。",
+        "impact": "可信稳定域和最小服务条件可直接影响 CPS/BME 控制器设计与标准讨论；但 ITS-G5 仿真不能自动外推到 C-V2X，未接感知 trace 时也不能声称任务质量收益。",
+        "comparison-readiness": "固定等率、ETSI selector 加 LIMERIC、Quality over Quantity 风格阈值、weighted LIMERIC 和 FABRIC 基线合理，振荡与 starvation 定义明确。主要缺口是并发方法需重实现，边际效用定义差异可能主导比较。"
+      },
+      "strongestObjection": "这是把两个已知自适应环连接后做常规小信号和参数 sweep；若所谓跨发送者语义耦合只是共享 CBR，或边界不优于经典 LIMERIC 的负载稳定判据，新颖性会退化为直接组合。",
+      "requiredExperiment": "先逐式重现 Quality over Quantity 的阈值更新与共享 BME，再在冻结 Artery 场景中完成 2、5、10、15 节点的 gain-delay-period sweep；用干预法测量非对角边际效用导数，预注册 Jacobian 谱半径预测，并以关闭语义反馈、异步更新、更细仿真步长和固定边际效用为对照。只有预测边界跨种子命中持续振荡或 starvation，且最小服务稳定器不把拥塞转移到队列，才支持核心主张。",
+      "overall": 7
+    },
+    {
+      "candidateId": "failure-domain-evidence-quorum",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 6,
+        "success-probability": 5,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "failure-domain quorum、fail-prone sets 和 common-cause 分析均为既有概念；ROBOSAC 的[子集共识](https://arxiv.org/abs/2303.09495)、[All Vehicles Can Lie](https://arxiv.org/abs/2603.08498) 的随机分组与时序验证，以及最新 [GLST](https://arxiv.org/abs/2607.23059) 对多攻击者伪共识的防御已占据大量功能空间。剩余边界是显式可执行 root lineage、固定车辆数下改变 root cardinality、root-disjoint admission 及错误 lineage 敏感性，属于清楚但偏组合式的增量。",
+        "feasibility": "q_FD 枚举和 sidecar 易实现，[RCP-Bench](https://github.com/LuckyDush/RCP-Bench) 也提供 corruption 与负协作入口；但其旧 CUDA/OpenCOOD 栈、兼容 checkpoint、ROBOSAC 等基线移植尚未验证。公开 CoSDH 权重并不自动兼容 RCP-Bench，而 V2X-Real 无官方权重。",
+        "success-probability": "在 oracle root 标签下减少同根重复计数几乎是构造性结果，真正困难的是可观察或可合理 assigned lineage 下仍优于车辆共识，并对 missing、merged、split 和 wrong labels 稳健。现有公开数据通常没有完整或认证 lineage，成功概率受此核心依赖限制。",
+        "impact": "若能证明车辆多数在共同根下系统失效，该协议可补足现有 trust 和 consensus 方法的重要盲区；但部署价值依赖可信 lineage 基础设施，离线 assigned seed 不能支撑道路安全主张。",
+        "comparison-readiness": "固定车辆数、可见性、字节和模型的配对设计很强，且车辆投票、ROBOSAC、随机 drop、trust 与 oracle collapse 基线基本充分。尚缺可审计的 root taxonomy、跨基线统一证据单元以及现实标签错误分布。"
+      },
+      "strongestObjection": "方法可能通过实验者提供的共同故障标签获得近乎 oracle 的优势：先人为声明哪些证据相关，再限制其计数，结论具有循环性；没有认证或可靠可观察 lineage 时无法部署。",
+      "requiredExperiment": "构造 corruption-process 真实独立或同根与 lineage 标签正确或错误的 2x2 配对矩阵，在相同车辆数、每车边际严重度、可见性、消息字节和模型下比较车辆投票、ROBOSAC、trust、随机 drop 与 q_FD；加入 shuffled-root placebo、标签合并拆分和一个 held-out 故障族。核心结果必须只在正确的可观察或预先 assigned lineage 下改善共同根 false acceptance，并在错误标签下呈现量化、可接受的渐进退化，而非依赖 oracle roots。",
+      "overall": 6
+    }
+  ]
+}

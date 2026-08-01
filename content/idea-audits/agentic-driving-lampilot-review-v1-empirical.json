@@ -1,0 +1,38 @@
+{
+  "candidateId": "lampilot-same-seed-paraphrase-policy-leakage",
+  "lens": "empirical-reviewer",
+  "reviewerAgentId": "019fbb3d-078b-7d50-b38a-aee0c017b7d8",
+  "reviewedAt": "2026-08-01T03:10:02Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 7,
+    "success-probability": 7,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "分组 holdout 和记忆消融本身常见，但把持久策略库的总分分解为语言改写、异状态记忆和同状态策略消费，并用内容保持的定向 denylist 与 provenance trace 识别，针对 LaMPilot 当前 runner 是具体且可证伪的审计残差。新颖性不来自“发现数据泄漏”，而来自实际消费链和模型排序后果；这一边界在 dossier 中处理得当。",
+    "feasibility": "固定代码直接暴露 dataset ID、sample 内 seed、demo-before-test 流程、Chroma 检索和策略写入接口，构建 tracer 与 denylist 不需要重写模拟器。现有 PolicyRepository 只保存 name、code、description，没有来源 sample/seed，必须从全新仓库快照重跑并在调用链外附 provenance；外部 LLM、OpenAI embedding 与 Chroma 版本还会造成漂移。三任务六条件加第二模型可执行，但 6 至 8 周依赖缓存、服务版本和 order-swap 噪声门真正通过。",
+    "success-probability": "自然问题证据很强：demo 的精确 `c0` 条目成功后写入持久库，后续仅跳过相同 iid，而同一 sample 的其他命令改写仍被评测；检索查询又直接使用语义相近的 command，因此 Gate 0 观察到同组策略进入候选的概率较高。效果达到有意义幅度并在第二模型或任务族复现仍不确定，尤其基础 primitives 可能已足够完成任务，且外部生成噪声可能掩盖 denylist 差异。",
+    "impact": "若同组策略消费改变成功率或模型排序，结果会直接要求 memory-augmented driving benchmark 报告 state-group split 和检索来源；同样的 trace 也可迁移到技能库和反思记忆系统。范围限制很重要：正式论文描述的人类反馈是在 100 个 non-test 样本上进行，而候选明确审计的是后续固定提交的 human-feedback runner；未重建论文原始 split 前，不能把 runner 结果追溯为已发表主分数的问题。",
+    "comparison-readiness": "官方 exact-ID、same-sample/seed denylist、strict group holdout、全库 reset、stateless ICL 和 retrieved-but-hidden placebo 能区分检索、上下文消费和一般记忆，比较设计较强。重大缺口是未给出数值最小有意义差异和功效；此外 seed 不是独立的状态身份，同一个 sample 内它与 sample 键重合，而跨不同环境配置复用同一整数 seed 也不保证同一状态，因此必须先用完整初态哈希定义分组并证明 sample 与 seed 对照确实不同。"
+  },
+  "strongestObjection": "`seed` 不能单独定义“同状态”：在每个样本内它与 sample 键绑定，跨场景相同 seed 又不代表相同环境配置。若 same-sample 与 same-seed denylist 实际选中同一策略集合，三项 estimand 中至少两项不可分别识别；若它们选中不同集合，差异也可能只是错误地把异状态策略归为同状态。固定 runner 中确有可核验的同 sample 改写与持久检索重叠，Gate 0 的先验成功概率高于另外两个候选。当前最大的实证修订是用完整初态哈希替代裸 seed，并补齐数值功效与论文原始 split 的边界；完成后，这会是一项范围窄但结论清楚的 benchmark 归因审计。",
+  "requiredExperiment": "在看任何性能前生成不可变 grouping manifest，以完整环境配置、初始 ego/traffic 状态和 simulator seed 的规范哈希作为 stateGroup，明确报告它与 sampleId、裸 seed 的列联关系。随后在至少三个预注册任务族和两个冻结模型上，对同一条目配对运行 official exact-ID、same-state denylist 与 retrieved-but-hidden placebo，记录每个候选策略的来源、相似度、进入提示和消费状态，并随机交换顺序；用 stateGroup 聚类的 pilot 方差预先确定至少 80% 功效所需组数及数值成功率/碰撞率等效界。若裸 seed 不增加独立分组信息，应在主分析中删除 same-seed estimand。",
+  "evidenceReopened": [
+    {
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Ma_LaMPilot_An_Open_Benchmark_Dataset_for_Autonomous_Driving_with_Language_CVPR_2024_paper.html",
+      "finding": "正式论文定义 4,900 个场景条目的 benchmark、持久代码仓库和人类反馈基线；论文方法说明人类反馈学习使用每种方法 100 个 non-test 随机样本，因此固定提交 runner 的重叠不能在未重建原始 split 前归因到已发表主结果。"
+    },
+    {
+      "url": "https://github.com/PurdueDigitalTwin/LaMPilot/tree/ba4564e28a32935f2a5de7b1b85bed7289fcebdb",
+      "finding": "固定提交的 `DbLv1Dataset` 将每个 sample 与所有 command 做笛卡尔展开并生成 `..._sX_cY`；`DbLv1DemoDataset` 选择若干 `c0`，`test_hf.py` 先迭代成功并提交这些策略，之后只按精确 iid 跳过。PolicyRepository 以 command 做 Chroma 相似检索且仅存 name/code/description，未保存来源 provenance。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2209.07753",
+      "finding": "Code as Policies 证明在无持久驾驶策略库时，少量示例和 API 文档即可让 LLM 组合策略代码；它为 stateless/few-shot 能力提供方法谱系，也要求本候选把代码生成能力与记忆消费效应分开。"
+    }
+  ],
+  "overall": 7,
+  "dossierSnapshotFingerprint": "f19b3fb2c5b25e697a331f3cf24a94485d7fe771a999944b7681bc2306deb1d7"
+}

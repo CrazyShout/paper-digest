@@ -1,0 +1,30 @@
+{
+  "candidateId": "covla-caption-side-channel-future-motion",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbba-8d16-7a61-bb8e-a9b1bc8b62db",
+  "reviewedAt": "2026-08-01T13:23:34+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 4,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 4
+  },
+  "rationales": {
+    "novelty": "CoVLA 已比较 ground-truth 与 predicted caption，也公开说明 rule caption 使用 speed、acceleration、trajectory curvature 等字段；把每个 span 的最晚可用时间与轨迹增量相连，比普通动作词遮盖更具体。相邻工作覆盖 caption utility、语言动作耦合和无语言 latent action，但未提供该时间来源审计。",
+    "feasibility": "官方 Hugging Face 数据是 452 GB 的 gated academic/non-commercial 数据，card 公开 frame_id、timestamp、CAN/IMU/GNSS、60 点未来 trajectory 和 caption，足以做粗粒度 ablation。论文还明确 rule caption 使用 trajectory curvature，VLM caption 使用含首尾帧的三秒窗口；但官方未发布 caption 生成脚本、逐 span source field/source timestamp、CoVLA-Agent 训练代码或 checkpoint，公开 card 也没有可直接验证的 drive/session 标识。dossier 的核心 span-level provenance 因此不是写一个 parser 就能恢复。",
+    "success-probability": "未来信息风险本身有强一手依据：目标是随后三秒 trajectory，而 caption 同时由 trajectory curvature 和三秒视频窗生成，ground-truth caption 又明显优于 predicted caption。用 motion-only/masked 分支观察到差异的概率较高；但把差异严格归因到 prediction cutoff 之后的具体字段、排除模板和场景线索，并复现原 CoVLA-Agent 排名的概率受未公开生成链与模型实现限制。",
+    "impact": "若证实未来动作侧信道，会直接改变 VLA 数据发布规范、caption supervision 解释和 split/provenance 要求；负结果也能澄清 ground-truth caption 上界。影响受限于单一 gated 数据集和轻量自建 trajectory head，不能自动推翻所有语言监督。",
+    "comparison-readiness": "vision+ego、caption-only、motion-only、motion-masked 和 strict-lagged 对照可自建，数据字段也支持 ADE/FDE；但无法复现论文的 CoVLA-Agent 训练路径与权重，LatentVLA/LinkVLA 等模型也不是同一数据和监督接口，轻量 head 的结果只能审计数据可预测性，不能直接验证原方法收益或方法排序。"
+  },
+  "strongestObjection": "主张要求逐 caption span 知道 source field、生成规则和最晚时间戳，但官方发布物只有最终 caption、传感器字段和未来轨迹，论文描述的 rule/VLM 生成管线没有对应脚本或 provenance ledger。仅凭文本与未来轨迹相关性无法区分真实未来字段使用、当前状态可预测性和 VideoLLaMA 的视觉推断，因此核心因果处理变量目前不可观测。",
+  "requiredExperiment": "Gate 0 先向官方数据访问端核验下载后的目录是否包含稳定 scene/session ID、caption 生成中间件、rule templates、VideoLLaMA 窗口边界和字段来源记录；抽取 1,000 个样本，把每个 span 映射到可证明的 source timestamp，并由第二人复核。若这些记录不存在，只允许把研究降级为 caption target-recoverability audit，不得声称 future-derived span 因果分解；若存在，再按 scene/session 而非 frame 划分七分支轻量 head。",
+  "evidenceReopened": [
+    "https://huggingface.co/datasets/turing-motors/CoVLA-Dataset",
+    "https://arxiv.org/html/2408.10845",
+    "https://openaccess.thecvf.com/content/WACV2025/html/Arai_CoVLA_Comprehensive_Vision-Language-Action_Dataset_for_Autonomous_Driving_WACV_2025_paper.html",
+    "https://captionqa.github.io/website/"
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "68fceb706c991068cecab1d77ef72bec31c59550d9e14ce75ff2e8dbfd61100c"
+}

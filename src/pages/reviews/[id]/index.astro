@@ -1,7 +1,9 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../../components/NotebookDocs.jsx";
 import ReviewReference from "../../../components/ReviewReference.astro";
 import { getReviewCenter } from "../../../lib/content.js";
+import { getNotebookData, routeUrl } from "../../../lib/navigation.js";
 
 export async function getStaticPaths() {
   const center = await getReviewCenter();
@@ -10,12 +12,12 @@ export async function getStaticPaths() {
   }));
 }
 
-const center = await getReviewCenter();
-const { id } = Astro.params;
-const direction = center.directions.find((item) => item.id === id);
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const center = notebook.reviewCenter;
+const direction = center.directions.find((item) => item.id === Astro.params.id);
 
 if (!direction) {
-  return Astro.redirect("../");
+  return Astro.redirect(routeUrl(notebook.base, "reviews"));
 }
 
 const directionIndex = center.directions.findIndex((item) => item.id === direction.id);
@@ -27,9 +29,9 @@ const reviewedLabel = new Intl.DateTimeFormat("zh-CN", {
   day: "2-digit",
   timeZone: "Asia/Shanghai"
 }).format(new Date(`${direction.reviewedAt}T00:00:00+08:00`));
-const localReferenceCount = direction.references.filter((reference) => reference.origin === "local").length;
+const localReferenceCount = direction.references
+  .filter((reference) => reference.origin === "local").length;
 const externalReferenceCount = direction.references.length - localReferenceCount;
-
 const kindLabels = {
   scope: "Scope & Definitions",
   evolution: "Evolution",
@@ -41,212 +43,182 @@ const kindLabels = {
   challenges: "Open Challenges",
   outlook: "Research Agenda"
 };
+const toc = [
+  { depth: 2, title: "核心问题", url: "#research-questions" },
+  { depth: 2, title: "检索记录", url: "#search-audit" },
+  ...direction.sections.map((section) => ({
+    depth: 2,
+    title: section.title,
+    url: `#${section.id}`
+  })),
+  { depth: 2, title: "综合结论", url: "#takeaways" },
+  { depth: 2, title: "参考文献", url: "#references" }
+];
 ---
 
 <BaseLayout
   title={`${direction.title} · 综述中心`}
   description={direction.abstract}
-  stylesheet="../../assets/styles.css"
   canonicalPath={`reviews/${direction.id}/`}
   type="article"
 >
-  <div class="review-site">
-    <header class="review-site-header">
-      <a class="review-home-link" href="../../" aria-label="返回 Paper Digest 首页">
-        <span>PD</span>
-        <strong>Paper Digest</strong>
-      </a>
-      <nav aria-label="方向综述页面导航">
-        <a href="../">全部综述</a>
-        <a href="../../ideas/">Idea 中心</a>
-        <a href="../../">返回简报</a>
-      </nav>
-    </header>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={direction.title}
+    description={direction.abstract}
+    eyebrow={`${direction.label} · 方向综述 · 复核于 ${reviewedLabel}`}
+    toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <div class="review-detail-kicker">
+      <span class="direction-dot" style={`--tag-color: ${direction.color}`}></span>
+      <span>{direction.label}</span>
+      <span>{direction.subtitle}</span>
+    </div>
 
-    <main class="review-detail-main">
-      <header class="review-detail-hero" style={`--review-color: ${direction.color}`}>
-        <div class="review-detail-kicker">
-          <span class="review-direction-mark" aria-hidden="true"></span>
-          <span>{direction.label}</span>
-          <span>方向综述</span>
-        </div>
-        <h1>{direction.title}</h1>
-        <p class="review-detail-subtitle">{direction.subtitle}</p>
-        <p class="review-detail-abstract">{direction.abstract}</p>
-        <dl class="review-detail-meta">
+    <dl class="review-detail-meta">
+      <div>
+        <dt>最近复核</dt>
+        <dd>{reviewedLabel}</dd>
+      </div>
+      <div>
+        <dt>检索窗口</dt>
+        <dd>{direction.searchWindow}</dd>
+      </div>
+      <div>
+        <dt>引用构成</dt>
+        <dd>{localReferenceCount} 本库 · {externalReferenceCount} 扩展</dd>
+      </div>
+    </dl>
+
+    <article class="review-article">
+      <section class="review-questions" id="research-questions" aria-labelledby="researchQuestionsTitle">
+        <p class="eyebrow">Guiding Questions</p>
+        <h2 id="researchQuestionsTitle">这份综述试图回答什么</h2>
+        <ol>
+          {direction.researchQuestions.map((question) => <li>{question}</li>)}
+        </ol>
+      </section>
+
+      <section class="review-search-audit" id="search-audit" aria-labelledby="searchAuditTitle">
+        <header>
           <div>
-            <dt>最近复核</dt>
-            <dd>{reviewedLabel}</dd>
+            <p class="eyebrow">Search & Evidence</p>
+            <h2 id="searchAuditTitle">检索记录与证据边界</h2>
+          </div>
+          <p>{direction.searchAudit.evidenceBoundary}</p>
+        </header>
+        <dl class="review-search-stats">
+          <div>
+            <dt>检索截止</dt>
+            <dd>{direction.searchAudit.cutoffDate}</dd>
           </div>
           <div>
-            <dt>检索窗口</dt>
-            <dd>{direction.searchWindow}</dd>
+            <dt>来源覆盖</dt>
+            <dd>{direction.searchAudit.sourceFamilies.length} 类</dd>
           </div>
           <div>
-            <dt>引用构成</dt>
-            <dd>{localReferenceCount} 本库 · {externalReferenceCount} 扩展</dd>
+            <dt>候选去重</dt>
+            <dd>
+              {direction.searchAudit.counts.candidates}
+              {" → "}
+              {direction.searchAudit.counts.deduplicated}
+            </dd>
+          </div>
+          <div>
+            <dt>纳入文献</dt>
+            <dd>{direction.searchAudit.counts.included}</dd>
           </div>
         </dl>
-      </header>
-
-      <div class="review-detail-layout">
-        <aside class="review-toc">
-          <nav aria-label={`${direction.label}综述目录`}>
-            <p class="eyebrow">Contents</p>
-            <strong>本文目录</strong>
+        <div class="review-search-columns">
+          <div>
+            <h3>实际覆盖的查询族</h3>
             <ol>
-              <li><a href="#research-questions">核心问题</a></li>
-              <li><a href="#search-audit">检索记录</a></li>
-              {direction.sections.map((section) => (
-                <li><a href={`#${section.id}`}>{section.title}</a></li>
-              ))}
-              <li><a href="#takeaways">综合结论</a></li>
-              <li><a href="#references">参考文献</a></li>
+              {direction.searchAudit.queryFamilies.map((query) => <li>{query}</li>)}
             </ol>
-          </nav>
-          <div class="review-toc-legend" aria-label="文献标记说明">
-            <span class="review-origin-badge is-local">本库已报告</span>
-            <p>进入本站详细阅读报告。</p>
-            <span class="review-origin-badge is-external">外部文献 <span aria-hidden="true">↗</span></span>
-            <p>前往会议、期刊或 arXiv 原文。</p>
           </div>
-        </aside>
+          <div>
+            <h3>仍需持续追踪</h3>
+            <ul>
+              {direction.searchAudit.openSearchGaps.map((gap) => <li>{gap}</li>)}
+            </ul>
+          </div>
+        </div>
+        <p>
+          {direction.searchAudit.independentReview.status === "passed"
+            ? `本轮已完成 ${direction.searchAudit.independentReview.reviewers} 路独立复核，并迭代 ${direction.searchAudit.independentReview.rounds} 轮。`
+            : "本轮独立复核仍在进行，当前内容不会进入正式发布。"}
+        </p>
+      </section>
 
-        <article class="review-article">
-          <section class="review-questions" id="research-questions" aria-labelledby="researchQuestionsTitle">
-            <p class="eyebrow">Guiding Questions</p>
-            <h2 id="researchQuestionsTitle">这份综述试图回答什么</h2>
-            <ol>
-              {direction.researchQuestions.map((question) => <li>{question}</li>)}
-            </ol>
-          </section>
-
-          <section class="review-search-audit" id="search-audit" aria-labelledby="searchAuditTitle">
-            <header>
-              <div>
-                <p class="eyebrow">Search & Evidence</p>
-                <h2 id="searchAuditTitle">检索记录与证据边界</h2>
-              </div>
-              <p>{direction.searchAudit.evidenceBoundary}</p>
-            </header>
-            <dl class="review-search-stats">
-              <div>
-                <dt>检索截止</dt>
-                <dd>{direction.searchAudit.cutoffDate}</dd>
-              </div>
-              <div>
-                <dt>来源覆盖</dt>
-                <dd>{direction.searchAudit.sourceFamilies.length} 类</dd>
-              </div>
-              <div>
-                <dt>候选去重</dt>
-                <dd>{direction.searchAudit.counts.candidates} → {direction.searchAudit.counts.deduplicated}</dd>
-              </div>
-              <div>
-                <dt>纳入文献</dt>
-                <dd>{direction.searchAudit.counts.included}</dd>
-              </div>
-            </dl>
-            <div class="review-search-columns">
-              <div>
-                <h3>实际覆盖的查询族</h3>
-                <ol>
-                  {direction.searchAudit.queryFamilies.map((query) => <li>{query}</li>)}
-                </ol>
-              </div>
-              <div>
-                <h3>仍需持续追踪</h3>
-                <ul>
-                  {direction.searchAudit.openSearchGaps.map((gap) => <li>{gap}</li>)}
-                </ul>
-              </div>
+      {direction.sections.map((section, index) => (
+        <section class="review-section" id={section.id} aria-labelledby={`${section.id}-title`}>
+          <header>
+            <div>
+              <span class="trend-index">{String(index + 1).padStart(2, "0")}</span>
+              <p class="eyebrow">{kindLabels[section.kind] || section.kind}</p>
             </div>
-            {direction.searchAudit.independentReview.status === "passed" ? (
-              <p class="review-search-review-note">
-                本轮由未参与最终撰写的审阅分片完成 {direction.searchAudit.independentReview.reviewers} 路复核，
-                共迭代 {direction.searchAudit.independentReview.rounds} 轮；后续新论文、正式发表版本和反例证据会继续并入。
-              </p>
-            ) : (
-              <p class="review-search-review-note">本轮独立复核仍在进行，当前内容不会进入正式发布。</p>
-            )}
-          </section>
-
-          {direction.sections.map((section, index) => (
-            <section class="review-section" id={section.id} aria-labelledby={`${section.id}-title`}>
-              <header>
-                <div>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <p class="eyebrow">{kindLabels[section.kind] || section.kind}</p>
-                </div>
-                <h2 id={`${section.id}-title`}>{section.title}</h2>
-                <p>{section.thesis}</p>
-              </header>
-              <div class="review-prose" set:html={section.bodyHtml} />
-              {section.references.length > 0 && (
-                <aside class="review-section-sources" aria-label={`${section.title}引用文献`}>
-                  <strong>本节关键文献</strong>
-                  <div>
-                    {section.references.map((reference) => (
-                      <ReviewReference reference={reference} compact />
-                    ))}
-                  </div>
-                </aside>
-              )}
-            </section>
-          ))}
-
-          <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
-            <p class="eyebrow">Synthesis</p>
-            <h2 id="takeawaysTitle">综合结论</h2>
-            <ol>
-              {direction.takeaways.map((takeaway, index) => (
-                <li>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <p>{takeaway}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
-
-          <section class="review-bibliography" id="references" aria-labelledby="referencesTitle">
-            <header>
+            <h2 id={`${section.id}-title`}>{section.title}</h2>
+            <p>{section.thesis}</p>
+          </header>
+          <div class="review-prose" set:html={section.bodyHtml} />
+          {section.references.length > 0 && (
+            <aside class="review-section-sources" aria-label={`${section.title}引用文献`}>
+              <strong>本节关键文献</strong>
               <div>
-                <p class="eyebrow">Bibliography</p>
-                <h2 id="referencesTitle">参考文献与站内状态</h2>
+                {section.references.map((reference) => (
+                  <ReviewReference reference={reference} compact />
+                ))}
               </div>
-              <p>本库论文进入详细报告；未收录论文直接前往可核验的一手来源。</p>
-            </header>
-            <ol>
-              {direction.references.map((reference, index) => (
-                <li>
-                  <span class="review-reference-number">{String(index + 1).padStart(2, "0")}</span>
-                  <ReviewReference reference={reference} />
-                </li>
-              ))}
-            </ol>
-          </section>
+            </aside>
+          )}
+        </section>
+      ))}
 
-          <nav class="review-direction-pagination" aria-label="相邻方向综述">
-            {previousDirection ? (
-              <a href={`../${previousDirection.id}/`}>
-                <span>上一篇</span>
-                <strong>{previousDirection.label}</strong>
-              </a>
-            ) : <span></span>}
-            {nextDirection ? (
-              <a href={`../${nextDirection.id}/`}>
-                <span>下一篇</span>
-                <strong>{nextDirection.label}</strong>
-              </a>
-            ) : <span></span>}
-          </nav>
-        </article>
-      </div>
-    </main>
+      <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
+        <p class="eyebrow">Synthesis</p>
+        <h2 id="takeawaysTitle">综合结论</h2>
+        <ol>
+          {direction.takeaways.map((takeaway) => <li>{takeaway}</li>)}
+        </ol>
+      </section>
 
-    <footer class="review-footer">
-      <p>Paper Digest · {direction.label}</p>
-      <p>复核于 {reviewedLabel}</p>
-    </footer>
-  </div>
+      <section class="review-bibliography" id="references" aria-labelledby="referencesTitle">
+        <header>
+          <div>
+            <p class="eyebrow">Bibliography</p>
+            <h2 id="referencesTitle">参考文献与站内状态</h2>
+          </div>
+          <p>本库论文进入详细报告；未收录论文直接前往可核验的一手来源。</p>
+        </header>
+        <ol>
+          {direction.references.map((reference, index) => (
+            <li>
+              <span class="review-reference-number">{String(index + 1).padStart(2, "0")}</span>
+              <ReviewReference reference={reference} />
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <nav class="review-direction-pagination" aria-label="相邻方向综述">
+        {previousDirection ? (
+          <a href={routeUrl(notebook.base, `reviews/${previousDirection.id}`)}>
+            <span>上一篇</span>
+            <strong>{previousDirection.label}</strong>
+          </a>
+        ) : <span></span>}
+        {nextDirection ? (
+          <a href={routeUrl(notebook.base, `reviews/${nextDirection.id}`)}>
+            <span>下一篇</span>
+            <strong>{nextDirection.label}</strong>
+          </a>
+        ) : <span></span>}
+      </nav>
+    </article>
+  </NotebookDocs>
 </BaseLayout>

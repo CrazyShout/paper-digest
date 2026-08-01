@@ -419,8 +419,8 @@ function validateIdeaCenter(config, knownTags, paperById, latestDigestDate, file
     if (!knownTags.has(direction?.id)) addError(`${directionLabel} references unknown direction: ${direction?.id}`);
     if (directionIds.has(direction?.id)) addError(`${file} has duplicate direction: ${direction?.id}`);
     directionIds.add(direction?.id);
-    if (!["ready", "planned"].includes(direction?.status)) {
-      addError(`${directionLabel} status must be ready or planned`);
+    if (!["ready", "reviewed", "planned"].includes(direction?.status)) {
+      addError(`${directionLabel} status must be ready, reviewed, or planned`);
     }
     if (!/^#[0-9a-f]{6}$/i.test(direction?.color || "")) {
       addError(`${directionLabel} color must be a six-digit hex value`);

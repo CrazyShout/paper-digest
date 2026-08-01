@@ -1,0 +1,215 @@
+{
+  "candidateId": "multitraversal-current-state-provenance",
+  "title": "多遍历重建资产的 current/stale/unknown 来源契约",
+  "hook": "在部分重访下保留集合值状态与观测来源，避免把未看见误写成已移除或仍然存在。",
+  "output": "对象/区域级三状态 provenance store、partial-revisit 协议、false-keep/drop 与冻结任务评测报告。",
+  "effort": "1-2 名研究者，2-4 张 24-48GB 显存 GPU，优先复用 renderer 并在对象/占据层实现。",
+  "timeline": "总周期 8-12 周；Gate 0/1 最多 3 周，标注、实现与锁定实验 5-9 周。",
+  "status": "pre-execution-dossier",
+  "claimsNotMade": [
+    "尚未在 Mapverse、MTGS、GaME 或其他公开资产中确认足量真实部分重访冲突。",
+    "尚未运行 3DGM、MTGS、GaME、LT-Gaussian 或本 dossier 的 provenance 代码。",
+    "SceneEdited 或人工 timeline 只能作补充 fixture，不能证明真实 current/stale/unknown 冲突发生。"
+  ],
+  "whyNow": "3DGM 已从多遍历提取持久环境，MTGS 已分离 shared static 与 traversal-specific nodes，GaME、LT-Gaussian、CubifyGS 和 RTMap 又覆盖 latest-map 更新、剪枝和新鲜度；因此通用 stale removal 已不是 residual。尚可检验的窄问题是：部分重访使 absence 与 unobserved 结构性混淆时，显式 current/stale/unknown provenance 是否相对 recency/latest-only 改变 false-keep/drop 或冻结任务结论。",
+  "keyProblem": "多遍历资产若只输出 persistent map 或最新状态，会在局部重访中把未覆盖区域的 absence 错当作删除证据，或把旧对象继续当作当前对象。该歧义在结构上必然存在，但公开数据中是否有足量、可标注的真实部分重访冲突尚未确认，必须先通过 Gate 0。",
+  "problemEvidence": [
+    "3DGM 把跨遍历变化对象作为 ephemeral outliers，并依赖环境基本一致；该假设无法表示真正的长期结构变化。",
+    "MTGS 用 shared static node 与 traversal-specific dynamic nodes 提升多遍历 NVS，但没有为目标时刻输出 current/stale/unknown 任务语义。",
+    "GaME 丢弃 stale observations 以维护 latest map，LT-Gaussian 和 CubifyGS 也做长期更新；这些机制直接构成强竞品，却没有保留面向部分重访审计的集合值状态与逐对象来源。"
+  ],
+  "closestDirectCompetitors": [
+    {
+      "work": "3DGM",
+      "overlap": "从 Mapverse 多遍历视频提取 persistent environment 并抑制 ephemeral content。",
+      "unreplacedResidual": "persistent/outlier 二分不能区分目标时刻的当前障碍、已移除对象与未重访 unknown。"
+    },
+    {
+      "work": "MTGS",
+      "overlap": "同时建模 shared static geometry、traversal-specific dynamic nodes 和外观变化。",
+      "unreplacedResidual": "遍历特定分解没有定义跨目标时刻的 current/stale/unknown 更新和任务 false-keep/drop。"
+    },
+    {
+      "work": "GaME、LT-Gaussian、CubifyGS 与 RTMap",
+      "overlap": "已覆盖 stale observation removal、结构变化检测、对象级剪枝和地图 freshness。",
+      "unreplacedResidual": "latest-only/recency 更新不保留 set-valued provenance，也未在相同 known-state coverage 下比较两类错误和任务结论。"
+    }
+  ],
+  "currentLimitations": "通用地图更新、stale pruning、共享/遍历特定分解和对象级维护都已有直接工作。本候选若只增加时间戳或删除旧 Gaussian 将与最近竞品功能等价；不可替代 residual 仅是部分重访下的三状态来源契约，以及它相对最强 recency/latest-only baseline 对 false-keep、false-drop 或时间匹配任务结论的可识别改变。",
+  "residualClaim": "只在对象或占据层增加 current/stale/unknown、时间和观测支持，不发明新 renderer，不声称已存在真实冲突，也不以人工 change fixture 建立主结论。",
+  "stateContract": {
+    "current": "目标时刻新鲜窗口内存在直接正观测，或在可见、可判定区域得到与当前存在一致的多传感器支持。",
+    "stale": "更新遍历对同一已可见区域提供可判定的冲突证据，表明旧对象或几何不再属于目标时刻。",
+    "unknown": "区域未被新遍历覆盖、可见性不足、证据互相冲突或 freshness 超限；unknown 必须 abstain，不能静默并入 current 或 stale。",
+    "provenance": "每个状态保存 source traversal、timestamp、positive/negative support、visibility 判据、更新规则版本和冲突链。"
+  },
+  "estimand": {
+    "targetPopulation": "通过 Gate 0 的自然多遍历 scene/traversal pairs 中，目标时刻的对象-区域单元，覆盖真实加入、移除、持续存在和未重访四类机会。",
+    "statisticalUnit": "测量单位是 object-region-time；独立推断单位是 scene/traversal group，组内对象和时刻为重复测量。",
+    "primaryEstimand": "在共同 known-state coverage c=0.80 下，Delta_balanced(c)=0.5*[FKeep_prov-FKeep_best]+0.5*[FDrop_prov-FDrop_best]，best 是 recency 与 latest-only 中风险较低者。",
+    "taskEstimand": "Delta_task(c) 为冻结 detector 或 map-based planner 相对时间匹配真值的 verdict mismatch risk difference；任务和阈值在打开标签前锁定。",
+    "identification": "状态真值来自时间匹配原始传感器与盲法人工/规则审定，不能由任一待比较地图方法自身生成。"
+  },
+  "hypothesis": "若部分重访中的未观测区域被显式标记为 unknown，并让 stale 只由可见冲突证据触发，则在相同 known-state coverage 下，三状态 provenance 相对最强 recency/latest-only baseline 将降低 false-keep/drop 的预注册平衡风险，或降低时间匹配冻结任务的 verdict mismatch；任一成功分支都必须在看标签前锁定。",
+  "gateStatus": [
+    {
+      "gate": "Gate 0 - 真实部分重访冲突与许可",
+      "state": "not-run",
+      "pass": "依法可用的公开多遍历数据中存在足量自然 scene/traversal groups，可从时间匹配原始帧/点云独立标注加入、移除、持续存在与未重访 unknown。",
+      "fail": "若真实冲突不足、只有全覆盖重访、许可证不允许派生研究，或主事件只能由 SceneEdited/人工 timeline 构造，停止候选。"
+    },
+    {
+      "gate": "Gate 1 - 固定 baseline 与标签链",
+      "state": "not-run",
+      "pass": "至少 latest-only 和 recency baseline 可在相同输入上运行，raw observation 到 object/region truth 的审定链与方法输出隔离，固定 renderer 输出可追踪。",
+      "fail": "若 baseline 无法依法复用、标签依赖待测方法、或 partial visibility 不能测量，停止主实验。"
+    }
+  ],
+  "dataPreflight": [
+    "对 Mapverse/3DGM、MTGS nuPlan pipeline 和 GaME Flat/Aria pointers 只做元数据与许可预检，列出 scene、traversal、timestamp、空间覆盖、可见性和对象标签可得性；不预设真实冲突存在。",
+    "固定审计显示 MTGS 代码为 Apache-2.0、其数据条款含 CC-BY-NC-SA；3DGM 与 GaME 固定资产未记录清晰标准许可证，获得许可确认前不得把它们列为可执行主依赖。",
+    "在盲于方法输出的 raw frames/LiDAR 上建立 candidate timeline，至少要求 20 个独立 scene/traversal groups、100 个 object-region-time 单元，并覆盖加入/移除与未重访 unknown；否则 Gate 0 失败。",
+    "定义 visibility-supported absence：只有目标区域进入新传感器有效视锥、未被遮挡且达到检测能力时，absence 才能成为 stale 证据；未覆盖一律是 unknown。",
+    "SceneEdited 只在 Gate 0 已有自然冲突后补充受控 timeline 和单元测试，不能计入自然事件数或主统计。"
+  ],
+  "noveltyClaims": [
+    "新对象是部分重访下的 set-valued current/stale/unknown provenance，不是一般地图更新、时间戳或 stale Gaussian pruning。",
+    "主对比必须在相同 known-state coverage 下同时约束 false-keep 与 false-drop，防止把所有困难区域标成 unknown 获得平凡改善。",
+    "相对 recency/latest-only 的增量必须改变预注册错误风险或时间匹配任务结论；若两者等价，候选即失去不可替代性。"
+  ],
+  "method": [
+    "将固定 renderer 或地图输出投影到 object/region store，为每个元素保存 source traversal、timestamp、positive/negative support、visibility 与状态转换历史。",
+    "实现三状态更新：新鲜正支持进入 current；可见且可判定的冲突证据把旧状态转为 stale；未覆盖、遮挡或证据冲突保持 unknown。",
+    "以同一 raw observations 驱动 3DGM persistent、MTGS shared/traversal-specific、GaME-style latest-only、简单 recency 和三状态 provenance。",
+    "在固定 known-state coverage 下输出 object/region states，并用独立时间匹配真值计算 false-keep、false-drop 与冻结 task verdict。",
+    "按 scene/traversal group 聚类比较风险；所有状态、阈值和 success branch 在打开 held-out truth 前预注册。"
+  ],
+  "implementationPath": [
+    "阶段 A（第 1-2 周）：完成许可、timeline、空间覆盖与自然事件清单；只有 Gate 0 达到 cluster/事件门槛才继续。",
+    "阶段 B（第 3 周）：固定可用 baseline、数据预处理和 blind truth adjudication，完成 Gate 1。",
+    "阶段 C（第 4-6 周）：实现 object/region provenance store、visibility-supported absence、三状态更新和 partial-revisit sampler。",
+    "阶段 D（第 7-9 周）：运行 persistent、shared/specific、latest-only、recency 和 provenance，冻结输出后开封 truth。",
+    "阶段 E（第 10-12 周，仅在主实验可识别时）：运行冻结 detector/planner、SceneEdited 补充 fixture 和跨数据源敏感性。"
+  ],
+  "resourcePlan": {
+    "reusableFixedAssets": [
+      {
+        "asset": "3DGM official implementation and Mapverse workflow",
+        "revision": "32b02d4dcac5cf7218cdf4f4f57e10f30806518f",
+        "reuse": "persistent environment 与 ephemeral suppression 直接 baseline。",
+        "licenseBoundary": "固定审计未记录清晰标准许可证；Mapverse 还继承 Ithaca365/nuPlan 条款，Gate 0 获许可前只读接口。"
+      },
+      {
+        "asset": "MTGS official implementation/checkpoints/pipeline",
+        "revision": "7ab67a3e386e5a4830017819324922a7bb9f26f7",
+        "reuse": "shared-static/traversal-specific 直接 baseline 与自动 nuPlan 多遍历 pipeline。",
+        "licenseBoundary": "代码 Apache-2.0；固定审计记录数据为 CC-BY-NC-SA，预处理和派生发布必须遵守非商业与署名/相同方式共享条件。"
+      },
+      {
+        "asset": "GaME official code and Flat/Aria pointers",
+        "revision": "1c971d65d29952789fa4a2ebb342580d41acbbff",
+        "reuse": "run.py/configs 与 latest-map stale removal 直接 baseline。",
+        "licenseBoundary": "固定审计未记录清晰标准许可证，且依赖外部 poses/segmentation；获许可前不把仓库存在写成可执行。"
+      }
+    ],
+    "selfBuiltModules": [
+      "object/region provenance store 与版本化 schema",
+      "visibility-supported positive/negative evidence join",
+      "current/stale/unknown update engine 与 partial-revisit sampler",
+      "false-keep/drop、known-state coverage 和冻结 task evaluator"
+    ],
+    "compute": "小规模 Gate 0/标签预检以 CPU 和 1 张 GPU 为主；主实验预算 2-4 张 24-48GB GPU、约 3-6 GPU-weeks，外加对象/区域索引与约 2-5TB 临时存储。",
+    "cycle": "8-12 周上限；三周内没有合法自然冲突 corpus 或可运行 latest/recency baseline 即停止。"
+  },
+  "minimumStudy": [
+    "Gate 0 只从自然 timestamped traversals 建立主 cohort，达到至少 20 个 scene/traversal clusters 和 100 个独立 object-region-time 测量单元，并覆盖四类状态机会。",
+    "Gate 1 固定 raw observation manifest、baseline commits、预处理容器、visibility 规则和 blind truth adjudication；方法输出不能参与真值定义。",
+    "对每个目标时刻构造真实 partial-revisit mask；同一 scene 的所有 traversals 只属于一个 split，防止地点泄漏。",
+    "运行 3DGM persistent、MTGS shared/specific、GaME-style latest-only、last-observation recency 和三状态 provenance，锁定 known-state coverage c=0.80。",
+    "开封时间匹配 truth 后计算 false-keep/drop；若主 success branch 预注册为 task，则同时运行冻结 detector 或 map-based planner 并记录 verdict mismatch。",
+    "以 scene/traversal cluster 做配对 bootstrap；SceneEdited 结果单列为 fixture，不与自然 cohort 合并。"
+  ],
+  "strongBaselines": [
+    "3DGM persistent map：把跨遍历一致环境保留、ephemeral content 抑制的直接静态 baseline。",
+    "MTGS shared static plus traversal-specific nodes：保留遍历差异但不输出目标时刻三状态的直接 baseline。",
+    "GaME-style latest-only map：用最新观测更新并移除 stale content 的最接近功能竞品。",
+    "last-observation recency：按对象/区域最后观测时间和固定 freshness threshold 输出 current/stale，未显式保留 provenance。",
+    "recency plus visibility：给简单 baseline 同样的可见性输入，检验三状态收益是否只来自知道哪里被重访。",
+    "oracle full-revisit truth：用完整目标时刻覆盖给出不可部署上界，只用于分解数据缺失和更新规则误差。"
+  ],
+  "metrics": [
+    "主指标：在 known-state coverage c=0.80 下的 false-keep rate、false-drop rate 与二者等权 balanced risk。",
+    "主对比：provenance 相对 recency/latest-only 最强者的 scene-clustered Delta_balanced、分项风险差和 95% 置信区间。",
+    "覆盖约束：known-state coverage、unknown rate、按重访覆盖/遮挡/时间间隔分层的 coverage 漂移。",
+    "任务指标：冻结 detector 或 map-based planner 相对时间匹配真值的 object set、route feasibility 或 stop/go verdict mismatch。",
+    "审计指标：每个状态的 source completeness、timestamp correctness、冲突链完整率、更新延迟和存储/运行开销。"
+  ],
+  "statisticalAnalysis": {
+    "unitAndClustering": "object-region-time 是测量单位，scene/traversal group 是独立 cluster；同一地点的多对象、多时刻不能增加独立样本量。",
+    "primaryTest": "在 c=0.80 下配对估计 provenance 与 best(recency, latest-only) 的 Delta_balanced；同时给出 false-keep/drop 分项，防止均值掩盖单项恶化。",
+    "successBranch": "在打开 held-out truth 前锁定 A（balanced risk）或 B（frozen task verdict）为主 success branch；另一个只作支持性结果，不能事后择优。",
+    "equivalence": "若 95% 区间完全落在 balanced risk +/-5 个百分点和 task risk +/-5 个百分点的等价界内，则判定简单 baseline 等价并 kill。"
+  },
+  "successCriteria": [
+    "Gate 0/1 均通过，自然 cohort 达到预注册 cluster/事件门槛，且主结果不依赖 SceneEdited 或人工 timeline。",
+    "分支 A：在 c=0.80、coverage 差不超过 1 个百分点时，provenance 相对 best(recency, latest-only) 的 balanced risk 至少相对降低 20%，95% 风险差上界低于 0，且任一分项不恶化超过 2 个百分点。",
+    "分支 B：若预注册选择 task estimand，provenance 相对 best baseline 的冻结 task verdict mismatch 至少降低 10 个百分点且 95% 区间上界低于 0；结论改变必须更接近时间匹配真值，而非仅让方法输出不同。"
+  ],
+  "killCriteria": [
+    "Gate 0 找不到足量真实部分重访冲突、加入/移除和 unknown，或主事件只能由 SceneEdited/人工 timeline 产生。",
+    "简单 recency 或 latest-only 在共同 coverage 下同时落入 false-keep/drop 与 task risk 的 5 个百分点等价界。",
+    "收益仅来自把更多单元标成 unknown、coverage 明显下降，或 false-keep 改善以超过 2 个百分点的 false-drop 恶化为代价。",
+    "关键固定资产/数据许可不允许研究复用，blind truth 无法与方法输出隔离，或最小研究超过 12 周。"
+  ],
+  "risks": [
+    "公开多遍历数据可能主要含短时 ephemeral traffic 而不含真实结构加入/移除；Gate 0 不通过时必须停止。",
+    "对象标签和 visibility-supported absence 可能有系统误差；双人盲审、分歧仲裁与 raw evidence link 用于限制标签偏差。",
+    "recency 加 visibility 可能已复现全部收益；它被设为强 baseline，并触发等价 kill。",
+    "许可证碎片化可能让 3DGM/GaME 只能作论文对比而不能执行；主实现必须能退化到许可清晰的数据与 MTGS/自建对象层，否则停止。"
+  ],
+  "outcomeInterpretation": {
+    "positive": "若成功，结果支持多遍历可渲染资产发布逐对象/区域状态与来源，并把 unknown 当作显式 abstention，而不是强制合并为最新单图。",
+    "negative": "若 recency/latest-only 在预注册等价界内，结论会否决复杂三状态 provenance 的增量必要性，并给出可采用的简单 freshness 规则；若 Gate 0 无自然冲突，则只说明公开数据不能识别主张。",
+    "boundary": "正结果不证明所有地图更新都需要相同 schema，负结果也不证明真实长期变化不存在；结论只覆盖通过 Gate 0 的自然 cohort、freshness horizon 和冻结任务。"
+  },
+  "impact": "正结果会为持续重建资产引入可审计的状态和来源契约，直接改变部分重访时的资产准入与任务消费方式；负结果则把工程选择收敛到简单 recency/latest-only，并暴露真实多遍历 benchmark 的事件缺口。",
+  "evidence": [
+    {
+      "title": "Memorize What Matters: Emergent Scene Decomposition from Multitraverse",
+      "url": "https://arxiv.org/abs/2405.17187",
+      "role": "3DGM 直接基线：提取 persistent environment 并抑制 ephemeral content，但假设主要环境一致。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MTGS: Multi-Traversal Gaussian Splatting",
+      "url": "https://arxiv.org/abs/2503.12552",
+      "role": "最近多遍历直接竞品：shared static 与 traversal-specific 分解已被覆盖，但无目标时刻三状态。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Gaussian Mapping for Evolving Scenes",
+      "url": "https://arxiv.org/abs/2506.06909",
+      "role": "最接近 latest-only 竞品：持续更新最新 3DGS 并移除 stale observations。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "LT-Gaussian: Long-Term Map Update Using 3D Gaussian Splatting for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2508.01704",
+      "role": "长期地图更新竞品：用当前 LiDAR 检测结构变化并定向更新旧 Gaussian map。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "CubifyGS: Object-Centric Lifelong Gaussian Splatting for Dynamic Map Maintenance",
+      "url": "https://arxiv.org/abs/2606.28720",
+      "role": "对象级 lifelong maintenance 直接碰撞，覆盖资产检索、变换与剪枝，但不输出集合值来源契约。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "RTMap: Real-Time Recursive Mapping with Change Detection and Localization",
+      "url": "https://arxiv.org/abs/2507.00980",
+      "role": "地图 freshness 与 change detection 强基线，限定本候选不能把实时更新本身作为新贡献。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:24:20.744Z"
+}

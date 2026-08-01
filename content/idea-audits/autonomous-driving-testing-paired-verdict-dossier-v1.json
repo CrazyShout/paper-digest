@@ -1,0 +1,124 @@
+{
+  "candidateId": "paired-execution-layer-verdict-set",
+  "title": "同场景跨执行层的选择性 Verdict Set 与现实假安全风险",
+  "hook": "把仿真、世界模型与 HIL 的一致结论从多数票改写为可拒答的现实安全证据，并直接约束最危险的 false-safe 事件。",
+  "output": "评测协议、选择性校准方法与配对执行数据清单",
+  "effort": "中高",
+  "timeline": "10-12 周形成可证伪 pilot",
+  "whyNow": "Cam2Sim 和实车扰动测试已经提供同场景跨执行层的最小配对锚点，Digital Siblings 证明多仿真器一致性有用，而世界模型准入研究又指出视觉质量不能替代动作与现实 verdict；这些条件使事件级可采信边界首次可以被直接检验，而不必继续停留在平均相关或画质指标。",
+  "keyProblem": "对固定 ADS 版本、ODD 和可迁移场景，低成本执行层给出的 pass/fail 是否足以支持现实层 verdict；若证据不足，系统能否输出集合或 abstain，并在声明覆盖率下控制现实失败被误判为安全的概率。",
+  "currentLimitations": "最近工作分别覆盖双仿真器一致性、仿真到试验场流程、真实轨迹重建和实车扰动，但没有把经典仿真器、世界模型、HIL/ViL 与现实执行视为同一 scenario-version-seed 单元内的缺失重复测量，也没有在事件级报告 selective coverage 与现实 false-safe 风险。已有一致投票会隐藏层间冲突，非配对总体相关又会把场景组成差异误当成 transfer。",
+  "hypothesis": "在预注册的同场景配对集合上，显式建模执行层缺失、oracle 冲突和场景协变量的 set-valued calibrator，能在相同现实执行覆盖率下比单仿真器、固定一致规则和多数票更低且经置信上界约束的现实 false-safe rate；若不能，则事件级选择性迁移主张被推翻。",
+  "gate0": {
+    "decision": "继续到数据前检",
+    "basis": "现实扰动实验已经观察到离线影响与实车失败不一致，双仿真器和 Cam2Sim 又提供直接可碰撞的配对工作，因此问题有现实后果且不是单纯增加一个 simulator。",
+    "boundary": "本轮只主张固定版本、固定 ODD 和公开可迁移场景支持内的证据可采信性；没有更多物理配对时不得外推为通用 sim-to-real 保证。"
+  },
+  "gate1": {
+    "decision": "先做数据与接口前检，再进入 10-12 周可信自建路径",
+    "requiredEvidence": "第 2 周前必须验证统一 scenario manifest 能把真实轨迹、CARLA、至少一个替代执行层及 oracle vector 对齐，并保留所有未执行原因。",
+    "hardStop": "若场景身份和版本无法审计，或公开配对样本不足以形成至少 60 个独立 scenario-version-seed 单元，则只保留协议说明，不启动方法主张。"
+  },
+  "noveltyClaims": [
+    "Digital Siblings 已研究两个仿真器一致时预测缩比物理车 failure；本研究不再证明一致性有用，而是估计异构 verdict vector 到现实 verdict 的选择性映射，在固定 coverage 下控制 false-safe，并允许层缺失时 abstain。",
+    "Formal Scenario-Based Testing 与 Cam2Sim 已建立特定 sim-real 桥接；本研究新增可审计的 scenario-version-seed 统计单位、inclusion probability 和配对 bootstrap，避免用非配对平均差异替代事件级 transfer。",
+    "世界模型 simulator admissibility 提出了现实 verdict transfer 的最高准入层级但未实例化；本研究只把世界模型作为一个可缺失执行层，并用现实配对结果决定其 verdict 能否进入安全证据，而不是以视觉质量赋予准入。",
+    "Real-World Perturbation Testing 已展示离线低影响与实车失败可能不一致；本研究把这种不一致转化为 false-safe estimand 和选择性拒答规则，不把有限实车结果扩写成通用 transfer function。"
+  ],
+  "method": [
+    "定义统一 scenario manifest：固定场景参数、ADS/agent 版本、软件与地图版本、seed、执行层、oracle 语义、可执行性筛选和拒绝原因；把 frame 仅作为单元内观测，不作为独立样本。",
+    "为每个 scenario-version-seed 构造 verdict vector，元素为各执行层各 oracle 的 pass、fail、missing 或 invalid；现实或物理层 verdict 仅作为训练/校准标签和最终评价，不参与场景挑选。",
+    "训练轻量 set-valued calibrator，输出 {pass}、{fail}、{pass, fail} 或 abstain；分别比较无模型的分层频率校准、逻辑/树模型和带单调约束的缺失感知模型，避免把复杂网络当作贡献来源。",
+    "以 split conformal 或有限样本上置信界对现实 false-safe 事件做 coverage-risk 曲线；校准拆分按场景族而非 run 随机，防止相邻 seed 泄漏。",
+    "显式建模从候选池到可物理执行 paired subset 的选择过程，报告 inclusion rate、拒绝原因和对未观测危险场景的 sensitivity bound；不以逆概率加权制造不可验证的总体因果结论。",
+    "用执行层消融和 oracle 冲突分层定位收益来源：移除世界模型、移除 HIL、只保留多数票、只保留单 simulator，并检查 abstention 是否只是按场景难度拒绝。"
+  ],
+  "implementationPath": [
+    "可复用资产：Cam2Sim 固定提交提供 ROS 抽取、CARLA 场景生成、trajectory replay、DAVE2 闭环、真实轨迹与驾驶质量指标；Bench2Drive-Robust 提供 CARLA 0.9.15 的扰动 wrapper 与 mini route。Cam2Sim 根目录未声明许可证，只用于本地研究复现和接口参考，不分发其派生资产；Bench2Drive-Robust 为 CC-BY-NC-ND-4.0，输出数据和补丁需先做许可证隔离。",
+    "必须自建：scenario identity mapper、跨层 adapter、统一 oracle registry、missingness/abstention 编码、set-valued calibrator、paired bootstrap 与审计日志；这些模块以独立 Apache/MIT 兼容代码实现，不复制受限仓库内容。",
+    "数据边界：首轮只使用 Cam2Sim 的公开真实轨迹和可由 CARLA 重放的匹配场景；如无法取得 HIL，使用第二个独立 simulator 或世界模型作为方法开发层，但论文主结果必须明确它不是 HIL/现实替代。",
+    "接口边界：每个 adapter 只交换版本化 scenario manifest、逐时状态摘要、动作、oracle vector 和执行状态；不要求不同执行层共享渲染内部状态，防止不可用的特权信息进入 calibrator。",
+    "算力与依赖：预计 1 台 24 GB GPU 用于可选世界模型推理，CARLA 并行 worker 8-16 CPU 核、约 2 TB 轨迹存储；首轮不训练大型生成模型。CARLA 0.9.15、ROS 数据解析和 DAVE2 checkpoint 在第 1 周锁定容器与 checksum。",
+    "里程碑：第 1-2 周完成许可证、数据和 scenario identity 前检；第 3-5 周生成完整配对矩阵；第 6-8 周实现校准器和基线；第 9-10 周完成 held-out 评估；第 11-12 周只在 Gate 1 数据量满足时扩展第二场景族并整理可复现实验。"
+  ],
+  "minimumStudy": [
+    "预注册至少两个场景族、每族至少 30 个独立 scenario-version-seed 单元；同一单元在可用的经典仿真、替代执行层与现实轨迹锚点上配对，所有筛除在看见现实 verdict 前完成。",
+    "采用按场景族分组的 train/calibration/test 划分；主结果只在完全未见的场景参数区间报告，并对重复 seed 使用 cluster bootstrap 的 95% 置信区间。",
+    "在 25%、50%、75% 三个非 abstain coverage 点比较 set-valued 方法、单 simulator、双层一致规则、多数票与缺失感知逻辑回归；同一配对样本、oracle 和预算下公平比较。",
+    "构造但不冒充真实发生的受控冲突：动作延迟、感知帧丢失和重建误差分别注入，用于定位执行层 disagreement 机制；现实性结论只来自真实配对部分。",
+    "报告候选池、可迁移池、可执行池和最终 paired set 的逐级样本数、排除原因及 verdict 分布；对选择偏差做最坏情况 sensitivity analysis。",
+    "首个可证伪实验在第 5 周完成：检查 lower-layer 全一致的样本中是否仍存在现实 false-safe；若事件为零且上置信界已低于预注册容忍值，则不再开发复杂 calibrator。"
+  ],
+  "strongBaselines": [
+    "单一经典 simulator verdict：在相同非 abstain coverage 下直接映射 pass/fail，作为最低复杂度基线。",
+    "Digital Siblings 风格固定一致规则：仅当两个 simulator 一致时给出 verdict，否则 abstain；严格复现同样的执行层输入。",
+    "多数票和全一致投票：对可用层不学习地聚合，并把缺失层处理策略预注册，防止后验挑规则。",
+    "缺失指示器逻辑回归或校准树：使用与 proposed method 相同的协变量和数据拆分，检验收益是否只来自监督学习。",
+    "oracle 上界：直接使用现实层历史同场景标签或留一场景族经验频率，仅作为不可部署参考，不参与方法训练。"
+  ],
+  "metrics": [
+    "主指标：在固定非 abstain coverage 下，现实 false-safe rate 及其单侧 95% 置信上界，统计单位为 scenario-version-seed。",
+    "选择性表现：risk-coverage 曲线、AURC、abstention rate，以及 fail 与 pass 两类的条件覆盖，避免靠拒绝所有困难场景获得低风险。",
+    "迁移误差：各执行层 verdict disagreement matrix、现实 false-unsafe/false-safe 分解、场景族间 worst-group risk。",
+    "选择偏差：候选到 paired set 的 inclusion rate、排除原因比例和在未观测样本最坏标签下的 sensitivity interval。",
+    "系统成本：每增加一个执行层带来的 wall-clock、GPU/CPU 小时、存储和每个非 abstain verdict 的物理执行成本。"
+  ],
+  "successCriteria": [
+    "在至少两个预注册场景族、相同 50% coverage 下，proposed set-valued calibrator 的现实 false-safe 单侧 95% 上界相对最佳固定规则降低至少 30%，且绝对上界不超过 10%。",
+    "在 25%-75% coverage 区间内，至少两个 coverage 点的 AURC/false-safe 改善在按场景族 cluster bootstrap 中稳定，且 worst-group false-safe 不高于最佳基线。",
+    "abstention 不能只由单一场景族贡献：每个场景族都至少保留 30% coverage，并且去掉任一执行层后能解释方法收益来自何种互补信息。"
+  ],
+  "killCriteria": [
+    "若最佳固定一致规则或单 simulator 在相同 coverage 下与 proposed method 的 false-safe 上界差异小于 5 个百分点且跨 seed 不稳定，停止方法开发并只保留负结果与协议审计。",
+    "若到第 2 周仍无法审计 scenario identity、ADS 版本或 oracle 语义，或现实/物理 paired set 少于 60 个独立单元，停止现实迁移主张。",
+    "若性能提升仅来自使用现实层泄漏特征、事后排除危险场景或把不可执行样本记为 abstain，结果判为无效并终止。"
+  ],
+  "risks": [
+    "公开物理配对样本很小，false-safe 罕见事件的置信上界可能过宽；必须用精确区间并限制结论，不用帧级伪重复扩大样本量。",
+    "场景在不同执行层不能严格同构，scenario identity mapper 可能把迁移误差与场景重建误差混合；需保留参数差异并设置不可比较状态。",
+    "世界模型或 HIL 接口可能无公开 checkpoint/硬件，导致执行层数量不足；最小研究仍可做双层 pilot，但不能宣传成完整多层证书。",
+    "Cam2Sim 无根许可证且 Bench2Drive-Robust 有 ND 限制，可能阻止数据再分发；发布物应只包含自建 manifest、统计代码和可重建脚本，并先做许可证审查。"
+  ],
+  "impact": "正结果会给出低成本测试何时可以进入安全证据、何时必须追加物理执行的定量边界，并把世界模型 simulator 的准入从视觉指标推进到事件级 verdict；负结果若证明固定一致规则已经足够，也会阻止团队在小样本上训练不必要的 transfer 模型，并明确哪些配对数据最值得继续采集。",
+  "evidence": [
+    {
+      "title": "Real-World Perturbation Testing of Autonomous Driving Systems",
+      "url": "https://arxiv.org/abs/2607.04953",
+      "role": "本库证据：提供离线、车载硬件和全尺寸实车的同扰动执行锚点，并限定单路线、单车和有限重复不能支持通用迁移。",
+      "localPaperId": "real-world-perturbation-testing",
+      "localLink": "papers/real-world-perturbation-testing/"
+    },
+    {
+      "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
+      "url": "https://arxiv.org/abs/2607.07196",
+      "role": "本库证据：定义现实 verdict transfer 的准入缺口，并证明视觉质量与动作跟随排序可能反转，但尚未实例化最高准入层级。",
+      "localPaperId": "world-model-simulator-admissibility",
+      "localLink": "papers/world-model-simulator-admissibility/"
+    },
+    {
+      "title": "Two Is Better Than One: Digital Siblings to Improve Autonomous Driving Testing",
+      "url": "https://doi.org/10.1007/s10664-024-10458-4",
+      "role": "外部直接竞品：双仿真器一致规则能预测缩比物理车 failure，但未控制选择性 false-safe 或多层缺失。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Formal Scenario-Based Testing of Autonomous Vehicles: From Simulation to the Real World",
+      "url": "https://doi.org/10.1109/ITSC45102.2020.9294368",
+      "role": "外部桥接基线：展示形式场景从仿真筛选到试验场执行的流程，不提供事件级集合 verdict 或 coverage 风险。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Cam2Sim: Neural Scenario Reconstruction for Closed-Loop Autonomous Driving Simulation",
+      "url": "https://arxiv.org/abs/2607.04770",
+      "role": "外部方法与数据依据：提供真实 ROS 记录到 CARLA/Gaussian 场景的配对闭环 pilot，但公开验证规模有限。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Cam2Sim official reconstruction and paired trajectory asset",
+      "url": "https://github.com/ast-fortiss-tum/cam2sim/tree/8268453c5c91bef06d9e05326d926133d1798649",
+      "role": "外部固定资产：核验 ROS 抽取、场景生成、轨迹重放、DAVE2 和真实轨迹入口；根目录未声明许可证。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:53:13.059Z"
+}

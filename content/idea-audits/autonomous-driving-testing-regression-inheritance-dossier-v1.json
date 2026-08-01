@@ -1,0 +1,130 @@
+{
+  "candidateId": "versioned-regression-evidence-inheritance",
+  "title": "ADS 版本更新后的证据继承与最小重测集合",
+  "hook": "不再只问哪些测试先跑，而是判断旧版每条 pass/fail 证据在新版上究竟可继承、已失效还是必须重测。",
+  "output": "版本化测试证据协议、选择算法与配对回归 benchmark",
+  "effort": "中高",
+  "timeline": "10-12 周形成版本对闭环研究",
+  "whyNow": "ADS 回归测试已经有场景缩减、失败优先级和 coverage-guided selection，ISO 24089 与 UNECE R156 又要求软件更新可追溯；随着公开闭环 agent 和自然 checkpoint 增多，现在可以把评估对象从 APFD 推进到旧 verdict 被错误继承的概率，而不必把人工 mutant 当成全部更新。",
+  "keyProblem": "给定 ADS 版本对、场景机制和旧版 verdict，有限重测预算下如何将旧证据标为 inherited、invalidated 或 unknown，并最小化未重测集合中的 pass-to-fail 与 fail-to-pass 错误继承，而不是只优化更早发现已知失败。",
+  "currentLimitations": "现有 ADS 回归工作主要按场景 schema、道路结构、coverage 或历史 failure 做缩减与排序，评价集中在 APFD、fault coverage 和失败道路保留率；这些指标不能回答未执行场景的旧版 pass/fail 是否仍有效。标准提供版本和更新追溯要求，但没有给出 scenario-mechanism 级证据继承算法。只用 mutants 会夸大可检测性，只用历史失败又会遗漏更危险的 pass-to-fail 回归。",
+  "hypothesis": "在同一 scenario-version-pair-seed 的全量新版执行真值上，联合旧 verdict、结构化 change descriptor 与场景机制簇的三态继承模型，能在相同重测预算下比随机、coverage、DETOUR 风格历史失败相似度和不加区分的全继承规则显著降低 false-inheritance mass；若收益不能在自然 checkpoint 或真实 bugfix 上重复，则核心主张不成立。",
+  "gate0": {
+    "decision": "继续到版本对可得性审计",
+    "basis": "最近直接工作已覆盖缩减和优先级，却没有定义未重测旧证据的错误继承；持续部署与软件更新追溯使该误差有明确安全案例后果。",
+    "boundary": "贡献必须是 scenario-mechanism 级继承 estimand 和 unknown 决策；若最终只报告 APFD、suite reduction 或旧失败保留率，则与最近工作功能等价。"
+  },
+  "gate1": {
+    "decision": "以自然版本对比例为前置条件的可信自建路径",
+    "requiredEvidence": "第 3 周前需获得至少两个公开 agent 的自然 checkpoint/release 或真实 bugfix 版本对，并完成同场景同 seed 的全量重放；受控更新仅用于机制覆盖。",
+    "hardStop": "若主要改善只存在于 mutation 版本，或自然版本对不足以贡献至少一半主分析单元，则停止证据继承主张。"
+  },
+  "noveltyClaims": [
+    "FSE 2022 的场景缩减与优先级工作优化 fault coverage 和 APFD；本研究的被解释变量是未重测 cell 的旧 verdict 是否被错误继承，并显式允许 unknown，因而不是另一种测试排序器。",
+    "DETOUR 按道路结构和历史失败邻近性选测试，coverage-guided work 以道路与行为覆盖缩减测试集；本研究用它们作 selection 基线，但以 paired false-inheritance 而非更早找到 failure 评价。",
+    "ISO 24089 和 UNECE R156 要求更新可管理和可追溯；本研究不把标准要求冒充算法新颖性，而是把版本 manifest 和 change descriptor 变成可审计输入，研究标准未规定的证据有效性。",
+    "与一般软件回归选择不同，scenario、oracle 和失效机制共同定义 ADS 证据单元；同一路线的帧、多个 oracle 和重复 seed 保持嵌套，不用帧级差异虚增统计显著性。"
+  ],
+  "method": [
+    "建立 version manifest 和 change taxonomy，区分自然训练 checkpoint、量化/编译变化、传感接口变化、planner bugfix 与受控 mutation；记录代码 commit、权重 hash、依赖、地图和传感配置。",
+    "冻结 scenario/route/seed 和 oracle registry，对每个版本对执行全量新版本测试，得到研究阶段的继承真值；selector 只能访问旧版证据、change descriptor 和不含新版结果的场景特征。",
+    "把场景归入可解释 mechanism cells，例如感知遮挡、时序延迟、路线交互和控制边界；比较规则化三态分类器、成本敏感树模型和基于机制簇的保守集合预测。",
+    "在固定重测预算下联合优化重测选择与证据状态：高风险 cell 重测，低风险 cell 继承，证据不足 cell 标 unknown；unknown 有显式成本，不能用全部拒答规避错误。",
+    "分别估计 pass-to-fail、fail-to-pass 和总体 false-inheritance mass，并按更新类型、机制簇和旧 verdict 分层；自然版本和 mutants 从不混成单一总体。",
+    "通过 leave-one-update-type-out、去掉 change descriptor、去掉机制簇和仅旧 verdict 消融，检验收益来自可迁移版本信息而非对某个版本对记忆。"
+  ],
+  "implementationPath": [
+    "可复用资产：Bench2Drive-Robust 固定提交包含 CARLA 0.9.15 扰动接口和 mini routes，可用于冻结 route/seed；coverage-guided prioritization 固定提交为 MIT，包含道路覆盖、聚类、优先级代码与失败道路数据，可直接作为基线。",
+    "许可证边界：Bench2Drive-Robust 为 CC-BY-NC-ND-4.0，不修改或再分发其资产；自建 version manifests、selector、统计代码与实验记录独立发布。自然 agent checkpoint 的许可证逐一登记，许可证不明的版本不进入可发布 benchmark。",
+    "必须自建：版本注册表、change descriptor extractor、机制簇标注/弱监督规则、三态 inherit-invalidated-unknown 决策器、全量 paired runner、重测预算模拟器与审计报告生成器。",
+    "数据边界：至少两个公开 agent、每个至少两个自然 checkpoint/release；受控 fine-tune、量化、传感接口和 planner mutation 扩展机制，但不得在主结果中替代自然版本。旧 pass、旧 fail、边界场景和自然日志按预注册比例分层抽样。",
+    "算力与接口：使用 Bench2Drive mini routes 起步，预计 8-16 CPU 核并行 CARLA、1-2 张 24 GB GPU 运行 agent、约 3 TB 轨迹和日志；每次执行只通过标准传感输入、ego state 与控制输出连接，不访问模型内部梯度作为默认特征。",
+    "里程碑：第 1-2 周锁定版本、许可证和容器；第 3-5 周完成全量版本对 oracle；第 6-7 周实现四类 selection 基线；第 8-9 周训练三态模型；第 10 周完成自然/受控分层；第 11-12 周做跨 agent 复现和统计审计。"
+  ],
+  "minimumStudy": [
+    "选择至少两个公开 ADS agent、每个两个自然 checkpoint/release，再加入两类受控更新；每个版本对在同一组 route/scenario/seed 上全量执行新版本以生成研究真值。",
+    "测试池由旧 pass、旧 fail、边界场景与随机自然路线分层组成；主统计单位是 scenario-version-pair-seed，episode 内 frame 和多个 oracle 不独立计数。",
+    "在 10%、25%、50% 三个重测预算下，比较随机、旧 failure 优先、coverage-guided、DETOUR 风格、全继承、全 unknown 与 proposed 三态方法；所有方法共享场景特征和执行成本。",
+    "对每个未重测 cell 根据全量 oracle 回看 inherited/invalidated/unknown 是否正确，并报告 pass-to-fail 与 fail-to-pass；全量执行只用于评估，不泄漏给 selector。",
+    "做 leave-one-version-pair-out 和 leave-one-update-type-out 验证，防止模型记住单次更新；自然版本结果单列，mutants 只用于机制敏感性和 negative control。",
+    "第 5 周完成首个可证伪检查：change descriptor 加旧证据是否在自然版本对上优于按场景覆盖随机重测；若没有方向性改善，停止复杂建模。"
+  ],
+  "strongBaselines": [
+    "随机分层重测：在旧 pass/fail 与场景机制层内按预算随机选择，给出最低无信息基线。",
+    "FSE 2022 风格场景 schema reduction/prioritization：以相同测试池和执行成本评估 APFD 与 false-inheritance。",
+    "DETOUR 风格道路结构聚类和历史 failure 邻近选择：不改变其目标，只新增本研究指标做公平比较。",
+    "Coverage-guided road selection：复用固定 MIT 代码和公开配置，在相同预算下报告失败保留率与错误继承。",
+    "全继承、全重测和全 unknown：分别作为零成本下界、预算上界和保守拒答边界；全 unknown 的未知成本必须计入。"
+  ],
+  "metrics": [
+    "主指标：给定重测预算下未重测集合的 false-inheritance mass，并分解为 pass-to-fail 与 fail-to-pass，统计单位为 scenario-version-pair-seed。",
+    "安全代价：按预注册严重度加权的 false-safe inheritance、其 95% cluster bootstrap 区间和 worst-mechanism risk。",
+    "效率：重测比例、CARLA/GPU 小时、发现每个 pass-to-fail 回归的成本，以及传统 APFD/fault coverage 供直接工作对比。",
+    "三态质量：inherited precision、invalidated recall、unknown rate、coverage-risk 曲线与每个更新类型的校准误差。",
+    "迁移性：leave-one-version-pair-out 和 leave-one-update-type-out 的相对风险、自然版本与 mutation 版本之间的效果差。"
+  ],
+  "successCriteria": [
+    "在至少两个自然版本对上，25% 重测预算下相对最佳 coverage/history 基线将严重度加权 false-inheritance 降低至少 25%，且 95% cluster bootstrap 区间不跨越零改善。",
+    "自然 checkpoint/release 或真实 bugfix 贡献至少一半主分析单元，并在每个 agent 上都观察到 pass-to-fail 降低；不能由 mutation 版本单独驱动。",
+    "在 unknown rate 不超过 30% 的约束下，proposed 方法的 false-safe inheritance 不高于全 unknown 之外的任何可部署基线，并保持至少 70% 旧证据可用或被重测。"
+  ],
+  "killCriteria": [
+    "若 change descriptor 与旧证据在自然版本对上不能优于随机分层或 coverage-guided 重测，或者改善小于 10% 且跨 agent 方向不一致，停止该方法线。",
+    "若只能获得 mutants 或人工 fine-tune，无法形成至少两个自然版本对，则停止跨版本证据继承主张，只保留测试工具。",
+    "若模型通过扩大 unknown 到 50% 以上才降低 false-inheritance，或收益仅来自新版执行泄漏特征，判定研究假设失败。"
+  ],
+  "risks": [
+    "公开 agent 的自然版本变化可能同时改变训练数据、代码与依赖，change descriptor 不可完全观测；需报告 unknown descriptor 并限制因果语言。",
+    "全量 paired 执行昂贵且 CARLA 非确定性会污染版本差异；每个关键 cell 需重复 seed、保存 simulator hash，并将不稳定 verdict 单列。",
+    "机制簇可能成为主观标签或泄漏新版结果；必须在运行新版前冻结规则，并用无机制簇基线检查其实际贡献。",
+    "旧 failure 优先容易掩盖 pass-to-fail；若测试池来自历史 failure 搜索而非分层抽样，结论会发生选择偏差。"
+  ],
+  "impact": "正结果将把持续部署中的回归测试从发现失败的排序问题推进到版本化安全证据管理，给出有限预算下哪些旧结论仍可用、哪些必须重测的可审计依据；负结果若显示 change descriptor 无法支持继承，也会证明当前团队不应把旧版 pass 自动沿用，并推动公开 benchmark 保存真实版本对而非只发布 mutants。",
+  "evidence": [
+    {
+      "title": "Bench2Drive-Robust: Benchmarking Closed-Loop Autonomous Driving under Deployment Perturbations",
+      "url": "https://arxiv.org/abs/2605.18059",
+      "role": "本库证据：提供冻结 route/seed 和闭环部署扰动的启动平台，但注入能力不能替代自然版本更新证据。",
+      "localPaperId": "bench2drive-robust-deployment-perturbations",
+      "localLink": "papers/bench2drive-robust-deployment-perturbations/"
+    },
+    {
+      "title": "Importance Sampling and PCA for Finding Failures in Commercial Autonomous Vehicles",
+      "url": "https://arxiv.org/abs/2607.18106",
+      "role": "本库边界证据：比较商业规划器失败搜索并产生可复放 failure，但高命中率和单私有系统不能证明跨版本证据可继承。",
+      "localPaperId": "commercial-av-failure-sampling",
+      "localLink": "papers/commercial-av-failure-sampling/"
+    },
+    {
+      "title": "Scenario-Based Test Reduction and Prioritization for Multi-Module Autonomous Driving Systems",
+      "url": "https://doi.org/10.1145/3540250.3549152",
+      "role": "外部直接基线：以场景 schema、fault coverage 和 APFD 做缩减与排序，但未估计未重测证据的错误继承。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "DETOUR: A Tool for Regression Testing of Autonomous Driving Systems",
+      "url": "https://doi.org/10.1016/j.scico.2026.103490",
+      "role": "外部直接竞品：按道路结构和历史 failure 邻近性选择测试，目标不是旧 verdict 的三态有效性。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Coverage-Guided Road Selection and Prioritization for Efficient Testing in Autonomous Driving Systems",
+      "url": "https://arxiv.org/abs/2601.08609",
+      "role": "外部强基线：展示高比例测试缩减与失败道路保留，但保留 failure 不等价于未测试 pass 的安全证据。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ISO 24089:2023 Road Vehicles - Software Update Engineering",
+      "url": "https://www.iso.org/standard/77796.html",
+      "role": "外部规范边界：要求软件更新可管理、可通信并绑定版本，但不规定 ADS 场景证据如何继承。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Coverage-guided road selection and prioritization official code and data",
+      "url": "https://github.com/lakhanqurban/prioritization/tree/55b1eb31302517b41a7155278d96484b09a5f260",
+      "role": "外部固定资产：MIT 代码提供道路覆盖、聚类、优先级和失败道路数据，可直接形成可复现比较。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:53:13.144Z"
+}

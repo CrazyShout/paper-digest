@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 2,
+  "directionId": "cooperative-autonomous-driving",
+  "poolId": "cooperscene-throughput-only-candidate-pool-v3",
+  "generatedAt": "2026-07-31",
+  "status": "unranked-throughput-only-candidates",
+  "schemaAudit": {
+    "verifiedFacts": [
+      "The audited complete take 9 MCAP exposes 12 directed pairwise throughput channels.",
+      "The audited MCAP channels do not expose measured latency, packet-loss, or jitter fields.",
+      "The mini release contains no MCAP trace.",
+      "The release contains 14 takes.",
+      "The allowed timing and identity evidence consists of MCAP log time, MCAP publish time, LiDAR timestamp, sender identity, and receiver identity.",
+      "Per-model payload must be measured from the executable model path rather than inferred from a project-page claim."
+    ],
+    "allowedMeasuredInputs": [
+      "measured pairwise throughput",
+      "MCAP log time",
+      "MCAP publish time",
+      "LiDAR timestamp",
+      "sender identity",
+      "receiver identity",
+      "measured model payload"
+    ],
+    "forbiddenInputs": [
+      "latency",
+      "packet loss",
+      "jitter",
+      "RSSI",
+      "retransmission state",
+      "queue state",
+      "packet identifier",
+      "unverified project-page schema claims"
+    ],
+    "interpretationLimits": [
+      "A throughput channel is a measured link-rate time series, not a packet-delivery log.",
+      "A completion time derived by integrating payload over throughput is a replay construct and must not be described as measured end-to-end latency.",
+      "MCAP log time, MCAP publish time, and LiDAR timestamp are distinct clocks until an explicit alignment contract is verified.",
+      "The absence of latency, packet-loss, and jitter fields prevents claims about those phenomena.",
+      "The take 9 schema audit does not establish trace availability or schema consistency for the other 13 takes.",
+      "The project page is discovery context only and is not accepted as evidence of an MCAP field."
+    ]
+  },
+  "orderingNote": "Candidate order is an identifier sequence only and does not encode priority, preference, or evaluation.",
+  "candidateCounts": {
+    "retained": 10,
+    "rejected": 2
+  },
+  "candidates": [
+    {
+      "candidateId": "throughput-payload-completion-replay",
+      "title": "吞吐积分驱动的模型载荷完成回放",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "completion-replay",
+      "falsifiableHypothesis": "从 LiDAR 消息产生时刻开始，对定向链路实测 throughput 随时间积分，得到的模型 payload 完成时刻会使至少一种支持模型的可用协作输入不同于固定 1.6 Mbps 与 100 ms 帧取整路径；如果三种路径在预注册范围内给出等价输入和结果，则假设被否定。",
+      "minimumImplementation": [
+        "在一个已核验 take 和一条 sender-to-receiver channel 上测量选定模型的实际 payload 字节数。",
+        "分别以 MCAP log time 和 publish time 构造分段常数 throughput 序列，并记录两种时钟解释。",
+        "从对齐后的 LiDAR timestamp 开始积分可传输 bit 数，达到 payload bit 数时标记完成；未达到时只标记未完成，不合成丢包或额外时延。",
+        "冻结模型检查点和 LiDAR 样本，比较固定 1.6 Mbps、现有帧取整和 throughput 积分完成回放。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "audited fixed-throughput CooperScene code path",
+          "constant 1.6 Mbps replay",
+          "officially supported model implementation with measured payload"
+        ],
+        "constraint": "No external paper is asserted as a direct competitor until a separate primary-source novelty audit is completed."
+      },
+      "reproducibleBaselines": [
+        "constant 1.6 Mbps",
+        "current payload-over-throughput delay followed by 100 ms frame conversion",
+        "throughput integration on MCAP log time",
+        "throughput integration on MCAP publish time"
+      ],
+      "successResult": "The completion replay changes a preregistered input-availability or task metric relative to both fixed-throughput baselines under identical payload, model, LiDAR samples, and directed link.",
+      "nullOrNegativeResult": "All paths agree within declared tolerances. This rejects the need for continuous completion replay in the tested range and bounds where the fixed abstraction is adequate.",
+      "limitedComputeFeasibility": "High. The scheduler is CPU-side, model weights remain frozen, and a one-model pilot requires only bounded single-GPU inference."
+    },
+    {
+      "candidateId": "throughput-time-structure-sufficiency",
+      "title": "吞吐时间结构的最小充分性检验",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "time-structure-sufficiency",
+      "falsifiableHypothesis": "保持 throughput 边际分布但打乱时间顺序，不能复现原始定向 trace 的 payload 完成行为；如果逐点置换已能复现原始结果，则连续时间结构不是测试范围内的必要因素。",
+      "minimumImplementation": [
+        "从同一 directed channel 生成原始顺序、固定种子逐点置换和多个预声明长度的连续块置换。",
+        "所有版本使用相同 throughput 数值集合、同一 MCAP 时间间隔解释、同一 LiDAR timestamp 和同一模型 payload。",
+        "对每个版本运行相同 completion replay，比较完成时刻、截止时间前完成比例和冻结模型结果。",
+        "寻找能复现原始序列结论的最短块长度，不训练网络生成器。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "constant 1.6 Mbps",
+          "exact-order throughput completion replay",
+          "deterministic shuffled-throughput replay"
+        ],
+        "constraint": "Whether prior work has already established an equivalent temporal-sufficiency test remains unverified."
+      },
+      "reproducibleBaselines": [
+        "constant mean throughput",
+        "fixed-seed independent permutation",
+        "fixed-seed block permutations at declared durations",
+        "unmodified directed trace"
+      ],
+      "successResult": "Exact order differs from independent permutation, and a reproducible nonzero block duration is required to recover the exact-order completion conclusion.",
+      "nullOrNegativeResult": "Independent permutation matches exact order. The result supports a cheaper throughput-marginal model for the audited scope.",
+      "limitedComputeFeasibility": "High. Resampling and completion calculations are CPU-only; frozen inference can be restricted to one model and one take."
+    },
+    {
+      "candidateId": "directed-cross-link-correlation",
+      "title": "十二条定向链路的同步吞吐结构审计",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "cross-link-correlation",
+      "falsifiableHypothesis": "take 9 的 12 条 directed throughput channels 存在会影响多协作者同时完成状态的同步结构；如果独立打乱各链路后，多载荷联合完成行为与原始同步回放等价，则该结构对测试问题不重要。",
+      "minimumImplementation": [
+        "分别在 MCAP log time 和 publish time 下建立 12 条 directed channel 的共同时间网格，不插入未观测网络字段。",
+        "比较原始同步序列与每条链路独立置换后的序列，保持每条链路自身 throughput 值不变。",
+        "对同一 LiDAR timestamp 和各模型 payload 计算多个 sender-to-receiver 消息在截止时间前的联合完成集合。",
+        "先做无模型的联合完成审计，再对一个冻结模型运行必要的多协作者输入组合。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "original synchronized take 9 channels",
+          "independently permuted directed channels",
+          "constant per-link mean throughput"
+        ],
+        "constraint": "No claim is made that the 12 channels represent packet-level contention or a shared physical cause."
+      },
+      "reproducibleBaselines": [
+        "original cross-link timing",
+        "independent per-link permutation with fixed seeds",
+        "common permutation applied to every link",
+        "constant per-link temporal mean"
+      ],
+      "successResult": "Original synchronization changes the distribution of simultaneous payload completions or a preregistered model metric relative to independent link permutations.",
+      "nullOrNegativeResult": "Independent link permutations reproduce the original joint result. This rejects cross-link temporal dependence as necessary for the tested replay.",
+      "limitedComputeFeasibility": "High. The first-stage audit is CPU-only; only the final bounded confirmation uses one frozen model on one GPU."
+    },
+    {
+      "candidateId": "mcap-lidar-scene-alignment-contract",
+      "title": "MCAP 与 LiDAR 场景时间对齐契约",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "scene-alignment",
+      "falsifiableHypothesis": "不同但表面合理的 MCAP log time、publish time 与 LiDAR timestamp 对齐选择会改变 throughput completion replay 的结果；如果所有可审计对齐选择均等价，则对齐不是主要不确定来源。",
+      "minimumImplementation": [
+        "为每个 take 记录 LiDAR timestamp 范围、MCAP log-time 范围、publish-time 范围和 directed channel 身份。",
+        "只允许单调、可逆、参数完全记录的时钟映射，不使用感知结果反向挑选偏移。",
+        "预先声明候选映射和拒绝条件，并在模型推理前比较其完成时刻差异。",
+        "输出一个机器可检查 manifest；无法获得唯一或有界映射时停止模型层结论。"
+      ],
+      "requiredRealFields": [
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured pairwise throughput",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "log-time alignment contract",
+          "publish-time alignment contract",
+          "no-alignment rejection path"
+        ],
+        "constraint": "The project page is not used to assert a clock relationship; only released timestamps and an explicit mapping are admissible."
+      },
+      "reproducibleBaselines": [
+        "identity mapping when timestamp domains already overlap",
+        "declared constant-offset mapping",
+        "declared affine monotonic mapping",
+        "reject-as-unalignable baseline"
+      ],
+      "successResult": "The audit either identifies one reproducible alignment contract with bounded sensitivity or demonstrates that plausible contracts lead to materially different completion conclusions.",
+      "nullOrNegativeResult": "All admissible mappings agree within tolerance. This removes alignment as a material confound for the tested take.",
+      "limitedComputeFeasibility": "High. Manifest generation and clock analysis are CPU-only; no model inference is required until the contract passes."
+    },
+    {
+      "candidateId": "throughput-deadline-admission",
+      "title": "基于历史吞吐完成概率的截止时间准入",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "deadline-admission",
+      "falsifiableHypothesis": "在相同总 payload 预算下，仅使用每条 directed channel 的历史 throughput 估计消息能否在下一 LiDAR 截止时间前完成，可以优于全发送、随机准入和按历史平均 throughput 准入；若收益消失或依赖未来 throughput，则假设被否定。",
+      "minimumImplementation": [
+        "冻结一个支持模型，测量每个候选协作者的模型 payload。",
+        "仅使用当前 LiDAR timestamp 之前的 throughput 记录，估计下一截止时间前可传输 bit 数。",
+        "在固定总 payload 或固定协作者数量下决定哪些消息进入 completion replay。",
+        "在未见的连续 throughput 区间比较全发送、随机、历史均值、最近值和历史窗口完成概率。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "all-partner fixed-throughput path",
+          "random partner admission",
+          "history-only mean-throughput admission"
+        ],
+        "constraint": "No external communication-selection method is labeled a direct competitor before its mechanism and evidence boundary are reopened."
+      },
+      "reproducibleBaselines": [
+        "all candidate messages admitted",
+        "uniform random admission with fixed seeds",
+        "highest historical mean throughput",
+        "highest most-recent throughput",
+        "future-throughput oracle reported only as a nondeployable upper bound"
+      ],
+      "successResult": "History-only completion admission improves a preregistered task or completion metric under an exactly matched payload budget on held-out temporal intervals.",
+      "nullOrNegativeResult": "A simple mean or recent-throughput rule matches the mechanism, or the claimed gain vanishes after payload matching. The mechanism is rejected as unnecessary.",
+      "limitedComputeFeasibility": "Medium-high. The admission rule is non-neural or lightweight and the perception backbone remains frozen for a one-model single-GPU pilot."
+    },
+    {
+      "candidateId": "throughput-diverse-partner-portfolio",
+      "title": "低共降吞吐的协作者组合",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "partner-portfolio",
+      "falsifiableHypothesis": "在固定协作者数量和总 payload 下，选择历史 throughput 不会同时下降的 directed links，比只选择平均 throughput 最高的 links 更能维持多消息联合完成；若低共降组合没有稳定优势，则假设被否定。",
+      "minimumImplementation": [
+        "在训练时间段上根据 12 条 directed channels 的 throughput 序列计算共降统计量。",
+        "选择固定大小的 sender-to-receiver 组合，并为每个模型使用实测 payload。",
+        "在未见连续时间段运行 completion replay，比较平均吞吐组合、最近吞吐组合和低共降组合。",
+        "先比较联合完成和最差时间窗，再用一个冻结模型检查任务层影响。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "all-partner portfolio",
+          "highest-mean-throughput portfolio",
+          "most-recent-throughput portfolio",
+          "fixed-seed random portfolio"
+        ],
+        "constraint": "Throughput co-degradation is treated only as an observed relation among the released directed time series."
+      },
+      "reproducibleBaselines": [
+        "all available partners",
+        "fixed-size random portfolio",
+        "top historical mean throughput",
+        "top most-recent throughput",
+        "future-window oracle reported only as an upper bound"
+      ],
+      "successResult": "The low-co-degradation portfolio improves held-out worst-window joint completion or a declared model metric under equal partner count and payload.",
+      "nullOrNegativeResult": "Cross-link co-degradation is unstable or the quality-only baseline matches it. The portfolio mechanism is rejected.",
+      "limitedComputeFeasibility": "Medium-high. Portfolio construction is CPU-only and task-level confirmation is bounded to one frozen model on one GPU."
+    },
+    {
+      "candidateId": "prior-frame-completion-propagation",
+      "title": "基于完成时刻的历史 LiDAR 特征传播",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "prior-time-delay-propagation",
+      "falsifiableHypothesis": "当当前 LiDAR payload 尚未按实测 throughput 完成时，使用最近一个已完成的历史 LiDAR 特征，比现有 100 ms 取整选帧或直接移除协作者更准确地表征可用信息；若三者结果等价，则该传播机制不必要。",
+      "minimumImplementation": [
+        "为每个 sender-to-receiver link 和 LiDAR timestamp 运行 payload completion replay。",
+        "在接收截止时间选择最近一个已经完成的历史 LiDAR payload。",
+        "冻结模型，比较直接移除、现有帧取整历史帧和按完成时刻选择的历史帧。",
+        "按所选历史帧与当前 LiDAR timestamp 的时间差分层报告结果。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "current 100 ms frame-converted prior-frame path",
+          "drop unfinished collaborator input",
+          "completion-time-selected prior LiDAR frame"
+        ],
+        "constraint": "External temporal-propagation methods require a separate novelty audit before being named as direct competitors."
+      },
+      "reproducibleBaselines": [
+        "remove collaborator when current payload is incomplete",
+        "current integer-frame delay path",
+        "most recent completion-time-valid prior frame",
+        "current-frame oracle reported only as an upper bound"
+      ],
+      "successResult": "Completion-time-selected history changes a preregistered model metric relative to both integer-frame selection and removal, with the effect reproducible across held-out temporal intervals.",
+      "nullOrNegativeResult": "Integer-frame selection or removal matches completion-time propagation. The added scheduling precision is rejected for the tested scope.",
+      "limitedComputeFeasibility": "High. The method reuses stored prior features or repeated frozen inference and can be tested with one model on one GPU."
+    },
+    {
+      "candidateId": "release-trace-consistency-contract",
+      "title": "十四个 take 的 trace 发布一致性契约",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "release-consistency",
+      "falsifiableHypothesis": "当前发布物不能自动保证 14 个 takes、完整数据与无 MCAP 的 mini 数据之间具有一致可复现的 throughput replay 覆盖；如果所有完整 takes 都能通过同一 schema、时钟、链路和 LiDAR 对齐检查，则该风险被否定。",
+      "minimumImplementation": [
+        "为 14 个 takes 分别生成文件存在性、MCAP 可读性、directed channel 数量、sender/receiver 集合和时间范围 manifest。",
+        "分别记录 throughput、MCAP log time、publish time 和 LiDAR timestamp 是否存在且可单调读取。",
+        "明确把 mini 标记为 no-MCAP，不为其伪造网络 trace，也不把 take 9 schema外推到其他 takes。",
+        "只有通过一致性契约的 take 才进入跨 take completion replay；失败 take 保留具体拒绝原因。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "audited complete take 9 manifest",
+          "mini no-MCAP manifest",
+          "per-take strict accept-or-reject contract"
+        ],
+        "constraint": "Project-page release descriptions are not treated as schema evidence; every take is inspected from the released files."
+      },
+      "reproducibleBaselines": [
+        "take 9 only",
+        "all takes passing the strict contract",
+        "mini marked as throughput-replay unavailable",
+        "schema-union parsing reported only as a diagnostic and never pooled with strict results"
+      ],
+      "successResult": "The contract either validates a reproducible common subset of takes or identifies concrete cross-take differences that would otherwise invalidate pooled replay conclusions.",
+      "nullOrNegativeResult": "All full takes pass the same contract. This removes release inconsistency as a material concern while preserving the mini no-MCAP boundary.",
+      "limitedComputeFeasibility": "High for the schema phase because it is CPU and storage bound. Model execution is optional and starts only after the manifests pass."
+    },
+    {
+      "candidateId": "payload-normalized-method-frontier",
+      "title": "模型载荷归一化后的吞吐完成边界",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "payload-sensitivity",
+      "falsifiableHypothesis": "不同支持模型在实测 throughput 下的结论部分由模型 payload 大小决定；在实际 payload、统一 payload 和固定 1.6 Mbps 三种条件下，相对方法结论会发生变化。若结论完全稳定，则 payload 不是主要解释变量。",
+      "minimumImplementation": [
+        "从至少两个官方支持模型的可执行路径测量实际 payload，不使用论文或项目页中的声称数值。",
+        "在同一 directed throughput trace 和 LiDAR timestamps 上分别运行实际 payload completion replay。",
+        "增加统一 payload 反事实：只改变 completion scheduler 的 payload bit 数，不宣称该反事实可直接运行对应模型。",
+        "把通信完成效应与冻结模型本身的任务效应分开报告。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "actual measured payload per supported model",
+          "equal-payload scheduling counterfactual",
+          "constant 1.6 Mbps"
+        ],
+        "constraint": "Supported model names establish executable comparators only; their external papers are not characterized until the novelty audit."
+      },
+      "reproducibleBaselines": [
+        "fixed 1.6 Mbps with each actual payload",
+        "exact throughput replay with each actual payload",
+        "equal-payload scheduling counterfactual",
+        "payload-only completion calculation without model inference"
+      ],
+      "successResult": "Actual-payload and equal-payload conditions lead to materially different completion or task conclusions, isolating payload as a testable part of the observed method difference.",
+      "nullOrNegativeResult": "Method conclusions remain stable after payload normalization. This rejects payload size as a dominant explanation in the tested range.",
+      "limitedComputeFeasibility": "Medium-high. Payload instrumentation plus two frozen models is feasible on one GPU; the scheduling-only counterfactual is CPU-side."
+    },
+    {
+      "candidateId": "directed-link-asymmetry",
+      "title": "发送与接收方向不可互换性检验",
+      "disposition": "retained-for-novelty-audit",
+      "mechanismFamily": "directionality",
+      "falsifiableHypothesis": "把 sender-to-receiver 与 receiver-to-sender throughput 对称化会改变 payload completion replay；如果方向分离、双向平均和反向替换给出等价结果，则方向性在测试范围内可忽略。",
+      "minimumImplementation": [
+        "从 12 条 directed channels 中识别可组成双向配对的 sender/receiver 组合，不假设所有方向都有对应反向 channel。",
+        "分别运行原始方向、双向平均和反向替换 throughput replay。",
+        "保持 LiDAR timestamp、模型 payload、截止时间和冻结模型完全一致。",
+        "对缺失反向 channel 的链路明确拒绝双向比较，不进行插值补造。"
+      ],
+      "requiredRealFields": [
+        "measured pairwise throughput",
+        "MCAP log time",
+        "MCAP publish time",
+        "LiDAR timestamp",
+        "sender identity",
+        "receiver identity",
+        "measured model payload"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [
+          "original directed channel",
+          "bidirectionally averaged throughput where both directions exist",
+          "reverse-direction substitution"
+        ],
+        "constraint": "No external paper or project-page statement is used to infer wireless reciprocity or channel semantics."
+      },
+      "reproducibleBaselines": [
+        "original sender-to-receiver throughput",
+        "reverse-direction throughput",
+        "pointwise bidirectional mean on an explicitly aligned grid",
+        "constant 1.6 Mbps"
+      ],
+      "successResult": "At least one verified bidirectional pair produces a reproducible completion or model-result difference between original direction and symmetry baselines.",
+      "nullOrNegativeResult": "All verified bidirectional pairs agree within tolerance. This supports directionally simplified replay for the tested take.",
+      "limitedComputeFeasibility": "High. Directional replay is primarily CPU-side and needs only one frozen model for bounded confirmation."
+    },
+    {
+      "candidateId": "loss-jitter-fidelity-ladder",
+      "title": "基于丢包与抖动的网络保真度阶梯",
+      "disposition": "rejected-schema-mismatch",
+      "mechanismFamily": "unsupported-network-fields",
+      "rejectionReason": "The audited take 9 MCAP has no packet-loss or jitter field. These quantities cannot be reconstructed from throughput without introducing unsupported assumptions.",
+      "requiredUnavailableFields": [
+        "packet loss",
+        "jitter"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [],
+        "constraint": "The candidate is rejected before novelty evaluation because its required measured fields are absent."
+      }
+    },
+    {
+      "candidateId": "measured-latency-buffer",
+      "title": "基于实测端到端时延的特征缓冲",
+      "disposition": "rejected-schema-mismatch",
+      "mechanismFamily": "unsupported-network-fields",
+      "rejectionReason": "The audited MCAP does not expose measured end-to-end latency or packet-delivery events. Throughput-integrated payload completion is a modeled completion time and must not be relabeled as measured latency.",
+      "requiredUnavailableFields": [
+        "measured end-to-end latency",
+        "packet-delivery event"
+      ],
+      "directCompetingWork": {
+        "status": "pending-external-novelty-audit",
+        "verifiedInternalComparators": [],
+        "constraint": "The candidate is rejected before novelty evaluation because its measurement premise is not present in the audited schema."
+      }
+    }
+  ]
+}

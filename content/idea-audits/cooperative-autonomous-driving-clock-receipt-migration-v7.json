@@ -1,0 +1,682 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-receipt-migration-v7",
+  "candidateId": "cross-domain-freshness-obligation",
+  "generatedAt": "2026-07-31T11:40:59.129Z",
+  "role": "independent C++ migration evidence; no scoring or acceptance threshold",
+  "purpose": "Produce source-bound evidence for an explicit migration from source-stamp subtraction to time-since-local-receipt at two fixed commits.",
+  "provenanceInputs": [
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-public-path-replay-v5.json",
+      "sha256": "d82bc07378bf5d49f5765291689a58b517b5133f14a3805f39f3985adab07ef8"
+    },
+    {
+      "path": "content/idea-audits/cooperative-autonomous-driving-clock-freshness-obligation-pilot-v6.json",
+      "sha256": "9ea7b7319f9e28e2360b185d4a1ee2f43c55fa8b2967c64cf948f97de9a2fa03"
+    },
+    {
+      "path": "scripts/idea-pilots/clock_obligation.hpp",
+      "sha256": "77238dac64b1438aa92d61975f85493b68387794c812862af956d97ea438325b"
+    }
+  ],
+  "semanticContract": {
+    "target": "time-since-local-receipt",
+    "explicitlyNotPreserved": "source-event-age",
+    "receiptClock": "std::chrono::steady_clock",
+    "comparator": ">",
+    "equalityVerdict": "fresh",
+    "failClosedScope": "stored message with missing receipt, wrong receipt clock, local epoch/relock mismatch, negative age, or unrepresentable elapsed age",
+    "replayScope": "Autoware cached polling replay cannot refresh receipt after the Latest-to-Newest change; newly delivered duplicates remain new receipts."
+  },
+  "cases": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "replayBinding": {
+        "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+        "visibleInputSha256": "7a16ba842ba883b2834ffc36e985c94dfb69a275dce019a1a67dbc8d95c6e5a3",
+        "thresholdNanoseconds": "3000000000",
+        "comparator": ">"
+      },
+      "sourceVerification": {
+        "caseId": "POS-01-AUTOWARE-VTL",
+        "repository": "autowarefoundation/autoware_universe",
+        "readOnlyRoot": "/private/tmp/clock-audit-autoware",
+        "expectedCommit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+        "observedHead": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+        "commitMatches": true,
+        "worktreeCleanBefore": true,
+        "files": [
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp",
+            "referenceOnly": false,
+            "sha256": "b0436b0facf82e54f5b5b637841940df92c6865308e247686e50b73f2fc6e553"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+            "referenceOnly": false,
+            "sha256": "5a97a5331b7e433a9a5736d84a348be7e07f40b63d65fe5188e369ab828549c2"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+            "referenceOnly": false,
+            "sha256": "f5ad43e1aae6c37012d47833c4f432e7a0a451a42e8f17903f30189a0055110d"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+            "referenceOnly": false,
+            "sha256": "5ac459db0f8143b15ed827973ed057fad2d4ca7af6e7bdce29b85b09f9c6fc32"
+          },
+          {
+            "path": "common/autoware_universe_utils/include/autoware/universe_utils/ros/polling_subscriber.hpp",
+            "referenceOnly": true,
+            "sha256": "3b56de3fc7c8f2d0cff6764e44bd5597df3945a6bf2cfa9633710aeb98d9c81a"
+          }
+        ],
+        "worktreeCleanAfter": true
+      },
+      "replacementAnchors": [
+        {
+          "id": "poll-only-new-arrivals-declaration",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            58,
+            60
+          ],
+          "afterLines": [
+            58,
+            61
+          ],
+          "beforeSha256": "fb4efa2c570f3cc9949ffc240d830632318832e190b8137a5f43ddeae5be0dcc",
+          "afterSha256": "d521dfd03d31d352bb281f85d95db59c203b65821d812f3e1e0050453a789d7a"
+        },
+        {
+          "id": "poll-only-new-arrivals-construction",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            58,
+            60
+          ],
+          "afterLines": [
+            58,
+            61
+          ],
+          "beforeSha256": "8357ab289b61be9099eaa5f33b04a7f51b94c5f6965b0d0c8f1f99524b638bc1",
+          "afterSha256": "7c30aa8a8db07fe2f2e8c91426750824e915f1f0974f731c15ba5cc7def52eed"
+        },
+        {
+          "id": "receipt-clock-include",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            35,
+            35
+          ],
+          "afterLines": [
+            35,
+            36
+          ],
+          "beforeSha256": "5e8b564105077f2b17defed4f7b3c590639d15bc87241574125316c7678cf39b",
+          "afterSha256": "1642fecc736904af40ea4b3ebb2975bb89b2dbb82e9be8f7f30e2c3c3b4a3a7f"
+        },
+        {
+          "id": "receipt-clock-alias",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            132,
+            133
+          ],
+          "afterLines": [
+            132,
+            135
+          ],
+          "beforeSha256": "38ddd9bf92e190030188b3efa78fb4c7fb375c45d83689d579b39ae584207e4c",
+          "afterSha256": "1714b6d3baf682bbf361ecdc66c25095111e40493499ef5a3322d09d895bbc59"
+        },
+        {
+          "id": "receipt-member-declaration-and-empty-initialization",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            139,
+            140
+          ],
+          "afterLines": [
+            139,
+            141
+          ],
+          "beforeSha256": "737f28103baf4f2e9148c0936691f17879b9a3f221be22ce444c278ac75fd8d8",
+          "afterSha256": "8ee92cd3cb54d4d5d975968bef22ccf617842d21c2ac1bd5d15c40687fdecd19"
+        },
+        {
+          "id": "timeout-signature-drops-source-message",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            181,
+            181
+          ],
+          "afterLines": [
+            181,
+            181
+          ],
+          "beforeSha256": "ce3075c9cf17064de0bed26e1a66d418dce3ce459057e1424f0dee4abbeb099d",
+          "afterSha256": "2f31f4840032b4a3a4a8838db7a45ff990e4d4f4555532d335b6d0c1a713545b"
+        },
+        {
+          "id": "receipt-duration-include",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            23,
+            23
+          ],
+          "afterLines": [
+            23,
+            24
+          ],
+          "beforeSha256": "8bc3ff5c398a214afbe0c2ba78ae30c49cb45c9550295d6b15ef956aaa4a1198",
+          "afterSha256": "05cdabf6dba3c7c682c96f8450f08c6bbf272b62b0fe9f7a52c192246f7cb4b6"
+        },
+        {
+          "id": "timeout-call-drops-source-message",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "occurrenceCount": 2,
+          "beforeLines": [
+            273,
+            273
+          ],
+          "afterLines": [
+            273,
+            273
+          ],
+          "beforeSha256": "324c6acbbf9671bf10d0425066b735e19938214ca6eb8c31ec6586017865fa39",
+          "afterSha256": "62331e1e05324e52747baed3ccf632da1388e9b26a7d32f54856fb4699f0da77"
+        },
+        {
+          "id": "timeout-uses-local-receipt-only",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            460,
+            470
+          ],
+          "afterLines": [
+            460,
+            481
+          ],
+          "beforeSha256": "ca88733bac22518f680ded6816774b23384e8fead207388356aa28e4caa688e0",
+          "afterSha256": "e98ab627adad6a58f119d65bda43553f76fe7ec2cb1d47c83766ae06e41eae71"
+        },
+        {
+          "id": "store-local-receipt-at-state-store-boundary",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            635,
+            636
+          ],
+          "afterLines": [
+            635,
+            637
+          ],
+          "beforeSha256": "066ae6ab9e5484c35567b0bcdea5fe67ad5e030051589be4160f2e4f060acbcd",
+          "afterSha256": "6710d83e675c16f45ed957061816ac32fc7258e1b73e3e907886c13bfba31ca7"
+        }
+      ],
+      "mechanicalSemantics": {
+        "semanticTargetBefore": "source-event-age-without-clock-relation",
+        "semanticTargetAfter": "time-since-local-receipt",
+        "beforeExpression": "(clock_->now() - rclcpp::Time(state.stamp)).seconds()",
+        "afterExpression": "std::chrono::duration<double>(now - *virtual_traffic_light_state_received_at_).count()",
+        "beforeComparator": ">",
+        "afterComparator": ">",
+        "localClockType": "std::chrono::steady_clock",
+        "localNowExpression": "ReceiptClock::now()",
+        "receiptStoreExpression": "virtual_traffic_light_state_received_at_ = ReceiptClock::now()",
+        "remoteStampOperandBefore": "state.stamp",
+        "remoteStampOperandAfter": null,
+        "missingReceiptAction": "return timeout",
+        "negativeAgeAction": "return timeout",
+        "downstreamAction": "insertStopVelocityAtStopLine",
+        "cachedReplayHandling": "polling_policy::Newest returns nullptr when no newly taken message exists"
+      },
+      "patch": {
+        "format": "unified-diff",
+        "sha256": "81bd0ea7891565cbc0c469636e7591f2641510c07e47e7d3666d83840fcbb804",
+        "changedFiles": [
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp",
+            "beforeSha256": "b0436b0facf82e54f5b5b637841940df92c6865308e247686e50b73f2fc6e553",
+            "afterSha256": "6e4d258de734ffc8390ca111d83bac1d6ffa053c8f9392d538651acb949dadee"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+            "beforeSha256": "5a97a5331b7e433a9a5736d84a348be7e07f40b63d65fe5188e369ab828549c2",
+            "afterSha256": "9b8a04238977fa0b8d81c3f8d61d676e5c8efebeb8834e9386ba5b28e01fa5d4"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp",
+            "beforeSha256": "f5ad43e1aae6c37012d47833c4f432e7a0a451a42e8f17903f30189a0055110d",
+            "afterSha256": "59ca9745c2a6586ca4e23fc7fa8e828540691bef72617aa39e4fe54bde64fab5"
+          },
+          {
+            "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+            "beforeSha256": "5ac459db0f8143b15ed827973ed057fad2d4ca7af6e7bdce29b85b09f9c6fc32",
+            "afterSha256": "86c0c386fe512b1e21fa29d62408805a161e3ee855b4ebadf08e44210a3ece99"
+          }
+        ],
+        "unifiedDiff": "diff --git a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp\nindex 90ed520..0399679 100644\n--- a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp\n+++ b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp\n@@ -56,7 +56,8 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node\n   }\n \n   sub_virtual_traffic_light_states_ = autoware_utils::InterProcessPollingSubscriber<\n-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::\n+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray,\n+    autoware_utils::polling_policy::Newest>::\n     create_subscription(&node, \"~/input/virtual_traffic_light_states\");\n \n   pub_infrastructure_commands_ =\ndiff --git a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp\nindex b987207..d1cd9a6 100644\n--- a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp\n+++ b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp\n@@ -56,7 +56,8 @@ private:\n     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;\n \n   autoware_utils::InterProcessPollingSubscriber<\n-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr\n+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray,\n+    autoware_utils::polling_policy::Newest>::SharedPtr\n     sub_virtual_traffic_light_states_;\n \n   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr\ndiff --git a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp\nindex 40505fe..081e9a2 100644\n--- a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp\n+++ b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp\n@@ -20,6 +20,7 @@\n #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>\n #include <autoware/motion_utils/trajectory/trajectory.hpp>\n \n+#include <chrono>\n #include <memory>\n #include <string>\n #include <vector>\n@@ -269,7 +270,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path)\n   // Stop at stop_line if state is timeout before stop_line\n   if (isBeforeStopLine(end_line_idx)) {\n     setModuleState<State::REQUESTING>();\n-    if (isStateTimeout(*virtual_traffic_light_state_)) {\n+    if (isStateTimeout()) {\n       logWarnThrottle(\n         5000, \"virtual traffic light state is timeout, stop at stop line (ID: %s)\",\n         map_data_.stop_line_id_for_log.c_str());\n@@ -287,7 +288,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path)\n \n   // Check timeout after stop_line if the option is on\n   if (\n-    planner_param_.check_timeout_after_stop_line && isStateTimeout(*virtual_traffic_light_state_)) {\n+    planner_param_.check_timeout_after_stop_line && isStateTimeout()) {\n     setModuleState<State::PASSING>();\n     logWarnThrottle(\n       5000,\n@@ -456,10 +457,21 @@ bool VirtualTrafficLightModule::isNearAnyEndLine(const size_t end_line_idx)\n   return std::abs(signed_arc_length) < planner_param_.near_line_distance;\n }\n \n-bool VirtualTrafficLightModule::isStateTimeout(\n-  const tier4_v2x_msgs::msg::VirtualTrafficLightState & state)\n+bool VirtualTrafficLightModule::isStateTimeout()\n {\n-  const auto delay = (clock_->now() - rclcpp::Time(state.stamp)).seconds();\n+  if (!virtual_traffic_light_state_received_at_) {\n+    logDebug(\"virtual traffic light receipt time is unavailable\");\n+    return true;\n+  }\n+\n+  const auto now = ReceiptClock::now();\n+  if (now < *virtual_traffic_light_state_received_at_) {\n+    logDebug(\"virtual traffic light receipt clock moved backwards\");\n+    return true;\n+  }\n+\n+  const auto delay =\n+    std::chrono::duration<double>(now - *virtual_traffic_light_state_received_at_).count();\n   if (delay > planner_param_.max_delay_sec) {\n     logDebug(\"delay=%f, max_delay=%f\", delay, planner_param_.max_delay_sec);\n     return true;\n@@ -620,6 +632,7 @@ void VirtualTrafficLightModule::setCorrespondingVirtualTrafficLightState(\n         state.id.c_str(), state.approval ? \"true\" : \"false\", state.stamp.sec, state.stamp.nanosec);\n     }\n \n+    virtual_traffic_light_state_received_at_ = ReceiptClock::now();\n     virtual_traffic_light_state_ = state;\n     return;\n   }\ndiff --git a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp\nindex 756f745..c48574f 100644\n--- a/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp\n+++ b/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp\n@@ -32,6 +32,7 @@\n #include <lanelet2_core/LaneletMap.h>\n #include <lanelet2_routing/RoutingGraph.h>\n \n+#include <chrono>\n #include <functional>\n #include <memory>\n #include <optional>\n@@ -129,11 +130,14 @@ public:\n   }\n \n private:\n+  using ReceiptClock = std::chrono::steady_clock;\n+\n   const int64_t lane_id_;\n   const lanelet::autoware::VirtualTrafficLight & reg_elem_;\n   const lanelet::ConstLanelet lane_;\n   const PlannerParam planner_param_;\n   std::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState> virtual_traffic_light_state_;\n+  std::optional<ReceiptClock::time_point> virtual_traffic_light_state_received_at_{};\n   State state_{State::NONE};\n   tier4_v2x_msgs::msg::InfrastructureCommand command_;\n   std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;\n@@ -174,7 +178,7 @@ private:\n \n   bool isNearAnyEndLine(const size_t end_line_idx);\n \n-  bool isStateTimeout(const tier4_v2x_msgs::msg::VirtualTrafficLightState & state);\n+  bool isStateTimeout();\n \n   bool hasRightOfWay(const tier4_v2x_msgs::msg::VirtualTrafficLightState & state);\n \n"
+      },
+      "actualPatchApplicability": {
+        "temporarySnapshot": true,
+        "fixedCheckoutModified": false,
+        "gitApplyCheckExitStatus": 0,
+        "gitApplyExitStatus": 0,
+        "changedPaths": [
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp"
+        ],
+        "onlyExpectedFilesChanged": true,
+        "appliedDiffMatchesGeneratedDiff": true,
+        "beforeSha256": {
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp": "b0436b0facf82e54f5b5b637841940df92c6865308e247686e50b73f2fc6e553",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp": "5a97a5331b7e433a9a5736d84a348be7e07f40b63d65fe5188e369ab828549c2",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp": "f5ad43e1aae6c37012d47833c4f432e7a0a451a42e8f17903f30189a0055110d",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp": "5ac459db0f8143b15ed827973ed057fad2d4ca7af6e7bdce29b85b09f9c6fc32",
+          "common/autoware_universe_utils/include/autoware/universe_utils/ros/polling_subscriber.hpp": "3b56de3fc7c8f2d0cff6764e44bd5597df3945a6bf2cfa9633710aeb98d9c81a"
+        },
+        "afterSha256": {
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.hpp": "6e4d258de734ffc8390ca111d83bac1d6ffa053c8f9392d538651acb949dadee",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp": "9b8a04238977fa0b8d81c3f8d61d676e5c8efebeb8834e9386ba5b28e01fa5d4",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.hpp": "59ca9745c2a6586ca4e23fc7fa8e828540691bef72617aa39e4fe54bde64fab5",
+          "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp": "86c0c386fe512b1e21fa29d62408805a161e3ee855b4ebadf08e44210a3ece99",
+          "common/autoware_universe_utils/include/autoware/universe_utils/ros/polling_subscriber.hpp": "3b56de3fc7c8f2d0cff6764e44bd5597df3945a6bf2cfa9633710aeb98d9c81a"
+        }
+      }
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "replayBinding": {
+        "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+        "visibleInputSha256": "20b5963da1d5315f59877e3a14dc78664850307eeb6365add721d34fc6aed5c9",
+        "thresholdNanoseconds": "500000000",
+        "comparator": ">"
+      },
+      "sourceVerification": {
+        "caseId": "POS-02-CARMA-GNSS",
+        "repository": "usdot-fhwa-stol/carma-platform",
+        "readOnlyRoot": "/private/tmp/clock-audit-carma-platform",
+        "expectedCommit": "1c774df099ce23e77394758969bf86b0e5f40863",
+        "observedHead": "1c774df099ce23e77394758969bf86b0e5f40863",
+        "commitMatches": true,
+        "worktreeCleanBefore": true,
+        "files": [
+          {
+            "path": "localization_manager/include/localization_manager/LocalizationManager.hpp",
+            "referenceOnly": false,
+            "sha256": "8640caa978a0ec07358e07b49293187cb5eee2a4a5ce5962e7d79c17c70c63af"
+          },
+          {
+            "path": "localization_manager/src/LocalizationManager.cpp",
+            "referenceOnly": false,
+            "sha256": "ee5d41fa49cffffe773c9f216d0675ea50c68dd48d22f4b6c03db8aaf0981bc2"
+          },
+          {
+            "path": "localization_manager/src/LocalizationTransitionTable.cpp",
+            "referenceOnly": true,
+            "sha256": "9dc296dfdfb4ebef3f2b085293480d87b11cfb7d3481193b5f0a247cb8da7f11"
+          }
+        ],
+        "worktreeCleanAfter": true
+      },
+      "replacementAnchors": [
+        {
+          "id": "receipt-clock-include",
+          "path": "localization_manager/include/localization_manager/LocalizationManager.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            26,
+            26
+          ],
+          "afterLines": [
+            26,
+            27
+          ],
+          "beforeSha256": "5e8b564105077f2b17defed4f7b3c590639d15bc87241574125316c7678cf39b",
+          "afterSha256": "1642fecc736904af40ea4b3ebb2975bb89b2dbb82e9be8f7f30e2c3c3b4a3a7f"
+        },
+        {
+          "id": "receipt-clock-alias",
+          "path": "localization_manager/include/localization_manager/LocalizationManager.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            137,
+            138
+          ],
+          "afterLines": [
+            137,
+            140
+          ],
+          "beforeSha256": "329cfa27570df706dce40c4c976d7ded2aa8d213061baf3fbd565b8d2f4ea644",
+          "afterSha256": "36e51ba707fd6c453515e374df890581dceae05783d777cf02ad8eae8b978eb6"
+        },
+        {
+          "id": "receipt-member-declaration-and-empty-initialization",
+          "path": "localization_manager/include/localization_manager/LocalizationManager.hpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            155,
+            156
+          ],
+          "afterLines": [
+            155,
+            157
+          ],
+          "beforeSha256": "bedd35c80339c745d346a1da72685ed7ba7bbd1f065c1c12fe81ee722e8e4362",
+          "afterSha256": "7d45089007c0c0679e4d89dc5b2efd86d6637b1e3053effbd777ea3c69f6ed02"
+        },
+        {
+          "id": "receipt-duration-include",
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            18,
+            18
+          ],
+          "afterLines": [
+            18,
+            19
+          ],
+          "beforeSha256": "bcd5f045fec788c96f9e6baae16f12298789dc3ccc8f820bc3d501b0cc78cfe3",
+          "afterSha256": "3a0b4399e87bc6cc3cb213c9946700bd9055e8b3631cc08eeb19e6417aa9c867"
+        },
+        {
+          "id": "store-local-receipt-at-gnss-callback-boundary",
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            145,
+            147
+          ],
+          "afterLines": [
+            145,
+            148
+          ],
+          "beforeSha256": "1bf43be40487447788b46a8958366726841b3c4c402362dfbdf835f53481352e",
+          "afterSha256": "98aa26ae5800d1716b395d01882c36f5bb83944de1bafff79999fc7583077c9e"
+        },
+        {
+          "id": "timeout-uses-local-receipt-only",
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "occurrenceCount": 1,
+          "beforeLines": [
+            285,
+            289
+          ],
+          "afterLines": [
+            285,
+            295
+          ],
+          "beforeSha256": "c7857bff353617368c72e5c8700393b61297bf52c1888b30ead5aafdab3350dc",
+          "afterSha256": "e56f639139da28a7a7e75a552bf7d0db541ead631b48f42386fe0210fec90d12"
+        }
+      ],
+      "mechanicalSemantics": {
+        "semanticTargetBefore": "source-event-age-without-clock-relation",
+        "semanticTargetAfter": "time-since-local-receipt",
+        "beforeExpression": "timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_)",
+        "afterExpression": "gnss_receipt_now - *last_raw_gnss_received_at_",
+        "beforeComparator": ">",
+        "afterComparator": ">",
+        "localClockType": "std::chrono::steady_clock",
+        "localNowExpression": "ReceiptClock::now()",
+        "receiptStoreExpression": "last_raw_gnss_received_at_ = ReceiptClock::now()",
+        "remoteStampOperandBefore": "last_raw_gnss_value_->header.stamp",
+        "remoteStampOperandAfter": null,
+        "missingReceiptAction": "signal GNSS_DATA_TIMEOUT for a stored GNSS message",
+        "negativeAgeAction": "signal GNSS_DATA_TIMEOUT",
+        "downstreamAction": "signal LocalizationSignal::GNSS_DATA_TIMEOUT",
+        "degradedStateAction": "throw runtime_error when state is DEGRADED_NO_LIDAR_FIX"
+      },
+      "patch": {
+        "format": "unified-diff",
+        "sha256": "a1b40b24f36ca709deead19840294b97d4c5f398fc9f53b3e59639d943d7e27d",
+        "changedFiles": [
+          {
+            "path": "localization_manager/include/localization_manager/LocalizationManager.hpp",
+            "beforeSha256": "8640caa978a0ec07358e07b49293187cb5eee2a4a5ce5962e7d79c17c70c63af",
+            "afterSha256": "53936934db011decf59af03d088df6186c3f590080b29bcb8604310ed9e6c4de"
+          },
+          {
+            "path": "localization_manager/src/LocalizationManager.cpp",
+            "beforeSha256": "ee5d41fa49cffffe773c9f216d0675ea50c68dd48d22f4b6c03db8aaf0981bc2",
+            "afterSha256": "9e5bc58257b32bf842cb94b4e6f04832d5495852522d3c2185ca913181ed5841"
+          }
+        ],
+        "unifiedDiff": "diff --git a/localization_manager/include/localization_manager/LocalizationManager.hpp b/localization_manager/include/localization_manager/LocalizationManager.hpp\nindex 9ae5e64..fb57730 100644\n--- a/localization_manager/include/localization_manager/LocalizationManager.hpp\n+++ b/localization_manager/include/localization_manager/LocalizationManager.hpp\n@@ -23,6 +23,7 @@\n #include <tf2/LinearMath/Vector3.h>\n #include <carma_msgs/msg/system_alert.hpp>\n #include <carma_localization_msgs/msg/localization_status_report.hpp>\n+#include <chrono>\n #include <functional>\n #include <unordered_set>\n #include <carma_ros2_utils/timers/Timer.hpp>\n@@ -134,6 +135,8 @@ namespace localization_manager\n         void setConfig(const LocalizationManagerConfig& config);\n \n     private:\n+        using ReceiptClock = std::chrono::steady_clock;\n+\n         //! The set of strings which mark a lidar failure in a system alert message\n         static const std::unordered_set<std::string> LIDAR_FAILURE_STRINGS; // Static const container defined in cpp file\n \n@@ -150,6 +153,7 @@ namespace localization_manager\n         int lidar_init_sequential_timesteps_counter_ = 0;\n         bool is_sequential_ = false;\n         boost::optional<geometry_msgs::msg::PoseStamped> last_raw_gnss_value_;\n+        boost::optional<ReceiptClock::time_point> last_raw_gnss_received_at_{};\n         boost::optional<tf2::Vector3> gnss_offset_;\n         boost::optional<geometry_msgs::msg::PoseStamped> current_pose_;\n \ndiff --git a/localization_manager/src/LocalizationManager.cpp b/localization_manager/src/LocalizationManager.cpp\nindex a6f0f89..500b05b 100644\n--- a/localization_manager/src/LocalizationManager.cpp\n+++ b/localization_manager/src/LocalizationManager.cpp\n@@ -16,6 +16,7 @@\n \n #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>\n #include <algorithm>\n+#include <chrono>\n #include \"localization_manager/LocalizationManager.hpp\"\n \n namespace localization_manager\n@@ -142,6 +143,7 @@ namespace localization_manager\n \n     void LocalizationManager::gnssPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)\n     {\n+        last_raw_gnss_received_at_ = ReceiptClock::now();\n         last_raw_gnss_value_ = *msg;\n         // Just like ndt_matching the gnss pose is treated as an initialize signal if the system is not yet intialized\n         if (transition_table_.getState() == LocalizationState::UNINITIALIZED)\n@@ -280,8 +282,14 @@ namespace localization_manager\n             }\n         }\n \n-        // check if last gnss time stamp is older than threshold and send the corresponding signal\n-        if (last_raw_gnss_value_ && timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > rclcpp::Duration::from_nanoseconds(config_.gnss_data_timeout * 1e6))\n+        // Check elapsed local time since the last GNSS callback.\n+        const auto gnss_receipt_now = ReceiptClock::now();\n+        const auto gnss_timeout = std::chrono::milliseconds(config_.gnss_data_timeout);\n+        if (\n+            last_raw_gnss_value_ &&\n+            (!last_raw_gnss_received_at_ ||\n+             gnss_receipt_now < *last_raw_gnss_received_at_ ||\n+             gnss_receipt_now - *last_raw_gnss_received_at_ > gnss_timeout))\n         {\n             transition_table_.signal(LocalizationSignal::GNSS_DATA_TIMEOUT);\n         }\n"
+      },
+      "actualPatchApplicability": {
+        "temporarySnapshot": true,
+        "fixedCheckoutModified": false,
+        "gitApplyCheckExitStatus": 0,
+        "gitApplyExitStatus": 0,
+        "changedPaths": [
+          "localization_manager/include/localization_manager/LocalizationManager.hpp",
+          "localization_manager/src/LocalizationManager.cpp"
+        ],
+        "onlyExpectedFilesChanged": true,
+        "appliedDiffMatchesGeneratedDiff": true,
+        "beforeSha256": {
+          "localization_manager/include/localization_manager/LocalizationManager.hpp": "8640caa978a0ec07358e07b49293187cb5eee2a4a5ce5962e7d79c17c70c63af",
+          "localization_manager/src/LocalizationManager.cpp": "ee5d41fa49cffffe773c9f216d0675ea50c68dd48d22f4b6c03db8aaf0981bc2",
+          "localization_manager/src/LocalizationTransitionTable.cpp": "9dc296dfdfb4ebef3f2b085293480d87b11cfb7d3481193b5f0a247cb8da7f11"
+        },
+        "afterSha256": {
+          "localization_manager/include/localization_manager/LocalizationManager.hpp": "53936934db011decf59af03d088df6186c3f590080b29bcb8604310ed9e6c4de",
+          "localization_manager/src/LocalizationManager.cpp": "9e5bc58257b32bf842cb94b4e6f04832d5495852522d3c2185ca913181ed5841",
+          "localization_manager/src/LocalizationTransitionTable.cpp": "9dc296dfdfb4ebef3f2b085293480d87b11cfb7d3481193b5f0a247cb8da7f11"
+        }
+      }
+    }
+  ],
+  "cppHarness": {
+    "compiler": "/usr/bin/clang++",
+    "compilerVersion": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+    "languageMode": "c++17",
+    "generationBinding": "Exact before/after expressions, receipt-store expressions, comparators, case IDs, and fail-closed action tokens are extracted from the fixed and patched source before C++ generation.",
+    "base": {
+      "id": "clock-receipt-base",
+      "sourceSha256": "46e7107e3172f8bf9ff61f52e1b82fb360016f158e887e6a670475a1ca191838",
+      "compileExitStatus": 0,
+      "compilerStderr": null,
+      "runExitStatus": 0,
+      "stdout": "PASS:13",
+      "stderr": null
+    },
+    "mutants": [
+      {
+        "id": "continues-using-source-stamp",
+        "category": "source-stamp",
+        "description": "The decision subtracts the remote source stamp instead of the local receipt.",
+        "sourceSha256": "612b782532114cdec3fe6fae563ec0378a8c1a8b171881229e5c2bda3ef3d43f",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:fresh,timeout,strict-equality,remote-stamp-offset-invariance,overflow",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "fresh",
+          "timeout",
+          "strict-equality",
+          "remote-stamp-offset-invariance",
+          "overflow"
+        ]
+      },
+      {
+        "id": "accepts-wrong-clock",
+        "category": "wrong-clock",
+        "description": "The decision omits the receipt/decision clock-domain equality check.",
+        "sourceSha256": "eee2cccdee7d23e550b568f00c1773d0ee3d2e5fc5307e817a617014d772a15e",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:wrong-clock",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "wrong-clock"
+        ]
+      },
+      {
+        "id": "missing-receipt-defaults-fresh",
+        "category": "missing-receipt-store",
+        "description": "A stored message without a receipt timestamp is treated as fresh.",
+        "sourceSha256": "e75e4866f3ca4f211894296c0e960898ed5a12604712b304d176794be1b7168a",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:missing-receipt",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "missing-receipt"
+        ]
+      },
+      {
+        "id": "changes-boundary-to-inclusive",
+        "category": "comparison-boundary",
+        "description": "The fixed strict greater-than comparator is changed to greater-or-equal.",
+        "sourceSha256": "3f402c0a1673e8be04f1b3e7bcdfaeaafb942b3f47ada79d19756b681fbb8d3a",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:strict-equality",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "strict-equality"
+        ]
+      },
+      {
+        "id": "overwrites-receipt-during-replay",
+        "category": "receipt-overwrite-replay",
+        "description": "The decision boundary overwrites receipt with now, modeling cached replay refresh.",
+        "sourceSha256": "f04ccc40e049444acd107d94f545e55fa347a551bbfb1aedb8f9aa94fe71ef9e",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:timeout,negative-age,overflow",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "timeout",
+          "negative-age",
+          "overflow"
+        ]
+      },
+      {
+        "id": "negative-age-defaults-fresh",
+        "category": "negative-age",
+        "description": "A backwards local-clock observation is coerced to fresh.",
+        "sourceSha256": "bf9a77b7c6e88f0b6019b14a2967dd43c936edd0111c12159dab156555622110",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:negative-age",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "negative-age"
+        ]
+      },
+      {
+        "id": "overflow-defaults-fresh",
+        "category": "overflow",
+        "description": "An unrepresentable signed elapsed duration is coerced to fresh.",
+        "sourceSha256": "5e549608e352306ad290ae6405b256d12b52b791ccfcfbd7f2864f1fb06766c9",
+        "compileExitStatus": 0,
+        "compilerStderr": null,
+        "runExitStatus": 1,
+        "stdout": "FAIL:negative-age,overflow",
+        "stderr": null,
+        "killed": true,
+        "killedBy": [
+          "negative-age",
+          "overflow"
+        ]
+      }
+    ],
+    "allMutantsKilled": true
+  },
+  "fullProjectBuilds": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "status": "blocked",
+      "attempted": false,
+      "reason": "The fixed checkout is source-only evidence and this environment has no provisioned ROS 2 installation or complete ament workspace dependencies.",
+      "evidence": {
+        "rosInstallRoot": "/opt/ros",
+        "rosInstallRootPresent": false,
+        "colconPath": null,
+        "dependencyManifest": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/package.xml"
+      },
+      "conclusion": "No full Autoware/CARMA build, link, unit-test, or integration result is claimed."
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "status": "blocked",
+      "attempted": false,
+      "reason": "The fixed checkout is source-only evidence and this environment has no provisioned ROS 2 installation or complete ament workspace dependencies.",
+      "evidence": {
+        "rosInstallRoot": "/opt/ros",
+        "rosInstallRootPresent": false,
+        "colconPath": null,
+        "dependencyManifest": "localization_manager/package.xml"
+      },
+      "conclusion": "No full Autoware/CARMA build, link, unit-test, or integration result is claimed."
+    }
+  ],
+  "execution": {
+    "localArtifactSha256": {
+      "scripts/idea-pilots/clock-receipt-migration.mjs": "574fca1f7fcfa541e961245ef9556874d3b9c09f124375f7633e82f482f99f30",
+      "test/clock-receipt-migration.test.mjs": "c4d81510da884c1d5c7b35417be57cca8b87cea0939a8cd0fb59c3c97393c378"
+    },
+    "temporaryDirectoriesRemoved": true,
+    "fixedCheckoutsModified": false
+  },
+  "results": {
+    "fixedSourceContractsVerified": true,
+    "actualPatchApplicabilityPassed": true,
+    "onlyExpectedSourceFilesChanged": true,
+    "remoteStampRemovedFromFreshnessOperands": true,
+    "strictComparisonBoundaryPreserved": true,
+    "harnessCompiledAndRan": true,
+    "allMutantsKilled": true,
+    "fullAutowareBuild": "blocked",
+    "fullCarmaBuild": "blocked"
+  },
+  "claimBoundary": {
+    "supported": [
+      "At the two fixed commits, the declared source blobs and exact replacement anchors match their recorded SHA-256 values.",
+      "The generated unified diffs apply to temporary snapshots with git apply --check and git apply, and only the declared files change.",
+      "The patched timeout operands implement time-since-local-receipt with one process-local steady clock; remote source stamps are not freshness operands.",
+      "For a stored message, missing receipt, clock-domain or local epoch mismatch, negative elapsed time, and unrepresentable elapsed time are fail-closed in the generated C++17 harness.",
+      "The mechanically generated C++17 harness compiles and runs fresh, timeout, strict-equality, remote-stamp invariance, and case-specific fail-closed action checks.",
+      "Every declared mutant is compiled, run, and killed by at least one harness check."
+    ],
+    "notSupported": [
+      "This is an explicit semantic migration to time-since-local-receipt; it does not preserve or estimate source-event-age.",
+      "Neither the full Autoware project nor the full CARMA project is built in this environment.",
+      "Patch applicability is not evidence of project compilation, ABI compatibility, deployment reachability, scheduling behavior, or runtime integration.",
+      "No safety benefit, product defect, vulnerability, incident frequency, or field clock condition is inferred.",
+      "Autoware's Newest polling change prevents cached planner-cycle replay from refreshing receipt; it is not a network anti-replay mechanism, and a newly delivered duplicate is a new local receipt.",
+      "The harness is a mechanically bound policy model, not execution of ROS 2, Autoware, CARMA, or their transition machinery."
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "lens": "empirical-reviewer",
+  "reviewerAgentId": "019fbb3d-078b-7d50-b38a-aee0c017b7d8",
+  "reviewedAt": "2026-08-01T03:10:02Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 7,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "潜在结果、选择性日志、IPS/DR/SWITCH/CRM 和 learning-to-defer 均已有直接先例，Cognitive Dual-Process 还已报告强制 fast 后果、全 fast/全 slow/动态路由及长尾 FNR。剩余新意是同一真实驾驶 VLA 上公开逐场景 fast-slow 净收益账本，并证明视觉复杂度与该收益发生会改变预算决策的错配；这个残差明确，但在观察到实证反例前仍属于条件性贡献。",
+    "feasibility": "AutoVLA 固定提交、checkpoint、动作 tokenizer 和 NAVSIM PDM 评测路径使静态 paired ledger 可实现，且无需训练新视觉骨干。关键处理有效性仍未关闭：官方 `use_cot=true` 提示允许模型自行选择是否推理，论文附录又把快慢模式与不同 temperature、top-p、top-k 绑定；自建 forced branch 若同时改变提示、格式和采样，得到的是处理包效应而非可解释的慢思考收益。闭环 runner 未随固定提交提供，但它不应阻塞限定为 NAVSIM 的最小研究。",
+    "success-probability": "AutoVLA 的平均慢路径时延约为快路径十倍，Cognitive Dual-Process 又显示动态路由优于全慢并在长尾子集出现较高 FNR，这些结果使收益异质性和错误路由具有中等先验概率。更强假设要求复杂度或置信度错配在独立测试集稳定出现、收益路由优于最强 L2D/复杂度基线，并且选择性日志校正改变实质结论；目前没有逐场景自然证据或数值功效分析支持这组三重成功门。",
+    "impact": "若完整账本改变固定预算下的路由排序，它会把驾驶快慢系统从复杂度代理转向可审计的增量效用，并推动 propensity、支持诊断和时延合同成为标准报告项。影响会被单一 checkpoint、静态 NAVSIM、人工分支合同和未建模的十秒级环境演化限制；未完成闭环时不能转译为真实控制安全收益。",
+    "comparison-readiness": "always-fast、always-slow、随机预算匹配、复杂度、置信度、L2D、oracle benefit 以及 DM/IPS/DR/SWITCH/CRM 的集合充分，预算匹配和 positivity 边界也写得清楚。缺口是没有冻结最小有意义的 PDMS/安全漏路由差、没有基于 scene-cluster 方差给出样本量，也没有用正交实验分离 prompt、输出格式和 decoding 对所谓 branch benefit 的贡献。"
+  },
+  "strongestObjection": "可比较的 fast/slow treatment 尚未被定义。官方 AutoVLA 的 CoT 提示本身是自适应的，快慢结果又可由不同采样参数产生；若研究者改用两个强制提示，slow-minus-fast 会混合提示、格式、序列长度、解码随机性与推理内容，并且未必对应任何真实部署路由器。没有先证明处理稳定性，后续完整账本和 OPE 审计都可能精确回答了错误的问题。静态完整配对账本可执行，且自然结果为收益异质性提供了合理先验；但研究成败首先取决于 fast/slow 是否是稳定、可解释并对应部署语义的处理。当前更像一项有潜力的驾驶特定审计，尚未达到无需先做 branch-validity gate 就可直接扩展的程度。",
+  "requiredExperiment": "先做一个分支有效性析因实验：在至少 150 个分层 scene cluster 上固定 checkpoint、同一系统提示、输入、动作 token 时域和随机数流，用约束解码只强制 direct-action 或 structured-reasoning-before-action；再在 greedy 与固定采样两种共享 decoding 设置下各运行两分支，随机交换执行顺序，并对采样条件做至少 3 seed 重复。只有当分支合规率足够高、slow-minus-fast 的方向不被 mode-by-decoding 交互主导、重复方差低于预声明收益界时，才冻结 treatment；随后用 pilot 的簇方差计算达到至少 80% 功效所需的 full ledger 样本量和危险漏路由最小效应。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2607.19194",
+      "finding": "Cognitive Dual-Process 已用视觉 Arbiter、强制 fast 后果项和静态 Fast-Plan/Slow-Think 对照；574 个 NAVSIM 样本上动态模式 80.14%、全慢 77.87%、全快 73.87%，六个长尾子集平均 FNR 25.10%。它支持自然异质性线索，也显著压缩本候选的新颖性空间。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "finding": "AutoVLA 正式论文定义 trajectory-only 快模式和 CoT 慢模式，报告平均时延 1.072 秒与 10.518 秒；其附录把更高温度和更宽 top-p/top-k 与慢思考关联，说明官方模式并不是一个已隔离的纯 reasoning 开关。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "finding": "固定提交公开 Qwen2.5-VL-3B checkpoint 路径、动作 tokenizer 和逐 token NAVSIM PDM evaluator；代码中的 `use_cot` 只改变提示且仍写明按需推理，生成还受 temperature/top-k/top-p 控制，因此需要先验证自建强制分支合同。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "finding": "AISTATS 2025 已以潜在结果定义 deferral 的个体因果效应，并分别处理双侧预测可得与只观察被延期结果的情形；本候选不能把潜在结果表述本身作为贡献。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v37/swaminathan15.html",
+      "finding": "CRM 已形式化 logged bandit feedback 下的 propensity 校正和方差正则化，确认选择性日志学习属于成熟方法边界；驾驶贡献必须来自新的收益错配和系统决策后果。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v70/wang17a.html",
+      "finding": "该工作给出 contextual-bandit OPE 的 minimax 难度，并比较 IPS、DR 与 SWITCH 的偏差方差边界；它支持 dossier 对 deterministic positivity failure 的限制，也意味着 OPE 方法比较本身不构成新结果。"
+    }
+  ],
+  "overall": 6
+}

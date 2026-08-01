@@ -1,0 +1,33 @@
+{
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "lens": "impact-reviewer",
+  "reviewerAgentId": "019fbb48-8e3c-7432-94ce-8cc509aded17",
+  "reviewedAt": "2026-08-01T03:18:25Z",
+  "scores": {
+    "novelty": 8,
+    "feasibility": 5,
+    "success-probability": 5,
+    "impact": 8,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "VLADriveBench 已经证明观察对齐与语义干预结果可明显背离，因此本候选不能把这种背离本身算作新发现。真正的新意是把在隔离数据上标定的因果制度作为观察型安全监测器的 transport variable，检验跨制度校准、风险排序和共同支持区内的伤害反例，并用同一 checkpoint 的理由通道脱钩对照区分模型身份与机制。这是紧邻强先例但仍有明确、可证伪的评测残差。",
+    "feasibility": "方案给出了固定代码与权重 revision、selfsplice 检查、路线族隔离和分阶段止损，技术路径具体。但两套重型模型的不同推理边界、CARLA 适配、ORION 大 checkpoint、Alpamayo 的 OOD 输入以及 KV-cache 脱钩都具有较高工程风险。更关键的是，自然输出中每个制度获得足够 harm-positive 路线和至少 80 个观察分数匹配单元未被现有证据保证，可能在实现成功后仍因支持不足而无法回答主问题。",
+    "success-probability": "一手结果强力支持固定模型对确实可能落在不同语义耦合制度，因而制度分层不是凭空假设；Alpamayo 的方向性干预和 ORION 的非语义响应也提供了机制先验。然而，现有结果没有显示冻结观察监测器的 AUROC、校准或自然伤害排序会反转，两个模型的传感器契约和域差异还可能主导结果。同 checkpoint 脱钩分支能否在不引入新的分布偏移时复现自然差异，是成功概率的主要不确定项。",
+    "impact": "若观察分数在不同因果制度下对应不同真实伤害风险，理由型驾驶 VLA 的监测报告需要增加制度标定、共同支持和模型迁移校准，且不能再把表面一致性直接当作跨模型安全信号；这会实质改变评测协议和部署审计。若在预注册边界内没有差异，紧窄的校准与排序上界也能支持继续使用低成本观察监测，避免不必要的机制模块。影响仍应严格限于固定 checkpoint、受控 CARLA 与所定义伤害标签，不能声称真实道路事故风险已被识别。",
+    "comparison-readiness": "基线覆盖观察指标、既有 fidelity 指标、trajectory-only monitor、pooled calibration、model-ID calibration、制度交互和每模型 oracle，且制度标定、监测训练与伤害标签在数据和特征上分离。模型 ID 基线尤其重要，因为它能直接检验制度变量是否只是在给模型身份换名。尚需把同 checkpoint 脱钩分支也纳入完全相同的校准比较，并报告模型 ID 与制度同时进入时的增量，否则机制解释仍可能超过证据。"
+  },
+  "strongestObjection": "只有两个自然模型时，因果制度与模型身份完全共线；所谓制度条件化的收益可能只是普通的模型特定校准或传感器域适配。同 checkpoint 脱钩又是人工构造的新分布，若它不能在原生输出的共同支持区复现同方向校准变化，研究就无法证明监测含义改变来自理由进入动作链的方式。",
+  "requiredExperiment": "先完成一个预注册的小型 transport falsification：在路线族隔离的共同场景上同时运行 ORION、原生 Alpamayo 1.5 和固定权重理由通道脱钩 Alpamayo，冻结同一观察监测器与几何伤害标签；在严格共同支持区比较 pooled、model-ID、regime、model-ID-plus-regime 四种校准器，并要求脱钩分支在自然 harm-positive 样本上复现跨模型方向，而 regime 在加入 model ID 后仍有稳定增量。若样本支持或该增量不存在，应只报告固定边界内的可迁移性。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2606.12706",
+      "finding": "重新打开摘要与论文 HTML；论文在三种公开 VLA 上并列观察指标和 CoT splice，报告 ORION 高观察对齐但非语义响应、Alpamayo 1.5 较低观察对齐但方向性语义作用，并明确 Alpamayo 在 CARLA 中为 OOD、效应幅度应视为上界。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.17268",
+      "finding": "重新打开论文一手页面；其 100 个 PhysicalAI-AV 场景、300 次 Alpamayo-R1 推理结果支持原生理由存在实体遗漏和理由动作不一致，但该研究本身没有检验跨因果制度的监测校准或真实道路事故。"
+    }
+  ],
+  "overall": 7
+}

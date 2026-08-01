@@ -1,0 +1,38 @@
+{
+  "candidateId": "coalition-outsider-counterfactual-veto",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb9a-72bc-7db0-8803-7d066c608a96",
+  "reviewedAt": "2026-08-01T05:21:31.652Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 4,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "actor-wise counterfactual harm、最小扰动和社会福利已有直接方法，单纯增加 outsider 指标不新。可辨识的 residual 是在第一条实际消息前冻结 coalition complement 和 actor identity，再从共同世界前缀比较完整协商与对照，并验证这份账本是否改变强基线的准入决定。",
+    "feasibility": "MDrive 固定代码已有 interaction scenarios、反应式背景 actor、协商 trace 和 `COLMDRIVER_DISABLE_NEGOTIATION` 开关，因此两个政策 arm 的入口真实存在。但公开 runner 是完整独立重跑，没有 treatment-time CARLA 世界、traffic manager、所有 controller memory 和外部 LLM 状态的原生快照/恢复；actor outcome ledger、共同前缀分叉和第二响应 cohort 均需自建。8-12 周可做小型 Gate，但完整比较矩阵偏紧。",
+    "success-probability": "密集多车场景中第三方急刹或延误具有现实可能性，MDrive 也报告协商并非始终改善；但 joint event 可能主要是 coalition 自身失败，且 actor-wise Do No Harm 或最小扰动基线可能与新 selector 等价。共同前缀误差还可能大于 outsider burden。",
+    "impact": "若账本在多个 response cohort 中稳定改变部署决定，会改进协商 benchmark、fallback 和第三方风险审计；但结论局限于 CARLA 脚本化响应，尚不能外推真实交通参与者。",
+    "comparison-readiness": "no-negotiation、最小扰动、SVO/welfare、Do No Harm 和 outsider-aware selector 均被纳入，且有 no-treatment twin、order swap、placebo coalition、actor exit 对账和第二 cohort；比较设计充分。"
+  },
+  "strongestObjection": "主要 estimand 要求两个 arm 在第一条 treatment 消息前完全同态，但公开 MDrive 只支持从头运行 negotiation/no-negotiation，CARLA 与外部 LLM/VLM 又没有仓库级可复用的联合快照。固定 seed 和缓存消息不足以恢复 traffic manager、actor controllers 与 planner memory；若无法构建并验证这一分叉，所有 outsider 差异都可能只是独立闭环漂移。",
+  "requiredExperiment": "选择 10 个会实际形成通信组的官方 interaction scenes，缓存第一条 treatment 消息之前的全部 LLM/VLM 输出，记录 roster、actor IDs、pose/velocity、route、traffic events、每个 ego planner/controller memory 和随机状态，并在该时刻序列化后分叉 negotiation/no-negotiation。先运行两次 no-treatment twin 和执行顺序互换；只有所有 actor 在 treatment 前逐字段一致、twin 的 actor-wise TTC/进度漂移显著低于预注册 burden 阈值、跨 arm actor identity 无替换，并至少出现一个自然 coalition-benefit plus outsider-burden 事件，才实现完整 selector 和第二 cohort。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "finding": "固定代码提供 225 个场景、112 个反应式交互场景和 46 个 InterDrive 协商场景；根许可证为 Apache-2.0，运行栈基于 CARLA 0.9.12。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/MDrive/blob/9e08377042b8f2e2860bb00de2416b3ebcfa3be4/simulation/leaderboard/team_code/colmdriver_action.py",
+      "finding": "执行路径读取 `COLMDRIVER_DISABLE_NEGOTIATION` 并可返回空通信组，协商日志也可追踪；但文件未提供 first-message 世界/控制器快照、恢复或跨 arm actor-wise outcome ledger。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v242/vaskov24a.html",
+      "finding": "Do No Harm 已正式定义相对替代策略的个体反事实伤害约束，因此本候选必须证明通信成员资格账本对该强基线有增量，而不能把个体 veto 本身当作贡献。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "25b3f8af5e717a028aa02d95251459761fea053c9e02489e5514424662a336be"
+}

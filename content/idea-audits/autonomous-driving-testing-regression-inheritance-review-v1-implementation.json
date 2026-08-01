@@ -1,0 +1,38 @@
+{
+  "candidateId": "versioned-regression-evidence-inheritance",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbbc0-f9cd-7293-8632-441a239393a2",
+  "reviewedAt": "2026-08-01T13:24:22+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 3,
+    "success-probability": 2,
+    "impact": 8,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "将旧 verdict 分成 inherited、invalidated、unknown，并直接估计未重测证据的 false-inheritance，明显超出 APFD 和 failure-retention；问题定义有新意。",
+    "feasibility": "Bench2Drive-Robust 固定提交可在 CARLA 0.9.15 运行多种兼容 agent，coverage-guided 固定提交为 MIT 且有 main.py、道路聚类与 APFD 基线。硬缺口是 dossier 没有锁定两个公开 agent 各自的两个自然 checkpoint/release 或真实 bugfix 版本对，也没有这些版本的 license、hash 和相同 route/seed 可运行性证明。",
+    "success-probability": "如果自然版本对拿不到，mutant 或人工 fine-tune 不能支撑主张；即便拿到，版本间训练数据、代码和依赖的未观测变化会削弱 change descriptor。两个 agent、多个版本对、全量 paired oracle 与重复 seed 的算力和调试周期也显著超过普通 10-12 周 pilot。",
+    "impact": "可审计地继承 ADS 测试证据会直接降低持续部署重测成本并减少 pass-to-fail 漏检，工程与安全案例价值高。",
+    "comparison-readiness": "随机、历史 failure、coverage-guided、全继承/全重测/全 unknown 都有明确实现路径，coverage-guided 代码可直接复用；DETOUR 风格实现和最关键的自然版本 ground truth 尚未锁定。"
+  },
+  "strongestObjection": "Gate 1 的必要资产没有被证明存在：Bench2Drive-Robust 支持多个不同 agent，但这不是同一 agent 的自然版本序列；coverage-guided 仓库也只有测试选择代码。若无法取得两个 agent 各至少两个可重放、许可明确的自然 checkpoint/release 或真实 bugfix 版本，研究只能在人工 mutation 上成立，不能识别真实版本更新后的证据继承。",
+  "requiredExperiment": "第 1-3 周先完成不可替代的 version-pair audit：列出至少两个公开 agent、每个两个自然 release/checkpoint 的源码 commit、权重 SHA-256、许可证、依赖容器和相同 route/seed 入口；每个版本对先重放 20 条 mini routes、每条至少两个 seed，验证版本差异大于 CARLA 重复噪声且同时含 pass-to-fail 与稳定证据。未达到条件不得引入 mutants 代替。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/Thinklab-SJTU/Bench2Drive-Robust/tree/ae1b5867324710bf0574cba797062280d9d97105",
+      "finding": "固定提交要求 CARLA 0.9.15，兼容 SimLingo、TCP-traj、UniAD、VAD 并给出评测脚本与部署扰动；这些是不同 agent，并未提供每个 agent 的自然版本对。仓库资产声明为 CC-BY-NC-ND。"
+    },
+    {
+      "url": "https://github.com/lakhanqurban/prioritization/tree/55b1eb31302517b41a7155278d96484b09a5f260",
+      "finding": "固定提交为 MIT，提供 Code/main.py、DTW 道路聚类、coverage reduction、prioritization 和 APFD 输出，可作强基线；没有 ADS 版本 registry 或自然 checkpoint pair。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.18059",
+      "finding": "一手论文研究闭环部署扰动与跨模型鲁棒性，不是同一 ADS 的自然软件更新或回归证据继承数据集。"
+    }
+  ],
+  "overall": 4,
+  "dossierSnapshotFingerprint": "e52b82ae58d73fde95b3b36b2fb8a37cc7fb630e0c6eda8553e80360772b67a7"
+}

@@ -1,0 +1,707 @@
+{
+  "schemaVersion": 1,
+  "certificateId": "cooperative-autonomous-driving-clock-freshness-obligation-pilot-v7",
+  "candidateId": "cross-domain-freshness-obligation",
+  "generatedAt": "2026-07-31T11:35:15.960Z",
+  "purpose": "Prototype a fail-closed freshness obligation over two fixed behavior-changing public source paths without inferring deployment clock quality.",
+  "replayInput": {
+    "path": "content/idea-audits/cooperative-autonomous-driving-clock-public-path-replay-v5.json",
+    "sha256": "d82bc07378bf5d49f5765291689a58b517b5133f14a3805f39f3985adab07ef8",
+    "strictPositiveCases": 2
+  },
+  "obligationContract": {
+    "semanticTargets": [
+      "time-since-local-receipt",
+      "source-event-age"
+    ],
+    "requiredForCrossDomainSourceAge": [
+      "source and target clock-domain identities",
+      "source and target timescale identities",
+      "valid source-time interval",
+      "matching relock generation",
+      "conservative source-to-target offset bounds"
+    ],
+    "unresolvedAction": "return uncertain; do not coerce to fresh or timeout"
+  },
+  "caseClosures": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+      "sourceExpressionVerdict": "timeout",
+      "sourceExpressionHasClockRelationEvidence": false,
+      "obligationWithoutRelation": {
+        "status": "unresolved",
+        "verdict": "uncertain",
+        "obligationId": "pos-01-autoware-vtl-freshness",
+        "ageIntervalNanoseconds": null,
+        "reason": "missing-clock-relation"
+      },
+      "boundedSourceAgeRepair": {
+        "status": "resolved-bounded-relation",
+        "verdict": "uncertain",
+        "obligationId": "pos-01-autoware-vtl-freshness",
+        "ageIntervalNanoseconds": [
+          "2000000000",
+          "4000000000"
+        ],
+        "reason": "bounded-clock-relation"
+      },
+      "localReceiptRepair": {
+        "status": "resolved-same-domain",
+        "verdict": "fresh",
+        "obligationId": "pos-01-autoware-vtl-freshness-receipt",
+        "ageIntervalNanoseconds": [
+          "1500000000",
+          "1500000000"
+        ],
+        "reason": "same-domain-local-receipt-time"
+      }
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+      "sourceExpressionVerdict": "timeout",
+      "sourceExpressionHasClockRelationEvidence": false,
+      "obligationWithoutRelation": {
+        "status": "unresolved",
+        "verdict": "uncertain",
+        "obligationId": "pos-02-carma-gnss-freshness",
+        "ageIntervalNanoseconds": null,
+        "reason": "missing-clock-relation"
+      },
+      "boundedSourceAgeRepair": {
+        "status": "resolved-bounded-relation",
+        "verdict": "uncertain",
+        "obligationId": "pos-02-carma-gnss-freshness",
+        "ageIntervalNanoseconds": [
+          "300000000",
+          "600000000"
+        ],
+        "reason": "bounded-clock-relation"
+      },
+      "localReceiptRepair": {
+        "status": "resolved-same-domain",
+        "verdict": "fresh",
+        "obligationId": "pos-02-carma-gnss-freshness-receipt",
+        "ageIntervalNanoseconds": [
+          "250000000",
+          "250000000"
+        ],
+        "reason": "same-domain-local-receipt-time"
+      }
+    }
+  ],
+  "mutationSuites": [
+    {
+      "caseId": "POS-01-AUTOWARE-VTL",
+      "mutations": [
+        {
+          "id": "missing-relation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "missing-clock-relation"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-relation",
+            "ageIntervalNanoseconds": null,
+            "reason": "missing-clock-relation"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-source-domain",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-domain-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-source-domain",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-domain-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-timescale",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-timescale-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-timescale",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-timescale-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "expired-relation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-outside-validity"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "expired-relation",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-outside-validity"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-relock-generation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-relock-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-relock-generation",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-relock-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "invalid-offset-order",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "invalid-offset-order",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-validity",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-validity-shape"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-validity",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-validity-shape"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "empty-validity",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-validity"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "empty-validity",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-validity"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-offset-bounds",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-shape"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-offset-bounds",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-shape"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "non-integer-offset",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "non-integer-offset",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "negative-threshold",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "negative-threshold"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "negative-threshold",
+            "ageIntervalNanoseconds": null,
+            "reason": "negative-threshold"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "unsupported-comparator",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "invalid-comparator"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "unsupported-comparator",
+            "ageIntervalNanoseconds": null,
+            "reason": "invalid-comparator"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-timestamp-domain",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "invalid-clock-domain"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-timestamp-domain",
+            "ageIntervalNanoseconds": null,
+            "reason": "invalid-clock-domain"
+          },
+          "oracleMatches": true
+        }
+      ]
+    },
+    {
+      "caseId": "POS-02-CARMA-GNSS",
+      "mutations": [
+        {
+          "id": "missing-relation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "missing-clock-relation"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-relation",
+            "ageIntervalNanoseconds": null,
+            "reason": "missing-clock-relation"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-source-domain",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-domain-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-source-domain",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-domain-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-timescale",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-timescale-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-timescale",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-timescale-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "expired-relation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-outside-validity"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "expired-relation",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-outside-validity"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "wrong-relock-generation",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-relock-mismatch"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "wrong-relock-generation",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-relock-mismatch"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "invalid-offset-order",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "invalid-offset-order",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-validity",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-validity-shape"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-validity",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-validity-shape"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "empty-validity",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-validity"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "empty-validity",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-validity"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-offset-bounds",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-shape"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-offset-bounds",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-shape"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "non-integer-offset",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "non-integer-offset",
+            "ageIntervalNanoseconds": null,
+            "reason": "clock-relation-invalid-offset-bounds"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "negative-threshold",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "negative-threshold"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "negative-threshold",
+            "ageIntervalNanoseconds": null,
+            "reason": "negative-threshold"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "unsupported-comparator",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "invalid-comparator"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "unsupported-comparator",
+            "ageIntervalNanoseconds": null,
+            "reason": "invalid-comparator"
+          },
+          "oracleMatches": true
+        },
+        {
+          "id": "missing-timestamp-domain",
+          "expected": {
+            "verdict": "uncertain",
+            "reason": "invalid-clock-domain"
+          },
+          "result": {
+            "status": "unresolved",
+            "verdict": "uncertain",
+            "obligationId": "missing-timestamp-domain",
+            "ageIntervalNanoseconds": null,
+            "reason": "invalid-clock-domain"
+          },
+          "oracleMatches": true
+        }
+      ]
+    }
+  ],
+  "implementationMutationEvidence": [
+    {
+      "pairId": "pos-01-autoware-vtl-7a16ba842ba883b2",
+      "oracle": "independent exact integer outcomes for fixed mutation fixtures",
+      "mutants": [
+        {
+          "guard": "domain",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "timescale",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "validity",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "relock",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "strict-comparator",
+          "expected": "fresh",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "negative-age",
+          "expected": "uncertain",
+          "bypassMutant": "fresh",
+          "killed": true
+        }
+      ]
+    },
+    {
+      "pairId": "pos-02-carma-gnss-20b5963da1d5315f",
+      "oracle": "independent exact integer outcomes for fixed mutation fixtures",
+      "mutants": [
+        {
+          "guard": "domain",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "timescale",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "validity",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "relock",
+          "expected": "uncertain",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "strict-comparator",
+          "expected": "fresh",
+          "bypassMutant": "timeout",
+          "killed": true
+        },
+        {
+          "guard": "negative-age",
+          "expected": "uncertain",
+          "bypassMutant": "fresh",
+          "killed": true
+        }
+      ]
+    }
+  ],
+  "cppCompileEvidence": {
+    "compiler": "/usr/bin/clang++",
+    "languageMode": "c++17",
+    "header": {
+      "path": "scripts/idea-pilots/clock_obligation_v7.hpp",
+      "sha256": "8135afaa405721984c205413eb6c4da2ef8abf38f4c2e6a112ecd83cb43af990"
+    },
+    "cases": [
+      {
+        "id": "same-domain-receipt",
+        "expected": "compile",
+        "compileExitStatus": 0,
+        "runExitStatus": 0,
+        "stdout": "0",
+        "diagnosticClass": null
+      },
+      {
+        "id": "bounded-cross-domain",
+        "expected": "compile",
+        "compileExitStatus": 0,
+        "runExitStatus": 0,
+        "stdout": "2:0:100",
+        "diagnosticClass": null
+      },
+      {
+        "id": "bare-cross-domain-subtraction",
+        "expected": "reject",
+        "compileExitStatus": 1,
+        "runExitStatus": null,
+        "stdout": null,
+        "diagnosticClass": {
+          "hasInvalidOperands": true,
+          "hasTemplateMismatch": false
+        }
+      },
+      {
+        "id": "private-raw-field-arithmetic",
+        "expected": "reject",
+        "compileExitStatus": 1,
+        "runExitStatus": null,
+        "stdout": null,
+        "diagnosticClass": {
+          "hasInvalidOperands": true,
+          "hasTemplateMismatch": false
+        }
+      },
+      {
+        "id": "source-event-as-local-receipt",
+        "expected": "reject",
+        "compileExitStatus": 1,
+        "runExitStatus": null,
+        "stdout": null,
+        "diagnosticClass": {
+          "hasInvalidOperands": false,
+          "hasTemplateMismatch": true
+        }
+      },
+      {
+        "id": "wrong-domain-local-receipt",
+        "expected": "reject",
+        "compileExitStatus": 1,
+        "runExitStatus": null,
+        "stdout": null,
+        "diagnosticClass": {
+          "hasInvalidOperands": false,
+          "hasTemplateMismatch": true
+        }
+      },
+      {
+        "id": "wrong-relation-direction",
+        "expected": "reject",
+        "compileExitStatus": 1,
+        "runExitStatus": null,
+        "stdout": null,
+        "diagnosticClass": {
+          "hasInvalidOperands": false,
+          "hasTemplateMismatch": true
+        }
+      },
+      {
+        "id": "checked-int64-overflow",
+        "expected": "compile",
+        "compileExitStatus": 0,
+        "runExitStatus": 0,
+        "stdout": "2:6",
+        "diagnosticClass": null
+      }
+    ]
+  },
+  "localSourceIdentity": {
+    "script": {
+      "path": "scripts/idea-pilots/clock-freshness-obligation-v7.mjs",
+      "sha256": "f5c43f01e3ca910ca4bc9d09c72aa409efef5c9e948a206f6650b118cadbb4d5"
+    },
+    "test": {
+      "path": "test/clock-freshness-obligation-v7.test.mjs",
+      "sha256": "ff65cb34731e0a16a0741710b3225b42a72af51c078d5edaad39b782c20a49f9"
+    }
+  },
+  "checks": {
+    "everyBareCrossDomainCaseFailsClosed": true,
+    "everyBoundedExampleStraddlesThreshold": true,
+    "everyReceiptTimeRepairUsesOneLocalDomain": true,
+    "everyMalformedRelationFailsClosed": true,
+    "everyRecordedMutationMatchesIndependentOracle": true,
+    "everyImplementationMutantIsKilled": true,
+    "typedCppInterfaceCompilesPositiveCases": true,
+    "typedCppInterfaceRejectsBareOrSemanticallyWrongCases": true,
+    "cppCheckedArithmeticFailsClosedUnderUbsan": true
+  },
+  "claimBoundary": {
+    "supported": [
+      "The two fixed source-path examples cannot resolve source-event age from their visible subtraction operands alone.",
+      "The executable obligation distinguishes local receipt freshness from source-event age and fails closed when cross-domain relation evidence is absent, mismatched, expired, relocked, malformed, wrong-timescale, or threshold-straddling.",
+      "The same decision kernel and mutation classes execute for both fixed source-path adapters; per-path witness bounds are explicit evidence inputs rather than hidden case branches.",
+      "A C++17 typed interface uses checked wide intermediates, keeps timestamp fields private, compiles same-domain receipt and certified cross-domain cases, and rejects the recorded bare, wrong-domain, wrong-direction, and wrong-origin examples."
+    ],
+    "notSupported": [
+      "No claim is made that either public path is unsafe, reachable in a particular deployment, or supplied by unsynchronized clocks.",
+      "The offset bounds in this pilot are constructed witnesses, not field-calibrated guarantees.",
+      "This prototype is not yet a C++ AST extractor, ROS message-type checker, upstream production patch, or ecosystem prevalence study.",
+      "Private C++ fields and selected compile-negative fixtures reduce accidental misuse but do not prove that every caller or serialization boundary must use this API.",
+      "No performance, safety benefit, incident frequency, or product defect is inferred."
+    ]
+  }
+}

@@ -1,0 +1,483 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "auditId": "causal-identification-red-team-2026-07-31",
+  "auditedAt": "2026-07-31",
+  "role": "falsifiability-and-causal-identification-red-team",
+  "decisionAuthority": false,
+  "scoringPerformed": false,
+  "scope": {
+    "years": [
+      2024,
+      2025,
+      2026
+    ],
+    "sourcePolicy": "Primary papers, official proceedings pages, official project pages, and official code repositories only.",
+    "mechanismClusters": [
+      "counterfactual-harm-gate",
+      "joint-latency-pose-calibration-posterior",
+      "planning-safety-value-per-byte",
+      "randomized-safe-message-probes-and-offline-causal-evaluation",
+      "byzantine-observability-under-independent-evidence-lineage",
+      "time-consistent-risk-budget",
+      "cross-evidence-level-ranking-transfer"
+    ]
+  },
+  "searchAudit": {
+    "queryFamilies": [
+      "harmful fusion and uncertainty-aware rejection",
+      "latency, pose, calibration, clock drift, and age-of-information alignment",
+      "planning-oriented communication and closed-loop value",
+      "counterfactual and off-policy driving evaluation",
+      "adaptive and fully untrusted cooperative-perception attacks",
+      "anytime-valid risk control under adaptive selection",
+      "simulation, replay, vehicle-in-the-loop, and real-world evidence transfer"
+    ],
+    "retrievalLimitations": [
+      "No cooperative-perception paper was found that identifies message-level causal effects from logged adaptive communication without an explicit randomized logging policy.",
+      "Several 2026 papers promise code or data but do not yet expose a verified official release; future-release statements were not treated as executable evidence.",
+      "Vehicle-in-the-loop facilities are described in primary papers, but a public paired benchmark spanning all evidence levels was not found."
+    ]
+  },
+  "mechanismAudits": [
+    {
+      "mechanismId": "counterfactual-harm-gate",
+      "strongestCollisions": [
+        "UECP already learns physically supervised uncertainty for weighting and suppressing unreliable contributions.",
+        "RCP-Bench already defines positive and negative collaboration coefficients under agent-specific corruptions.",
+        "CATNet and mmCooper already combine alignment, denoising, selection, and robust multi-stage fusion.",
+        "Fusion or Confusion directly demonstrates that additional V2X evidence can create ghost objects and safety-relevant false positives."
+      ],
+      "unidentifiedVariables": [
+        "A fused log never contains the simultaneous no-message outcome for the same scene and downstream policy state.",
+        "Message admission is confounded by occlusion, ego confidence, collaborator visibility, network quality, and scene difficulty.",
+        "Per-frame perception harm does not identify horizon-level planning harm because the planner may ignore, compensate for, or amplify the error."
+      ],
+      "dataLeakageRisks": [
+        "Training the gate with post-fusion ground-truth errors or future trajectory outcomes unavailable at decision time.",
+        "Splitting random frames instead of complete routes, actors, maps, corruption seeds, and communication traces.",
+        "Calibrating rejection thresholds on the same perturbation families used for the final robustness claim."
+      ],
+      "evaluationShortcuts": [
+        "Rejecting nearly every message and reporting selective accuracy without coverage and fallback utility.",
+        "Reporting AP improvement while omitting closed-loop collisions, minimum TTC, progress, comfort, and actual serialized bytes.",
+        "Using oracle corruption severity, attacker identity, or ground-truth pose as a gate input."
+      ],
+      "implementationRisks": [
+        "Paired counterfactual rollouts are expensive and reactive traffic makes replay non-equivalent to intervention.",
+        "Adaptive admission invalidates ordinary held-out calibration unless the logging and stopping process is modeled.",
+        "A detector-specific gate may not transfer across backbones, planners, or communication policies."
+      ],
+      "redTeamDisposition": "Do not review as a standalone confidence gate. Merge it with an explicit randomized logging design and a horizon-level causal estimand."
+    },
+    {
+      "mechanismId": "joint-latency-pose-calibration-posterior",
+      "strongestCollisions": [
+        "TraF-Align reconstructs current-time features through learned object trajectory fields.",
+        "IPDA performs joint temporal and spatial co-sensing calibration.",
+        "CATNet jointly addresses temporal latency and multi-source noise.",
+        "Network synchronization plus Age of Information explicitly models clock state, delay, alignment uncertainty, and fusion weights."
+      ],
+      "unidentifiedVariables": [
+        "Clock offset, clock drift, network delay, object motion, pose bias, and extrinsic bias can induce nearly identical residual motion.",
+        "Dynamic-object residuals cannot identify sensor extrinsics without static anchors or controlled excitation.",
+        "A flexible neural aligner can absorb the error without recovering a physically meaningful posterior."
+      ],
+      "dataLeakageRisks": [
+        "Using future frames to estimate the current posterior in an online claim.",
+        "Using simulator ground-truth timestamps, poses, or object correspondences at inference.",
+        "Generating train and test perturbations from the same route and random process."
+      ],
+      "evaluationShortcuts": [
+        "Injecting independent Gaussian delay and pose noise while claiming robustness to correlated drift.",
+        "Reporting AP only, without posterior NLL, coverage, calibration, state-recovery error, or recovery time.",
+        "Comparing a posterior model only against point estimators with weaker backbones or different temporal context."
+      ],
+      "implementationRisks": [
+        "Real datasets often lack ground truth for every latent error state.",
+        "Posterior collapse and overconfident multi-modal alignment can make sampling worse than a point estimate.",
+        "CUDA and sequence-memory costs grow quickly when posterior samples are propagated through fusion."
+      ],
+      "redTeamDisposition": "Potentially reviewable only with designed interventions that separate latent factors and with online, no-future-information evaluation."
+    },
+    {
+      "mechanismId": "planning-safety-value-per-byte",
+      "strongestCollisions": [
+        "Select2Drive uses area-of-importance communication to improve decision efficacy under resource limits.",
+        "Defer to Plan directly optimizes planning through adaptive multi-agent fusion.",
+        "WhisperNet performs receiver-centric global request planning under a communication budget.",
+        "MDrive shows that perception sharing does not consistently improve planning and supplies a closed-loop benchmark."
+      ],
+      "unidentifiedVariables": [
+        "High-risk scenes cause both higher communication demand and worse outcomes, confounding message value.",
+        "The value of a message depends on the receiving planner, current policy state, other messages, and future traffic reactions.",
+        "Per-message marginal value is not additive when messages overlap or interact."
+      ],
+      "dataLeakageRisks": [
+        "Using future collisions, route completion, or privileged planner rollouts as an online selector input.",
+        "Learning and evaluating value with the same planner, scenario generator, and communication policy.",
+        "Counting tensor elements or masks instead of serialized payload plus protocol overhead."
+      ],
+      "evaluationShortcuts": [
+        "Open-loop L2 trajectory error in place of reactive closed-loop safety.",
+        "A single scalar driving score that hides collision, progress, comfort, and violation trade-offs.",
+        "Perception AP per byte presented as planning safety value per byte."
+      ],
+      "implementationRisks": [
+        "Reliable message-level credit assignment needs expensive paired or randomized rollouts.",
+        "Planner-specific value models can reverse rankings under a different planner.",
+        "A learned selector may exploit simulator artifacts or communication timing."
+      ],
+      "redTeamDisposition": "Reject as a standalone candidate in its current form. Treat planning value as an outcome inside a causal message-admission study, not as an independently identified quantity."
+    },
+    {
+      "mechanismId": "randomized-safe-message-probes-and-offline-causal-evaluation",
+      "strongestCollisions": [
+        "Recent driving work uses synthetic counterfactual interventions to learn object relevance.",
+        "MDrive and EI-Drive provide closed-loop environments in which communication interventions can be executed.",
+        "No direct 2024-2026 collision was found for logged randomized message probes plus cooperative-driving off-policy evaluation."
+      ],
+      "unidentifiedVariables": [
+        "Without randomized propensities and overlap, logged communication cannot identify unseen admission policies.",
+        "A message intervention changes future observations and traffic reactions, creating sequential interference.",
+        "Safety filtering before randomization changes the target population and must be part of the estimand."
+      ],
+      "dataLeakageRisks": [
+        "Reconstructing propensities from outcomes instead of logging them at decision time.",
+        "Using the same route seeds for nuisance-model training and policy evaluation.",
+        "Training a world model on evaluation interventions and then calling its rollouts independent counterfactual evidence."
+      ],
+      "evaluationShortcuts": [
+        "Randomizing only obviously irrelevant messages, which produces overlap but no informative treatment variation.",
+        "Reporting a low prediction error for an outcome model without direct randomized-policy validation.",
+        "Ignoring effective sample size, importance-weight tails, and disagreement among direct, inverse-propensity, and doubly robust estimates."
+      ],
+      "implementationRisks": [
+        "Safety-preserving exploration restricts support and may require many scenarios.",
+        "Reactive closed-loop outcomes have high variance and long horizons.",
+        "The behavior policy, serialization, timing, and fallback action all need reproducible instrumentation."
+      ],
+      "redTeamDisposition": "Retain after merging with the counterfactual harm gate and defining a conservative, safety-screened randomized logging policy."
+    },
+    {
+      "mechanismId": "byzantine-observability-under-independent-evidence-lineage",
+      "strongestCollisions": [
+        "All Vehicles Can Lie estimates malicious identities through pseudo-random grouping and Bayesian inference.",
+        "Pretend Benign preserves consensus while attacking selected regions and predicts future features for real-time execution.",
+        "MVIG learns defense-specific vulnerability information and breaks consensus-based defenses.",
+        "Earlier consensus defenses already reason over agreement among vehicles."
+      ],
+      "unidentifiedVariables": [
+        "Different vehicles are not independent evidence when they share model weights, maps, calibration procedures, weather, or a common upstream RSU.",
+        "A lineage identifier is not evidence of independence unless it is cryptographically bound to an attested sensor, model, calibration, and network path.",
+        "Benign common-mode failures and coordinated attacks can be observationally equivalent."
+      ],
+      "dataLeakageRisks": [
+        "Supplying privileged attacker labels or attack-generation metadata to the trust graph.",
+        "Defining lineage from simulator-only agent IDs unavailable in deployment.",
+        "Training and testing on the same attack implementation, target regions, and persistence schedules."
+      ],
+      "evaluationShortcuts": [
+        "Counting vehicles instead of independent physical evidence roots.",
+        "Reporting attack detection rate without fixed false-positive rate, isolation delay, wrong-isolation cost, and clean utility.",
+        "Testing only single attackers or attacks that violate the defense's assumed consensus pattern."
+      ],
+      "implementationRisks": [
+        "Most public datasets do not expose attested model, calibration, and network lineage.",
+        "Cryptographic identity does not establish statistical independence.",
+        "Over-conservative abstention can remove the cooperative benefit in dense or degraded scenes."
+      ],
+      "redTeamDisposition": "Retain only after replacing vehicle-count trust with verifiable evidence-family roots and explicitly testing common-mode benign faults and colluding attacks."
+    },
+    {
+      "mechanismId": "time-consistent-risk-budget",
+      "strongestCollisions": [
+        "Anytime-Valid Conformal Risk Control already provides time-uniform guarantees for a growing calibration stream.",
+        "Recent selective-acting work targets pathwise risk under adaptive control.",
+        "Uncertainty-aware fusion and selective rejection already cover the non-sequential application surface."
+      ],
+      "unidentifiedVariables": [
+        "Exchangeability fails under adaptive message selection, route-dependent traffic, and online model updates.",
+        "Rare collision risk cannot be estimated from ordinary perception datasets without a defensible surrogate or targeted scenario distribution.",
+        "Per-frame miscoverage is not equivalent to route-level safety harm."
+      ],
+      "dataLeakageRisks": [
+        "Reusing routes or scenario families across calibration and evaluation.",
+        "Tuning alarms after observing the evaluation stopping times.",
+        "Presenting a marginal conformal guarantee as selective or pathwise validity."
+      ],
+      "evaluationShortcuts": [
+        "Average risk control instead of a time-uniform stopping-time guarantee.",
+        "Coverage reported without release rate, delay, escalation cost, and route completion.",
+        "A synthetic IID stream used to claim adaptive closed-loop validity."
+      ],
+      "implementationRisks": [
+        "The safety event and filtration must be specified before deriving a valid e-process.",
+        "Conservative bounds may abstain or escalate too often to be useful.",
+        "A convincing empirical study needs substantially more closed-loop episodes than an AP benchmark."
+      ],
+      "redTeamDisposition": "Defer as a standalone cooperative-perception Idea. It may later serve as a calibration wrapper after the causal logging and route-level harm definitions are validated."
+    },
+    {
+      "mechanismId": "cross-evidence-level-ranking-transfer",
+      "strongestCollisions": [
+        "RCP-Bench supplies controlled corruption benchmarks.",
+        "V2X-ReaLO and CooperScene supply real online or real C-V2X evidence.",
+        "MDrive supplies diverse reactive closed-loop scenarios.",
+        "A deployed hybrid Vehicle-in-the-Loop platform demonstrates a physical-virtual validation level."
+      ],
+      "unidentifiedVariables": [
+        "Method rankings can change because the scenario, stack, metric, sensor suite, and model snapshot all change with evidence level.",
+        "Without paired scenarios or a transport model, a rank reversal cannot be attributed to evidence level.",
+        "Implementation quality can dominate the method effect."
+      ],
+      "dataLeakageRisks": [
+        "Tuning each method separately on every evidence level.",
+        "Using the same digital-twin scenario for calibration and transfer evaluation.",
+        "Selecting only methods or metrics that remain stable after observing all levels."
+      ],
+      "evaluationShortcuts": [
+        "Correlating headline numbers copied from unrelated papers.",
+        "Calling offline real logs a closed-loop real-world test.",
+        "Using rank correlation with too few methods and no uncertainty or inversion analysis."
+      ],
+      "implementationRisks": [
+        "Paired ViL access may be unavailable, forcing the minimum study to stop at real-log replay.",
+        "Maintaining identical model snapshots, serialization, and metrics across stacks is engineering-heavy.",
+        "Some official datasets and frameworks lack verified licenses or executable releases."
+      ],
+      "redTeamDisposition": "Retain as a benchmark-methodology candidate only if the study uses frozen implementations, paired scenario families, and uncertainty over rank inversions."
+    }
+  ],
+  "revisedReviewableCandidates": [
+    {
+      "candidateId": "causal-probe-harm-gate",
+      "title": "安全随机消息探针驱动的反事实有害融合门",
+      "revisionFrom": [
+        "counterfactual-harm-gate",
+        "randomized-safe-message-probes-and-offline-causal-evaluation",
+        "planning-safety-value-per-byte"
+      ],
+      "preciseClaim": "For a predeclared safety-screened scenario population, estimate the conditional horizon-level effect of admitting one cooperative message versus dropping it, then reject only messages whose upper confidence bound on safety harm exceeds zero while falling back to ego-only.",
+      "identificationStrategy": [
+        "Randomize admit/drop for a small, predeclared fraction of messages after a deterministic safety screen; log the exact propensity before observing outcomes.",
+        "Use paired seeds and a doubly robust sequential estimator with cross-fitted nuisance models.",
+        "Define treatment at message-region-time granularity and outcomes over a fixed planning horizon: collision, minimum TTC, route progress, comfort, violation, and serialized bytes.",
+        "Validate the offline estimate against held-out randomized rollouts before using it to train the gate."
+      ],
+      "minimumExperiment": {
+        "dataAndSystems": [
+          "OPV2V or V2XSet with controlled perturbations through OpenCOOD",
+          "MDrive or EI-Drive closed-loop scenarios with fixed map and traffic seeds"
+        ],
+        "baselines": [
+          "ego-only",
+          "always fuse",
+          "UECP-style uncertainty weighting",
+          "RCP-Bench negative-collaboration threshold",
+          "direct outcome model",
+          "inverse-propensity weighting",
+          "doubly robust estimator"
+        ],
+        "protocol": "At least three independent route seeds per scenario family; split by map, route, actors, corruption process, and communication trace; report overlap, effective sample size, confidence intervals, and direct randomized-policy validation.",
+        "estimatedEffort": "8-12 weeks with one research engineer and one 24 GB CUDA GPU."
+      },
+      "negativeControls": [
+        "Sham randomization that changes a logged flag but not message delivery.",
+        "Messages from empty or planner-irrelevant remote regions.",
+        "Within-scene permutation of collaborator messages that preserves byte count and timing.",
+        "A placebo outcome measured before message delivery.",
+        "Equal-compute ego-only inference to exclude latency-induced gains."
+      ],
+      "failureCriteria": [
+        "The treatment propensity has poor overlap or effective sample size is too small in safety-relevant strata.",
+        "Doubly robust estimates disagree materially with held-out randomized-policy outcomes.",
+        "The gate's upper-bound policy performs worse than ego-only on collision or minimum TTC.",
+        "Reported benefit disappears when actual serialization and end-to-end latency are included.",
+        "Performance fails to transfer to a second planner or a held-out corruption family."
+      ],
+      "primarySources": [
+        "https://arxiv.org/abs/2606.23046",
+        "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+        "https://arxiv.org/abs/2605.10904",
+        "https://arxiv.org/abs/2501.12040",
+        "https://arxiv.org/abs/2607.19774",
+        "https://arxiv.org/abs/2606.10688",
+        "https://github.com/ucla-mobility/MDrive"
+      ]
+    },
+    {
+      "candidateId": "intervention-identified-joint-error-posterior",
+      "title": "干预可识别的时钟—网络—位姿—标定联合误差后验",
+      "revisionFrom": [
+        "joint-latency-pose-calibration-posterior"
+      ],
+      "preciseClaim": "A structured state-space posterior over clock offset and drift, network delay and AoI, ego-relative pose bias, extrinsic bias, and object motion can be identified under orthogonal interventions and improves calibrated online fusion under correlated drift without future frames.",
+      "identificationStrategy": [
+        "Use hardware or simulator timestamps plus orthogonal designed interventions: clock drift ramps, queued network delay, rigid pose bias, extrinsic perturbation, and independently controlled object motion.",
+        "Anchor calibration with static structures and dynamic motion with tracked actors rather than asking one residual network to explain both.",
+        "Propagate posterior samples or a low-rank mixture through the warp and report both state recovery and downstream uncertainty.",
+        "Forbid future frames and simulator ground truth at inference; publish the filtration and available signals."
+      ],
+      "minimumExperiment": {
+        "dataAndSystems": [
+          "OPV2V or V2XSet for factorial interventions",
+          "V2V4Real or DAIR-V2X-Seq for held-out real sequences",
+          "CooperScene C-V2X traces if the required fields are released"
+        ],
+        "baselines": [
+          "point-estimate alignment",
+          "factorized independent posterior",
+          "TraF-Align",
+          "IPDA",
+          "CATNet or LRCP",
+          "oracle single-factor correction"
+        ],
+        "protocol": "Factorial train interventions, correlated held-out combinations, and one unseen drift process; split complete sequences and locations; evaluate state NLL, interval coverage, ECE, AP, tracking ID switches, and recovery frames.",
+        "estimatedEffort": "8-10 weeks after one official baseline environment is reproducible."
+      },
+      "negativeControls": [
+        "Shuffle temporal residuals while preserving marginal noise.",
+        "Fit an equally sized unstructured latent model.",
+        "Remove static anchors to test whether extrinsic bias becomes unidentifiable.",
+        "Give only one baseline the future frame to expose leakage sensitivity.",
+        "Evaluate on independent Gaussian noise as a deliberately easy control."
+      ],
+      "failureCriteria": [
+        "Known intervention states are not recovered with calibrated intervals.",
+        "Joint and factorized posteriors are indistinguishable under correlated held-out drift.",
+        "Downstream gains vanish when future-frame access and oracle correspondences are removed.",
+        "Posterior sampling increases overconfidence, latency, or ID switches relative to a point estimate.",
+        "Results do not transfer from simulation to either V2V4Real, DAIR-V2X-Seq, or CooperScene."
+      ],
+      "primarySources": [
+        "https://arxiv.org/abs/2503.19391",
+        "https://ojs.aaai.org/index.php/AAAI/article/view/40197",
+        "https://arxiv.org/abs/2603.05255",
+        "https://openaccess.thecvf.com/content/WACV2025/html/Wang_Latency_Robust_Cooperative_Perception_using_Asynchronous_Feature_Fusion_WACV_2025_paper.html",
+        "https://arxiv.org/abs/2602.13439",
+        "https://arxiv.org/abs/2606.31219"
+      ]
+    },
+    {
+      "candidateId": "evidence-lineage-byzantine-observability",
+      "title": "独立证据谱系下的 Byzantine 可观测性与安全弃权",
+      "revisionFrom": [
+        "byzantine-observability-under-independent-evidence-lineage"
+      ],
+      "preciseClaim": "Trust should be conditioned on independent evidence roots rather than vehicle count. Fusion proceeds only when signed sensor, modality, model, calibration, view-geometry, and network-path lineages satisfy a predeclared observability condition; otherwise the system abstains to ego-only.",
+      "identificationStrategy": [
+        "Define an evidence root as a verifiable tuple, not a learned vehicle embedding or raw identity.",
+        "Construct attack and benign-fault cells that vary one root at a time and include common-mode model, calibration, map, weather, and RSU failures.",
+        "State the Byzantine guarantee conditionally on attestation and root-independence assumptions; do not claim assumption-free defense.",
+        "Evaluate the abstention policy at fixed clean false-positive rate and fixed communication budget."
+      ],
+      "minimumExperiment": {
+        "dataAndSystems": [
+          "OPV2V or V2XSet for controlled collusion and duplicate-lineage tests",
+          "CooperScene for heterogeneous vehicle and RSU roots",
+          "RCP-Bench corruptions for benign common-mode failures"
+        ],
+        "baselines": [
+          "vehicle-count majority",
+          "Among Us or ROBOSAC-style consensus",
+          "PRBI",
+          "MVIG-targeted defenses",
+          "ego-only"
+        ],
+        "protocol": "Cross attack family, persistence, attacker count, shared-root pattern, and benign common-mode fault; hold out one attack generator and one lineage pattern; report TPR at fixed FPR, isolation delay, wrong-isolation cost, clean AP, and fallback safety.",
+        "estimatedEffort": "8-12 weeks; cryptographic attestation may be emulated, but every emulated field must be labeled."
+      },
+      "negativeControls": [
+        "Duplicate one physical evidence stream under multiple vehicle identities.",
+        "Use distinct vehicles sharing the same model and calibration root.",
+        "Forge unsigned lineage metadata while preserving the sensor payload.",
+        "Apply severe benign weather or localization faults with no attacker.",
+        "Remove lineage fields at inference to verify safe abstention."
+      ],
+      "failureCriteria": [
+        "The lineage score is effectively a monotone transform of agent count.",
+        "Common-mode attacks are not detected better than PRBI at the same clean false-positive rate.",
+        "Benign shared failures are systematically misclassified as attacks.",
+        "Missing or forged metadata leads to unsafe fusion instead of abstention.",
+        "The result disappears on a held-out attack or evidence-root pattern."
+      ],
+      "primarySources": [
+        "https://arxiv.org/abs/2603.08498",
+        "https://openaccess.thecvf.com/content/ICCV2025/html/Lin_Pretend_Benign_A_Stealthy_Adversarial_Attack_by_Exploiting_Vulnerabilities_in_ICCV_2025_paper.html",
+        "https://openaccess.thecvf.com/content/CVPR2026/html/Tao_Learning_Mutual_View_Information_Graph_for_Adaptive_Adversarial_Collaborative_Perception_CVPR_2026_paper.html",
+        "https://arxiv.org/abs/2606.31219",
+        "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+        "https://github.com/LuckyDush/RCP-Bench"
+      ]
+    },
+    {
+      "candidateId": "paired-evidence-ladder-ranking-transfer",
+      "title": "配对证据阶梯上的方法排序迁移与反转概率",
+      "revisionFrom": [
+        "cross-evidence-level-ranking-transfer"
+      ],
+      "preciseClaim": "With frozen method snapshots, paired scenario families, harmonized metrics, and explicit transport covariates, estimate the probability that cooperative-perception method rankings invert from controlled corruption to real-log replay and reactive closed loop.",
+      "identificationStrategy": [
+        "Freeze code commit, checkpoint, sensor inputs, payload serialization, and metric definitions before opening higher evidence levels.",
+        "Build paired scenario families from common occlusion, merge, crossing, and braking mechanisms instead of comparing unrelated benchmark headlines.",
+        "Model method-by-level interactions and posterior rank-inversion probabilities with scenario-level uncertainty.",
+        "Treat ViL as an optional fourth level until a reproducible public facility is available; the minimum claim spans controlled corruption, real-log replay, and reactive closed loop."
+      ],
+      "minimumExperiment": {
+        "dataAndSystems": [
+          "RCP-Bench controlled corruptions",
+          "CooperScene or V2X-ReaLO real-log replay",
+          "MDrive or EI-Drive reactive closed loop"
+        ],
+        "baselines": [
+          "ego-only",
+          "late fusion",
+          "Where2comm or Select2Drive",
+          "mmCooper or CATNet",
+          "one uncertainty-aware method"
+        ],
+        "protocol": "At least four frozen methods and 50 paired scenario families per available level; preregister transport covariates and metrics; report rank-inversion posterior, uncertainty, failure-set overlap, and sensitivity to implementation quality.",
+        "estimatedEffort": "10-12 weeks if existing checkpoints run; a fourth ViL level is out of scope until access and reproducibility are verified."
+      },
+      "negativeControls": [
+        "Shuffle scenario pairing across levels.",
+        "Allow per-level retuning as a deliberately biased comparator.",
+        "Duplicate a method checkpoint under a second name.",
+        "Replace actual bytes and latency with feature-mask size.",
+        "Use unrelated headline metrics to demonstrate the invalid naive procedure."
+      ],
+      "failureCriteria": [
+        "Fewer than four methods or insufficient paired scenarios make inversion intervals uninformative.",
+        "Method snapshots, payloads, or metric definitions cannot be held fixed across levels.",
+        "Observed reversals are explained by implementation or tuning changes rather than level interactions.",
+        "Real-log replay is mislabeled as reactive closed loop.",
+        "No independent replication of at least one ranking cell is possible."
+      ],
+      "primarySources": [
+        "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+        "https://arxiv.org/abs/2503.10034",
+        "https://arxiv.org/abs/2606.31219",
+        "https://arxiv.org/abs/2605.10904",
+        "https://arxiv.org/abs/2607.13806",
+        "https://github.com/ucla-mobility/MDrive",
+        "https://github.com/UCR-CISL/CooperScene"
+      ]
+    }
+  ],
+  "notAdvancedToReview": [
+    {
+      "mechanismId": "planning-safety-value-per-byte",
+      "reason": "The standalone estimand remains confounded and collides with planning-oriented communication; its useful part is absorbed into causal message admission."
+    },
+    {
+      "mechanismId": "time-consistent-risk-budget",
+      "reason": "A valid route-level filtration, harm event, and adaptive logging process are prerequisites; without them the guarantee is either marginal or vacuous."
+    },
+    {
+      "mechanismId": "counterfactual-harm-gate",
+      "reason": "A non-randomized gate cannot identify message harm; it is absorbed into the randomized causal-probe candidate."
+    }
+  ],
+  "redTeamConclusion": "Four candidates are precise enough to enter independent review after the stated data and implementation prerequisites are confirmed. This audit does not score, accept, or claim that any candidate passes a gate."
+}

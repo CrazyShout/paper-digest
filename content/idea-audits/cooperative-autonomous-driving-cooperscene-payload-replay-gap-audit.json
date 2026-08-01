@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "auditId": "cooperscene-public-payload-replay-gap-2026-07-31",
+  "auditedAt": "2026-07-31",
+  "purpose": "Determine whether the public CooperScene implementation exposes an executable, trace-grounded payload-completion path and whether its public payload accounting is sufficient for a bounded Idea.",
+  "scoringPerformed": false,
+  "perceptionModelRun": false,
+  "sources": [
+    {
+      "type": "official-code",
+      "url": "https://github.com/UCR-CISL/CooperScene",
+      "commit": "0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+      "commitDate": "2026-07-13T22:54:34-07:00",
+      "files": [
+        {
+          "path": "tools/calc_sharing.py",
+          "sha256": "9ea8cd29261b26756e85cbbd48d7e8ab1aadcafbdad40c4b506eadbadeb17a68"
+        },
+        {
+          "path": "tools/run_table2.sh",
+          "sha256": "f388f0ac3ac0a3527b425aac642b3f312ec5ba28c1f9023f4d9540f87fd28a1d"
+        },
+        {
+          "path": "models/cooperative/datasets/coop_dataset.py",
+          "sha256": "50ed1dace225deb7df55c472251df6b90e69b842623f7791163eda1c1528244c"
+        },
+        {
+          "path": "models/cooperative/detectors/cooperative_detector.py",
+          "sha256": "9367063a5cc360e9537a55dc99c031ed5ad1b23ac89f934032ef0ded4147340e"
+        },
+        {
+          "path": "README.md",
+          "sha256": "1cdebe760c56e31ce6a5f9231c87154079763ca4fcf3746391da66977bb623e5"
+        }
+      ]
+    },
+    {
+      "type": "primary-paper-source",
+      "url": "https://export.arxiv.org/e-print/2606.31219",
+      "arxivId": "2606.31219v1",
+      "retrievedArchiveSha256": "f0e95528a6a6a5ff083f144208f9c0fea36c302bbc6424470f1852ac488527ff",
+      "files": [
+        {
+          "path": "sec/5_eval.tex",
+          "sha256": "587d4ff1b391dbb817d8c60e1642b7c361ddeda8c3bd33f82b68fb7bc46b45a8"
+        },
+        {
+          "path": "fig_latex/detection_tab_multi.tex",
+          "sha256": "74c4d6d25da9f987f9d2eb96bdad34b5f85ca20a5072877b8eff42428948294d"
+        }
+      ]
+    },
+    {
+      "type": "official-data-sample-audit",
+      "path": "content/idea-audits/cooperative-autonomous-driving-cooperscene-take9-throughput-stats.json",
+      "scope": "All 12 directed throughput channels in official mcap_preview/9.mcap."
+    },
+    {
+      "type": "external-methodology-boundary",
+      "title": "CellReplay: Towards accurate record-and-replay for cellular networks",
+      "venue": "USENIX NSDI 2025",
+      "url": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+      "role": "Primary evidence that replaying a trace collected under one workload for a different workload can be biased unless workload sensitivity is validated."
+    }
+  ],
+  "paperMeasurementContract": {
+    "perceptionCycleHz": 10,
+    "perceptionCycleMs": 100,
+    "radioExperiment": {
+      "chunkBytes": 2100,
+      "packetIntervalMs": 1,
+      "description": "The paper source says model data were segmented into 2100-byte chunks and sent sequentially over the C-V2X radio."
+    },
+    "claimBoundary": "The paper reports physical transmission times in Table 2 and separately describes synchronized C-V2X measurements. Those physical measurements are not equivalent to the current public scalar-throughput simulator.",
+    "reportedPayloadAndLatencyExamples": [
+      {
+        "model": "V2VNet",
+        "agents": "V+I",
+        "sharingSizeMB": 10.0,
+        "latencyMs": 64349,
+        "derivedAggregateThroughputMbps": 1.2432
+      },
+      {
+        "model": "V2X-ViT",
+        "agents": "V+V",
+        "sharingSizeMB": 0.338,
+        "latencyMs": 1305,
+        "derivedAggregateThroughputMbps": 2.072
+      },
+      {
+        "model": "CoBEVT",
+        "agents": "V+2V+I",
+        "sharingSizeMB": 1.5,
+        "latencyMs": 12381,
+        "derivedAggregateThroughputMbps": 0.9692
+      },
+      {
+        "model": "ERMVP",
+        "agents": "V+2V+I",
+        "sharingSizeMB": 1.038,
+        "latencyMs": 5190,
+        "derivedAggregateThroughputMbps": 1.6
+      },
+      {
+        "model": "CoSDH",
+        "agents": "V+I",
+        "sharingSizeMB": 0.0595,
+        "latencyMs": 298,
+        "derivedAggregateThroughputMbps": 1.5973
+      }
+    ],
+    "derivedThroughputCaveat": "sharingSizeMB*8/(latencyMs/1000) is only an aggregate arithmetic reconstruction. It does not identify scheduling, parallelism, per-link allocation, packet loss, or the exact paper implementation."
+  },
+  "publicCodeContract": {
+    "table2Runner": [
+      "tools/run_table2.sh defaults every agent setting to the same 1.6 Mbps scalar.",
+      "The script computes one per-cooperator share_size_mb and passes the same scalar throughput to every collaborator in a setting.",
+      "The script tells users to edit or override throughput values but does not ship the per-take or per-link values required to reconstruct the paper's physical transmission experiment."
+    ],
+    "datasetDelayPath": [
+      "CoopDataset converts share_size_mb to megabits, divides it by one scalar cv2x_throughput, converts the result to milliseconds, and floors it to 100 ms frame steps.",
+      "_build_valid_coops applies the same delay calculation independently to every collaborator; no directed MCAP channel is loaded.",
+      "_lookup_delayed clamps any delay beyond the available history to the first indexed frame instead of exposing a censored or unavailable message state.",
+      "If a delayed lookup returns None, the current synchronized collaborator frame remains in use."
+    ],
+    "modelDelayPath": [
+      "CooperativeDetector defaults prior_encoding=[time_delay, velocity, infra] to zeros.",
+      "The audited dataset path does not thread the computed delay or age into prior_encoding.",
+      "A model can therefore receive a stale historical collaborator point cloud while its explicit time-delay input remains zero."
+    ],
+    "traceIntegrationPresent": false,
+    "directedLinkModelPresent": false,
+    "payloadCompletionModelPresent": false,
+    "explicitUnfinishedMessageStatePresent": false,
+    "failClosedOnMissingTrace": false
+  },
+  "analyticPayloadCalculator": {
+    "method": "tools/calc_sharing.py analytically multiplies compressed BEV feature dimensions by four bytes per fp32 value.",
+    "runtimeSerializationMeasured": false,
+    "models": [
+      {
+        "model": "V2VNet",
+        "calculatedPerCooperatorMB": 9.011,
+        "paperPerCooperatorMB": 10.0,
+        "calculatedToPaperRatio": 0.9,
+        "delayAt1_6MbpsMs": 45056
+      },
+      {
+        "model": "V2X-ViT",
+        "calculatedPerCooperatorMB": 0.27,
+        "paperPerCooperatorMB": 0.338,
+        "calculatedToPaperRatio": 0.8,
+        "delayAt1_6MbpsMs": 1352
+      },
+      {
+        "model": "V2VAM",
+        "calculatedPerCooperatorMB": 0.282,
+        "paperPerCooperatorMB": 0.423,
+        "calculatedToPaperRatio": 0.67,
+        "delayAt1_6MbpsMs": 1408
+      },
+      {
+        "model": "CoBEVT",
+        "calculatedPerCooperatorMB": 0.541,
+        "paperPerCooperatorMB": 0.5,
+        "calculatedToPaperRatio": 1.08,
+        "delayAt1_6MbpsMs": 2703
+      },
+      {
+        "model": "CoSDH",
+        "calculatedPerCooperatorMB": 2.163,
+        "paperPerCooperatorMB": null,
+        "calculatedToPaperRatio": null,
+        "delayAt1_6MbpsMs": 10813
+      },
+      {
+        "model": "ERMVP",
+        "calculatedPerCooperatorMB": 8.651,
+        "paperPerCooperatorMB": null,
+        "calculatedToPaperRatio": null,
+        "delayAt1_6MbpsMs": 43254
+      }
+    ],
+    "interpretation": "The shipped calculator is useful as a deterministic static baseline, but its 0.67-1.08 ratios against the four paper-listed payloads show that it cannot substitute for runtime tensor or serialized-byte instrumentation."
+  },
+  "take9PreviewEvidence": {
+    "sampleCountPerDirectedLink": 161,
+    "durationSeconds": 16.0,
+    "throughputMeanRangeMbps": [
+      0.436799546584,
+      1.17599940994
+    ],
+    "throughputMedianRangeMbps": [
+      0.2352,
+      1.0584
+    ],
+    "zeroSampleCountRangePerLink": [
+      1,
+      39
+    ],
+    "strongestObservedPairwiseCorrelation": 0.811231767386,
+    "strongestObservedPairwiseAnticorrelation": -0.439333763644,
+    "directionalMeanRatioMaximum": 2.236,
+    "interpretation": [
+      "A single shared 1.6 Mbps scalar is outside the observed mean range of all 12 audited take-9 preview links.",
+      "The 12 links are neither exchangeable nor independent in this sample; direction, sender identity, and synchronous structure are candidate explanatory variables.",
+      "These statistics are descriptive evidence from one preview take and cannot be generalized to the release before all-take schema and trace audits pass."
+    ]
+  },
+  "workloadTransferGuardrail": {
+    "collectionWorkload": "The paper states that each agent ran one Iperf2 UDP client at 5 Mbps and three servers, with 100 ms reports.",
+    "targetWorkloads": "The candidate model payloads, packetization, concurrency, and deadlines differ from the collection workload.",
+    "risk": "A recorded application-layer throughput series may not be invariant to a new payload or sender schedule; direct integration can therefore be a benchmark abstraction without being a faithful live-radio counterfactual.",
+    "requiredCalibration": [
+      "Before any real-network claim, compare replayed completion-time distributions against the paper's physical-radio Table-2 transmission measurements at their published payload sizes and agent settings.",
+      "Predeclare an error tolerance and leave-one-payload-out calibration test; do not tune the replay on the same payload used for validation.",
+      "If the public artifacts cannot map Table-2 measurements to takes or reproduce the packetization schedule, report the comparison as a coarse consistency check rather than validation.",
+      "If replay error exceeds tolerance, restrict all conclusions to sensitivity of the released benchmark abstraction and do not call them C-V2X deployment results."
+    ],
+    "forbiddenShortcut": "Do not infer workload-independent service capacity from one Iperf trace merely because the throughput field has an Mbps interpretation."
+  },
+  "minimumExecutableInstrumentation": [
+    "Hook the exact tensor immediately after each model's compression or selection step and record shape, dtype, numel, element size, sparsity representation, serialization format, metadata overhead, and final bytes per sender.",
+    "Create a strict sidecar keyed by take, ego receiver, sender, and aligned LiDAR timestamp; reject any missing, duplicate, nonmonotonic, or unverified frame mapping.",
+    "Integrate only observed Vector3.x throughput over observed intervals, under an explicit unit-scale sensitivity analysis, until the measured payload bit count completes.",
+    "Expose complete, incomplete, censored-before-take-start, and trace-missing as separate states; never clamp an unavailable message to the first frame.",
+    "Thread completion-derived age into prior_encoding and retain the exact historical frame identity chosen at the receiver deadline.",
+    "Freeze checkpoints and perception inputs before comparing constant 1.6 Mbps, static mean-link throughput, exact directed trace order, and preregistered surrogate traces."
+  ],
+  "researchOpportunity": {
+    "problem": "The released code can reproduce a scalar stale-frame abstraction but cannot presently reproduce a directed, trace-grounded payload-completion process or distinguish an unfinished transmission from an old available frame.",
+    "boundedQuestion": "Do link direction, temporal ordering, cross-link dependence, runtime payload, and explicit censoring materially change the deployability verdict or method ordering relative to the shipped scalar-delay abstraction?",
+    "scientificValueIfPositive": "Identifies which network structures and payload accounting choices are necessary for valid cooperative-perception conclusions and supplies an executable replay contract.",
+    "scientificValueIfNegative": "Validates a cheaper scalar or marginal abstraction for the audited release and quantifies where it is sufficient.",
+    "notAClaim": [
+      "This audit does not claim that the paper's reported Table-2 measurements are wrong.",
+      "This audit does not claim packet loss, jitter, or end-to-end latency can be replayed from the current public MCAP schema.",
+      "This audit does not claim a model ranking changes before the replay is implemented and run.",
+      "This audit does not infer a radio cause from correlations."
+    ]
+  },
+  "stopRules": [
+    "Stop model-level replay if the official release cannot support a verified MCAP-time-to-perception-frame mapping.",
+    "Stop cross-take inference if the 14 full takes do not share an auditable directed-throughput schema.",
+    "Report only scheduling-level sensitivity if runtime payload bytes cannot be instrumented for the chosen official checkpoints.",
+    "Downgrade to a finite-release descriptive study if the available independent take count is inadequate for the preregistered uncertainty target."
+  ]
+}

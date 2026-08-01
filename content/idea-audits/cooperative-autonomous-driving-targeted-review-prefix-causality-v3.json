@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-targeted-review-prefix-causality-v3-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "prefix-causal-preprocessing-audit",
+  "reviewedAt": "2026-07-31",
+  "reviewer": {
+    "agentId": "019fb718-c68c-7b70-a512-c55e8e2c7afc",
+    "role": "targeted-code-path-data-and-novelty-dossier-review",
+    "freshContext": true,
+    "acceptanceThresholdDisclosed": false
+  },
+  "decision": "conditional-do-not-send-to-scored-panel",
+  "verifiedCommits": [
+    {
+      "asset": "V2X-Seq",
+      "repository": "https://github.com/AIR-THU/DAIR-V2X-Seq",
+      "commit": "8a5b4f82da5ab5c6eeacbf961aafbf2c883f437c"
+    },
+    {
+      "asset": "Co-MTP",
+      "repository": "https://github.com/xiaomiaozhang/Co-MTP",
+      "commit": "8d0937faec0cfb929a9d50dd921d39f0837a84f0"
+    }
+  ],
+  "claimBoundary": {
+    "dynamicallyConfirmedLeak": false,
+    "sampleRunCompleted": false,
+    "officialCheckpointLoaded": false,
+    "allowedStatement": "The fixed code contains window-wide retrospective decisions, explicit future-data reads, future-conditioned membership logic, and fields that require a dynamic reachability audit.",
+    "forbiddenStatement": "Do not claim that suffix information leaks into a deployed model input, changes a benchmark result, or improves a paper table before a real sample mutation reaches the fixed forward path."
+  },
+  "staticCodeFindings": [
+    {
+      "asset": "V2X-Seq",
+      "path": "tools/trajectory_fusion/fusion_for_prediction.py",
+      "finding": "The fusion stage derives track length, match counts, association ratios, and cannot_fusion_v2i from the complete fifty-frame observation window, so early rows can depend on later observation rows.",
+      "boundary": "At the standard prediction cut after frame 49, those rows remain history. This is retrospective smoothing inside the observation window, not prediction-future leakage."
+    },
+    {
+      "asset": "V2X-Seq",
+      "path": "tools/data_converter/tfd_converter.py",
+      "finding": "History and future labels coexist in one converted file, but the audited path did not show future coordinates entering historical input tensors."
+    },
+    {
+      "asset": "V2X-Seq HiVT",
+      "path": "projects/HiVT_plugin/datasets/tfd_dataset.py",
+      "finding": "The actor set uses the first fifty frames, while agent_index is selected from future TARGET_AGENT metadata. Future positions and labels exist in the sample object, but the encoder indexes historical timesteps.",
+      "boundary": "agent_index is a metadata-reachability suspicion, not a confirmed future-coordinate input."
+    },
+    {
+      "asset": "V2X-Seq TNT",
+      "path": "projects/TNT_plugin/core/util/preprocessor/tfd_preprocess.py",
+      "finding": "Future rows generate labels and ref_cetr_idx, while the public loader's model input uses historical feats, masks, and graph data.",
+      "boundary": "The audited ref_cetr_idx path currently appears to be label or dead metadata."
+    },
+    {
+      "asset": "Co-MTP",
+      "path": "preprocess/preprocess_road.py",
+      "finding": "screen_completed_track requires a future endpoint before an actor is admitted into agent_feature, pred_num, and object_id_lis.",
+      "boundary": "Future availability controls cohort membership in code, but numerical influence and forward reachability have not been executed."
+    },
+    {
+      "asset": "Co-MTP",
+      "path": "training/dataset_v2x_road.py",
+      "finding": "The default path converts true AV_fut and other_label into planning edges and future-node features.",
+      "boundary": "This is an explicit oracle design disclosed by the paper, not a newly discovered hidden leak."
+    },
+    {
+      "asset": "Co-MTP",
+      "path": "training/train.py",
+      "finding": "The documented entry point, flag semantics, checkpoint spelling, training-mode argument, default paths, and preprocessing schemas contain independent execution blockers.",
+      "boundary": "A single reachable helper cannot be attributed to a paper result while the public end-to-end path is broken."
+    }
+  ],
+  "prefixOracleContract": {
+    "partitions": [
+      "I: tensors, masks, actor ordering, and map edges actually consumed by model forward.",
+      "A: fused IDs, source IDs, actor or target selection, interpolated history, and max_source_timestamp provenance.",
+      "Y: future labels, metric targets, and loss masks, which are expected to change under suffix mutation."
+    ],
+    "mutations": [
+      "Truncate every row after the legal cut and keep labels in a separate sidecar.",
+      "Deterministically mutate suffix x, y, velocity, heading, and dimensions.",
+      "Permute only suffix id, car_side_id, and road_side_id.",
+      "Delete a suffix actor and append an actor that exists only after the cut.",
+      "Permute suffix row order as a negative control.",
+      "Modify one history row as a positive control."
+    ],
+    "decisionRule": "Canonical I and deployable A must be byte-identical for the same history. A field is a dynamic prefix violation only when its provenance exceeds the legal cut, a suffix mutation changes it, and it reaches the fixed forward path.",
+    "closureRule": "A crash after suffix truncation is a prefix-closure failure, not automatically a leakage result.",
+    "cutRule": "The primary V2X-Seq cut is the end of the documented observation window. Earlier cuts require reconstructing an equal-length history ending at that cut."
+  },
+  "assetStatus": {
+    "v2xSeqExample": "The official repository publishes a Google Drive TFD example link, but no archive size, hash, local sample, or successful loader run was verified in this environment.",
+    "v2xSeqCheckpoints": "The official benchmark table links six HiVT and TNT checkpoints on Google Drive. No checkpoint exists in the fixed git tree and none was downloaded, hashed, or loaded.",
+    "coMtpCheckpoint": "No checkpoint is present; the official checkpoint request remains open at https://github.com/xiaomiaozhang/Co-MTP/issues/4.",
+    "licenseBoundary": "No independently verified license was found for the relevant TFD data or Co-MTP release. A parent-repository code license must not be projected onto data.",
+    "verdict": "Assets are link-level public but actual availability, licensing, and fixed-path executability remain unverified; faithful Co-MTP reproduction is hard-blocked."
+  },
+  "minimumDynamicStudy": {
+    "scope": "At least 200 cooperative scenes at three legal cuts and at least 1,000 fixed target samples for downstream effects.",
+    "baselines": [
+      "Fixed official preprocessing.",
+      "Prefix-only online Hungarian matching with persistent IDs.",
+      "Vehicle-only and mask-aware no-interpolation controls.",
+      "An explicit oracle branch as a positive control."
+    ],
+    "metrics": [
+      "Prefix-violation rate and changed fields.",
+      "Maximum lookahead provenance.",
+      "Actor and ID Jaccard agreement.",
+      "Sample survival rate.",
+      "minADE, minFDE, and miss rate after forward reachability is proven."
+    ],
+    "statistics": "Use raw scene or continuous collection segment as the unit. Report exact scene-level binomial intervals, paired cluster bootstrap or cluster sign-flip tests by collection segment or intersection, Holm adjustment for multiple primary metrics, and multiple seeds only when retraining."
+  },
+  "killCriteria": [
+    "No legally usable TFD sample, verifiable checkpoint, or checkpoint-to-preprocessing provenance can be obtained.",
+    "At the standard cut, every difference is confined to Y, dead fields, or an explicitly labeled oracle branch while I and fused IDs remain invariant.",
+    "The only finding is smoothing within the legal observation history.",
+    "Co-MTP preprocessing cannot satisfy the public loader contract without changing its semantics.",
+    "The result does not reproduce on independent scenes and a second oracle implementation.",
+    "The contribution collapses to a generic slicing-difference utility without a V2X-specific field-level result or reproducible negative certificate."
+  ],
+  "nearestWorkBoundary": [
+    {
+      "work": "Freqtrade lookahead-analysis",
+      "url": "https://www.freqtrade.io/en/stable/lookahead-analysis/",
+      "boundary": "Baseline-versus-sliced DataFrame leakage detection is established."
+    },
+    {
+      "work": "Freqtrade recursive-analysis",
+      "url": "https://docs.freqtrade.io/en/stable/recursive-analysis/",
+      "boundary": "Output sensitivity to available history length is established."
+    },
+    {
+      "work": "Hidden Leaks",
+      "url": "https://arxiv.org/abs/2512.06932",
+      "boundary": "Window-before-split time-series leakage is a separate occupied problem."
+    },
+    {
+      "work": "MIMIC-IV data pipeline",
+      "url": "https://proceedings.mlr.press/v193/gupta22a.html",
+      "boundary": "Truncating the observation window before imputation is an established causal preprocessing principle."
+    },
+    {
+      "work": "CoPAD",
+      "url": "https://arxiv.org/abs/2509.15984",
+      "boundary": "History-timestamp Hungarian and Kalman early fusion already exist; the candidate may audit availability, not reclaim the mechanism."
+    },
+    {
+      "work": "V2X-RECT",
+      "url": "https://arxiv.org/abs/2511.17941",
+      "boundary": "Temporal ID matching and correction are already proposed; novelty is executable information-boundary auditing."
+    }
+  ],
+  "panelEntryRequirements": [
+    "TFD sample access and applicable use terms are verified.",
+    "At least 200 scenes pass the dynamic suffix-mutation oracle.",
+    "Every affected field is traced to model forward or explicitly classified as cohort, label, or dead metadata.",
+    "At least one verified checkpoint or an equal-budget runnable predictor completes fixed downstream evaluation.",
+    "The novelty statement credits generic lookahead and truncation oracles as prior art.",
+    "An independent implementation reproduces the result."
+  ],
+  "localEvidence": [
+    "content/idea-audits/cooperative-autonomous-driving-candidate-ledger-v3.json",
+    "content/idea-audits/cooperative-autonomous-driving-fresh-jury-v3.json",
+    "content/idea-audits/cooperative-autonomous-driving-co-mtp-asset-repro-audit.json"
+  ]
+}

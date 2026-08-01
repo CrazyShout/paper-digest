@@ -202,6 +202,7 @@ content/research-landscape.json
 
 ```text
 content/idea-center.json
+content/idea-audits/*.json
 content/templates/idea-exploration-template.md
 ```
 
@@ -210,12 +211,15 @@ Idea 中心不是 `research-landscape.json` 的加长版。研究态势从本站
 更新时注意：
 
 - 本站已总结论文只能作为检索种子，不得当作相关工作的全集。
-- `directions` 必须覆盖全部长期方向；未完成审计的方向使用 `planned`，不得提前填未经验证的 Idea。
-- `ready` 方向必须通过研究意义、突破余量、新颖空间和短期可行四道硬门槛。
-- 必须公开检索日期、时间范围、venue、查询族、关键一手证据、高竞争区和仍有余量的失败轴。
-- 每个 Idea 引用 3–5 篇最直接的一手论文，并写清每篇证据具体支持或限制什么。
+- `directions` 必须覆盖全部长期方向；未完成审计的方向使用 `planned`，完成候选池和盲评后使用 `reviewed`。`reviewed` 不等于存在通过候选。
+- 每轮候选池单独存入 `content/idea-audits/`，记录真实查询、范围理由、执行时间、结果计数、canonical-ID 样本或可复现元数据、来源尝试、去重一手来源、固定版本资产、候选 ledger、shortlist 和逐项淘汰原因；同一方向的多轮候选池通过 `candidatePoolPaths` 引用并按 canonical ID 去重展示。
+- 每个候选池还要有一份 `selectionReportPaths` 指向的独立筛选报告。筛选者只能看到去掉历史 shortlist、dossier 和评分的冻结候选输入，逐项给出保留或淘汰理由，并以 `candidatePoolSnapshotFingerprint` 绑定候选池内容。
+- shortlist 必须展开为独立 dossier，并由 `candidateRefs` 引用 dossier 与原始 reviewer 报告；页面摘要不能代替这些 artifact。
+- 每个 Idea 引用 4–7 篇最直接的一手论文，并写清每篇证据具体支持或限制什么；本库论文与外部证据使用互斥 provenance 标记。
 - 每个 Idea 都要有可证伪假设、最小实验、定量成功标准和停止条件；不能只写方法愿景。
-- 可做成度总分由统一五维权重自动复算，维度分与总分不一致时构建会失败。
+- 检索、独立筛选、dossier 写作和盲评角色必须分离，身份在整个中心范围内互斥。评估者独立给出五个维度及总体的 1–10 分，评估提示不得泄露发布分或其他评估结果。
+- 任一已提交评审出现未达到发布分的项时，候选标记为提前淘汰并停止未启动视角；只有此前评审均满足发布分时才继续补齐五个 lens。发布候选必须有完整五视角且各项和总体均达到配置中的发布分。
+- dossier 必须记录冻结时间，每份盲评必须保存并匹配 `dossierSnapshotFingerprint`；评审时间不得早于冻结时间。七个方向收口后必须由未参与前序检索、筛选或评审的独立 agent 做一次全局复核，并绑定中心及逐方向 artifact 快照；低分、淘汰和无通过结果都应如实公开。
 - `updatedAt` 和已完成方向的 `searchedAt` 随实际复核更新，不能早于最新简报。
 
 7. 需要维护方向综述时，更新：

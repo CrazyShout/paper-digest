@@ -1,0 +1,38 @@
+{
+  "candidateId": "adaptive-detector-fallback-hazard-budget",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb9a-72bc-7db0-8803-7d066c608a96",
+  "reviewedAt": "2026-08-01T05:21:31.398Z",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 3,
+    "success-probability": 3,
+    "impact": 7,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "自适应攻击、异常检测、最小风险机动和配对闭环评测均已有直接先例；可保留的新意是把 detector-aware 攻击者、实际触发延迟和非 fail-stop MRM 放进同一个车辆级 hazard budget，并要求相对继续执行和立即制动产生增量证据。",
+    "feasibility": "固定 AD2 代码中的 CBDetector 只出现在离线 TemporalDataset 训练/评估脚本，脚本包含作者绝对路径，仓库没有 detector checkpoint，也未发现 detector logit 接入在线驾驶 agent 或 safety wrapper。AD2 还基于 CARLA 0.9.10.1，而故障对照基于 0.9.15；迁移预处理、训练/取得权重、接入实时状态机、实现独立 MRM、攻击优化和同前缀分叉后，再完成 240 个多条件 route-seed blocks，10-12 周可信度偏低。",
+    "success-probability": "检测器被自适应攻击规避或被诱导误触发具有机制合理性，但当前公开资产尚未建立在线 detector 合同，也没有证明所设计 MRM 在后车和路侧约束下优于立即制动。即使攻击成功，主结论仍可能被 detector 迁移误差、CARLA 重放漂移或 MRM 自身风险否决。",
+    "impact": "若能证明检测准确率与车辆安全脱钩，并给出可复核的 detector-plus-MRM 风险边界，会直接影响自动驾驶防御模块的准入、回退设计和攻击评测口径；影响明确但仍限于模拟 ODD。",
+    "comparison-readiness": "dossier 已列出 non-adaptive、detector-aware、随机、自然故障以及 continue、fail-stop、MRM 的配对矩阵，并给出 route-seed 聚类、功效和 held-out 条件。主要缺口不是比较对象，而是这些对象尚未落在同一可运行执行链上。"
+  },
+  "strongestObjection": "核心 detector 并不在公开在线驾驶执行路径中且没有可取得的固定 detector 权重；因此当前设计不是在现有 detector-fallback 系统上做压力测试，而是先重建一个跨 CARLA 版本的新系统。再叠加无原生快照分叉的 CARLA、独立 MRM 和 detector-aware 攻击，240-block 主研究无法在 12 周内被当前公开资产可信支撑。",
+  "requiredExperiment": "先做一个两路线 Gate 0：在 CARLA 0.9.15 中用有 checksum 和许可记录的真实 AD2 detector 权重，把与离线脚本完全一致的两时刻三相机预处理和四类 logits 接入每 tick 控制路径；从同一前缀运行 no-op twin、continue、immediate brake 和非 fail-stop MRM。必须同时证明 no-op twin 漂移低于预注册主效应阈值、在线 logits 与离线样本合同一致、MRM 在控制轨迹上可区别于最大制动，并形成至少一个可复核的 detector-aware 风险差；任一项失败即停止 240-block 扩展。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/ishan-sahu/av-attack-detection/tree/4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb",
+      "finding": "固定提交声明 CARLA 0.9.10.1、Leaderboard 1.0 和 Scenario Runner 0.9.10，并要求外部 TransFuser/InterFuser 权重；仓库未提供 detector checkpoint。"
+    },
+    {
+      "url": "https://github.com/ishan-sahu/av-attack-detection/blob/4b09f3ce8206f4b4f9108ea1d3a1f7f677c968eb/detector/new_model/evaluate_detector_model.py",
+      "finding": "CBDetector 在带硬编码本地路径的离线 TemporalDataset 训练/测试脚本中实例化；未发现该 detector 输出进入在线 agent 控制或攻击 wrapper 的调用链。"
+    },
+    {
+      "url": "https://github.com/Thinklab-SJTU/Bench2Drive-Robust/tree/ae1b5867324710bf0574cba797062280d9d97105",
+      "finding": "固定提交提供 CARLA 0.9.15 的帧丢失、部分观测、GPS/速度噪声和动作延迟接口，可作为故障对照，但不提供 detector、攻击器或 MRM；许可证为 CC-BY-NC-ND-4.0。"
+    }
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "6bfb8252994de7b1ee3a5d49d8fd5b4023956528a06f8fb4225b3acf4d647dec"
+}

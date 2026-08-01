@@ -1,0 +1,647 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-clock-pilot-methodology-audit-v5-2026-07-31",
+  "auditedAt": "2026-07-31",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "auditScope": {
+    "independenceStatement": "本审计不读取或使用候选评分、排序、接受阈值或外部接受规则。结论仅来自指定的 v5 脚本、v5 测试、v5 pilot JSON、v4 methodology audit、原样重跑和独立复算。",
+    "writeConstraint": "审计未修改三个 v5 输入文件或其他仓库文件；唯一新增文件为本 methodology audit。",
+    "auditedFiles": [
+      "scripts/idea-pilots/clock-age-identifiability-v5.mjs",
+      "test/clock-age-identifiability-v5.test.mjs",
+      "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v5.json",
+      "content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v4.json"
+    ],
+    "sourceHashesSha256": {
+      "scripts/idea-pilots/clock-age-identifiability-v5.mjs": "4602b273562f4bd2a30077a70437ae3b85f924f0604f3c1840e03616bd19404b",
+      "test/clock-age-identifiability-v5.test.mjs": "7af06692a8c53668bacec6e59c81517322d119c981f08861d531aa9607fc9557",
+      "content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v5.json": "527c67e3ed40856dd409687f3580dd869fcf8c9b942a4a0413ad1d81185e885b",
+      "content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v4.json": "bc93eb1351274a32c110541e1522c983e42187c6fcc37b292494e2d53a85533e"
+    }
+  },
+  "commands": [
+    {
+      "command": "node scripts/idea-pilots/clock-age-identifiability-v5.mjs",
+      "exitCode": 0,
+      "result": "原样重跑成功；Node v24.14.0；生成 512 个 calibration episodes、3276 个 test records、1512 个唯一 test episode IDs；报告四个 failed checks 并执行 stop-at-finite-population-methodology-audit。"
+    },
+    {
+      "command": "node --test test/clock-age-identifiability-v5.test.mjs",
+      "exitCode": 0,
+      "result": "10 tests passed, 0 failed。"
+    },
+    {
+      "command": "shasum -a 256 scripts/idea-pilots/clock-age-identifiability-v5.mjs test/clock-age-identifiability-v5.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v5.json content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v4.json",
+      "exitCode": 0,
+      "result": "四个审计输入的 SHA-256 与 auditScope.sourceHashesSha256 一致。"
+    },
+    {
+      "command": "git ls-files --stage -- scripts/idea-pilots/clock-age-identifiability-v5.mjs test/clock-age-identifiability-v5.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v5.json content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v4.json",
+      "exitCode": 0,
+      "result": "无输出；四个输入在当前 index 中均未跟踪。"
+    },
+    {
+      "command": "git log --all --format=%H%x09%cI -- scripts/idea-pilots/clock-age-identifiability-v5.mjs test/clock-age-identifiability-v5.test.mjs content/idea-audits/cooperative-autonomous-driving-clock-age-pilot-v5.json",
+      "exitCode": 0,
+      "result": "无输出；没有可独立证明 design、stop code 与 observed results 先后顺序的提交历史。"
+    },
+    {
+      "command": "node --input-type=module -e '<independent recomputation over exported raw records and predictions>'",
+      "exitCode": 0,
+      "result": "未调用脚本汇总器，按 episodeId 独立重算 every/any、point errors、decision events、rate shifts、DGP 支持集、episode IDs、精确逆仿射边界、空集合 gate 和证书各子树一致性；未写临时文件。"
+    },
+    {
+      "command": "jq empty content/idea-audits/cooperative-autonomous-driving-clock-pilot-methodology-audit-v5.json",
+      "exitCode": 0,
+      "result": "目标文件为可解析 JSON。"
+    },
+    {
+      "command": "npm run validate",
+      "exitCode": 0,
+      "result": "Content validation passed: 11 digests, 85 papers, 7 direction reviews。"
+    }
+  ],
+  "independentRecomputations": {
+    "v4RepairMap": {
+      "repaired": [
+        "test DGP 在 calibration fit 前生成并 deep-freeze，且运行时不接收 fitted calibration",
+        "coverage 使用 cluster every；decision event 使用 cluster any",
+        "非负 age 空交集返回 inconsistent-provenance/uncertain",
+        "false-fresh gate 显式要求零事件估计和有限 upper",
+        "point diagnostics 与 interval coverage 分离",
+        "missing-field branch controls 与 wrong-but-present controls 分开",
+        "rate anchor 与 message point 分离，rate 改动传播到 mapped timestamp",
+        "有限总体不报告 Wilson、bootstrap 或其他 cluster CI",
+        "传入 test seed 写入 episode ID"
+      ],
+      "notRepaired": [
+        "没有 immutable pre-run commit 或 external timestamp",
+        "rate uncertainty 仍用非保守的一阶半宽近似，而不是精确逆仿射端点",
+        "有限总体 event upper 使用六位小数四舍五入值，非严格数学 upper"
+      ]
+    },
+    "dgpFreezeAndFittedBoundIndependence": {
+      "executionOrderObserved": [
+        "design-manifest-hashed-before-data",
+        "test-population-generated-and-deep-frozen",
+        "calibration-episodes-generated",
+        "calibration-fitted-after-test-freeze"
+      ],
+      "testGeneratorAcceptsCalibrationArgument": false,
+      "testGeneratorReadsFittedCalibrationAtRuntime": false,
+      "testPopulationObjectDeepFrozen": true,
+      "defaultPopulationSha256": "811c63a0600e811445c000712a755bdd9f1525290e6605492558dd0808da67db",
+      "populationSha256AfterDeliberatelyDifferentFit": "811c63a0600e811445c000712a755bdd9f1525290e6605492558dd0808da67db",
+      "deliberatelyDifferentFit": {
+        "mappingHalfWidthMs": 100002,
+        "rateHalfWidthPpm": 10002
+      },
+      "fittedBounds": {
+        "mappingHalfWidthMs": 19.993867883,
+        "rateHalfWidthPpm": 121.705907572
+      },
+      "testResidualSupports": {
+        "mappingResidualSupportMs": 26,
+        "rateResidualSupportPpm": 180
+      },
+      "testSupportOverFittedBoundRatios": {
+        "mapping": 1.300399,
+        "rate": 1.478975
+      },
+      "interpretation": "运行时 freeze 和 fitted-bound independence 成立，修复了 v4 的直接反向构造问题。但 calibration residual 的生成支持为约 +/-18 ms 与 +/-120 ppm，test 支持为 +/-26 ms 与 +/-180 ppm；因此 test 是预定义的更宽 stress population，不是同分布 holdout。没有外部时间证据可证明这些常量在观察结果前冻结。"
+    },
+    "aggregationSemantics": {
+      "boundedRecords": 504,
+      "boundedClusters": 252,
+      "coveredRecords": 471,
+      "everyCoveredClusters": 219,
+      "failedEveryClusters": 33,
+      "anyCoveredClusters": 252,
+      "failedAnyClusters": 0,
+      "falseFreshAnyEvent": {
+        "eventClusters": 1,
+        "eligibleClusters": 252
+      },
+      "falseStaleAnyEvent": {
+        "eventClusters": 1,
+        "eligibleClusters": 252
+      },
+      "adversarialPartialCluster": {
+        "everyEstimate": 0.5,
+        "anyEventEstimate": 0.5,
+        "interpretation": "一个二记录 cluster 中只有一条 miss 时，coverage cluster 正确失败；一个 cluster 中只要一条 event 即正确计为 event。"
+      },
+      "interpretation": "v5 的 every/any 修复是实质性的：若沿用 v4 的 any coverage，本次 33 个部分 miss clusters 会全部被隐藏为 252/252。"
+    },
+    "emptySetsAndFalseFreshGate": {
+      "negativeAgeCounterexample": {
+        "rawIntervalMs": [
+          -10041.901150316,
+          -9958.098849684
+        ],
+        "intervalMs": null,
+        "status": "inconsistent-provenance",
+        "verdict": "uncertain"
+      },
+      "emptyEligibleEventAggregate": {
+        "eventClusters": 0,
+        "eligibleClusters": 0,
+        "estimate": null,
+        "finitePopulationUpperBound": null
+      },
+      "emptyCoverageAggregate": {
+        "successClusters": 0,
+        "totalClusters": 0,
+        "estimate": null
+      },
+      "emptyPopulationChecks": {
+        "completeFiniteGrid": false,
+        "everyRecordIntervalCoverage": true,
+        "falseFreshGate": false,
+        "action": "stop-at-finite-population-methodology-audit"
+      },
+      "oneFalseFreshGatePasses": false,
+      "nullUpperGatePasses": false,
+      "interpretation": "空 age 交集和 false-fresh gate 均 fail closed。空 coverage 子检查本身因 0===0 呈 vacuous true，但 completeFiniteGrid 与 falseFreshGate 同时失败，最终 action 仍为 stop；建议仍消除该局部 vacuous pass。"
+    },
+    "ratePropagation": {
+      "wrongRateRecords": 504,
+      "nonzeroMappedTimestampShiftRecords": 504,
+      "injectedRateDeltaPpm": 240,
+      "minimumAbsoluteShiftMs": 143.903417,
+      "p50AbsoluteShiftMs": 143.998939,
+      "maximumAbsoluteShiftMs": 144.099875,
+      "currentFrozenPopulationExactVsApproximate": {
+        "maximumEndpointDifferenceMs": 0.014910638,
+        "coverageChanges": 0,
+        "verdictChanges": 0
+      },
+      "boundEndpointCounterexample": {
+        "episodeIdUsedAsBase": "v5-test-bounded-provenance-2026073197-66",
+        "exactRawUpperMs": 63.929007292,
+        "reportedRawUpperMs": 63.919433057,
+        "missAtValidUpperBoundMs": 0.009574234,
+        "maximumEndpointUnderreachMs": 0.014910638,
+        "interpretation": "令真实 anchor/rate error 取 calibration half-width 合法端点时，精确逆仿射 identified-set 端点落在当前线性近似之外；可构造正 age 63.929007292 ms 未被报告 interval 覆盖。"
+      },
+      "interpretation": "v5 已证明 rate 值会传播，但尚未证明 rate half-width 被正确、保守地传播。当前 frozen run 的计数不受 0.015 ms 级近似误差影响，数学 identified-set claim 仍受阻。"
+    },
+    "pointAndIntervalMetrics": {
+      "pointMethodsContainCoverageField": false,
+      "intervalMethodContainsCoverageField": true,
+      "pointRecomputation": {
+        "naive-direct-subtraction": {
+          "meanAbsoluteErrorMs": 157.849611,
+          "p95AbsoluteErrorMs": 518,
+          "exactHitRecords": 504,
+          "falseFreshRecords": 669,
+          "falseStaleRecords": 480
+        },
+        "mcap-log-minus-publish": {
+          "meanAbsoluteErrorMs": 158.14652,
+          "p95AbsoluteErrorMs": 520,
+          "exactHitRecords": 546,
+          "falseFreshRecords": 678,
+          "falseStaleRecords": 468
+        },
+        "rtt-half-point": {
+          "meanAbsoluteErrorMs": 4.530786,
+          "p95AbsoluteErrorMs": 12,
+          "exactHitRecords": 504,
+          "falseFreshRecords": 252,
+          "falseStaleRecords": 0
+        },
+        "ptp-like-point": {
+          "meanAbsoluteErrorMs": 16.673317,
+          "p95AbsoluteErrorMs": 71.142387,
+          "exactHitRecords": 504,
+          "falseFreshRecords": 451,
+          "falseStaleRecords": 199
+        },
+        "oracle": {
+          "meanAbsoluteErrorMs": 0,
+          "p95AbsoluteErrorMs": 0,
+          "exactHitRecords": 3276,
+          "falseFreshRecords": 0,
+          "falseStaleRecords": 0
+        }
+      },
+      "interpretation": "独立重算与 pilot JSON 完全一致；exact hit 被明确命名且未再冒充 interval coverage。"
+    },
+    "wrongButPresentAblations": {
+      "wrongDomainPresent": {
+        "fieldRemainsPresent": true,
+        "uncertainRecords": 504,
+        "totalRecords": 504,
+        "finiteIntervals": 0
+      },
+      "expiredValidityPresent": {
+        "fieldRemainsPresent": true,
+        "uncertainRecords": 504,
+        "totalRecords": 504,
+        "finiteIntervals": 0
+      },
+      "wrongRateLongLookback": {
+        "fieldRemainsPresent": true,
+        "nonzeroPropagationRecords": 504,
+        "freshRecordsAssignedPositiveDelta": 252,
+        "staleRecordsAssignedNegativeDelta": 252,
+        "directionAssignmentIsTruthAligned": true,
+        "nominalDecisionErrorRecords": 281,
+        "widenedDecisionErrorRecords": 2,
+        "nominalMeanFiniteWidthMs": 149.748582,
+        "widenedMeanFiniteWidthMs": 336.673685
+      },
+      "relockMismatchAndRecovery": {
+        "transitionMismatch": {
+          "records": 252,
+          "mismatchedCounters": 252,
+          "uncertainRecords": 252,
+          "finiteIntervals": 0
+        },
+        "postRelockRecovery": {
+          "records": 252,
+          "mismatchedCounters": 0,
+          "uncertainRecords": 129,
+          "finiteIntervals": 252
+        }
+      },
+      "interpretation": "字段均保留，修复了删除字段冒充 empirical ablation 的问题。但 wrong-domain/expired-validity 仍是显式 guard branch controls；其 [0,Infinity] coverage 为定义上的 vacuous coverage。wrong-rate 的符号对 252 个 fresh 全取正、对 252 个 stale 全取负，是 truth-aligned adversarial stress，不是自然错误率或无偏敏感性估计。"
+    },
+    "finitePopulationAndConfidenceBoundaries": {
+      "population": {
+        "records": 3276,
+        "uniqueEpisodeIds": 1512,
+        "gridClustersPerRegime": 252,
+        "regimeRecordCounts": {
+          "paired-counterexample": 504,
+          "bounded-provenance": 504,
+          "common-clock": 504,
+          "unknown-domain": 504,
+          "rate-stress": 504,
+          "relock-control": 756
+        }
+      },
+      "clusterConfidenceIntervalsReported": false,
+      "calibrationFitUncertaintyIntegrated": false,
+      "ciKeysFoundInAuditResults": false,
+      "oneOf252": {
+        "exactFraction": 0.003968253968253968,
+        "reportedEstimate": 0.003968,
+        "reportedFinitePopulationUpperBound": 0.003968,
+        "reportedValueIsMathematicalUpper": false
+      },
+      "zeroOf252": {
+        "exactFinitePopulationFraction": 0,
+        "externalPopulationConfidenceUpper": null
+      },
+      "interpretation": "对已定义且穷举的 seeded finite population，event counts 是精确描述；没有 CI 是正确边界。finitePopulationUpperBound 实际等于四舍五入后的 observed fraction，1/252 时略小于精确比例，名称和数值并非严格 upper。它也不是 seeded generator、重复 calibration 或部署总体的风险上界。当前 false-fresh 阈值为 0 且另有 estimate===0，因此舍入没有改变本次 gate。"
+    },
+    "episodeIds": {
+      "allTestIdsContainPassedDefaultSeed": true,
+      "alternativeSeed": 314159265,
+      "alternativeSeedIdsContainPassedSeed": true,
+      "defaultAlternativeOverlap": 0,
+      "calibrationTestIdOverlap": 0,
+      "expectedClusterSizes": {
+        "paired-counterexample": 2,
+        "bounded-provenance": 2,
+        "common-clock": 2,
+        "unknown-domain": 2,
+        "rate-stress": 2,
+        "relock-control": 3
+      },
+      "interpretation": "v4 的 hard-coded test seed provenance 问题已修复。"
+    },
+    "pairedWitness": {
+      "episodePairs": 252,
+      "identicalObservationPairs": 252,
+      "oppositeDeadlineTruthPairs": 252,
+      "identicalQueueSerializationProcessingPairs": 252,
+      "minimumDirectionalPropagationMs": 29.5,
+      "maximumRttIdentityResidualMs": 0,
+      "directionalPropagationVariesBetweenWorlds": true,
+      "interpretation": "构造内 observational-equivalence witness 仍成立；固定的是 observation、RTT 和声明的 queue/serialization/receiver-processing，非整个 directional propagation process。"
+    },
+    "hashAndCertificateConsistency": {
+      "recordedInputHashesMatchRerun": true,
+      "recordedAuditResultsHashMatchesRerun": true,
+      "recordedScriptHashMatchesCurrentFile": true,
+      "recordedTestHashMatchesCurrentFile": true,
+      "methodsMatchRerun": true,
+      "calibrationMatchesRerun": true,
+      "pointResultsMatchRerun": true,
+      "boundedAndRateIntervalResultsMatchRerun": true,
+      "negativeControlsMatchRerun": true,
+      "missingControlsMatchRerun": true,
+      "wrongPresentAblationsMatchRerun": true,
+      "failedChecksAndActionMatchRerun": true,
+      "immutableCommitPresent": false,
+      "externalTimestampPresent": false,
+      "auditedInputsTrackedInGit": false,
+      "interpretation": "当前工作树上的可复现性证书内部一致；hash 证明相同 bytes 可重现相同输出，不证明 design、threshold、generator 与结果的时间先后，也不构成 preregistration。"
+    },
+    "stopFailureClassification": {
+      "everyRecordIntervalCoverage": {
+        "classification": "real-within-declared-finite-population; stress-design-dependent",
+        "isAggregationArtifact": false,
+        "observed": "219/252 clusters every-covered；33 个 clusters 各有一条真实 miss。错误的 any 聚合会给出 252/252。",
+        "causeBoundary": "最大实际 mapped error 为 57.442682 ms，方法半宽仅约 41.899 至 41.903 ms。test mapping/rate supports 分别是 fitted bounds 的 1.300399 和 1.478975 倍。用声明 test supports 的精确端点区间反事实复算为 252/252 coverage。",
+        "judgment": "这不是测试实现伪影，方法对所声明 stress population 确实漏覆盖；但它不能被解释为同分布 calibration failure 或外部 coverage 证据。"
+      },
+      "falseFreshGate": {
+        "classification": "real-within-declared-finite-population; gate-correctly-stops",
+        "isGateArtifact": false,
+        "observed": "episode v5-test-bounded-provenance-2026073197-34 的 true age=58 ms、deadline=50 ms，方法返回 interval [0,42.71019148826599] 和 fresh；1/252 eligible clusters false-fresh。",
+        "causeBoundary": "该记录 mapping residual=24.998236635 ms、rate residual=-178.81225423 ppm，均接近更宽 test support 且超出 fitted bounds；精确逆仿射端点替换不会改变本条当前结果。",
+        "judgment": "事件真实存在且 v5 gate 正确失败；它同样是 support-shift stress 结果，不能外推为部署 false-fresh rate。"
+      },
+      "boundedUncertainRecordRate": {
+        "classification": "real-within-declared-finite-population; population-weight-and-threshold-dependent",
+        "isCountingArtifact": false,
+        "observed": "379/504=0.751984，超过 0.5。按 deadline margin 分解：8 ms 为 158/168 uncertain，22 ms 为 133/168，38 ms 为 88/168。",
+        "causeBoundary": "当前 interval 全宽约 83.798 至 83.806 ms，而 grid 对 8、22、38 ms margins 等权。用完整 test supports 时 uncertainty 进一步为 459/504。",
+        "judgment": "这是该有限 grid 上真实的 utility failure，不是实现伪影；0.5 阈值、margin 集和等权方式没有外部注册或部署权重，不能形成外部 utility 结论。"
+      },
+      "externalRegistrationEvidence": {
+        "classification": "real-procedural-evidence-failure; not-an-estimator-performance-failure",
+        "isTestArtifact": false,
+        "observed": "registrationEvidence 两字段均为 null；输入未被 git 跟踪且无提交历史。",
+        "judgment": "该 stop failure 完全正确且无须用性能结果解释。当前 hash certificate 只能证明工作树内一致性，不能补足事前冻结证据。"
+      },
+      "overall": "四项均不是 v4 那类测试逻辑伪影。前三项是对当前固定 synthetic population 的真实观测，其中前两项强烈受预设 support shift 驱动、第三项受 grid 权重和阈值驱动；第四项是程序性证据失败。它们共同要求 stop，但只在各自边界内说明问题。"
+    }
+  },
+  "findings": [
+    {
+      "id": "V5-F1",
+      "classification": "confirmed-repair",
+      "title": "test DGP 在运行时确实先冻结且不读取 fitted bounds",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:1404-1445 先 hash design，再生成并 freeze test population，随后才生成和 fit calibration。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:683-726 的 test generator 只接收 test seed，支持集来自 TEST_DGP_CONFIG。",
+        "将 calibration fit 改为 mapping=100002 ms、rate=10002 ppm 后，test population SHA-256 仍为 811c63a0600e811445c000712a755bdd9f1525290e6605492558dd0808da67db。"
+      ],
+      "conclusion": "v4 F1 的运行时 calibration-to-test 直接耦合已修复；事前登记问题仍由 V5-F8 单独阻断。"
+    },
+    {
+      "id": "V5-F2",
+      "classification": "confirmed-repair",
+      "title": "every coverage 与 any event 已正确分离，且改变了本次实际计数",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:874-903 分别实现 entries.every(Boolean) 和 entries.some(Boolean)。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:977-1016 仅 coverage 调用 every，false-fresh/false-stale 调用 any。",
+        "独立复算得到 bounded every=219/252，而错误的 any coverage 会得到 252/252。"
+      ],
+      "conclusion": "v4 F2 已修复；报告中的 33 个 coverage-failed clusters 不是聚合伪影。"
+    },
+    {
+      "id": "V5-F3",
+      "classification": "confirmed-repair",
+      "title": "空 age 交集和 false-fresh gate 已 fail closed",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:805-827 在 rawUpperMs<0 时返回 intervalMs=null、inconsistent-provenance、uncertain。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:1290-1295 要求 estimate===0、upper finite 且不超过阈值。",
+        "独立注入一项 false-fresh 或 null upper 均使 falseFreshGate=false；空 eligible aggregate 也不能通过 gate。"
+      ],
+      "conclusion": "v4 F3、F4 已修复；本次 observed false-fresh failure 是被 gate 正确捕获的真实 finite-population event。"
+    },
+    {
+      "id": "V5-F4",
+      "classification": "remaining-method-defect",
+      "title": "rate 已传播，但 uncertainty half-width 不是保守的精确逆仿射界",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:753-765 使用 affine inverse，wrong-rate 使 504/504 mapped timestamps 移动 143.903417 至 144.099875 ms。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:793-804 使用 abs(sender delta)*rateHalfWidthPpm*1e-6 的一阶对称半宽，没有在 rate endpoints 上精确求逆。",
+        "独立端点复算最大 underreach=0.014910638 ms；可构造合法正 age 63.929007292 ms，而报告 upper=63.919433057 ms。"
+      ],
+      "conclusion": "只能保留 rate 会传播和 widening tradeoff 的 claim；provenance-interval 是 calibration bounds 下严格 identified set 的 claim 仍被阻断。"
+    },
+    {
+      "id": "V5-F5",
+      "classification": "confirmed-repair",
+      "title": "point diagnostics 与 interval coverage 已分离",
+      "evidence": [
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:929-955 仅汇报 point MAE、分位误差、exact hit 和 decision errors。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:977-1016 只在 interval summary 中汇报 coverageEveryRecord。",
+        "五个 point 方法的独立 MAE、p95、exact-hit 和 error counts 与 pilot JSON 全部一致。"
+      ],
+      "conclusion": "v4 F6 已修复；这些指标只能描述当前 finite population。"
+    },
+    {
+      "id": "V5-F6",
+      "classification": "repair-with-interpretation-limit",
+      "title": "wrong-but-present controls 已实现，但不是字段贡献或自然错误率实验",
+      "evidence": [
+        "wrong domain 和 expired validity 在 504/504 records 中保留字段并触发 uncertain。",
+        "wrong rate 在 504/504 records 中传播，widened rate half-width 将 decision errors 从 281 降至 2，同时 mean finite width 从 149.748582 ms 增至 336.673685 ms。",
+        "wrong-rate 符号与 truth label 完全对齐：252 个 fresh 全加正 delta，252 个 stale 全加负 delta。",
+        "relock mismatch 的 252/252 records 无 finite interval；recovery 的 252/252 records 恢复 finite interval，129 records 仍 uncertain。"
+      ],
+      "conclusion": "可保留显式 guard、adversarial sensitivity 和 width-error tradeoff 行为；不能声称 empirical necessity、自然发生率或因果贡献。"
+    },
+    {
+      "id": "V5-F7",
+      "classification": "finite-population-correct-with-label-defect",
+      "title": "无 CI 边界正确，但 finitePopulationUpperBound 的舍入值不是严格 upper",
+      "evidence": [
+        "METRIC_DEFINITIONS 明确限定 exhaustive seeded finite population 且不报告 Wilson/bootstrap CI。",
+        "独立扫描 auditResults 未发现 ci95、confidenceInterval 或 bootstrapInterval keys。",
+        "scripts/idea-pilots/clock-age-identifiability-v5.mjs:889-902 将 observed fraction 四舍五入到六位并复制为 upper；1/252 的精确值 0.003968253968 大于报告的 0.003968。"
+      ],
+      "conclusion": "counts/fractions 可作为当前有限总体描述；rounded value 不能命名为数学 upper，也不能解释为外部风险 bound。当前零阈值 gate 不受该舍入缺陷影响。"
+    },
+    {
+      "id": "V5-F8",
+      "classification": "procedural-blocker",
+      "title": "hash certificate 内部一致，但不构成 preregistration",
+      "evidence": [
+        "重跑的四个 input hashes、auditResults hash、script/test source hashes 与 v5 pilot JSON 一致。",
+        "methods、calibration、point/interval results、controls、failed checks 和 action 的证书子树全部与重跑一致。",
+        "registrationEvidence.externalTimestamp 和 immutableCommit 均为空；四个审计输入未进入 index，且相关 git log 为空。"
+      ],
+      "conclusion": "可复现性通过；时间先后和事前冻结不可证。externalRegistrationEvidence stop failure 真实且必须保留。"
+    },
+    {
+      "id": "V5-F9",
+      "classification": "confirmed-repair",
+      "title": "episode ID seed provenance 已修复",
+      "evidence": [
+        "默认 3276 records 的 ID 均包含 test seed 2026073197。",
+        "替代 seed 314159265 的 ID 均包含传入 seed，与默认 ID overlap=0。",
+        "calibration/test episode ID overlap=0；每个 regime 有 252 clusters，cluster size 与设计一致。"
+      ],
+      "conclusion": "v4 F9 已修复。"
+    },
+    {
+      "id": "V5-F10",
+      "classification": "claim-boundary",
+      "title": "四个 stop failures 都应保留，但不能被合并解释为一种方法失败",
+      "evidence": [
+        "coverage、false-fresh 和 uncertainty 是当前 synthetic finite population 的实际输出。",
+        "coverage 与 false-fresh 强烈受 test supports 大于 fitted bounds 的 stress design 驱动。",
+        "uncertainty 受 8/22/38 ms margins 等权和 0.5 threshold 驱动。",
+        "external registration 是程序性证据失败，不是 estimator performance。"
+      ],
+      "conclusion": "observed action=stop 方法学上正确；stop 不等于真实系统漏洞、部署风险、同分布校准失败或所有四项都是 estimator defect。"
+    }
+  ],
+  "passableClaims": [
+    {
+      "claim": "在当前执行路径中，test population 在 calibration fit 前生成并 deep-freeze，且 test generator 不读取 fitted calibration bounds。",
+      "boundary": "这是源码和运行时 independence；不是 externally timestamped preregistration，也不表示 calibration/test 同分布。"
+    },
+    {
+      "claim": "v5 正确使用 every-record cluster coverage 和 any-event cluster decision errors。",
+      "boundary": "只保证当前聚合实现；部署总体和 cluster sampling 分布未定义。"
+    },
+    {
+      "claim": "当前 bounded finite population 中 219/252 clusters every-covered、1/252 clusters false-fresh、1/252 clusters false-stale、379/504 records uncertain。",
+      "boundary": "仅是当前 seed、grid、支持集和单次 calibration fit 的精确计数；不是 confidence interval 或外部风险率。"
+    },
+    {
+      "claim": "空的非负 age 交集返回 inconsistent-provenance/uncertain；非零 false-fresh 或非有限 upper 均不能通过 gate。",
+      "boundary": "该 fail-closed 行为通过当前 adversarial checks；不消除 interval endpoint 的 V5-F4 缺陷。"
+    },
+    {
+      "claim": "point 方法的 MAE、绝对误差分位、exact hit 和 decision errors 与 interval coverage 已按不同语义报告。",
+      "boundary": "这些数值仅描述当前 finite population；exact hit tolerance 为 1e-9 ms。"
+    },
+    {
+      "claim": "在 600000 ms lookback 的当前 wrong-rate stress 中，+/-240 ppm 使 504/504 mapped timestamps 非零移动；扩大 rate uncertainty 显示更宽 interval 与更少 decision errors 的 tradeoff。",
+      "boundary": "只能称 adversarial sensitivity；符号与 truth label 对齐，且 half-width 传播不是严格保守端点。"
+    },
+    {
+      "claim": "wrong-present clock domain、expired validity 和 relock mismatch 会触发 fail-closed；relock counter 恢复匹配后 finite intervals 恢复。",
+      "boundary": "这是实现 guard/recovery branch 行为，不证明字段因果贡献、必要性或现实发生率。"
+    },
+    {
+      "claim": "252 对 paired worlds 在生成器内 observation 相同、deadline truth 相反，并保持声明的 queue/serialization/receiver-processing 相同。",
+      "boundary": "directional propagation 在 worlds 间变化；这是 synthetic observational-equivalence witness，不是现实漏洞证据。"
+    },
+    {
+      "claim": "test episode IDs 包含传入 seed，替代 seed 与默认 seed IDs 不重叠，calibration/test IDs 不重叠。",
+      "boundary": "只证明当前 ID scheme 的 provenance 和 disjointness。"
+    },
+    {
+      "claim": "v5 pilot JSON 对当前 script、test、input artifacts 和 auditResults 的 hash/certificate 内部一致并可重现。",
+      "boundary": "hash 没有外部 timestamp 或 immutable commit，不能证明事前登记。"
+    }
+  ],
+  "blockedClaims": [
+    {
+      "claim": "v5 已 externally preregistered 或可证明 design、threshold、DGP 在结果前冻结。",
+      "blockedBy": [
+        "V5-F8"
+      ]
+    },
+    {
+      "claim": "provenance-interval 是 calibration mapping/rate bounds 下严格、保守的 age identified set。",
+      "blockedBy": [
+        "V5-F4"
+      ]
+    },
+    {
+      "claim": "33 个 coverage failures 和一个 false-fresh 证明同分布 calibration 方法失效。",
+      "blockedBy": [
+        "V5-F1",
+        "V5-F10"
+      ],
+      "reason": "test residual supports 显式大于 calibration generation supports 和 fitted bounds。"
+    },
+    {
+      "claim": "0.003968 是严格 finite-population upper bound 或任何外部总体的风险上界。",
+      "blockedBy": [
+        "V5-F7"
+      ]
+    },
+    {
+      "claim": "0.751984 uncertain rate 证明部署 utility 不足。",
+      "blockedBy": [
+        "V5-F10"
+      ],
+      "reason": "margin grid、等权规则、threshold 和单次 calibration fit 没有部署分布依据。"
+    },
+    {
+      "claim": "wrong-but-present ablations 估计了自然错误率，或证明 domain、validity、rate、relock 各字段的因果贡献。",
+      "blockedBy": [
+        "V5-F6"
+      ]
+    },
+    {
+      "claim": "四个 stop failures 都是 estimator 的真实系统性能失败。",
+      "blockedBy": [
+        "V5-F10"
+      ],
+      "reason": "external registration 是程序性证据失败；其余三项仅为设计依赖的 synthetic finite-population 输出。"
+    },
+    {
+      "claim": "当前 pilot 支持继续到 trace phase 或 usable bounded-age gate。",
+      "blockedBy": [
+        "V5-F4",
+        "V5-F8",
+        "V5-F10"
+      ]
+    },
+    {
+      "claim": "当前结果建立任何 ROS 2、MCAP、PTP、V2X、协同感知或自动驾驶系统中的漏洞、风险频率、安全缺陷或性能效果。",
+      "blockedBy": [
+        "V5-F1",
+        "V5-F6",
+        "V5-F7",
+        "V5-F8",
+        "V5-F10"
+      ]
+    }
+  ],
+  "requiredFixes": [
+    {
+      "priority": "required-before-identified-set-claim",
+      "fix": "对 affine rate uncertainty 在 rate endpoints 上精确求逆并联合 anchor endpoints 取 min/max；或加入可证明保守 remainder。增加 calibration-bound endpoint coverage test，包括正 age 边界。"
+    },
+    {
+      "priority": "required-before-calibration-generalization-claim",
+      "fix": "明确选择并事前登记 calibration/test 关系：若验证同分布 coverage，使用同一预定义 residual law 的独立 draws；若验证 distribution shift，保留 26 ms/180 ppm stress supports，但把 failures 明确标为 out-of-calibration-support stress，不称同分布 calibration failure。"
+    },
+    {
+      "priority": "required-before-risk-bound-claim",
+      "fix": "将 finitePopulationUpperBound 改名为 observedFinitePopulationFraction，或保留整数 numerator/denominator 并用未舍入值比较；若确需数学 upper，使用不向下舍入的保守表示。"
+    },
+    {
+      "priority": "required-before-new-gated-run",
+      "fix": "在新数据生成前把 source、DGP、seeds、metrics、grid completeness rule、thresholds 和 stop code 写入 immutable commit，并取得独立 external timestamp；然后用未使用的新 test seed 重跑。"
+    },
+    {
+      "priority": "required-before-utility-generalization",
+      "fix": "为 deadline margins 和 grid cell 权重提供目标总体依据；整合 repeated calibration-fit uncertainty，或只报告按 cell 分层的 finite-population counts，不把 0.5 uncertainty threshold 外推为部署 utility。"
+    },
+    {
+      "priority": "required-before-ablation-contribution-claim",
+      "fix": "把 wrong-domain、expired-validity 和 relock mismatch 命名为 wrong-present guard controls；把 wrong-rate 标为 truth-aligned adversarial stress，并增加 counterbalanced/random-sign、多个 delta 和边界扰动，避免把 adversarial direction 的 error fraction 当自然率。"
+    },
+    {
+      "priority": "robustness",
+      "fix": "让 everyRecordIntervalCoverage 在 totalClusters===0 时自身返回 false；让 completeFiniteGrid 验证 252 个声明 grid keys 各出现一次且每个 regime 的 cluster size 正确，而不只比较 cluster count。"
+    },
+    {
+      "priority": "wording",
+      "fix": "保留 v5 的 claim boundary：paired witness 固定 observation、RTT 和声明的 queue/serialization/receiver-processing；明确 directional propagation 变化，且所有结果仅限 synthetic finite population。"
+    }
+  ],
+  "verdict": {
+    "status": "methodology-blocked-with-limited-executable-claims",
+    "stopActionIsCorrect": true,
+    "fourStopFailures": {
+      "realFinitePopulationMethodFailures": [
+        "everyRecordIntervalCoverage",
+        "falseFreshGate",
+        "boundedUncertainRecordRate"
+      ],
+      "proceduralEvidenceFailures": [
+        "externalRegistrationEvidence"
+      ],
+      "pureTestImplementationArtifacts": []
+    },
+    "summary": "v5 确实修复了 v4 的 DGP 运行时耦合、every/any、空交集、false-fresh null gate、point/interval 混用、missing-vs-wrong controls、rate 非传播、CI 表述和 episode ID 问题。原样重跑、独立复算和 hash/certificate 子树一致。四个 observed stop failures 都应保留：前三个是当前 synthetic finite population 上的真实方法输出，第四个是实际的外部登记证据缺失；没有一个是 v4 式测试实现伪影。不过 coverage 与 false-fresh 由更宽 test residual supports 强烈驱动，uncertainty 由 grid margins/权重/threshold 驱动，均不能外推。另有一个未被现有测试捕获的实质缺陷：rate uncertainty 使用非保守一阶近似，在合法 calibration-bound 端点可漏约 0.014911 ms。因此当前只能保留受限的构造内 witness、实现分支、有限总体计数、point diagnostics、adversarial sensitivity 和可复现性 claim；严格 identified-set、外部 risk/utility、字段贡献、preregistration 和继续到 trace phase 的 claim 仍被阻断。"
+  }
+}

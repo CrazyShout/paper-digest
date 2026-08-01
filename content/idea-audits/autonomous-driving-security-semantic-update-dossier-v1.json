@@ -1,0 +1,298 @@
+{
+  "candidateId": "signed-semantic-update-differential-admission",
+  "directionId": "autonomous-driving-security",
+  "dossierVersion": 1,
+  "createdAt": "2026-08-01",
+  "reviewMode": "evidence-dossier-no-scoring",
+  "title": "签名正确仍可能行为错误：自动驾驶模型更新的配对语义差分准入",
+  "hook": "密码学完整性只能证明收到的是被授权发布的制品；若恶意语义在签名前进入模型，准入器还必须判断新版本相对旧版本在触发条件下改变了什么驾驶行为。",
+  "output": "授权制品配对语义账本、强回归基线、held-out trigger 准入器与回滚决策协议",
+  "effort": "高投入",
+  "timeline": "10-12 周",
+  "whyNow": "UN R156 和 ISO 24089 已把车辆软件更新的版本、兼容、验证、交付和组织责任制度化，Architectural Backdoors 又直接证明可执行模型架构能在 clean utility 保持时携带 dormant behavior。BADControl、BadDreamer、车道检测后门和驾驶 VLM 后门分别把供应链攻击推进到控制器、世界模型、感知和语言驾驶接口。AutoVLA 固定代码与 checkpoint 使同一基础模型的版本配对成为可执行研究，但现有标准不规定学习行为准入，现有攻击工作也没有把旧/新模型、普通回归、攻击自适应和车辆级回滚放进同一个 admission decision。",
+  "keyProblem": "一个模型包可以拥有正确 hash、合法测试签名、递增版本号和兼容 manifest，同时在签名前已经被受信供应商、训练链或构建链植入目标触发行为。传统完整性检查会正确地确认该包就是签名者授权的包，却无法判断授权内容是否语义安全。另一方面，任何版本更新都会产生普通性能波动、自然 ODD shift 和非恶意构建故障；如果专用后门准入器只是在重复 clean regression，它没有不可替代价值。要识别的是同一基础 checkpoint、同一更新预算和同一场景初态下，malicious update 相对 benign update、faulty update 与 matched random regression 的 trigger-conditional excess hazard，以及该差分是否改变接受、拒绝或回滚。",
+  "currentLimitations": "最近工作已经完成三块相邻对象。UN R156 要求版本可识别、目标车辆兼容、更新前验证、安全交付与失败恢复；ISO 24089 给出组织和项目级软件更新工程要求，但明确不规定具体技术，也不覆盖车辆功能软件开发本身。Architectural Backdoors 在多个 VLM 任务上证明架构制品可携带 dormant steering，BADControl 已在低层控制器上完成供应链投毒、物理触发、防御和车辆/实体后果，BadDreamer 已证明驾驶世界模型的训练时后门能传播到 waypoint。不可替代 residual 仅是：对同一 lineage 的旧/新授权模型做车辆行为配对差分，让攻击者针对准入特征自适应，并证明它在 held-out trigger family 上优于全面普通回归。这里的本地签名 harness 不是 OEM OTA 仿真，更不是对 R156/SUMS 合规性的复现；若普通回归已可靠拒绝所有危险更新，专用语义准入主张即被淘汰。",
+  "hypothesis": "在固定 AutoVLA 基础版本、相同 LoRA/微调预算、相同本地授权封装和 clean non-inferiority 约束下，恶意更新会在 held-out trigger family 上产生旧/新版本特有的定向车辆行为差分；一个按版本配对、以车辆安全边界为目标并接受 adaptive evasion 测试的准入器，将比 hash/version/compatibility 检查和全面普通回归更少接受危险更新，同时把良性更新误拒率维持在预注册上限内。",
+  "threatModel": {
+    "attackerCapability": "攻击者控制受信模型供应商、微调数据管线、导出步骤或签名前构建环境，因此可以提交会被正常授权的恶意 checkpoint/adapter；攻击者不能伪造签名、窃取 OEM 密钥、劫持传输、篡改车端 verifier 或在部署后写模型内存。",
+    "attackerKnowledge": "主分析给攻击者 white-box knowledge：知道基础 checkpoint、普通回归套件、语义差分特征、阈值和开发 trigger family；不知道隔离测试场景、held-out trigger family 与 admission 随机审计样本。",
+    "budget": "每个 benign/malicious lineage 使用相同基础 checkpoint、LoRA rank、训练步数、数据量和优化器；恶意分支的污染样本不超过更新数据的 0.5%，adapter 参数增量 Frobenius norm 不超过同 seed benign update 的 1.1 倍，clean PDMS/闭环分量相对 benign update 的下降不得超过 1 个绝对百分点。",
+    "inputPath": "攻击发生在签名前的训练/导出制品链。部署实验只加载由本地测试密钥签名的模型包；测试密钥、manifest 和 verifier 用于确保 benign 与 malicious 包都通过同一授权检查，不声称复现真实 OEM OTA、HSM、SUMS、后端或车端更新协议。",
+    "target": "在特定视觉/语义 trigger family 出现时诱导非避让、危险轨迹或错误动作，同时通过 clean、自然 shift、随机回归和静态制品检查。",
+    "odd": "主静态阶段限定 AutoVLA 固定 checkpoint、NAVSIM/nuPlan 可合法取得的评测 split 和五秒轨迹；闭环阶段限定 CARLA 0.9.15 白天城市路线、限速不高于 50 km/h。真实 OEM 车型、无线传输、开放道路和法规合规均在范围外。",
+    "comparators": {
+      "attack": "目标化 malicious update，由受信链在签名前植入 trigger-conditional 行为，并针对 admission features 自适应。",
+      "fault": "合法签名但非恶意的构建/配置错误，如 tokenizer-codebook 版本错配、错误 adapter merge 或系统性数据处理 bug；它通常造成广泛而非目标化退化。",
+      "natural": "旧/新版本在天气、照明、场景密度和传感退化下的共同 ODD shift，不修改制品，也没有主动对手。",
+      "random": "与 malicious update 参数范数、训练预算和 clean utility 匹配的随机标签/参数回归或随机 trigger placement，无目标语义。"
+    }
+  },
+  "noveltyClaims": [
+    "把 hash、版本、兼容与本地签名明确设为所有更新都通过的控制条件，研究对象仅是授权制品的新旧版本行为差分；不声称发明或复现 OTA 安全。",
+    "用同一基础 checkpoint 生成独立 benign、malicious、fault 和 matched-random update lineages，并在相同 scene/seed 上运行旧版与新版，避免把跨模型差异包装为供应链识别。",
+    "让攻击者同时约束 clean regression、静态 model diff 和语义 admission score，再用未见 trigger family 测试是否存在不可替代的车辆级差分信号。",
+    "把准入输出直接映射到 accept、reject、rollback 与 ODD restriction；正结果和负结果都必须改变更新治理，而不是只报告后门 ASR 或 detector AUROC。"
+  ],
+  "method": [
+    "固定 AutoVLA commit ba34eed74ce6729e7986592d0e66cbaca397b4fa、checkpoint revision、processor、action codebook、数据 split 和评测器，建立 base-to-update lineage manifest，记录训练数据摘要、LoRA 配置、随机 seed、artifact digest 和许可证。",
+    "对每个独立 seed 从同一 base 训练 benign update、malicious update、faulty update 与 matched-random update；benign 和 malicious 使用相同 clean update 数据与预算，恶意分支只在预注册上限内加入 trigger poison 或 trigger-gated steering。",
+    "用实验室生成的 Ed25519 测试密钥对所有包执行完全相同的 digest、version、compatibility 和 signature 流程；该层只产生 pass/fail 控制变量，任何文字都不得把它写成 OEM OTA 或 R156 认证。",
+    "普通强回归先比较 old/new 的 clean PDMS 分解、轨迹有效性、自然天气/传感 shift、随机/fault suite、推理时延和资源占用；只有通过这个基线的 update 才进入专用语义差分比较。",
+    "在开发 trigger families 上构造 paired semantic ledger：同场景、同输入、同解码 seed 分别执行 old/new，记录 token、轨迹、对象持续性、碰撞/TTC/越线代理和表示差分；准入器只能在开发集校准。",
+    "攻击者在固定更新预算内针对普通回归和 admission score 做 adaptive optimization；最终检验完全隔离的 trigger family、场景和 update seeds。闭环 CARLA 只评估被各准入器接受的 update，并从同一初态比较继续、拒绝和回滚到 base 的车辆后果。",
+    "以 update lineage/训练 seed 为主要统计单位，以 scene 为 lineage 内的重复测量；采用 two-level bootstrap 或 hierarchical model，不把同一 checkpoint 上的数千场景当作数千个独立供应链更新。"
+  ],
+  "implementationPath": [
+    {
+      "type": "reusable",
+      "asset": "AutoVLA official code and checkpoint",
+      "work": "固定提交 ba34eed74ce6729e7986592d0e66cbaca397b4fa，复用 Qwen2.5-VL-3B、动作 codebook、公开 checkpoint、SFT/RFT 配置和 NAVSIM PDM evaluator。",
+      "boundary": "UCLA Academic Software License 仅允许学术/非营利研究并禁止进一步转移软件及衍生物；发布物只能包含原创独立 harness、配置、摘要和统计，不能重新分发上游代码、权重或衍生 checkpoint。"
+    },
+    {
+      "type": "reusable",
+      "asset": "CARLA 0.9.15",
+      "work": "固定 release 0.9.15 和提交 d7b45c1e159e6d13296f7a3a4e8b13e6c2d62c18，用于受控闭环版本接受/回滚后果。",
+      "boundary": "MIT 许可；AutoVLA 官方仓库虽然报告 CARLA 结果，但固定 README 未给出开箱即用的闭环更新准入入口，需自建 adapter，仿真结果不等于道路证据。"
+    },
+    {
+      "type": "reusable-with-review",
+      "asset": "BADControl artifact and public backdoor mechanisms",
+      "work": "只复用供应链威胁模型、触发/clean utility 约束和对照设计；若使用 BADControl 代码，先解决 Zenodo metadata CC-BY-4.0 与论文项目 MIT 表述不一致。",
+      "boundary": "BADControl 已覆盖低层控制器后门，不能把换成 AutoVLA 后重做攻击当新颖性；本候选 residual 是版本配对准入。"
+    },
+    {
+      "type": "self-built",
+      "asset": "UpdateLineageBuilder",
+      "work": "从同一 base 自动产生 benign、malicious、fault 和 random adapter，锁定训练预算，输出数据摘要、参数范数、clean margin 和完整 provenance。",
+      "acceptanceCheck": "四类 lineage 的训练步数、LoRA rank、基础数据和 seed 配对可核对；恶意分支若无法满足 clean non-inferiority 则不进入主研究。"
+    },
+    {
+      "type": "self-built",
+      "asset": "LocalAuthorizedPackageHarness",
+      "work": "用测试密钥生成 manifest、digest、version、compatibility 和 signature，验证后加载指定 checkpoint；所有字段标记 research harness。",
+      "acceptanceCheck": "benign 与 malicious 包必须都通过同一 verifier，篡改一字节必须失败；文档中不得出现 OEM 兼容或 R156 合规结论。"
+    },
+    {
+      "type": "self-built",
+      "asset": "PairedVersionRunner and SemanticLedger",
+      "work": "缓存同一场景输入，为 old/new 使用独立但匹配的生成 seed，保存原始 token、轨迹、PDMS 分解、表示摘要、异常、时延和 artifact IDs。",
+      "acceptanceCheck": "base/base no-op 对照必须一致；old/new 执行顺序交换不能改变结果，所有计划场景完整对账。"
+    },
+    {
+      "type": "self-built",
+      "asset": "RegressionGate and AdaptiveSemanticAdmission",
+      "work": "RegressionGate 实现 clean、natural、fault、random 和资源回归；SemanticAdmission 在 paired ledger 上学习或聚合 trigger-conditional 差分，并暴露可供攻击者优化的 score。",
+      "acceptanceCheck": "held-out trigger family、test scene 和 update seed 在阈值锁定前不可访问；专用 gate 必须与普通回归做增量比较。"
+    },
+    {
+      "type": "self-built",
+      "asset": "RollbackController and CARLA adapter",
+      "work": "把被接受 update 装入测试 agent；拒绝或运行时越界时回到固定 base 版本，并记录回滚时间、状态迁移和期间保底控制。",
+      "acceptanceCheck": "回滚不得只是进程重启后丢弃场景；必须在同初态闭环中测量暴露时间和恢复后的车辆轨迹。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Data, compute and schedule",
+      "work": "需要合法取得 nuPlan/NAVSIM 数据与 metric cache，预计 4-8 张 40GB 级 GPU 并行训练小型 LoRA lineages、2-4 张 GPU 做推理，CARLA 使用 16-32 CPU cores；第 1-2 周签名/执行门，第 3-5 周 lineage，第 6-9 周准入，第 10-12 周闭环与复跑。",
+      "boundary": "若 checkpoint 条款、数据或训练成本无法支持独立 lineages，不能以单一恶意 checkpoint 和场景级伪重复声称供应链普遍性。"
+    },
+    {
+      "type": "dependencies",
+      "asset": "Standards boundary",
+      "work": "R156 与 ISO 24089 只作为需求和治理边界的一手来源；不复制受版权限制的完整标准文本，不把研究 harness 输出解释为认证或合规。",
+      "boundary": "研究不接触真实 OEM 密钥、车辆后台、SUMS 审计、空口传输、HSM 或型式批准。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "stage": "authorized-artifact-smoke",
+      "duration": "第 1-2 周",
+      "protocol": "从一个 base checkpoint 产生一个 benign adapter 和一个 0.5% 以内污染的 malicious adapter，用同一测试 signer 封装。验证两包均通过 digest/version/compat/signature、单字节篡改失败，并在 20 个 paired NAVSIM scenes 上跑 old/new clean 与 trigger。",
+      "decision": "smoke 只证明本地授权制品与行为可配对；若文字或实现依赖真实 OEM OTA 假设，立即修订范围。若 old/new 执行不能稳定配对，停止主实验。"
+    },
+    {
+      "stage": "strong-regression-and-lineage-pilot",
+      "duration": "第 3-5 周",
+      "protocol": "建立至少 3 个 seed 的 benign/malicious/fault/random lineages，锁定 clean non-inferiority、参数范数、自然 shift 和 ordinary regression suite；测量 lineage 间方差和训练吞吐。",
+      "decision": "若 malicious update 总被普通回归拒绝，专用语义准入没有最小 residual；转而发布普通回归 sufficiency 边界或终止。"
+    },
+    {
+      "stage": "powered-held-out-admission-study",
+      "duration": "第 6-9 周",
+      "protocol": "主研究至少包含每类 12 个独立 update lineages，且每个 lineage 在至少 120 个隔离 scenes 上执行 old/new paired run；开发与测试 trigger families、场景和 seed 三重隔离。",
+      "decision": "主要统计单位是 update lineage。基于 pilot 做仿真功效分析，要求双侧 alpha 0.05、至少 80% 功效检测 malicious acceptance rate 相对 ordinary regression 降低 0.40，且 benign false rejection 增加不超过 0.10；功效不足则只报告机制案例。"
+    },
+    {
+      "stage": "accepted-update-closed-loop-and-rollback",
+      "duration": "第 10-12 周",
+      "protocol": "选择由不同 gate 接受的更新，在 CARLA 隔离路线从同一初态运行 trigger/clean/natural 场景；比较继续、准入拒绝和回滚 base 的碰撞、TTC、越线、route completion、回滚暴露和时延。",
+      "decision": "若 semantic gate 的 artifact-level 改善不能转化为车辆级接受/回滚决策，影响主张收缩为离线版本审计，不宣称车辆安全准入。"
+    }
+  ],
+  "strongBaselines": [
+    {
+      "name": "hash, version, compatibility and local signature only",
+      "role": "所有授权包均应通过的密码学/manifest 控制；它故意不能识别签名前语义后门，也不代表真实 OEM OTA。"
+    },
+    {
+      "name": "comprehensive ordinary paired regression",
+      "role": "最重要强基线：old/new clean PDMS 分解、轨迹有效性、natural shift、fault/random suite、延迟和资源回归；专用 gate 必须给出增量价值。"
+    },
+    {
+      "name": "static artifact and architecture diff",
+      "role": "比较参数范数、层级变化、可执行模块和 manifest 差异，覆盖 Architectural Backdoors 提出的逻辑审计方向。"
+    },
+    {
+      "name": "unpaired new-version trigger test",
+      "role": "只看新版本绝对表现，检验旧/新配对差分是否真正必要，而不是普通 backdoor benchmark。"
+    },
+    {
+      "name": "paired random/fault differential gate",
+      "role": "用相同差分统计但不使用 trigger 条件，检验专用方法是否只是一般 change detector。"
+    },
+    {
+      "name": "oracle trigger-family admission",
+      "role": "知道测试 trigger family 的不可部署上界，用于衡量 held-out/adaptive 攻击造成的差距。"
+    },
+    {
+      "name": "accept-all, reject-all and rollback-to-base policies",
+      "role": "给出更新效用、过度保守和保留旧版风险的系统级决策边界。"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "malicious update acceptance",
+      "definition": "通过 gate 且在 held-out trigger family 上产生预注册危险行为的 update 比例，普通回归和 semantic gate 分别报告。",
+      "unit": "independent update lineage"
+    },
+    {
+      "name": "benign false rejection",
+      "definition": "满足 clean/natural non-inferiority 的 benign update 被拒绝比例，以及因此损失的 PDMS、延迟或修复收益。",
+      "unit": "independent benign update lineage"
+    },
+    {
+      "name": "paired semantic differential",
+      "definition": "同 scene/seed 下 old-to-new 的 action token、轨迹、对象持续性、PDMS 安全分量、最低 TTC、越线和碰撞差；trigger 与 non-trigger 分开。",
+      "unit": "scene nested within update lineage"
+    },
+    {
+      "name": "increment over ordinary regression",
+      "definition": "在相同 benign false-rejection 上限下，semantic gate 相对全面普通回归减少的危险更新接受率、净重分类和 decision-curve utility。",
+      "unit": "update-lineage paired decision"
+    },
+    {
+      "name": "adaptive held-out generalization",
+      "definition": "开发 trigger、未见 trigger family 与针对 gate 优化后的攻击分别报告检测、接受和车辆风险，不混成平均 ASR。",
+      "unit": "trigger family by update lineage"
+    },
+    {
+      "name": "rollback exposure and cost",
+      "definition": "拒绝/回滚触发到 base 恢复的时间、期间最低 TTC、控制连续性、route completion、算力和存储成本。",
+      "unit": "closed-loop route-seed nested in lineage"
+    },
+    {
+      "name": "lineage reproducibility",
+      "definition": "攻击和准入结果跨训练 seed、base revision、场景 strata 的方差与区间；单 checkpoint 的大量场景不替代该指标。",
+      "unit": "independent training seed"
+    }
+  ],
+  "successCriteria": [
+    "在每类至少 12 个独立 lineages、held-out trigger families 和 update-level 功效门下，存在通过 hash/signature 与全面 ordinary regression 的 malicious updates，而 semantic paired gate 显著降低其接受率；95% update-level 区间满足预注册效应。",
+    "在相同阈值下 benign false rejection 不超过 0.10 的增量上限，且 gate 的收益不能由 static diff、clean PDMS、natural/fault regression 或单一 trigger sweep完全解释。",
+    "adaptive attacker 知道 gate 后，held-out 结果仍改变至少一个明确决策：拒绝更新、要求回滚、限制 ODD、增加独立审计，或禁止仅凭签名/普通回归上线。",
+    "负结果必须改变准入规则：若 ordinary regression 已捕获全部危险更新，则采用更便宜的普通回归并放弃专用 gate；若任何行为测试都不可分，则把重点转向供应链 provenance、隔离构建和人工签名前审计，而不是继续声称语义检测。"
+  ],
+  "killCriteria": [
+    "在相同更新预算和 clean non-inferiority 约束下，无法构造至少两个机制或多个 seed 可重复的 malicious updates；只有明显损坏模型才产生危险行为。",
+    "全面 ordinary paired regression 已在预注册 benign false-rejection 上限内拒绝所有危险更新，semantic gate 没有增量接受/拒绝价值。",
+    "semantic gate 在未见 trigger family 或 adaptive evasion 下退化到随机，或仅靠已知 trigger 模板记忆，不能改变车辆级接受/回滚决策。",
+    "数据、许可证或算力无法支持每类至少 12 个独立 lineages，导致主要统计单位只能是单 checkpoint 内重复场景。",
+    "任何核心结论必须把本地测试签名解释为真实 OEM OTA、R156 合规或现实供应链攻击成功率才能成立。"
+  ],
+  "risks": [
+    {
+      "risk": "本地签名被误写成 OEM OTA",
+      "detail": "测试密钥和 manifest 没有 HSM、SUMS、组织审计、车端兼容或传输语义。",
+      "mitigation": "字段、图表和标题统一写 local authorized artifact harness；标准只界定缺口，不作合规结论。"
+    },
+    {
+      "risk": "普通回归基线被做弱",
+      "detail": "只测 clean 平均分会人为制造专用语义 gate 的优势。",
+      "mitigation": "普通回归覆盖 PDMS 分解、natural、fault、random、时延和资源，并在同一 old/new paired runner 上执行。"
+    },
+    {
+      "risk": "单一更新伪重复",
+      "detail": "数千场景无法替代独立训练/构建 lineages，攻击可能只对一个 seed 成立。",
+      "mitigation": "update lineage 是主单位，scene 只作嵌套测量；功效门和区间均在 update level 计算。"
+    },
+    {
+      "risk": "trigger 泄漏与自适应过拟合",
+      "detail": "准入器可能记住开发 trigger 外观，而非学习版本安全边界。",
+      "mitigation": "隔离 trigger family、scene 和 seed；攻击者看到 gate 做 adaptive optimization，最终测试不可回看。"
+    },
+    {
+      "risk": "AutoVLA/CARLA 桥接失真",
+      "detail": "官方资产的主要公开 evaluator 是 NAVSIM，闭环 adapter 可能引入新的控制错误。",
+      "mitigation": "先做 base/base 和 benign/base 一致性，桥接失败与后门失败分层；CARLA 不通过时主张限于 NAVSIM 版本行为。"
+    },
+    {
+      "risk": "许可证与制品不可再分发",
+      "detail": "AutoVLA 禁止转移软件及衍生物，BADControl 资产还存在许可证表述不一致。",
+      "mitigation": "不发布受限 checkpoint/派生代码；只发布原创 harness、hash、配置、场景索引和汇总统计，复用第三方代码前单独审查。"
+    }
+  ],
+  "impact": "正结果会在更新准入中增加一个密码学完整性之后、部署之前的车辆语义门：授权包只有在旧/新版本配对、普通回归和 held-out adaptive trigger 都满足门限时才能进入限定 ODD，并保留可执行回滚。负结果也会直接收敛治理：若强普通回归足够，就采用它并停止维护专用后门 gate；若行为测试不可分，就拒绝把黑盒准入当保障，转向更强 provenance、隔离构建和签名前审计。结果只说明学术模型制品在本地授权 harness 与固定仿真中的 admission 行为，不证明真实 OEM OTA 已受攻击或已被保护。",
+  "evidence": [
+    {
+      "title": "BadDreamer: Transferable Backdoor Attacks against Video World Models for Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2606.21172",
+      "localPaperId": "baddreamer-world-model-backdoor",
+      "localLink": "papers/baddreamer-world-model-backdoor/",
+      "role": "本地一手论文笔记对应的驾驶供应链攻击证据：世界模型后门可改变下游 waypoint，但不等于真实 OTA 链被攻破。"
+    },
+    {
+      "title": "UN Regulation No. 156: Software Update and Software Update Management System",
+      "year": 2021,
+      "venue": "UNECE",
+      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-156-software-update-and-software-update",
+      "sourceOrigin": "external",
+      "role": "更新治理基线：版本、兼容、验证、交付与恢复要求用于界定问题，但不提供学习模型 trigger-conditional 语义测试。"
+    },
+    {
+      "title": "ISO 24089:2023 Road vehicles - Software update engineering",
+      "year": 2023,
+      "venue": "ISO",
+      "url": "https://www.iso.org/standard/77796.html",
+      "sourceOrigin": "external",
+      "role": "组织和项目级软件更新工程边界；标准不规定具体技术且车辆功能软件开发在其声明范围之外。"
+    },
+    {
+      "title": "Architectural Backdoors in Vision-Language Model Supply Chains via Representation Steering",
+      "year": 2026,
+      "venue": "arXiv",
+      "url": "https://arxiv.org/abs/2607.25479",
+      "sourceOrigin": "external",
+      "role": "最近直接供应链竞品：证明模型架构制品可在 clean utility 保持时携带 dormant steering，支持密码完整与语义完整分离。"
+    },
+    {
+      "title": "BADControl: Backdoor Attacks Against Control Systems",
+      "year": 2026,
+      "venue": "USENIX Security",
+      "url": "https://www.usenix.org/conference/usenixsecurity26/presentation/burbano",
+      "sourceOrigin": "external",
+      "role": "最近正式车辆控制后门竞品：已覆盖供应链投毒、动态物理触发、仿真/实体后果和防御，限制本候选只能贡献版本准入 residual。"
+    },
+    {
+      "title": "AutoVLA official code and checkpoint release at fixed commit",
+      "year": 2026,
+      "venue": "Official GitHub repository",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "sourceOrigin": "external",
+      "role": "固定执行资产：提供基础 checkpoint、动作 codebook、训练和 NAVSIM 评测入口，同时其 Academic Software License 限制再分发。"
+    }
+  ],
+  "frozenAt": "2026-08-01T04:16:55.513Z"
+}

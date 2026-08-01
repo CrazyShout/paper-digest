@@ -1,0 +1,50 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../components/NotebookDocs.jsx";
+import { getNotebookData, routeUrl } from "../../lib/navigation.js";
+
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const summary = `按时间浏览 ${notebook.digests.length} 期论文简报；每一期都保留筛选判断、应用启发和完整论文元数据。`;
+---
+
+<BaseLayout
+  title="简报归档 · Paper Digest"
+  description={summary}
+  canonicalPath="digests/"
+>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title="简报归档"
+    description={summary}
+    eyebrow="Weekly Digests"
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <div class="digest-archive">
+      {notebook.digests.map((digest, index) => (
+        <article>
+          <div>
+            <p class="eyebrow">{digest.displayDate || digest.date}</p>
+            <h2>
+              <a href={routeUrl(notebook.base, `digests/${digest.id}`)}>{digest.title}</a>
+            </h2>
+            <p>{digest.summary}</p>
+            <div class="paper-tag-list">
+              {digest.tags.map((tag) => (
+                <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
+              ))}
+            </div>
+          </div>
+          <div class="digest-archive-count">
+            <strong>{digest.papers.length}</strong>
+            <span>papers</span>
+          </div>
+          {index === 0 && <span class="digest-latest">最新一期</span>}
+        </article>
+      ))}
+    </div>
+  </NotebookDocs>
+</BaseLayout>

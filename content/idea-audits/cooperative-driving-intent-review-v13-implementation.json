@@ -1,0 +1,42 @@
+{
+  "candidateId": "precommitment-intent-identifiability-bound",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb9a-72bc-7db0-8803-7d066c608a96",
+  "reviewedAt": "2026-08-01T05:21:31.736Z",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "早期机动预测、LSIT/TTR 和 intent-agnostic reachability 均非新概念；有价值的 residual 是在可追溯自然事件上，以严格分离的两个代码路径联合估计 calibrated earliest-identification time 与 last-safe interval，并把删失、底层数据去重和自然发生率纳入同一对象。",
+    "feasibility": "InterHub 固定仓库为 MIT，提供可运行 mini cache、统一 trajdata 接口、事件提取脚本以及 source scene/track/time 回溯字段，足以建立小型 causal-prefix pilot。主要工作是重算所有 prefix 特征、构造可审计响应标签、实现不读未来的冲突区和 jerk-limited last-safe evaluator，再训练强模型包络；1200 个有效事件和跨来源校准在 6-10 周内偏紧但并非不可执行。",
+    "success-probability": "自然驾驶中可靠响应信号晚于舒适或紧急干预窗口的事件很可能存在，但严格成功标准要求在两个不重叠底层来源、两个场景族和合理动力学参数网格下保持超过 10% 的保守尾部。强 map-aware predictor 或 intent-agnostic hedge 也可能消除研究意义，因此成功概率中等。",
+    "impact": "正结果能给出明确研究分流：何时继续提高 predictor，何时必须采用更早通信或无需意图的 hedge；负结果也能终止一个缺乏自然发生性的叙事。影响高但仍是给定观测类和动力学模型下的经验边界。",
+    "comparison-readiness": "route/priority、运动学、HMM、早期机动网络、map-aware Transformer、Safety Shell 指标和 reachability hedge 均在比较中，且设置了 source-held-out、删失、cluster bootstrap、泄漏检查和 kill 条件；比较准备度较高。"
+  },
+  "strongestObjection": "InterHub 的 `path_relation`、`turn_label` 和 `priority_label` 是在完整交互后的未来轨迹上生成，交互提取本身也使用未来时间窗；与此同时，自建 last-safe evaluator 若用过宽的 bounded target occupancy，会人为把安全截止提前。只要任一未来派生字段渗入在线 prefix，或两个时钟共享 realized route/response 假设，正 lateness gap 就可能是标签泄漏或过保守动力学造成的，而非自然信息盲点。",
+  "requiredExperiment": "先在 InterHub mini cache 和两个可追溯底层来源各抽取 100 个事件，建立物理隔离的三表协议：完整未来只存在于 offline response-label table，causal-prefix builder 每个截止时刻从原始历史重新计算速度、地图匹配和 route-hypothesis union，last-safe 进程不得加载 label 或 predictor 文件。两名审计者盲审标签，并做字段级 provenance test、未来帧置换测试和 realized-route ablation；只有 prefix 模型在 held-out source 校准有效、last-safe 前后一步可行性可复现、且 conservative late tail 在参数网格中不由单一 source 驱动，才扩展到每类 600 个事件。",
+  "evidenceReopened": [
+    {
+      "url": "https://github.com/zxc-tju/InterHub/tree/1d8a764554017618447247e5c55eff4b4ab50de4",
+      "finding": "固定仓库提供 MIT 代码、mini INTERACTION 数据、统一缓存、事件提取和可视化入口；完整元数据包含 dataset、original scene、track 和时间信息，可形成可追溯事件账本。"
+    },
+    {
+      "url": "https://github.com/zxc-tju/InterHub/blob/1d8a764554017618447247e5c55eff4b4ab50de4/utils/SceneProcessor.py",
+      "finding": "事件提取在交互结束时取得未来轨迹线，并调用 path relation、turn 和 priority 标注；这些字段可作离线结果标签或分层，但不能直接作为在线 causal-prefix 特征。"
+    },
+    {
+      "url": "https://doi.org/10.1038/s41597-025-05344-7",
+      "finding": "Scientific Data 正式论文确认 InterHub 汇集多个自然驾驶来源并提取密集交互事件，支持自然 occurrence 研究；它不直接提供心理意图真值或独立 last-safe 时刻。"
+    },
+    {
+      "url": "https://doi.org/10.6084/m9.figshare.27899754",
+      "finding": "官方 Figshare release 是完整处理数据入口；底层 Waymo、nuPlan、Lyft 和 INTERACTION 的许可仍需分别遵守，跨来源结论也必须按原始 scene 去重。"
+    }
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "6ee785e3cd55d56cac380b5ca138b8a4dfad620c6242c08dd817e90029816739"
+}

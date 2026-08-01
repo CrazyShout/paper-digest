@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "agentic-driving",
+  "candidateId": "reasoning-monitor-causal-regime-reversal",
+  "stage": "pre-review",
+  "dossierVersion": 2,
+  "revisionOf": "content/idea-audits/agentic-driving-reasoning-monitor-causal-regime-reversal-dossier-v1.json",
+  "createdAt": "2026-08-01",
+  "title": "同 checkpoint 的驾驶推理监测迁移：动作通道条件会不会改变同一理由分数的安全含义",
+  "hook": "不再用 ORION 与 Alpamayo 的模型身份代替因果制度；在同一 Alpamayo 1.5 checkpoint 内固定原生理由和监测分数，只改变动作端是否消费该理由，直接检验监测器的校准与风险排序能否跨通道条件迁移。",
+  "output": "同 checkpoint monitor crossover 合同、配对伤害账本、校准迁移报告与明确的负结果止损记录",
+  "effort": "中高，需要固定 Alpamayo 推理边界、KV-cache crossover、CARLA 场景回放和路线簇统计",
+  "timeline": "8 至 10 周；前 2 周关闭资产与 selfsplice 门，第 4 周关闭事件率和功效门",
+  "whyNow": "VLADriveBench 已证明 ORION 与 Alpamayo 的观察对齐和语义干预响应会背离，Lost in Fog 与近期 fidelity 工作又表明理由一致性可作为轨迹脆弱性的观察信号。现有证据没有回答的是：当 model ID、权重、输入、理由文本和动作接口都固定时，理由进入动作链的条件变化是否会改变同一观察分数对独立驾驶伤害的预测关系。",
+  "keyProblem": "v1 的自然模型对把 causal regime 与 model ID、架构、传感器、控制器和 CARLA OOD 程度完全绑定。任何所谓 regime-aware calibration 都可被普通 per-model calibration 等价解释。可识别的剩余问题必须在同一 checkpoint 内建立 crossover，并把人工通道条件、平均伤害变化和真正的 condition-by-monitor interaction 分开。",
+  "currentLimitations": "目前没有本项目自己的 Alpamayo checkpoint smoke、selfsplice 结果、channel-decoupled 结果、自然 harm prevalence、功效计算、共同支持或 monitor interaction 结果。VLADriveBench 的跨模型观察只能证明实验入口和现象先验，不能替代本合同的同 checkpoint 结果。人工替换 cache 还可能创造新的内部状态分布，因此即使正结果也只能称为所定义通道条件下的 monitor transport failure。",
+  "hypothesis": "在固定 Alpamayo 1.5 checkpoint 和相同原生 CoT 下，冻结的 CoT observation monitor 对独立几何伤害的校准斜率、Brier 风险和场景排序会随动作端的 CoT-consumption condition 改变；该变化应表现为超出 condition main effect、trajectory-only 风险和 selfsplice 重建伪差的 condition-by-monitor interaction。若交互不存在或只由单一 replacement cache、非法轨迹或平均伤害率变化造成，则主张失败。",
+  "claimBoundary": {
+    "primaryClaim": "主结果只识别固定 Alpamayo 1.5 checkpoint、预注册 CARLA 路线和受控 action-cache 条件下的 monitor transport/interaction。",
+    "secondaryClaim": "ORION 与 Alpamayo 的自然模型对最多是 fixed-pair external stress test；它不能识别架构、训练方法或自然因果制度效应。",
+    "forbiddenClaims": [
+      "不得声称已经观察到同 checkpoint crossover、自然发生率、校准反转或风险排序反转。",
+      "不得把人工 channel-decoupled 条件称为另一个自然模型制度。",
+      "不得用 condition 平均伤害差代替 condition-by-monitor interaction。",
+      "不得把 CARLA 受控结果外推为真实道路事故风险或所有 reasoning VLA。"
+    ]
+  },
+  "noveltyClaims": [
+    "把 model ID 恒定的 action-channel crossover 设为主识别实验：监测器始终读取一次生成并冻结的原生 CoT，动作端分别消费 native cache、重建 native cache sham 或多份长度风格匹配的语义脱钩 cache，从而直接检验 monitor score 与伤害关系的条件交互。",
+    "把贡献限定为 monitor transport 而非忠实度或制度发现：比较 condition-only、monitor-only、condition-plus-monitor 与 condition-by-monitor，并要求语言监测交互超出 trajectory-only 和 Lost in Fog consistency 基线。",
+    "把多-cache 稳健性和 sham 等效写成硬门，防止单份中性文本、KV 重建误差或异常 token 分布被误写成因果机制。",
+    "将跨模型结果降为次级压力测试；自然模型方向与同 checkpoint 方向不一致时，以同 checkpoint 边界为最终结论并停止自然制度叙事。"
+  ],
+  "primaryEstimands": {
+    "transportRisk": "在 route-family 隔离的 confirmatory test 上，将 native 条件拟合并冻结的 CoT monitor 运输到 channel-decoupled 条件，估计 held-out Brier、校准截距和校准斜率的配对变化。",
+    "monitorInteraction": "以独立几何伤害为结果，估计 action-channel condition 与冻结 monitor score 的交互；condition main effect 单独进入模型，路线族作为聚类单位。",
+    "matchedMeaningChange": "在完全相同路线、原生 CoT 和 monitor score 的 crossover 单元中，比较条件伤害差与 pairwise risk ordering；平均伤害变化不自动算作 monitor meaning change。",
+    "languageSpecificIncrement": "比较 CoT-only、trajectory-only、CoT-plus-trajectory 和 Lost in Fog style consistency monitor，检验交互是否由语言观察特征提供独立增量。"
+  },
+  "fixedStudyContract": {
+    "model": "固定 nvidia/Alpamayo-1.5-10B revision 089866afb4cfa2231fa7822c67e1e8bc91eed46f、官方代码入口、BF16 权重、processor、相机契约、解码设置和 action expert；任何替代 checkpoint 都需要新 dossier，不能静默替换。",
+    "unit": "独立路线族中的 route-seed 世界状态。相邻帧、同路线重复或多个 replacement cache 不计为新的独立路线。",
+    "observation": "每个单元先生成一次原生 CoT，冻结文本、token、past-key-value 边界和所有 CoT-only monitor 特征；主 monitor 不读取 condition 标签、注入结果或伤害。",
+    "conditions": [
+      "native-coupled：动作端消费原生 CoT cache。",
+      "selfsplice-sham：通过完整重建路径重新注入同一原生 cache，用于检验适配器零效应。",
+      "channel-decoupled：动作端消费从独立 donor split 生成、长度和格式匹配且与当前动作语义独立的 cache；至少使用三份 donor cache family，结果不得由单份 cache 驱动。"
+    ],
+    "regimeCheck": "只在与 confirmatory test 按 route family 隔离的 calibration split 上，用有方向的制动、加速和语义保持干预测量动作端对 CoT 语义的响应。native 必须通过预注册 semantic-coupling 门，channel-decoupled 必须显著削弱该响应；无法形成差异时停止，不调整阈值追求分组。",
+    "outcome": "伤害标签只读取 CARLA 真值、轨迹和几何规则，包括碰撞、红灯或停止线违规、负安全裕度、无合理阻塞时持续无进展及连续最小裕度；标签器不读取 CoT、monitor score 或 condition。",
+    "splits": "资产 smoke、regime calibration、monitor fitting、event-rate pilot 和 confirmatory test 按 route family 五段隔离。pilot 只估计事件率、簇内相关和方差，不能用于选择有利特征或 replacement cache。",
+    "power": "用独立 pilot 冻结至少 80% power 的路线数，以检出预注册的 10% 相对 Brier 改善或 0.05 绝对校准差；若所需路线数超出冻结算力与时间预算，候选因不可识别而停止。"
+  },
+  "method": [
+    "实现只生成一次原生 CoT 的 paired crossover runner；所有条件共享世界状态、视觉输入、原生 CoT、action expert、随机数流和后处理，唯一允许变化是动作端消费的 cache 及其预注册 condition label。",
+    "先执行 native/native、selfsplice/selfsplice 和 condition order-swap，保存输入、CoT、cache manifest、动作 token、轨迹、异常和哈希；任何未对账样本都计为失败而不是删除。",
+    "在 calibration split 上分别测量 native、selfsplice 和每个 decoupled cache family 的有方向语义响应，禁止用 confirmatory harm 或 monitor score定义通道条件。",
+    "在 monitor split 上拟合 CoT-only 逻辑监测器并完成校准，冻结特征、权重和映射；trajectory-only、consistency 和组合监测器按相同 split 与自由度审计。",
+    "在 confirmatory test 上进行路线簇配对分析，先检验 sham，再检验 condition main effect，最后检验 condition-by-monitor、held-out Brier transport 和匹配排序；按 cache family 分层并报告所有失败。",
+    "只有主同 checkpoint 实验通过后，才可将 ORION 加入次级 fixed-pair transport stress test；跨模型结果不回流调整主合同。"
+  ],
+  "implementationPath": [
+    "第 1 周固定 Alpamayo revision、环境、依赖、权重文件、模型卡许可和推理参数；完成单路线 native inference。当前这些均为待执行资产门，不写为已通过 smoke。",
+    "第 2 周实现 cache capture/replay、selfsplice sham、原生 CoT 冻结和全字段哈希；要求 deterministic native 与 selfsplice 轨迹 bit-identical 或在预注册数值精度内等效，否则停止。",
+    "第 3 周建立 donor split 和至少三类长度风格匹配的 decoupled cache manifest，排除与当前路线、目标动作和 test route family 重叠的 donor。",
+    "第 3 至 4 周实现独立 CARLA 几何标签器、route-family split、monitor 特征提取与 Lost in Fog style consistency 基线，并执行 regime calibration 和 pilot。",
+    "第 5 至 8 周按 pilot 冻结的路线数执行 confirmatory crossover；原始结果按路线、condition、cache family 和失败类型完整对账。",
+    "第 9 至 10 周只做预注册复核、次级 ORION stress test 或负结果包装，不增加新 threshold、cache family 或结论。"
+  ],
+  "minimumStudy": [
+    "Gate 0 资产门：固定 Alpamayo checkpoint 与官方 action expert 跑通原生单元；native/native 重复、selfsplice sham 和 order-swap 必须在冻结数值容差内一致。失败即停止。",
+    "Gate 1 通道门：在独立 calibration route families 上确认 native 的有方向语义响应、selfsplice 的零效应和至少三类 decoupled cache 的响应衰减；若差异不稳定或由单一 cache 驱动，停止。",
+    "Gate 2 支持门：在独立 pilot 上估计自然 native harm prevalence、簇内相关、monitor score 支持和主要终点方差；冻结 80% power 所需路线数及等效界，不能用人工错误文本补自然事件。",
+    "Gate 3 主实验：按功效规模在 held-out route families 上执行全配对 crossover，比较 condition-only、monitor-only、condition-plus-monitor 和 interaction，并与 trajectory-only、consistency 及组合监测器公平比较。",
+    "Gate 4 次级外推：仅在主实验可解释后运行 ORION fixed-pair stress test；不要求跨模型与同 checkpoint 一致来保存负结果，但不一致会禁止自然制度主张。"
+  ],
+  "strongBaselines": [
+    "condition-only outcome model，用于判断结果是否只是通道条件改变平均伤害率。",
+    "冻结 CoT-only monitor 与不含 condition 的 pooled calibration，用于测量纯运输误差。",
+    "trajectory-only risk monitor，用于判断任何交互是否只是动作轨迹变化而非 reasoning observation 的增量。",
+    "Lost in Fog style clean-versus-perturbed reasoning consistency monitor，作为最直接观察监测先例。",
+    "condition-plus-monitor additive model 与 condition-by-monitor interaction model，使用同一特征和相同正则化预算。",
+    "每个 condition 单独校准的 oracle upper bound，只用于量化最大可恢复差距，不作为可部署方法。",
+    "跨模型次级分析中的 model-ID、model-ID-plus-monitor 和饱和 model-specific calibration。"
+  ],
+  "metrics": [
+    "主要预测指标为 held-out Brier score、校准截距、校准斜率和 AUPRC；AUROC 与自适应分箱 ECE 为次级指标，不使用小样本固定 15-bin ECE 作为主终点。",
+    "主要识别指标为 condition-by-monitor interaction、其路线簇 bootstrap 区间和相对 additive baseline 的 Brier 改善。",
+    "通道有效性指标为 selfsplice 轨迹差、语义干预方向正确率、signed standardized effect 及各 donor cache family 的一致性。",
+    "驾驶结果逐项报告碰撞、红灯或停止线违规、最小安全裕度、无进展、路线进展和非法轨迹，不用事后加权复合分。",
+    "支持指标包括每个 condition 的 harm-positive 路线数、monitor score 覆盖、route-family 数量、匹配丢弃率和 cache-family 依赖性。",
+    "稳健性指标包括 native/native 重复差、order-swap 差、selfsplice sham、condition failure rate 和 trajectory-only interaction。"
+  ],
+  "successCriteria": [
+    "处理有效性门全部通过：native/native 与 selfsplice sham 在冻结等效界内，native 显示预注册有方向语义响应，至少三类 decoupled cache 均显著削弱该响应，且没有非法轨迹率或单一 cache family 主导差异。",
+    "独立 pilot 支持在冻结预算内达到至少 80% power；confirmatory test 的每个 condition 有足够独立 harm-positive 路线和 monitor score 支持，不用帧级重复、攻击文本或 test-driven 采样补足。",
+    "condition-by-CoT-monitor interaction 相对 additive condition-plus-monitor baseline 的 held-out Brier 至少改善 10%，路线簇 95% 区间排除零，并在至少两类 decoupled cache 上方向一致。",
+    "交互不能被 condition main effect、trajectory-only monitor、非法输出或 Lost in Fog consistency 基线完全解释；只有平均伤害变化或只有跨模型差异不算成功。"
+  ],
+  "killCriteria": [
+    "固定 checkpoint、官方推理入口、native 重复或 selfsplice sham 不能在第 2 周通过，或适配器改变原生轨迹且无法定位。",
+    "native 与 decoupled 条件不能形成预注册的语义响应差异，或差异依赖单一 donor cache、异常 token 分布或明显 OOD 失败。",
+    "pilot 显示事件率、共同支持或所需路线数无法在冻结预算内支撑主要终点；不得降低门槛或用攻击样本替代。",
+    "interaction 相对 additive baseline 没有预注册增量，或 trajectory-only 提供同等解释；此时结论是该 observation monitor 在所测条件下可运输或并非 reasoning-specific。",
+    "次级跨模型差异与同 checkpoint 主实验方向不一致时，停止所有自然因果制度解释，只保留固定条件结果。"
+  ],
+  "risks": [
+    "人工 decoupled cache 可能引入广泛内部状态偏移而非只移除语义消费；多 cache family、selfsplice、语义保持 control、token 分布审计和严格 claim boundary 只能限制解释，不能将其变成自然制度。",
+    "CARLA 对 Alpamayo 属于 OOD，可能产生停滞和异常伤害；主结论只在预注册路线和模型输入契约内成立，并逐项报告 OOD failure。",
+    "自然 harm-positive 可能太少，导致校准和交互无功效；独立 pilot 决定 go/no-go，不用扩大帧数伪造样本量。",
+    "CoT-only monitor 可能缺少动作信息而预测力弱；这是真实负结果，不能事后改为更有利的 branch-specific trajectory monitor。",
+    "权重许可、显存和固定依赖可能阻碍复现；资产门失败直接关闭候选，不用其他 checkpoint 替换。"
+  ],
+  "impact": "若同 checkpoint 交互成立，结果会要求 reasoning-enabled driving monitor 报告它对 action-channel condition 的运输边界，并把平均模型性能、通道主效应和监测分数含义分开验证。若交互被紧窄区间排除，结果则支持在该固定 checkpoint 和路线边界内继续使用低成本观察监测。两种结果都不证明自然模型制度效应，也不外推真实道路。",
+  "evidence": [
+    {
+      "title": "VLADriveBench: Evaluating CoT-Action Relationship in VLA for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2606.12706",
+      "role": "直接占据跨模型观察对齐与语义干预背离，并提供 Alpamayo cache boundary、selfsplice 和 CARLA 协议；本候选只保留同 checkpoint monitor transport 残差。",
+      "localPaperId": "vladrivebench-cot-action-vla",
+      "localLink": "papers/vladrivebench-cot-action-vla/"
+    },
+    {
+      "title": "Lost in Fog",
+      "url": "https://arxiv.org/abs/2605.21446",
+      "role": "最直接的 reasoning consistency monitor 先例，要求本候选证明 condition interaction 超出 clean-versus-perturbed 观察一致性。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Is VLA Reasoning Faithful? Probing Safety of Chain-of-Causation",
+      "url": "https://arxiv.org/abs/2605.17268",
+      "role": "提供 Alpamayo 原生 reasoning fidelity 与轨迹脆弱性证据，也限定观察相关性不能替代同 checkpoint 交互。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ReasonBreak: Probing Vulnerabilities in Reasoning-Enabled Vision-Language-Action Models for Autonomous Driving",
+      "url": "https://arxiv.org/abs/2605.29114",
+      "role": "证明理由通道对动作和闭环行为可达，但人工攻击不能作为自然发生率或 monitor transport 结果。",
+      "localPaperId": "reasonbreak-vla-vulnerability-driving",
+      "localLink": "papers/reasonbreak-vla-vulnerability-driving/"
+    },
+    {
+      "title": "Alpamayo 1.5 10B Public Model at 089866a",
+      "url": "https://huggingface.co/nvidia/Alpamayo-1.5-10B/tree/089866afb4cfa2231fa7822c67e1e8bc91eed46f",
+      "role": "固定主实验 checkpoint、官方推理接口和 action expert 边界；公开资产存在不表示本项目 smoke 已完成。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "ORION Official Repository at 657f3cf",
+      "url": "https://github.com/xiaomi-mlab/Orion/tree/657f3cf09b745d3972affb84d68f7e376140b221",
+      "role": "只支撑可选 fixed-pair stress test 的公开模型入口；不得用于替代同 checkpoint 主识别实验。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T03:46:10.418Z"
+}

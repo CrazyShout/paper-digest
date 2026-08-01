@@ -1,0 +1,53 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb32-330c-7a62-add9-1c00bd35be00",
+  "reviewedAt": "2026-08-01T03:10:58Z",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 6,
+    "success-probability": 5,
+    "impact": 6,
+    "comparison-readiness": 6
+  },
+  "rationales": {
+    "novelty": "功能等价的先例已从两侧包围本候选。Cognitive Dual-Process 已在驾驶中实现视觉复杂度驱动的快慢路由，并报告强制 Fast-Plan、强制 Slow-Think、动态路由、延迟和长尾漏路由；Palomba 已用潜在结果处理延期系统的双侧结果与缺失结果，CRM、OPE 和 post-hoc L2D 又覆盖选择性日志、价值估计和精度-成本路由。剩余差异是 AutoVLA/NAVSIM 上逐场景完整分支收益账本、驾驶效用分解以及复杂度与真实净收益的错配；在没有先导数据证明该错配会改变预算匹配决策前，这主要是领域化审计贡献而非不可替代的新方法。",
+    "feasibility": "AutoVLA 固定提交公开了模型代码、checkpoint 链接、动作 tokenizer、NAVSIM agent、PDMS 脚本和小规模 split，300-1000 个静态同输入双执行在工程上可做。关键分支合同尚未成立：源码的 `use_cot` 开关在启用时允许模型自行决定是否推理，并不强制慢路，推理还默认采样；因此必须新增 adapter、固定生成并验证时域和动作 token 合法性。reasoning data 未发布、许可限制及可选闭环状态克隆进一步限制可执行范围，但不阻止静态最小实验。",
+    "success-probability": "最近驾驶证据表明动态路由能优于全快和全慢，且存在 over-reasoning 与长尾 false negative，因此逐场景收益异质性有合理先验。尚无一手结果证明这种异质性在控制随机性、prompt 格式和非法轨迹后仍与复杂度/置信度发生稳定符号分裂，也没有证据表明 OPE 校正会改变方法排序或部署判断而非仅复现已知方差现象。核心成功依赖这两个未验证且必须同时成立的实证条件。",
+    "impact": "若公开完整 paired ledger 并证明复杂度路由系统性错过安全收益、选择性日志又会反转预算匹配的路由器排序，这会为驾驶 VLA 的计算分配和离线评价提供有用基准，也能迫使后续工作报告支持与延迟语义。影响受单一 AutoVLA checkpoint、静态 NAVSIM 同观测和人为构造日志限制；未完成可信闭环 twin 时不能声称真实控制安全提升，而通用方法贡献已被既有因果/OPE 文献占据。",
+    "comparison-readiness": "档案识别了最直接的 Cognitive Dual-Process、always-fast/slow、随机预算匹配、复杂度、置信度、post-hoc defer、full-information oracle，以及 DM/IPS/DR/SWITCH/CRM，比较集合方向正确，且明确 positivity 与同预算原则。重大缺口是 `fixedStudyContract` 为空，强制快慢提示、确定性解码、共同预测时域、PDMS 分量的安全优先聚合、延迟计量和最小有效差异尚未冻结；success criteria 也缺少数值效应阈值和功效分析。没有先通过 branch-contract smoke，后续任何方法排序都可能只是 prompt 或采样伪差。"
+  },
+  "strongestObjection": "最强反对意见是研究贡献已被现有工作拆分覆盖：Cognitive Dual-Process 已做驾驶快慢路由、强制分支结果与延迟权衡，Palomba、CRM、OPE 和 post-hoc L2D 已覆盖潜在结果、选择性缺失和精度-成本延期。除非完整配对账本揭示可复现的驾驶特有复杂度-净收益符号错配，并且该错配或缺失校正实质改变同预算下的方法排序或部署决策，否则这只是把成熟因果评估工具应用到一个新的 VLA 数据表。",
+  "requiredExperiment": "先冻结并通过 branch-contract smoke：同一 AutoVLA checkpoint、processor、action codebook、输入、预测时域和确定性生成下，实现明确的 fast-direct 与 forced-slow-structured 提示，重复运行确认分支内一致、分支遵从和轨迹合法，no-op 重复差异接近零。随后在按 log/scene 隔离的至少 300 个 NAVSIM 样本上双执行，保留 PDMS 安全分量、进度、有效性、token 数和实测时延；在测试集按复杂度/置信度匹配后检验 slow-minus-fast 的符号分裂。最后从完整账本生成已知 propensity 的随机日志和确定性复杂度日志，比较 naive、DM、IPS、DR、SWITCH、CRM、post-hoc defer 与 complexity router 在相同慢路预算下相对 oracle 的价值、支持、置信区间和排序。只有至少两个预注册子群出现非伪差的收益符号错配，且完整账本或可识别的日志校正改变一个部署结论，才支持剩余新颖性；否则停止 missingness 主张。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2607.19194",
+      "finding": "Cognitive Dual-Process 在 574 个手工核验 NAVSIM 样本上报告 Fast-Plan 73.87%、Slow-Think 77.87%、动态 Dual-Process 80.14%，相应平均时延约为 401.62、520.26 和 429.81 ms；六个外部长尾子集平均 FNR 为 25.10%。它已占据复杂度快慢路由及全局强制分支比较，但未公开逐场景 slow-minus-fast 账本。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "finding": "AutoVLA 的正式 NeurIPS 页面确认同一自回归模型经 SFT 获得 trajectory-only 快思考和 CoT 慢思考，并用 GRPO 减少简单场景中的不必要推理；摘要未提供逐场景双分支反事实收益或离线选择偏差分析。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "finding": "固定提交包含 AutoVLAAgent、动作 tokenizer、NAVSIM PDMS 评测、navmini 配置和公开 checkpoint 说明。源码显示 `use_cot` 启用的提示是“必要时”推理且 `predict` 默认 `do_sample=True`，所以仓库没有直接提供候选所需的确定性 forced-slow 合同，必须先自建并验证。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "finding": "AISTATS 2025 工作已把延期系统置于潜在结果框架，并区分双侧预测都可得时的个体效应识别与只观察延期结果时的局部识别；这直接占据候选的一般反事实缺失叙事。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v37/swaminathan15.html",
+      "finding": "CRM 已形式化 logged bandit 只观察所选动作反馈的问题，使用 propensity scoring 并把估计方差纳入学习目标；候选只能把它作为基线，不能将选择性日志校正本身作为新方法。"
+    },
+    {
+      "url": "https://proceedings.mlr.press/v70/wang17a.html",
+      "finding": "该 OPE 工作给出 agnostic contextual bandit 下的难度边界，说明 IPS/DR 的性质并提出 SWITCH 改善偏差-方差权衡；它也明确支持不足时不能从确定性日志无偏恢复未探索分支。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/bc8f76d9caadd48f77025b1c889d2e2d-Abstract-Conference.html",
+      "finding": "Post-hoc learning-to-defer 已把基础模型向昂贵专家或大模型路由写成精度-成本权衡，并在基础模型错误概率超过专家成本时学习 defer；普通 benefit/error-cost router 因而不是候选的新颖点。"
+    }
+  ],
+  "overall": 5
+}

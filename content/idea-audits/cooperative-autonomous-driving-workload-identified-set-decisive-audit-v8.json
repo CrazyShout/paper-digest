@@ -1,0 +1,1409 @@
+{
+  "schemaVersion": "decisive-idea-audit-v8",
+  "candidateId": "workload-robust-completion-identified-set",
+  "reviewedAt": "2026-07-31T22:49:56+08:00",
+  "reviewerAgentId": "codex-independent-workload-identified-set-auditor-v8",
+  "decision": "reject",
+  "rationale": {
+    "conclusion": "该候选没有留下足够独立发表的新颖残差。CooperScene 的有限发布审计可以成为有用的复现附件，但当前可识别的对象只是 Iperf 工作负载下的应用层吞吐观测与发布资产清单；从该观测到模型负载的服务映射、线路字节、队列、丢包、时延及 deadline completion 仍未被发布数据约束。允许这些映射自由变化时，completion identified set 退化为 [0, 1]；施加 identity、constant-rate、均值或任意 Lipschitz 类后得到的窄区间主要由研究者选择的限制产生，而不是由 CooperScene 数据产生。",
+    "decisiveReasons": [
+      "CooperScene 论文的网络测量用 Iperf2 UDP：每个 agent 一个 5 Mbps client、三个 server、100 ms report；模型数据实验却把模型数据切成 2100-byte chunks，并以 1 ms 间隔顺序发送。两种 offered workload 的 packet size、pacing、并发、队列占用与统计口径不相同。",
+      "现有 all-take audit 只用远程摘要和 range requests 核验 schema、topic、channel 与 message count；它没有下载全部 MCAP，也没有解码 14 takes 的 73,879 个 Vector3.x 原始值。只有 take 9 的 1,932 个值被独立解码。",
+      "即使补齐全部 Iperf x 值，也仍缺少与模型工作负载配对的校准、Table 2 原始日志、Iperf 命令与版本、datagram length、offered-versus-received 口径、线路字节和排队状态，因此 workload map 不能由有限发布识别。",
+      "sharp endpoints、witness maps、moment/shape constraints、robust optimization 和 set-valued reporting 均已有成熟方法先例；在一个未校准的小型 release 上套用这些方法，不构成新的识别理论。",
+      "CellReplay 已直接证明 record/replay 结果对 workload 敏感，并以两个 workload 及插值处理 workload transfer；SEE-V2X 又提供按 packet size、timing、priority 与并发组织的应用流量测量。候选缺少能超出这些工作的配对实证或新定理。",
+      "CooperScene mini 的 released index 与当前 converter 在 ego 数量和布局上存在 lineage 差异，frame mapping 也没有完成全量逐帧核验；因此 perception-level 可比性不能为通信 identified set 提供下游科学效应。"
+    ],
+    "decisionRuleApplied": "不按分数或猜测接受阈值决策。只要跨 workload 映射、科学效应或可比性仍未由公开证据识别，且剩余贡献可归结为标准 partial identification 对单一发布的应用，就直接 reject。"
+  },
+  "searchAudit": {
+    "searchedAt": "2026-07-31",
+    "yearWindow": "2020-2026",
+    "resultCountDefinition": "每个 queryRuns.resultCount 是经过年份、主题和一手来源筛选后进入 canonical candidate ledger 的记录数；不是搜索页面显示的总命中数。DOI、arXiv、会议页和规范化标题在入账前合并。",
+    "deduplicationKeys": [
+      "DOI",
+      "arXiv ID",
+      "formal venue record",
+      "normalized title"
+    ],
+    "queryRuns": [
+      {
+        "family": "cooperscene-primary-measurement",
+        "sourceFamily": "arxiv",
+        "query": "CooperScene Iperf 5 Mbps 100 ms model data 2100 bytes 1 ms official paper",
+        "scopeRationale": "逐项核验 Iperf 与 model traffic 的负载定义、测量口径和论文限制。",
+        "executedAt": "2026-07-31",
+        "resultCount": 2,
+        "resultIdSample": [
+          "arxiv:2606.31219",
+          "technical:iperf2-manual-2.2.2"
+        ],
+        "retrieval": {
+          "provider": "web search plus primary-page reopen",
+          "endpoints": [
+            "https://arxiv.org/html/2606.31219v1",
+            "https://iperf2.sourceforge.io/iperf2-user-manual.html"
+          ],
+          "parameters": "2020-2026 where applicable; primary sources only"
+        }
+      },
+      {
+        "family": "network-calculus-service-curves",
+        "sourceFamily": "arxiv",
+        "query": "2020 2026 network calculus service curve packetized traffic tight delay bound primary paper",
+        "scopeRationale": "核验 service curves、packetization 与 tight delay bounds 是否已是成熟方法。",
+        "executedAt": "2026-07-31",
+        "resultCount": 6,
+        "resultIdSample": [
+          "arxiv:2403.13656",
+          "arxiv:2204.10906",
+          "doi:10.1109/ITC-3560063.2023.10555847",
+          "arxiv:2509.17028",
+          "arxiv:2207.01730",
+          "arxiv:2205.03115"
+        ],
+        "retrieval": {
+          "provider": "web search and arXiv primary pages",
+          "endpoints": [
+            "https://arxiv.org/abs/2403.13656",
+            "https://arxiv.org/abs/2204.10906",
+            "https://arxiv.org/abs/2305.18036",
+            "https://arxiv.org/abs/2509.17028"
+          ],
+          "parameters": "title/abstract screening for service curves, packet-level assumptions and delay bounds"
+        }
+      },
+      {
+        "family": "packetization-deadline-bounds",
+        "sourceFamily": "publisher-and-venue",
+        "query": "packetization deadline completion bounds wireless hard deadline scheduling 2020 2026 primary",
+        "scopeRationale": "区分 bit-rate replay、packetized completion 和 hard-deadline scheduling。",
+        "executedAt": "2026-07-31",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:2403.13656",
+          "arxiv:2204.10906",
+          "arxiv:2509.17028",
+          "arxiv:2207.01730",
+          "arxiv:2205.03115",
+          "doi:10.1016/j.peva.2020.102166",
+          "arxiv:2507.23286"
+        ],
+        "retrieval": {
+          "provider": "web search, arXiv and publisher pages",
+          "endpoints": [
+            "https://www.sciencedirect.com/science/article/abs/pii/S0166531620300882",
+            "https://arxiv.org/abs/2507.23286"
+          ],
+          "parameters": "hard deadline, service bound, packet size and queueing scope"
+        }
+      },
+      {
+        "family": "partial-identification-sharp-bounds",
+        "sourceFamily": "publisher-and-venue",
+        "query": "2020 2026 partial identification sharp bounds witness optimization measurement error overlap primary paper",
+        "scopeRationale": "核验 sharp endpoints、witness construction 与 set-valued reporting 的直接方法先例。",
+        "executedAt": "2026-07-31",
+        "resultCount": 9,
+        "resultIdSample": [
+          "pmlr:v177:guo22a",
+          "pmlr:v161:finkelstein21b",
+          "arxiv:2305.11812",
+          "doi:10.1093/biomet/asac042",
+          "doi:10.1093/ectj/utab014",
+          "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+          "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+          "arxiv:2406.07868",
+          "pmlr:v244:zhang24a"
+        ],
+        "retrieval": {
+          "provider": "PMLR, Oxford Academic, NeurIPS proceedings and arXiv",
+          "endpoints": [
+            "https://proceedings.mlr.press/v177/guo22a.html",
+            "https://proceedings.mlr.press/v161/finkelstein21b.html",
+            "https://academic.oup.com/biomet/article-abstract/110/2/485/6649721"
+          ],
+          "parameters": "primary method papers; exact estimand and computation checked"
+        }
+      },
+      {
+        "family": "robust-optimization-moment-sets",
+        "sourceFamily": "publisher-and-venue",
+        "query": "robust optimization identified set moment inequalities constrained optimization partial identification 2020 2026",
+        "scopeRationale": "检查候选的 min-max、约束映射类与 endpoint solver 是否有方法新意。",
+        "executedAt": "2026-07-31",
+        "resultCount": 8,
+        "resultIdSample": [
+          "pmlr:v177:guo22a",
+          "arxiv:2305.11812",
+          "doi:10.1093/biomet/asac042",
+          "doi:10.1093/ectj/utab014",
+          "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+          "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+          "arxiv:2406.07868",
+          "pmlr:v244:zhang24a"
+        ],
+        "retrieval": {
+          "provider": "primary proceedings and journal pages",
+          "endpoints": [
+            "https://academic.oup.com/ectj/article-abstract/24/3/399/6262350",
+            "https://proceedings.neurips.cc/paper_files/paper/2024/hash/7f9220f90cc85b0da693643add6618e6-Abstract-Conference.html"
+          ],
+          "parameters": "optimization formulations and sharpness claims reopened"
+        }
+      },
+      {
+        "family": "cellular-record-replay-workload-transfer",
+        "sourceFamily": "publisher-and-venue",
+        "query": "CellReplay workload transfer record replay cellular network NSDI 2025 official paper",
+        "scopeRationale": "核验 workload-sensitive record/replay 是否已被直接提出、验证并缓解。",
+        "executedAt": "2026-07-31",
+        "resultCount": 1,
+        "resultIdSample": [
+          "usenix:nsdi25-sentosa"
+        ],
+        "retrieval": {
+          "provider": "USENIX official proceedings",
+          "endpoints": [
+            "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+            "https://www.usenix.org/system/files/nsdi25-sentosa.pdf"
+          ],
+          "parameters": "full primary paper and artifact links"
+        }
+      },
+      {
+        "family": "v2x-application-traffic-calibration",
+        "sourceFamily": "official-project",
+        "query": "SEE-V2X application centric traces packet size timing priority mixed traffic official",
+        "scopeRationale": "寻找公开的 V2X workload calibration 与应用流量设计先例。",
+        "executedAt": "2026-07-31",
+        "resultCount": 4,
+        "resultIdSample": [
+          "usenix:nsdi25-sentosa",
+          "doi:10.1145/3715014.3722077",
+          "doi:10.6028/NIST.TN.2315",
+          "technical:iperf2-manual-2.2.2"
+        ],
+        "retrieval": {
+          "provider": "official project, NIST and tool manual",
+          "endpoints": [
+            "https://cisl.ucr.edu/SEE-V2X/",
+            "https://www.nist.gov/publications/c-v2x-interoperability-testing-datasets-description-and-use"
+          ],
+          "parameters": "packet size, inter-packet timing, workload concurrency and measurement semantics"
+        }
+      },
+      {
+        "family": "cooperative-perception-payload-transport",
+        "sourceFamily": "publisher-and-venue",
+        "query": "cooperative perception feature payload transport V2X bandwidth latency scheduling 2020 2026 official paper",
+        "scopeRationale": "核验 model payload、压缩、通信调度和真实链路传输的相邻贡献。",
+        "executedAt": "2026-07-31",
+        "resultCount": 8,
+        "resultIdSample": [
+          "arxiv:2606.31219",
+          "doi:10.1145/3498361.3538925",
+          "doi:10.1145/3666025.3699328",
+          "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+          "cvf:cvpr2022:cui-coopernaut",
+          "arxiv:2008.07519",
+          "doi:10.1007/978-3-031-19842-7_7",
+          "pmlr:v205:xu23a"
+        ],
+        "retrieval": {
+          "provider": "ACM, CVF, ECVA, NeurIPS and PMLR primary pages",
+          "endpoints": [
+            "https://hangqiu.github.io/AutoCast/",
+            "https://openaccess.thecvf.com/content/CVPR2022/html/Cui_Coopernaut_End-to-End_Driving_With_Cooperative_Perception_for_Networked_Vehicles_CVPR_2022_paper.html",
+            "https://proceedings.mlr.press/v205/xu23a.html"
+          ],
+          "parameters": "2020-2026 cooperative perception systems with explicit communication payload or transport concern"
+        }
+      },
+      {
+        "family": "deadline-aware-v2x-scheduling",
+        "sourceFamily": "publisher-and-venue",
+        "query": "deadline aware V2X cooperative perception scheduling real radio completion 2020 2026",
+        "scopeRationale": "检查 deadline completion 是否已由系统或调度论文直接优化。",
+        "executedAt": "2026-07-31",
+        "resultCount": 4,
+        "resultIdSample": [
+          "doi:10.1145/3498361.3538925",
+          "doi:10.1145/3666025.3699328",
+          "cvf:cvpr2022:cui-coopernaut",
+          "doi:10.1016/j.peva.2020.102166"
+        ],
+        "retrieval": {
+          "provider": "ACM, CVF and journal primary pages",
+          "endpoints": [
+            "https://hangqiu.github.io/AutoCast/",
+            "https://sensys.acm.org/2024/program/index.html",
+            "https://www.sciencedirect.com/science/article/abs/pii/S0166531620300882"
+          ],
+          "parameters": "hard deadlines, completion scheduling and real-radio evidence"
+        }
+      },
+      {
+        "family": "measurement-calibration-external-validation",
+        "sourceFamily": "publisher-and-venue",
+        "query": "measurement calibration external validation transportability paired workload validation 2020 2026 primary",
+        "scopeRationale": "检查用外部校准样本约束 workload map 所需的可迁移性假设。",
+        "executedAt": "2026-07-31",
+        "resultCount": 6,
+        "resultIdSample": [
+          "doi:10.1145/3715014.3722077",
+          "arxiv:2207.01730",
+          "pmlr:v161:finkelstein21b",
+          "doi:10.1177/0962280220988574",
+          "doi:10.6028/NIST.TN.2315",
+          "technical:iperf2-manual-2.2.2"
+        ],
+        "retrieval": {
+          "provider": "publisher, PubMed, NIST and official manual",
+          "endpoints": [
+            "https://pubmed.ncbi.nlm.nih.gov/33620006/",
+            "https://cisl.ucr.edu/SEE-V2X/",
+            "https://iperf2.sourceforge.io/iperf2-user-manual.html"
+          ],
+          "parameters": "paired calibration, measurement error and transportability assumptions"
+        }
+      },
+      {
+        "family": "cooperscene-assets-lineage",
+        "sourceFamily": "official-code-and-data",
+        "query": "CooperScene official code data license commit dataset size MCAP mini info",
+        "scopeRationale": "固定官方版本、许可证、归档规模及 release lineage。",
+        "executedAt": "2026-07-31",
+        "resultCount": 4,
+        "resultIdSample": [
+          "arxiv:2606.31219",
+          "doi:10.1145/3715014.3722077",
+          "doi:10.6028/NIST.TN.2315",
+          "technical:iperf2-manual-2.2.2"
+        ],
+        "retrieval": {
+          "provider": "official project, fixed GitHub tree and official data pages",
+          "endpoints": [
+            "https://cisl.ucr.edu/CooperScene/",
+            "https://github.com/UCR-CISL/CooperScene/tree/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a"
+          ],
+          "parameters": "fixed commit and published license/size declarations"
+        }
+      },
+      {
+        "family": "semantic-scholar-cross-check",
+        "sourceFamily": "semantic-scholar",
+        "query": "site:semanticscholar.org/paper Boosting Collaborative Vehicular Perception Harbor",
+        "scopeRationale": "对 Harbor 的 DOI、题名、年份和正式 venue 做别名交叉核验。",
+        "executedAt": "2026-07-31",
+        "resultCount": 1,
+        "resultIdSample": [
+          "doi:10.1145/3666025.3699328"
+        ],
+        "retrieval": {
+          "provider": "Semantic Scholar public paper page",
+          "endpoints": [
+            "https://www.semanticscholar.org/paper/Boosting-Collaborative-Vehicular-Perception-on-the-Zhu-Zhu/448f28ede4dfe1c9542e58bf1f52920b8efeb4e6"
+          ],
+          "parameters": "exact-title lookup; no unique accepted reference attributed to aggregator"
+        }
+      },
+      {
+        "family": "openalex-cross-check",
+        "sourceFamily": "openalex",
+        "query": "site:openalex.org/works SEE-V2X DOI 10.1145/3715014.3722077",
+        "scopeRationale": "尝试以 OpenAlex 复核 SEE-V2X 的规范化 DOI 别名。",
+        "executedAt": "2026-07-31",
+        "resultCount": 1,
+        "resultIdSample": [
+          "doi:10.1145/3715014.3722077"
+        ],
+        "retrieval": {
+          "provider": "OpenAlex web/API attempt",
+          "endpoints": [
+            "https://api.openalex.org/works/https://doi.org/10.1145/3715014.3722077"
+          ],
+          "parameters": "exact DOI lookup; endpoint was not safely openable in the review environment, so no claim relies on it"
+        }
+      },
+      {
+        "family": "local-corpus-audit",
+        "sourceFamily": "local-corpus",
+        "query": "rg over content/idea-audits for CooperScene throughput payload replay CellReplay partial identification workload",
+        "scopeRationale": "复开本仓库既有原始审计，不相信摘要或标题，并核对它们实际读取的数据层级。",
+        "executedAt": "2026-07-31",
+        "resultCount": 3,
+        "resultIdSample": [
+          "arxiv:2606.31219",
+          "usenix:nsdi25-sentosa",
+          "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f"
+        ],
+        "retrieval": {
+          "provider": "local ripgrep and direct JSON reads",
+          "endpoints": [
+            "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+            "content/idea-audits/cooperative-autonomous-driving-cooperscene-payload-replay-gap-audit.json",
+            "content/idea-audits/cooperative-autonomous-driving-targeted-review-workload-v3.json"
+          ],
+          "parameters": "rawHitCount not used as paper count; three canonical primary records entered cross-source deduplication"
+        }
+      }
+    ],
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "status": "succeeded",
+        "acceptedCount": 0,
+        "acceptedCanonicalIds": [],
+        "limitation": "用于审计仓库证据链，不把本地摘要当成一手文献引用。"
+      },
+      {
+        "sourceFamily": "arxiv",
+        "status": "succeeded",
+        "acceptedCount": 9,
+        "acceptedCanonicalIds": [
+          "arxiv:2606.31219",
+          "arxiv:2403.13656",
+          "arxiv:2204.10906",
+          "doi:10.1109/ITC-3560063.2023.10555847",
+          "arxiv:2509.17028",
+          "arxiv:2207.01730",
+          "arxiv:2205.03115",
+          "arxiv:2305.11812",
+          "arxiv:2406.07868"
+        ],
+        "limitation": "预印本用于核验方法与版本；有正式 DOI 时 ledger 以正式 ID 为主。"
+      },
+      {
+        "sourceFamily": "publisher-and-venue",
+        "status": "succeeded",
+        "acceptedCount": 18,
+        "acceptedCanonicalIds": [
+          "usenix:nsdi25-sentosa",
+          "doi:10.1145/3715014.3722077",
+          "doi:10.1145/3498361.3538925",
+          "doi:10.1145/3666025.3699328",
+          "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+          "cvf:cvpr2022:cui-coopernaut",
+          "arxiv:2008.07519",
+          "doi:10.1007/978-3-031-19842-7_7",
+          "pmlr:v205:xu23a",
+          "doi:10.1016/j.peva.2020.102166",
+          "pmlr:v177:guo22a",
+          "pmlr:v161:finkelstein21b",
+          "doi:10.1093/biomet/asac042",
+          "doi:10.1093/ectj/utab014",
+          "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+          "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+          "pmlr:v244:zhang24a",
+          "doi:10.1177/0962280220988574"
+        ],
+        "limitation": "仅将可由正式 proceedings、journal、author manuscript 或 DOI 页面核验的事实纳入。"
+      },
+      {
+        "sourceFamily": "semantic-scholar",
+        "status": "succeeded-duplicate-only",
+        "acceptedCount": 0,
+        "acceptedCanonicalIds": [],
+        "limitation": "只用于 Harbor DOI 别名交叉检查；最终引用由 ACM/SenSys 一手页面核验。"
+      },
+      {
+        "sourceFamily": "openalex",
+        "status": "attempted-access-limited",
+        "acceptedCount": 0,
+        "acceptedCanonicalIds": [],
+        "limitation": "精确 DOI API URL 在审计环境中被安全 URL 检查拒绝，网页检索未贡献独立记录；没有结论依赖该来源。"
+      },
+      {
+        "sourceFamily": "official-project",
+        "status": "succeeded-duplicate-only",
+        "acceptedCount": 0,
+        "acceptedCanonicalIds": [],
+        "limitation": "CooperScene、SEE-V2X 和 AutoCast 项目页用于资产与实验语义核验；对应论文仍归入 arXiv 或正式 venue。"
+      },
+      {
+        "sourceFamily": "official-code-and-data",
+        "status": "succeeded",
+        "acceptedCount": 2,
+        "acceptedCanonicalIds": [
+          "doi:10.6028/NIST.TN.2315",
+          "technical:iperf2-manual-2.2.2"
+        ],
+        "limitation": "NIST technical note/data 和 Iperf2 官方手册是测量与数据语义的一手技术来源，不冒充同行评审算法论文。"
+      }
+    ],
+    "counts": {
+      "candidates": 64,
+      "deduplicated": 30,
+      "included": 29,
+      "excluded": 1
+    },
+    "retainedCanonicalIds": [
+      "arxiv:2606.31219",
+      "usenix:nsdi25-sentosa",
+      "doi:10.1145/3715014.3722077",
+      "doi:10.1145/3498361.3538925",
+      "doi:10.1145/3666025.3699328",
+      "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+      "cvf:cvpr2022:cui-coopernaut",
+      "arxiv:2008.07519",
+      "doi:10.1007/978-3-031-19842-7_7",
+      "pmlr:v205:xu23a",
+      "arxiv:2403.13656",
+      "arxiv:2204.10906",
+      "doi:10.1109/ITC-3560063.2023.10555847",
+      "arxiv:2509.17028",
+      "arxiv:2207.01730",
+      "arxiv:2205.03115",
+      "doi:10.1016/j.peva.2020.102166",
+      "pmlr:v177:guo22a",
+      "pmlr:v161:finkelstein21b",
+      "arxiv:2305.11812",
+      "doi:10.1093/biomet/asac042",
+      "doi:10.1093/ectj/utab014",
+      "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+      "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+      "arxiv:2406.07868",
+      "pmlr:v244:zhang24a",
+      "doi:10.1177/0962280220988574",
+      "doi:10.6028/NIST.TN.2315",
+      "technical:iperf2-manual-2.2.2"
+    ],
+    "excludedCandidates": [
+      {
+        "canonicalId": "arxiv:2507.23286",
+        "title": "Optimal Packetization Towards Low Latency in Random Access Networks (extended version)",
+        "url": "https://arxiv.org/abs/2507.23286",
+        "reasonCode": "different-estimand",
+        "reason": "研究 Aloha/RA-SDT 的均值排队时延与最优 packetization，不识别有限实测发布上的 model-workload deadline completion；保留在 ledger 以显示检索边界。"
+      }
+    ],
+    "candidateLedger": [
+      {
+        "canonicalId": "arxiv:2606.31219",
+        "title": "CooperScene: A Unified Framework for Cooperative Autonomous Driving",
+        "year": 2026,
+        "primaryUrl": "https://arxiv.org/html/2606.31219v1",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperscene-primary-measurement",
+          "cooperative-perception-payload-transport",
+          "cooperscene-assets-lineage",
+          "local-corpus-audit"
+        ],
+        "occurrences": 4
+      },
+      {
+        "canonicalId": "usenix:nsdi25-sentosa",
+        "title": "CellReplay: A Record-and-Replay Approach for Testing Cellular Network Applications",
+        "year": 2025,
+        "primaryUrl": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+        "disposition": "included",
+        "queryFamilies": [
+          "cellular-record-replay-workload-transfer",
+          "v2x-application-traffic-calibration",
+          "local-corpus-audit"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "doi:10.1145/3715014.3722077",
+        "title": "SEE-V2X: An Application-Centric V2X Testbed",
+        "year": 2025,
+        "primaryUrl": "https://doi.org/10.1145/3715014.3722077",
+        "disposition": "included",
+        "queryFamilies": [
+          "v2x-application-traffic-calibration",
+          "measurement-calibration-external-validation",
+          "cooperscene-assets-lineage",
+          "openalex-cross-check"
+        ],
+        "occurrences": 4
+      },
+      {
+        "canonicalId": "doi:10.1145/3498361.3538925",
+        "title": "AutoCast: Scalable Infrastructure-less Cooperative Perception for Distributed Collaborative Driving",
+        "year": 2022,
+        "primaryUrl": "https://doi.org/10.1145/3498361.3538925",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport",
+          "deadline-aware-v2x-scheduling"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1145/3666025.3699328",
+        "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+        "year": 2024,
+        "primaryUrl": "https://doi.org/10.1145/3666025.3699328",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport",
+          "deadline-aware-v2x-scheduling",
+          "semantic-scholar-cross-check"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+        "title": "Where2comm: Communication-Efficient Collaborative Perception via Spatial Confidence Maps",
+        "year": 2022,
+        "primaryUrl": "https://papers.nips.cc/paper_files/paper/2022/hash/1f5c5cd01b864d53cc5fa0a3472e152e-Abstract-Conference.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2022:cui-coopernaut",
+        "title": "Coopernaut: End-to-End Driving with Cooperative Perception for Networked Vehicles",
+        "year": 2022,
+        "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2022/html/Cui_Coopernaut_End-to-End_Driving_With_Cooperative_Perception_for_Networked_Vehicles_CVPR_2022_paper.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport",
+          "deadline-aware-v2x-scheduling"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2008.07519",
+        "title": "V2VNet: Vehicle-to-Vehicle Communication for Joint Perception and Prediction",
+        "year": 2020,
+        "primaryUrl": "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123470596.pdf",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-19842-7_7",
+        "title": "V2X-ViT: Vehicle-to-Everything Cooperative Perception with Vision Transformer",
+        "year": 2022,
+        "primaryUrl": "https://www.ecva.net/papers/eccv_2022/papers_ECCV/papers/136990106.pdf",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "pmlr:v205:xu23a",
+        "title": "CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers",
+        "year": 2023,
+        "primaryUrl": "https://proceedings.mlr.press/v205/xu23a.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperative-perception-payload-transport"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2403.13656",
+        "title": "Network Calculus Bounds for Time-Sensitive Networks: A Revisit",
+        "year": 2024,
+        "primaryUrl": "https://arxiv.org/abs/2403.13656",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves",
+          "packetization-deadline-bounds"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2204.10906",
+        "title": "Improved Network Calculus Delay Bounds in Time-Sensitive Networks",
+        "year": 2022,
+        "primaryUrl": "https://arxiv.org/abs/2204.10906",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves",
+          "packetization-deadline-bounds"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/ITC-3560063.2023.10555847",
+        "title": "Network-Calculus Service Curves of the Interleaved Regulator",
+        "year": 2023,
+        "primaryUrl": "https://arxiv.org/abs/2305.18036",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2509.17028",
+        "title": "Impact of Packetization on Network Calculus Analysis",
+        "year": 2025,
+        "primaryUrl": "https://arxiv.org/abs/2509.17028",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves",
+          "packetization-deadline-bounds"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2207.01730",
+        "title": "Service Modeling and Delay Analysis of Packet Delivery over a Wireless Link",
+        "year": 2022,
+        "primaryUrl": "https://arxiv.org/abs/2207.01730",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves",
+          "packetization-deadline-bounds",
+          "measurement-calibration-external-validation"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2205.03115",
+        "title": "Latency Guarantee for Ubiquitous Intelligence in 6G: A Network Calculus Approach",
+        "year": 2022,
+        "primaryUrl": "https://arxiv.org/abs/2205.03115",
+        "disposition": "included",
+        "queryFamilies": [
+          "network-calculus-service-curves",
+          "packetization-deadline-bounds"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1016/j.peva.2020.102166",
+        "title": "Wireless Scheduling with Deadline and Power Constraints",
+        "year": 2021,
+        "primaryUrl": "https://www.sciencedirect.com/science/article/abs/pii/S0166531620300882",
+        "disposition": "included",
+        "queryFamilies": [
+          "packetization-deadline-bounds",
+          "deadline-aware-v2x-scheduling"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2507.23286",
+        "title": "Optimal Packetization Towards Low Latency in Random Access Networks (extended version)",
+        "year": 2025,
+        "primaryUrl": "https://arxiv.org/abs/2507.23286",
+        "disposition": "excluded",
+        "queryFamilies": [
+          "packetization-deadline-bounds"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "pmlr:v177:guo22a",
+        "title": "Partial Identification with Noisy Covariates: A Robust Optimization Approach",
+        "year": 2022,
+        "primaryUrl": "https://proceedings.mlr.press/v177/guo22a.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "pmlr:v161:finkelstein21b",
+        "title": "Partial Identifiability in Discrete Data with Measurement Error",
+        "year": 2021,
+        "primaryUrl": "https://proceedings.mlr.press/v161/finkelstein21b.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "measurement-calibration-external-validation"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2305.11812",
+        "title": "Off-Policy Evaluation Beyond Overlap: Partial Identification Through Smoothness",
+        "year": 2023,
+        "primaryUrl": "https://arxiv.org/abs/2305.11812",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1093/biomet/asac042",
+        "title": "Sample-Constrained Partial Identification",
+        "year": 2023,
+        "primaryUrl": "https://academic.oup.com/biomet/article-abstract/110/2/485/6649721",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1093/ectj/utab014",
+        "title": "Computing Moment Inequality Models Using Constrained Optimization",
+        "year": 2021,
+        "primaryUrl": "https://academic.oup.com/ectj/article-abstract/24/3/399/6262350",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+        "title": "Neural Causal Partial Identification",
+        "year": 2024,
+        "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/7f9220f90cc85b0da693643add6618e6-Abstract-Conference.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+        "title": "Weak Supervision Performance Evaluation via Partial Identification",
+        "year": 2024,
+        "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/f4c6bec746b0aeca8c2cd15096f1ad1f-Abstract-Conference.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets",
+          "local-corpus-audit"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2406.07868",
+        "title": "Bridging Multiple Worlds: Multi-Marginal Optimal Transport for Causal Partial Identification",
+        "year": 2024,
+        "primaryUrl": "https://arxiv.org/abs/2406.07868",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "pmlr:v244:zhang24a",
+        "title": "Partial Identification with Proxy of Latent Confoundings via Sum-of-Ratios Fractional Programming",
+        "year": 2024,
+        "primaryUrl": "https://proceedings.mlr.press/v244/zhang24a.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "partial-identification-sharp-bounds",
+          "robust-optimization-moment-sets"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1177/0962280220988574",
+        "title": "Calibrating Validation Samples When Accounting for Measurement Error in Intervention Studies",
+        "year": 2021,
+        "primaryUrl": "https://pubmed.ncbi.nlm.nih.gov/33620006/",
+        "disposition": "included",
+        "queryFamilies": [
+          "measurement-calibration-external-validation"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.6028/NIST.TN.2315",
+        "title": "C-V2X Interoperability Testing Datasets: Description and Use",
+        "year": 2024,
+        "primaryUrl": "https://www.nist.gov/publications/c-v2x-interoperability-testing-datasets-description-and-use",
+        "disposition": "included",
+        "queryFamilies": [
+          "v2x-application-traffic-calibration",
+          "measurement-calibration-external-validation",
+          "cooperscene-assets-lineage"
+        ],
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "technical:iperf2-manual-2.2.2",
+        "title": "Iperf2 User Manual",
+        "year": 2026,
+        "primaryUrl": "https://iperf2.sourceforge.io/iperf2-user-manual.html",
+        "disposition": "included",
+        "queryFamilies": [
+          "cooperscene-primary-measurement",
+          "v2x-application-traffic-calibration",
+          "measurement-calibration-external-validation",
+          "cooperscene-assets-lineage"
+        ],
+        "occurrences": 4
+      }
+    ],
+    "openSearchGaps": [
+      "没有找到 CooperScene 作者公开的 Table 2 packet-level raw logs、完整 Iperf command line 或 paired Iperf/model calibration；未命中不能证明这些材料不存在。",
+      "OpenAlex 精确 DOI API 在当前审计环境中无法安全打开，因此该来源只记录为受限尝试，不承担核验作用。",
+      "没有公开证据把 CooperScene MCAP 的 throughput topic 时间轴逐帧映射到 mini-info 的全部 644 个数据帧。"
+    ]
+  },
+  "verifiedReferences": [
+    {
+      "canonicalId": "arxiv:2606.31219",
+      "title": "CooperScene: A Unified Framework for Cooperative Autonomous Driving",
+      "year": 2026,
+      "venue": "arXiv v1; ECCV 2026 project designation",
+      "primaryUrl": "https://arxiv.org/html/2606.31219v1",
+      "sourceFamily": "arxiv",
+      "verification": "论文正文核验：Iperf2 UDP 为每 agent 5 Mbps client、100 ms reports；model data 为 2100-byte chunks、1 ms interval；论文也声明未建模 lower-layer scheduling 与 RSS。",
+      "relevance": "建立 mismatch 事实，但不提供跨 workload 校准或 raw Table 2 network logs。"
+    },
+    {
+      "canonicalId": "usenix:nsdi25-sentosa",
+      "title": "CellReplay: A Record-and-Replay Approach for Testing Cellular Network Applications",
+      "year": 2025,
+      "venue": "USENIX NSDI 2025",
+      "primaryUrl": "https://www.usenix.org/conference/nsdi25/presentation/sentosa",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "官方论文页和 PDF 核验 record/replay 对 workload 敏感，并记录两个 workload 以支持插值。",
+      "relevance": "直接先占一般 workload-transfer 问题与双负载校准思路。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3715014.3722077",
+      "title": "SEE-V2X: An Application-Centric V2X Testbed",
+      "year": 2025,
+      "venue": "ACM SenSys 2025",
+      "primaryUrl": "https://cisl.ucr.edu/SEE-V2X/",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "官方项目与论文记录提供 BSM-only、perception-only 和 mixed workload，并显式改变 packet length、timing、priority 与 concurrency。",
+      "relevance": "说明 V2X 校准必须绑定应用 workload，而不是只转放标量 throughput。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3498361.3538925",
+      "title": "AutoCast: Scalable Infrastructure-less Cooperative Perception for Distributed Collaborative Driving",
+      "year": 2022,
+      "venue": "ACM MobiSys 2022",
+      "primaryUrl": "https://hangqiu.github.io/AutoCast/",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "官方项目和论文核验有限带宽下的 cooperative perception scheduling 及 real-radio transmission schedules。",
+      "relevance": "先占 deadline-aware payload scheduling 的系统层贡献。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3666025.3699328",
+      "title": "Boosting Collaborative Vehicular Perception on the Edge with Vehicle-to-Vehicle Communication",
+      "year": 2024,
+      "venue": "ACM SenSys 2024",
+      "primaryUrl": "https://sensys.acm.org/2024/program/index.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "正式 program、DOI 和作者稿核验 Harbor 的 V2I/V2V 协同与系统评测。",
+      "relevance": "构成强系统基线，候选没有同级 end-to-end 实证。"
+    },
+    {
+      "canonicalId": "neurips:2022:1f5c5cd01b864d53cc5fa0a3472e152e",
+      "title": "Where2comm: Communication-Efficient Collaborative Perception via Spatial Confidence Maps",
+      "year": 2022,
+      "venue": "NeurIPS 2022",
+      "primaryUrl": "https://papers.nips.cc/paper_files/paper/2022/hash/1f5c5cd01b864d53cc5fa0a3472e152e-Abstract-Conference.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "NeurIPS 正式页核验按空间置信度选择通信区域的通信效率方法。",
+      "relevance": "模型 payload 与 accuracy/communication trade-off 的强感知基线。"
+    },
+    {
+      "canonicalId": "cvf:cvpr2022:cui-coopernaut",
+      "title": "Coopernaut: End-to-End Driving with Cooperative Perception for Networked Vehicles",
+      "year": 2022,
+      "venue": "CVPR 2022",
+      "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2022/html/Cui_Coopernaut_End-to-End_Driving_With_Cooperative_Perception_for_Networked_Vehicles_CVPR_2022_paper.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "CVF 正式开放论文页核验端到端 cooperative driving 与网络约束实验。",
+      "relevance": "下游 driving impact 比 release-only completion 指标更接近科学效应。"
+    },
+    {
+      "canonicalId": "arxiv:2008.07519",
+      "title": "V2VNet: Vehicle-to-Vehicle Communication for Joint Perception and Prediction",
+      "year": 2020,
+      "venue": "ECCV 2020",
+      "primaryUrl": "https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123470596.pdf",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "ECVA 正式论文 PDF 核验 feature communication 与联合感知预测。",
+      "relevance": "覆盖 cooperative model payload 的经典基线。"
+    },
+    {
+      "canonicalId": "doi:10.1007/978-3-031-19842-7_7",
+      "title": "V2X-ViT: Vehicle-to-Everything Cooperative Perception with Vision Transformer",
+      "year": 2022,
+      "venue": "ECCV 2022",
+      "primaryUrl": "https://www.ecva.net/papers/eccv_2022/papers_ECCV/papers/136990106.pdf",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "ECVA 正式论文 PDF 核验 heterogeneous V2X fusion 与通信设置。",
+      "relevance": "形成 payload replay 后应比较的感知模型家族。"
+    },
+    {
+      "canonicalId": "pmlr:v205:xu23a",
+      "title": "CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers",
+      "year": 2023,
+      "venue": "CoRL 2022 proceedings",
+      "primaryUrl": "https://proceedings.mlr.press/v205/xu23a.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "PMLR 正式页核验 sparse cooperative BEV semantic segmentation。",
+      "relevance": "说明不同模型 payload/任务不可由单一静态 payload 或 Iperf trace 代表。"
+    },
+    {
+      "canonicalId": "arxiv:2403.13656",
+      "title": "Network Calculus Bounds for Time-Sensitive Networks: A Revisit",
+      "year": 2024,
+      "venue": "arXiv",
+      "primaryUrl": "https://arxiv.org/abs/2403.13656",
+      "sourceFamily": "arxiv",
+      "verification": "主文以 counterexamples 指出忽略 packetization 会使基础 min-plus service models 和 delay bounds 失效。",
+      "relevance": "否定从 100 ms 标量吞吐直接宣称 packet-level completion guarantee。"
+    },
+    {
+      "canonicalId": "arxiv:2204.10906",
+      "title": "Improved Network Calculus Delay Bounds in Time-Sensitive Networks",
+      "year": 2022,
+      "venue": "IEEE/ACM Transactions on Networking 2023 manuscript",
+      "primaryUrl": "https://arxiv.org/abs/2204.10906",
+      "sourceFamily": "arxiv",
+      "verification": "主文比较 packet-level 与 bit-level arrival constraints，并给出更紧 delay bounds。",
+      "relevance": "证明 tightness 依赖正确 packet-level contract，不是 replay 标量本身。"
+    },
+    {
+      "canonicalId": "doi:10.1109/ITC-3560063.2023.10555847",
+      "title": "Network-Calculus Service Curves of the Interleaved Regulator",
+      "year": 2023,
+      "venue": "International Teletraffic Congress 2023",
+      "primaryUrl": "https://arxiv.org/abs/2305.18036",
+      "sourceFamily": "arxiv",
+      "verification": "主文证明某些条件下不存在能给出有效保证的 service curve，并展示 unbounded latency。",
+      "relevance": "说明 service curve 的存在与非平凡性本身需要机制假设。"
+    },
+    {
+      "canonicalId": "arxiv:2509.17028",
+      "title": "Impact of Packetization on Network Calculus Analysis",
+      "year": 2025,
+      "venue": "arXiv",
+      "primaryUrl": "https://arxiv.org/abs/2509.17028",
+      "sourceFamily": "arxiv",
+      "verification": "主文用 counterexamples 检查 packetization 被忽略时的 service、output、backlog 与 concatenation bounds。",
+      "relevance": "进一步预占 packetization-aware bounds，并强化 CooperScene 口径缺失的致命性。"
+    },
+    {
+      "canonicalId": "arxiv:2207.01730",
+      "title": "Service Modeling and Delay Analysis of Packet Delivery over a Wireless Link",
+      "year": 2022,
+      "venue": "IEEE CAMAD 2023 manuscript",
+      "primaryUrl": "https://arxiv.org/abs/2207.01730",
+      "sourceFamily": "arxiv",
+      "verification": "主文用 packet error rate、service time 和 loss 的实测模型构造 stochastic service curve，并做实验验证。",
+      "relevance": "展示 measurement-calibrated service model 的必要强基线。"
+    },
+    {
+      "canonicalId": "arxiv:2205.03115",
+      "title": "Latency Guarantee for Ubiquitous Intelligence in 6G: A Network Calculus Approach",
+      "year": 2022,
+      "venue": "arXiv",
+      "primaryUrl": "https://arxiv.org/abs/2205.03115",
+      "sourceFamily": "arxiv",
+      "verification": "主文以 stochastic arrival/service curves 建模 wireless tail 与 end-to-end delay。",
+      "relevance": "一般 latency guarantee 的理论框架已存在；候选没有新 service characterization。"
+    },
+    {
+      "canonicalId": "doi:10.1016/j.peva.2020.102166",
+      "title": "Wireless Scheduling with Deadline and Power Constraints",
+      "year": 2021,
+      "venue": "Performance Evaluation",
+      "primaryUrl": "https://www.sciencedirect.com/science/article/abs/pii/S0166531620300882",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "正式期刊页核验 hard deadlines、packet discard、QoS 与 PDMax throughput-optimal scheduling。",
+      "relevance": "deadline success 需要到达、信道、调度和功率模型；标量 throughput trace 不足。"
+    },
+    {
+      "canonicalId": "pmlr:v177:guo22a",
+      "title": "Partial Identification with Noisy Covariates: A Robust Optimization Approach",
+      "year": 2022,
+      "venue": "CLeaR 2022",
+      "primaryUrl": "https://proceedings.mlr.press/v177/guo22a.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "PMLR 主文核验 noisy covariates 下用 robust optimization 得到 partial-identification bounds。",
+      "relevance": "直接先占候选的 robust set optimization 形式。"
+    },
+    {
+      "canonicalId": "pmlr:v161:finkelstein21b",
+      "title": "Partial Identifiability in Discrete Data with Measurement Error",
+      "year": 2021,
+      "venue": "UAI 2021",
+      "primaryUrl": "https://proceedings.mlr.press/v161/finkelstein21b.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "PMLR 主文核验 measurement error 下通过 optimization/linear constraints 计算 sharp bounds。",
+      "relevance": "endpoint 与 witness 型计算不是本候选的新方法。"
+    },
+    {
+      "canonicalId": "arxiv:2305.11812",
+      "title": "Off-Policy Evaluation Beyond Overlap: Partial Identification Through Smoothness",
+      "year": 2023,
+      "venue": "arXiv",
+      "primaryUrl": "https://arxiv.org/abs/2305.11812",
+      "sourceFamily": "arxiv",
+      "verification": "主文在 lack of overlap 下用 smoothness 约束和 optimization 给出 sharp partial-identification intervals。",
+      "relevance": "与用 smooth workload-map class 收窄区间同构。"
+    },
+    {
+      "canonicalId": "doi:10.1093/biomet/asac042",
+      "title": "Sample-Constrained Partial Identification",
+      "year": 2023,
+      "venue": "Biometrika",
+      "primaryUrl": "https://academic.oup.com/biomet/article-abstract/110/2/485/6649721",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "正式期刊页核验 sample-constrained identified set 与 stochastic optimization computation。",
+      "relevance": "有限样本约束 identified set 已有通用计算框架。"
+    },
+    {
+      "canonicalId": "doi:10.1093/ectj/utab014",
+      "title": "Computing Moment Inequality Models Using Constrained Optimization",
+      "year": 2021,
+      "venue": "The Econometrics Journal",
+      "primaryUrl": "https://academic.oup.com/ectj/article-abstract/24/3/399/6262350",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "正式期刊页核验用 constrained optimization 计算 identified/confidence sets 并替代 grid search。",
+      "relevance": "一般 endpoint solver 与可计算性不构成新颖残差。"
+    },
+    {
+      "canonicalId": "neurips:2024:7f9220f90cc85b0da693643add6618e6",
+      "title": "Neural Causal Partial Identification",
+      "year": 2024,
+      "venue": "NeurIPS 2024",
+      "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/7f9220f90cc85b0da693643add6618e6-Abstract-Conference.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "NeurIPS 正式页核验 flexible model class 下的 causal partial identification 与 optimization。",
+      "relevance": "表明非参数/灵活映射类上的 set optimization 已是活跃成熟方向。"
+    },
+    {
+      "canonicalId": "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f",
+      "title": "Weak Supervision Performance Evaluation via Partial Identification",
+      "year": 2024,
+      "venue": "NeurIPS 2024",
+      "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/f4c6bec746b0aeca8c2cd15096f1ad1f-Abstract-Conference.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "NeurIPS 正式页核验 weak-supervision performance 的 Frechet bounds 与 convex optimization。",
+      "relevance": "目标 v3 把该 URL 误标为 Partial Identification with Proxy Variables；本审计已按正式题名纠正，不能把误标当成新 prior。"
+    },
+    {
+      "canonicalId": "arxiv:2406.07868",
+      "title": "Bridging Multiple Worlds: Multi-Marginal Optimal Transport for Causal Partial Identification",
+      "year": 2024,
+      "venue": "arXiv",
+      "primaryUrl": "https://arxiv.org/abs/2406.07868",
+      "sourceFamily": "arxiv",
+      "verification": "主文核验 multi-marginal optimal transport 对 causal partial-identification bounds 的计算。",
+      "relevance": "witness couplings 和 extremal constructions 有直接方法先例。"
+    },
+    {
+      "canonicalId": "pmlr:v244:zhang24a",
+      "title": "Partial Identification with Proxy of Latent Confoundings via Sum-of-Ratios Fractional Programming",
+      "year": 2024,
+      "venue": "UAI 2024",
+      "primaryUrl": "https://proceedings.mlr.press/v244/zhang24a.html",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "PMLR 正式页核验 proxy assumptions 下用 fractional programming 计算 bounds。",
+      "relevance": "说明可识别区间的科学内容来自可辩护 proxy/calibration assumptions，而不是优化器本身。"
+    },
+    {
+      "canonicalId": "doi:10.1177/0962280220988574",
+      "title": "Calibrating Validation Samples When Accounting for Measurement Error in Intervention Studies",
+      "year": 2021,
+      "venue": "Statistical Methods in Medical Research",
+      "primaryUrl": "https://pubmed.ncbi.nlm.nih.gov/33620006/",
+      "sourceFamily": "publisher-and-venue",
+      "verification": "PubMed 正式记录核验 external validation sample 的 measurement-error calibration，以及 transportability assumption 失效时的偏差风险。",
+      "relevance": "Iperf-to-model 校准不能仅因来自同一车辆或场景就自动可迁移。"
+    },
+    {
+      "canonicalId": "doi:10.6028/NIST.TN.2315",
+      "title": "C-V2X Interoperability Testing Datasets: Description and Use",
+      "year": 2024,
+      "venue": "NIST Technical Note 2315",
+      "primaryUrl": "https://www.nist.gov/publications/c-v2x-interoperability-testing-datasets-description-and-use",
+      "sourceFamily": "official-code-and-data",
+      "verification": "NIST 官方 technical note/data 页面核验 C-V2X interoperability measurement dataset 的数据与使用说明。",
+      "relevance": "公开的 packet-level V2X measurement 资产可作外部 sanity check，但不能替代 CooperScene 同场配对校准。"
+    },
+    {
+      "canonicalId": "technical:iperf2-manual-2.2.2",
+      "title": "Iperf2 User Manual",
+      "year": 2026,
+      "venue": "Official Iperf2 documentation",
+      "primaryUrl": "https://iperf2.sourceforge.io/iperf2-user-manual.html",
+      "sourceFamily": "official-code-and-data",
+      "verification": "官方手册核验 Iperf2 版本、UDP datagram/configuration 选项与 socket-level byte accounting；IP/UDP/Ethernet overhead 不在应用 byte count 内。",
+      "relevance": "没有 CooperScene 实际 command/version/datagram length 时，不能把 throughput topic 当作 wire service。"
+    }
+  ],
+  "directPreemption": [
+    {
+      "claim": "记录一个网络 trace 后可跨应用 workload 复放",
+      "preemptedBy": [
+        "usenix:nsdi25-sentosa"
+      ],
+      "effect": "CellReplay 已把 workload sensitivity 作为中心问题，并通过两个记录 workload 与插值改善跨 workload replay；候选仅在 CooperScene 上指出同类 gap，不足以成为新问题。"
+    },
+    {
+      "claim": "对不完全识别的 workload map 求 sharp endpoint 并给出 witness",
+      "preemptedBy": [
+        "pmlr:v177:guo22a",
+        "pmlr:v161:finkelstein21b",
+        "arxiv:2305.11812",
+        "doi:10.1093/ectj/utab014",
+        "arxiv:2406.07868"
+      ],
+      "effect": "robust optimization、linear/fractional programs、smoothness-restricted bounds 与 extremal couplings 均已有直接方法先例。"
+    },
+    {
+      "claim": "从吞吐 trace 推导 deadline completion bound",
+      "preemptedBy": [
+        "arxiv:2403.13656",
+        "arxiv:2204.10906",
+        "arxiv:2509.17028",
+        "arxiv:2207.01730"
+      ],
+      "effect": "service/delay bounds 的 packetization、arrival contract 与 empirical service calibration 已被系统研究；候选没有新的 service theorem，且缺少这些前提。"
+    },
+    {
+      "claim": "V2X model payload 的 deadline-aware transport 是新系统问题",
+      "preemptedBy": [
+        "doi:10.1145/3498361.3538925",
+        "doi:10.1145/3666025.3699328",
+        "doi:10.1145/3715014.3722077"
+      ],
+      "effect": "AutoCast、Harbor 与 SEE-V2X 已覆盖真实/应用导向的 payload transport、调度或 workload measurement；release-only certificate 需要更强的配对证据才有增量。"
+    },
+    {
+      "claim": "目标 v3 所列 NeurIPS 2024 proxy-variable 工作支持其特定 novelty",
+      "preemptedBy": [
+        "neurips:2024:f4c6bec746b0aeca8c2cd15096f1ad1f"
+      ],
+      "effect": "该 URL 的正式题名是 Weak Supervision Performance Evaluation via Partial Identification，不是目标 v3 写的 Partial Identification with Proxy Variables；原审计的文献语义不能直接沿用。"
+    }
+  ],
+  "noveltyResidue": {
+    "exactResidue": "可保留的最窄残差是：针对 CooperScene 14-take 公开发布，发布一个机器可检查的证据清单，区分直接观测、假设敏感性与不可识别项，并为每个预先声明的 workload-map class 输出 endpoint 和 witness replay。",
+    "publishableStandalone": false,
+    "whyInsufficient": [
+      "release-specific ledger 与 witness artifact 是复现工程，不是新的 identification theorem。",
+      "没有 paired model/Iperf observations 时，admissible map class 无法从数据校准；identity、constant、mean、monotone 或 Lipschitz 限制的宽度是研究者选择。",
+      "最宽可信类给出 [0, 1] completion，结论可在下载 90.9 GB MCAP 前由实验设计直接推出；它不是由新实证发现产生的反直觉负结果。",
+      "没有完成可比的 perception replay、frame lineage 或 safety outcome，因此区间宽窄不能连接到新的 autonomous-driving 科学效应。",
+      "公开 SEE-V2X/CellReplay 先例使仅报告 workload mismatch 和敏感性曲线的边际影响更低。"
+    ],
+    "negativeResultAssessment": "负结果本身不足以挽救候选。‘未配对的 Iperf trace 不能识别不同 packetization 的模型流量完成率’是由观测设计直接蕴含，并已被 workload-sensitive replay 与 packetization-aware bounds 文献从不同方向预期。若没有新的不可识别性定理、跨数据集反例或配对校准失败证据，负结果只适合作为 CooperScene 使用警告。",
+    "artifactValue": "可以并入 CooperScene reproducibility note、dataset card 或后续系统论文的 measurement appendix；不应作为独立候选继续。"
+  },
+  "assetAudit": {
+    "officialAssets": [
+      {
+        "asset": "paper",
+        "fixedUrl": "https://arxiv.org/html/2606.31219v1",
+        "version": "arXiv:2606.31219v1",
+        "license": "arXiv page terms; paper license not treated as dataset/code license"
+      },
+      {
+        "asset": "project and dataset portal",
+        "fixedUrl": "https://cisl.ucr.edu/CooperScene/",
+        "version": "page reopened 2026-07-31",
+        "license": "data: CC BY-NC-SA 4.0; code: MIT as declared by project"
+      },
+      {
+        "asset": "official code",
+        "fixedUrl": "https://github.com/UCR-CISL/CooperScene/tree/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+        "version": "commit 0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+        "license": "MIT"
+      }
+    ],
+    "publishedScale": {
+      "fullCoreArchivesCompressedBytesApprox": 94259000000,
+      "fullMcapBytes": 90907217741,
+      "previewBytesApprox": 8364000000,
+      "miniInfoZipBytes": 2918993095,
+      "takes": 14,
+      "throughputTopicsPerTake": 12,
+      "allTakeThroughputMessageCount": 73879,
+      "decodedTake9MessageCount": 1932,
+      "note": "十进制近似值来自官方 portal 和既有逐资产审计；full MCAP 与 mini-info 使用审计记录的精确字节数。"
+    },
+    "integrityAndLineage": {
+      "take9LocalPreviewSha256": "1a408f54f39c3bf43ecf99c33181444f956c52ae71e3648ea14a04a0fdf10717",
+      "miniInfoOfficialSha256": "ae7208d87fcbf72d6cca9268fe791f9b9e846418907d8c11d4c73d02e43a01ea",
+      "individualFullMcapPublisherHashesAvailable": false,
+      "remoteVerificationAvailable": "HTTP metadata, ETag and range reads were used by prior audits, but these do not substitute for publisher checksums.",
+      "releaseMismatch": "released mini-info index contains four ego projections per event including infrastructure and OPV2V metainfo, while the pinned current converter emits three vehicle egos plus CooperScene layout; the historical generator for the released index is absent."
+    },
+    "licenseImplications": [
+      "CC BY-NC-SA 4.0 permits noncommercial analysis subject to attribution and ShareAlike obligations; it constrains redistribution and commercial reuse of derived dataset material.",
+      "MIT code license does not override the dataset license.",
+      "审计 JSON 可以发布统计、URL、hash 和方法，但不应重新打包受限原始数据。"
+    ],
+    "localMachineFeasibility": {
+      "platform": "Darwin arm64 MacBook Air",
+      "node": "v24.14.0",
+      "python": "3.9.6",
+      "jq": "1.7.1",
+      "freeDiskAtAudit": "approximately 572 GiB",
+      "cachedAssets": [
+        "/tmp/paper-digest-cooperscene-audit at pinned commit, approximately 143 MB",
+        "/tmp/cooperscene-preview9.mcap, approximately 220 MB"
+      ],
+      "feasible": [
+        "下载并 CPU 解码 90.9 GB MCAP 在磁盘容量上可行。",
+        "按 topic 逐流解码 73,879 个 Vector3 messages、计算 endpoints 和运行 witness replay 不需要 GPU。"
+      ],
+      "notFeasibleOrNotNeeded": [
+        "本机无 NVIDIA GPU，不适合在两周最小闭环内重训完整 perception models。",
+        "下载和解码不能生成缺失的 Table 2 raw logs 或 paired Iperf/model calibration。"
+      ]
+    },
+    "missingNonSubstitutableAssets": [
+      "CooperScene Table 2 的 packet-level raw logs 和 per-run metadata",
+      "完整 Iperf2 command line、版本、UDP datagram length、offered/received 定义和 server/client pairing",
+      "同场、同无线条件下的 Iperf workload 与每种 model workload 配对测量",
+      "runtime serialized bytes、wire bytes、queue occupancy、packet loss、jitter 和 per-packet delay",
+      "将全部 MCAP 时间与 644 个 mini-info physical frames 对齐的官方 sidecar",
+      "生成 released mini-info 四 ego 布局的历史 converter commit"
+    ]
+  },
+  "identificationBoundary": {
+    "estimand": "对指定 model payload B、deadline d、sender/receiver pair 与 frame，在 CooperScene 发布所代表网络条件下，payload 在 d 前完整到达的概率或有限发布经验完成比例。",
+    "directlyIdentified": [
+      "14 takes 的文件、schema、topic 和 channel inventory，以及通过 summary/range audit 得到的 73,879 条 throughput-message counts。",
+      "take 9 中 12 个 directed throughput channels 的 1,932 个 Vector3.x values 及其时间戳顺序。",
+      "论文中 Iperf offered workload 的部分配置：每 agent 一个 5 Mbps UDP client、三个 server 和 100 ms reporting interval。",
+      "论文中 model workload generator 的部分配置：2100-byte chunks、1 ms sequential spacing，以及表中 model payload sizes/latencies。"
+    ],
+    "onlyConditionallyIdentified": [
+      "在明确假定 Vector3.x 单位为 Mbps、100 ms 窗内恒定、应用层吞吐等于可用于模型数据的 service、无额外协议开销/丢包/排队且 time/frame mapping 正确时的 deterministic replay。",
+      "在预先固定 identity、constant-rate、mean-rate、monotone 或 Lipschitz workload map 后的 sensitivity interval。",
+      "在把 static payload calculator 当作 runtime wire payload，且把 paper Table 2 latency 当作与 MCAP 同一过程时的 payload completion。"
+    ],
+    "notIdentified": [
+      "Iperf workload 到 2100-byte/1 ms model workload 的 service map。",
+      "Iperf application bytes 到 IP/UDP/Ethernet/PC5 wire bytes 的映射。",
+      "packet loss、retransmission、queueing、jitter、per-packet delay 与 lower-layer scheduling。",
+      "Table 2 model run 与 MCAP throughput window 的配对关系。",
+      "14 takes 的全部 Vector3.x values；现有 all-take audit 只有 counts。",
+      "MCAP 时间戳到全部 perception frame 的官方映射。",
+      "model completion 对 perception accuracy、planning safety 或 driving outcome 的因果效应。",
+      "从单次 campus campaign 到其他地点、负载、无线软件栈或车辆密度的 population transport。"
+    ],
+    "iperfVsModelMismatch": {
+      "verified": true,
+      "iperfTraffic": "每 agent 一个 UDP client，target rate 5 Mbps，同时提供三个 servers，100 ms reports。实际 Iperf2 command、版本与 datagram length 未发布。",
+      "modelTraffic": "model data 按 2100-byte chunks 切分，并以 1 ms 间隔顺序发送；若连续发送，仅生成器 payload rate 就是 16.8 Mbps，且不含协议开销。",
+      "whyNotExchangeable": "packet size、pacing、offered rate、并发方向、queue interaction 和 byte-accounting 都可能改变 service/loss/delay。Iperf2 官方手册还表明应用层 byte counts 不含网络/链路层 overhead。",
+      "calibrationStatus": "没有 paired observations 或经验证的 transport restriction，因此 mismatch 被确认，但 map 未被校准。"
+    },
+    "allTakeAuditRecheck": {
+      "auditedFile": "content/idea-audits/cooperative-autonomous-driving-cooperscene-all-takes-summary-audit.json",
+      "whatItActuallyDid": "对 14 个 MCAP 使用 footer/summary/schema/channel metadata 与少量 range transfer，确认每 take 12 个 throughput topics，并从 chunk/message index 汇总 counts。审计明确写明没有 full MCAP downloads，也没有 payload chunks decoded。",
+      "whatItSupports": "发布资产存在性、schema 一致性、channel coverage 与待解码工作量上界。",
+      "whatItDoesNotSupport": "全 take throughput empirical distribution、跨 take extrema、endpoint 数值、witness map 或 finite-release completion certificate。",
+      "conclusion": "不能把 73,879 个 message counts 当作 73,879 个 observed rates；现有 all-take audit 不支持有限发布识别证书。"
+    },
+    "formalNonIdentificationArgument": {
+      "setup": "令 O_I 是 Iperf workload w_I 下的发布观测，w_M 是 model workload，G 是所有与 O_I 一致但未由 paired calibration 约束的 workload-to-service maps。",
+      "witnessLow": "存在 g_low 属于 G，使 g_low(w_I) 完全复现 O_I，但在 w_M 的 packetization/pacing 下 service 为 0 或所有 packets 晚于 d；completion=0。",
+      "witnessHigh": "存在 g_high 属于 G，同样复现 O_I，但在 w_M 下提供足以在 d 前传完 B 的无损 service；completion=1。",
+      "result": "只要 G 不含由数据支持的 cross-workload restriction，sharp identified set 即 [0, 1]。任何更窄 endpoint 都来自额外 assumption，不来自 CooperScene Iperf 观测。",
+      "scientificConsequence": "给出 g_low/g_high 的代码 witness 可以证明逻辑 sharpness，却不能把 assumption-driven sensitivity 变成新的实证结果。"
+    }
+  },
+  "minimumStudy": {
+    "applicableToCurrentCandidate": false,
+    "reason": "decision 为 reject，因此不授权以两周 implementation 继续当前候选。仅解码公开原始值能闭合 release inventory，不能闭合不可替代的 workload calibration。",
+    "twoWeekNoNewVehicleAssessment": {
+      "executableComponents": [
+        "下载 14 个 full MCAP 并解码 73,879 个 Vector3.x values，保存原始时间戳、channel、单位假设和 hashes。",
+        "声明 candidate map classes，运行 sharp endpoint solver，并导出每个 endpoint 的 witness replay。",
+        "与 static 1.6 Mbps、take-local mean、identity replay、CellReplay-style two-anchor interpolation 的可用部分和 packetization-aware network-calculus sanity bounds 比较。"
+      ],
+      "fatalGapAfterExecution": "公开资产中没有第二个与 model workload 配对的 service anchor，也没有 Table 2 raw network logs；因此 admissible map class 仍不能由数据选择或校准。",
+      "resultingArtifact": "最多得到高质量 reproducibility appendix，不是可独立发表的识别研究。"
+    },
+    "reconsiderationOnlyIf": [
+      "作者公开同场 paired Iperf/model traces 或 Table 2 packet logs，且可固定版本与许可。",
+      "出现无需 paired data 但可由 CooperScene 已发布变量检验的新 cross-workload restriction 或新 sharpness theorem。",
+      "能够把 completion interval 与可比较的 perception/planning outcome 连接，并完成全帧 lineage。"
+    ]
+  },
+  "successCriteria": [
+    "只有在新增公开配对证据使至少一个非平凡 model workload 的 completion set 严格窄于 [0, 1]，且宽度不是由任意选择的 map-class 常数决定时，才可重新开启。",
+    "必须固定全部原始资产 URL/commit/hash、公开解码器、73,879 个值的逐条 provenance、endpoint solver 和可执行 witness replays。",
+    "必须比较 CellReplay-style workload transfer、packetization-aware service bounds、identity/constant/mean baselines 与至少一个真实 V2X application-traffic calibration baseline。",
+    "必须证明新结果改变对至少一个 model/deadline 的结论，或给出可迁移的新 theorem；仅报告 interval 很宽不算成功。",
+    "必须补齐 perception frame lineage，或明确把论文范围限制为网络测量并放弃 autonomous-driving impact 主张。"
+  ],
+  "killCriteria": [
+    "公开证据仍只有 Iperf workload，无法识别 model-workload map；当前已触发。",
+    "all-take 数据只有 message counts 而非全部 x values；当前已触发。",
+    "最宽可辩护 map class 给出 [0, 1]，而窄区间随 identity/constant/Lipschitz 选择显著变化；当前已触发。",
+    "不能取得 Table 2 raw logs、paired calibration、wire-byte semantics 或 packet-level service variables；当前已触发。",
+    "不能完成 released mini-info 与 current converter 的 lineage/全帧对齐，导致 perception 比较不可审计；当前已触发。",
+    "最终贡献仍可描述为把标准 partial identification 和 robust optimization 套到一个有限 release；当前已触发。"
+  ],
+  "forbiddenClaims": [
+    "不得称 CooperScene throughput topics 是 model payload transport traces。",
+    "不得称 14-take counts audit 已解码全部 throughput values。",
+    "不得称 Iperf 5 Mbps/100 ms reports 给出 packet-level、wire-level或 deadline service curve。",
+    "不得把 identity、constant、mean 或研究者指定 Lipschitz map 的结果称为 data-identified。",
+    "不得把 static payload calculator 输出称为 runtime serialized/wire bytes。",
+    "不得声称 finite-release endpoint 可推广到其他地点、无线栈、拥塞或车辆密度。",
+    "不得声称首次提出 workload-sensitive replay、sharp partial-identification bounds、witness optimization 或 deadline-aware V2X transport。",
+    "不得使用错误题名 Partial Identification with Proxy Variables 指代 NeurIPS 2024 hash f4c6bec746b0aeca8c2cd15096f1ad1f。",
+    "不得声称负结果具有独立科学影响，除非新增 theorem、配对实证或跨数据集反例。"
+  ],
+  "blockingFindings": [
+    {
+      "id": "B1-workload-map-unidentified",
+      "severity": "fatal",
+      "finding": "Iperf 与 model workload 不可交换，且没有 paired calibration；completion set 在可信宽类上退化。"
+    },
+    {
+      "id": "B2-all-take-values-absent",
+      "severity": "fatal-for-finite-release-certificate",
+      "finding": "all-take audit 只有 73,879 个 counts；仅 take 9 解码 1,932 values。"
+    },
+    {
+      "id": "B3-packet-service-semantics-absent",
+      "severity": "fatal",
+      "finding": "缺 Iperf command/version/datagram、wire bytes、loss、queue、jitter 和 per-packet delay。"
+    },
+    {
+      "id": "B4-method-residue-standard",
+      "severity": "fatal-for-novelty",
+      "finding": "sharp endpoints、witnesses、smoothness classes 与 robust optimization 均有直接方法先例。"
+    },
+    {
+      "id": "B5-direct-system-preemption",
+      "severity": "major",
+      "finding": "CellReplay、SEE-V2X、AutoCast 和 Harbor 已覆盖 workload transfer、应用流量校准或 deadline-aware cooperative transport。"
+    },
+    {
+      "id": "B6-release-lineage",
+      "severity": "major",
+      "finding": "mini-info released layout/current converter 和全帧 time mapping 未闭合，不能做可信 perception impact 比较。"
+    },
+    {
+      "id": "B7-reference-mislabel",
+      "severity": "corrective",
+      "finding": "目标 v3 对 NeurIPS 2024 hash f4c6... 的题名与内容标注错误。"
+    }
+  ],
+  "nextActions": [
+    "将 workload-robust-completion-identified-set 记为 reject，不进入打分面板，也不启动两周论文闭环。",
+    "保留 all-take raw-value decoder 作为共享 CooperScene 数据质量基础设施候选，但不要把它登记为该论文贡献。",
+    "在后续维护中纠正 targeted review v3 的 NeurIPS 2024 题名；本任务按要求不修改旧文件。",
+    "若未来出现固定版本的 paired Iperf/model traces、Table 2 raw logs 或官方 frame sidecar，以新候选重新审计，不恢复当前结论。",
+    "任何后续复现报告都必须把 observed Iperf rates、assumed map、derived completion 和 unobserved packet service 分层输出。"
+  ]
+}

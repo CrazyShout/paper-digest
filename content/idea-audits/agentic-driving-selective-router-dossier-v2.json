@@ -1,0 +1,168 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "agentic-driving",
+  "candidateId": "selective-router-counterfactual-missingness",
+  "stage": "pre-review",
+  "dossierVersion": 2,
+  "revisionOf": "content/idea-audits/agentic-driving-selective-router-counterfactual-missingness-dossier-v1.json",
+  "createdAt": "2026-08-01",
+  "title": "驾驶快慢分支合同与净收益错配：何时复杂度路由会改变部署结论",
+  "hook": "不把官方自适应提示当作天然 fast/slow treatment，也不把 OPE 当新方法；先建立跨提示和共享解码稳定的分支合同，再要求复杂度与安全优先净收益发生可复查的符号错配并改变同预算部署排序。",
+  "output": "分支有效性证书、完整快慢配对账本、复杂度净收益错配报告和预算匹配部署决策审计",
+  "effort": "中高，需要 AutoVLA/NAVSIM 资产、强制分支适配、配对生成和场景级统计",
+  "timeline": "8 至 10 周；前 3 周只关闭资产、分支有效性和功效门，未通过即停止",
+  "whyNow": "AutoVLA 公开了同一 checkpoint 的 trajectory-only 与 CoT 生成路径，Cognitive Dual-Process 又报告动态路由优于静态分支并存在长尾漏路由和 over-reasoning 迹象。这些结果使逐场景净收益异质性成为可检验问题，但没有证明 AutoVLA 的官方自适应 prompt 是稳定处理，也没有给出复杂度与安全优先净收益的逐场景符号错配或部署排序后果。",
+  "keyProblem": "只执行所选分支的部署日志缺失另一分支结果，但潜在结果、causal deferral、CRM、OPE 和 learning-to-defer 已经成熟。剩余问题不是如何发明反事实估计器，而是能否在一个真实驾驶 VLA 上定义可重复的 branch treatment，并观察到复杂度代理与慢分支安全净收益的驾驶特有错配足以改变相同预算下的路由器排序或准入决定。",
+  "currentLimitations": "目前没有本项目自己的 AutoVLA checkpoint smoke、forced branch 合规率、跨 prompt 稳定性、重复生成噪声、逐场景 paired benefit、复杂度收益符号错配或部署排序变化。官方 use_cot=true 允许模型按需推理，论文和代码还把提示、输出长度与采样设置混在一起。NAVSIM 冻结同一观测，无法表示十秒级推理期间的世界演化；固定公开提交也没有已核验的闭环 twin runner。",
+  "hypothesis": "若固定 checkpoint 上存在一个跨两套语义等价提示和共享 decoding 稳定的 fast-direct/slow-structured treatment，则在 held-out NAVSIM 场景中，视觉复杂度或置信度相近的样本会出现安全优先 slow-minus-fast 净收益符号分裂；用完整配对净收益评价会改变至少一个相同算力预算下的 router 排序或 deploy/no-deploy 结论。若 treatment 不稳定、错配只来自非法输出或生成噪声、或部署排序不变，则候选失败。",
+  "claimBoundary": {
+    "primaryClaim": "结论只适用于固定 AutoVLA checkpoint、冻结 prompt-level branch contract、NAVSIM 同观测规划任务和预注册安全优先效用。",
+    "matureMethods": "潜在结果、individual treatment effect、IPS/IPW、DR、SWITCH、CRM、outcome regression 和 learning-to-defer 只作为既有工具与基线。",
+    "forbiddenClaims": [
+      "不得声称官方 AutoVLA 已暴露稳定的强制 fast/slow treatment。",
+      "不得声称已经观察到 branch stability、complexity-benefit mismatch 或 ranking reversal。",
+      "不得把 positivity failure、IPS 方差或人工遮蔽日志本身当作驾驶新颖性。",
+      "没有闭环 twin 和等待期动作合同时，不得声称推理时延改善真实闭环安全。",
+      "不得把 prompt-level treatment 外推为所有快慢推理架构的内在能力。"
+    ]
+  },
+  "noveltyClaims": [
+    "把 branch validity 设为研究结论前置的析因证书：同一 checkpoint、processor、动作 grammar 和预测时域下，fast 与 slow 各使用两套预注册语义等价 prompt，并在共享 greedy 解码和配对 sampling 敏感性中验证分支内等效与分支间稳定差异。",
+    "把贡献限定为驾驶特有的 complexity/net-benefit sign mismatch：净收益以安全硬约束、轨迹有效性、进度和实测计算成本的层级规则定义，不以 CoT 出现、人工复杂标签或任意线性总分定义。",
+    "把 paired-ledger 真值是否改变同预算部署排序或准入作为必要结果；普通 OPE 只有在恢复一个已经由完整账本观察到的驾驶结论时才有审计价值。",
+    "将静态规划与闭环时延语义完全拆开：NAVSIM 结果只说明同观测分支选择，任何等待期安全结论都需要独立状态克隆和明确保底动作。"
+  ],
+  "primaryEstimands": {
+    "branchBenefit": "对同一 NAVSIM scene token 和冻结输入，估计 slow-structured 相对 fast-direct 的安全优先配对净收益，逐项保留 collision、TTC proxy、progress、comfort、trajectory validity、token 数和墙钟成本。",
+    "complexityMismatch": "在 held-out scene clusters 上估计复杂度或置信度分层内的净收益正负比例、符号熵、rank correlation 和 beneficial-slow/harmful-slow 分类误差。",
+    "deploymentConsequence": "在相同慢分支调用率、平均 GPU 时间或尾时延预算下，比较 complexity、confidence、post-hoc L2D、benefit predictor 与 full-information oracle 的安全优先价值和排序。",
+    "loggingAudit": "从完整账本按预注册 logging policy 遮蔽未选分支，以配对真值评估 naive、DM、IPS、DR、SWITCH 和 CRM 的价值误差与排序恢复；确定性无支持区域保持未识别。"
+  },
+  "fixedStudyContract": {
+    "asset": "固定 AutoVLA official code commit ba34eed74ce6729e7986592d0e66cbaca397b4fa、公开 Zewei-Zhou/AutoVLA checkpoint、processor、action codebook 和 NAVSIM scorer。checkpoint revision、文件 hash、许可和实际显存必须在 Gate 0 记录；当前不视为已完成 smoke。",
+    "unit": "按 nuPlan log 和 scene cluster 隔离的 NAVSIM scene token。多个 prompt、分支、生成 seed 或日志遮蔽不增加独立场景数。",
+    "branches": {
+      "officialAdaptive": "只作为诊断条件，保留官方 use_cot=true 的按需推理语义，不把它当 forced-slow ground truth。",
+      "forcedFast": "两套预注册语义等价 prompt 都只允许直接输出统一 action grammar，不允许长理由；动作 token 数、五秒预测时域和错误处理与 forced-slow 相同。",
+      "forcedSlow": "两套预注册语义等价 prompt 都要求固定结构理由后再输出同一 action grammar；理由长度上限冻结，动作 token 预算不得被理由侵占。",
+      "decoding": "greedy 或等价 deterministic decoding 是主设置；共享 temperature、top-p、top-k 和随机数流的配对 sampling 只作敏感性，不允许 fast/slow 使用不同采样超参。"
+    },
+    "validityRule": "在与主测试按 log 隔离的 branch-validation split 上预先冻结合规率、无效输出、no-op 重复和 prompt-equivalence margins。每个分支合规率必须至少 95%；两套同分支 prompt 的主要轨迹与净收益差必须通过等效检验，且 slow-minus-fast 符号不能被 prompt-by-branch interaction 或 sampling 方差主导。任一条件失败则不生成 paired-benefit 主张。",
+    "utility": "主分析使用层级规则：先判定碰撞、TTC/安全裕度和规则违规等硬安全状态，再比较轨迹有效性与进度，最后在前两层不劣时计入 GPU 时间和尾时延。线性权重只作预注册敏感性曲线。",
+    "power": "独立 pilot 估计 scene-cluster 方差、invalid rate 和 mismatch prevalence；冻结至少 80% power 的主样本数，且 confirmatory ledger 不少于 300 个独立 scenes。pilot 不能用于挑选 prompt、复杂度阈值或有利子群。",
+    "logging": "完整 paired ledger 是评价真值。确定性 complexity logs 的 propensity 为零区域明确标为 unsupported；无偏 OPE 只在具有已知非零 propensity 的预注册随机探索日志中解释。"
+  },
+  "method": [
+    "实现 ForcedBranchAdapter，使四个 prompt 变体共享 checkpoint、输入、processor、action tokenizer、预测时域、动作 grammar、解码器和错误计分；保存原始 token、轨迹、时延、显存和完整异常。",
+    "在 branch-validation split 上交叉 branch、prompt template、greedy/sampling 与 order，执行 no-op/no-op、同分支重复和 prompt-equivalence 分析；官方 adaptive prompt 只用于测量与 forced branches 的关系。",
+    "通过 validity gate 后，在同一不可变 NAVSIM 输入和同一 metric cache 上串行执行 fast 与 slow，随机化顺序并生成完整 paired ledger；所有 scene 必须对账为成功、branch invalid 或 scorer failure。",
+    "按安全优先层级规则给每个 scene 标记 beneficial-slow、harmful-slow、branch-equivalent 或 both-fail，并在打开 router 结果前冻结 practical-equivalence margins。",
+    "在按 log 隔离的测试集上比较复杂度、置信度、L2D 和 benefit predictor；所有方法使用相同慢分支调用率、平均 GPU 时间或尾时延预算，并与 full-information oracle 比较。",
+    "从完整账本生成确定性和随机探索日志，使用成熟 DM、IPS、DR、SWITCH 和 CRM 做恢复审计；不得用 outcome model 填补无支持区域后声称已识别。",
+    "只有静态主实验通过且存在可信闭环入口时，才从同一 CARLA snapshot 建立独立 twins，慢分支等待期间执行预注册最小风险动作；no-op twins 不一致则取消闭环解释。"
+  ],
+  "implementationPath": [
+    "第 1 周固定代码、checkpoint revision、文件 hash、NAVSIM 数据和 metric cache，完成官方单 scene 推理。资产尚未运行，失败时不替换为不同模型拼接结果。",
+    "第 1 至 2 周实现四 prompt ForcedBranchAdapter、统一 action grammar、完整失败计分、deterministic generator 和 order-swap runner。",
+    "第 2 至 3 周在 branch-validation split 执行 treatment factorial，冻结合规率、prompt-equivalence、重复噪声和 practical-effect margins；未通过就停止。",
+    "第 3 至 4 周在独立 pilot 上估计 scene-cluster 方差与样本量，冻结场景子群、复杂度代理、置信度定义和预算网格。",
+    "第 4 至 7 周执行不少于 300 个独立 scene 的 confirmatory paired ledger，原始结果按 log、scene、branch、prompt 和失败类型完整发布。",
+    "第 7 至 9 周完成预算匹配 router 和选择性日志审计；第 10 周只做预注册复核或负结果包装，不新增估计器作为贡献。"
+  ],
+  "minimumStudy": [
+    "Gate 0 资产门：固定 AutoVLA checkpoint、processor、action codebook、NAVSIM scorer 和 metric cache 可在同一环境运行；记录 revision、hash、显存和许可。当前没有 smoke 结果。",
+    "Gate 1 branch-validity 门：在至少 150 个 log-isolated scenes 上交叉两套 forced-fast、两套 forced-slow、官方 adaptive、共享 greedy 和配对 sampling；只有合规率、等效检验、重复噪声和非法输出门全部通过才冻结 treatment。",
+    "Gate 2 功效门：用独立 scenes 估计簇方差、invalid rate 和 mismatch prevalence，冻结不少于 300 scenes 且至少 80% power 的 confirmatory 规模；无法在预算内达到即停止。",
+    "Gate 3 驾驶现象门：建立完整 paired ledger，在预注册复杂度/置信度区间和至少两个驾驶子群检验 slow-minus-fast 符号错配，并证明结果在两套 prompt 合同下方向一致。",
+    "Gate 4 部署后果门：在完全 held-out logs 和相同预算下比较 complexity、confidence、L2D、benefit predictor 与 oracle；必须出现有置信区间支持的排序变化或 deploy/no-deploy 变化。",
+    "Gate 5 次级 logging audit：只有 Gate 3 和 Gate 4 通过后才解释 OPE 恢复；否则只报告成熟 estimator 的复现附录并关闭 missingness 贡献。"
+  ],
+  "strongBaselines": [
+    "always-fast 与 always-slow，分别给出最低计算成本和全量慢推理参照。",
+    "官方 AutoVLA adaptive prompt，作为当前发布行为的诊断基线而非稳定 treatment。",
+    "预算匹配随机路由，用于判断学习方法是否超越随机计算分配。",
+    "Cognitive Dual-Process style visual-complexity router，按论文可核验规格重建并明确没有官方 checkpoint。",
+    "confidence 或 entropy router，检验 complexity mismatch 是否只是普通不确定性。",
+    "post-hoc learning-to-defer error-cost router，作为成熟路由目标的最强直接基线。",
+    "held-out paired-benefit predictor 与 full-information oracle benefit router；前者可部署，后者只是上界。",
+    "DM、IPS、DR、SWITCH 和 CRM，作为已知 propensity 下的选择性日志基线而非方法贡献。"
+  ],
+  "metrics": [
+    "branch validity：prompt 合规率、动作 token 数、五秒时域、非法轨迹率、同分支重复差、prompt-equivalence interval 和 branch-by-prompt interaction。",
+    "paired net benefit：collision、TTC 或安全裕度、progress、comfort、trajectory validity、token 数、p50/p95/p99 墙钟时延和 GPU 时间的逐 scene 差。",
+    "complexity-benefit mismatch：分层内正负收益率、符号熵、rank correlation、beneficial-slow 漏路由和 harmful-slow 过度推理率。",
+    "deployment value：相同慢分支调用率、平均 GPU 时间或尾时延预算下的安全优先价值、Pareto 前沿、router regret 和方法排序。",
+    "logging audit：估计值相对 paired truth 的误差、区间覆盖、有效样本量、unsupported strata 和方法排序恢复率。",
+    "稳健性：prompt variant、decoding、scene subgroup、log cluster、invalid-output inclusion 和执行顺序敏感性。"
+  ],
+  "successCriteria": [
+    "branch treatment 先通过 95% 合规率、同分支 prompt 等效、共享 decoding、no-op 重复和 order-swap 门；slow-minus-fast 方向不能由 prompt-by-branch interaction、sampling 方差或非法输出主导。",
+    "在完全 held-out test 和至少两个预注册驾驶子群中，复杂度或置信度相近 scenes 同时出现有 practical magnitude 的 beneficial-slow 与 harmful-slow，scene-cluster 区间排除只由重复噪声解释的范围，并跨两套 prompt 合同方向一致。",
+    "完整 paired truth 必须改变至少一个实质部署结论：相同预算下 complexity、confidence、L2D 或 benefit router 的排序发生有区间支持的变化，或一个预注册 deploy/no-deploy 安全准入决定改变。",
+    "选择性日志分析只有在恢复或遗漏上述已观察部署结论时才算支持性结果；单独展示 positivity failure、IPS 方差或标准 DR 优势不算成功。",
+    "未完成闭环 twin 时，所有成功表述严格限于 NAVSIM 同观测规划与计算分配评测。"
+  ],
+  "killCriteria": [
+    "固定 checkpoint 或 NAVSIM 资产不能运行，或 forced branches 无法在同一动作 grammar 和预测时域达到预注册合规率。",
+    "fast/slow 差异对 prompt template、decoding 或 sampling seed 不稳定，分支内方差不小于分支间 practical effect，或非法输出解释主要符号差异。",
+    "复杂度/置信度与净收益近似单调，或符号错配不能在至少两个预注册子群和两套 prompt 合同中复现。",
+    "paired ledger 不改变任何相同预算方法排序或 deploy/no-deploy 结论；此时领域化 OPE 应作为附录而非独立候选。",
+    "所有结果都能由通用 causal deferral、CRM/OPE 或 L2D 直接表达，且没有新的驾驶 treatment、反例或部署后果。",
+    "任何闭环 claim 的 no-op twins、共同初态或等待期保底动作合同失败。"
+  ],
+  "risks": [
+    "ForcedBranchAdapter 定义的是研究者构造的 prompt-level treatment，可能不对应官方 adaptive deployment；标题、结论和 artifact 必须保留该限定。",
+    "NAVSIM 静态同观测不模拟慢推理期间的环境演化；墙钟成本只能用于计算预算，不等于闭环安全代价。",
+    "线性效用可人为制造收益符号；主分析使用安全优先层级规则，并公开所有分量与敏感性。",
+    "重复生成成本可能限制独立 scenes；功效按 scene/log 而非生成次数计算，预算不足直接停止。",
+    "确定性日志无支持区域不能由 DR 凭空恢复；unsupported strata 保持未识别。",
+    "AutoVLA 许可和数据准备可能限制发布与复现；只发布独立适配器、manifest 和统计，不重新分发受限资产。"
+  ],
+  "impact": "若三个硬门都通过，这项工作会提供一个真实驾驶 VLA 上可复查的 branch contract，并证明复杂度代理会在安全净收益符号和同预算部署排序上产生实际后果；这会改变快慢路由的监督目标和评测报告。若 branch 不稳定、错配不存在或排序不变，候选被关闭，通用 causal deferral 与 OPE 继续作为充分解释。没有闭环 twin 时，任何影响都只及 NAVSIM 规划评测。",
+  "evidence": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "role": "最直接驾驶竞品，已覆盖复杂度 Arbiter、快慢路由、强制快路径后果、静态分支比较和长尾漏路由；本候选必须提供配对净收益错配与部署排序增量。",
+      "localPaperId": "cognitive-dual-process-driving",
+      "localLink": "papers/cognitive-dual-process-driving/"
+    },
+    {
+      "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "role": "定义同一 VLA 的 trajectory-only、CoT 和自适应生成模式及显著时延差，但没有稳定强制分支或逐 scene paired benefit。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "AutoVLA Official Repository at ba34eed",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "role": "提供固定代码、checkpoint 链接、动作 tokenizer、NAVSIM agent 和 PDM scorer；公开资产存在不表示 branch-contract smoke 已完成。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "A Causal Framework for Evaluating Deferring Systems",
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "role": "直接占据潜在结果、个体延期效应和缺失专家结果的因果框架，禁止把一般 deferral 识别写成新意。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Counterfactual Risk Minimization: Learning from Logged Bandit Feedback",
+      "url": "https://proceedings.mlr.press/v37/swaminathan15.html",
+      "role": "直接占据 logged bandit feedback、propensity 和离线策略学习，CRM 只能作为本研究基线。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Optimal and Adaptive Off-policy Evaluation in Contextual Bandits",
+      "url": "https://proceedings.mlr.press/v70/wang17a.html",
+      "role": "提供 IPS、DR、SWITCH 与支持方差边界，要求确定性无支持区域保持未识别。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Post-hoc Estimators for Learning to Defer to an Expert",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/bc8f76d9caadd48f77025b1c889d2e2d-Abstract-Conference.html",
+      "role": "直接占据精度成本型 post-hoc defer router；候选必须以驾驶净收益错配和部署排序后果超出该基线。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-01T03:48:41.519Z"
+}

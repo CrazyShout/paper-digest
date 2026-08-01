@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "panelId": "cooperative-autonomous-driving-finalist-panel-v4",
+  "round": 1,
+  "reviewerAgentId": "019fb775-aaa8-7522-9ae5-2447cc14f1a9",
+  "freshContext": true,
+  "thresholdDisclosed": false,
+  "reviewedAt": "2026-07-31T17:33:00+08:00",
+  "lens": "impact-reviewer",
+  "candidates": [
+    {
+      "candidateId": "runtime-semantic-checkers-for-fusion-contracts",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 7,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 8
+      },
+      "rationales": {
+        "novelty": "跨资产溯源图、协同感知专用不变量和语义保持差分执行构成可信增量，但语义检查器与溯源不变量已分别被 [T2C](https://www.usenix.org/conference/osdi25/presentation/lou) 和 [Basilisk](https://www.usenix.org/conference/osdi25/presentation/zhang-tony) 占据。当前证据尚不能排除其最终退化为领域化规则集合。",
+        "feasibility": "四类静态漂移已有固定提交和一手证据，CPU 优先的解析器、图和突变测试两周内可实现。主要限制是 V2XScenes 数据受控、Co-MTP 执行链损坏、CodeFilling 缺少真实序列化边界，动态验证只能集中在少数资产。",
+        "success-probability": "发现已知静态漂移的概率高，但共享 IR 跨三个框架泛化、低误报以及漂移在异常前改变冻结模型输出或评测 cohort 的核心主张尚无运行证据，因此仍有重大缺口。",
+        "impact": "若成立，会直接改变发布物绑定、加载前检查和评测协议，并将静态漂移与模型影响分开。若通用 schema 已能覆盖全部问题或模型输出不变，负结果仍能限定工具投资范围；现有证据不支持道路安全或论文结果失真外推。",
+        "comparison-readiness": "结构校验、原仓库断言、哈希绑定、字段统计、人工审计和最终指标对比均已列出，检测率、误报、定位、提前量和开销也可比较。缺口是尚无冻结的跨仓库盲测集和完整动态执行结果。"
+      },
+      "strongestObjection": "已确认的四个实例异质且多为静态发布缺陷，尚未证明一个非仓库特例化的 IR 能以低误报发现未知问题并改变真实模型或评测结论。",
+      "requiredExperiment": "冻结规则后，在至少三个仓库进行盲测：同时加入合法变换、未参与规则设计的语义突变和真实漂移，以结构 schema、原断言和人工审计为基线；并在一个可运行冻结模型上报告 cohort、输出和指标的配对变化及误报。",
+      "overall": 7
+    },
+    {
+      "candidateId": "cooperative-benchmark-cohort-missingness",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 5,
+        "success-probability": 5,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "三路回退、物理事件聚类和组条件 harmful-cooperation 风险的组合具有应用差异，但风险控制、Mondrian 校准和组条件保证本身已成熟；[条件保证研究](https://academic.oup.com/jrsssb/article/87/4/1100/8058684)也明确覆盖预设组。相对风险感知协作选择器的不可替代差异尚未充分证明。",
+        "feasibility": "CooperScene 的配置和哈希 checkpoint 可匿名取得，但尚未端到端运行，mini test 只有 30 个独立物理事件，无法支撑多层 cohort。第二模型或第二基准缺少现成 checkpoint，因此六周计划仍有显著资产与样本量风险。",
+        "success-probability": "层级 cohort 很可能造成支持碎片化；在交换性、独立 sequence 数量和 mixture shift 均未实证前，同时实现逐组风险上界和有用覆盖率的概率有限。部署可见特征中的 message age 也需要可信时钟语义。",
+        "impact": "若成功，会把聚合 AP 改为可执行的协作、ego-only 与降级回退策略，直接影响评测和部署决策。等价性负结果可支持采用更简单的全局策略，但只对有充分支持的冻结分布有效，不能解释为道路安全保证；“safe-degraded action”目前也未操作化。",
+        "comparison-readiness": "估计量、匹配事件、聚类拆分、同时上界、mixture reweighting 和主要基线较完整。[Conformal Risk Control](https://proceedings.iclr.cc/paper_files/paper/2024/hash/f3549ef9b5ff520a7e41ff3cc306ab2b-Abstract-Conference.html)支持单调损失风险控制，但候选仍需预先给出 delta、风险阈值、置信水平、最小独立支持和区间宽度止损值。"
+      },
+      "strongestObjection": "当前可执行资产的独立事件数远不足以同时校准和检验多层 cohort；最终策略可能只能频繁拒绝保证或退回 ego-only，从而无法证明比全局选择器更有用。",
+      "requiredExperiment": "在两个冻结模型或基准上按完整 sequence 分离校准与测试，预注册 delta、风险上限、同时置信水平、最小 cohort 支持和覆盖下限；对匹配物理事件比较全局、逐角色、逐叶和层级策略，并明确区分自然缺失、注入遮蔽和 stale 条件。",
+      "overall": 6
+    },
+    {
+      "candidateId": "clock-domain-provenance-age-identifiability",
+      "scores": {
+        "novelty": 7,
+        "feasibility": 8,
+        "success-probability": 8,
+        "impact": 8,
+        "comparison-readiness": 8
+      },
+      "rationales": {
+        "novelty": "时钟偏移与单向时延不可联合识别并非新理论，[RFC 7679](https://datatracker.ietf.org/doc/html/rfc7679)已要求同步、时间戳边界和误差分析，近期工作也已联合同步与 AoI。新意在于把 V2X、ROS 和 MCAP 字段逐项绑定到事件与时钟域，并输出 identified interval 和 fresh、stale、uncertain 三值决策。",
+        "feasibility": "反例、区间计算器、sidecar 和合成偏移、漂移、relock 回放均为 CPU 优先，不依赖训练模型。[ROS 2 时间设计](https://design.ros2.org/articles/clock_and_time.html)明确区分多种时钟并允许跳变，[MCAP](https://mcap.dev/spec)也只定义 log_time 与 publish_time，且缺失时后者可等于前者，支持该审计入口。",
+        "success-probability": "形式反例和字段语义差异高度可复现，区间覆盖也可在校准真值下检验。主要不确定性是能否找到冻结公开路径确实跨未证明时钟域做减法，以及真实资产能否提供足够窄的映射误差界。",
+        "impact": "该结果可直接改变消息 schema、日志要求、freshness gate 和评测协议，避免把不可识别年龄误报为新鲜。若所有目标路径均证明共同时间基和有效误差界，负结果仍形成有价值的时间合同证书；任何结论都应限定到具体版本、take 和 timestamping plane。",
+        "comparison-readiness": "naive subtraction、MCAP 差值、RTT/2、PTP 点估计、oracle 和区间方法均已定义，覆盖、宽度、false-fresh、false-stale、uncertain 与开销可直接比较。仍需冻结各基线的事件边界和真值生成程序。"
+      },
+      "strongestObjection": "如果真实系统没有可审计的 offset 或 rate 误差界，正确区间可能长期宽到覆盖全部截止时间，使方法理论上诚实但工程上几乎总返回 uncertain。",
+      "requiredExperiment": "构造内容、顺序和服务过程完全相同但 deadline 真值相反的双世界，同时采集具有独立硬件或校准真值的真实双主机 trace；冻结 age gate 后比较所有点估计基线与区间方法的覆盖、宽度、false-fresh 和 uncertain 率，并在一次 relock 前后重复。",
+      "overall": 8
+    },
+    {
+      "candidateId": "coupled-adaptive-rate-controller-stability",
+      "scores": {
+        "novelty": 8,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "经典 LIMERIC、FABRIC 和公平控制已占据一般拥塞稳定性，但语义内容反馈、共享负载和跨发送者冗余效用的耦合稳定域仍有可信空缺。[Quality over Quantity](https://arxiv.org/html/2607.18495v1)明确把 BME 收敛、阈值交互和自适应 CPM 周期留作后续工作。",
+        "feasibility": "Artery、Vanetza、OMNeT++ 和 SUMO 提供合理入口，但审计尚未编译固定环境，直接邻近方法没有公开实现，也没有 Artery 到 OpenCOOD 的适配器。两周协议研究可行但存在明显环境与实现风险，感知质量主张六周内仍不稳。",
+        "success-probability": "找到某些 gain-delay 组合振荡并不困难，但证明是语义反馈导致、边界对步长与种子稳定、且不是原拥塞控制或数值伪影更困难。跨发送者边际效用及冗余定义尚未冻结。",
+        "impact": "若获得可预测边界和有效稳定器，会影响 CPS/BME 参数、最小服务机制和网络评测矩阵；稳定 null envelope 也能排除不必要的控制器改造。证据目前仅覆盖 ITS-G5 仿真和协议级 VoI，不能外推到 C-V2X、真实感知收益或道路安全。",
+        "comparison-readiness": "节点数、控制周期、反馈延迟、同步性和负载阶跃的 sweep 明确，并包含固定速率、ETSI/LIMERIC、加权与 utility-fair 基线。缺口是候选控制律、效用计算、QoQ 近似实现和隐藏队列判据尚未完全固定。"
+      },
+      "strongestObjection": "所谓语义耦合可能由人为定义的合成 VoI 和控制律构造出来；即使仿真出现振荡，也未证明真实协同感知效用或部署网络会产生同一动力学。",
+      "requiredExperiment": "先复现固定 Artery 示例，再使用冻结的感知 payload 与 receiver marginal-utility trace，在相同负载下对语义反馈开关进行配对 gain-delay-node-count sweep；用更细仿真步长、多种子和异步更新验证边界，并确认稳定器没有把拥塞转移到队列或通过持续降级服务掩盖问题。",
+      "overall": 7
+    },
+    {
+      "candidateId": "failure-domain-evidence-quorum",
+      "scores": {
+        "novelty": 6,
+        "feasibility": 6,
+        "success-probability": 6,
+        "impact": 7,
+        "comparison-readiness": 7
+      },
+      "rationales": {
+        "novelty": "failure-domain quorum、共识、信任和未知相关性均有成熟先例，候选也正确放弃“首次 quorum”主张。可信增量是协同感知 evidence-root manifest、固定车辆数下的 root-cardinality 配对实验，以及对错误 provenance 的系统敏感性分析，但仍主要是已有思想的领域化。",
+        "feasibility": "小规模 root-disjoint 子集可精确枚举，[RCP-Bench](https://github.com/LuckyDush/RCP-Bench)提供 global、ego、CAV corruption 和负协作指标入口。主要风险是兼容 checkpoint、ROBOSAC 等基线复现，以及可观测而非 oracle 的 lineage；两周内只能证明 assigned-root 因果效应。",
+        "success-probability": "固定车辆数时复制同根证据造成计数式方法失效的效应很可能存在，但 oracle domain collapse 的收益可能在 root 合并、拆分或错误标签下消失。真实系统缺少经过认证的模型、地图、标定和网络路由 lineage，使部署成功概率明显低于仿真成功概率。",
+        "impact": "若在不可靠 provenance 下仍稳健，可改变证据接纳、消息 lineage 和 fallback 架构；若两条受控路径及 held-out fault 均无稳定效应，负结果可避免昂贵的 provenance 投资。当前 assigned seed 仅是实验代理，离线 AP 或 false acceptance 不能解释为道路安全改善。",
+        "comparison-readiness": "车辆数、可见性、字节和模型固定的配对设计较强，基线、false acceptance、正负协作、校准、弃权、开销及标签错误敏感性均已列出。仍需预注册 root taxonomy、每类故障的冲突边、未知 root 处理和兼容基线版本。"
+      },
+      "strongestObjection": "核心方法需要可信 failure-root 标签，而公开数据几乎不提供认证 lineage；如果收益只在 oracle 或人为 assigned roots 下成立，它不会改变真实接纳决策。",
+      "requiredExperiment": "在冻结模型、车辆数、可见性和字节预算下，对独立根与共同根进行配对注入，并保留至少一个 held-out fault family；同时系统扫描 root 缺失、合并、拆分和错误标签，与车辆投票、ROBOSAC、随机丢弃及 uncertainty weighting 比较，要求收益在非 oracle 可观测或 assigned provenance 下仍保持且不靠拒绝几乎全部协作获得。",
+      "overall": 6
+    }
+  ]
+}

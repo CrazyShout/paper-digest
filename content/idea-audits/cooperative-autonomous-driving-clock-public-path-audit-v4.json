@@ -1,0 +1,860 @@
+{
+  "schemaVersion": "1.0.0",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "clock-domain-provenance-age-identifiability",
+  "auditedAt": "2026-07-31T18:16:28+08:00",
+  "auditMode": "frozen-public-path-evidence-audit",
+  "scope": {
+    "target": "Public cooperative-perception, V2X, autonomous-driving ROS 2, and MCAP code paths that use timestamp subtraction or an equivalent timestamp cutoff for age, freshness, timeout, or deadline behavior.",
+    "strictPositiveDefinition": "A fixed-commit executable path must subtract a timestamp originating at another component or carried without a clock-domain contract from a local decision clock, and the result must change freshness, timeout, deadline, planning, or system-state behavior.",
+    "clockDomainStandard": "A numeric ROS builtin_interfaces/Time, MCAP logTime/publishTime, or JSON timestamp is not by itself evidence of clock identity. A path is marked cross-domain-unproven only when the frozen public path lacks an explicit producer clock identity, clock-domain identifier, synchronization generation, or quantified offset/error contract. This label does not assert that deployed clocks are actually different or unsynchronized.",
+    "repositoriesInspected": 11,
+    "frozenCommits": 11,
+    "coverageFamilies": [
+      "Autoware cooperative infrastructure planning",
+      "USDOT CARMA autonomous-driving and V2X services",
+      "ROS 2 sensor diagnostics",
+      "ROS 2 MCAP storage",
+      "official cooperative-perception paper code",
+      "public cooperative-perception dataset tooling"
+    ]
+  },
+  "classificationDefinitions": {
+    "field-only": "A timestamp field is parsed, stored, serialized, sorted, or replayed without an age/freshness/deadline decision.",
+    "latency-observation-only": "A timestamp difference is computed only for logging, metrics, feature construction, or offline reporting and does not gate behavior.",
+    "same-clock-safe-subtraction": "Both operands are explicitly sampled from the same local node/process clock in the inspected path before the freshness decision.",
+    "cross-domain-unproven-subtraction": "A serialized or externally produced timestamp whose clock-domain relationship is not established by the frozen public path is directly subtracted from a local decision clock, and the result changes behavior.",
+    "cross-domain-unproven-cutoff-comparison": "A local clock produces a cutoff such as now minus timeout and an external timestamp is compared to that cutoff. This is age-equivalent but is not counted as a strict direct-subtraction positive.",
+    "modeled-delay-only": "Delay is synthesized from frame indices, configured lag, payload size, throughput, or a simulation model rather than measured by subtracting live source and receiver clocks.",
+    "unresolved-adjacent": "The path performs clock conversion or timestamp comparison but does not satisfy the strict age/freshness/deadline positive definition, or the public path ends before the needed clock contract can be verified."
+  },
+  "queries": [
+    {
+      "id": "Q-GH-01",
+      "source": "GitHub code search via gh api",
+      "query": "\"now() - rclcpp::Time\" timeout language:C++",
+      "executedAt": "2026-07-31",
+      "resultCount": 83,
+      "countMeaning": "GitHub code-search total_count at execution time",
+      "screening": "Used to locate literal ROS 2 local-now subtraction paths. Retained Autoware Universe and CARMA Platform paths after fixed-commit inspection."
+    },
+    {
+      "id": "Q-GH-02",
+      "source": "GitHub code search via gh api",
+      "query": "\"metadata.FindMember(\\\"timestamp\\\")\" timeout language:C++",
+      "executedAt": "2026-07-31",
+      "resultCount": 1,
+      "countMeaning": "GitHub code-search total_count at execution time",
+      "screening": "The sole result was the CARMA Streets all-stop status-intent processor; its cutoff comparison was retained as adjacent evidence rather than a strict direct-subtraction positive."
+    },
+    {
+      "id": "Q-GH-03",
+      "source": "GitHub code search via gh api",
+      "query": "\"now() -\" \"header.stamp\" language:C++",
+      "executedAt": "2026-07-31",
+      "resultCount": 5432,
+      "countMeaning": "GitHub code-search total_count at execution time",
+      "screening": "High-recall query was noisy. Screening was restricted to official autonomous-driving and ROS 2 repositories, then verified in frozen clones."
+    },
+    {
+      "id": "Q-GH-04",
+      "source": "GitHub code search via gh api",
+      "query": "\"publish_time\" \"log_time\" mcap language:Python",
+      "executedAt": "2026-07-31",
+      "resultCount": 562,
+      "countMeaning": "GitHub code-search total_count at execution time",
+      "screening": "Most results were readers and converters. The official rosbag2 MCAP storage implementation was inspected directly for field mapping and age decisions."
+    },
+    {
+      "id": "Q-WEB-01",
+      "source": "web search",
+      "query": "site:github.com autonomous driving ROS2 \"now() -\" \"header.stamp\" timeout",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "countMeaning": "Search provider did not expose a stable total",
+      "screening": "Used only for repository discovery; conclusions rely on fixed-commit source inspection."
+    },
+    {
+      "id": "Q-WEB-02",
+      "source": "web search",
+      "query": "site:github.com cooperative perception ROS timestamp latency freshness",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "countMeaning": "Search provider did not expose a stable total",
+      "screening": "Led to paper-code and cooperative-perception repositories; no search snippet was accepted as evidence."
+    },
+    {
+      "id": "Q-WEB-03",
+      "source": "web search",
+      "query": "site:github.com/usdot-fhwa-stol/carma-platform timestamp timeout header stamp",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "countMeaning": "Search provider did not expose a stable total",
+      "screening": "Led to CARMA Platform and CARMA Streets fixed-commit inspection."
+    },
+    {
+      "id": "Q-WEB-04",
+      "source": "web search",
+      "query": "site:github.com MCAP publish_time log_time latency age",
+      "executedAt": "2026-07-31",
+      "resultCount": null,
+      "countMeaning": "Search provider did not expose a stable total",
+      "screening": "Used to fan out MCAP candidates; official rosbag2 and CooperScene were inspected."
+    }
+  ],
+  "sourceAttempts": [
+    {
+      "sourceFamily": "official-autonomous-driving-stacks",
+      "targets": [
+        "autowarefoundation/autoware_universe",
+        "usdot-fhwa-stol/carma-platform",
+        "usdot-fhwa-stol/carma-streets"
+      ],
+      "method": "Shallow public clone, detached fixed commit, rg candidate scan, and line-level source inspection",
+      "outcome": "Two strict direct-subtraction positives, one age-equivalent cutoff path, one latency-only path, and two same-clock controls retained."
+    },
+    {
+      "sourceFamily": "ros2-message-contracts-and-drivers",
+      "targets": [
+        "tier4/tier4_autoware_msgs",
+        "tier4/nebula"
+      ],
+      "method": "Autoware dependency tag resolution through build_depends_stable.repos and GitHub API, plus frozen sensor-driver clone",
+      "outcome": "The V2X state contract contains a bare builtin_interfaces/Time and no domain/synchronization fields; Nebula supplied a same-clock freshness control."
+    },
+    {
+      "sourceFamily": "mcap",
+      "targets": [
+        "ros2/rosbag2",
+        "UCR-CISL/CooperScene"
+      ],
+      "method": "Frozen source scan for MCAP logTime, publishTime, timestamp subtraction, freshness, timeout, stale, and deadline",
+      "outcome": "Found timestamp persistence and offline/raw-replay assets, but no retained MCAP code path that subtracts publish and log domains to gate freshness or deadlines."
+    },
+    {
+      "sourceFamily": "official-paper-code",
+      "targets": [
+        "ucla-mobility/OpenCDA",
+        "DerrickXuNu/OpenCOOD",
+        "ucla-mobility/V2X-Real",
+        "tum-traffic-dataset/coopdet3d"
+      ],
+      "method": "Frozen clone and scans for timestamp, stamp, age, fresh, stale, timeout, deadline, delay, latency, clock, and message-time arithmetic",
+      "outcome": "Found timestamp fields, same-recording sweep offsets, and configured or throughput-derived delay models, but no live age/freshness/deadline path satisfying the strict positive definition."
+    },
+    {
+      "sourceFamily": "license-verification",
+      "targets": [
+        "All retained repositories"
+      ],
+      "method": "Inspected fixed-commit LICENSE, DATA_LICENSE, package.xml, or repository README license text",
+      "outcome": "License evidence is recorded per repository. CARMA Streets has no top-level LICENSE at the frozen commit, so its Apache-2.0 entry is explicitly qualified as README contribution-license evidence."
+    }
+  ],
+  "repositories": [
+    {
+      "repository": "autowarefoundation/autoware_universe",
+      "repositoryUrl": "https://github.com/autowarefoundation/autoware_universe",
+      "fixedCommit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+      "license": {
+        "name": "Apache License 2.0",
+        "evidencePath": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/package.xml",
+        "lines": [13, 13],
+        "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/package.xml#L13"
+      },
+      "evidence": [
+        {
+          "id": "AU-VTL-ROLE",
+          "classification": "field-only",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md",
+          "lines": [5, 26],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md#L5-L26",
+          "codeFact": "The module cooperates with V2X traffic lights, communication devices, and FMS, receives status from infrastructure, and plans velocity from the cooperation result.",
+          "clockSemanticJudgment": "This establishes the external/cooperative source role but does not itself perform timestamp arithmetic."
+        },
+        {
+          "id": "AU-VTL-TRANSPORT",
+          "classification": "field-only",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md",
+          "lines": [86, 102],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md#L86-L102",
+          "codeFact": "The planner and infrastructure exchange abstract messages over infrastructure-specific methods including HTTP, Bluetooth, and ZigBee.",
+          "clockSemanticJudgment": "The inspected documentation supplies no receipt-time restamping or common-clock guarantee."
+        },
+        {
+          "id": "AU-VTL-SUBSCRIPTION",
+          "classification": "field-only",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp",
+          "lines": [47, 60],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/manager.cpp#L47-L60",
+          "codeFact": "The manager loads max_delay_sec and subscribes to VirtualTrafficLightStateArray.",
+          "clockSemanticJudgment": "The subscription path carries the infrastructure state into the planner without a visible clock-domain check."
+        },
+        {
+          "id": "AU-VTL-DIRECT-SUBTRACTION",
+          "classification": "cross-domain-unproven-subtraction",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "lines": [459, 468],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp#L459-L468",
+          "operation": "(clock_->now() - rclcpp::Time(state.stamp)).seconds() > max_delay_sec",
+          "leftOperand": "Local planner clock_->now() sampled at the timeout decision.",
+          "rightOperand": "stamp carried by the matched infrastructure VirtualTrafficLightState.",
+          "decisionUse": "Returns true from isStateTimeout.",
+          "clockSemanticJudgment": "The frozen path directly subtracts a local planner clock from an external state stamp. The state contract and module path do not encode or verify clock identity, synchronization generation, offset, or error bound. This is a strict positive under the audit definition, without asserting that deployed clocks are actually unsynchronized."
+        },
+        {
+          "id": "AU-VTL-BEHAVIOR",
+          "classification": "cross-domain-unproven-subtraction",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp",
+          "lines": [269, 299],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp#L269-L299",
+          "codeFact": "Before the stop line, and optionally after it, a timeout causes stop velocity insertion and affects infrastructure-command updates.",
+          "clockSemanticJudgment": "The unproven subtraction has a concrete planning consequence rather than merely recording latency."
+        },
+        {
+          "id": "AU-VTL-PARAMETER",
+          "classification": "field-only",
+          "path": "planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md",
+          "lines": [207, 215],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/README.md#L207-L215",
+          "codeFact": "max_delay_sec is documented as the maximum allowed command delay and check_timeout_after_stop_line checks timeout after disconnection.",
+          "clockSemanticJudgment": "This confirms freshness/deadline intent, not just diagnostic timing."
+        },
+        {
+          "id": "AU-VTL-DEPENDENCY-PIN",
+          "classification": "field-only",
+          "path": "build_depends_stable.repos",
+          "lines": [4, 9],
+          "url": "https://github.com/autowarefoundation/autoware_universe/blob/09df2ebfa09f425b7f42d163423816ec572b87c8/build_depends_stable.repos#L4-L9",
+          "codeFact": "The stable dependency file pins tier4_autoware_msgs to v0.58.0.",
+          "clockSemanticJudgment": "The companion message contract was inspected at the tag's fixed commit b9c385197baf1a2e77f088bea46e7287cd3ec367."
+        }
+      ],
+      "repositoryConclusion": "Contains one strict, reproducible cooperative-infrastructure freshness path with direct subtraction and a velocity-planning consequence."
+    },
+    {
+      "repository": "tier4/tier4_autoware_msgs",
+      "repositoryUrl": "https://github.com/tier4/tier4_autoware_msgs",
+      "fixedRef": "v0.58.0",
+      "fixedCommit": "b9c385197baf1a2e77f088bea46e7287cd3ec367",
+      "license": {
+        "name": "Apache License 2.0",
+        "evidencePath": "tier4_v2x_msgs/package.xml",
+        "lines": [4, 8],
+        "url": "https://github.com/tier4/tier4_autoware_msgs/blob/b9c385197baf1a2e77f088bea46e7287cd3ec367/tier4_v2x_msgs/package.xml#L4-L8"
+      },
+      "evidence": [
+        {
+          "id": "T4-VTL-STATE-CONTRACT",
+          "classification": "field-only",
+          "path": "tier4_v2x_msgs/msg/VirtualTrafficLightState.msg",
+          "lines": [1, 5],
+          "url": "https://github.com/tier4/tier4_autoware_msgs/blob/b9c385197baf1a2e77f088bea46e7287cd3ec367/tier4_v2x_msgs/msg/VirtualTrafficLightState.msg#L1-L5",
+          "codeFact": "The message contains builtin_interfaces/Time stamp, type, id, approval, and is_finalized.",
+          "clockSemanticJudgment": "The message supplies a numeric stamp but no clock-domain identifier, producer-clock identity, synchronization generation, offset estimate, or uncertainty bound. The id identifies the virtual-traffic-light instrument, not the timestamp clock."
+        }
+      ],
+      "repositoryConclusion": "Companion field contract for the Autoware positive; field presence alone is not counted as a positive."
+    },
+    {
+      "repository": "usdot-fhwa-stol/carma-platform",
+      "repositoryUrl": "https://github.com/usdot-fhwa-stol/carma-platform",
+      "fixedCommit": "1c774df099ce23e77394758969bf86b0e5f40863",
+      "license": {
+        "name": "Apache License 2.0",
+        "evidencePath": "localization_manager/package.xml",
+        "lines": [3, 23],
+        "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/localization_manager/package.xml#L3-L23"
+      },
+      "evidence": [
+        {
+          "id": "CARMA-LM-SUBSCRIPTION",
+          "classification": "field-only",
+          "path": "localization_manager/src/localization_manager_node.cpp",
+          "lines": [81, 85],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/localization_manager/src/localization_manager_node.cpp#L81-L85",
+          "codeFact": "The node subscribes to a geometry_msgs/PoseStamped gnss_pose and dispatches it to gnssPoseCallback.",
+          "clockSemanticJudgment": "PoseStamped carries a bare ROS header timestamp; this call site does not establish the upstream GNSS producer clock."
+        },
+        {
+          "id": "CARMA-LM-STORE",
+          "classification": "field-only",
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "lines": [140, 150],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/localization_manager/src/LocalizationManager.cpp#L140-L150",
+          "codeFact": "gnssPoseCallback stores the received PoseStamped unchanged in last_raw_gnss_value_.",
+          "clockSemanticJudgment": "No local receipt timestamp or source-domain metadata is attached before later freshness use."
+        },
+        {
+          "id": "CARMA-LM-DIRECT-SUBTRACTION",
+          "classification": "cross-domain-unproven-subtraction",
+          "path": "localization_manager/src/LocalizationManager.cpp",
+          "lines": [263, 287],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/localization_manager/src/LocalizationManager.cpp#L263-L287",
+          "operation": "timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_) > gnss_data_timeout",
+          "leftOperand": "Localization manager timer factory clock sampled during posePubTick.",
+          "rightOperand": "Serialized header stamp from the most recently received GNSS PoseStamped, relabeled with timer_clock_type_.",
+          "decisionUse": "Signals LocalizationSignal::GNSS_DATA_TIMEOUT to the localization transition table.",
+          "clockSemanticJudgment": "The code obtains timer_clock_type_ from the local timer clock and assigns that type to the incoming numeric stamp before subtraction; the frozen path does not verify that the producer used that domain or provide an offset/error contract. This is a strict autonomous-driving ROS 2 positive under the audit definition."
+        },
+        {
+          "id": "CARMA-ERV-SAFE-STORE",
+          "classification": "same-clock-safe-subtraction",
+          "path": "approaching_emergency_vehicle_plugin/src/approaching_emergency_vehicle_plugin_node.cpp",
+          "lines": [869, 877],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/approaching_emergency_vehicle_plugin/src/approaching_emergency_vehicle_plugin_node.cpp#L869-L877",
+          "codeFact": "After processing an approaching ERV BSM, latest_update_time is set from this->now().",
+          "clockSemanticJudgment": "The stored freshness reference is local receipt/processing time, not the remote BSM producer stamp."
+        },
+        {
+          "id": "CARMA-ERV-SAFE-SUBTRACTION",
+          "classification": "same-clock-safe-subtraction",
+          "path": "approaching_emergency_vehicle_plugin/src/approaching_emergency_vehicle_plugin_node.cpp",
+          "lines": [235, 245],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/approaching_emergency_vehicle_plugin/src/approaching_emergency_vehicle_plugin_node.cpp#L235-L245",
+          "operation": "get_clock()->now() - tracked_erv_.latest_update_time >= timeout_duration",
+          "decisionUse": "Clears the tracked ERV and triggers ERV_UPDATE_TIMEOUT.",
+          "clockSemanticJudgment": "Both operands are sampled from the same node clock in this frozen path, so this is a same-clock control rather than a cross-domain positive."
+        },
+        {
+          "id": "CARMA-SDSM-CLOCK-CONVERSION",
+          "classification": "unresolved-adjacent",
+          "path": "carma_cooperative_perception/include/carma_cooperative_perception/sdsm_to_detection_list_component.hpp",
+          "lines": [127, 134],
+          "url": "https://github.com/usdot-fhwa-stol/carma-platform/blob/1c774df099ce23e77394758969bf86b0e5f40863/carma_cooperative_perception/include/carma_cooperative_perception/sdsm_to_detection_list_component.hpp#L127-L134",
+          "operation": "time_delta = now() - cdasim_time; detection.header.stamp += time_delta",
+          "codeFact": "The comment explicitly distinguishes CARLA ROS time from CDASim SDSM time and shifts detections by a sampled delta.",
+          "clockSemanticJudgment": "This is explicit cross-domain conversion, but the subtraction is used for timestamp translation rather than an age/freshness/deadline gate. It is not a strict positive."
+        }
+      ],
+      "repositoryConclusion": "Contains one strict undeclared-domain GNSS timeout positive, one same-node receipt-time safety control, and one explicit simulation clock-conversion path outside the strict freshness target."
+    },
+    {
+      "repository": "usdot-fhwa-stol/carma-streets",
+      "repositoryUrl": "https://github.com/usdot-fhwa-stol/carma-streets",
+      "fixedCommit": "95f96adb7c18b1356500c75e987445e6f8f29236",
+      "license": {
+        "name": "Apache License 2.0 contribution terms",
+        "evidencePath": "README.md",
+        "lines": [137, 138],
+        "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/README.md#L137-L138",
+        "qualification": "GitHub license metadata was unset and no top-level LICENSE file was present in the frozen clone. The recorded evidence is the repository README statement that CARMA contributions are licensed under Apache License 2.0."
+      },
+      "evidence": [
+        {
+          "id": "STREETS-V2X-ROLE",
+          "classification": "field-only",
+          "path": "README.md",
+          "lines": [37, 41],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/README.md#L37-L41",
+          "codeFact": "V2X Hub connects CARMA Streets to an RSU and J2735/C-V2X communication.",
+          "clockSemanticJudgment": "This establishes the external vehicle/RSU context but not a timestamp-domain contract."
+        },
+        {
+          "id": "STREETS-MO-PARSE",
+          "classification": "field-only",
+          "path": "message_services/src/models/mobilityoperation.cpp",
+          "lines": [34, 72],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/message_services/src/models/mobilityoperation.cpp#L34-L72",
+          "codeFact": "The incoming metadata parser stores hostStaticId as sender_id and parses string timestamp into the mobility header.",
+          "clockSemanticJudgment": "The parsed timestamp has sender identity but no clock-domain or synchronization metadata."
+        },
+        {
+          "id": "STREETS-VSI-PROPAGATE",
+          "classification": "field-only",
+          "path": "message_services/src/services/vehicle_status_intent_service.cpp",
+          "lines": [247, 260],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/message_services/src/services/vehicle_status_intent_service.cpp#L247-L260",
+          "codeFact": "compose_vehicle_status_intent copies the MobilityOperation sender_id and timestamp into vehicle_id and cur_timestamp.",
+          "clockSemanticJudgment": "The externally supplied value is propagated rather than replaced by a local receipt timestamp."
+        },
+        {
+          "id": "STREETS-VSI-SERIALIZE",
+          "classification": "field-only",
+          "path": "message_services/src/models/vehicle_status_intent.cpp",
+          "lines": [84, 97],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/message_services/src/models/vehicle_status_intent.cpp#L84-L97",
+          "codeFact": "The propagated cur_timestamp is serialized as metadata.timestamp.",
+          "clockSemanticJudgment": "No domain conversion or uncertainty field is added."
+        },
+        {
+          "id": "STREETS-VSI-CUTOFF",
+          "classification": "cross-domain-unproven-cutoff-comparison",
+          "path": "streets_utils/streets_vehicle_list/src/message_processors/all_stop_status_intent_processor.cpp",
+          "lines": [31, 49],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/streets_utils/streets_vehicle_list/src/message_processors/all_stop_status_intent_processor.cpp#L31-L49",
+          "operation": "timeout_time = local system_clock now - timeout; reject when timeout_time > metadata.timestamp",
+          "decisionUse": "Throws and ignores an update older than the local cutoff; also rejects non-monotonic incoming timestamps.",
+          "clockSemanticJudgment": "The local system clock cutoff is compared with a vehicle-origin timestamp whose relation to that clock is not established in the frozen path. It is freshness-equivalent and behavior-changing, but not counted as a strict direct-subtraction positive because the source timestamp is compared to a precomputed cutoff rather than literally subtracted from now."
+        },
+        {
+          "id": "STREETS-VSI-PURGE",
+          "classification": "cross-domain-unproven-cutoff-comparison",
+          "path": "streets_utils/streets_vehicle_list/src/models/vehicle_list.cpp",
+          "lines": [53, 64],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/streets_utils/streets_vehicle_list/src/models/vehicle_list.cpp#L53-L64",
+          "operation": "timeout_time = local system_clock now - timeout; erase vehicle when vehicle._cur_time < timeout_time",
+          "decisionUse": "Purges the vehicle from the live list.",
+          "clockSemanticJudgment": "This is the downstream behavior of the same unproven-domain cutoff comparison, not a literal timestamp-to-timestamp subtraction."
+        },
+        {
+          "id": "STREETS-BSM-SAFE",
+          "classification": "same-clock-safe-subtraction",
+          "path": "message_services/src/services/vehicle_status_intent_service.cpp",
+          "lines": [146, 160],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/message_services/src/services/vehicle_status_intent_service.cpp#L146-L160",
+          "operation": "abs(local system_clock now - bsm.msg_received_timestamp_) > expiration",
+          "decisionUse": "Erases an expired BSM and skips processing.",
+          "clockSemanticJudgment": "bsm.msg_received_timestamp_ is initialized from local system_clock in message_services/src/models/bsm.h lines 32-33, so both operands are from the same process clock."
+        },
+        {
+          "id": "STREETS-SPAT-LAG",
+          "classification": "latency-observation-only",
+          "path": "signal_opt_service/src/signal_opt_service.cpp",
+          "lines": [173, 183],
+          "url": "https://github.com/usdot-fhwa-stol/carma-streets/blob/95f96adb7c18b1356500c75e987445e6f8f29236/signal_opt_service/src/signal_opt_service.cpp#L173-L183",
+          "operation": "current local system timestamp - SPaT epoch timestamp",
+          "decisionUse": "Logs a warning above 200 ms and a debug lag value; execution continues.",
+          "clockSemanticJudgment": "Potentially cross-source latency is observed, but the inspected lines do not gate freshness, deadline, or control behavior, so this is not a positive."
+        }
+      ],
+      "repositoryConclusion": "Contains a reproducible vehicle-to-local age-equivalent cutoff and purge path, but it is kept adjacent rather than strict because the source timestamp is not the direct subtraction operand. Also contains a verified same-clock receiver-time control and a latency-only SPaT subtraction."
+    },
+    {
+      "repository": "tier4/nebula",
+      "repositoryUrl": "https://github.com/tier4/nebula",
+      "fixedCommit": "c9721ebfb1ec929057f4371b309fc9bc759be80a",
+      "license": {
+        "name": "Apache License 2.0",
+        "evidencePath": "src/nebula_robosense/nebula_robosense/package.xml",
+        "lines": [10, 10],
+        "url": "https://github.com/tier4/nebula/blob/c9721ebfb1ec929057f4371b309fc9bc759be80a/src/nebula_robosense/nebula_robosense/package.xml#L10"
+      },
+      "evidence": [
+        {
+          "id": "NEBULA-ROBOSENSE-SAFE",
+          "classification": "same-clock-safe-subtraction",
+          "path": "src/nebula_robosense/nebula_robosense/src/hw_monitor_wrapper.cpp",
+          "lines": [47, 59],
+          "url": "https://github.com/tier4/nebula/blob/c9721ebfb1ec929057f4371b309fc9bc759be80a/src/nebula_robosense/nebula_robosense/src/hw_monitor_wrapper.cpp#L47-L59",
+          "operation": "parent node clock now - current_info_time_",
+          "decisionUse": "Emits STALE warning and forces diagnostics update when the local interval exceeds the threshold.",
+          "clockSemanticJudgment": "diagnostics_callback stores current_info_time_ from the same parent node clock at lines 81-90, so this is a same-clock freshness control."
+        }
+      ],
+      "repositoryConclusion": "A high-quality ROS 2 sensor-driver control demonstrating the safe local-receipt-time pattern."
+    },
+    {
+      "repository": "ros2/rosbag2",
+      "repositoryUrl": "https://github.com/ros2/rosbag2",
+      "fixedCommit": "4dddf35d297a9c3ddd1da6589c90dac55706747e",
+      "license": {
+        "name": "Apache License 2.0",
+        "evidencePath": "LICENSE",
+        "lines": [2, 4],
+        "url": "https://github.com/ros2/rosbag2/blob/4dddf35d297a9c3ddd1da6589c90dac55706747e/LICENSE#L2-L4"
+      },
+      "evidence": [
+        {
+          "id": "ROSBAG2-MCAP-READ",
+          "classification": "field-only",
+          "path": "rosbag2_storage_mcap/src/mcap_storage.cpp",
+          "lines": [536, 544],
+          "url": "https://github.com/ros2/rosbag2/blob/4dddf35d297a9c3ddd1da6589c90dac55706747e/rosbag2_storage_mcap/src/mcap_storage.cpp#L536-L544",
+          "codeFact": "MCAP message.logTime is mapped to recv_timestamp and message.publishTime to send_timestamp.",
+          "clockSemanticJudgment": "Both timestamp fields are persisted as values; the read path does not compare their domains or use their difference for freshness."
+        },
+        {
+          "id": "ROSBAG2-MCAP-WRITE",
+          "classification": "field-only",
+          "path": "rosbag2_storage_mcap/src/mcap_storage.cpp",
+          "lines": [906, 934],
+          "url": "https://github.com/ros2/rosbag2/blob/4dddf35d297a9c3ddd1da6589c90dac55706747e/rosbag2_storage_mcap/src/mcap_storage.cpp#L906-L934",
+          "codeFact": "recv_timestamp is written to logTime, send_timestamp to publishTime, and recording duration is updated from recv_timestamp relative to recording start.",
+          "clockSemanticJudgment": "The implementation does not subtract publishTime from logTime or use either relation as a freshness/deadline decision. The recording-duration calculation is container metadata, not message freshness."
+        }
+      ],
+      "repositoryConclusion": "MCAP timestamp fields are retained, but no strict or adjacent freshness gate was found in the inspected official storage path."
+    },
+    {
+      "repository": "UCR-CISL/CooperScene",
+      "repositoryUrl": "https://github.com/UCR-CISL/CooperScene",
+      "fixedCommit": "0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+      "license": {
+        "name": "MIT for source code; CC BY-NC-SA 4.0 for dataset and MCAP recordings",
+        "evidence": [
+          {
+            "path": "LICENSE",
+            "lines": [1, 13],
+            "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/LICENSE#L1-L13"
+          },
+          {
+            "path": "DATA_LICENSE",
+            "lines": [4, 20],
+            "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/DATA_LICENSE#L4-L20"
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "id": "COOPERSCENE-MCAP-ASSET",
+          "classification": "field-only",
+          "path": "README.md",
+          "lines": [53, 61],
+          "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/README.md#L53-L61",
+          "codeFact": "Per-take MCAP recordings are distributed separately and are used only for raw replay/visualization, not training or evaluation.",
+          "clockSemanticJudgment": "The frozen repository contains a documented MCAP asset boundary but no checked-in reader path that turns MCAP clock fields into a freshness or deadline decision."
+        },
+        {
+          "id": "COOPERSCENE-LATENCY-MODEL",
+          "classification": "modeled-delay-only",
+          "path": "tools/calc_sharing.py",
+          "lines": [2, 14],
+          "url": "https://github.com/UCR-CISL/CooperScene/blob/0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a/tools/calc_sharing.py#L2-L14",
+          "operation": "latency_ms = sharing_MB * 8 / throughput_Mbps * 1000",
+          "clockSemanticJudgment": "Latency is derived from payload size and configured throughput, not from source and receiver timestamps."
+        }
+      ],
+      "repositoryConclusion": "Public code exposes MCAP assets and modeled C-V2X latency, but not a reproducible MCAP timestamp-domain freshness path at the frozen commit."
+    },
+    {
+      "repository": "ucla-mobility/OpenCDA",
+      "repositoryUrl": "https://github.com/ucla-mobility/OpenCDA",
+      "fixedCommit": "72b17e7b7fa0d67da1bf11a4083c90737eb1225f",
+      "license": {
+        "name": "UCLA Academic Software License",
+        "evidencePath": "LICENSE",
+        "lines": [2, 10],
+        "url": "https://github.com/ucla-mobility/OpenCDA/blob/72b17e7b7fa0d67da1bf11a4083c90737eb1225f/LICENSE#L2-L10",
+        "qualification": "Use is limited to academic or nonprofit educational/research purposes; transfer is prohibited by the frozen license text."
+      },
+      "evidence": [
+        {
+          "id": "OPENCDA-CONFIGURED-LAG",
+          "classification": "modeled-delay-only",
+          "path": "opencda/core/common/v2x_manager.py",
+          "lines": [53, 101],
+          "url": "https://github.com/ucla-mobility/OpenCDA/blob/72b17e7b7fa0d67da1bf11a4083c90737eb1225f/opencda/core/common/v2x_manager.py#L53-L101",
+          "codeFact": "The V2X manager stores configured lag and appends simulation global_clock only to an evaluation trace.",
+          "clockSemanticJudgment": "No source/receiver timestamp subtraction or freshness gate occurs in this path."
+        },
+        {
+          "id": "OPENCDA-DEQUE-LAG",
+          "classification": "modeled-delay-only",
+          "path": "opencda/core/common/v2x_manager.py",
+          "lines": [109, 124],
+          "url": "https://github.com/ucla-mobility/OpenCDA/blob/72b17e7b7fa0d67da1bf11a4083c90737eb1225f/opencda/core/common/v2x_manager.py#L109-L124",
+          "codeFact": "Communication lag is simulated by selecting an older deque element by configured index.",
+          "clockSemanticJudgment": "This is a simulation-step delay, not live clock-domain age identification."
+        }
+      ],
+      "repositoryConclusion": "Official cooperative-driving simulation code models lag without a live timestamp-age decision."
+    },
+    {
+      "repository": "DerrickXuNu/OpenCOOD",
+      "repositoryUrl": "https://github.com/DerrickXuNu/OpenCOOD",
+      "fixedCommit": "31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+      "license": {
+        "name": "UCLA Academic Software License",
+        "evidencePath": "LICENSE",
+        "lines": [2, 10],
+        "url": "https://github.com/DerrickXuNu/OpenCOOD/blob/31ba16025da27ffe4e336f011290dfbc66f9a1f1/LICENSE#L2-L10",
+        "qualification": "Use is limited to academic or nonprofit educational/research purposes; transfer is prohibited by the frozen license text."
+      },
+      "evidence": [
+        {
+          "id": "OPENCOOD-FRAME-DELAY",
+          "classification": "modeled-delay-only",
+          "path": "opencood/data_utils/datasets/basedataset.py",
+          "lines": [228, 263],
+          "url": "https://github.com/DerrickXuNu/OpenCOOD/blob/31ba16025da27ffe4e336f011290dfbc66f9a1f1/opencood/data_utils/datasets/basedataset.py#L228-L263",
+          "codeFact": "A calculated integer timestamp_delay is subtracted from a dataset frame index to load an older frame.",
+          "clockSemanticJudgment": "The operation is index arithmetic over an offline dataset, not subtraction of source and receiver clocks."
+        },
+        {
+          "id": "OPENCOOD-DELAY-MODEL",
+          "classification": "modeled-delay-only",
+          "path": "opencood/data_utils/datasets/basedataset.py",
+          "lines": [345, 376],
+          "url": "https://github.com/DerrickXuNu/OpenCOOD/blob/31ba16025da27ffe4e336f011290dfbc66f9a1f1/opencood/data_utils/datasets/basedataset.py#L345-L376",
+          "codeFact": "Delay is synthesized from overhead noise, payload size, transmission speed, backbone delay, or a fixed simulation value, then quantized at 10 Hz.",
+          "clockSemanticJudgment": "This is a controlled delay model and does not establish a public runtime freshness failure path."
+        }
+      ],
+      "repositoryConclusion": "Official paper code contains asynchronous-data models but no strict live clock-domain subtraction path in the inspected dataset pipeline."
+    },
+    {
+      "repository": "ucla-mobility/V2X-Real",
+      "repositoryUrl": "https://github.com/ucla-mobility/V2X-Real",
+      "fixedCommit": "2b8acd5c15b22fdb47326e30b8805e172d9b1259",
+      "license": {
+        "name": "UCLA Academic Software License",
+        "evidencePath": "LICENSE",
+        "lines": [2, 10],
+        "url": "https://github.com/ucla-mobility/V2X-Real/blob/2b8acd5c15b22fdb47326e30b8805e172d9b1259/LICENSE#L2-L10",
+        "qualification": "Use is limited to academic or nonprofit educational/research purposes; transfer is prohibited by the frozen license text."
+      },
+      "evidence": [
+        {
+          "id": "V2XREAL-SENSOR-TIMESTAMP",
+          "classification": "field-only",
+          "path": "logreplay/sensors/bev_semantic_camera.py",
+          "lines": [156, 173],
+          "url": "https://github.com/ucla-mobility/V2X-Real/blob/2b8acd5c15b22fdb47326e30b8805e172d9b1259/logreplay/sensors/bev_semantic_camera.py#L156-L173",
+          "codeFact": "The sensor callback stores event.frame and event.timestamp.",
+          "clockSemanticJudgment": "The timestamp field is retained without an age/freshness/deadline decision in the inspected callback."
+        },
+        {
+          "id": "V2XREAL-FRAME-DELAY",
+          "classification": "modeled-delay-only",
+          "path": "opencood/data_utils/datasets/basedataset.py",
+          "lines": [287, 303],
+          "url": "https://github.com/ucla-mobility/V2X-Real/blob/2b8acd5c15b22fdb47326e30b8805e172d9b1259/opencood/data_utils/datasets/basedataset.py#L287-L303",
+          "codeFact": "An integer delay is subtracted from the dataset timestamp index to select an older sample.",
+          "clockSemanticJudgment": "This is offline frame-index selection, not live cross-domain age subtraction."
+        },
+        {
+          "id": "V2XREAL-DELAY-MODEL",
+          "classification": "modeled-delay-only",
+          "path": "opencood/data_utils/datasets/basedataset.py",
+          "lines": [401, 432],
+          "url": "https://github.com/ucla-mobility/V2X-Real/blob/2b8acd5c15b22fdb47326e30b8805e172d9b1259/opencood/data_utils/datasets/basedataset.py#L401-L432",
+          "codeFact": "The delay is generated from overhead, data size, transmission speed, backbone delay, or a fixed simulation value and quantized by the 10 Hz assumption.",
+          "clockSemanticJudgment": "This is a modeled asynchrony path rather than a measured clock-domain freshness path."
+        }
+      ],
+      "repositoryConclusion": "Contains sensor timestamp fields and modeled asynchronous dataset loading, but no strict live age/freshness/deadline subtraction in the inspected paths."
+    },
+    {
+      "repository": "tum-traffic-dataset/coopdet3d",
+      "repositoryUrl": "https://github.com/tum-traffic-dataset/coopdet3d",
+      "fixedCommit": "85d1216d7d6930a33d78f89d8a69dddedf8ee15f",
+      "license": {
+        "name": "MIT",
+        "evidencePath": "LICENSE",
+        "lines": [1, 13],
+        "url": "https://github.com/tum-traffic-dataset/coopdet3d/blob/85d1216d7d6930a33d78f89d8a69dddedf8ee15f/LICENSE#L1-L13"
+      },
+      "evidence": [
+        {
+          "id": "COOPDET-SWEEP-OFFSET",
+          "classification": "latency-observation-only",
+          "path": "mmdet3d/datasets/pipelines/loading.py",
+          "lines": [486, 520],
+          "url": "https://github.com/tum-traffic-dataset/coopdet3d/blob/85d1216d7d6930a33d78f89d8a69dddedf8ee15f/mmdet3d/datasets/pipelines/loading.py#L486-L520",
+          "operation": "current dataset timestamp - per-source sweep timestamp",
+          "codeFact": "Vehicle and infrastructure sweep offsets are written into point feature column 4 during offline multisweep loading.",
+          "clockSemanticJudgment": "The differences are feature/alignment values within the dataset pipeline and do not gate age, freshness, timeout, or deadline behavior. The code also does not directly subtract a vehicle timestamp from an infrastructure timestamp."
+        },
+        {
+          "id": "COOPDET-DETECT-TIMESTAMP",
+          "classification": "field-only",
+          "path": "scripts/cooperative_multimodal_3d_detection.py",
+          "lines": [92, 96],
+          "url": "https://github.com/tum-traffic-dataset/coopdet3d/blob/85d1216d7d6930a33d78f89d8a69dddedf8ee15f/scripts/cooperative_multimodal_3d_detection.py#L92-L96",
+          "codeFact": "The cooperative detector accepts a timestamp argument with a default value but does not use it in the inspected method body.",
+          "clockSemanticJudgment": "A timestamp parameter alone is not an age/freshness path."
+        }
+      ],
+      "repositoryConclusion": "Timestamp subtraction exists for offline sweep feature construction, but not for a freshness or deadline decision."
+    }
+  ],
+  "positiveCases": [
+    {
+      "id": "POS-01-AUTOWARE-VTL",
+      "repository": "autowarefoundation/autoware_universe",
+      "fixedCommit": "09df2ebfa09f425b7f42d163423816ec572b87c8",
+      "primaryEvidenceIds": [
+        "AU-VTL-DIRECT-SUBTRACTION",
+        "AU-VTL-BEHAVIOR"
+      ],
+      "companionContractEvidenceId": "T4-VTL-STATE-CONTRACT",
+      "sourceRole": "Infrastructure-origin VirtualTrafficLightState selected by instrument id",
+      "decisionClock": "Local planner clock_->now()",
+      "literalOperation": "clock_->now() - rclcpp::Time(state.stamp)",
+      "freshnessThreshold": "planner_param_.max_delay_sec",
+      "behavioralConsequence": "isStateTimeout becomes true and the planner inserts stop velocity before the stop line, and optionally after it.",
+      "whyStrict": "The operation is a literal local-now minus incoming-stamp subtraction, the path is explicitly cooperative/V2X infrastructure-facing, and timeout changes the velocity plan.",
+      "whyUnprovenNotProvenDifferent": "The frozen code and pinned message definition expose no clock-domain or synchronization contract. This supports absence of proof in the public path, not a claim that real deployments use different clocks."
+    },
+    {
+      "id": "POS-02-CARMA-GNSS",
+      "repository": "usdot-fhwa-stol/carma-platform",
+      "fixedCommit": "1c774df099ce23e77394758969bf86b0e5f40863",
+      "primaryEvidenceIds": [
+        "CARMA-LM-SUBSCRIPTION",
+        "CARMA-LM-STORE",
+        "CARMA-LM-DIRECT-SUBTRACTION"
+      ],
+      "sourceRole": "GNSS PoseStamped producer upstream of the localization manager",
+      "decisionClock": "Local timer_factory_->now() and its timer_clock_type_",
+      "literalOperation": "timer_factory_->now() - rclcpp::Time(last_raw_gnss_value_->header.stamp, timer_clock_type_)",
+      "freshnessThreshold": "config_.gnss_data_timeout",
+      "behavioralConsequence": "Signals GNSS_DATA_TIMEOUT into the localization state transition table.",
+      "whyStrict": "The operation is a literal local-now minus incoming-header-stamp subtraction and changes localization state behavior.",
+      "whyUnprovenNotProvenDifferent": "The frozen path relabels the incoming numeric timestamp with the local clock type but does not show a producer-domain check or synchronization/error contract. This is an undeclared-domain finding, not proof of an actual offset."
+    }
+  ],
+  "safeCases": [
+    {
+      "id": "SAFE-01-CARMA-ERV-RECEIPT-TIME",
+      "repository": "usdot-fhwa-stol/carma-platform",
+      "evidenceIds": [
+        "CARMA-ERV-SAFE-STORE",
+        "CARMA-ERV-SAFE-SUBTRACTION"
+      ],
+      "reason": "The node stores latest_update_time from this->now() when a BSM is processed and later subtracts it from the same node clock. The remote BSM timestamp is not the freshness operand."
+    },
+    {
+      "id": "SAFE-02-STREETS-BSM-RECEIPT-TIME",
+      "repository": "usdot-fhwa-stol/carma-streets",
+      "evidenceIds": [
+        "STREETS-BSM-SAFE"
+      ],
+      "reason": "Both current time and msg_received_timestamp_ are sampled from std::chrono::system_clock in the message service process."
+    },
+    {
+      "id": "SAFE-03-NEBULA-DIAGNOSTICS",
+      "repository": "tier4/nebula",
+      "evidenceIds": [
+        "NEBULA-ROBOSENSE-SAFE"
+      ],
+      "reason": "The diagnostic callback and stale timer use the same parent ROS node clock."
+    }
+  ],
+  "unresolvedCases": [
+    {
+      "id": "UNRESOLVED-01-STREETS-VSI-CUTOFF",
+      "repository": "usdot-fhwa-stol/carma-streets",
+      "evidenceIds": [
+        "STREETS-MO-PARSE",
+        "STREETS-VSI-PROPAGATE",
+        "STREETS-VSI-SERIALIZE",
+        "STREETS-VSI-CUTOFF",
+        "STREETS-VSI-PURGE"
+      ],
+      "known": "A vehicle-identified external timestamp is propagated into status-intent metadata, compared to a local system-clock cutoff, and can cause update rejection and vehicle purge.",
+      "unresolved": "The predicate is algebraically an age/deadline test but the source timestamp is not literally subtracted from local now in the inspected code. It is therefore not promoted into positiveCases under the strict definition. The public path also does not expose a source/local clock synchronization contract."
+    },
+    {
+      "id": "UNRESOLVED-02-CARMA-SDSM-CONVERSION",
+      "repository": "usdot-fhwa-stol/carma-platform",
+      "evidenceIds": [
+        "CARMA-SDSM-CLOCK-CONVERSION"
+      ],
+      "known": "The component explicitly states that CARLA ROS time and CDASim SDSM time differ and computes a sampled delta to shift detection timestamps.",
+      "unresolved": "No age/freshness/deadline gate is present in the inspected conversion block, and no quantified mapping error is exposed. It is adjacent clock-domain evidence, not a strict positive."
+    },
+    {
+      "id": "UNRESOLVED-03-AUTOWARE-UPSTREAM-BRIDGE",
+      "repository": "autowarefoundation/autoware_universe",
+      "evidenceIds": [
+        "AU-VTL-TRANSPORT",
+        "AU-VTL-SUBSCRIPTION",
+        "T4-VTL-STATE-CONTRACT"
+      ],
+      "known": "The planner receives an infrastructure state with a bare stamp and directly uses it for timeout.",
+      "unresolved": "The frozen repositories do not include a complete infrastructure-specific bridge deployment proving whether the stamp is producer acquisition time, synchronized wall time, or local receipt time. This missing proof is exactly why the subtraction is labeled unproven-domain; no claim is made about a deployment not visible in the public path."
+    }
+  ],
+  "nonPositiveCases": [
+    {
+      "classification": "field-only",
+      "evidenceIds": [
+        "T4-VTL-STATE-CONTRACT",
+        "ROSBAG2-MCAP-READ",
+        "ROSBAG2-MCAP-WRITE",
+        "COOPERSCENE-MCAP-ASSET",
+        "V2XREAL-SENSOR-TIMESTAMP",
+        "COOPDET-DETECT-TIMESTAMP"
+      ],
+      "boundary": "Timestamp presence, persistence, or replay is not treated as freshness evidence."
+    },
+    {
+      "classification": "latency-observation-only",
+      "evidenceIds": [
+        "STREETS-SPAT-LAG",
+        "COOPDET-SWEEP-OFFSET"
+      ],
+      "boundary": "A subtraction used only for warning/logging or an offline feature does not establish a behavior-changing age path."
+    },
+    {
+      "classification": "modeled-delay-only",
+      "evidenceIds": [
+        "COOPERSCENE-LATENCY-MODEL",
+        "OPENCDA-CONFIGURED-LAG",
+        "OPENCDA-DEQUE-LAG",
+        "OPENCOOD-FRAME-DELAY",
+        "OPENCOOD-DELAY-MODEL",
+        "V2XREAL-FRAME-DELAY",
+        "V2XREAL-DELAY-MODEL"
+      ],
+      "boundary": "Configured frame lag and throughput-derived delay are experiment models, not observations of source/receiver clock provenance."
+    }
+  ],
+  "negativeCertificate": {
+    "status": "not-issued",
+    "reason": "Two strict reproducible positive cases were found, so a certificate asserting absence of public paths would be false.",
+    "boundedNegativeFindings": [
+      "No checked-in CooperScene path at commit 0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a was found that reads its separately distributed MCAP files and gates freshness from MCAP timestamp differences.",
+      "No official rosbag2 MCAP storage path in the inspected read/write blocks at commit 4dddf35d297a9c3ddd1da6589c90dac55706747e was found that treats publishTime-minus-logTime as an age/freshness/deadline decision.",
+      "OpenCDA, OpenCOOD, V2X-Real, and coopdet3d paths inspected at the listed commits model delay or construct offline temporal features; they do not provide a live strict positive in the inspected files."
+    ],
+    "coverageLimits": [
+      "The audit is source- and commit-bounded; it is not an ecosystem-wide proof that no other repository, branch, private bridge, deployment configuration, or generated launch graph contains additional paths.",
+      "Separately distributed CooperScene MCAP binaries were not downloaded in this source-code audit; their message values and schemas are outside the negative boundary.",
+      "Search-result totals are time-dependent discovery metadata and are not treated as evidence. Only fixed-commit lines listed in repositories are evidentiary."
+    ]
+  },
+  "claimBoundary": {
+    "supported": [
+      "At least one frozen public cooperative-infrastructure path directly subtracts a local planner clock from a timestamp carried by an infrastructure state without a visible clock-domain/synchronization contract and changes stop-velocity planning.",
+      "At least one frozen public autonomous-driving ROS 2 path directly subtracts a local timer clock from an incoming GNSS header stamp whose producer domain is not verified in the path and signals a localization timeout.",
+      "Public comparison paths also demonstrate safer receipt-time designs where both operands are sampled from the same local node/process clock.",
+      "MCAP log/publish fields, timestamp-bearing messages, latency logs, and modeled asynchronous frames are separable from behavior-changing cross-domain-unproven age subtraction."
+    ],
+    "notSupported": [
+      "That the clocks in any observed real deployment are actually different, unsynchronized, or outside a required error bound.",
+      "That either strict positive necessarily causes a safety violation, exploit, or field failure.",
+      "That PTP, NTP, ROS time configuration, bridge restamping, or deployment-specific synchronization is absent outside the frozen public paths.",
+      "That MCAP publishTime and logTime are universally comparable or universally incomparable; the finding is only that the inspected public paths do not establish and use such a relation for freshness.",
+      "Any candidate score, acceptance decision, or inferred pass/fail rule."
+    ],
+    "terminology": {
+      "unproven-domain": "No explicit clock relation was found in the frozen public path needed for the subtraction; this is an evidence-gap label, not an assertion of clock inequality.",
+      "strict-positive": "Literal timestamp subtraction plus a freshness/timeout/deadline decision and behavioral consequence.",
+      "adjacent": "Relevant clock arithmetic or cutoff behavior that misses at least one strict-positive element."
+    }
+  },
+  "reproducibleCommands": [
+    "gh api -X GET search/code -f q='\"now() - rclcpp::Time\" timeout language:C++' --jq '{total_count,items:[.items[]|{repository:.repository.full_name,path,html_url}]}'",
+    "gh api -X GET search/code -f q='\"metadata.FindMember(\\\"timestamp\\\")\" timeout language:C++' --jq '{total_count,items:[.items[]|{repository:.repository.full_name,path,html_url}]}'",
+    "gh api -X GET search/code -f q='\"now() -\" \"header.stamp\" language:C++' --jq '.total_count'",
+    "gh api -X GET search/code -f q='\"publish_time\" \"log_time\" mcap language:Python' --jq '.total_count'",
+    "git clone --filter=blob:none --no-checkout https://github.com/autowarefoundation/autoware_universe.git /private/tmp/clock-audit-autoware && git -C /private/tmp/clock-audit-autoware checkout --detach 09df2ebfa09f425b7f42d163423816ec572b87c8",
+    "git -C /private/tmp/clock-audit-autoware rev-parse HEAD",
+    "rg -n 'isStateTimeout|max_delay_sec|VirtualTrafficLightState|clock_->now' /private/tmp/clock-audit-autoware/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module",
+    "nl -ba /private/tmp/clock-audit-autoware/planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/src/scene.cpp | sed -n '245,302p;452,474p;587,624p'",
+    "gh api repos/tier4/tier4_autoware_msgs/git/ref/tags/v0.58.0 --jq '.object.type + \" \" + .object.sha'",
+    "gh api -H 'Accept: application/vnd.github.raw+json' 'repos/tier4/tier4_autoware_msgs/contents/tier4_v2x_msgs/msg/VirtualTrafficLightState.msg?ref=v0.58.0'",
+    "git clone --filter=blob:none --no-checkout https://github.com/usdot-fhwa-stol/carma-platform.git /private/tmp/clock-audit-carma-platform && git -C /private/tmp/clock-audit-carma-platform checkout --detach 1c774df099ce23e77394758969bf86b0e5f40863",
+    "rg -n -C 5 'last_raw_gnss_value_|GNSS_DATA_TIMEOUT|latest_update_time|cdasim_time_' /private/tmp/clock-audit-carma-platform/localization_manager /private/tmp/clock-audit-carma-platform/approaching_emergency_vehicle_plugin /private/tmp/clock-audit-carma-platform/carma_cooperative_perception",
+    "git clone --filter=blob:none --no-checkout https://github.com/usdot-fhwa-stol/carma-streets.git /private/tmp/clock-audit-carma-streets && git -C /private/tmp/clock-audit-carma-streets checkout --detach 95f96adb7c18b1356500c75e987445e6f8f29236",
+    "rg -n 'metadata.FindMember\\(\"timestamp\"\\)|setCur_timestamp|msg_received_timestamp_|spat_lag|purge_old_vehicles' /private/tmp/clock-audit-carma-streets",
+    "git clone --filter=blob:none --no-checkout https://github.com/tier4/nebula.git /private/tmp/clock-audit-nebula && git -C /private/tmp/clock-audit-nebula checkout --detach c9721ebfb1ec929057f4371b309fc9bc759be80a",
+    "rg -n -C 5 'current_info_time_|STALE|now -' /private/tmp/clock-audit-nebula/src/nebula_robosense",
+    "git clone --filter=blob:none --no-checkout https://github.com/ros2/rosbag2.git /private/tmp/clock-audit-rosbag2 && git -C /private/tmp/clock-audit-rosbag2 checkout --detach 4dddf35d297a9c3ddd1da6589c90dac55706747e",
+    "rg -n 'logTime|publishTime|recv_timestamp|send_timestamp|fresh|stale|timeout|deadline' /private/tmp/clock-audit-rosbag2/rosbag2_storage_mcap",
+    "git clone --filter=blob:none --no-checkout https://github.com/UCR-CISL/CooperScene.git /private/tmp/clock-audit-cooperscene && git -C /private/tmp/clock-audit-cooperscene checkout --detach 0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+    "rg -n -i 'mcap|publish_time|log_time|timestamp|latency|fresh|stale|timeout|deadline' /private/tmp/clock-audit-cooperscene/README.md /private/tmp/clock-audit-cooperscene/tools",
+    "git clone --filter=blob:none --no-checkout https://github.com/ucla-mobility/OpenCDA.git /private/tmp/clock-audit-opencda && git -C /private/tmp/clock-audit-opencda checkout --detach 72b17e7b7fa0d67da1bf11a4083c90737eb1225f",
+    "rg -n 'global_clock|timestamp|lag|fresh|stale|timeout|deadline|age' /private/tmp/clock-audit-opencda/opencda",
+    "git clone --filter=blob:none --no-checkout https://github.com/DerrickXuNu/OpenCOOD.git /private/tmp/clock-audit-opencood && git -C /private/tmp/clock-audit-opencood checkout --detach 31ba16025da27ffe4e336f011290dfbc66f9a1f1",
+    "rg -n 'timestamp_delay|time_delay_calculation|fresh|stale|timeout|deadline|age' /private/tmp/clock-audit-opencood/opencood",
+    "git clone --filter=blob:none --no-checkout https://github.com/ucla-mobility/V2X-Real.git /private/tmp/clock-audit-v2x-real && git -C /private/tmp/clock-audit-v2x-real checkout --detach 2b8acd5c15b22fdb47326e30b8805e172d9b1259",
+    "rg -n 'event.timestamp|timestamp_delay|time_delay_calculation|fresh|stale|timeout|deadline|age' /private/tmp/clock-audit-v2x-real",
+    "git clone --filter=blob:none --no-checkout https://github.com/tum-traffic-dataset/coopdet3d.git /private/tmp/clock-audit-coopdet3d && git -C /private/tmp/clock-audit-coopdet3d checkout --detach 85d1216d7d6930a33d78f89d8a69dddedf8ee15f",
+    "rg -n 'vehicle_ts - vehicle_sweep_ts|infrastructure_ts - infrastructure_sweep_ts|timestamp=0|fresh|stale|timeout|deadline|age' /private/tmp/clock-audit-coopdet3d",
+    "for d in /private/tmp/clock-audit-autoware /private/tmp/clock-audit-carma-platform /private/tmp/clock-audit-carma-streets /private/tmp/clock-audit-nebula /private/tmp/clock-audit-rosbag2 /private/tmp/clock-audit-cooperscene /private/tmp/clock-audit-opencda /private/tmp/clock-audit-opencood /private/tmp/clock-audit-v2x-real /private/tmp/clock-audit-coopdet3d; do git -C \"$d\" rev-parse HEAD; done"
+  ]
+}

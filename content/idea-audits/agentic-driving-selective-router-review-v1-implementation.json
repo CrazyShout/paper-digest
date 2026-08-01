@@ -1,0 +1,60 @@
+{
+  "candidateId": "selective-router-counterfactual-missingness",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fbb33-3818-7f42-94b4-b912855dc4c7",
+  "reviewedAt": "2026-08-01T10:55:49+08:00",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 7,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "潜在结果、选择性日志、propensity、IPS/DR/SWITCH/CRM 与 post-hoc learning-to-defer 已被直接先例覆盖；Cognitive Dual-Process 也已强制运行快路径、报告全快/全慢/动态模式并观察 over-reasoning 与长尾漏路由。因此一般反事实缺失或收益路由不新。剩余贡献是驾驶特有的同 checkpoint 逐场景快慢 PDMS/安全/有效性/时延账本，以及证明复杂度标签与净收益错配会改变固定预算下的方法排序。该残差可发表，但必须先有实证反例。",
+    "feasibility": "固定 AutoVLA 提交包含 Qwen2.5-VL-3B 模型封装、动作 codebook、AutoVLAAgent、NAVSIM PDM scorer、metric cache 路径和公开 16.3 GB checkpoint；不需训练视觉骨干即可串行双分支。主要工作是 ForcedBranchAdapter、配对 runner、严格失败对账和日志审计，工程量与 8-10 周相符。风险在于官方 use_cot=true 只允许模型自适应选择，predict 默认 do_sample=true，官方评测脚本仍有配置路径与异常样本只记 valid=false 等粗糙点；此外需合法准备 nuPlan/NAVSIM 数据和 metric cache，并受仅学术/非营利且禁止转移衍生软件的许可证约束。",
+    "success-probability": "直接驾驶先例中 Slow-Think 平均优于 Fast-Plan、动态模式又优于全慢，说明收益异质性和 over-reasoning 至少在相邻系统中存在。AutoVLA 本身也训练双思考模式，因而发现配对差异的概率中等偏高；但严格快慢提示可能不是 checkpoint 训练分布内的纯 treatment，生成噪声、非法 action token 或提示长度可能主导差值。选择性日志偏差可以从完整账本构造出来，但要达到预注册的实质方法排序或部署结论变化，不能只展示标准 OPE 现象，成功概率仍只有中等。",
+    "impact": "正结果会把驾驶快慢路由评价从复杂度分类转向可审计的逐场景增量，并促使系统报告分支合同、propensity、支持与固定预算安全价值；负结果可为低成本复杂度路由给出适用域。影响被单一公开 checkpoint、NAVSIM 非反应式评分和可选闭环入口缺失限制。",
+    "comparison-readiness": "always-fast、always-slow、随机预算匹配、复杂度、置信度、L2D、full-information oracle 与 DM/IPS/DR/SWITCH/CRM 均已定义，完整配对账本提供遮蔽日志的真值，positivity failure 与安全优先效用也被显式处理。最大缺口是 Cognitive Dual-Process 没有公开 checkpoint，无法做同实现复现；其复杂度 router 只能按论文规格重建或作为报告级竞品。"
+  },
+  "strongestObjection": "发布的 AutoVLA checkpoint 没有现成的强制快慢 treatment：use_cot=false 是短提示，use_cot=true 仍写着按需推理，且两者都用随机采样。若强制提示改变格式、token 数、采样分布或非法轨迹率，slow-minus-fast 账本测到的是 prompt/decoder artifact，而不是慢推理的个体净收益；此时后续 OPE 再严谨也只是在审计错误 treatment。",
+  "requiredExperiment": "先在 navmini 上做 50 个场景的 branch-contract smoke：每个分支使用两种语义等价提示、确定性解码主设置和至少三次重复 seed，随机交换执行顺序；要求快分支无长理由、慢分支稳定输出预定结构，两者动作 token 数和五秒时域一致，非法轨迹完整计入失败，且分支间效应明显大于同分支提示/seed 方差。通过后再扩到 300 个按 log 隔离的配对样本；若复杂度-收益符号分裂不能改变至少一个预算匹配 router 排序或安全漏路由结论，则停止 missingness 主张。",
+  "evidenceReopened": [
+    {
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "url": "https://arxiv.org/abs/2607.19194",
+      "finding": "重开 v2 全文确认其 Arbiter 在解码前路由、训练时强制快提示计算后果项，并在 574 个 NAVSIM 样本上报告 Fast-Plan 73.87%、Slow-Think 77.87%、Dual-Process 80.14% 规划准确率及长尾平均 25.10% FNR。论文没有发布逐样本快慢净收益或可执行代码链接。"
+    },
+    {
+      "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/2843fccca5bedd369a4764848b9bd546-Abstract-Conference.html",
+      "finding": "重开 NeurIPS 正式页确认同一 autoregressive VLA 通过 SFT 获得 trajectory-only 与 CoT-enhanced 双模式，并在开放环和 CARLA 闭环报告结果；正式页本身未提供可复放的 CARLA runner。"
+    },
+    {
+      "title": "AutoVLA Official Repository",
+      "url": "https://github.com/ucla-mobility/AutoVLA/tree/ba34eed74ce6729e7986592d0e66cbaca397b4fa",
+      "finding": "重开固定提交的模型、dataset、agent、PDM runner、环境和许可证。use_cot=true 的系统提示仍允许按需直接输出，predict 使用 do_sample=true；run_pdm_score_cot.py 可对固定 JSON 与 metric cache 评分但每 token 只跑一次。公开 checkpoint 页显示单个 16.3 GB pickle 文件且模型卡缺少 YAML 许可证元数据；代码许可证限制为学术/非营利并禁止进一步转移软件及衍生物。"
+    },
+    {
+      "title": "A Causal Framework for Evaluating Deferring Systems",
+      "url": "https://proceedings.mlr.press/v258/palomba25a.html",
+      "finding": "重开 AISTATS 2025 正式页确认该工作已经用潜在结果定义 deferral 的个体因果效应，并区分双侧结果可得与仅观察延期结果的识别场景；本候选不能把这套一般形式化当新贡献。"
+    },
+    {
+      "title": "Counterfactual Risk Minimization: Learning from Logged Bandit Feedback",
+      "url": "https://proceedings.mlr.press/v37/swaminathan15.html",
+      "finding": "重开 ICML 2015 正式页确认 logged bandit feedback、propensity scoring、方差正则与 CRM 已成熟，只能作为基线。"
+    },
+    {
+      "title": "Optimal and Adaptive Off-policy Evaluation in Contextual Bandits",
+      "url": "https://proceedings.mlr.press/v70/wang17a.html",
+      "finding": "重开 ICML 2017 正式页确认 IPS、DR 的难度边界及 SWITCH 偏差方差权衡；确定性路由的零支持区域不能靠这些 estimator 恢复。"
+    },
+    {
+      "title": "Post-hoc Estimators for Learning to Defer to an Expert",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/bc8f76d9caadd48f77025b1c889d2e2d-Abstract-Conference.html",
+      "finding": "重开 NeurIPS 2022 正式页确认 adaptive inference 的 accuracy-cost deferral 与后验 rejector 已被直接研究；普通 benefit/error-cost router 不能构成本候选的新颖性。"
+    }
+  ],
+  "overall": 7
+}

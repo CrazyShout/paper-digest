@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "purpose": "Verify that the cooperative-driving candidates rest on executable public assets rather than paper-only claims.",
+  "assets": [
+    {
+      "id": "mdrive",
+      "type": "simulator",
+      "officialUrl": "https://github.com/ucla-mobility/MDrive",
+      "paperUrl": "https://arxiv.org/abs/2605.10904",
+      "auditedCommit": "9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "license": "Apache-2.0",
+      "availability": "public",
+      "checks": [
+        "Sparse checkout of README.md, LICENSE, scenarioset, model_envs, and tools completed.",
+        "Found exactly 46 InterDrive, 112 Interaction, and 67 V2XPnP scenario leaf directories.",
+        "Parsed all 278 scenario JSON files with zero JSON errors.",
+        "Validated all 6603 active scenario XML files with xmllint and observed zero errors.",
+        "Confirmed runner entries for CoDriving, TCP, LMDrive, UniAD, VAD, CoLMDriver, and perception_swap_{fcooper,attfuse,disco,cobevt}.",
+        "Confirmed pose-error and communication-latency variants for cooperative perception swaps.",
+        "Confirmed per-tick prediction dumps plus ADE, FDE, AP, and predicted-collision metrics in tools/openloop_post_metrics.py."
+      ],
+      "reproducibilityRisks": [
+        "CARLA 0.9.12 and planner-specific legacy Python/CUDA environments are required.",
+        "The four HEAL-backed perception_swap variants declare about 16 GB of GPU memory each in the runner's observed estimates.",
+        "The --openloop CLI help still describes legacy ego teleportation, while the current runtime branch deliberately keeps normal closed-loop ego control unless CUSTOM_EGO_LOG_REPLAY=1 is set.",
+        "Native AP visibility filters differ between CoDriving and perception_swap; the runner exposes --no-visibility-filter to make cross-pipeline AP comparable.",
+        "Model checkpoints are separate downloads and must be fingerprinted before any comparison."
+      ],
+      "fileHashes": {
+        "README.md": "8ad2100c982cf1d9832804d343f4a866ebc4dc11bde5e5177fa14aef89e00128",
+        "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "id": "rcp-bench",
+      "type": "code",
+      "officialUrl": "https://github.com/LuckyDush/RCP-Bench",
+      "paperUrl": "https://openaccess.thecvf.com/content/CVPR2025/html/Du_RCP-Bench_Benchmarking_Robustness_for_Collaborative_Perception_Under_Diverse_Corruptions_CVPR_2025_paper.html",
+      "auditedCommit": "bf999089d1a56265cdfc1238ef4d065fb74602fa",
+      "license": "UCLA Academic Software License",
+      "availability": "public for academic or nonprofit research",
+      "checks": [
+        "Shallow checkout completed and the corruption generator was inspected.",
+        "The generator exposes camera corruption functions and five severity levels over test data.",
+        "The README documents OPV2V-C, V2XSet-C, and DAIR-V2X-C plus positive and negative collaboration coefficients."
+      ],
+      "reproducibilityRisks": [
+        "The generator imports imagecorruptions and a legacy Python 3.8, PyTorch 1.12, CUDA 11.6 stack; that environment was not installed during this audit.",
+        "The implementation list contains 13 explicit corruption names while the README describes 14 camera corruptions plus temporal misalignment; every selected condition must be enumerated in the experiment manifest.",
+        "The license prohibits redistribution and commercial use without separate permission.",
+        "Dataset paths and original benchmark downloads require local configuration."
+      ]
+    },
+    {
+      "id": "cooperscene",
+      "type": "dataset",
+      "officialUrl": "https://github.com/UCR-CISL/CooperScene",
+      "paperUrl": "https://arxiv.org/abs/2606.31219",
+      "license": "Code MIT; dataset CC BY-NC-SA 4.0",
+      "availability": "public project, code, mini split, and full dataset links",
+      "checks": [
+        "Official project and repository expose code and dataset licensing separately.",
+        "The project documents real C-V2X throughput, latency, packet loss, and jitter traces together with synchronized multi-agent sensors."
+      ],
+      "reproducibilityRisks": [
+        "The mini split is about 2.9 GB and the full dataset about 94.3 GB; no full download was performed.",
+        "A real-log replication must remain separate from MDrive's reactive closed-loop claim."
+      ]
+    },
+    {
+      "id": "dair-v2x",
+      "type": "dataset",
+      "officialUrl": "https://thudair.baai.ac.cn",
+      "availability": "public registration/download",
+      "checks": [
+        "Parsed the official cooperative split manifest used by the repository audit.",
+        "Observed train=4813, val=1783, test=2688, and test_A=851 with unique IDs, no split overlap, and test_A contained in test."
+      ],
+      "sampleHash": "eec0e4fd5956ce3f26845f729ab049047a8074a8e8e6dfeb005294ddcb5ebac2",
+      "reproducibilityRisks": [
+        "The split manifest check does not validate sensor payload integrity or every annotation.",
+        "Published frame counts differ across some secondary descriptions; only the official split used by an experiment should be treated as authoritative."
+      ]
+    }
+  ],
+  "sampleChecks": [
+    {
+      "id": "mdrive-scenario-structure",
+      "result": "passed",
+      "method": "Count scenario leaf directories, parse every JSON file, and validate every active XML file.",
+      "boundedScope": "Repository metadata and route files only; no CARLA or model inference was run."
+    },
+    {
+      "id": "dair-cooperative-split",
+      "result": "passed",
+      "method": "Parse split JSON and test uniqueness, disjointness, and subset relations.",
+      "boundedScope": "Split metadata only."
+    },
+    {
+      "id": "rcp-generator-static-audit",
+      "result": "passed-with-limitations",
+      "method": "Inspect official generator, dependencies, corruption list, and license.",
+      "boundedScope": "No generated image was claimed because the required Python image stack was absent."
+    }
+  ],
+  "unverifiedItems": [
+    "No candidate is allowed to claim a complete MDrive run before CARLA, checkpoints, and one planner-specific environment pass a smoke test on CUDA hardware.",
+    "No candidate is allowed to call V2XPnP playback a fully reactive real-world experiment.",
+    "No candidate is allowed to treat a repository software license as the dataset license.",
+    "CooperScene is an optional external-validity checkpoint, not a prerequisite for the bounded MDrive pilots."
+  ]
+}

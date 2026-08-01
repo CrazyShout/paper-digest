@@ -1,7 +1,7 @@
 ---
 import EvidenceLinks from "./EvidenceLinks.astro";
 
-const { landscape } = Astro.props;
+const { landscape, embedded = false } = Astro.props;
 
 const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
@@ -11,30 +11,53 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
 ---
 
 <section class="landscape" id="researchLandscape" aria-labelledby="landscapeTitle">
-  <header class="landscape-hero">
-    <div class="landscape-copy">
-      <p class="eyebrow">Research Landscape · 更新于 {updatedLabel}</p>
-      <h1 id="landscapeTitle">全库研究态势</h1>
-      <p class="landscape-thesis">{landscape.title}</p>
-      <p class="landscape-summary">{landscape.summary}</p>
-      <a class="landscape-skip" href="#digestArticle">查看本期简报</a>
+  {embedded ? (
+    <div class="landscape-notebook-summary">
+      <div>
+        <h2 id="landscapeTitle">{landscape.title}</h2>
+        <p>先看全库证据，再判断趋势、热点与可立项问题。</p>
+      </div>
+      <dl class="landscape-stats" aria-label="内容库统计">
+        <div>
+          <dt>独立论文</dt>
+          <dd>{landscape.corpus.paperCount}</dd>
+        </div>
+        <div>
+          <dt>研究方向</dt>
+          <dd>{landscape.corpus.directionCount}</dd>
+        </div>
+        <div>
+          <dt>有效简报</dt>
+          <dd>{landscape.corpus.digestCount}</dd>
+        </div>
+      </dl>
     </div>
+  ) : (
+    <header class="landscape-hero">
+      <div class="landscape-copy">
+        <p class="eyebrow">Research Landscape · 更新于 {updatedLabel}</p>
+        <h1 id="landscapeTitle">全库研究态势</h1>
+        <p class="landscape-thesis">{landscape.title}</p>
+        <p class="landscape-summary">{landscape.summary}</p>
+        <a class="landscape-skip" href="#digestArticle">查看本期简报</a>
+      </div>
 
-    <dl class="landscape-stats" aria-label="内容库统计">
-      <div>
-        <dt>独立论文</dt>
-        <dd>{landscape.corpus.paperCount}</dd>
-      </div>
-      <div>
-        <dt>研究方向</dt>
-        <dd>{landscape.corpus.directionCount}</dd>
-      </div>
-      <div>
-        <dt>有效简报</dt>
-        <dd>{landscape.corpus.digestCount}</dd>
-      </div>
-    </dl>
-  </header>
+      <dl class="landscape-stats" aria-label="内容库统计">
+        <div>
+          <dt>独立论文</dt>
+          <dd>{landscape.corpus.paperCount}</dd>
+        </div>
+        <div>
+          <dt>研究方向</dt>
+          <dd>{landscape.corpus.directionCount}</dd>
+        </div>
+        <div>
+          <dt>有效简报</dt>
+          <dd>{landscape.corpus.digestCount}</dd>
+        </div>
+      </dl>
+    </header>
+  )}
 
   <p class="landscape-scope">
     统计范围：{landscape.corpus.scopeStart} 至 {landscape.corpus.scopeEnd}，去除同论文修订版；近期信号比较最近

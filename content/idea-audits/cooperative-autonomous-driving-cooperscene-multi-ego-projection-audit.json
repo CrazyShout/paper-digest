@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "auditId": "cooperative-autonomous-driving-cooperscene-multi-ego-projection-2026-07-31",
+  "directionId": "cooperative-autonomous-driving",
+  "auditedAt": "2026-07-31",
+  "officialRepository": {
+    "url": "https://github.com/UCR-CISL/CooperScene",
+    "commit": "0945b52ce7a9765ae17d9c8ffa5e2e8573fef19a",
+    "file": "tools/dataset_converters/coop_data_converter.py"
+  },
+  "currentConverterContract": {
+    "physicalEventKey": [
+      "scenario",
+      "timestamp"
+    ],
+    "candidateEgoIds": [
+      "1",
+      "2",
+      "3"
+    ],
+    "projectionMultiplicity": 3,
+    "evidence": [
+      {
+        "lines": "1-10",
+        "finding": "The module documents that every scenario and timestamp produces three samples, one for each vehicle ego, with the infrastructure and the other vehicles as cooperators."
+      },
+      {
+        "lines": "125-143",
+        "finding": "All agent YAML files are first grouped by the same scenario and timestamp."
+      },
+      {
+        "lines": "148-214",
+        "finding": "The converter parses one shared agent_data collection for that physical event."
+      },
+      {
+        "lines": "216-282",
+        "finding": "The converter loops over vehicle ego IDs, reuses the same event-level agent_data, changes the reference ego, and emits a separate sample index for every projection."
+      },
+      {
+        "lines": "224-279",
+        "finding": "Ground truth is recomputed in each ego coordinate frame and the ego/cooperator roles differ, so the three rows are not byte-identical duplicates."
+      }
+    ]
+  },
+  "releasedMiniIndexEvidence": {
+    "auditRef": "content/idea-audits/cooperative-autonomous-driving-cooperscene-mini-info-release-audit.json",
+    "projectionMultiplicity": 4,
+    "candidateEgoIds": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "finding": "All 180 physical events in the CRC-verified distributed mini indexes have four ego projections, including infrastructure agent 0. The distributed indexes therefore do not match the fixed converter's three-vehicle-ego contract."
+  },
+  "interpretation": [
+    "The projections are legitimate receiver-conditioned tasks and may add training value.",
+    "They share one physical traffic event, one timestamp, the same event-level sensor files, and the same underlying participants; they are therefore statistically clustered.",
+    "Counting projected rows as independent road acquisitions would overstate an independent-event count.",
+    "The fixed converter emits three vehicle-ego projections, while the distributed mini indexes contain four projections including infrastructure ego; this is a release-regeneration protocol mismatch, not proof of leakage or metric inflation.",
+    "Neither the static converter audit nor the mini index audit proves train-test leakage, metric inflation, or that multi-ego training lacks value."
+  ],
+  "mergedResearchCandidate": {
+    "candidateIds": [
+      "multi-ego-counterfactual-duplication",
+      "cooperative-benchmarks-clustered-uncertainty"
+    ],
+    "workingTitle": "Release-regeneration parity and physical-event inference for multi-ego cooperative benchmarks",
+    "falsifiableHypotheses": [
+      "Paired confidence intervals clustered by physical event are materially wider than intervals that resample projected ego rows independently for at least one close method comparison.",
+      "At a fixed number of unique physical-event exposures and optimizer steps, using all ego projections may still improve performance; if so, the gain is valid augmentation rather than evidence of additional independent events.",
+      "The fixed converter and the distributed index define materially different evaluation populations because only the latter includes infrastructure ego.",
+      "If release and regenerated protocols, cluster-aware and row-wise intervals, and method order are all practically equivalent, the release obtains a bounded protocol and statistical robustness certificate."
+    ],
+    "minimumStudy": [
+      "Regenerate indexes with the fixed official converter and compare canonical release-versus-regenerated manifests before any model analysis.",
+      "Add a physical_event_id derived only from scenario and timestamp, plus a projection_id for ego identity and a protocol_id for released versus regenerated indexes.",
+      "Verify sensor-file overlap, role changes, infrastructure-ego inclusion, and annotations across all projected rows in the official train, validation, and test information files.",
+      "Cache paired per-event method outcomes for at least two fixed checkpoints or released predictions.",
+      "Compare vehicle-only, infrastructure-only, row-weighted, equal-event-weighted, and physical-event paired inference without treating projections as new acquisition units.",
+      "Run equal-physical-event training ablations with one random ego, cyclic ego, vehicle-only all-ego, and four-ego projections while matching optimizer steps and unique event exposure."
+    ],
+    "primaryMetrics": [
+      "Unique physical events",
+      "Projected rows per event",
+      "Release-regeneration manifest mismatch count",
+      "Vehicle-ego versus infrastructure-ego performance",
+      "Intraclass correlation of paired per-row outcomes",
+      "Effective sample size",
+      "Paired method-difference interval",
+      "Method-order stability",
+      "Equal-exposure training delta"
+    ],
+    "successCriteria": [
+      "Every released and regenerated row can be deterministically mapped to a physical event, projection, and protocol without collisions or missing provenance.",
+      "At least one result establishes either a reproducible inference change or a bounded equivalence certificate.",
+      "All statistical intervals preserve pairing by physical event and expose the 14-take continuous-campaign limitation separately."
+    ],
+    "killCriteria": [
+      "Neither the released nor regenerated information files preserve stable physical-event provenance.",
+      "No fixed checkpoints, predictions, or feasible training baseline can support a paired outcome comparison.",
+      "A prior primary paper already publishes the same physical-event ledger, paired cluster analysis, and equal-exposure multi-ego ablation for CooperScene."
+    ]
+  },
+  "claimGuardrails": [
+    "Do not call the projections duplicate acquisitions; use receiver-conditioned or counterfactual ego projections.",
+    "Do not call the design data leakage unless an event or underlying file crosses a declared train-test boundary.",
+    "Do not infer confidence-interval changes before paired outcomes are computed.",
+    "Do not treat any ego projections, their frames, or random resamples as independent acquisitions.",
+    "Do not infer which index protocol produced a published result without command, artifact, and checkpoint provenance.",
+    "Do not claim a population result from the 14 CooperScene takes, which belong to one finite continuous collection campaign."
+  ]
+}

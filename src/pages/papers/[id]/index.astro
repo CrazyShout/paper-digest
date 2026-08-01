@@ -1,6 +1,13 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import { getPaperWithTag, getPapers, markdownToHtml } from "../../../lib/content.js";
+import NotebookDocs from "../../../components/NotebookDocs.jsx";
+import {
+  getMarkdownHeadings,
+  getPaperWithTag,
+  getPapers,
+  markdownToHtml
+} from "../../../lib/content.js";
+import { getNotebookData } from "../../../lib/navigation.js";
 
 export async function getStaticPaths() {
   const papers = await getPapers();
@@ -10,69 +17,85 @@ export async function getStaticPaths() {
 }
 
 const { id } = Astro.params;
-const result = await getPaperWithTag(id);
+const [result, notebook] = await Promise.all([
+  getPaperWithTag(id),
+  getNotebookData(import.meta.env.BASE_URL)
+]);
 
 if (!result) {
-  return Astro.redirect("../../");
+  return Astro.redirect(notebook.base);
 }
 
 const { paper, tags } = result;
-const reportHtml = markdownToHtml(paper.body);
+const reportHtml = markdownToHtml(paper.body, { headingIds: true });
+const toc = getMarkdownHeadings(paper.body)
+  .filter((heading) => heading.level === 2)
+  .map((heading) => ({
+    depth: 2,
+    title: heading.text,
+    url: `#${heading.id}`
+  }));
 ---
 
 <BaseLayout
   title={`${paper.title} · Paper Digest`}
   description={paper.comment}
-  stylesheet="../../assets/styles.css"
   canonicalPath={`papers/${paper.id}/`}
   type="article"
 >
-  <main class="paper-page">
-    <a class="back-link" href="../../">返回简报</a>
-    <section class="paper-hero">
-      <div class="paper-tag-list">
-        {tags.map((tagItem) => (
-          <span class="paper-tag" style={`--tag-color: ${tagItem.color}`}>{tagItem.label}</span>
-        ))}
-      </div>
-      <h1>{paper.title}</h1>
-      <p>{paper.comment}</p>
-      <div class="paper-hero-meta">
-        <dl class="paper-meta-list">
-          <div>
-            <dt>抓取位置</dt>
-            <dd>
-              {paper.sourceLinks?.length > 0 ? (
-                <span class="paper-source-links">
-                  {paper.sourceLinks.map((link) => (
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
-                      {link.label} <span aria-hidden="true">↗</span>
-                      <span class="sr-only">（在新窗口打开）</span>
-                    </a>
-                  ))}
-                </span>
-              ) : paper.source}
-            </dd>
-          </div>
-          <div>
-            <dt>作者</dt>
-            <dd>{paper.authors.join(", ")}</dd>
-          </div>
-          <div>
-            <dt>单位</dt>
-            <dd>{paper.affiliations.join("; ")}</dd>
-          </div>
-        </dl>
+  <NotebookDocs
+    tree={notebook.tree}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={paper.title}
+    description={paper.comment}
+    eyebrow="Paper Report"
+    toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`}
+    homeUrl={notebook.base}
+    client:load
+  >
+    <div class="paper-tag-list">
+      {tags.map((tagItem) => (
+        <span class="paper-tag" style={`--tag-color: ${tagItem.color}`}>{tagItem.label}</span>
+      ))}
+    </div>
+
+    <section class="paper-detail-meta" aria-label="论文元数据">
+      <dl class="paper-meta-list">
+        <div>
+          <dt>抓取位置</dt>
+          <dd>
+            {paper.sourceLinks?.length > 0 ? (
+              <span class="paper-source-links">
+                {paper.sourceLinks.map((link) => (
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.label} <span aria-hidden="true">↗</span>
+                    <span class="sr-only">（在新窗口打开）</span>
+                  </a>
+                ))}
+              </span>
+            ) : paper.source}
+          </dd>
+        </div>
+        <div>
+          <dt>作者</dt>
+          <dd>{paper.authors.join(", ")}</dd>
+        </div>
+        <div>
+          <dt>单位</dt>
+          <dd>{paper.affiliations.join("; ")}</dd>
+        </div>
+      </dl>
+      <div class="paper-detail-actions">
         <button class="share-link" type="button" data-share-button>
           <span data-share-label role="status" aria-live="polite">分享链接</span>
         </button>
       </div>
     </section>
 
-    <section class="paper-detail-grid">
-      <article class="paper-report" set:html={reportHtml} />
-    </section>
-  </main>
+    <article class="paper-report" set:html={reportHtml} />
+  </NotebookDocs>
 
   <script is:inline>
     const shareButton = document.querySelector("[data-share-button]");

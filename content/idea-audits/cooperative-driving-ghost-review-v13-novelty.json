@@ -1,0 +1,49 @@
+{
+  "candidateId": "accurate-v2x-ghost-planner-effect",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fbb3d-072d-7a73-9809-e6919125f44c",
+  "reviewedAt": "2026-08-01T03:06:58Z",
+  "scores": {
+    "novelty": 8,
+    "feasibility": 7,
+    "success-probability": 6,
+    "impact": 7,
+    "comparison-readiness": 8
+  },
+  "rationales": {
+    "novelty": "一手工作已分别覆盖自然融合鬼影、规划感知协同、逐框删除或插入的 planner-centric 评估，以及恶意协同假目标到动作的传播。因此，单独的 ghost、leave-one-out 或 planner effect 都不新。仍可成立的不可替代残差是同一条事件级识别链：在非注入自然运行中确认协同来源，用 cooperative、primary-only 和 leave-one-cooperator-out 区分来源，再在完全相同且可恢复的规划器状态中仅删除该目标，并由 GT-oracle 与独立风险方向判断动作变化。所查一手来源没有给出这条完整链，但其新颖性高度依赖来源归因和 matched ordinary-FP 对照确实改变结论，而非仅增加审计字段。",
+    "feasibility": "固定版本 MDrive 已暴露协同与 ego-only 感知路径、GT 路径、显式 planner_dets，以及 BasicAgent 和 BehaviorAgent 接口，说明目标列表干预点真实存在。主要执行风险是仓库尚未提供不可变规划器快照、跟踪状态恢复、协作者级来源账本和严格 no-op twin；列表顺序、规划器记忆、CARLA 随机性或过滤器状态都可能伪造删除效应。这些是重大但边界清楚的工程与验证工作，并非因为需要自建 adapter 而扣分。",
+    "success-probability": "Fusion or Confusion 证明低噪声条件下也会出现自然融合鬼影，但没有证明其会在 MDrive 的 detector、fusion、tracking 和 planner 组合中以足够频率出现。候选还需同时满足至少 20 条可归因轨迹、跨至少 10 个场景、删除后动作差异、规范风险方向一致、matched non-fusion FP 不等价，并在第二 planner 或 detector 上复现；这些相乘条件使正结果目前仍有重大缺口。",
+    "impact": "若链条成立，它能把协同感知的静态 FP 指标提升为可归因、可干预、可止损的规划审计，并直接区分应修复融合来源、跟踪 persistence 还是规划器敏感性。影响目前受限于名义仿真、显式 object-list planner 和低频事件；若只得到稀有发生率上界或只在单一 planner 生效，结论更适合作为基准审计项而非普遍安全主张。",
+    "comparison-readiness": "dossier 已正面对齐最接近的四类功能等价工作，并设计 no-op、顺序交换、primary-only、leave-one-cooperator-out、matched TP、matched non-fusion FP、GT-oracle、独立 TTC 或碰撞风险及第二模型复现。比较框架可信且有明确 kill 条件。重要剩余风险是尚未实证共同状态恢复有效，也尚未证明来源条件化相较普通 planner-centric FP 删除产生额外判别力。"
+  },
+  "strongestObjection": "该候选可能退化为对自然发生假阳性执行既有 planner-centric 单框删除，再附加一个协同来源标签。若在尺寸、距离、置信度、持续时间和场景匹配后，协同 ghost 的动作效应与普通非融合 FP 或 placebo 无可重复差异，来源归因不改变诊断或止损决策，完整链条就是改名组合而非不可替代残差。综合判断：这是三个候选中残差定义较清楚的一项：其可信新意不在 ghost 或删除算子，而在自然发生、协同来源、同状态因果效应和规范风险方向的闭环识别。当前应视为高价值但发生率与确定性恢复尚未通过的审计假设；正面 novelty 结论必须以 matched ordinary-FP 之外的诊断增量为准。",
+  "requiredExperiment": "先在冻结定义后的 180 个 held-out MDrive 场景中盲检自然事件并报告零结果，达到至少 20 条来源确认轨迹且来自至少 10 个场景后，才运行同一序列化规划器状态上的 original、remove-only、no-op twin、matched TP、matched non-fusion FP 和 GT-oracle arms。必须逐状态哈希并做顺序交换，按场景聚类估计动作与独立风险差值，再以第二 planner 或 detector 复现。只有协同来源归因在普通 FP 对照之外改变效应解释或修复选择，才能排除功能等价异议。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/abs/2605.10904",
+      "finding": "MDrive 在 225 个 CARLA 场景中显示协同感知提升不必然转化为规划收益，复杂密集场景中的协商甚至会损害表现；论文没有报告自然 ghost 的事件级来源归因或同状态删除效应。"
+    },
+    {
+      "url": "https://doi.org/10.1109/CSCN67557.2025.11230764",
+      "finding": "Fusion or Confusion 在超过 1000 次 SUMO 运行中定义 Ghost Object Rate，并显示关联残留造成的融合 ghost 在有利低噪声条件下仍可发生；它没有在 MDrive 中测发生率，也没有做规划器反事实删除。"
+    },
+    {
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "finding": "固定提交中的 perception_swap_agent.py 同时包含 cooperative、ego-only、GT 路径，并把 planner_dets 传给 BasicAgent 或 BehaviorAgent；这提供了显式插入点，但未提供规划器快照恢复或协作者级 provenance runner。"
+    },
+    {
+      "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Philion_Learning_to_Evaluate_Perception_Models_Using_Planner-Centric_Metrics_CVPR_2020_paper.html",
+      "finding": "Planner-Centric Metrics 已通过逐个删除 GT detection 和在不同位置插入 false positive 测量规划器敏感性，因此 remove-only 与假目标 planner effect 本身是直接先例。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2605.01301",
+      "finding": "该攻击工作让恶意 V2X 位姿扰动经 tracking、prediction 和 planning 传播，并在部分场景诱发急刹；协同假目标影响动作并非空白，但其事件是主动注入而非自然非恶意 occurrence。"
+    },
+    {
+      "url": "https://arxiv.org/abs/2607.19774",
+      "finding": "Defer to Plan 在规划阶段自适应融合协同信息并以规划目标优化，说明 planning-aware V2X fusion 已有直接并发工作；它未给出本候选的来源确认同状态审计链。"
+    }
+  ],
+  "overall": 7
+}

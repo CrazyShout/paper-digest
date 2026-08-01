@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "coalition-outsider-counterfactual-veto",
+  "stage": "pre-review",
+  "title": "谁替协商买单：多车 Coalition 之外的 Actor 级闭环外部性审计",
+  "hook": "在第一条协商消息发出前冻结参与成员和 outsider 名单，从同一世界状态运行完整协商与回退政策，检查 coalition 的收益是否由一辆未参与车辆的急刹、延误或风险上升承担，并验证这份 actor-wise 账本会不会改变现有方法仍会放行的决策。",
+  "output": "成员资格条件化的闭环外部性账本与准入审计协议",
+  "effort": "中高，集中在确定性分支、消息追踪与 actor 级指标",
+  "timeline": "8 至 10 周完成最小研究，跨响应模型复核不超过 12 周",
+  "whyNow": "MDrive 已公开协商与无协商执行矩阵、112 个交互密集场景、反应式背景交通和固定随机种子，并报告协商在复杂密集交通中可能降低规划表现。现有反事实安全、最小扰动和社会福利方法已经足够成熟，恰好允许把真正残差收窄为：消息定义的 coalition 之外，是否存在被平均指标掩盖且会改变准入决策的固定 actor 负担。",
+  "keyProblem": "多车协商通常以参与 ego 的成功率、整体 driving score 或社会福利评价。一个协议可能提高发送者和接收者的合流效率，同时迫使没有接收消息、也未被写入协商目标的第三辆车急刹或等待。若 outsider 在干预后才定义、用最大值或平均值汇总，或在不同仿真 arm 中被替换，这类代价会被幸存者偏差和 actor 对齐错误掩盖。当前公开结果只证明协商有时变差，没有回答负担落在谁身上以及这一归因是否改变部署选择。",
+  "currentLimitations": "一般 counterfactual policy evaluation、Do No Harm、minimally disruptive control 和个体/社会效用优化都已有直接先例，因此反事实、非伤害、veto 或 welfare 本身不能成为贡献。MDrive 的 negotiation 与 no-negotiation 是两次独立闭环运行；固定 seed 不能自动保证第一条消息前的 actor roster、状态和随机事件一致。现有论文也没有确认 coalition 获益与固定 outsider 负担同时自然出现，首阶段必须先建立 occurrence，而不能人为设计一个必然受害的 outsider controller。",
+  "hypothesis": "在 MDrive 的自然交互密集场景中，至少一类预注册场景会出现 coalition 成员收益为正、而干预前固定 outsider 的安全或通行负担为正的联合事件；该 actor-wise membership-conditioned 估计会使准入或回退决定与无协商、最小扰动、社会福利和一般 Do No Harm 基线产生可解释分歧。若外部性只来自 coalition 自身失败、强基线作出相同决定或第二响应 cohort 不复现，则该残差被推翻。",
+  "claimBoundary": "贡献只定位为消息成员资格条件化的估计对象、闭环识别协议与决策信息增量。不得声称发明一般反事实评价、Do No Harm、安全盾、最小扰动、SVO 或社会福利优化；不得冻结 outsider 的未来轨迹；不得把人工极端响应当自然发生率；MDrive 仿真结果不外推为真实道路人口效应。",
+  "primaryEstimand": "对在第一条 coalition 消息前冻结的 actor roster R、成员集 C 和 outsider 集 O=R\\C，从相同 pre-treatment 世界状态执行协商政策 pi_c 与对照政策 pi_0。估计成员收益向量 B_C = Y_C(pi_c)-Y_C(pi_0) 和每名固定 outsider 的负担向量 H_o = Y_o(pi_0)-Y_o(pi_c)，并测量使用 {B_C,H_O} 的准入规则是否改变只使用平均 welfare 或最小扰动的决定。",
+  "noveltyClaims": [
+    "把 coalition 定义锚定到第一条实际协商消息的发送者、接收者和明确受益对象，并把 pre-treatment roster 补集固定为 outsider；actor 消失、碰撞或退出不被当作缺失，从而形成可审计的成员资格条件化外部性对象。",
+    "每个 arm 都从同一可验证前缀进入完整闭环，允许 outsider 在政策改变后响应；这不同于冻结非成员轨迹、跨独立随机世界比较或只对最终 aggregate score 做归因。",
+    "研究成功必须证明 outsider-aware 账本改变最强直接基线未改变的准入或回退决定，并在独立响应 cohort 降低 outsider 风险而不越过 coalition 损失上限；新意来自可决策的增量信息，不来自另造一个 veto 名称。"
+  ],
+  "closestWorkDifference": [
+    "Do No Harm 已定义相对替代策略的个体反事实伤害，本研究必须把它实现为强基线；残差是通信 membership 与固定 outsider roster 的联合审计。",
+    "Counterfactual Policy Evaluation 已覆盖执行前驾驶政策的反事实闭环比较，因此 paired simulation 本身不新；残差是 pre-message actor identity、coalition complement 和 actor-wise burden。",
+    "Minimally Disruptive Cooperative Lane-change 和混合交通个体/系统效用工作已覆盖周边扰动和 welfare trade-off；只有这些方法仍放行、而 outsider ledger 有证据地回退时才有不可替代差异。"
+  ],
+  "method": [
+    "从消息 trace 定义 treatment time：第一条会改变协商政策的消息发出前，保存完整 actor roster、成员身份、pose、velocity、route progress、controller memory、世界随机状态和环境事件计数；无法逐 actor 验证相等的 episode 不进入主分析。",
+    "对同一 pre-treatment snapshot 运行原始协商、完整禁用协商、最小扰动、个体/系统效用或 SVO、一般 Do No Harm 与 outsider-aware audit selector；每个分支在 treatment 后都使用反应式 actor 和完整闭环，不重放固定未来轨迹。",
+    "按干预前 roster 导出每名 actor 的碰撞、minimum TTC、强制动、等待、进度、舒适度和退出状态；主要报告 burden vector 与 actor-wise non-inferiority，不以 max-over-outsiders 或幸存 actor 平均替代身份。",
+    "用开发场景只冻结 coalition 定义、负担阈值和 selector；确认按 scene template 与 seed 做配对，actor 是 episode 内重复测量，帧不是样本。对无消息时刻、伪 coalition 标签和提前 intervention 做 placebo。",
+    "在第二套背景交通响应参数或第二 reactive policy cohort 复核方向，并对随机执行顺序、事件键随机数、actor replacement 和并发仿真漂移做敏感性分析。"
+  ],
+  "reusableAssets": [
+    "MDrive commit 9e08377042b8f2e2860bb00de2416b3ebcfa3be4 的 interaction scenes、CoLMDriver、rule-based ablation 和 --add-no-negotiation 运行矩阵。",
+    "CARLA actor state、control、collision、route 和 traffic event 接口，以及 MDrive 的 CARLA/traffic seed 参数。",
+    "已发表的 Do No Harm、minimally disruptive lane change 和 mixed-traffic utility 目标作为强基线定义。"
+  ],
+  "modulesToBuild": [
+    "MessageCoalitionTracer：在 treatment 前冻结 sender、receiver、beneficiary、roster 和 outsider 集合。",
+    "CommonPrefixBranchRunner：保存或可校验地重放完整 pre-treatment 世界与 controller memory，并使用事件键随机数。",
+    "ActorOutcomeLedger：跨 arm 保持 actor identity，导出安全、通行和舒适性指标并把消失或碰撞记为结果。",
+    "OutsiderAwareDecisionAudit：在开发集冻结阈值，在独立确认集比较准入分歧和后果。"
+  ],
+  "implementationPath": [
+    "固定 MDrive、CARLA、CoLMDriver、LLM/VLM 服务 revision、地图、场景和 seeds，复现同一场景的 negotiation/no-negotiation 官方运行并保存环境 manifest。",
+    "增加消息和 actor trace，定位第一条 treatment 消息；对至少十个场景验证禁用消息前的 roster、pose、velocity、route、controller memory 和环境事件逐字段相等。",
+    "若独立重跑无法通过前缀等价，使用 CARLA snapshot/controller serialization 或确定性前缀重放，并用 no-treatment twin 与 order-swap 检查作为硬门。",
+    "实现 actor outcome ledger 和固定身份对齐；先在开发场景检查所有 included、excluded、no-message 与 actor-exit episode 可完整对账。",
+    "实现无协商、最小扰动、mixed utility/SVO、Do No Harm 与 outsider-aware selector，在开发模板冻结部署相关 burden 阈值和 coalition 损失上限。",
+    "在未见 scene templates、seeds 和第二响应 cohort 上完成配对确认，发布逐 actor 结果、placebo、null cases、环境 hashes 和完整重算脚本。"
+  ],
+  "minimumStudy": [
+    "Gate 0 natural occurrence：在预注册的 merge、dense crossing 与 negotiation 场景中先运行原始协商和完整 no-negotiation，确认是否存在 coalition 获益与固定 outsider 负担同时出现的事件；不得依据结果新增场景模板。",
+    "Gate 1 identification：所有候选事件必须通过 pre-treatment roster/state equality、no-treatment twin、order-swap 和完整政策分配检查；只固定 seed 而不验证状态的 pair 不可用。",
+    "Gate 2 direct comparison：在独立确认模板和 seeds 上比较 negotiation、no-negotiation、minimally disruptive、mixed utility/SVO、Do No Harm 和 outsider-aware 决策，按 paired episode 聚类。",
+    "Gate 3 externality robustness：用第二背景交通响应 policy 或参数 cohort 重跑，并对固定 actor 消失、替换、碰撞和多 outsider 汇总规则做敏感性分析。",
+    "Gate 4 decision consequence：只有 outsider-aware ledger 改变直接基线仍会放行的决定，并降低预注册 outsider burden 且 coalition 损失不越界，才保留研究主张。"
+  ],
+  "strongBaselines": [
+    "原始 MDrive negotiation policy。",
+    "完整 no-negotiation 或 ego-only fallback policy。",
+    "Minimally Disruptive Cooperative Lane-change 风格的周边扰动目标。",
+    "Mixed-traffic individual/system utility 或 SVO 风格的 welfare baseline。",
+    "Do No Harm 的个体 counterfactual harm constraint。",
+    "只按 aggregate driving score 或平均 social welfare 准入。",
+    "使用完整未来 outcome 的 offline oracle selector，作为不可部署上界。"
+  ],
+  "metrics": [
+    "Coalition 成员的 success、route progress、collision、minimum TTC、等待和舒适性配对收益。",
+    "每名固定 outsider 的 collision、minimum TTC、hard-brake、最大减速度、等待、进度损失、jerk 与 actor-exit 状态。",
+    "Coalition-benefit/outsider-burden 联合事件率及 scene-cluster bootstrap 置信区间。",
+    "Outsider-aware selector 相对各强基线的准入分歧率、错误放行、错误回退和 coalition opportunity cost。",
+    "Pre-treatment 状态偏差、no-treatment twin 差异和 order-swap drift，作为识别噪声底线。",
+    "跨 scene family、背景响应 cohort、outsider 数量和消息拓扑的效应异质性。"
+  ],
+  "successCriteria": [
+    "在冻结的独立确认模板和至少两个 reactive-traffic cohort 中，重复观察 coalition 获益与至少一个 pre-treatment fixed outsider 的部署相关负担同时出现，区间不由单一 seed 或 actor 驱动。",
+    "Outsider-aware ledger 使准入决定与 no-negotiation、minimally disruptive、mixed utility/SVO 和 Do No Harm 中至少一个最强基线产生可解释分歧，而不是对所有方法加同一保守阈值。",
+    "该分歧在确认集降低预注册 outsider 风险，同时 coalition success 或 progress 损失保持在冻结容忍界内，并在第二响应 cohort 保持方向。",
+    "所有正结果通过 pre-treatment equality、no-treatment twin、placebo coalition 和 actor-identity 对账。"
+  ],
+  "killCriteria": [
+    "MDrive 的协商负面结果完全来自 coalition 成员自身失败，没有固定 outsider 的稳定额外负担，或 joint event 只在人工极端 controller 中出现。",
+    "固定 random seed 仍不能恢复逐 actor 相同 pre-treatment 世界，状态 checkpoint 或确定性前缀重放也无法把 twin drift 压低到主效应以下。",
+    "Minimally disruptive、mixed utility/SVO 或 Do No Harm 基线作出等价决定并取得同等 outsider 风险，membership-conditioned ledger 没有增量。",
+    "效应在未见 template、seed 或第二响应 cohort 消失、反转，或只在帧级伪重复后显著。",
+    "Outsider-aware fallback 降低 outsider 风险却超过冻结 coalition opportunity-cost 上限，只得到更保守而非更好决策。"
+  ],
+  "negativeResultConsequence": "若没有自然 joint event，停止构建 outsider-aware selector并把 MDrive 负面协商归因留在 coalition 内；若强基线决策等价，则采用更简单的 minimally disruptive 或 Do No Harm 方案；若响应 cohort 不稳定，则要求 future benchmark 报告 actor-wise sensitivity 而不主张可部署 veto。",
+  "risks": [
+    "固定 seed 仍可能因 CARLA 并发和外部 LLM 服务产生前缀漂移；必须冻结服务输出或缓存消息，且逐 actor 验证状态而不是相信 seed。",
+    "Coalition membership 可能随多轮消息变化；主 estimand 使用第一条 treatment 消息的冻结成员集，多轮动态 membership 只能作为次级分析。",
+    "Outsider 在某 arm 中退出、碰撞或被替换会造成幸存者偏差；pre-treatment roster 与 actor identity 必须跨 arm 保持，消失记为结果。",
+    "仿真响应模型可能决定外部性的方向；第二 reactive cohort 是硬复核，真实道路外推必须保留为未证实。",
+    "候选很容易退化为把成熟 welfare 或 safety constraint 换一个名字；若不能改变强基线决定，应按 kill 条件淘汰。"
+  ],
+  "impact": "该审计把多车协商的评价单位从参与 ego 的平均分扩展到消息成员资格和固定非成员 actor。正结果会直接改变协商模块的准入、fallback 和 benchmark 报告方式，避免用多数参与者收益掩盖第三方急刹或延误；负结果则会证明现有最小扰动或 Do No Harm 基线已经足够，无需维护复杂 outsider selector。Actor-wise ledger 还可迁移到协同换道、V2X 让行、车路协同和多机器人任务分配。",
+  "evidence": [
+    {
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "role": "本地详细报告提供协商在复杂密集交通中可能降低规划表现的自然问题信号，并确认闭环交互场景与多智能体评价底座。",
+      "localPaperId": "mdrive-closed-loop-cooperative-driving",
+      "localLink": "papers/mdrive-closed-loop-cooperative-driving/"
+    },
+    {
+      "title": "MDrive official repository at fixed commit",
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "role": "固定代码提供 negotiation/no-negotiation 运行矩阵、反应式 actors、CARLA 与 traffic seeds 及 actor state 接口，但共同前缀和 actor ledger 仍需自建。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Do No Harm: A Counterfactual Approach to Safe Reinforcement Learning",
+      "url": "https://proceedings.mlr.press/v242/vaskov24a.html",
+      "role": "正式工作已经定义个体 counterfactual harm 和非伤害约束，是候选必须超过的直接安全基线，而不是可重命名的新方法。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Counterfactual Policy Evaluation for Decision-Making in Autonomous Driving",
+      "url": "https://arxiv.org/abs/2003.11919",
+      "role": "一手驾驶研究已覆盖执行前的反事实闭环政策比较，约束本候选的新意只能来自 coalition complement 和 actor identity。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Minimally Disruptive Cooperative Lane-change",
+      "url": "https://arxiv.org/abs/2303.05991",
+      "role": "直接研究合作换道对周边交通的最小扰动，是 outsider burden 是否真正增加决策信息的强功能基线。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Mixed-traffic Cooperative Decision-making with Individual and System Utility",
+      "url": "https://arxiv.org/abs/2604.20231",
+      "role": "最新混合交通工作联合个体与系统效用并包含实车验证，排除了把 welfare trade-off 或人类偏好建模本身当作新意。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "role": "本地阅读记录表明 planning-aware cooperation 与闭环自适应融合已被直接研究，帮助限定候选为协商外部性审计而非一般规划感知协作。",
+      "localPaperId": "defer-to-plan-v2x-driving",
+      "localLink": "papers/defer-to-plan-v2x-driving/"
+    }
+  ],
+  "frozenAt": "2026-08-01T02:51:43.928Z"
+}

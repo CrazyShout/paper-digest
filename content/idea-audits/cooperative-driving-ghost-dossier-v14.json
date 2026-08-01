@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "idea-dossier-v1",
+  "directionId": "cooperative-autonomous-driving",
+  "candidateId": "accurate-v2x-ghost-planner-effect",
+  "stage": "pre-review",
+  "dossierVersion": "v14",
+  "revisionOf": "content/idea-audits/cooperative-autonomous-driving-ghost-planner-effect-dossier-v12.json",
+  "title": "协同来源是否值得修：非注入 Ghost 的同状态效应与修复路由审计",
+  "hook": "逐框删除早已不是新问题；本研究只问 cooperative provenance 在 matched ordinary false positive 之外，是否会改变可证伪的危害分类或把修复从通用 planner-side suppression 路由到更小的 fusion association 或 cooperator-track 干预。",
+  "output": "来源门控的 common-state replay 账本、ordinary-FP 等价检验与修复路由合同",
+  "effort": "中高，需要来源重放、规划器状态恢复和等预算修复比较",
+  "timeline": "8 至 12 周完成 occurrence、同状态效应与最小修复路由研究",
+  "whyNow": "Fusion or Confusion 已在低但非零误差的直接仿真中给出非注入 fusion ghost 机制；MDrive 固定提交同时暴露 cooperative/single-agent perception、GT 对照和 object-list planners。另一方面，Planner-Centric Metrics 已覆盖逐对象删除与 false-positive 插入，Task-Aware Risk Estimation 已覆盖 perception failure 到 motion-plan risk 的通用路由，攻击研究也已覆盖恶意协同对象到动作的传播。因而现在可做且仅剩的窄问题，是 cooperative provenance 是否具有超出普通 FP planner relevance 的决策价值。",
+  "keyProblem": "一个 cooperative-output FP 可能只是 ordinary detector FP 恰好出现在协同分支，也可能由某一 cooperator 的 track 或 fusion association 引入。planner-centric deletion 能回答该对象是否影响动作，却不能单独回答错误源在哪里、应修 planner filter、detector/tracker、单条 association edge 还是整个 cooperator。若来源标签不改变危害分类或最小修复，增加 provenance 字段只是重新命名；若 common state、no-op、order-swap 或 occurrence 任一门未通过，删除差也不能解释为对象因果效应。",
+  "currentLimitations": "目前没有 MDrive 中 provenance-confirmed natural ghost 的 occurrence estimate，也没有完成 smoke、planner snapshot serializer、no-op floor、order-swap 或修复收益。Fusion or Confusion 的发生率来自不同仿真、噪声和 memoryless fusion，不能移植。MDrive 的 cooperative flag、GT 和多个 object-list planner 只证明插入点存在，不证明逐协作者来源重放与同状态恢复已可用。通用单框删除、false-positive planner sensitivity、task-aware risk 和恶意对象动作传播都有直接先例，因此任何不改变 ordinary-FP 结论或修复路由的结果都必须判为功能等价。",
+  "hypothesis": "在冻结 MDrive 配置和 held-out 场景中，若存在 provenance-confirmed non-injected fusion-introduced 或 fusion-amplified ghost，则其来源标签会在 matched ordinary FP 之外改变至少一个预注册危害分类，并使等干预算的 provenance-guided association/cooperator-track repair 与 source-blind planner-centric suppression 作出不同选择且获得更好的规范结果或更低的 true-object collateral cost。若 occurrence、common-state、ordinary-FP 增量或 repair consequence 任一硬门失败，则撤回 cooperative-specific 主张。",
+  "claimBoundary": "结论只适用于固定 MDrive nominal simulation、冻结 detector checkpoint、显式 object-list planner 和预注册 provenance/repair 合同。不得声称真实道路 occurrence、零误差 V2X ghost、所有 end-to-end BEV planners 的脆弱性或长期碰撞因果效应；不得把 cooperative-output FP 自动称为 fusion ghost；不得把 action delta 自动称为 harm；不得把未执行的 smoke、occurrence、确定性恢复或修复收益写成结果。",
+  "primaryEstimands": {
+    "objectDeletionEffect": "对来源确认 ghost g，从同一不可变 planner snapshot S 和 detection list D 估计 tau_g = A(S,D) - A(S,D\\{g})；除 g 外的字段、对象值、相对顺序、planner memory、route state、时间和随机状态均相同。",
+    "ordinaryFpIncrement": "对在距离、尺寸、置信度、持续性、planner exposure、场景族和基线风险上有共同支持的 ordinary FP m，估计 delta_source = E[tau_g - tau_m]，并比较 harmful/beneficial/undetermined 分类是否因 provenance 改变。",
+    "repairRoutingIncrement": "在相同 decision time、相同确认事件和相同 false-intervention/true-object-loss/latency caps 下，估计 rho = U(R_provenance) - U(R_source_blind)，其中 U 由 GT-oracle action distance、独立风险、通行代价和 collateral true-object retention 的预注册层级规则定义。"
+  },
+  "noveltyClaims": [
+    "把 cooperative provenance 的价值定义为一个可被普通 FP 直接推翻的增量 estimand：只有来源确认改变 matched ordinary-FP 之外的危害分类或修复路由，才保留 cooperative-specific 结论。",
+    "把 common-state replay、no-op twin、branch order-swap、list-order placebo 和 post-state hash 写成分析前合同，使单对象 effect 与 planner memory、对象顺序、运行顺序和 CARLA 漂移可区分。",
+    "把诊断与修复分开：remove-only 只估计对象级效应；真正的决策检验比较 source-blind planner suppression 与 provenance-guided association-edge/cooperator-track repair，并在等干预算下核验风险方向和 collateral cost。",
+    "用完整 occurrence 与 null ledger 给出停止规则：无自然事件、无超出 no-op 的 action effect、与 ordinary FP 等价或 repair 无增量都关闭主张，而不是从少数视频反推普遍危害。"
+  ],
+  "closestWorkDifference": [
+    "Fusion or Confusion 已证明 cooperative fusion association 在有利但非零误差条件下仍可生成 ghost，并给出 Ghost Object Rate；它没有在 MDrive 中估计 occurrence、执行 planner counterfactual 或比较来源修复。",
+    "Planner-Centric Metrics 已逐个移除对象并在 ego 周围插入 false positives，Task-Aware Risk Estimation 已按 motion-plan consequence 触发 safety maneuver；本候选不能把 deletion、planner relevance 或通用 risk routing 当作贡献。",
+    "MDrive 与 Defer to Plan 已把 cooperative perception 放入 closed-loop planning，说明 planner-aware cooperation 已被占据；固定 MDrive 代码只提供可插入底座，来源账本和状态合同仍需实现。",
+    "协同攻击研究已让恶意 pose/object 扰动传播到 tracking、prediction 和 planning；本候选只保留 benign non-injected occurrence、来源归因、ordinary-FP 增量和最小修复路由的联合残差。"
+  ],
+  "method": [
+    "将 225 个 MDrive 场景在查看任何 remove-only action delta 前固定为 45 个 discovery 和 180 个 confirmation 场景；discovery 只冻结 GT matching、ambiguity、persistence、planner exposure、ordinary-FP matching 和修复预算。",
+    "在 confirmation 中无早停扫描全部 180 场景，对每个 cooperative-output FP 从同一原始观测分别运行 cooperative、primary-only 和所有可用 leave-one-cooperator-out branches；不通过来源规则的对象只进入 ordinary/ambiguous ledger。",
+    "对每个来源确认事件生成 content-addressed planner snapshot，并从独立深拷贝依次执行 original、remove-only、no-op twin、matched ordinary-FP removal、matched TP removal、GT-oracle 和 list-order placebo；每个 arm 都从同一 pre-state 恢复。",
+    "按预注册共同支持变量为每个来源确认 ghost 匹配 ordinary detector FP；比较 action effect、GT-oracle 方向、独立风险方向和 null floor，不允许用来源标签替代效果差异。",
+    "在 discovery 事件上只冻结两个修复器：source-blind planner-side object suppressor只能使用 planner 可见属性，provenance-guided repair 只能按冻结规则删除 association edge、回退 primary track 或隔离单个 cooperator track；两者在 confirmation 前锁定。",
+    "在 confirmation 上以相同 false-intervention count、true-object-loss cap、communication/latency cap 比较两类 repair；按 scene 聚类报告所有 disagreement、agreement、null、反方向和 collateral cases，并在第二 planner 或第二 detector 上复核。"
+  ],
+  "executableContracts": {
+    "occurrenceGate": {
+      "freezePoint": "在读取任何 original-versus-removal action delta 前，冻结 discovery/confirmation split、GT matching、host-self、同步与标签 ambiguity、persistence、planner exposure、来源分类和 ordinary-FP matching 规则。",
+      "confirmationRun": "无早停扫描全部 180 个 confirmation 场景；每个 cooperative-output FP、排除项、无候选场景和失败原因都进入 append-only ledger。",
+      "minimumSupport": "主要 action/repair inference 至少需要 20 条 provenance-confirmed tracks、来自至少 10 个独立场景，且单场景最多贡献两条；未达门槛只报告配置特定 occurrence 上界和描述性 replay。",
+      "failureConsequence": "零 occurrence、来源确认不足或 support 不足时，不得继续挑选动作案例，不得把 Fusion or Confusion 的发生率移植到 MDrive。"
+    },
+    "provenanceGate": {
+      "sharedInputs": "cooperative、primary-only 与 leave-one-cooperator-out 使用相同原始 LiDAR、poses、timestamps、checkpoint、NMS/tracker config 和随机状态；每个分支保存输入与输出哈希。",
+      "fusionIntroduced": "对象在 cooperative 输出中通过冻结 FP、persistence 和 exposure 规则，在 primary-only 无匹配，并在至少一个 leave-one-cooperator-out branch 消失；其它输入差异必须为空。",
+      "fusionAmplified": "primary-only 存在匹配 FP，但 cooperative 使预注册 score、位置误差、持续性或 exposure 跨门，且移除至少一个 cooperator 后跨门变化反转。",
+      "ordinaryFp": "对象在 primary-only 与 cooperative 中均出现，且所有 leave-one-cooperator-out branches 都不能按冻结规则改变其身份或过门状态；它只作功能等价对照。",
+      "failureConsequence": "无法唯一分类、受 host-self、标签、同步或多协作者等价解释影响的对象进入 ambiguous ledger，不支撑 cooperative provenance claim。"
+    },
+    "commonStateReplay": {
+      "preStateFields": [
+        "ego pose, velocity, acceleration and control",
+        "route plan, route cursor and target waypoint",
+        "planner memory, behavior state, timers and persistence buffers",
+        "simulation tick, sensor timestamp and frame identifiers",
+        "Python, NumPy, framework and simulator random states",
+        "immutable detection tensor values, metadata and list order",
+        "planner code, config, checkpoint and dependency manifest"
+      ],
+      "snapshotRule": "对规范化 pre-state 与 D 计算 SHA-256 snapshotId；每个 arm 从独立反序列化实例启动，禁止共享可变对象、缓存或 planner instance。",
+      "mutationRule": "remove-only arm 只删除冻结 objectId 对应的一个 list entry，保留其余对象逐字段值与相对顺序；不得重跑 detector、fusion、NMS 或 tracking。",
+      "postStateRule": "保存 action、planned path 和 planner post-state hash；pre-state hash 不同、意外字段变化或跨 arm mutable alias 任一出现即排除该 event。"
+    },
+    "noOpContract": {
+      "arms": "A0 与 A2 均接收 D 的独立深拷贝，不执行任何语义 mutation；至少在 discovery 中对每个 planner 收集 100 个跨场景 no-op pairs。",
+      "passRule": "对 deterministic planner 要求 action、trajectory 和 post-state byte-identical；若底层运行时存在不可消除的数值误差，则在主分析前冻结 epsilon_noop 为 discovery no-op delta 的第 99 百分位与数值精度容差的较大者。",
+      "effectRule": "任何 object effect 必须严格超过 epsilon_noop，且 no-op drift 不得随 branch position 或 scene time 系统变化。",
+      "failureConsequence": "no-op 不稳定、post-state 不一致或 epsilon_noop 与候选效应同量级时，停止 object-level causal analysis。"
+    },
+    "orderSwapContract": {
+      "branchOrder": "对每个 event 预先随机分配 original-first 或 removal-first，并在独立恢复后执行反向 schedule；两次 tau 的差异必须不超过 epsilon_noop。",
+      "listOrderPlacebo": "对不依赖对象优先级语义的 planner，额外运行保持对象集合不变的冻结 permutation；若 planner 依赖 list order，则将 canonical sort key 写入合同，并要求所有 arms 重建同一 canonical order。",
+      "failureConsequence": "branch schedule 改变效应符号/幅度，或纯 list permutation 产生同量级结果时，该 event 不进入主 estimand；系统性失败则终止研究。"
+    },
+    "ordinaryFpEquivalenceGate": {
+      "matchingVariables": "scene family、range、bearing、box size、score、persistence、relative velocity、baseline TTC/risk、planner exposure 和 object-list rank。",
+      "commonSupport": "无共同支持的 ghost 只作描述性个案；不得外推来源增量。匹配与 balance diagnostics 在查看 tau 分组差异前冻结。",
+      "decisionRule": "必须报告 delta_source、harm direction reclassification 和 source-by-removal interaction；若 cooperative 与 ordinary FP 在 no-op-adjusted effect 和方向分类上等价，则只能继续检验 repair routing，不得宣称 cooperative ghosts 更具 planner consequence。"
+    },
+    "repairRoutingGate": {
+      "sourceBlindRepair": "只使用 planner 可见的 geometry、score、persistence、relative motion 和 risk proxy，对所有 FP-like tracks执行同一 planner-side suppression；不得读取 cooperator identity 或 provenance replay。",
+      "provenanceGuidedRepair": "fusion-introduced 只删除被归因的 association/cooperator-track contribution，fusion-amplified 回退到 primary-only track 或冻结融合前状态，ordinary FP 不触发 cooperative-path repair。",
+      "equalBudget": "在 confirmation 前匹配 false-track correction coverage，并冻结相同的 true-object suppression cap、cooperator/message exclusion cap、runtime/latency cap 和通行损失上限。",
+      "decisionDifference": "至少 5 条 tracks、跨至少 3 个独立场景出现预注册 repair-target disagreement；disagreement 集中 provenance-guided repair 的 scene-cluster outcome 必须优于 source-blind repair，或在风险/GT-oracle 不劣时显著减少 collateral true-object suppression。",
+      "failureConsequence": "若 repair target 全部相同、差异可由 source-blind attributes 重现、优势区间包含零、或只靠更高干预算取得改善，则 provenance 是解释标签，cooperative-specific 主张被淘汰。"
+    }
+  },
+  "operationalDefinitions": [
+    "Cooperative-output FP：在 cooperative 输出中不满足冻结 GT matching 的对象；它是候选集合，不等于 fusion ghost。",
+    "Provenance-confirmed ghost：通过 fusion-introduced 或 fusion-amplified 合同且不属于 host-self、同步、标签或多义来源的 persistent track。",
+    "Harmful object effect：remove-only 相对 original 同时更接近 GT-oracle action/trajectory，并改善至少一个独立风险指标且不越过通行损失上限；参照不一致时标记 undetermined。",
+    "Planner-centric functional equivalence：在共同支持内，来源确认 ghost 与 ordinary FP 的 no-op-adjusted deletion effect、方向分类和 source-blind repair decision 没有可复现差异。",
+    "Provenance decision value：来源标签在 confirmation 中改变预注册 repair target，并在等干预算下带来规范结果或 collateral retention 的可复现增量。"
+  ],
+  "reusableAssets": [
+    "MDrive commit 9e08377042b8f2e2860bb00de2416b3ebcfa3be4 的 225 个 closed-loop scenarios、cooperative/single-agent paths、GT collector 和 Rule/Basic/Behavior object-list planners。",
+    "Fusion or Confusion 的 ghost/association failure 定义与低但非零噪声机制，只作为 occurrence 规则起点和外部机制证据。",
+    "Planner-Centric Metrics 与 Task-Aware Risk Estimation 的 object relevance 和 task-aware risk 设计，作为必须超过的 source-blind baselines。"
+  ],
+  "modulesToBuild": [
+    "GhostOccurrenceLedger：冻结 track-level inclusion、ambiguity、exposure 与完整 null reconciliation。",
+    "CooperativeProvenanceRunner：从同一原始观测执行 primary-only 与逐 cooperator leave-one-out，并输出字段级 diff 与来源标签。",
+    "ContentAddressedPlannerSnapshot：序列化 pre-state、随机状态、D 与 post-state，提供 alias-free restore。",
+    "PairedPlannerExecutor：执行 original、remove-only、no-op、order-swap、matched controls、placebo 和 GT-oracle arms。",
+    "RepairRoutingAudit：冻结 source-blind 与 provenance-guided repairs、等干预算和 disagreement/outcome ledger。"
+  ],
+  "implementationPath": [
+    "固定 MDrive commit、CARLA、detector checkpoint、planner、场景 split 和依赖 manifest；运行一个官方 cooperative 场景 smoke 只验证接口，smoke 结果不得计入 occurrence 或 efficacy。",
+    "实现 occurrence ledger，在 45 个 discovery 场景冻结 GT matching、ambiguity、persistence、exposure、ordinary-FP matching 和所有 analysis thresholds。",
+    "实现 provenance runner，并用字段级 input diff 证明 cooperative、primary-only 与 leave-one-out 仅在预期 cooperator contribution 上不同。",
+    "实现 planner snapshot/restore；先通过 100 个 discovery no-op pairs、branch order-swap、list-order placebo、deep-copy alias test 和 post-state hash，再开放 remove-only 主分析。",
+    "实现 matched ordinary FP、matched TP、GT-oracle、独立 risk evaluator、source-blind suppressor 和 provenance-guided minimal upstream repair；在 discovery 锁定预算与层级结果规则。",
+    "无早停扫描 180 个 confirmation 场景，发布 included、excluded、ambiguous、ordinary-FP、no-ghost 和 contract-failure ledger；只有 occurrence 支持门通过才做主要 action/repair inference。",
+    "在第二 object-list planner 或第二 cooperative detector 上复核 occurrence、ordinary-FP equivalence 和 repair direction；不把单一复现失败隐藏在 pooled average 中。"
+  ],
+  "minimumStudy": [
+    "Gate 0 occurrence：45 个 discovery 场景只冻结规则；180 个 confirmation 场景全部扫描，至少 20 条 provenance-confirmed tracks、10 个独立场景后才允许主 action/repair inference。",
+    "Gate 1 source identification：每条主事件完成 cooperative、primary-only 和所有可用 leave-one-cooperator-out；未通过 input equality 与唯一来源规则的对象留在非主 ledger。",
+    "Gate 2 common-state validity：每个 planner 至少 100 个 discovery no-op pairs，通过 pre/post-state hash、branch order-swap、list-order contract 和 no mutable alias tests。",
+    "Gate 3 ordinary-FP comparison：每条可匹配 ghost 至少有一个共同支持 ordinary FP，对 no-op-adjusted effect、方向分类和 source interaction 做 scene-cluster inference。",
+    "Gate 4 repair decision：在 confirmation 上以冻结的等干预算比较 source-blind suppression 与 provenance-guided upstream repair，完整报告 decision agreements/disagreements 和 collateral outcomes。",
+    "Gate 5 scope replication：第二 planner 或第二 detector 至少重复 occurrence 或 repair mechanism；任一范围失败都收窄 claim，不做 pooled rescue。"
+  ],
+  "strongBaselines": [
+    "No-op/no-op deterministic twin、pre/post-state hash 与 branch execution order-swap。",
+    "List-order placebo 或冻结 canonical object ordering。",
+    "Primary-only、逐 cooperator leave-one-out 与 full cooperator quarantine。",
+    "Planner-relevance-matched ordinary detector FP removal。",
+    "Planner-relevance-matched true-positive removal与冻结 geometry placebo。",
+    "Planner-Centric Metrics 风格的 source-blind object relevance。",
+    "Task-Aware Risk Estimation 风格的 source-blind safety-maneuver trigger。",
+    "GT-oracle object set、独立 TTC/预测碰撞风险与 ego-only fallback。"
+  ],
+  "metrics": [
+    "每 scene、每千帧和每公里的 provenance-confirmed ghost track rate、scene-level interval 与零发生上界。",
+    "Fusion-introduced、fusion-amplified、ordinary FP、host-self、ambiguity 和 contract failure 的完整对账比例。",
+    "No-op floor、pre/post-state hash mismatch、branch order effect 与 list permutation effect。",
+    "Paired brake、throttle、steer、target speed、trajectory endpoint/lateral/longitudinal delta 和 effect-above-no-op indicator。",
+    "GT-oracle action/trajectory distance、minimum TTC、预测碰撞风险、hard brake、通行时间和方向一致性。",
+    "Ghost-versus-matched-ordinary-FP delta_source、source interaction、harm reclassification 和 common-support balance。",
+    "Repair-target disagreement rate、false-track correction、true-object suppression、cooperator/message exclusions、latency、risk improvement 和 coalition-free progress cost。"
+  ],
+  "successCriteria": [
+    "Confirmation 达到冻结 occurrence support，且事件通过唯一 provenance gate，不依赖人工注入、放大噪声、host-self 或标签/同步歧义。",
+    "Common-state、no-op、branch order-swap、list-order 和 post-state contracts 全部通过，object effect 严格超过 epsilon_noop。",
+    "GT-oracle 与独立风险参照对至少一个主要 harmful-effect 方向一致；不一致结果保持 undetermined。",
+    "Cooperative provenance 在 matched ordinary FP 之外改变预注册 repair target，满足至少 5 tracks/3 scenes 的 disagreement support，并在等干预算下改善规范结果或 collateral true-object retention。",
+    "第二 planner 或第二 detector 保持 occurrence、source interaction 或 repair direction 中至少一条预注册机制；不能复现时明确收窄适用范围。"
+  ],
+  "killCriteria": [
+    "180 个 confirmation 场景无 provenance-confirmed event，或未达到 20 tracks/10 scenes 的主要推断门；只报告 occurrence 上界并停止动作案例挖掘。",
+    "候选在 primary-only 已存在且 leave-one-cooperator-out 不改变身份，或只在攻击、手工注入、放大误差和绕过官方过滤时出现。",
+    "No-op、pre/post-state、branch order-swap 或 list-order contract 系统失败，或 object effect 与 epsilon_noop 同量级。",
+    "在共同支持内，cooperative ghost 与 ordinary FP 的删除效应和方向分类等价，且后续 repair routing 也没有增量。",
+    "Provenance-guided repair 与 source-blind repair 作出相同决定，分歧可由 source-blind attributes 重现，或只靠更大干预算取得优势。",
+    "修复后 GT-oracle 与独立风险方向不一致、true-object collateral 或通行损失越界，或第二 planner/detector 上方向消失。"
+  ],
+  "negativeResultConsequence": "零 occurrence 会停止该 MDrive 配置上的 ghost mitigation 投入；有 occurrence 但无 object effect 会否定从 low-rate FP 外推 planning harm；与 ordinary FP 等价会把工作降为通用 planner-centric error audit；provenance 改变标签但不改变等预算 repair outcome 会停止构建 cooperative-specific repair。四类负结果都保留完整 ledger，并直接关闭对应 claim。",
+  "risks": [
+    "Fusion or Confusion 与 MDrive 使用不同 fusion、noise 和 tracking 机制；外部论文只支撑机制可信度，不能支撑本栈发生率。",
+    "Planner memory、对象顺序、缓存和数值非确定性可能制造伪 effect；common-state、no-op、order-swap 和 post-state hash 是分析前硬门。",
+    "Ordinary FP 可能缺少与 provenance-confirmed ghost 的共同支持；无支持事件只能描述，不能被 matching model 外推。",
+    "Provenance-guided repair 可能只是用额外信息实现更复杂的通用 filter；必须锁定 source-blind information set、等干预算和可由普通属性重现的 kill test。",
+    "GT matching、标签时延和遮挡会改变 ghost identity；需要 ambiguity ledger、多阈值 specification 和分层人工审计。",
+    "Occurrence 可能低到无法在 12 周内支撑 repair inference；该结果产生上界但不自动成为高影响结论。",
+    "Object-list planner 不代表 feature-level end-to-end planner；任何 feature-space claim 都需要独立候选和新识别合同。"
+  ],
+  "impact": "正结果不会证明 cooperative ghosts 普遍更危险，而会证明 cooperative provenance 在某个公开闭环栈中具有可测的诊断与修复价值：相对 source-blind planner suppression，系统能把干预定位到 association edge 或 cooperator track，并在等干预算下降低风险或 collateral。负结果同样直接：若普通 FP 基线与来源修复等价，团队应采用更简单的 planner-centric monitor，而不是维护昂贵的 provenance pipeline。共同状态和完整 null ledger 还可迁移到 stale V2X、duplicate tracks 和地图对象审计。",
+  "evidence": [
+    {
+      "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+      "url": "https://arxiv.org/abs/2605.10904",
+      "role": "一手论文提供 225 个闭环场景，并直接报告 perception gain 不总能转化为 planning gain；它是执行底座，不证明 natural ghost occurrence。",
+      "localPaperId": "mdrive-closed-loop-cooperative-driving",
+      "localLink": "papers/mdrive-closed-loop-cooperative-driving/"
+    },
+    {
+      "title": "Defer to Plan: Adaptive Multi-Agent Fusion for End-to-End V2X Driving",
+      "url": "https://arxiv.org/abs/2607.19774",
+      "role": "一手并发工作直接以 planning objective 优化 adaptive multi-agent fusion，排除把 planner-aware cooperation 本身当作本候选新意。",
+      "localPaperId": "defer-to-plan-v2x-driving",
+      "localLink": "papers/defer-to-plan-v2x-driving/"
+    },
+    {
+      "title": "Fusion or Confusion? Potential and Challenges in Fusion of Onboard Sensors and V2X Data in Cooperative Perception",
+      "url": "https://doi.org/10.1109/CSCN67557.2025.11230764",
+      "role": "正式一手论文在低但非零 sensing/GNSS error 下给出 association-generated ghost 与 GOR，支持非注入机制但不支持 MDrive occurrence 或 planner effect。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MDrive official repository at fixed commit",
+      "url": "https://github.com/ucla-mobility/MDrive/tree/9e08377042b8f2e2860bb00de2416b3ebcfa3be4",
+      "role": "固定代码暴露 cooperative/single-agent perception、GT control 和 Rule/Basic/Behavior object-list planners；provenance runner 与 planner snapshot 尚需自建。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Learning to Evaluate Perception Models Using Planner-Centric Metrics",
+      "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Philion_Learning_to_Evaluate_Perception_Models_Using_Planner-Centric_Metrics_CVPR_2020_paper.html",
+      "role": "正式先例已逐对象删除并插入 false positives 测量 planner relevance，迫使本候选以 provenance 的 ordinary-FP 增量和 repair routing 为核心。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Task-Aware Risk Estimation of Perception Failures for Autonomous Vehicles",
+      "url": "https://arxiv.org/abs/2305.01870",
+      "role": "一手工作已根据 perception failure 对 motion plan 的相对风险决定是否触发 safety maneuver，是 source-blind task-aware repair routing 的直接强基线。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "From Stealthy Data Fabrication to Unsafe Driving: Realistic Scenario Attacks on Collaborative Perception",
+      "url": "https://arxiv.org/abs/2605.01301",
+      "role": "一手攻击研究已把恶意协同对象扰动传播到 tracking、prediction 和 planning；它占据虚假对象动作后果，但不替代 benign non-injected occurrence。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "readiness": {
+    "status": "contract-ready-not-executed",
+    "occurrenceStatus": "not measured in MDrive",
+    "smokeStatus": "not claimed",
+    "blindReviewEligibility": "eligible for contract-level blind review; all empirical claims remain gated"
+  },
+  "frozenAt": "2026-08-01T03:33:38.073Z"
+}
