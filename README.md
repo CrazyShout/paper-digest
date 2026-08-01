@@ -407,6 +407,14 @@ npm run email:idea-update
 
 Idea 更新允许全局终审得出“不通过”，但要求所有方向均已完成候选检索、至少两名独立评审和一次全局终审。正式发送前还会核对线上 Idea 中心的完整内容指纹，避免在 Pages 尚未部署时提前通知用户。
 
+若执行环境只能访问 GitHub API、无法稳定连接 `github.io`，可显式启用严格的 Actions 部署证明：
+
+```bash
+PAPER_DIGEST_ACTIONS_DEPLOYMENT_FALLBACK=true npm run email:idea-update
+```
+
+该备用路径只处理直播地址的网络传输失败，并同时要求本地 `dist/ideas/index.html` 内容指纹匹配、Git `HEAD` 与 `origin` 身份有效、GitHub 官方 API 中同一完整 SHA 的 Pages 工作流已成功。若站点返回 HTTP 错误或旧内容指纹，仍会拒绝发信。
+
 ## References
 
 - [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/)

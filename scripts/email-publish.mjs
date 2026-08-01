@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -124,7 +125,25 @@ async function loadSmtpConfig() {
         config.socketTimeout ?? config.SMTP_SOCKET_TIMEOUT ?? process.env.SMTP_SOCKET_TIMEOUT ?? DEFAULT_SOCKET_TIMEOUT_MS,
         DEFAULT_SOCKET_TIMEOUT_MS,
         { min: 1_000, max: 300_000 }
-      ))
+      )),
+      actionsDeploymentFallback: normalizeBoolean(
+        config.actionsDeploymentFallback
+          ?? config.PAPER_DIGEST_ACTIONS_DEPLOYMENT_FALLBACK
+          ?? process.env.PAPER_DIGEST_ACTIONS_DEPLOYMENT_FALLBACK,
+        false
+      ),
+      deploymentWorkflow: normalizeString(
+        config.deploymentWorkflow
+          ?? config.PAPER_DIGEST_DEPLOYMENT_WORKFLOW
+          ?? process.env.PAPER_DIGEST_DEPLOYMENT_WORKFLOW
+          ?? "deploy-pages.yml"
+      ),
+      deploymentBranch: normalizeString(
+        config.deploymentBranch
+          ?? config.PAPER_DIGEST_DEPLOYMENT_BRANCH
+          ?? process.env.PAPER_DIGEST_DEPLOYMENT_BRANCH
+          ?? "main"
+      )
     };
   } catch (error) {
     throw new Error(`读取SMTP配置失败：${error.message}`);
@@ -590,8 +609,111 @@ export function assertIdeaCenterReady(center) {
   }
 }
 
-export async function verifyPublishedIdeaCenter(center, currentSiteUrl, fetchImpl = fetch) {
+function ideaCenterReleaseMarkers(center) {
   const fingerprint = ideaArtifactSnapshotFingerprint(center);
+  return {
+    fingerprint,
+    markers: [
+      `data-idea-version="${center.version}"`,
+      `data-idea-updated="${center.updatedAt}"`,
+      `data-idea-directions="${center.directions.length}"`,
+      `data-idea-fingerprint="${fingerprint}"`
+    ]
+  };
+}
+
+function assertIdeaCenterMarkers(center, html, message) {
+  const { markers } = ideaCenterReleaseMarkers(center);
+  if (markers.some((marker) => !html.includes(marker))) {
+    throw new Error(message);
+  }
+}
+
+export function parseGitHubRepository(remoteUrl) {
+  const match = normalizeString(remoteUrl)
+    .match(/github\.com(?::|\/)([^/\s]+)\/([^/\s]+?)(?:\.git)?$/i);
+  return match ? `${match[1]}/${match[2]}` : "";
+}
+
+function localGitDeploymentIdentity() {
+  try {
+    const headSha = normalizeString(execFileSync(
+      "git",
+      ["rev-parse", "HEAD"],
+      { cwd: ROOT, encoding: "utf8" }
+    ));
+    const remoteUrl = normalizeString(execFileSync(
+      "git",
+      ["remote", "get-url", "origin"],
+      { cwd: ROOT, encoding: "utf8" }
+    ));
+    const repository = parseGitHubRepository(remoteUrl);
+    if (!/^[0-9a-f]{40}$/.test(headSha) || !repository) {
+      throw new Error("本地 Git 身份不完整");
+    }
+    return { headSha, repository };
+  } catch (error) {
+    throw new Error(`无法读取部署提交身份：${error.message}`);
+  }
+}
+
+export async function verifyIdeaCenterActionsDeployment(center, options = {}) {
+  const repository = normalizeString(options.repository);
+  const headSha = normalizeString(options.headSha);
+  const workflow = normalizeString(options.workflow) || "deploy-pages.yml";
+  const branch = normalizeString(options.branch) || "main";
+  const fetchImpl = options.fetchImpl || fetch;
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+    throw new Error("GitHub Actions 部署核验缺少合法仓库名");
+  }
+  if (!/^[0-9a-f]{40}$/.test(headSha)) {
+    throw new Error("GitHub Actions 部署核验缺少完整提交 SHA");
+  }
+
+  let builtHtml = options.builtHtml;
+  if (typeof builtHtml !== "string") {
+    try {
+      builtHtml = await readFile(path.join(ROOT, "dist", "ideas", "index.html"), "utf8");
+    } catch (error) {
+      throw new Error(`无法读取本地构建指纹：${error.message}`);
+    }
+  }
+  assertIdeaCenterMarkers(center, builtHtml, "本地构建的 Idea 中心不是当前内容版本");
+
+  const apiUrl = `https://api.github.com/repos/${repository}/actions/workflows/${encodeURIComponent(workflow)}/runs`
+    + `?branch=${encodeURIComponent(branch)}&status=success&per_page=10`;
+  let response;
+  try {
+    response = await fetchImpl(apiUrl, {
+      headers: {
+        accept: "application/vnd.github+json",
+        "user-agent": "paper-digest-deployment-verifier"
+      }
+    });
+  } catch (error) {
+    throw new Error(`无法核验 GitHub Actions 部署：${error.message}`);
+  }
+  if (!response?.ok) {
+    throw new Error(`GitHub Actions 部署核验失败：HTTP ${response?.status || "unknown"}`);
+  }
+  const payload = await response.json();
+  const run = (Array.isArray(payload?.workflow_runs) ? payload.workflow_runs : [])
+    .find((item) => item?.head_sha === headSha
+      && item?.head_branch === branch
+      && item?.status === "completed"
+      && item?.conclusion === "success");
+  if (!run) {
+    throw new Error("没有找到与本地提交完全匹配的成功 Pages 工作流，禁止发送更新通知");
+  }
+  return {
+    runId: run.id,
+    runUrl: run.html_url,
+    headSha
+  };
+}
+
+export async function verifyPublishedIdeaCenter(center, currentSiteUrl, fetchImpl = fetch) {
+  const { fingerprint } = ideaCenterReleaseMarkers(center);
   const verificationUrl = `${getIdeaCenterUrl(currentSiteUrl)}?verify=${encodeURIComponent(fingerprint)}`;
   let response;
   try {
@@ -601,22 +723,21 @@ export async function verifyPublishedIdeaCenter(center, currentSiteUrl, fetchImp
       }
     });
   } catch (error) {
-    throw new Error(`无法核验线上 Idea 中心：${error.message}`);
+    const wrapped = new Error(`无法核验线上 Idea 中心：${error.message}`);
+    wrapped.code = "IDEA_LIVE_FETCH_FAILED";
+    wrapped.cause = error;
+    throw wrapped;
   }
   if (!response?.ok) {
     throw new Error(`线上 Idea 中心核验失败：HTTP ${response?.status || "unknown"}`);
   }
 
   const html = await response.text();
-  const markers = [
-    `data-idea-version="${center.version}"`,
-    `data-idea-updated="${center.updatedAt}"`,
-    `data-idea-directions="${center.directions.length}"`,
-    `data-idea-fingerprint="${fingerprint}"`
-  ];
-  if (markers.some((marker) => !html.includes(marker))) {
-    throw new Error("线上 Idea 中心仍不是当前本地版本，禁止发送更新通知");
-  }
+  assertIdeaCenterMarkers(
+    center,
+    html,
+    "线上 Idea 中心仍不是当前本地版本，禁止发送更新通知"
+  );
 }
 
 export function buildIdeaUpdateSubject(center) {
@@ -1050,7 +1171,22 @@ async function publishIdeaUpdate(options = {}) {
   if (!recipients.length) {
     throw new Error("收件人列表为空");
   }
-  await verifyPublishedIdeaCenter(center, currentSiteUrl);
+  try {
+    await verifyPublishedIdeaCenter(center, currentSiteUrl);
+  } catch (error) {
+    if (error.code !== "IDEA_LIVE_FETCH_FAILED" || !smtpConfig.actionsDeploymentFallback) {
+      throw error;
+    }
+    const identity = localGitDeploymentIdentity();
+    const deployment = await verifyIdeaCenterActionsDeployment(center, {
+      ...identity,
+      workflow: smtpConfig.deploymentWorkflow,
+      branch: smtpConfig.deploymentBranch
+    });
+    console.error(
+      `GitHub Pages 直播地址暂不可达；已核验同一提交的成功 Actions 部署：${deployment.runId}`
+    );
+  }
 
   let info;
   try {

@@ -18,10 +18,12 @@ import {
   getIdeaCenterUrl,
   getReviewCenterUrl,
   isRetryableSmtpError,
+  parseGitHubRepository,
   parseRecipientState,
   parseRecipientsConfig,
   summarizeIdeaCenter,
   validateDelivery,
+  verifyIdeaCenterActionsDeployment,
   verifyPublishedIdeaCenter,
   verifyPublishedReviewCenter,
   withSmtpRetry
@@ -368,6 +370,83 @@ test("idea update publishing verifies the deployed content fingerprint", async (
       text: async () => '<dl data-idea-version="2" data-idea-updated="2026-08-01" data-idea-directions="2" data-idea-fingerprint="stale">'
     })),
     /不是当前本地版本/
+  );
+});
+
+test("GitHub repository parsing accepts SSH and HTTPS remotes", () => {
+  assert.equal(
+    parseGitHubRepository("git@github.com:CrazyShout/paper-digest.git"),
+    "CrazyShout/paper-digest"
+  );
+  assert.equal(
+    parseGitHubRepository("https://github.com/CrazyShout/paper-digest.git"),
+    "CrazyShout/paper-digest"
+  );
+  assert.equal(parseGitHubRepository("https://example.com/repo.git"), "");
+});
+
+test("Actions fallback binds the local Idea build to the exact successful commit", async () => {
+  const center = sampleIdeaCenter();
+  const fingerprint = ideaArtifactSnapshotFingerprint(center);
+  const headSha = "a".repeat(40);
+  const builtHtml = `<dl data-idea-version="2" data-idea-updated="2026-08-01" data-idea-directions="2" data-idea-fingerprint="${fingerprint}">`;
+  let requestedUrl = "";
+
+  const deployment = await verifyIdeaCenterActionsDeployment(center, {
+    repository: "CrazyShout/paper-digest",
+    headSha,
+    branch: "main",
+    workflow: "deploy-pages.yml",
+    builtHtml,
+    fetchImpl: async (url) => {
+      requestedUrl = url;
+      return {
+        ok: true,
+        json: async () => ({
+          workflow_runs: [{
+            id: 42,
+            html_url: "https://github.com/example/run/42",
+            head_sha: headSha,
+            head_branch: "main",
+            status: "completed",
+            conclusion: "success"
+          }]
+        })
+      };
+    }
+  });
+
+  assert.equal(deployment.runId, 42);
+  assert.match(requestedUrl, /deploy-pages\.yml\/runs\?branch=main/);
+  await assert.rejects(
+    verifyIdeaCenterActionsDeployment(center, {
+      repository: "CrazyShout/paper-digest",
+      headSha,
+      builtHtml,
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => ({ workflow_runs: [] })
+      })
+    }),
+    /没有找到.*完全匹配/
+  );
+});
+
+test("live Idea verification marks only transport failures as fallback eligible", async () => {
+  const center = sampleIdeaCenter();
+  await assert.rejects(
+    verifyPublishedIdeaCenter(center, "https://example.com", async () => {
+      throw new Error("connection reset");
+    }),
+    (error) => error.code === "IDEA_LIVE_FETCH_FAILED"
+  );
+
+  await assert.rejects(
+    verifyPublishedIdeaCenter(center, "https://example.com", async () => ({
+      ok: true,
+      text: async () => '<dl data-idea-fingerprint="stale">'
+    })),
+    (error) => !error.code && /不是当前本地版本/.test(error.message)
   );
 });
 
