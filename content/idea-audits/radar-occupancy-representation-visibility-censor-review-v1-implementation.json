@@ -1,0 +1,58 @@
+{
+  "candidateId": "visibility-censored-radar-occupancy-supervision",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "019fe79f-7665-7130-b3df-d20cf0dcb051",
+  "reviewedAt": "2026-08-10T01:58:00+08:00",
+  "dossierSnapshotFingerprint": "c29dbcd68e0c890edcd83db22a437b3b13459d8bffc208b8fb56beb803496bd6",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 4,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "体素级教师删失概率、三态输出和固定覆盖校准在雷达三维占据中的组合具有明确增量，但各组成分别接近可见性过滤、噪声标签学习、选择性预测和时序一致性，主要新意是问题定义与审计协议，而非新的算法原理。",
+    "feasibility": "固定代码确有 RadarOcc-S、Doppler 输入和两张 24 GB GPU 训练路径，但标签代码不保存射线自由或逐体素来源，主干也没有时序输入。硬编码路径、旧版 CUDA 依赖、原始数据获取和人工审计使前述三周 Gate 0/1 周期明显偏紧。",
+    "success-probability": "RadarOcc 用序列级 LiDAR 聚合缓解稀疏性，且定量标签仅来自天气较好的序列，剩余可确认删失事件可能不足。学习头还容易复现距离、密度或序列捷径，因此稳定超过规则 mask 并满足占据质量约束的概率有限。",
+    "impact": "若能可信降低危险假自由并校准 unknown，结果对雷达占据监督和安全评测有实际价值，负结果也能约束复杂方法投入。但 K-Radar 天气不配对且缺少独立体素真值，结论将主要局限于单一硬件和人工审计协议。",
+    "comparison-readiness": "方案列出了规则 mask、ray-density、教师置信度和常见噪声标签基线，也要求固定 coverage，方向正确；但尚未锁定各基线的三维适配、训练种子、审计样本量和时间窗口，并且正文所称四种监督制度与实际列出的至少五种制度不一致。"
+  },
+  "overall": 5,
+  "strongestObjection": "现有资产没有独立的体素级可靠性真值。RadarOcc 先聚合序列 LiDAR 点，再把未写入网格的位置统一编码为 unoccupied；K-Radar v2.1 则只提供对象框级雷达可见性，主要标记 LiDAR 可见而雷达不可见的对象。若删失头依赖这些代理训练，又以同源多帧 LiDAR 和雷达证据评测，监督、正例发现和裁决会共享误差，无法排除自确认。",
+  "requiredExperiment": "先执行不训练可靠性头的纯 Gate 0：冻结至少 12 个序列，从原始 OS2-64 射线、时间标定和位姿重新生成逐帧 observed-free、occupied、unobserved 及来源账本，不得以 RadarOcc 的序列聚合标签裁决。分层抽取标签为空但连续雷达和 Doppler 支持占据的体素簇及匹配阴性对照，由不知道雷达证据的两名标注者使用多相机、前后帧 LiDAR 和对象轨迹独立复核，分歧保留 unknown，并加入时间偏移与标定扰动负控。只有事件可重复、人工一致性和相对对照可辨识性满足预注册判据后，才运行同 coverage、同预算的规则 mask 与学习删失头对照。",
+  "evidenceReopened": [
+    {
+      "url": "https://raw.githubusercontent.com/Toytiny/RadarOcc/dbaa20d29909b03af5f77a84dc69340561f46011/tools/process_kradar.py",
+      "finding": "固定脚本先聚合最多 100 帧静态点和跟踪对象再逐帧体素化，只保存占据坐标，不保存射线自由、未观测状态或逐体素来源。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Toytiny/RadarOcc/dbaa20d29909b03af5f77a84dc69340561f46011/projects/occ_plugin/datasets/pipelines/loading.py",
+      "finding": "加载器先将整个网格初始化为 unoccupied，再写入稀疏占据点；默认关闭的可见性分支也只体素化 LiDAR 命中点，未实现自由射线追踪。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Toytiny/RadarOcc/dbaa20d29909b03af5f77a84dc69340561f46011/projects/configs/baselines/RadarOcc_Small.py",
+      "finding": "RadarOcc-S 配置提供 128×128×14 网格、三类输出和 batch size 1，但数据及标注文件使用本机绝对路径，且没有跨帧雷达输入或删失头。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/b81d83165e3145a2e7d33bb5e33ea913-Paper-Conference.pdf",
+      "finding": "官方论文仅为 24 个良好天气序列生成定量占据标签，恶劣天气只做定性分析；原模型在两张 RTX 3090 上约训练 16.7 小时，并明确不建模时序。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kaist-avelab/K-Radar/f90c28993d1757ce0236632b4d912c92a14976b2/docs/dataset.md",
+      "finding": "固定说明确认全量数据约 15 TB 且完整 4DRT 主要经服务器或硬盘提供；v2.1 可见性修订针对对象级 LiDAR 可见而雷达不可见，不是体素可靠性真值。"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kaist-avelab/K-Radar/f90c28993d1757ce0236632b4d912c92a14976b2/tools/revise_label/kradar_revised_label_v2_1.zip",
+      "finding": "固定压缩资产中的逐帧文本记录 R、L 或 L1 可用性及三维对象框，没有自由空间射线、体素占据状态或连续可靠性概率。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/file/185fdf627eaae2abab36205dcd19b817-Paper-Datasets_and_Benchmarks.pdf",
+      "finding": "K-Radar 论文说明多模态量测存在异步偏移并依赖时间标定，公开真值为三维对象框和跟踪 ID；动态边界审计必须显式控制时间与重投影误差。"
+    },
+    {
+      "url": "https://arxiv.org/pdf/2112.04282",
+      "finding": "既有一手工作已按雷达功率阈值删除雷达不可见的 LiDAR 监督，并讨论雷达可见而 LiDAR 受遮挡的情形，因此固定规则过滤是不可省略的强基线。"
+    }
+  ]
+}

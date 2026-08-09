@@ -1,0 +1,54 @@
+{
+  "candidateId": "visibility-censored-radar-occupancy-supervision",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "019fe79f-75f8-7343-9580-291c9bd1b3c7",
+  "reviewedAt": "2026-08-10T01:51:00+08:00",
+  "dossierSnapshotFingerprint": "c29dbcd68e0c890edcd83db22a437b3b13459d8bffc208b8fb56beb803496bd6",
+  "scores": {
+    "novelty": 5,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 6,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "一手来源中未发现完整联合三维体素级教师删失概率、雷达时序证据、三态输出和独立校准的方案，因此尚无明确的功能等价覆盖。但 2112.04282 已处理可见性冲突，Sless 与 Deep Radar ISM 已覆盖三态、时序及 Doppler，RadarOcc、4D-ROLLS 和 LiCROcc 又覆盖三维占据与跨模态监督，剩余新意主要是学习型删失 mask 及其校准审计，概念增量有限。",
+    "feasibility": "RadarOcc-S、K-Radar 预处理和公开标签流程提供了可复用起点，固定主干的小规模对照可以实施。主要障碍是缺少独立体素真值、人工多视角复核成本高、删失头容易与占据头自确认，以及训练期使用的 LiDAR 支持特征如何转化为部署期可用的 unknown 决策尚不充分明确，十至十二周完成完整验证偏紧。",
+    "success-probability": "可见性规则、ray-density 权重、教师置信度和常见噪声标签方法很可能吸收大部分收益。学习型删失头还必须同时证明不是距离或天气分类器、不是简单删除困难体素、不会把雷达多径固化为占据，并在跨序列测试中保持校准；在当前缺乏独立真值的条件下，获得稳定且可归因增量的概率偏低。",
+    "impact": "危险假自由率和监督可信度是安全相关且长期被整体 IoU 掩盖的问题，若能形成可复核协议并证明固定 coverage 下的稳定改进，会对雷达占据评测产生实际价值。不过结论受 K-Radar 量测域、非配对天气和人工审计真值限制，方法影响力取决于能否证明不是以大幅增加 unknown coverage 换取表面安全收益。",
+    "comparison-readiness": "方案已经预注册固定 backbone、监督预算、多个 coverage 点、校准指标、危险假自由率以及规则 mask、教师置信度和噪声标签强基线，比较框架较完整。剩余缺口是 Deep Radar ISM、4D-ROLLS 和 LiCROcc 与 K-Radar 设置并非直接同域，需要定义可执行的功能等价基线，并冻结审计标签、阈值和聚类 bootstrap 单位。"
+  },
+  "overall": 5,
+  "strongestObjection": "核心贡献可能被判定为既有部件的增量组合：2112.04282 已经按雷达可见性修正 LiDAR 监督，Sless 和 Deep Radar ISM 已经实现 free、occupied、unknown 及多帧或 Doppler 推理，RadarOcc、4D-ROLLS 和 LiCROcc 则把 LiDAR 监督带入三维雷达占据。若删失头没有独立于自身预测的教师错误真值，并且不能在相同 coverage 下显著超过可解释规则与教师不确定性基线，它就只是更复杂的学习型 mask 和拒识策略，而非新的占据学习原理。",
+  "requiredExperiment": "在完全冻结的 K-Radar 序列划分上建立双人独立复核的体素簇审计集，使用同步相机、前后帧 LiDAR、对象轨迹和标定诊断形成 teacher-missing、free 及 unknown 标签，分歧样本不得强制归类。固定 RadarOcc-S、种子、训练步数和标签预算，在 50%、70%、90% 相同监督 coverage 下比较原始监督、2112.04282 式功率可见性 mask、LiDAR ray-density、教师熵、co-teaching、随机等 coverage 删除、学习型删失头及删失头加雷达时序约束。阈值只能在独立校准集冻结；测试集报告删失识别 PR、危险假自由率、Brier、NLL、AURC、occupied IoU、unknown coverage 和对象簇 bootstrap 区间。还必须加入时序打乱、Doppler 打乱、停止梯度移除及仅距离天气分类器对照，证明增量来自可迁移的删失识别而非自确认或样本删除。",
+  "evidenceReopened": [
+    {
+      "url": "https://arxiv.org/pdf/2112.04282",
+      "finding": "论文已用雷达功率阈值预处理 LiDAR 标签，显式处理雷达与 LiDAR 可见性差异，并用极坐标滑窗保留远距和穿透能力；但没有学习三维删失概率，也没有三态校准评测。"
+    },
+    {
+      "url": "https://arxiv.org/html/2305.12409v3",
+      "finding": "Deep Radar ISM 已输出 free、occupied、unknown 三态，使用多帧 LiDAR 动态栅格生成标签，在部分可见区域剔除无雷达点的占据监督，并结合 Doppler 生成动态栅格；它仍是二维方法且未估计教师错误概率。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/b81d83165e3145a2e7d33bb5e33ea913-Paper-Conference.pdf",
+      "finding": "RadarOcc 直接处理 4D 雷达张量并预测三维占据，监督来自连续 LiDAR 扫描叠加；坏天气序列因标签噪声仅作定性评估，作者还明确说明方法为单帧且未建模时序。"
+    },
+    {
+      "url": "https://arxiv.org/html/2505.13905v1",
+      "finding": "4D-ROLLS 以 LiDAR 射线占据查询和高度图弱监督三维雷达占据，并在雷达无观测位置屏蔽高度损失；论文承认穿透目标可能被 LiDAR 完全漏掉，但未建立教师删失概率、unknown 输出或校准端点。"
+    },
+    {
+      "url": "https://arxiv.org/html/2407.16197v1",
+      "finding": "LiCROcc 通过 CMRD、BRD 和预测分布蒸馏把 LiDAR 相机教师迁移到雷达学生，已经构成强跨模态教师基线；其目标是贴近教师分布，没有显式审计教师失效，也没有 unknown 或选择性风险校准。"
+    },
+    {
+      "url": "https://arxiv.org/pdf/1904.00415",
+      "finding": "2019 年工作已用多帧雷达聚合和 LiDAR 标签预测 occupied、free、unobserved 三态，并通过 LiDAR 覆盖凹包忽略无教师区域；因此三态、时序和可见性屏蔽本身均不能作为新颖点。"
+    },
+    {
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+      "finding": "K-Radar 提供三万五千帧 4D 雷达及标定后的 LiDAR、相机、RTK 和多天气数据，但官方核心标注是三维对象框而非独立体素占据真值，无法直接解决教师删失验证问题。"
+    }
+  ]
+}

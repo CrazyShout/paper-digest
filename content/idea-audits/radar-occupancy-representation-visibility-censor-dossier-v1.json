@@ -1,0 +1,173 @@
+{
+  "candidateId": "visibility-censored-radar-occupancy-supervision",
+  "direction": "radar-occupancy-representation",
+  "title": "CensorOcc：面向教师删失的雷达三维占据与可信自由空间",
+  "hook": "当 LiDAR 在远距、遮挡或恶劣天气中没有返回时，不再把“教师没看见”直接写成“空间为空”，而是先估计监督被删失的概率，再决定雷达占据模型应学习、保留未知还是拒绝判断。",
+  "output": "教师删失审计协议、轻量可靠性头、三态占据训练方案与负结果地图",
+  "effort": "中等工程量，复用 RadarOcc-S 主干与 K-Radar 标签流程，只新增可靠性建模、人工审计和校准评测",
+  "timeline": "首轮 10 至 12 周；前 3 周完成 Gate 0/1，若删失事件或增量不成立立即止损",
+  "whyNow": "固定雷达可见性过滤、二维 inverse sensor model、LiDAR 蒸馏和雷达三维占据已经分别出现，但最近公开方法仍普遍把 LiDAR 派生标签当成均匀可靠的监督。RadarOcc 与 K-Radar 的固定版本现在同时提供可运行的小模型、标签生成、多天气序列和对象可见性元数据，使“教师缺失究竟是假自由还是未知”首次能被压缩为一个有强基线、可人工复核且可停止的实验。",
+  "keyProblem": "在固定 K-Radar 序列、RadarOcc-S backbone 和 LiDAR 标签预算下，能否对每个三维体素估计 LiDAR 教师标签被距离、遮挡、稀疏采样或动态错位删失的概率，并将该概率与雷达跨帧持续性及 Doppler 证据结合，从而在不牺牲正常天气占据质量的前提下降低危险假自由率和过度自信，而不是只把困难体素从损失中删除。",
+  "currentLimitations": "2021 年雷达占据工作已经用固定规则过滤雷达可见而 LiDAR 不可见的标签，Deep Radar ISM 已学习二维 free/occupied measurement grid，RadarOcc、4D-ROLLS 和 LiCROcc 又分别覆盖完整雷达张量、LiDAR 弱监督与跨模态教师迁移。仍未闭合的是三维体素级教师删失概率、雷达自身时序证据、occupied/free/unknown 三态决策和 held-out 校准端点的联合验证；K-Radar 天气序列并非同场景配对，因此也不能把数据切片误写成天气因果实验。",
+  "hypothesis": "相对无条件 LiDAR 监督、固定雷达功率 mask、LiDAR ray-density 权重和教师熵权重，一个只使用训练期可获得信号的体素级删失头，加上雷达时序持续性与 Doppler 一致性约束，能在固定 coverage 下更准确地识别教师漏标区域，降低 occupied 体素被高置信预测为 free 的比例，并改善 Brier、NLL 与 selective risk；如果收益只来自忽略困难体素或只按距离、天气分类，Gate 1 应能将其否定。",
+  "noveltyClaims": [
+    {
+      "nearestWork": "Radar Occupancy Prediction with Lidar Supervision 已用固定预处理保留雷达远距与穿透能力。",
+      "irreducibleDifference": "本研究不把可见性写成固定二值规则，而是估计三维体素级教师删失概率，并以人工审计、概率校准和危险假自由率检验该概率是否真的对应监督错误。"
+    },
+    {
+      "nearestWork": "Deep Radar Inverse Sensor Models 已输出二维 free/occupied measurement grid，RadarOcc 与 4D-ROLLS 已覆盖三维雷达占据和 LiDAR 弱监督。",
+      "irreducibleDifference": "这里的估计对象不是另一个 occupancy backbone 或 evidential head，而是训练标签何时不应被当作真值；占据头、删失头和雷达时序证据必须分别消融。"
+    },
+    {
+      "nearestWork": "LiCROcc 等跨模态蒸馏方法把 LiDAR 与相机知识迁移到雷达。",
+      "irreducibleDifference": "本研究要求教师可靠性在 held-out 距离、遮挡和天气分层上可校准，并允许输出 unknown；教师置信度本身不得作为唯一真值或自证信号。"
+    }
+  ],
+  "method": [
+    {
+      "step": "构建冻结标签与删失事件证据账本",
+      "detail": "固定 K-Radar 序列、标定、RadarOcc 标签生成版本和 train/validation/test 划分；为每个体素记录 LiDAR ray support、距离、遮挡代理、动态边界、时间错位、雷达功率与 Doppler 持续性，并从留出序列抽取人工多视角复核子集。"
+    },
+    {
+      "step": "训练体素级教师删失概率预测头",
+      "detail": "在不改变 RadarOcc-S backbone 的 Gate 1 中，用训练期可得的 LiDAR 支持、几何与雷达历史特征预测标签可靠性；采用交叉拟合或停止梯度，阻止 occupancy 预测反过来自证哪些标签应被删除。"
+    },
+    {
+      "step": "三态占据监督与雷达物理一致性约束",
+      "detail": "把 occupied、free、unknown 分离：高可靠教师标签执行常规监督，疑似删失体素只接受雷达跨帧持续性、Doppler-ego-motion 一致性和保守 unknown 约束，不把单帧高反射直接当作占据真值。"
+    },
+    {
+      "step": "独立校准集上的固定 coverage 风险评测",
+      "detail": "在独立校准集上冻结可靠性阈值，比较 50%、70%、90% 监督 coverage 下的 Brier、NLL、ECE、AURC 与危险假自由率；禁止事后选择最有利天气、距离或阈值。"
+    },
+    {
+      "step": "面向自确认捷径的系统反例审计",
+      "detail": "对 LiDAR-only 障碍、雷达多径、动态边界和低反射目标分别做 counter-audit，检查模型是否只是删除困难标签、按天气分类或把雷达伪影固化为 occupied。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "asset": "RadarOcc official code @ dbaa20d29909b03af5f77a84dc69340561f46011",
+      "reuse": "复用 RadarOcc-S、K-Radar 预处理、LiDAR occupancy 标签生成、Doppler 编码和公开 checkpoint，保持主干、训练预算与既有结果可比。",
+      "boundary": "仓库标签由 LiDAR 聚合生成，不能作为教师可靠性的独立真值；固定版本也没有体素级删失头、三态标签或校准评测。"
+    },
+    {
+      "asset": "K-Radar official dataset tools @ f90c28993d1757ce0236632b4d912c92a14976b2",
+      "reuse": "复用同步 4D radar tensor、LiDAR、相机、RTK-GPS、天气序列和 v2.1 对象可见性元数据，构造距离、遮挡与动态分层。",
+      "boundary": "全量约 15 TB，天气序列不是严格配对；对象级 LiDAR-visible/radar-invisible 标签不能替代体素级 free/occupied 真值。"
+    },
+    {
+      "module": "自建 censor ledger、可靠性头与三态损失",
+      "detail": "实现逐体素 provenance、ray support、跨帧 radar persistence、Doppler 残差、交叉拟合可靠性头、unknown 状态和固定 coverage 评测；所有删失判定保留可回放日志。"
+    },
+    {
+      "module": "人工审计样本与统计评测协议",
+      "detail": "在冻结测试集按天气、距离、动态边界和教师支持分层抽样，使用同步相机、前后帧 LiDAR 与雷达时序进行双人复核；分歧样本保留 unknown，不强行制造真值。"
+    },
+    {
+      "compute": "分阶段算力与数据存储预算",
+      "detail": "Gate 0 只运行数据审计与 RadarOcc-S 推理；Gate 1 使用两张 24 GB GPU 或等价资源训练相同主干的四种监督制度，先下载固定子集，只有信号成立才扩展数据。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "phase": "Gate 0：教师删失事件存在性预检",
+      "plan": "在至少 12 个留出序列中按四个分层抽取体素簇，检查 LiDAR 派生 free 与雷达时序、后续 LiDAR 或相机证据冲突是否显著高于匹配对照；若事件稀少、复核一致性低或只由标定错误解释，停止。"
+    },
+    {
+      "phase": "Gate 1：固定主干监督制度公平对照",
+      "plan": "固定 RadarOcc-S、随机种子、标签预算和增强，仅比较原始 CE、2021 式固定可见性 mask、LiDAR ray-density 或教师熵权重、学习型删失头，以及删失头加雷达时序约束。"
+    },
+    {
+      "phase": "完整阶段：校准与失败分层验证",
+      "plan": "在独立校准集冻结阈值后，按天气、距离、LiDAR 支持和动态边界报告 occupied/free/unknown 指标、危险假自由率与 selective risk，并用 cluster bootstrap 给出区间。"
+    },
+    {
+      "phase": "冻结阶段：反自确认与跨序列验证",
+      "plan": "冻结模型后测试 LiDAR-only 障碍、低反射目标、多径与时间错位审计集；再迁移到未参与阈值选择的 K-Radar 序列，结论仅限定在公开量测域，不外推为所有雷达硬件。"
+    }
+  ],
+  "strongBaselines": [
+    "RadarOcc-S 原始 LiDAR 派生 occupancy 监督，保持 backbone、数据、训练步数、增强和标签预算完全一致。",
+    "Radar Occupancy Prediction with Lidar Supervision 的固定雷达可见性过滤，以及按雷达功率、距离和 LiDAR ray count 的可解释规则 mask。",
+    "教师 entropy 或置信度加权、focal loss、bootstrapping 与 co-teaching，检验收益是否只是常见噪声标签学习。",
+    "Deep Radar ISM 式 evidential 或 uncertainty head，以及 4D-ROLLS、LiCROcc 在可比设置下的公开监督策略。",
+    "只使用天气、距离或序列身份的简单可靠性分类器，暴露模型是否依赖分层捷径。"
+  ],
+  "metrics": [
+    "占据质量：occupied IoU、free IoU、semantic mIoU，并分别报告 normal-weather 与各预注册分层，防止校准收益以整体质量崩塌换取。",
+    "概率质量：Brier score、NLL、occupied/free ECE、AURC 和 reliability diagram，阈值只在独立校准集选择。",
+    "安全错误：危险假自由率，即被审计为 occupied 或 unresolved obstacle 的体素被高置信预测为 free 的比例，并按对象簇 bootstrap。",
+    "删失识别：人工审计子集上的 precision-recall、coverage-risk 曲线、分层稳定性和跨序列校准误差。",
+    "代价：每帧延迟、显存、训练开销、unknown coverage，以及固定 coverage 下相对规则 mask 的增量。"
+  ],
+  "successCriteria": [
+    "相对最强规则 mask 或教师置信度基线，在至少两个预注册监督 coverage 点将危险假自由率的 95% cluster-bootstrap 上界降低至少 20%，同时 normal-weather occupied IoU 的下降不超过 1 个绝对百分点。",
+    "Brier、NLL 与 AURC 至少两项在 held-out 序列稳定改善，且可靠性头在不输入天气标签时仍优于仅按天气、距离或 LiDAR density 的简单分类器。",
+    "人工审计确认收益来自更准确地区分 teacher-missing、free 与 unknown，而不是整体删除困难体素；LiDAR-only 障碍的召回不得显著下降。"
+  ],
+  "killCriteria": [
+    "Gate 0 中所谓教师删失冲突不能在留出序列稳定复现，或大部分可由标定、同步和标签生成错误直接修复。",
+    "固定可见性 mask、ray-density 权重、教师 entropy 或常见 noisy-label 基线在相同 coverage 与计算预算下达到等价校准和危险假自由率。",
+    "可靠性头只学习天气、距离或序列身份，换序列后排序失效，或者降低错误的方式只是把大量 occupied 体素改成 unknown。",
+    "雷达时序约束造成自确认：多径被固化为 occupied，LiDAR-only 障碍被删除，或概率不确定性上升却不改善 Brier、NLL 与 selective risk。"
+  ],
+  "risks": [
+    "缺少独立体素级真值是最大风险；同步相机、前后帧 LiDAR 和人工审计只能降低而不能消除不确定性，因此主要结论必须限定为审计协议内的监督可靠性。",
+    "K-Radar 天气非配对，任何分层差异都可能混入场景、交通和距离分布；天气只作为外部切片，不能宣称因果鲁棒性。",
+    "删失头可能与 occupancy 头形成自确认回路，需要停止梯度、交叉拟合、固定审计集和 LiDAR-only 反例共同约束。",
+    "全量数据和标签重建成本较高，必须先用固定小模型和子集完成 Gate 0/1，再决定是否扩大规模。"
+  ],
+  "impact": "正结果会把雷达 occupancy 的研究重点从“再换一个融合或 backbone”推进到“监督何时可信、自由空间何时必须保留 unknown”，并提供可复用的危险假自由与校准协议；负结果如果证明固定 mask 或普通 noisy-label 方法已经足够，也会阻止继续投入复杂删失模型，并明确现有公开数据不足以支撑更强的坏天气可靠性主张。",
+  "gates": {
+    "gate0": "尚未执行：确认教师删失冲突是真实、可复核且不是标定或同步错误。",
+    "gate1": "尚未执行：固定主干与 coverage，验证学习型删失是否超过规则 mask、教师置信度和 noisy-label 强基线。"
+  },
+  "evidence": [
+    {
+      "title": "STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision",
+      "url": "https://arxiv.org/abs/2608.01535",
+      "role": "本地深读报告提供雷达距离与径向速度作为物理教师的相邻证据，同时明确投影遮挡和 ego-motion 混淆，不能替代 occupancy 真值。",
+      "localPaperId": "star-vlm-radar-supervision",
+      "localLink": "papers/star-vlm-radar-supervision/"
+    },
+    {
+      "title": "RadarOcc: Robust 3D Occupancy Prediction with 4D Imaging Radar",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/b81d83165e3145a2e7d33bb5e33ea913-Abstract-Conference.html",
+      "role": "直接雷达三维 occupancy 基线和固定代码资产，其 LiDAR 派生标签与坏天气定性结果定义了本研究必须超过的比较边界。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Radar Occupancy Prediction with Lidar Supervision while Preserving Long-Range Sensing and Penetrating Capabilities",
+      "url": "https://arxiv.org/abs/2112.04282",
+      "role": "最接近的历史工作，已用固定可见性过滤处理 LiDAR 与雷达观测不一致，因此删失建模必须证明超出规则 mask。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Deep Radar Inverse Sensor Models for Dynamic Occupancy Grid Maps",
+      "url": "https://doi.org/10.1109/ITSC57777.2023.10422593",
+      "role": "提供学习型 free/occupied measurement grid 与动态占据近邻，限制把 evidential head 或二维 inverse sensor model 本身声称为新意。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "4D-ROLLS: 4D Radar Occupancy Learning via LiDAR Supervision",
+      "url": "https://arxiv.org/abs/2505.13905",
+      "role": "最近的 LiDAR 弱监督雷达 occupancy 竞品，要求本研究独立消融教师删失、雷达时序约束和三态校准。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "LiCROcc: Teach Radar for 3D Occupancy Prediction using LiDAR and Camera",
+      "url": "https://arxiv.org/abs/2407.16197",
+      "role": "直接跨模态教师迁移近邻，用于检验删失概率是否提供超出知识蒸馏和教师置信度加权的不可替代增量。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "K-Radar: 4D Radar Object Detection for Autonomous Driving in Various Weather Conditions",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+      "role": "固定数据资产提供雷达张量、同步传感器、天气和对象可见性元数据，同时其非配对天气与检测标注限制所有外推。",
+      "sourceOrigin": "external"
+    }
+  ],
+  "frozenAt": "2026-08-10T01:40:00+08:00"
+}

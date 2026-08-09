@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-01",
+  "updatedAt": "2026-08-10",
   "analysisWindowIssues": 3,
-  "title": "从模型能力竞赛转向可验证的驾驶接口",
-  "summary": "最新证据进一步收敛到四类可验证接口：端到端模型要说明模态如何共同决定动作，Agent 要说明何时值得深思以及何时回退，测试系统要把道路风险转成可复现的失败证据，部署系统还要把推理时限和传感器可信度写进安全边界。协同、三维重建与世界模型仍是重要支撑，但仅有生成质量或离线精度已经不足以构成完整结论。",
+  "title": "从可验证驾驶接口走向传感器可观测的场景表示",
+  "summary": "最新证据继续收敛到可验证接口：端到端模型要隔离未来标签和模态贡献，Agent 要说明证据来源与回退条件，测试系统要把传感器物理攻击和场景重建追到车辆后果，世界动作模型还要公开计算路由的风险。新增的雷达中心方向把问题进一步下沉到场景表示：4D 成像雷达不等于时空四维占据，真正值得投入的是利用 Doppler、跨帧连续性和天气鲁棒性，显式表达哪些空间可见、哪些运动可识别、哪些监督源不可信。",
   "trends": [
     {
       "id": "testing-as-common-language",
@@ -44,6 +44,14 @@
       "judgement": "协同方向的研究空间正从更复杂的融合网络转向通信、感知和规划的联合决策；关键问题不再是能否多发消息，而是每条消息何时值得发、何时值得信、最终是否改善闭环。",
       "tags": ["cooperative-autonomous-driving"],
       "evidencePaperIds": ["defer-to-plan-v2x-driving", "update-unseen-aoi-collaborative-perception", "deployed-vil-cooperative-perception", "cooperscene-cv2x-benchmark"]
+    },
+    {
+      "id": "radar-representation-from-measurement-to-state",
+      "title": "4D 雷达研究正在从检测输入转向可审计场景状态",
+      "evidence": "RadarOcc 与 4D-ROLLS 已把 4D 成像雷达用于当前三维占据；本期 Radar4D-VLM、STAR-VLM、Talk2Sensors 和 MoRAL 又分别检验时序雷达是否被真正使用、径向速度能否监督视觉表征、文本何时需要速度传感器，以及物理量能否进入边缘 VLM。",
+      "judgement": "下一阶段的竞争点不只是更密的雷达特征，而是明确区分量测维度、当前三维占据、场景流和真正 x-y-z-time 占据，并把教师删失、Doppler 切向歧义、自由空间校准和规划效用写进同一证据链。",
+      "tags": ["radar-occupancy-representation", "agentic-driving", "autonomous-driving-testing"],
+      "evidencePaperIds": ["radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "talk2sensors-grounding", "moral-sensor-grounded-vlm"]
     }
   ],
   "hotspots": [
@@ -78,6 +86,14 @@
       "whyItMatters": "它有机会把海量车队日志转成可运行测试资产，但需要新的下游可用性指标。",
       "tags": ["3d-reconstruction", "world-models"],
       "evidencePaperIds": ["geoworldad-geometry-world-action", "instant-nurec-feedforward-3dgs", "driving-videos-to-simulatable-scenarios", "cascadeocc-occupancy-world-model"]
+    },
+    {
+      "level": "上升交叉",
+      "title": "雷达中心 Occupancy 与传感器可靠性",
+      "evidence": "雷达张量占据、多传感器物理接地、雷达监督 VLM 与恶劣天气传感器诊断开始交汇，但现有论文仍常把 LiDAR 伪标签当真值、把径向 Doppler 当完整速度，或只在定性坏天气样例中证明鲁棒性。",
+      "whyItMatters": "雷达在低能见度和距离速度量测上的独立信息，可能成为相机/LiDAR 退化时的安全冗余；只有把不可观测性和监督失真显式化，occupancy 才能承担自由空间和规划接口。",
+      "tags": ["radar-occupancy-representation", "autonomous-driving-security", "autonomous-driving-testing"],
+      "evidencePaperIds": ["radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "talk2sensors-grounding", "moral-sensor-grounded-vlm"]
     }
   ],
   "opportunities": [
@@ -119,7 +135,7 @@
       "minimumStudy": "构造多个感知或表征版本，冻结规划器，测量闭环回归、置信度漂移和最小适配成本，再比较轻量校准与完全重训。",
       "risk": "需要避免把普通域偏移重新命名为版本问题；必须明确更新前后接口和语义变化。",
       "tags": ["end-to-end-autonomous-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["policy-stitching-e2e-driving", "s2-vla-semantic-spatial", "world-engine-post-training-driving"]
+      "evidencePaperIds": ["policy-stitching-e2e-driving", "s2-vla-semantic-spatial", "world-engine-post-training-driving", "wam-diff2-efficient-driving-vla"]
     },
     {
       "priority": "A",
@@ -150,6 +166,16 @@
       "risk": "策略依赖性很强；需要至少覆盖不同感知输入和规划范式，避免只对单一栈有效。",
       "tags": ["3d-reconstruction", "world-models", "autonomous-driving-testing"],
       "evidencePaperIds": ["geoworldad-geometry-world-action", "instant-nurec-feedforward-3dgs", "driving-videos-to-simulatable-scenarios", "cascadeocc-occupancy-world-model"]
+    },
+    {
+      "priority": "A",
+      "title": "雷达时空 Occupancy 的独立真值与规划闭环资产",
+      "question": "现有公开资产能否组合出独立逐体素 free/occupied/unknown、教师错误和未来占据流真值，并在固定规划器下判断表示改进是否真的降低风险？",
+      "whyNow": "78 篇方向综述已通过独立复核，八个方法候选却都因直接能力碰撞、端点错位或结果标签不可识别而未进入详细评审。当前最有价值的工作不是继续换模型，而是把可观测性边界变成可执行的数据合同和闭环基准。",
+      "minimumStudy": "冻结 RadarOcc/K-Radar、OmniHD-Scenes、View of Delft 及公开 radar scene-flow/occupancy 资产的版本、许可、下载入口和时空 schema，各完成一个可重复小样本解析 smoke；随后审计射线级状态、教师独立性、切向运动、未来时域和天气配对，并在固定检测器与规划器上运行同日志 no-op 和功能等价基线。",
+      "risk": "公开资产可能仍无法提供独立结果标签；若必须新建最小评测集，应先冻结预算、双人审计和禁止循环真值的规则。在这些闸门通过前，不能把任何 occupancy 模型收益表述为已验证 Idea。",
+      "tags": ["radar-occupancy-representation", "autonomous-driving-testing", "autonomous-driving-security"],
+      "evidencePaperIds": ["radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "talk2sensors-grounding", "moral-sensor-grounded-vlm"]
     }
   ],
   "directions": [
@@ -236,6 +262,18 @@
       "validation": "按天气、交互密度、动作幅度和 rollout 长度划分训练内外包络，比较视觉质量阈值、单一不确定性、ensemble 与所提组合；测量 OOD 检测、risk-coverage、错误 verdict 率、有效测试覆盖率以及与真实结果的迁移一致性。",
       "novelty": "现有世界模型强调可控生成，准入框架强调资格层级，但很少让模型在线声明‘这次结果不可信’；该 idea 把适用范围和拒答做成世界模型的第一类输出。",
       "evidencePaperIds": ["geoworldad-geometry-world-action", "safegen-critical-video-diffusion", "world-model-simulator-admissibility", "m4world-multimodal-driving-world"]
+    },
+    {
+      "tag": "radar-occupancy-representation",
+      "signal": "评测资产先行",
+      "focus": "从概率占据栅格、雷达张量三维占据和多模态融合，推进到显式时间演化、Doppler 约束、连续雷达场和恶劣天气可观测性；严格区分 4D 成像量测与 x-y-z-time 占据。",
+      "gap": "当前雷达 occupancy 多依赖 LiDAR 派生标签，却很少提供独立的 free/unknown、教师错误和未来占据流真值；雷达 scene flow 也常输出唯一三维速度，没有把 Doppler 的切向不可识别性传播到规划后果。",
+      "ideaTitle": "雷达时空 Occupancy 的独立真值与规划闭环闸门",
+      "idea": "先回答现有资产是否足以独立识别监督删失、径向多解和未来占据误差，再决定是否启动新模型。若公开资产不能组合出所需真值，则把最小、可双人审计的评测集本身作为阶段成果，而不是在循环标签上宣称方法有效。",
+      "method": "建立版本与许可固定的资产矩阵，逐项执行下载和解析 smoke，记录坐标、时间、射线状态、教师来源、对象或体素流、未来时域和天气配对；随后冻结检测器与规划器，构造同日志 no-op、规则 mask、单解 flow 和功能等价组合基线。只有独立真值与规划闭环都成立，才重启教师可靠性或集合式 occupancy-flow 方法候选。",
+      "validation": "Gate 0 检查独立 free/occupied/unknown、教师错误与未来流标签能否获得；Gate 1 检查固定检测器和规划器能否复现危险假自由、碰撞、干预、舒适性与校准风险。任一门失败就发布资产缺口和负结果，不训练新模型；通过后再按天气、距离、动态边界和预测时域比较强基线。",
+      "novelty": "方向综述已经覆盖雷达张量占据、教师迁移、时序融合、scene flow、neural field 和 VLM 接地；当前可辩护的新切入不是再造 backbone，而是把传感器可观测性、标签独立性与规划结果写成同一套可证伪准入合同。",
+      "evidencePaperIds": ["radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "talk2sensors-grounding", "moral-sensor-grounded-vlm"]
     }
   ]
 }

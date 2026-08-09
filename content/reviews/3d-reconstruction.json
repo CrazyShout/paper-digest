@@ -5,7 +5,7 @@
   "subtitle": "驾驶重建的终点不是更高的 PSNR，而是一个几何可信、传感器一致、可受控外推且不会悄然改变策略结论的世界。",
   "abstract": "NeRF 与 3D Gaussian Splatting 已把驾驶日志重建从离线新视角合成推进到实时相机、LiDAR 和雷达渲染、静动态分解、前馈 4D 重建、对象编辑与物理交互。2026-08-01 增量 RoadVGGT 又把前馈化收窄到一个实用但边界明确的资产：在给定 pose 与 depth 的前提下重建紧凑静态路面，并在 Waymo 与 nuScenes 零样本协议上同时报告图像、语义和高程指标。它证明道路结构先验可减少逐场景优化与存储，却没有动态参与者、代码或规划闭环，因此不能与完整驾驶世界重建等同。本综述继续以“资产能否准入某一具体用途”为主线，把视觉、几何、传感器/感知一致性和现实锚定闭环 verdict 分层；任何 NVS、mIoU 或高程分数都只支撑对应协议，不替代未见轨迹上的物理、动作与安全证据。",
   "reviewedAt": "2026-08-01",
-  "searchWindow": "2020-01-01 至 2026-08-01；覆盖 NeRF、3DGS、动态/4D 驾驶场景、多传感器渲染、前馈与道路表面重建、可编辑 Real2Sim、轨迹外推和闭环资产验证",
+  "searchWindow": "2020-01-01 至 2026-08-01 的核心文献综合；本地候选审计更新至 2026-08-10。覆盖 NeRF、3DGS、动态/4D 驾驶场景、多传感器渲染、前馈与道路表面重建、可编辑 Real2Sim、轨迹外推和闭环资产验证。",
   "researchQuestions": [
     "视觉、几何、传感器、感知和闭环 verdict 五类证据应如何分层，才能防止把 NVS 指标误写成闭环证明？",
     "单车日志中视角与时间耦合、未见表面和动态遮挡造成的不可辨识性，能否被可靠检测并转化为资产拒绝条件？",
@@ -530,7 +530,7 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-08-01",
+    "searchedAt": "2026-08-10",
     "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
@@ -551,12 +551,12 @@
       "official-project"
     ],
     "counts": {
-      "candidates": 50,
-      "deduplicated": 39,
+      "candidates": 57,
+      "deduplicated": 46,
       "included": 24,
-      "excluded": 15
+      "excluded": 22
     },
-    "evidenceBoundary": "2026-08-01 综合复核逐条重开 24 条纳入引用、11 条站外排除和当前本库候选的一手记录，并纳入 RoadVGGT 这一外部预印本。本库语义 rg 得到 13 个原始文件命中，按方向标签与 revisionOf 归并为 9 篇候选，其中 5 篇纳入、4 篇暂缓；外部清单含 19 篇纳入和 11 篇排除。六个真实语义查询保留跨族重叠：9 个候选出现在多个查询族，共产生 11 次额外 occurrence，因此 50 次候选出现归并为 39 篇唯一记录，最终为 24 篇纳入、11 篇排除和 4 篇暂缓。RoadVGGT 的结论严格限定在给定 pose/depth、静态路面、共同有效区域和视觉/语义/高程协议；没有动态参与者、代码或闭环验证，不能外推为完整驾驶仿真资产。",
+    "evidenceBoundary": "截至 2026-08-10，本轮实际重跑本地 ripgrep 并用 3d-reconstruction frontmatter tag 闭合候选；站外查询沿用 2026-08-01 保存的可复核结果，只重开与新增候选相关的一手记录，不声称重新执行全部站外检索。本地查询得到 20 个原始文件命中，归并为 16 篇带方向标签的规范候选，其中 5 篇已纳入、11 篇逐项暂缓。全部 6 个查询族形成 57 次候选出现并归并为 46 篇唯一记录，最终纳入 24 篇、站外排除 11 篇、本地暂缓 11 篇；本次增量同步不把候选发现自动写成方法结论更新。",
     "openSearchGaps": [
       "缺少现实道路上可成对观测的反事实真值，闭环 verdict 仍需多源现实锚定而非单一模拟器证明。",
       "跨相机 rig、跨城市、恶劣天气和训练视锥外表面的几何不确定性与拒绝机制仍缺统一基准。",
@@ -565,11 +565,11 @@
       "前馈重建的代码、长尾失败样例、存储/吞吐口径与逐场景优化基线仍缺统一复现实验。"
     ],
     "independentReview": {
-      "completedAt": "2026-08-01",
+      "completedAt": "2026-08-10",
       "status": "passed",
       "reviewers": 1,
       "rounds": 2,
-      "snapshotFingerprint": "6e01d6fc2ba72c6c4fbf46980d41623ff9c3c75624489909e1eb595f7554cb82"
+      "snapshotFingerprint": "e1fbbee93ffcd427e17d97ab7d9bd1adfb79254523531b963ee68fa9e5e8bc0d"
     },
     "queryRuns": [
       {
@@ -597,24 +597,36 @@
       {
         "family": "静态动态分解和驾驶 4D 重建",
         "sourceFamily": "local-corpus",
-        "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
-        "executedAt": "2026-08-01",
-        "resultCount": 9,
-        "rawHitCount": 13,
+        "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图|3d-reconstruction",
+        "executedAt": "2026-08-10",
+        "resultCount": 16,
+        "rawHitCount": 20,
         "screenedOutCount": 4,
-        "screeningNote": "实际执行 rg -l -i -- \"4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图\" content/papers；13 个原始文件命中经方向标签、文档类型与 revisionOf 规范化筛选后，9 篇进入跨源去重池，其余 4 篇记录为范围外或非规范条目。全部方向内候选均进入引用或暂缓组。",
+        "screeningNote": "2026-08-10 实际重跑 rg -l -i，语义正则与 3d-reconstruction tag 闭合共命中 20 个 Markdown 文件；按方向标签与 revisionOf 归并为 16 篇规范候选，其他 4 个文件完成范围筛除。",
         "resultIdSample": [
-          "arxiv:2411.16816",
-          "arxiv:2605.21032",
+          "arxiv:2605.26113",
+          "doi:10.1109/lsp.2026.3680426",
+          "arxiv:2608.01761",
+          "arxiv:2411.11921",
+          "arxiv:2606.21993",
+          "arxiv:2605.07910",
+          "arxiv:2606.10656",
+          "arxiv:2607.17521",
           "arxiv:2607.14203",
-          "arxiv:2605.13591"
+          "arxiv:2605.21032",
+          "arxiv:2605.11594",
+          "arxiv:2605.13591",
+          "arxiv:2605.23406",
+          "arxiv:2411.16816",
+          "arxiv:2606.12396",
+          "arxiv:2605.05897"
         ],
-        "scopeRationale": "对本库 Markdown 全文执行与本查询族语义对齐的可复现宽正则，再按方向标签、文档类型与 revisionOf 做范围筛选；原始文件命中和进入去重池的论文候选分别计数。",
+        "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
         "retrieval": {
           "provider": "ripgrep-local-corpus",
           "endpoint": "content/papers",
           "parameters": {
-            "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
+            "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图|3d-reconstruction",
             "path": "content/papers",
             "flags": [
               "-l",
@@ -626,20 +638,27 @@
         },
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
+            "anyscene-controllable-driving-scene-generation",
+            "cascadeocc-occupancy-world-model",
+            "decouplegs-interactive-driving-testing",
             "desire-gs-4d-street-gaussians",
+            "driving-videos-to-simulatable-scenarios",
             "dust-cooperative-4d-reconstruction",
             "envision4d-feedforward-4dgs",
+            "geoworldad-geometry-world-action",
             "instant-nurec-feedforward-3dgs",
             "physically-consistent-4d-driving-reconstruction",
             "pointforward-driving-reconstruction",
             "real2sim-physics-4dgs",
+            "rs2ad-lidar-roadside-to-vehicle-generation",
             "splatad-realtime-3dgs",
+            "vlga-geometry-action-driving",
             "vrs-roadside-lidar-synthesis"
           ],
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "截至 2026-08-01 与本方向直接相关，但与核心代表工作高度重叠，或仍缺正式出版、独立复现及用途级证据；保留为后续证据升级候选。",
+              "reason": "这些论文的主要方向属于本综述，但本轮只完成版本、来源和候选合规性复核，尚未与最新站外直接竞品共同重写 taxonomy 或形成独立用途级证据，因此暂不升级为核心引用。",
               "localPaperIds": [
                 "dust-cooperative-4d-reconstruction",
                 "envision4d-feedforward-4dgs",
@@ -648,8 +667,15 @@
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "截至 2026-08-01 可提供跨方向补充证据，但主要贡献归入另一研究方向；本综述不重复加权，形成独立证据链后再提升为核心引用。",
+              "reason": "这些论文带有本方向次级标签并提供相关证据，但主要研究对象归入另一方向；本综述保留其 canonical 记录而不重复加权，只有形成独立证据链后才升级为核心引用。",
               "localPaperIds": [
+                "anyscene-controllable-driving-scene-generation",
+                "cascadeocc-occupancy-world-model",
+                "decouplegs-interactive-driving-testing",
+                "driving-videos-to-simulatable-scenarios",
+                "geoworldad-geometry-world-action",
+                "rs2ad-lidar-roadside-to-vehicle-generation",
+                "vlga-geometry-action-driving",
                 "vrs-roadside-lidar-synthesis"
               ]
             }
@@ -1193,6 +1219,69 @@
           "静态动态分解和驾驶 4D 重建"
         ],
         "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01761",
+        "occurrences": 1,
+        "disposition": "deferred",
+        "localPaperId": "decouplegs-interactive-driving-testing",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ]
+      },
+      {
+        "canonicalId": "arxiv:2605.26113",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "anyscene-controllable-driving-scene-generation"
+      },
+      {
+        "canonicalId": "doi:10.1109/lsp.2026.3680426",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "cascadeocc-occupancy-world-model"
+      },
+      {
+        "canonicalId": "arxiv:2606.21993",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "driving-videos-to-simulatable-scenarios"
+      },
+      {
+        "canonicalId": "arxiv:2607.17521",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "geoworldad-geometry-world-action"
+      },
+      {
+        "canonicalId": "arxiv:2605.23406",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "rs2ad-lidar-roadside-to-vehicle-generation"
+      },
+      {
+        "canonicalId": "arxiv:2606.12396",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "occurrences": 1,
+        "localPaperId": "vlga-geometry-action-driving"
       }
     ],
     "sourceLimitations": [
@@ -1218,12 +1307,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-08-01",
+        "executedAt": "2026-08-10",
         "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 5,
-        "note": "实际执行 rg -l -i：13 个原始文件命中，9 篇方向内规范候选；5 篇纳入，4 篇逐篇闭合到暂缓组。"
+        "note": "2026-08-10 重跑本库 rg，得到 14 个原始命中文件和 10 篇带方向标签的规范化候选；每篇均进入引用或暂缓组。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1275,6 +1364,7 @@
         "acceptedCount": 1,
         "note": "官方 3DGS 项目页作为一条基础表示引用的直接核验源；其他项目页只用于核对资产，不升级出版或闭环证据等级。"
       }
-    ]
+    ],
+    "incrementalLocalAuditAt": "2026-08-10"
   }
 }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
@@ -74,6 +75,61 @@ test("literature review workflow is pinned and covers every direction", async ()
   ]);
   for (const direction of Object.values(workflow.directions)) {
     assert.ok(direction.queryFamilies.length >= workflow.requirements.minQueryFamilies);
+  }
+});
+
+test("OpenAlex review retrievals use the real search API parameter", async () => {
+  const review = await readFile(
+    "content/reviews/radar-occupancy-representation.json",
+    "utf8"
+  ).then(JSON.parse);
+  const openAlexRuns = review.searchAudit.queryRuns.filter((run) =>
+    run.retrieval.provider.includes("openalex")
+  );
+
+  assert.ok(openAlexRuns.length >= 2);
+  for (const run of openAlexRuns) {
+    assert.equal(run.retrieval.parameters.search, run.query);
+    assert.equal(Object.hasOwn(run.retrieval.parameters, "query"), false);
+    assert.ok(Number.isInteger(run.retrieval.parameters.per_page));
+  }
+});
+
+test("ranked OpenAlex snapshots bind aliases and citation expansion counts", async () => {
+  const review = JSON.parse(
+    await readFile("content/reviews/radar-occupancy-representation.json", "utf8")
+  );
+  const snapshotRuns = review.searchAudit.queryRuns.filter(
+    (run) => Array.isArray(run.retrieval?.rankedOpenAlexIds)
+  );
+
+  assert.equal(snapshotRuns.length, 2);
+  for (const run of snapshotRuns) {
+    const ids = run.retrieval.rankedOpenAlexIds;
+    const fingerprint = createHash("sha256")
+      .update(JSON.stringify(ids))
+      .digest("hex");
+    const mergedAliasRows = run.retrieval.aliasMerges.reduce(
+      (sum, merge) => sum + merge.rankedOpenAlexIds.length - 1,
+      0
+    );
+
+    assert.equal(ids.length, run.retrieval.limit);
+    assert.equal(new Set(ids).size, ids.length);
+    assert.equal(fingerprint, run.retrieval.rankedSnapshotSha256);
+    assert.equal(mergedAliasRows, run.aliasMergedCount);
+    assert.equal(
+      run.rawHitCount,
+      run.directCandidateCount + run.aliasMergedCount + run.screenedOutCount
+    );
+    assert.equal(
+      run.resultCount,
+      run.directCandidateCount + run.citationExpansionCount
+    );
+    assert.equal(
+      run.retrieval.citationExpansion.resultIdSample.length,
+      run.citationExpansionCount
+    );
   }
 });
 
@@ -472,6 +528,43 @@ test("local review searches separate raw hits and close every tagged candidate",
         `${direction.id}:${attempt.sourceFamily}`
       );
     }
+  }
+});
+
+test("local-only review refreshes preserve core and external audit dates", async () => {
+  const center = await getReviewCenter();
+
+  for (const direction of center.directions) {
+    const { searchAudit } = direction;
+    if (!searchAudit.incrementalLocalAuditAt) {
+      assert.equal(searchAudit.searchedAt, direction.reviewedAt, direction.id);
+      continue;
+    }
+
+    assert.equal(
+      searchAudit.incrementalLocalAuditAt,
+      searchAudit.searchedAt,
+      direction.id
+    );
+    assert.ok(direction.reviewedAt < searchAudit.searchedAt, direction.id);
+
+    const postReviewRuns = searchAudit.queryRuns.filter(
+      (queryRun) => queryRun.executedAt > direction.reviewedAt
+    );
+    assert.ok(postReviewRuns.length > 0, direction.id);
+    assert.ok(
+      postReviewRuns.every((queryRun) => queryRun.sourceFamily === "local-corpus"),
+      direction.id
+    );
+
+    const postReviewAttempts = searchAudit.sourceAttempts.filter(
+      (attempt) => attempt.executedAt > direction.reviewedAt
+    );
+    assert.ok(postReviewAttempts.length > 0, direction.id);
+    assert.ok(
+      postReviewAttempts.every((attempt) => attempt.sourceFamily === "local-corpus"),
+      direction.id
+    );
   }
 });
 

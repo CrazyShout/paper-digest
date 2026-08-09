@@ -91,6 +91,18 @@
 | obsdrivebench-adverse-weather | ObsDriveBench: Benchmarking Multimodal Understanding under Adverse Weather with Observability Awareness | 2607.23537 | 2026-08-01 |
 | denial-of-deadline-inference | Denial of Deadline: Network-Driven Accuracy Collapse in Distributed Inference Pipelines | 2607.24692 | 2026-08-01 |
 | rl-fuzz-testing-agents | Evaluating Fuzz Testing for Reinforcement Learning Agents | 2607.24577 | 2026-08-01 |
+| moral-sensor-grounded-vlm | MoRAL: Sensor-Grounded BEV Reasoning for Compact VLMs toward Edge-Oriented Autonomous Driving | 2608.02449 | 2026-08-10 |
+| deft-rlvr-verifiable-driving-reasoning | Deferred Exposure of Future Trajectories for Verifiable Reasoning in Autonomous Driving VLMs | 2608.01755 | 2026-08-10 |
+| wam-diff2-efficient-driving-vla | WAM-Diff2: Hierarchical AR-to-Diffusion Distillation for Highly Efficient Autonomous Driving VLA | 2608.01035 | 2026-08-10 |
+| adaptive-wam-early-exit-planning | Adaptive-WAM: Quality-Guided Early-Exit Planning from Intermediate Video-Diffusion Features | 2608.06008 | 2026-08-10 |
+| decouplegs-interactive-driving-testing | DecoupleGS: Interactive 3D Gaussian Splatting for End-to-End Autonomous Driving Testing | 2608.01761 | 2026-08-10 |
+| twinir-online-map-attack | TwinIR: Coordinated Invisible Dual-Point Attacks on Online HD Map Construction | 2608.04453 | 2026-08-10 |
+| perspective-shift-optical-sensor-attack | Perspective-Shift Attacks Against Optical Perception Sensors: A Novel Attack Vector on LiDAR and Camera | - | 2026-08-10 |
+| seeing-is-deceiving-mirror-lidar-attack | Seeing is Deceiving: Systematic Vulnerability Analysis of LiDAR-Based Autonomous Driving to Mirror-Induced Perception Failures | 2509.17253 | 2026-08-10 |
+| rail-resilient-autonomous-driving | RAIL: Risk-Aware Human-in-the-Loop Framework with Adaptive Intrusion Response for Autonomous Vehicles | 2601.11781 | 2026-08-10 |
+| radar4d-vlm-temporal-reasoning | Radar4D-VLM: Proposal-Grounded Temporal 4D Radar Reasoning Across Frozen Language Models | 2608.04130 | 2026-08-10 |
+| star-vlm-radar-supervision | STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision | 2608.01535 | 2026-08-10 |
+| talk2sensors-grounding | Talk2Sensors: 3D Visual Grounding in Autonomous Driving via Sensor-Adaptive Physical Cue Matching | 2608.04568 | 2026-08-10 |
 
 ## 使用说明
 

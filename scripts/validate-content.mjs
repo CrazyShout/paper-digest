@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -160,6 +161,10 @@ function isStringArray(value) {
     && value.length > 0
     && value.every((item) => typeof item === "string" && item.trim())
   );
+}
+
+function jsonSha256(value) {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
 function validateStringField(data, field, file) {
@@ -1202,8 +1207,27 @@ function validateReviewCenter(
     ) {
       addError(`${searchAuditLabel}.cutoffDate cannot be later than searchedAt`);
     }
-    if (searchAudit.searchedAt !== review.reviewedAt) {
-      addError(`${searchAuditLabel}.searchedAt must equal reviewedAt`);
+    const isIncrementalLocalAudit = searchAudit.searchedAt !== review.reviewedAt;
+    if (isIncrementalLocalAudit) {
+      if (
+        !isValidIsoDate(searchAudit.incrementalLocalAuditAt)
+        || searchAudit.incrementalLocalAuditAt !== searchAudit.searchedAt
+      ) {
+        addError(
+          `${searchAuditLabel}.incrementalLocalAuditAt must equal searchedAt when only the local corpus is refreshed`
+        );
+      }
+      if (
+        !isValidIsoDate(review.reviewedAt)
+        || !isValidIsoDate(searchAudit.searchedAt)
+        || review.reviewedAt > searchAudit.searchedAt
+      ) {
+        addError(`${searchAuditLabel}.searchedAt cannot predate reviewedAt`);
+      }
+    } else if (searchAudit.incrementalLocalAuditAt !== undefined) {
+      addError(
+        `${searchAuditLabel}.incrementalLocalAuditAt is only allowed after a local-only refresh`
+      );
     }
 
     const directionWorkflow = workflow.directions?.[review.id];
@@ -1289,10 +1313,113 @@ function validateReviewCenter(
         ["provider", "endpoint", "sort"],
         `${queryRunLabel}.retrieval`
       );
+      const hasRankedSnapshot = [
+        "rankedOpenAlexIds",
+        "rankedSnapshotSha256",
+        "retrievedAt",
+        "reportedTotal"
+      ].some((field) => Object.hasOwn(retrieval, field));
+      if (hasRankedSnapshot) {
+        const rankedIds = retrieval.rankedOpenAlexIds;
+        if (!isStringArray(rankedIds)) {
+          addError(`${queryRunLabel}.retrieval.rankedOpenAlexIds must be a non-empty string array`);
+        } else {
+          if (new Set(rankedIds).size !== rankedIds.length) {
+            addError(`${queryRunLabel}.retrieval.rankedOpenAlexIds must not contain duplicates`);
+          }
+          if (rankedIds.some((id) => !/^W\d+$/.test(id))) {
+            addError(`${queryRunLabel}.retrieval.rankedOpenAlexIds must contain OpenAlex work IDs`);
+          }
+          if (Number.isInteger(retrieval.limit) && rankedIds.length !== retrieval.limit) {
+            addError(`${queryRunLabel}.retrieval.rankedOpenAlexIds must match retrieval.limit`);
+          }
+          if (retrieval.rankedSnapshotSha256 !== jsonSha256(rankedIds)) {
+            addError(`${queryRunLabel}.retrieval.rankedSnapshotSha256 does not match rankedOpenAlexIds`);
+          }
+        }
+        if (
+          typeof retrieval.retrievedAt !== "string"
+          || Number.isNaN(Date.parse(retrieval.retrievedAt))
+        ) {
+          addError(`${queryRunLabel}.retrieval.retrievedAt must be an ISO timestamp`);
+        }
+        if (
+          !Number.isInteger(retrieval.reportedTotal)
+          || retrieval.reportedTotal < (Array.isArray(rankedIds) ? rankedIds.length : 0)
+        ) {
+          addError(`${queryRunLabel}.retrieval.reportedTotal must cover the ranked snapshot`);
+        }
+
+        const directCount = queryRun.directCandidateCount;
+        const aliasCount = queryRun.aliasMergedCount;
+        const expansionCount = queryRun.citationExpansionCount;
+        for (const [field, value] of [
+          ["directCandidateCount", directCount],
+          ["aliasMergedCount", aliasCount],
+          ["citationExpansionCount", expansionCount]
+        ]) {
+          if (!Number.isInteger(value) || value < 0) {
+            addError(`${queryRunLabel}.${field} must be a non-negative integer`);
+          }
+        }
+        if (
+          Number.isInteger(queryRun.rawHitCount)
+          && Number.isInteger(queryRun.screenedOutCount)
+          && Number.isInteger(directCount)
+          && Number.isInteger(aliasCount)
+          && queryRun.rawHitCount !== directCount + aliasCount + queryRun.screenedOutCount
+        ) {
+          addError(
+            `${queryRunLabel}.rawHitCount must equal direct candidates, alias rows, and screened rows`
+          );
+        }
+        if (
+          Number.isInteger(queryRun.resultCount)
+          && Number.isInteger(directCount)
+          && Number.isInteger(expansionCount)
+          && queryRun.resultCount !== directCount + expansionCount
+        ) {
+          addError(`${queryRunLabel}.resultCount must equal direct candidates plus citation expansion`);
+        }
+
+        const aliasMerges = Array.isArray(retrieval.aliasMerges) ? retrieval.aliasMerges : [];
+        const mergedAliasRows = aliasMerges.reduce((sum, merge, index) => {
+          const mergeLabel = `${queryRunLabel}.retrieval.aliasMerges[${index}]`;
+          if (!isStringArray(merge?.rankedOpenAlexIds) || merge.rankedOpenAlexIds.length < 2) {
+            addError(`${mergeLabel}.rankedOpenAlexIds must contain at least two IDs`);
+            return sum;
+          }
+          if (
+            Array.isArray(rankedIds)
+            && merge.rankedOpenAlexIds.some((id) => !rankedIds.includes(id))
+          ) {
+            addError(`${mergeLabel}.rankedOpenAlexIds must come from the ranked snapshot`);
+          }
+          validateRequiredStrings(merge, ["primaryCanonicalId", "reason"], mergeLabel);
+          return sum + merge.rankedOpenAlexIds.length - 1;
+        }, 0);
+        if (Number.isInteger(aliasCount) && mergedAliasRows !== aliasCount) {
+          addError(`${queryRunLabel}.retrieval.aliasMerges must account for aliasMergedCount`);
+        }
+        const expansionIds = retrieval.citationExpansion?.resultIdSample;
+        if (
+          Number.isInteger(expansionCount)
+          && (!Array.isArray(expansionIds) || expansionIds.length !== expansionCount)
+        ) {
+          addError(
+            `${queryRunLabel}.retrieval.citationExpansion.resultIdSample must match citationExpansionCount`
+          );
+        }
+      }
       if (!isPlainObject(retrieval.parameters)) {
         addError(`${queryRunLabel}.retrieval.parameters must be an object`);
-      } else if (retrieval.parameters.query !== queryRun?.query) {
-        addError(`${queryRunLabel}.retrieval.parameters.query must match query`);
+      } else if (
+        retrieval.provider?.includes("openalex")
+          ? retrieval.parameters.search !== queryRun?.query
+          : retrieval.parameters.query !== queryRun?.query
+      ) {
+        const parameterName = retrieval.provider?.includes("openalex") ? "search" : "query";
+        addError(`${queryRunLabel}.retrieval.parameters.${parameterName} must match query`);
       } else if (queryRun?.sourceFamily === "local-corpus") {
         if (retrieval.provider !== "ripgrep-local-corpus") {
           addError(`${queryRunLabel}.retrieval.provider must identify ripgrep for local corpus runs`);
@@ -1496,6 +1623,15 @@ function validateReviewCenter(
           `${queryRunLabel}.executedAt must be a real date between cutoffDate and searchedAt`
         );
       }
+      if (
+        isIncrementalLocalAudit
+        && queryRun?.executedAt > review.reviewedAt
+        && queryRun?.sourceFamily !== "local-corpus"
+      ) {
+        addError(
+          `${queryRunLabel}.executedAt cannot postdate reviewedAt during a local-only refresh`
+        );
+      }
       if (!Number.isInteger(queryRun?.resultCount) || queryRun.resultCount < 0) {
         addError(`${queryRunLabel}.resultCount must be a non-negative integer`);
       } else {
@@ -1600,6 +1736,15 @@ function validateReviewCenter(
       ) {
         addError(
           `${attemptLabel}.executedAt must be a real date between cutoffDate and searchedAt`
+        );
+      }
+      if (
+        isIncrementalLocalAudit
+        && attempt?.executedAt > review.reviewedAt
+        && attempt?.sourceFamily !== "local-corpus"
+      ) {
+        addError(
+          `${attemptLabel}.executedAt cannot postdate reviewedAt during a local-only refresh`
         );
       }
       if (!Number.isInteger(attempt?.limit) || attempt.limit < 1) {

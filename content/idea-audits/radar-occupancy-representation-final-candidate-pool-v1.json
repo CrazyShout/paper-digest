@@ -1,0 +1,569 @@
+{
+  "directionId": "radar-occupancy-representation",
+  "reviewerAgentId": "019fe787-8b71-7913-9db8-f324f3a44764",
+  "reviewerRole": "retrieval-and-candidate-collision-auditor",
+  "searchedAt": "2026-08-10T01:15:00+08:00",
+  "reviewMode": "unscored-candidate-generation-and-functional-collision",
+  "scope": {
+    "direction": "radar-occupancy-representation",
+    "cutoffDate": "2026-08-10",
+    "question": "哪些雷达中心场景表示问题同时具有明确任务代价、尚未被最近工作功能等价覆盖，并能用公开雷达张量、占据标签与时序数据在十二周内建立可证伪闭环？",
+    "definitions": [
+      "4D imaging radar 的四维是距离、方位角、俯仰角和 Doppler；它不是显式时间维。",
+      "本审计只把 x-y-z 随时间演化的占据、释放与运动不确定性称为 4D occupancy。",
+      "scene flow、neural field、sensor rendering 和 VLM grounding 可提供约束或接口，但没有自由/占据端点时不得冒充 occupancy 方法。"
+    ],
+    "included": [
+      "雷达单模态三维占据、动态占据和时空 occupancy flow",
+      "雷达与相机或 LiDAR 的监督、融合及传感器可见性",
+      "Doppler 可识别性、跨帧连续性和动态对象状态",
+      "恶劣天气下的证据校准、自由空间安全和规划效用",
+      "可复现数据、代码、标签生成和部署边界"
+    ],
+    "excluded": [
+      "只有 3D 检测框而没有占据、自由空间或场景表征端点的工作",
+      "只提高雷达点云密度或渲染质量而不验证 occupancy 校准和下游用途的工作",
+      "把 LiDAR 伪标签当无噪真值，或把径向 Doppler 当完整三维速度的方案",
+      "依赖私有原始 ADC、不可发布天气配对或真实未来反事实才能完成最小实验的主张"
+    ]
+  },
+  "searchAudit": {
+    "cutoffDate": "2026-08-10",
+    "deduplicationKeys": [
+      "DOI",
+      "arXiv ID",
+      "official proceedings identity",
+      "normalized title",
+      "formal-version and preprint alias"
+    ],
+    "queryRuns": [
+      {
+        "familyId": "local-radar-and-occupancy-evidence",
+        "query": "rg -l -i 'radar|occupancy|占据|Doppler|4D' content/papers",
+        "scopeRationale": "重开本期四篇雷达标签报告，确认语言接地和物理监督只能作为相邻证据，不能替代 occupancy 端点。",
+        "source": "local-corpus",
+        "executedAt": "2026-08-10T00:30:00+08:00",
+        "resultCount": 4,
+        "rawHitCount": 36,
+        "canonicalIdSample": ["arxiv:2608.04130", "arxiv:2608.01535", "arxiv:2608.04568", "arxiv:2608.02449"],
+        "screeningNote": "宽泛关键词用于发现，只有四篇具有新方向标签的报告进入候选碰撞；其余命中属于普通检测、既有 occupancy 或跨方向背景。"
+      },
+      {
+        "familyId": "radar-only-occupancy",
+        "query": "4D imaging radar occupancy prediction radar tensor free space dynamic occupancy grid",
+        "scopeRationale": "寻找直接以雷达张量或点云输出占据的最近工作，防止把新 backbone 或密度补全重复包装。",
+        "source": "arxiv",
+        "executedAt": "2026-08-10T00:35:00+08:00",
+        "resultCount": 6,
+        "canonicalIdSample": ["arxiv:2405.14014", "arxiv:2505.13905", "arxiv:2209.14499", "arxiv:2112.04282", "arxiv:1904.00415"]
+      },
+      {
+        "familyId": "multimodal-occupancy-supervision",
+        "query": "radar camera lidar semantic occupancy fusion LiCROcc TEOcc MetaOcc REOcc teacher supervision",
+        "scopeRationale": "核验多模态融合、时序训练和 LiDAR 教师已覆盖到哪里，并寻找监督源失效仍未被建模的残差。",
+        "source": "arxiv",
+        "executedAt": "2026-08-10T00:40:00+08:00",
+        "resultCount": 5,
+        "canonicalIdSample": ["arxiv:2407.16197", "arxiv:2410.11228", "arxiv:2501.15384", "arxiv:2511.06666"]
+      },
+      {
+        "familyId": "temporal-occupancy-and-flow",
+        "query": "4D occupancy forecasting occupancy flow radar scene flow Doppler CMFlow TARS UnO",
+        "scopeRationale": "严格区分显式时空占据、点云场景流和径向速度约束，检查切向不可识别性是否被现有方法诚实表达。",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-10T00:45:00+08:00",
+        "resultCount": 5,
+        "canonicalIdSample": ["arxiv:2203.03875", "arxiv:2406.08691", "arxiv:2303.00462", "arxiv:2503.10210"]
+      },
+      {
+        "familyId": "radar-neural-fields-and-rendering",
+        "query": "radar neural field dynamic radar rendering Radar Fields RF4D NeuRadar RadarSplat occupancy density",
+        "scopeRationale": "判断连续密度场能否提供占据先验，同时防止把传感器合成或新视角渲染指标直接写成自由空间证据。",
+        "source": "publisher-and-venue",
+        "executedAt": "2026-08-10T00:50:00+08:00",
+        "resultCount": 4,
+        "canonicalIdSample": ["doi:10.1145/3641519.3657510", "arxiv:2505.20967", "arxiv:2504.00859"]
+      },
+      {
+        "familyId": "weather-uncertainty-and-calibration",
+        "query": "adverse weather radar occupancy uncertainty calibration lidar teacher visibility free-space safety",
+        "scopeRationale": "检查恶劣天气论文是否具有真实退化、配对传感器和校准端点，而非只展示定性雷达图。",
+        "source": "arxiv",
+        "executedAt": "2026-08-10T00:55:00+08:00",
+        "resultCount": 4,
+        "canonicalIdSample": ["arxiv:2405.14014", "arxiv:2412.10734", "arxiv:2604.01081"]
+      },
+      {
+        "familyId": "datasets-labels-and-open-assets",
+        "query": "K-Radar View of Delft OmniHD-Scenes radar occupancy labels official code dataset checkpoint",
+        "scopeRationale": "核对最小研究可用的原始雷达、同步传感器、occupancy 标签、天气切片、许可证、代码入口和固定版本。",
+        "source": "official-code-and-data",
+        "executedAt": "2026-08-10T01:00:00+08:00",
+        "resultCount": 4,
+        "canonicalIdSample": ["neurips:2022:k-radar", "doi:10.1109/lra.2022.3147324", "arxiv:2412.10734"]
+      },
+      {
+        "familyId": "planning-utility-and-deployment",
+        "query": "radar occupancy planning collision free-space calibration closed loop runtime embedded deployment",
+        "scopeRationale": "检查 occupancy 改进是否真正改变规划、尾部风险和实时部署，限制只报告 mIoU 的研究主张。",
+        "source": "arxiv",
+        "executedAt": "2026-08-10T01:05:00+08:00",
+        "resultCount": 4,
+        "canonicalIdSample": ["arxiv:2405.14014", "arxiv:2505.13905", "arxiv:2406.08691"]
+      }
+    ],
+    "sourceAttempts": [
+      {
+        "sourceFamily": "local-corpus",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:30:00+08:00",
+        "status": "success",
+        "result": "以 ripgrep 重开本地论文报告，按配置标签与 canonical ID 形成四篇直接本地证据。"
+      },
+      {
+        "sourceFamily": "arxiv",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:35:00+08:00",
+        "status": "success",
+        "result": "用于核验预印本版本、任务端点、修订历史和仍无正式页面的最新方法。"
+      },
+      {
+        "sourceFamily": "publisher-and-venue",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:45:00+08:00",
+        "status": "success",
+        "result": "核验 NeurIPS、CVPR、ICCV、ACM 与 IEEE 正式页面；存在正式版时同时保留 arXiv。"
+      },
+      {
+        "sourceFamily": "semantic-scholar",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:46:00+08:00",
+        "status": "limited",
+        "result": "仅用于候选发现与别名交叉检查，API 限流后不承担任何最终主张。"
+      },
+      {
+        "sourceFamily": "openalex",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:47:00+08:00",
+        "status": "success",
+        "result": "用于 DOI、venue 与 arXiv 别名发现，最终证据均回到一手来源。"
+      },
+      {
+        "sourceFamily": "official-project",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T00:50:00+08:00",
+        "status": "success",
+        "result": "核验 RadarOcc、Radar Fields、数据集和正式项目页对任务、图像与资产状态的声明。"
+      },
+      {
+        "sourceFamily": "official-code-and-data",
+        "attempted": true,
+        "attemptedAt": "2026-08-10T01:00:00+08:00",
+        "status": "success-with-gaps",
+        "result": "固定 RadarOcc 与 K-Radar 官方仓库提交；4D-ROLLS 仓库在截止日仍缺完整可执行说明，故不作为关键依赖。"
+      }
+    ],
+    "knownCoverageLimitations": [
+      "K-Radar 的恶劣天气序列并非同一场景、同一交通状态下的晴天配对，不能直接识别天气造成的监督失真。",
+      "多数 occupancy 标签由 LiDAR 累积或伪标签生成；在远距、遮挡、雨雪和动态物体上，标签缺失与真实自由空间仍会混淆。",
+      "公开雷达通常是厂商处理后的张量或点云，不含完整 ADC 和波束形成配置；主张必须限定到可发布量测域。",
+      "CMFlow/TARS 的 scene flow、Radar Fields/RF4D 的渲染密度和本期 VLM 的语言接地均不是 occupancy 真值。"
+    ]
+  },
+  "verifiedReferences": [
+    {
+      "canonicalId": "arxiv:2608.04130",
+      "title": "Radar4D-VLM: Proposal-Grounded Temporal 4D Radar Reasoning Across Frozen Language Models",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "radar4d-vlm-temporal-reasoning",
+      "url": "https://arxiv.org/abs/2608.04130",
+      "queryFamilyIds": ["local-radar-and-occupancy-evidence"],
+      "verifiedUse": "提供雷达置零、时间反转、token 置换和无语言对照，可复用为模型是否真正使用雷达历史的干预检查。",
+      "evidenceBoundary": "任务是语言推理与对象接地，不输出自由空间或时空 occupancy。"
+    },
+    {
+      "canonicalId": "arxiv:2608.01535",
+      "title": "STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "star-vlm-radar-supervision",
+      "url": "https://arxiv.org/abs/2608.01535",
+      "queryFamilyIds": ["local-radar-and-occupancy-evidence", "multimodal-occupancy-supervision"],
+      "verifiedUse": "证明雷达距离与径向速度可作为低成本物理教师，也暴露投影遮挡与 ego-motion 混淆。",
+      "evidenceBoundary": "推理时是相机 VLM，监督点不等于体素占据或完整三维速度。"
+    },
+    {
+      "canonicalId": "arxiv:2608.04568",
+      "title": "Talk2Sensors: 3D Visual Grounding in Autonomous Driving via Sensor-Adaptive Physical Cue Matching",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "talk2sensors-grounding",
+      "url": "https://arxiv.org/abs/2608.04568",
+      "queryFamilyIds": ["local-radar-and-occupancy-evidence"],
+      "verifiedUse": "提供按文本物理属性选择相机、LiDAR 和雷达证据的接口，以及速度提示对接地的增量。",
+      "evidenceBoundary": "任务是 3D 指代表达，不检验稠密占据、校准或规划。"
+    },
+    {
+      "canonicalId": "arxiv:2608.02449",
+      "title": "MoRAL: Sensor-Grounded BEV Reasoning for Compact VLMs toward Edge-Oriented Autonomous Driving",
+      "year": 2026,
+      "sourceFamily": "local-corpus",
+      "localPaperId": "moral-sensor-grounded-vlm",
+      "url": "https://arxiv.org/abs/2608.02449",
+      "queryFamilyIds": ["local-radar-and-occupancy-evidence"],
+      "verifiedUse": "把雷达 Doppler、LiDAR 距离和几何显式编码为紧凑 BEV 接口，可借鉴物理量可读性检查。",
+      "evidenceBoundary": "教师生成推理和 LLM 裁判不能作为 occupancy 可靠性真值。"
+    },
+    {
+      "canonicalId": "neurips:2024:radarocc",
+      "title": "RadarOcc: Robust 3D Occupancy Prediction with 4D Imaging Radar",
+      "year": 2024,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/b81d83165e3145a2e7d33bb5e33ea913-Abstract-Conference.html",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2405.14014"}],
+      "queryFamilyIds": ["radar-only-occupancy", "weather-uncertainty-and-calibration", "planning-utility-and-deployment"],
+      "verifiedUse": "直接从完整雷达张量输出当前三维 occupancy，是任何雷达 backbone、Doppler 编码与 K-Radar 对比的首要基线。",
+      "evidenceBoundary": "输出不是 x-y-z-time 占据；恶劣天气主要是定性展示，标签由 LiDAR 生成。"
+    },
+    {
+      "canonicalId": "arxiv:2505.13905",
+      "title": "4D-ROLLS: 4D Radar Occupancy Learning via LiDAR Supervision",
+      "year": 2025,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2505.13905",
+      "queryFamilyIds": ["radar-only-occupancy", "multimodal-occupancy-supervision"],
+      "verifiedUse": "直接使用 LiDAR 查询和高度图多阶段监督雷达 occupancy，是监督删失 Idea 的最近方法竞品。",
+      "evidenceBoundary": "LiDAR 教师可靠性没有被作为随天气、距离和遮挡变化的随机变量建模；官方仓库尚不构成完整复现闭环。"
+    },
+    {
+      "canonicalId": "arxiv:2407.16197",
+      "title": "LiCROcc: Teach Radar for Accurate Semantic Occupancy Prediction using LiDAR and Camera",
+      "year": 2024,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2407.16197",
+      "queryFamilyIds": ["multimodal-occupancy-supervision"],
+      "verifiedUse": "建立 LiDAR/相机教师向雷达 occupancy 迁移的直接对比，限制泛称多教师蒸馏的新颖性。",
+      "evidenceBoundary": "主问题是知识迁移，不提供坏天气下教师删失的可识别与校准协议。"
+    },
+    {
+      "canonicalId": "arxiv:2410.11228",
+      "title": "TEOcc: Radar-camera Multi-modal Occupancy Prediction via Temporal Enhancement",
+      "year": 2024,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2410.11228",
+      "queryFamilyIds": ["multimodal-occupancy-supervision", "temporal-occupancy-and-flow"],
+      "verifiedUse": "直接覆盖雷达相机时序 occupancy 融合，要求新 Idea 超出普通历史堆叠或时序特征增强。",
+      "evidenceBoundary": "时序主要服务当前三维占据训练，并非显式未来 occupancy flow。"
+    },
+    {
+      "canonicalId": "arxiv:2501.15384",
+      "title": "MetaOcc: Spatio-Temporal Fusion of Surround-View 4D Radar and Camera for 3D Occupancy Prediction with Dual Training Strategies",
+      "year": 2025,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2501.15384",
+      "queryFamilyIds": ["multimodal-occupancy-supervision"],
+      "verifiedUse": "覆盖 surround radar-camera occupancy 和双训练策略，是简单融合及缺失模态训练的直接碰撞项。",
+      "evidenceBoundary": "仍以当前三维语义占据为端点，不回答教师失效的校准或时空运动不可识别性。"
+    },
+    {
+      "canonicalId": "arxiv:2203.03875",
+      "title": "Occupancy Flow Fields for Motion Forecasting in Autonomous Driving",
+      "year": 2022,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2203.03875",
+      "queryFamilyIds": ["temporal-occupancy-and-flow"],
+      "verifiedUse": "定义占据随时间与流场联合演化的基础任务，限制把普通未来体素分类称作新 occupancy flow。",
+      "evidenceBoundary": "主要依赖其他传感器和运动标签，不解决雷达径向观测的集合可识别性。"
+    },
+    {
+      "canonicalId": "arxiv:2406.08691",
+      "title": "UnO: Unsupervised Occupancy Fields for Perception and Forecasting",
+      "year": 2024,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Agarwalla_UnO_Unsupervised_Occupancy_Fields_for_Perception_and_Forecasting_CVPR_2024_paper.html",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2406.08691"}],
+      "queryFamilyIds": ["temporal-occupancy-and-flow", "planning-utility-and-deployment"],
+      "verifiedUse": "提供无语义人工标注的时空占据与预测基线，并把占据场连接到下游感知。",
+      "evidenceBoundary": "并非雷达中心方法，不能自动处理 Doppler 投影与雷达伪影。"
+    },
+    {
+      "canonicalId": "cvpr:2023:hidden-gems",
+      "title": "Hidden Gems: 4D Radar Scene Flow Learning Using Cross-Modal Supervision",
+      "year": 2023,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/CVPR2023/html/Ding_Hidden_Gems_4D_Radar_Scene_Flow_Learning_Using_Cross-Modal_Supervision_CVPR_2023_paper.html",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2303.00462"}],
+      "queryFamilyIds": ["temporal-occupancy-and-flow"],
+      "verifiedUse": "利用雷达 Doppler 与跨模态知识学习场景流，是径向约束 Idea 必须比较的直接运动基线。",
+      "evidenceBoundary": "输出点级场景流而非自由/占据概率，也不显式表达切向多解集合。"
+    },
+    {
+      "canonicalId": "iccv:2025:tars",
+      "title": "TARS: Traffic-Aware Radar Scene Flow Estimation",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Wu_TARS_Traffic-Aware_Radar_Scene_Flow_Estimation_ICCV_2025_paper.html",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2503.10210"}],
+      "queryFamilyIds": ["temporal-occupancy-and-flow"],
+      "verifiedUse": "直接覆盖时序雷达场景流，要求新 Idea 的贡献绑定 occupancy 状态、不可识别区间和规划校准，而非再做单解 flow。",
+      "evidenceBoundary": "场景流点集没有自由空间端点，且确定速度估计可能隐藏切向不确定性。"
+    },
+    {
+      "canonicalId": "doi:10.1145/3641519.3657510",
+      "title": "Radar Fields: Frequency-Space Neural Scene Representations for FMCW Radar",
+      "year": 2024,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1145/3641519.3657510",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2405.04662"}],
+      "queryFamilyIds": ["radar-neural-fields-and-rendering"],
+      "verifiedUse": "证明频率空间雷达量测可进入连续神经场，为几何与传感器似然建模提供近邻。",
+      "evidenceBoundary": "主任务是雷达场景表示和合成，密度不天然等于校准 occupancy 或自由空间。"
+    },
+    {
+      "canonicalId": "arxiv:2505.20967",
+      "title": "RF4D:Neural Radar Fields for Novel View Synthesis in Outdoor Dynamic Scenes",
+      "year": 2025,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2505.20967",
+      "queryFamilyIds": ["radar-neural-fields-and-rendering", "temporal-occupancy-and-flow"],
+      "verifiedUse": "把雷达神经场扩展到动态时间轴，是任何连续 x-y-z-time 表示必须对照的最近邻。",
+      "evidenceBoundary": "可微渲染质量不证明体素占据概率、释放事件或规划风险已经校准。"
+    },
+    {
+      "canonicalId": "neurips:2022:k-radar",
+      "title": "K-Radar: 4D Radar Object Detection for Autonomous Driving in Various Weather Conditions",
+      "year": 2022,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+      "queryFamilyIds": ["datasets-labels-and-open-assets", "weather-uncertainty-and-calibration"],
+      "verifiedUse": "公开完整 RAED 雷达张量、多传感器和多天气序列，是 RadarOcc 及最小研究的主要可复现资产。",
+      "evidenceBoundary": "原始任务和标注是 3D 检测；天气不是同场景配对，15 TB 全量数据也形成现实下载边界。"
+    },
+    {
+      "canonicalId": "doi:10.1109/lra.2022.3147324",
+      "title": "Multi-Class Road User Detection With 3+1D Radar in the View-of-Delft Dataset",
+      "year": 2022,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1109/LRA.2022.3147324",
+      "queryFamilyIds": ["datasets-labels-and-open-assets"],
+      "verifiedUse": "提供不同雷达处理链和真实道路数据，用于检查方法是否只适配 K-Radar 张量。",
+      "evidenceBoundary": "主要提供点云与目标标注，不直接提供稠密时空 occupancy 真值。"
+    },
+    {
+      "canonicalId": "arxiv:2412.10734",
+      "title": "OmniHD-Scenes: A Next-Generation Multimodal Dataset for Autonomous Driving",
+      "year": 2024,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2412.10734",
+      "queryFamilyIds": ["datasets-labels-and-open-assets", "weather-uncertainty-and-calibration"],
+      "verifiedUse": "同步六部 4D 雷达、六相机、LiDAR 与稠密 occupancy 标注，为多传感器监督和 360 度验证提供直接数据入口。",
+      "evidenceBoundary": "已标注子集、标签生成管线和资产下载可用性必须逐项核验，不能把发布承诺当完整现成训练集。"
+    },
+    {
+      "canonicalId": "arxiv:2209.14499",
+      "title": "NVRadarNet: Real-Time Radar Obstacle and Free Space Detection for Autonomous Driving",
+      "year": 2022,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2209.14499",
+      "queryFamilyIds": ["radar-only-occupancy", "planning-utility-and-deployment"],
+      "verifiedUse": "提供雷达障碍物与自由空间实时基线，限制把二值栅格或部署速度作为新贡献。",
+      "evidenceBoundary": "端点粒度和语义范围不同于稠密三维时空 occupancy。"
+    },
+    {
+      "canonicalId": "arxiv:1904.00415",
+      "title": "Road Scene Understanding by Occupancy Grid Learning from Sparse Radar Clusters using Semantic Segmentation",
+      "year": 2019,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/1904.00415",
+      "queryFamilyIds": ["radar-only-occupancy"],
+      "verifiedUse": "已用多帧雷达聚合与 LiDAR 标签学习 occupied、free、unobserved 三态，并对无教师覆盖区域做显式忽略，是删失监督和三态输出不可绕过的历史基线。",
+      "evidenceBoundary": "输出是基于稀疏雷达 cluster 的二维 occupancy grid，教师仍来自 LiDAR；没有三维体素可靠性、概率校准或独立教师错误真值。"
+    },
+    {
+      "canonicalId": "arxiv:2112.04282",
+      "title": "Radar Occupancy Prediction with Lidar Supervision while Preserving Long-Range Sensing and Penetrating Capabilities",
+      "year": 2021,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2112.04282",
+      "queryFamilyIds": ["radar-only-occupancy", "multimodal-occupancy-supervision"],
+      "verifiedUse": "直接指出 LiDAR 与雷达可见性不一致会损害远距和穿透能力，并用雷达可见性过滤教师标签，是删失监督候选必须超过的历史近邻。",
+      "evidenceBoundary": "输出为二维雷达 occupancy，可靠性处理是固定预处理，没有三维体素证据校准、天气条件化或学习型删失机制。"
+    },
+    {
+      "canonicalId": "doi:10.1109/itsc57777.2023.10422593",
+      "title": "Deep Radar Inverse Sensor Models for Dynamic Occupancy Grid Maps",
+      "year": 2023,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1109/ITSC57777.2023.10422593",
+      "links": [{"label": "arXiv", "url": "https://arxiv.org/abs/2305.12409"}],
+      "queryFamilyIds": ["radar-only-occupancy", "temporal-occupancy-and-flow"],
+      "verifiedUse": "从稀疏雷达学习 free/occupied measurement grid，并结合 Doppler 构建动态栅格，限制把 evidential inverse sensor model 本身当新意。",
+      "evidenceBoundary": "端点是有限视场二维极坐标网格，不处理完整 4D 雷达张量、体素级教师删失或未来 occupancy flow。"
+    },
+    {
+      "canonicalId": "arxiv:2607.09629",
+      "title": "4DR360: State Reasoning for Joint 3D Detection and Occupancy Prediction in 4D Radar-Camera Full-Scene Perception",
+      "year": 2026,
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2607.09629",
+      "queryFamilyIds": ["multimodal-occupancy-supervision", "temporal-occupancy-and-flow"],
+      "verifiedUse": "持续传播 occupancy state，并用 Doppler 引导时序融合和动态 warping，是普通时序融合与确定性速度候选的最近直接碰撞项。",
+      "evidenceBoundary": "仍以当前三维 occupancy 和确定性动态补偿为端点；代码与新增标签在截止日仅承诺录用后发布。"
+    },
+    {
+      "canonicalId": "cvpr:2025:dio",
+      "title": "DIO: Decomposable Implicit 4D Occupancy-Flow World Model",
+      "year": 2025,
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Diehl_DIO_Decomposable_Implicit_4D_Occupancy-Flow_World_Model_CVPR_2025_paper.html",
+      "queryFamilyIds": ["temporal-occupancy-and-flow"],
+      "verifiedUse": "提供真正 x-y-z-time 的可分解隐式 occupancy-flow 表示，是集合式未来占据必须采用的强表示与评测近邻。",
+      "evidenceBoundary": "输入和监督不以雷达径向观测为核心，没有建模 Doppler 对切向运动的集合可识别性。"
+    }
+  ],
+  "assetChecks": [
+    {
+      "assetId": "github:Toytiny/RadarOcc",
+      "name": "RadarOcc official code, K-Radar preprocessing and checkpoint",
+      "type": "code-and-data",
+      "url": "https://github.com/Toytiny/RadarOcc/tree/dbaa20d29909b03af5f77a84dc69340561f46011",
+      "fixedCommit": "dbaa20d29909b03af5f77a84dc69340561f46011",
+      "commitDate": "2026-03-27T17:48:49Z",
+      "license": "Apache-2.0",
+      "verifiedEntrypoints": ["tools/process_kradar.py", "generate_4d_polar_doppler.py", "projects/baselines/RadarOcc_self.py", "RadarOcc-S checkpoint"],
+      "reuse": "可复现当前三维雷达 occupancy、LiDAR 标签生成、Doppler 编码与晴天/恶劣天气切片，是冻结候选的静态基线。",
+      "boundary": "依赖 K-Radar 指定序列、OpenOccupancy 与两张 24 GB GPU；标签由 LiDAR 聚合，仓库没有时空 occupancy flow 真值或教师可见性估计器。"
+    },
+    {
+      "assetId": "github:kaist-avelab/K-Radar",
+      "name": "K-Radar official dataset, annotation and sensor tools",
+      "type": "dataset",
+      "url": "https://github.com/kaist-avelab/K-Radar/tree/f90c28993d1757ce0236632b4d912c92a14976b2",
+      "fixedCommit": "f90c28993d1757ce0236632b4d912c92a14976b2",
+      "commitDate": "2026-06-26T07:02:20Z",
+      "license": "dataset CC BY-NC-ND; code Apache-2.0",
+      "verifiedEntrypoints": ["4DRT RAED tensor", "synchronized LiDAR/cameras/RTK-GPS", "weather sequence metadata", "annotation and calibration tools"],
+      "reuse": "提供原始雷达张量、多传感器同步与天气场景，可建立 teacher visibility 分层和径向约束的最小实验。",
+      "boundary": "全量约 15 TB，天气序列不是严格同场景配对；v2.1 的 LiDAR-visible/radar-invisible 是对象级而非体素级可靠性，3D 框与 LiDAR 派生 occupancy 不能提供独立真实自由空间或切向速度真值。"
+    }
+  ],
+  "candidateLedger": [
+    {
+      "candidateId": "visibility-censored-radar-occupancy-supervision",
+      "title": "面向教师删失的雷达占据监督与可信自由空间",
+      "canonicalClaim": "相机和 LiDAR 教师在雨雪、远距、遮挡和动态边界处不是均匀真值；只有显式估计教师可见性与删失概率，并用雷达跨帧/Doppler 一致性补充证据，才能降低危险的过度自信自由空间。",
+      "closestDirectCompetitors": ["Radar Occupancy Prediction with Lidar Supervision", "Deep Radar ISM", "4D-ROLLS", "LiCROcc", "RadarOcc", "MetaOcc"],
+      "residual": "历史方法已做雷达可见性过滤和 evidential inverse sensor model，最近方法又覆盖蒸馏、融合与伪标签；剩余只在三维体素级条件化教师可靠性、雷达时序约束和独立坏天气证据校准的联合闭环。",
+      "minimumExperiment": "在 K-Radar 固定序列上比较无条件 LiDAR 监督、规则可见性加权、学习型删失模型与雷达自监督约束；按天气、距离和动态边界报告 occupied/free ECE、NLL、危险假自由率及下游制动占用。",
+      "killCondition": "规则 mask 或现有置信度蒸馏在同一计算预算下达到等价校准，或教师失效分层不能在 held-out 序列稳定复现。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "radial-ambiguity-aware-occupancy-flow",
+      "title": "径向可识别性约束的集合式时空 Occupancy Flow",
+      "canonicalClaim": "雷达 Doppler 只直接约束视线方向速度；时空 occupancy 不应被迫输出唯一切向流，而应在连续性、地图和多帧证据下给出兼容速度集合或分布，并把不可识别性传播到未来占据。",
+      "closestDirectCompetitors": ["RaFlow", "CMFlow", "TARS", "4DR360", "DIO", "Occupancy Flow Fields", "RF4D", "UnO"],
+      "residual": "现有雷达 scene flow 与 4DR360 多输出单一速度，DIO 等 occupancy-flow 又没有雷达径向观测模型；剩余只在把切向多解显式传播到未来占据概率、集合 sharpness 和同 coverage 风险。",
+      "minimumExperiment": "从 K-Radar/VoD 可跟踪动态目标构造径向一致性与多帧弱监督，比较单解 flow、ensemble、各向异性分布和集合约束；在 1/2/3 秒预测上报告 coverage、set width、occupancy NLL、流场 EPE 与规划碰撞上界。",
+      "killCondition": "多帧几何已使切向速度在目标数据上近乎完全可识别，或集合宽度与未来占据错误没有稳定关系，不能改善同 coverage 风险。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "generic-radar-tensor-occupancy-backbone",
+      "title": "更强雷达张量 Backbone 的三维占据网络",
+      "canonicalClaim": "用新的稀疏卷积或 Transformer 提高 K-Radar occupancy mIoU。",
+      "collision": "RadarOcc 已直接处理完整雷达张量并包含 Doppler 编码、旁瓣稀疏化和球坐标聚合；4D-ROLLS 又覆盖轻量 LiDAR 监督。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "naive-radar-camera-occupancy-fusion",
+      "title": "雷达与相机的通用时序占据融合",
+      "canonicalClaim": "拼接多帧相机和雷达特征提高当前三维语义占据。",
+      "collision": "TEOcc、MetaOcc、LiCROcc 和 REOcc 已覆盖时序增强、surround 融合、教师迁移和 radar-enhanced occupancy；没有新的可识别对象。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "radar-vlm-occupancy-question-answering",
+      "title": "用 VLM 查询雷达 Occupancy 的语言接口",
+      "canonicalClaim": "把雷达 token 输入 VLM，让模型回答物体和自由空间问题。",
+      "collision": "Radar4D-VLM、STAR-VLM、Talk2Sensors 与 MoRAL 已覆盖雷达推理、物理监督和传感器路由；没有体素标签、校准端点和规划闭环时只是接口拼接。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "neural-field-density-as-occupancy",
+      "title": "直接把 Radar Neural Field 密度阈值化为 Occupancy",
+      "canonicalClaim": "将 Radar Fields、NeuRadar 或 RF4D 的连续密度直接阈值化得到占据。",
+      "collision": "渲染密度同时吸收材质、传播、旁瓣和视角效应，不是概率占据；缺少自由空间似然与校准会使阈值结果无法解释。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "synthetic-weather-radar-augmentation",
+      "title": "合成恶劣天气增强雷达 Occupancy",
+      "canonicalClaim": "对晴天数据注入雨雪噪声以提升坏天气 mIoU。",
+      "collision": "可注入性不能证明现实雷达退化分布；K-Radar 天气不配对，若没有真实事件或物理传播参数，合成增益无法识别。",
+      "disposition": "rejected"
+    },
+    {
+      "candidateId": "direct-radar-occupancy-planning-stack",
+      "title": "端到端雷达 Occupancy 到规划的大一统系统",
+      "canonicalClaim": "从原始雷达张量联合训练 occupancy 与轨迹规划。",
+      "collision": "公开数据缺同一栈的反应式规划真值和替代动作；大一统训练不能隔离收益来自 occupancy、额外参数还是日志捷径，十二周内无法形成可信主张。",
+      "disposition": "rejected"
+    }
+  ],
+  "shortlist": [],
+  "rejected": [
+    {
+      "candidateId": "visibility-censored-radar-occupancy-supervision",
+      "primaryUrl": "https://arxiv.org/abs/1904.00415",
+      "reasons": [
+        "Sless 2019 已联合覆盖 occupied/free/unobserved 三态、ego-motion 对齐的多帧雷达聚合和 LiDAR 无覆盖区域忽略；后续 Radar Occupancy Prediction 与 Deep Radar ISM 又分别处理跨传感器可见性错配和学习型动态逆传感器模型。",
+        "剩余的三维条件化删失概率缺少独立逐体素教师错误真值；K-Radar v2.1 只有对象级可见性，RadarOcc 标签仍由 LiDAR 聚合，现有资产无法排除模型通过删除冲突标签形成自我确认。"
+      ]
+    },
+    {
+      "candidateId": "radial-ambiguity-aware-occupancy-flow",
+      "primaryUrl": "https://arxiv.org/abs/2607.09629",
+      "reasons": ["两个固定资产均不提供逐体素三维流、切向速度分布或独立未来占据真值，无法验证集合 coverage 是否真实校准。", "用 tracking box 构造刚体伪标签只能证明模型复现运动先验；4DR360 的代码和新增标签在截止日又尚未公开，限定周期内不能形成独立闭环。"]
+    },
+    {
+      "candidateId": "generic-radar-tensor-occupancy-backbone",
+      "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2024/hash/b81d83165e3145a2e7d33bb5e33ea913-Abstract-Conference.html",
+      "reasons": ["RadarOcc 已直接覆盖完整张量、Doppler 编码和三维占据。", "仅替换 backbone 没有新的识别对象或系统结论。"]
+    },
+    {
+      "candidateId": "naive-radar-camera-occupancy-fusion",
+      "primaryUrl": "https://arxiv.org/abs/2501.15384",
+      "reasons": ["MetaOcc、TEOcc、LiCROcc 与 REOcc 已覆盖主要融合范式。", "普通时序拼接属于拥挤的增量工程。"]
+    },
+    {
+      "candidateId": "radar-vlm-occupancy-question-answering",
+      "primaryUrl": "https://arxiv.org/abs/2608.04130",
+      "reasons": ["本期四篇相邻 VLM 已覆盖雷达物理接地和路由。", "没有 occupancy 真值与校准端点，语言准确率不能支持场景表示主张。"]
+    },
+    {
+      "candidateId": "neural-field-density-as-occupancy",
+      "primaryUrl": "https://doi.org/10.1145/3641519.3657510",
+      "reasons": ["Radar field 密度受反射和传播影响，不是占据概率。", "直接阈值化缺自由空间似然与校准解释。"]
+    },
+    {
+      "candidateId": "synthetic-weather-radar-augmentation",
+      "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+      "reasons": ["合成注入只证明可测试性，不证明现实退化机制。", "缺少同场景配对和传播参数时无法识别天气净效应。"]
+    },
+    {
+      "candidateId": "direct-radar-occupancy-planning-stack",
+      "primaryUrl": "https://arxiv.org/abs/2406.08691",
+      "reasons": ["公开雷达数据缺反应式替代动作与规划真值。", "大一统系统无法在限定周期隔离 occupancy 的因果贡献。"]
+    }
+  ],
+  "conclusion": {
+    "summary": "截至 2026-08-10，本轮执行八个互补查询族，核验二十四条去重一手证据和两个固定官方资产，生成八个 canonical 候选；独立筛选在补入 Sless 2019 与 Deep Radar ISM 后认定八项均存在直接能力碰撞、端点错位、真值不可识别或周期失控，本轮不发布候选。",
+    "shortlistedCandidateIds": [],
+    "rejectionBoundary": "教师删失候选缺独立逐体素错误真值，径向歧义占据流缺逐体素流与未来占据真值；新 backbone、普通雷达相机融合、Radar-VLM 接口、神经场密度阈值、合成天气增强和大一统规划栈也不满足问题新颖性与最小闭环要求。",
+    "scoreProduced": false,
+    "blindReviewsRead": false,
+    "nextGate": "只有获得独立逐体素自由空间与教师错误真值、同场景天气配对或可验证时空流标签后，才重启候选生成；当前先建设评测资产，不把方法包装成 Idea。"
+  }
+}
