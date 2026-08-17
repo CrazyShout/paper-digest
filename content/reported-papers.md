@@ -103,6 +103,14 @@
 | radar4d-vlm-temporal-reasoning | Radar4D-VLM: Proposal-Grounded Temporal 4D Radar Reasoning Across Frozen Language Models | 2608.04130 | 2026-08-10 |
 | star-vlm-radar-supervision | STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision | 2608.01535 | 2026-08-10 |
 | talk2sensors-grounding | Talk2Sensors: 3D Visual Grounding in Autonomous Driving via Sensor-Adaptive Physical Cue Matching | 2608.04568 | 2026-08-10 |
+| counterfactual-driving-world-models | How Can Driving World Models Do Counterfactual Prediction? | 2608.11601 | 2026-08-17 |
+| flashdrive-vla-inference | FlashDrive: Flash Vision-Language-Action Inference for Autonomous Driving | 2608.12932 | 2026-08-17 |
+| brainwam-action-space-coordination | BrainWAM: Action-Space Coordination of Semantic Priors and Predictive Dynamics for Autonomous Driving | 2608.12854 | 2026-08-17 |
+| coverage-aware-active-evaluation | Coverage Aware Active Evaluation for Failure Discovery with Paired Systems | 2608.13719 | 2026-08-17 |
+| ssp-syn2sim2phy-vla-evaluation | SSP: An Event-Matched Syn2Sim2Phy Cross-Domain Evaluation Framework for Autonomous-Driving VLA Models | 2608.14024 | 2026-08-17 |
+| rbft-net-radar-depth-completion | RbFT-Net: Rectify-Before-Fuse Temporal Radar Anchors for 4D Radar-Camera Depth Completion | 2608.13102 | 2026-08-17 |
+| geoup-unified-3d-perception | Geometry-Grounded Unified 3D Perception for Autonomous Driving | 2608.13147 | 2026-08-17 |
+| lgs-gaussian-structure-driving-reconstruction | Learning Gaussian Structure: Intervention-Guided Density Control for Feed-Forward Driving Reconstruction | 2608.11077 | 2026-08-17 |
 
 ## 使用说明
 
