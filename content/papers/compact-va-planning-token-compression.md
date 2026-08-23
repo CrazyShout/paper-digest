@@ -4,9 +4,9 @@
   "tag": "end-to-end-autonomous-driving",
   "tags": ["end-to-end-autonomous-driving", "world-models"],
   "title": "Planning-aligned Token Compression for Long-Context Autonomous Driving",
-  "source": "arXiv:2606.07464 / https://arxiv.org/abs/2606.07464",
+  "source": "IEEE Robotics and Automation Letters 2026 (accepted; formal page unavailable at audit) / arXiv:2606.07464 / https://arxiv.org/abs/2606.07464",
   "authors": ["Zhixuan Liang", "Yuxiao Chen", "Yurong You", "Peter Karkus", "Wenhao Ding", "Boyi Li", "Alexander Popov", "Yan Wang", "Maximilian Igl", "Yiming Li", "Danfei Xu", "Nikolai Smolyanskiy", "Boris Ivanovic", "Ping Luo", "Marco Pavone"],
-  "affiliations": ["NVIDIA Research", "School of Computing and Data Science, The University of Hong Kong"],
+  "affiliations": ["NVIDIA Research", "School of Computing and Data Science, The University of Hong Kong", "Stanford University", "Georgia Institute of Technology"],
   "comment": "COMPACT-VA 关注端到端驾驶的长上下文瓶颈，用 planning intent 监督 token compression，让工作记忆优先保留会影响决策的历史信息。"
 }
 ---

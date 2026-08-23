@@ -40,6 +40,12 @@ test("notebook search keeps one canonical record per rendered route", async () =
     notebook.searchRecords.filter((record) => record.id.startsWith("digest-")).length,
     notebook.digests.length
   );
+  assert.ok(notebook.papers.every((paper) => !paper.revisionOf));
+  assert.equal(notebook.papers.filter((paper) => paper.revisionId).length, 7);
+  assert.equal(
+    notebook.tree.children.find((node) => node.name?.startsWith("人工核验修订"))?.children.length,
+    7
+  );
 });
 
 test("routeUrl preserves root and repository deployment paths", () => {

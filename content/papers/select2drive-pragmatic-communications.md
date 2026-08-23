@@ -3,10 +3,10 @@
   "id": "select2drive-pragmatic-communications",
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
-  "title": "Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications",
+  "title": "Select2Drive: Pragmatic Communications for Real-Time Collaborative Autonomous Driving",
   "source": "arXiv:2501.12040 / https://arxiv.org/abs/2501.12040",
   "authors": ["Jiahao Huang", "Jianhang Zhu", "Rongpeng Li", "Zhifeng Zhao", "Honggang Zhang"],
-  "affiliations": ["Zhejiang University and collaborators"],
+  "affiliations": ["Zhejiang University", "Zhejiang Lab", "Macau University of Science and Technology"],
   "comment": "Select2Drive 关注 V2X 自动驾驶里最容易被低估的工程问题：带宽、延迟和位姿误差存在时，并不是传得越多越好。它把通信选择直接和闭环驾驶表现挂钩，适合用于协同驾驶系统的信息价值评估。"
 }
 ---

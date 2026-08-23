@@ -4,8 +4,8 @@
   "tag": "world-models",
   "tags": ["world-models", "end-to-end-autonomous-driving", "agentic-driving"],
   "title": "BrainWAM: Action-Space Coordination of Semantic Priors and Predictive Dynamics for Autonomous Driving",
-  "source": "arXiv:2608.12854 / https://arxiv.org/abs/2608.12854 / HTML: https://arxiv.org/html/2608.12854",
-  "authors": ["Bing Zhan", "Shuyao Shang", "Jiahao Gu", "Shuo Lu", "Yuan Xu", "Zhao Wang", "Yida Wang", "Xueyang Zhang", "Kun Zhan", "Lue Fan", "Zhaoxiang Zhang"],
+  "source": "arXiv:2608.12854 / https://arxiv.org/abs/2608.12854 / HTML (v1 figures): https://arxiv.org/html/2608.12854v1",
+  "authors": ["Bing Zhan", "Shuyao Shang", "Shuo Lu", "Yuan Xu", "Zhao Wang", "Yida Wang", "Xueyang Zhang", "Kun Zhan", "Jiahao Gu"],
   "affiliations": ["National Laboratory of Pattern Recognition, Institute of Automation, Chinese Academy of Sciences", "Li Auto Inc."],
   "comment": "BrainWAM 发现把 VLM、视频生成和 action token 全部塞进同一注意力池会让语义捷径压制预测动力学，于是保留 VLA/WAM 两条专门通路，只在 action 表征上双向协调。其 NAVSIM v1/v2 得分为 89.5/89.6，但推理仍需 475-644 ms。"
 }

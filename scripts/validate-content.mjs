@@ -263,7 +263,7 @@ function validateLandscapeEvidenceArrays(items, field, file) {
   }
 }
 
-function validateImageUrls(markdown, file) {
+function validateImageUrls(markdown, file, minimumCount = 1) {
   const imagePattern = /!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let count = 0;
   let match;
@@ -293,8 +293,197 @@ function validateImageUrls(markdown, file) {
     }
   }
 
-  if (!count) {
-    addError(`${file} must include at least one official figure image`);
+  if (count < minimumCount) {
+    addError(`${file} must include at least ${minimumCount} official figure images; found ${count}`);
+  }
+}
+
+function validatePaperStructure(markdown, file, requiredSections) {
+  const headings = [...String(markdown || "").matchAll(/^##\s+(.+?)\s*$/gm)]
+    .map((match) => match[1].trim());
+
+  if (
+    headings.length !== requiredSections.length
+    || headings.some((heading, index) => heading !== requiredSections[index])
+  ) {
+    addError(
+      `${file} must use the fixed paper-report section order: ${requiredSections.join(" -> ")}`
+    );
+  }
+}
+
+function validateArxivSourceLinks(source, file) {
+  for (const arxivId of extractArxivIds(source)) {
+    if (!String(source).includes(`https://arxiv.org/abs/${arxivId}`)) {
+      addError(`${file} lists arXiv:${arxivId} without its https://arxiv.org/abs/${arxivId} link`);
+    }
+  }
+}
+
+function validateDigestAudit(audit, digest, file) {
+  if (!audit || typeof audit !== "object" || Array.isArray(audit)) {
+    addError(`${file} must contain a JSON object`);
+    return;
+  }
+
+  if (audit.digestId !== digest.data.id) {
+    addError(`${file} digestId must match ${digest.data.id}`);
+  }
+  const auditedAt = Date.parse(audit.auditedAt);
+  if (typeof audit.auditedAt !== "string" || Number.isNaN(auditedAt)) {
+    addError(`${file} auditedAt must be an ISO timestamp`);
+  } else if (auditedAt > Date.now() + 5 * 60 * 1000) {
+    addError(`${file} auditedAt cannot be in the future`);
+  }
+  if (!audit.scanWindow || typeof audit.scanWindow !== "object" || Array.isArray(audit.scanWindow)) {
+    addError(`${file} must define scanWindow`);
+  } else {
+    if (audit.scanWindow.currentDigest !== digest.data.id) {
+      addError(`${file} scanWindow.currentDigest must match ${digest.data.id}`);
+    }
+    for (const field of ["previousDigest", "recentListWindow", "querySubmittedDateRange", "boundaryNote"]) {
+      if (typeof audit.scanWindow[field] !== "string" || !audit.scanWindow[field].trim()) {
+        addError(`${file} scanWindow.${field} must be a non-empty string`);
+      }
+    }
+  }
+  if (!Array.isArray(audit.queryRuns) || !audit.queryRuns.length) {
+    addError(`${file} must define non-empty queryRuns`);
+  }
+  if (!Array.isArray(audit.candidates) || !audit.candidates.length) {
+    addError(`${file} must define a non-empty candidate ledger`);
+    return;
+  }
+  if (audit.candidates.some((candidate) => !isPlainObject(candidate))) {
+    addError(`${file} every candidate must be an object`);
+    return;
+  }
+
+  const candidateIds = audit.candidates.map((candidate) => candidate?.canonicalId);
+  if (candidateIds.some((id) => typeof id !== "string" || !id.trim())) {
+    addError(`${file} every candidate must define canonicalId`);
+  }
+  if (new Set(candidateIds).size !== candidateIds.length) {
+    addError(`${file} candidate canonicalIds must be unique`);
+  }
+
+  const candidateIdSet = new Set(candidateIds);
+  const occurrenceFamiliesById = new Map(candidateIds.map((id) => [id, new Set()]));
+  const queryOccurrences = (audit.queryRuns || []).reduce((sum, queryRun, index) => {
+    if (
+      typeof queryRun?.family !== "string"
+      || !queryRun.family.trim()
+      || !isHttpsUrl(queryRun?.endpoint)
+      || typeof queryRun?.searchQuery !== "string"
+      || !queryRun.searchQuery.trim()
+      || !Number.isInteger(queryRun?.resultCount)
+      || !Array.isArray(queryRun?.resultIds)
+    ) {
+      addError(`${file} queryRuns[${index}] is missing its reproducible query contract`);
+      return sum;
+    }
+    if (!queryRun.resultIds.every((id) => typeof id === "string" && id.trim())) {
+      addError(`${file} queryRuns[${index}].resultIds must contain only non-empty strings`);
+    }
+    if (new Set(queryRun.resultIds).size !== queryRun.resultIds.length) {
+      addError(`${file} queryRuns[${index}].resultIds must be unique within the query`);
+    }
+    if (queryRun.resultCount !== queryRun.resultIds.length) {
+      addError(`${file} queryRuns[${index}] resultCount must equal resultIds.length`);
+    }
+    for (const resultId of queryRun.resultIds) {
+      if (!candidateIdSet.has(resultId)) {
+        addError(`${file} queryRuns[${index}] references candidate absent from the ledger: ${resultId}`);
+      } else {
+        occurrenceFamiliesById.get(resultId).add(queryRun.family);
+      }
+    }
+    return sum + queryRun.resultCount;
+  }, 0);
+
+  const selected = audit.candidates.filter((candidate) => candidate.disposition === "selected");
+  const selectedPaperIds = selected.map((candidate) => candidate.paperId).sort();
+  const digestPaperIds = [...digest.data.papers].sort();
+  if (!isStringArray(selectedPaperIds) || new Set(selectedPaperIds).size !== selectedPaperIds.length) {
+    addError(`${file} selected candidates must define unique paperIds`);
+  }
+  if (JSON.stringify(selectedPaperIds) !== JSON.stringify(digestPaperIds)) {
+    addError(`${file} selected paperIds must exactly match the digest papers array`);
+  }
+  const allowedDispositions = new Set([
+    "title-abstract-excluded",
+    "full-text-excluded",
+    "selected"
+  ]);
+  for (const candidate of audit.candidates) {
+    if (typeof candidate.title !== "string" || !candidate.title.trim()) {
+      addError(`${file} candidate ${candidate.canonicalId || "(missing id)"} must define title`);
+    }
+    if (typeof candidate.reason !== "string" || !candidate.reason.trim()) {
+      addError(`${file} candidate ${candidate.canonicalId || "(missing id)"} must define a reason`);
+    }
+    if (!Array.isArray(candidate.queryFamilies) || !candidate.queryFamilies.length) {
+      addError(`${file} candidate ${candidate.canonicalId || "(missing id)"} must define queryFamilies`);
+    } else {
+      const declaredFamilies = [...candidate.queryFamilies].sort();
+      const actualFamilies = [...(occurrenceFamiliesById.get(candidate.canonicalId) || [])].sort();
+      if (
+        !isStringArray(candidate.queryFamilies)
+        || new Set(candidate.queryFamilies).size !== candidate.queryFamilies.length
+        || JSON.stringify(declaredFamilies) !== JSON.stringify(actualFamilies)
+      ) {
+        addError(
+          `${file} candidate ${candidate.canonicalId || "(missing id)"} queryFamilies must exactly match its query occurrences`
+        );
+      }
+    }
+    if (!allowedDispositions.has(candidate.disposition)) {
+      addError(`${file} candidate ${candidate.canonicalId || "(missing id)"} has invalid disposition`);
+    }
+    if (candidate.disposition !== "selected" && candidate.paperId != null) {
+      addError(`${file} excluded candidate ${candidate.canonicalId || "(missing id)"} cannot define paperId`);
+    }
+  }
+
+  const dispositionCounts = {
+    titleAbstractExcluded: audit.candidates.filter(
+      (candidate) => candidate.disposition === "title-abstract-excluded"
+    ).length,
+    fullTextExcluded: audit.candidates.filter(
+      (candidate) => candidate.disposition === "full-text-excluded"
+    ).length,
+    selected: selected.length
+  };
+  const counts = audit.counts || {};
+  for (const [field, expected] of Object.entries({
+    queryOccurrences,
+    deduplicatedCandidates: audit.candidates.length,
+    ...dispositionCounts
+  })) {
+    if (counts[field] !== expected) {
+      addError(`${file} counts.${field} must equal ${expected}`);
+    }
+  }
+  if (counts.fullTextCompared !== dispositionCounts.fullTextExcluded + dispositionCounts.selected) {
+    addError(`${file} counts.fullTextCompared must equal full-text excluded plus selected`);
+  }
+
+  const review = audit.independentReview;
+  const reviewCompletedAt = Date.parse(review?.completedAt);
+  if (
+    !review
+    || review.finalOutcome !== "passed"
+    || typeof review.reviewerAgentId !== "string"
+    || !review.reviewerAgentId.trim()
+    || typeof review.finalFinding !== "string"
+    || !review.finalFinding.trim()
+    || Number.isNaN(reviewCompletedAt)
+  ) {
+    addError(`${file} must record a passed independentReview with reviewer, time, and finding`);
+  } else if (reviewCompletedAt < auditedAt) {
+    addError(`${file} independentReview.completedAt cannot precede auditedAt`);
+  } else if (reviewCompletedAt > Date.now() + 5 * 60 * 1000) {
+    addError(`${file} independentReview.completedAt cannot be in the future`);
   }
 }
 
@@ -2252,7 +2441,9 @@ let ideaCenterConfig = {};
 const reviewCenterFile = "review-center.json";
 let reviewCenterConfig = {};
 let literatureReviewWorkflow = {};
+let contentQuality = {};
 const reviewDocs = await readJsonDir(path.join(CONTENT, "reviews"));
+const digestAuditDocs = await readJsonDir(path.join(CONTENT, "digest-audits"));
 
 try {
   landscapeConfig = JSON.parse(await readFile(path.join(CONTENT, landscapeFile), "utf8"));
@@ -2278,6 +2469,31 @@ try {
   );
 } catch (error) {
   addError(`literature-review-workflow.json has invalid JSON: ${error.message}`);
+}
+
+try {
+  contentQuality = JSON.parse(
+    await readFile(path.join(CONFIG, "content-quality.json"), "utf8")
+  );
+} catch (error) {
+  addError(`content-quality.json has invalid JSON: ${error.message}`);
+}
+
+const requiredPaperSections = contentQuality.paperReports?.requiredSections;
+const minimumOfficialFigures = contentQuality.paperReports?.minimumOfficialFigures;
+const digestAuditRequiredFrom = contentQuality.digests?.auditRequiredFrom;
+const allowedDigestVisibilities = contentQuality.digests?.allowedVisibility;
+if (!isStringArray(requiredPaperSections)) {
+  addError("content-quality.json paperReports.requiredSections must be a non-empty string array");
+}
+if (!Number.isInteger(minimumOfficialFigures) || minimumOfficialFigures < 2) {
+  addError("content-quality.json paperReports.minimumOfficialFigures must be an integer of at least 2");
+}
+if (!isValidIsoDate(digestAuditRequiredFrom)) {
+  addError("content-quality.json digests.auditRequiredFrom must be a real YYYY-MM-DD date");
+}
+if (!isStringArray(allowedDigestVisibilities) || !allowedDigestVisibilities.includes("public")) {
+  addError("content-quality.json digests.allowedVisibility must include public");
 }
 
 validateStringField(landscapeConfig, "title", landscapeFile);
@@ -2350,6 +2566,7 @@ const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
 const digestDocs = await readMarkdownDir(path.join(CONTENT, "digests"));
 
 const latestDigestDate = digestDocs
+  .filter((digest) => digest.data.visibility !== "audit")
   .map((digest) => digest.data.date)
   .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date || ""))
   .sort()
@@ -2376,7 +2593,9 @@ const papers = paperDocs.map((doc) => {
   validateStringField(doc.data, "comment", doc.file);
   validateStringArrayField(doc.data, "authors", doc.file);
   validateAffiliations(doc.data, doc.file);
-  validateImageUrls(doc.body, doc.file);
+  validateImageUrls(doc.body, doc.file, minimumOfficialFigures || 2);
+  validatePaperStructure(doc.body, doc.file, requiredPaperSections || []);
+  validateArxivSourceLinks(doc.data.source, doc.file);
 
   if (!tags.length) {
     addError(`${doc.file} is missing tag/tags`);
@@ -2427,6 +2646,7 @@ validateReviewCenter(
 
 const canonicalPaperIds = new Set(papers.filter((paper) => !paper.revisionOf).map((paper) => paper.id));
 const effectiveEvidenceDigests = digestDocs
+  .filter((digest) => digest.data.visibility !== "audit")
   .map((digest) => ({
     id: digest.data.id,
     date: digest.data.date,
@@ -2516,6 +2736,7 @@ for (const digest of digestDocs) {
   const id = digest.data.id;
   const date = digest.data.date;
   const dateFromId = expectedId.match(/^(\d{4}-\d{2}-\d{2})(?:-[a-z0-9-]+)?$/)?.[1];
+  const visibility = digest.data.visibility || "public";
 
   if (id !== expectedId) {
     addError(`${digest.file} has id "${id}", expected "${expectedId}"`);
@@ -2529,6 +2750,10 @@ for (const digest of digestDocs) {
   validateStringField(digest.data, "summary", digest.file);
   validateStringArrayField(digest.data, "keywords", digest.file);
   validateNotes(digest.data.notes, digest.file);
+
+  if (!allowedDigestVisibilities?.includes(visibility)) {
+    addError(`${digest.file} visibility must be one of: ${allowedDigestVisibilities?.join(", ")}`);
+  }
 
   if (!Array.isArray(digest.data.papers)) {
     addError(`${digest.file} must define a papers array`);
@@ -2549,6 +2774,35 @@ for (const digest of digestDocs) {
     } else {
       paperDigestMap.set(paperId, id);
     }
+  }
+}
+
+const digestAuditById = new Map();
+for (const auditDoc of digestAuditDocs) {
+  const expectedId = path.basename(auditDoc.file, ".json");
+  if (auditDoc.data.digestId !== expectedId) {
+    addError(`${auditDoc.file} digestId must match its filename`);
+  }
+  if (digestAuditById.has(auditDoc.data.digestId)) {
+    addError(`duplicate digest audit for ${auditDoc.data.digestId}`);
+  } else {
+    digestAuditById.set(auditDoc.data.digestId, auditDoc);
+  }
+  const digest = digestById.get(auditDoc.data.digestId);
+  if (!digest) {
+    addError(`${auditDoc.file} references missing digest: ${auditDoc.data.digestId}`);
+  } else {
+    validateDigestAudit(auditDoc.data, digest, auditDoc.file);
+  }
+}
+
+for (const digest of digestDocs) {
+  if (
+    digest.data.visibility !== "audit"
+    && digest.data.date >= digestAuditRequiredFrom
+    && !digestAuditById.has(digest.data.id)
+  ) {
+    addError(`${digest.file} requires content/digest-audits/${digest.data.id}.json`);
   }
 }
 

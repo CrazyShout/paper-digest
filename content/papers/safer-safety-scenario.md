@@ -3,7 +3,7 @@
   "id": "safer-safety-scenario",
   "tag": "autonomous-driving-testing",
   "tags": ["autonomous-driving-testing"],
-  "title": "SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling",
+  "title": "SaFeR: Safety-Critical Scenario Generation for Autonomous Driving Test via Feasibility-Constrained Token Resampling",
   "source": "arXiv:2603.04071 / https://arxiv.org/abs/2603.04071",
   "authors": ["Jinlong Cui", "Fenghua Liang", "Guo Yang", "Chengcheng Tang", "Jianxun Cui"],
   "affiliations": ["School of Traffic and Transportation, Harbin Institute of Technology", "Chongqing Research Institute of Harbin Institute of Technology", "Chongqing Changan Automobile Co., Ltd."],

@@ -4,7 +4,7 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving", "autonomous-driving-testing"],
   "title": "CooperScene: Multi-Modal Cooperative Autonomy Benchmark with C-V2X Communication Characterization",
-  "source": "arXiv:2606.31219 / https://arxiv.org/abs/2606.31219",
+  "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/4574 / arXiv:2606.31219 / https://arxiv.org/abs/2606.31219",
   "authors": ["Bo Wu", "Ruoshen Mo", "Justin Yue", "Yanyu Zhang", "Janice Nguyen", "Guoyuan Wu", "Amit Roy-Chowdhury", "Matthew J. Barth", "Hang Qiu"],
   "affiliations": ["University of California, Riverside"],
   "comment": "CooperScene 是本期最贴近真实车路协同部署的数据与 benchmark：三辆 CAV 加一个 RSU，同步采集多模态感知和真实 C-V2X 通信链路。"

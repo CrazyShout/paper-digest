@@ -12,7 +12,7 @@ The main data source is Markdown content under `content/`, with JSON frontmatter
 
 - Runtime/tooling: Node.js, npm, ripgrep (`rg`), ES modules (`"type": "module"`).
 - CI Node version: Node 22, configured in `.github/workflows/deploy-pages.yml`.
-- Local required Node version: `>=22 <25`, declared in `package.json`.
+- Local required Node version: `>=22.12 <25`, declared in `package.json`.
 - Literature-review validation executes `rg` against raw Markdown; CI installs ripgrep explicitly.
 - Site framework: Astro `^5.16.2`, static output.
 - Frontend: Astro components plus vanilla JavaScript and CSS in `public/assets/`.

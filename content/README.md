@@ -43,9 +43,9 @@ content/templates/paper-selection-rubric.md
 content/templates/digest-template.md
 ```
 
-论文详细报告建议保持相同叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 1 张论文原图、官方项目图或 arXiv source/PDF 提取图；优先放 2 张，并在正文里解释图片支撑的结论。
+论文详细报告必须保持相同的八段叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 2 张论文原图、官方项目图或 arXiv source/PDF 提取图，并在正文里解释图片支撑的结论。
 
-每期检索还必须保存 `content/digest-audits/YYYY-MM-DD.json`。简报里的检索数量不得只写在叙述中：查询端点、参数、每族结果 ID、规范化候选、排除理由和最终去向都要能从审计文件复算。扫描窗口与论文提交日期分开记录，出版状态和代码/数据仓库的实际可用性在入选后再次核验。
+自 `config/content-quality.json` 的 `digests.auditRequiredFrom` 起，每期检索还必须保存 `content/digest-audits/YYYY-MM-DD.json`。此前简报作为遗留内容保留，不补造当时并未执行的检索账本。简报里的检索数量不得只写在叙述中：查询端点、参数、每族结果 ID、规范化候选、排除理由和最终去向都要能从审计文件复算。扫描窗口与论文提交日期分开记录，出版状态和代码/数据仓库的实际可用性在入选后再次核验。
 
 作者单位必须从论文 PDF 首页、arXiv source、项目页或会议页面核验后填写。不要使用“作者单位见论文 PDF”“unknown”“not confirmed”这类占位。arXiv API 通常没有 affiliations；如果 API 没给单位，需要继续查 PDF/source。
 
@@ -119,7 +119,7 @@ content/papers/example-world-model.md
 
 图片要求：
 
-- 每篇论文报告至少 1 张官方图片，优先 2 张。
+- 每篇论文报告至少 2 张官方图片。
 - 优先使用 arXiv HTML、论文项目页或会议页面上的图片 URL。
 - 如果没有可直接引用的 HTML 图，从官方 PDF/source 提取图片到 `public/assets/papers/<paper-id>-figure-1.png`，并在论文详情页中用 `../../assets/papers/<paper-id>-figure-1.png` 引用。
 - 不要用无来源截图、二次摘要站图片或和论文不对应的占位图。
@@ -170,6 +170,7 @@ content/digests/2026-05-18.md
 - `id`：必须和文件名一致。常规日报使用 `YYYY-MM-DD`；同日期对照版可使用 `YYYY-MM-DD-gpt` 这类后缀。
 - `date`：必须是文件名开头的 `YYYY-MM-DD` 日期；左侧目录会按日期倒序显示，最新一期在最上方。
 - `displayDate`：可选，仅用于页面显示，例如标记测试来源；不要用它替代 `id` / `date`。
+- `visibility`：可选，默认 `public`。仅用于保留历史质量对照的测试简报可设为 `audit`；它不会进入公开简报导航、搜索和研究态势统计。
 - `keywords`：显示在左侧目录里的几个核心关键词，保持简短。
 - `papers`：本期包含的论文 `id` 列表，必须能在 `content/papers/` 里找到对应文件。
 - `notes`：可留空数组；页面右侧评论区会显示这里的种子笔记。

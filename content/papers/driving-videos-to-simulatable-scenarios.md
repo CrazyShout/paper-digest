@@ -4,8 +4,8 @@
   "tag": "autonomous-driving-testing",
   "tags": ["autonomous-driving-testing", "world-models", "3d-reconstruction"],
   "title": "From Driving Videos to Simulatable Scenarios",
-  "source": "arXiv:2606.21993 / https://arxiv.org/abs/2606.21993",
-  "authors": ["Alexandre Levy", "Ernest Valveny Llobet", "Antonio Manuel Lopez"],
+  "source": "IEEE ITSC 2026 (accepted; formal page unavailable at audit) / arXiv:2606.21993 / https://arxiv.org/abs/2606.21993",
+  "authors": ["Alexandre Levy", "Ernest Valveny Llobet", "Antonio Manuel López"],
   "affiliations": ["Computer Vision Center", "Universitat Autonoma de Barcelona"],
   "comment": "D-V2S 自动把驾驶视频转成可控制、可重复的仿真场景，适合补足从真实道路观察到闭环仿真测试之间的转换链路。"
 }

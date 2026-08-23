@@ -4,7 +4,7 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
   "title": "C2E: Boosting Ego-Only 3D Object Detection via Multi-Teacher Contrastive Knowledge Distillation",
-  "source": "arXiv:2607.01827 / https://arxiv.org/abs/2607.01827",
+  "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/4362 / arXiv:2607.01827 / https://arxiv.org/abs/2607.01827",
   "authors": ["Jinlong Wang", "Xun Huang", "Qiming Xia", "Shijia Zhao", "Chenglu Wen"],
   "affiliations": ["Xiamen University", "Zhongguancun Academy"],
   "comment": "C2E 把协同感知当作训练期教师，把收益蒸馏回 ego-only 检测器，试图在不引入在线通信成本的情况下继承协同感知的遮挡补偿能力。"

@@ -4,8 +4,8 @@
   "tag": "autonomous-driving-testing",
   "tags": ["autonomous-driving-testing", "3d-reconstruction", "end-to-end-autonomous-driving"],
   "title": "DecoupleGS: Interactive 3D Gaussian Splatting for End-to-End Autonomous Driving Testing",
-  "source": "arXiv:2608.01761 / https://arxiv.org/abs/2608.01761 / 作者在 arXiv comments 中声明 ECCV 2026 录用，扫描时未找到正式 proceedings 页面",
-  "authors": ["Siying Li", "Ying Ni", "Jie Sun", "Jian Sun", "Haotian Shi"],
+  "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/5765 / arXiv:2608.01761 / https://arxiv.org/abs/2608.01761",
+  "authors": ["Siying Li", "Ying Ni", "Haotian Shi", "Jie Sun", "Jian Sun"],
   "affiliations": ["College of Transportation, Tongji University", "Key Laboratory of Road and Traffic Engineering, Ministry of Education"],
   "comment": "DecoupleGS 把驾驶场景拆为持久静态背景和可操纵的规范化动态车辆，并通过压缩、地图配准和代理光照实现实时重组。它少见地把神经重建指标接到响应式交通和端到端驾驶测试，但闭环仍只覆盖相机、刚体车辆和代理物理。"
 }

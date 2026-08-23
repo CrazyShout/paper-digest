@@ -5,7 +5,7 @@
   "tags": ["end-to-end-autonomous-driving", "autonomous-driving-testing"],
   "title": "TerraZero: Procedural Driving Simulation for Zero-Demonstration Self-Play at Scale",
   "source": "arXiv:2607.13028 / https://arxiv.org/abs/2607.13028 / https://terra-applied.github.io/TerraZero",
-  "authors": ["Zhouchonghao Wu", "Akshay Rangesh", "Weixin Li", "Wei-Jer Chang", "Zachary Lee", "Tim Wang", "Wei Zhan"],
+  "authors": ["Zhouchonghao Wu", "Akshay Rangesh", "Weixin Li", "Wei-Jer Chang", "Zachary Lee", "Saeed Bonab", "Tim Wang", "Wei Zhan"],
   "affiliations": ["Applied Intuition", "University of California, Berkeley"],
   "comment": "用高速对象级仿真、程序化长尾生成和零示范自博弈训练同一套驾驶与交通策略，在 InterPlan 上展示“场景覆盖”可以比更大模型或手工规划器更关键。"
 }

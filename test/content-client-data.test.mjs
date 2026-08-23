@@ -75,7 +75,8 @@ test("affiliation placeholder detection is case-insensitive and specific", () =>
     "unknown",
     "Not Confirmed",
     "unconfirmed affiliation",
-    "see pdf"
+    "see pdf",
+    "University A and collaborators"
   ]) {
     assert.equal(isAffiliationPlaceholder(value), true, value);
   }
@@ -132,5 +133,16 @@ test("paper links do not present pending repositories as released code", () => {
       "Repository (release pending): https://github.com/LeapWM/da-wam"
     )[0].label,
     "仓库（待发布）"
+  );
+});
+
+test("paper links distinguish an official PDF from its archive record", () => {
+  assert.deepEqual(
+    buildPaperSourceLinks(
+      "VehicleSec 2026: https://www.usenix.org/conference/vehiclesec26/presentation/calipari / "
+        + "DOI: https://doi.org/10.5281/zenodo.20395591 / "
+        + "Official PDF: https://zenodo.org/records/20395591/files/DTF_Vehiclesec2026.pdf"
+    ).map((link) => link.label),
+    ["正式版", "数据归档", "论文 PDF"]
   );
 });

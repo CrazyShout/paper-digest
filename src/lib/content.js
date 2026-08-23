@@ -358,6 +358,9 @@ export function buildPaperSourceLinks(source) {
           const context = sourceText
             .slice(segmentStart < 0 ? 0 : segmentStart + 1, urlIndex)
             .toLowerCase();
+          if (/official\s+pdf|paper\s+pdf|论文\s*pdf/.test(context)) {
+            return "论文 PDF";
+          }
           if (
             urlMatchesHostname(url, "github.com")
             && /release\s+pending|planned\s+(?:code|release)|待发布|即将发布/.test(context)
@@ -378,7 +381,7 @@ export function buildPaperSourceLinks(source) {
 
 export function isAffiliationPlaceholder(value) {
   const normalized = String(value || "").trim();
-  return /作者单位|见论文|\b(?:unknown|unconfirmed|not\s+confirmed)\b|^\s*pdf\s*$|\b(?:see|refer\s+to|in)\s+(?:the\s+)?(?:paper\s+)?pdf\b|\baffiliations?\s+(?:are\s+)?in\s+(?:the\s+)?pdf\b/i.test(normalized);
+  return /作者单位|见论文|\b(?:unknown|unconfirmed|not\s+confirmed)\b|^\s*pdf\s*$|\b(?:see|refer\s+to|in)\s+(?:the\s+)?(?:paper\s+)?pdf\b|\baffiliations?\s+(?:are\s+)?in\s+(?:the\s+)?pdf\b|\band collaborators\b/i.test(normalized);
 }
 
 export function buildReviewSourceLinks(reference) {
@@ -430,14 +433,16 @@ export async function getPapers() {
   });
 }
 
-export async function getDigests() {
+export async function getDigests({ includeAudit = false } = {}) {
   const tags = await getTags();
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
   const papers = await getPapers();
   const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
   const digestDocs = await readMarkdownDir(path.join(CONTENT, "digests"));
 
-  return digestDocs.map((doc) => {
+  return digestDocs
+    .filter((doc) => includeAudit || doc.data.visibility !== "audit")
+    .map((doc) => {
     const digestPapers = doc.data.papers.map((paperId) => {
       const paper = paperMap.get(paperId);
       if (!paper) throw new Error(`${doc.file} references missing paper: ${paperId}`);
@@ -516,8 +521,19 @@ export async function getPaperWithTag(id) {
   const tags = await getTags();
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
   const papers = await getPapers();
-  const paper = papers.find((item) => item.id === id);
-  if (!paper) return null;
+  const requestedPaper = papers.find((item) => item.id === id);
+  if (!requestedPaper) return null;
+  const preferredRevision = requestedPaper.revisionOf
+    ? null
+    : papers.find((item) => item.revisionOf === requestedPaper.id);
+  const paper = preferredRevision
+    ? {
+        ...preferredRevision,
+        id: requestedPaper.id,
+        link: requestedPaper.link,
+        revisionId: preferredRevision.id
+      }
+    : requestedPaper;
   const paperTags = paper.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean);
 
   return {
@@ -1182,6 +1198,7 @@ export async function getResearchLandscape() {
       papers: digest.papers.filter((paper) => canonicalPaperIds.has(paper.id))
     }))
     .filter((digest) => digest.papers.length);
+  const corpusPapers = uniquePapersFromDigests(effectiveDigests);
 
   const windowSize = Math.max(1, Number(landscapeConfig.analysisWindowIssues) || 3);
   const recentDigests = effectiveDigests.slice(0, windowSize);
@@ -1204,12 +1221,12 @@ export async function getResearchLandscape() {
   }
   const maxDirectionCount = Math.max(
     1,
-    ...tags.map((tag) => countPapersWithTag(canonicalPapers, tag.id))
+    ...tags.map((tag) => countPapersWithTag(corpusPapers, tag.id))
   );
 
   const directions = tags.map((tag) => {
     const analysis = directionAnalysis.get(tag.id) || {};
-    const total = countPapersWithTag(canonicalPapers, tag.id);
+    const total = countPapersWithTag(corpusPapers, tag.id);
     const recentCount = countPapersWithTag(recentPapers, tag.id);
     const previousCount = countPapersWithTag(previousPapers, tag.id);
     const recentShare = recentPapers.length ? (recentCount / recentPapers.length) * 100 : 0;
@@ -1221,7 +1238,9 @@ export async function getResearchLandscape() {
       ...tag,
       ...analysis,
       total,
-      coverage: roundPercentage((total / canonicalPapers.length) * 100),
+      coverage: corpusPapers.length
+        ? roundPercentage((total / corpusPapers.length) * 100)
+        : 0,
       barWidth: roundPercentage((total / maxDirectionCount) * 100),
       recentCount,
       previousCount,
@@ -1260,7 +1279,7 @@ export async function getResearchLandscape() {
     title: landscapeConfig.title,
     summary: landscapeConfig.summary,
     corpus: {
-      paperCount: canonicalPapers.length,
+      paperCount: corpusPapers.length,
       directionCount: tags.length,
       digestCount: effectiveDigests.length,
       scopeStart: dates[0] || "",
@@ -1275,7 +1294,7 @@ export async function getResearchLandscape() {
     trends: landscapeConfig.trends.map(attachTagInfo),
     hotspots: landscapeConfig.hotspots.map((hotspot) => ({
       ...attachTagInfo(hotspot),
-      jointCount: canonicalPapers.filter((paper) =>
+      jointCount: corpusPapers.filter((paper) =>
         hotspot.tags.every((tagId) => paper.tags.includes(tagId))
       ).length
     })),

@@ -4,7 +4,7 @@
   "tag": "3d-reconstruction",
   "tags": ["3d-reconstruction", "world-models"],
   "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
-  "source": "CVPR 2025 / arXiv:2411.11921 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html",
+  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html / arXiv:2411.11921 / https://arxiv.org/abs/2411.11921",
   "authors": ["Chensheng Peng", "Chengwei Zhang", "Yixiao Wang", "Chenfeng Xu", "Yichen Xie", "Wenzhao Zheng", "Kurt Keutzer", "Masayoshi Tomizuka", "Wei Zhan"],
   "affiliations": ["UC Berkeley"],
   "comment": "DeSiRe-GS 用自监督 4D Gaussian Splatting 做城市驾驶场景的静动态分解和表面重建。它的价值在于把视觉渲染质量、动态对象处理和几何可信度放到同一个驾驶场景表示问题里。"

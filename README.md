@@ -35,7 +35,7 @@ GitHub Pages 已使用 Actions 发布。构建产物输出到 `dist/`，由 work
 
 ## Local Development
 
-需要 Node.js `>=22 <25` 和 `ripgrep`（`rg`）。综述校验会执行真实的本库检索命令，缺少 `rg` 时会直接失败；GitHub Pages workflow 会显式安装该依赖。
+需要 Node.js `>=22.12 <25` 和 `ripgrep`（`rg`）。综述校验会执行真实的本库检索命令，缺少 `rg` 时会直接失败；GitHub Pages workflow 会显式安装该依赖。
 
 首次安装依赖：
 

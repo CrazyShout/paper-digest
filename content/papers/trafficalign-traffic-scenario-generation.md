@@ -4,7 +4,7 @@
   "tag": "autonomous-driving-testing",
   "tags": ["autonomous-driving-testing", "world-models", "end-to-end-autonomous-driving", "agentic-driving"],
   "title": "TrafficAlign: Aligning Large Language Models for Traffic Scenario Generation",
-  "source": "arXiv:2606.29097 / https://arxiv.org/abs/2606.29097",
+  "source": "CVPR 2026 / https://openaccess.thecvf.com/content/CVPR2026/html/Tu_TrafficAlign_Aligning_Large_Language_Models_for_Traffic_Scenario_Generation_CVPR_2026_paper.html / arXiv:2606.29097 / https://arxiv.org/abs/2606.29097",
   "authors": ["Zhi Tu", "Liangkun Niu", "Tianyi Zhang"],
   "affiliations": ["Purdue University"],
   "comment": "TrafficAlign 用真实驾驶视频合成、校验并对齐 LLM 交通场景生成，让 LLM 生成的测试场景更贴近地区交通分布并能触发更多碰撞。"

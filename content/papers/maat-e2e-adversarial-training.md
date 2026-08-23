@@ -6,7 +6,7 @@
   "title": "Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving",
   "source": "arXiv:2409.07321 / https://arxiv.org/abs/2409.07321",
   "authors": ["Tianyuan Zhang", "Lu Wang", "Jiaqi Kang", "Xinwei Zhang", "Siyuan Liang", "Yuwei Chen", "Aishan Liu", "Xianglong Liu"],
-  "affiliations": ["Beihang University and collaborators"],
+  "affiliations": ["School of Computer Science and Engineering, Beihang University", "School of Software, Beihang University", "School of Computing, National University of Singapore", "Aviation Industry Development Research Center of China"],
   "comment": "MA2T 把对抗训练从分类或感知模块推进到端到端驾驶链路，关注攻击如何穿过感知、预测和规划影响最终驾驶行为。它适合作为自动驾驶鲁棒性评测与防御设计的基线论文。"
 }
 ---

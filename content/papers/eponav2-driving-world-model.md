@@ -6,7 +6,7 @@
   "title": "EponaV2: Driving World Model with Comprehensive Future Reasoning",
   "source": "arXiv:2605.14696 / https://arxiv.org/abs/2605.14696",
   "authors": ["Jiawei Xu", "Zhizhou Zhong", "Zhijian Shu", "Mingkai Jia", "Mingxiao Li", "Jia-Wang Bian", "Qian Zhang", "Kaicheng Zhang", "Jin Xie", "Jian Yang", "Wei Yin"],
-  "affiliations": ["PCA Lab, VCIP, College of Computer Science, Nankai University", "Horizon Robotics", "HKUST", "NJUPT", "NTU", "Anyverse", "School of Intelligence Science and Technology, Nanjing University"],
+  "affiliations": ["PCA Lab, VCIP, College of Computer Science, Nankai University", "Horizon Robotics", "The Hong Kong University of Science and Technology", "Nanjing University of Posts and Telecommunications", "Nanyang Technological University", "Anyverse", "School of Intelligence Science and Technology, Nanjing University"],
   "comment": "EponaV2 把 perception-free driving world model 从下一帧预测扩展到未来图像、深度和语义的综合推理，并用这些未来表征提升 NAVSIM 规划。"
 }
 ---

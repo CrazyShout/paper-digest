@@ -15,7 +15,7 @@
 | driving-world-model-video | DrivingWorld: Constructing World Model for Autonomous Driving via Video GPT | 2412.19505 | 2026-05-12 |
 | dust-cooperative-4d-reconstruction | One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction | 2605.07910 | 2026-05-16 |
 | eponav2-driving-world-model | EponaV2: Driving World Model with Comprehensive Future Reasoning | 2605.14696 | 2026-05-16 |
-| evaluating-roadside-perception | Evaluating Roadside Perception for Autonomous Vehicles | 2401.12392 | 2026-05-12 |
+| evaluating-roadside-perception | Evaluating Roadside Perception for Autonomous Vehicles: Insights from Field Testing | 2401.12392 | 2026-05-12 |
 | maat-e2e-adversarial-training | Module-wise Adaptive Adversarial Training for End-to-end Autonomous Driving | 2409.07321 | 2026-05-13 |
 | mdrive-closed-loop-cooperative-driving | MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems | 2605.10904 | 2026-05-16 |
 | morph-u-resilient-v2x-planning | MORPH-U: Multi-Objective Resilient Motion Planning for V2X-Enabled Autonomous Driving in High-Uncertainty Environments via Simulation | 2605.07370 | 2026-05-16 |
@@ -23,8 +23,8 @@
 | real2sim-physics-4dgs | Real2Sim: A Physics-driven and Editable Gaussian Splatting Framework for Autonomous Driving | 2605.13591 | 2026-05-14 |
 | realtime-adversarial-autonomous-systems | Real-Time Evaluation of Autonomous Systems under Adversarial Attacks | 2605.03491 | 2026-05-16 |
 | revisiting-adversarial-attacks | Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems | 2505.11532 | 2026-05-12 |
-| safer-safety-scenario | SaFeR: Safety-Critical Scenario Generation via Feasibility-Constrained Token Resampling | 2603.04071 | 2026-05-12 |
-| select2drive-pragmatic-communications | Select2Drive: Enhancing Real-World V2X Autonomous Driving with Pragmatic Communications | 2501.12040 | 2026-05-13 |
+| safer-safety-scenario | SaFeR: Safety-Critical Scenario Generation for Autonomous Driving Test via Feasibility-Constrained Token Resampling | 2603.04071 | 2026-05-12 |
+| select2drive-pragmatic-communications | Select2Drive: Pragmatic Communications for Real-Time Collaborative Autonomous Driving | 2501.12040 | 2026-05-13 |
 | splatad-realtime-3dgs | SplatAD: Real-Time LiDAR and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving | 2411.16816 | 2026-05-12 |
 | swarmdrive-v2v-coordination | SwarmDrive: Semantic V2V Coordination for Latency-Constrained Cooperative Autonomous Driving | 2604.22852 | 2026-05-14 |
 | temporal-sampling-e2e-trajectory | Temporal Sampling Frequency Matters: A Capacity-Aware Study of End-to-End Driving Trajectory Prediction | 2605.10388 | 2026-05-16 |

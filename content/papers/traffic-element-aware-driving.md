@@ -5,7 +5,7 @@
   "tags": ["end-to-end-autonomous-driving"],
   "title": "Plug-and-Play Traffic Element Awareness for End-to-End Autonomous Driving",
   "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/3305 / arXiv:2608.18035 / https://arxiv.org/abs/2608.18035 / HTML: https://arxiv.org/html/2608.18035 / Project: https://zzongzheng0918.github.io/TE-Aware-E2E-AD/",
-  "authors": ["Zongzheng Zhang", "Jijun Wang", "Saining Zhang", "Wang Shuo", "Yiru Wang", "Hai Yang", "Yang Chen", "Yuwen Heng", "Hao Sun", "Anqing Jiang", "Hao Zhao"],
+  "authors": ["Zongzheng Zhang", "Jijun Wang", "Saining Zhang", "Shuo Wang", "Yiru Wang", "Hai Yang", "Yang Chen", "Yuwen Heng", "Hao Sun", "Anqing Jiang", "Hao Zhao"],
   "affiliations": ["Institute for AI Industry Research, Tsinghua University", "Bosch Corporate Research, Shanghai"],
   "comment": "论文把交通灯、标志及其与 ego lane 的拓扑做成可插拔三维约束，在六类规划器和四个 benchmark 上持续改善规则遵守；Bench2Drive 中 VAD Driving Score 从 42.3 提升到 56.4，且只增加少量时延。"
 }

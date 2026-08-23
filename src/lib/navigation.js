@@ -71,8 +71,31 @@ export async function getNotebookData(basePath = "/") {
     getRuntimeConfig()
   ]);
 
+  const publicPaperIds = new Set(
+    digests.flatMap((digest) => digest.papers.map((paper) => paper.id))
+  );
+  const revisionsByOriginalId = new Map(
+    papers
+      .filter((paper) => paper.revisionOf)
+      .map((paper) => [paper.revisionOf, paper])
+  );
+  const canonicalPapers = papers
+    .filter((paper) => !paper.revisionOf)
+    .map((paper) => {
+      const revision = revisionsByOriginalId.get(paper.id);
+      if (!revision) return paper;
+      return {
+        ...revision,
+        id: paper.id,
+        link: paper.link,
+        revisionOf: undefined,
+        revisionId: revision.id
+      };
+    });
+  const publicPapers = canonicalPapers.filter((paper) => publicPaperIds.has(paper.id));
+  const auditPapers = canonicalPapers.filter((paper) => !publicPaperIds.has(paper.id));
   const papersByTag = new Map(tags.map((tag) => [tag.id, []]));
-  for (const paper of papers) {
+  for (const paper of publicPapers) {
     const primaryTag = paper.tags[0];
     if (!papersByTag.has(primaryTag)) papersByTag.set(primaryTag, []);
     papersByTag.get(primaryTag).push(paper);
@@ -135,7 +158,7 @@ export async function getNotebookData(basePath = "/") {
       },
       {
         type: "folder",
-        name: `详细报告 · ${papers.length}`,
+        name: `详细报告 · ${publicPapers.length}`,
         defaultOpen: false,
         children: tags
           .map((tag) => ({
@@ -151,6 +174,18 @@ export async function getNotebookData(basePath = "/") {
               }))
           }))
           .filter((folder) => folder.children.length > 0)
+      },
+      {
+        type: "folder",
+        name: `人工核验修订 · ${auditPapers.length}`,
+        defaultOpen: false,
+        children: auditPapers
+          .sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id))
+          .map((paper) => ({
+            type: "page",
+            name: `${paper.title} · 人工核验版`,
+            url: routeUrl(base, `papers/${paper.id}`)
+          }))
       }
     ]
   };
@@ -222,7 +257,7 @@ export async function getNotebookData(basePath = "/") {
       breadcrumbs: ["简报归档", digest.displayDate || digest.date],
       featured: index < 3
     })),
-    ...papers.map((paper) => searchRecord({
+    ...canonicalPapers.map((paper) => searchRecord({
       id: `paper-${paper.id}`,
       url: routeUrl(base, `papers/${paper.id}`),
       title: paper.title,
@@ -233,10 +268,12 @@ export async function getNotebookData(basePath = "/") {
         paper.authors.join(" "),
         paper.affiliations.join(" ")
       ].join(" "),
-      breadcrumbs: [
-        "论文报告",
-        tags.find((tag) => tag.id === paper.tags[0])?.label || "未分类"
-      ]
+      breadcrumbs: publicPaperIds.has(paper.id)
+        ? [
+            "论文报告",
+            tags.find((tag) => tag.id === paper.tags[0])?.label || "未分类"
+          ]
+        : ["人工核验修订", "人工核验版"]
     }))
   ];
 
@@ -245,7 +282,7 @@ export async function getNotebookData(basePath = "/") {
     tree,
     searchRecords,
     digests,
-    papers,
+    papers: canonicalPapers,
     tags,
     reviewCenter,
     ideaCenter,

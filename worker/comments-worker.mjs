@@ -1,5 +1,6 @@
 const DEFAULT_COMMENTS_DIR = "comments";
 const MAX_COMMENT_LENGTH = 800;
+const MAX_REQUEST_BYTES = 16 * 1024;
 const DEFAULT_MAX_COMMENTS_PER_DIGEST = 200;
 
 function jsonResponse(data, status = 200, headers = {}) {
@@ -12,25 +13,36 @@ function jsonResponse(data, status = 200, headers = {}) {
   });
 }
 
-function corsHeaders(request, env) {
-  const origin = request.headers.get("Origin") || "";
-  const allowed = (env.ALLOWED_ORIGIN || "*")
+function allowedOrigins(env) {
+  return (env.ALLOWED_ORIGIN || "*")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
 
-  const allowOrigin = allowed.includes("*") || !origin
+function requestOriginIsAllowed(request, env) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = allowedOrigins(env);
+  return !origin || allowed.includes("*") || allowed.includes(origin);
+}
+
+function corsHeaders(request, env) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = allowedOrigins(env);
+  const allowOrigin = allowed.includes("*")
     ? "*"
-    : allowed.includes(origin)
+    : origin && allowed.includes(origin)
       ? origin
-      : allowed[0] || "*";
+      : "";
 
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
+  const headers = {
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400"
   };
+  if (allowOrigin) headers["Access-Control-Allow-Origin"] = allowOrigin;
+  if (allowOrigin && allowOrigin !== "*") headers.Vary = "Origin";
+  return headers;
 }
 
 function requireEnv(env, key) {
@@ -208,7 +220,27 @@ async function handleGet(request, env, cors) {
 }
 
 async function handlePost(request, env, cors) {
-  const payload = await request.json();
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
+    return jsonResponse({ error: "Content-Type must be application/json" }, 415, cors);
+  }
+
+  const declaredLength = Number.parseInt(request.headers.get("Content-Length") || "", 10);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
+    return jsonResponse({ error: "Request body too large" }, 413, cors);
+  }
+
+  const rawBody = await request.text();
+  if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
+    return jsonResponse({ error: "Request body too large" }, 413, cors);
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return jsonResponse({ error: "Invalid JSON" }, 400, cors);
+  }
   const comment = createComment(payload);
   await requireExistingDigest(env, comment.digestId);
 
@@ -231,6 +263,9 @@ async function handlePost(request, env, cors) {
 
 export default {
   async fetch(request, env) {
+    if (!requestOriginIsAllowed(request, env)) {
+      return jsonResponse({ error: "Origin not allowed" }, 403, { Vary: "Origin" });
+    }
     const cors = corsHeaders(request, env);
 
     if (request.method === "OPTIONS") {

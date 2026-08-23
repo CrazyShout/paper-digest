@@ -5,8 +5,8 @@
   "tags": ["autonomous-driving-testing", "cooperative-autonomous-driving"],
   "title": "SinD 2.0: A Multi-City UAV Dataset with Semantic Risk Annotations for SOTIF-Oriented Safety Validation at Signalized Intersections",
   "source": "arXiv:2607.16943 / https://arxiv.org/abs/2607.16943 / https://github.com/SOTIF-AVLab/SinD/tree/main",
-  "authors": ["Yunwei Li", "Shengjie Fu", "Chunrong Chen", "Chengxiang Zhao", "Yuchen Fan", "Mingyu Zhu", "Yanchao Xu", "Yuxin Zhang", "Lan Yang", "Chuzhao Li", "Jie Ji", "Yi He", "Abhijit Sarkar", "Akash Sonth", "Hong Wang", "Jun Li"],
-  "affiliations": ["Tsinghua University", "Beijing Institute of Technology", "Guangzhou Automobile Group Co., Ltd.", "Jilin University", "Chang'an University", "Chongqing University", "Southwest University", "Wuhan University of Technology", "Virginia Tech Transportation Institute", "Virginia Tech"],
+  "authors": ["Yunwei Li", "Shengjie Fu", "Chunrong Chen", "Chengxiang Zhao", "Yuchen Fan", "Mingyu Zhu", "Yanchao Xu", "Jiahui Xu", "Anran Wang", "Huanan Wang", "Yuxin Zhang", "Lan Yang", "Chuzhao Li", "Jie Ji", "Yi He", "Abhijit Sarkar", "Akash Sonth", "Hong Wang", "Jun Li"],
+  "affiliations": ["Tsinghua University", "Beijing Institute of Technology", "Guangzhou Automobile Group Co., Ltd.", "Jilin University", "Chang'an University", "Chongqing University", "Southwest University", "Wuhan University of Technology", "The University of Hong Kong", "East China University of Science and Technology", "Virginia Tech Transportation Institute", "Virginia Tech"],
   "comment": "把四城六个信号路口的自然交通轨迹、风险语义、开环/反应式闭环测试和 3DGS 可视化接成一套 SOTIF 工具链；价值在于能按遮挡、争路权和狭窄可行域直接查询高价值测试。"
 }
 ---

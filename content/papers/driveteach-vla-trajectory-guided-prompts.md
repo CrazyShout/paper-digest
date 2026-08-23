@@ -4,8 +4,8 @@
   "tag": "end-to-end-autonomous-driving",
   "tags": ["end-to-end-autonomous-driving", "cooperative-autonomous-driving"],
   "title": "Teaching Vision-Language-Action Models What to See and Where to Look",
-  "source": "arXiv:2607.01658 / https://arxiv.org/abs/2607.01658",
-  "authors": ["Yuguang Yang", "Canyu Chen", "Zhewen Tan", "Yizhi Wang", "Zichao Feng", "Chunyang Liu", "Kehua Sheng", "Juan Zhang", "Linlin Yang", "Baochang Zhang", "Yan Wang", "Bo Zhang", "Xianbin Cao"],
+  "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/5835 / arXiv:2607.01658 / https://arxiv.org/abs/2607.01658",
+  "authors": ["Yuguang Yang", "Canyu Chen", "Zhewen Tan", "Yizhi Wang", "Zichao Feng", "Chunyang Liu", "Kehua Sheng", "Bo Zhang", "Yan Wang", "Juan Zhang", "Linlin Yang", "Baochang Zhang", "Xianbin Cao"],
   "affiliations": ["Beihang University", "Institute for AI Industry Research, Tsinghua University", "DiDi", "Communication University of China"],
   "comment": "DriveTeach-VLA 认为驾驶 VLA 不能只靠文字 CoT，要用驾驶视觉蒸馏和 2D 轨迹提示显式教模型看什么、看哪里。"
 }

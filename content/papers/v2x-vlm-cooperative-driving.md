@@ -6,7 +6,7 @@
   "title": "V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models",
   "source": "arXiv:2408.09251 / https://arxiv.org/abs/2408.09251",
   "authors": ["Junwei You", "Haotian Shi", "Zhuoyu Jiang", "Zilin Huang", "Rui Gan", "Keshu Wu", "Xi Cheng", "Xiaopeng Li", "Bin Ran"],
-  "affiliations": ["University of Wisconsin-Madison and collaborators"],
+  "affiliations": ["Department of Civil and Environmental Engineering, University of Wisconsin-Madison", "College of Computing and Data Science, Nanyang Technological University", "College of Transportation, Tongji University", "Zachry Department of Civil and Environmental Engineering, Texas A&M University", "School of Civil and Environmental Engineering, Cornell University"],
   "comment": "V2X-VLM 尝试让车端和路侧图像、语义文本与轨迹规划在同一个端到端框架里对齐。它适合评估视觉语言模型是否能把车路协同从感知增强推进到安全规划。"
 }
 ---

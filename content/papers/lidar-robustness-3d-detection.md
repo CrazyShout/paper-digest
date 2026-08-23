@@ -4,7 +4,7 @@
   "tag": "autonomous-driving-security",
   "tags": ["autonomous-driving-security", "autonomous-driving-testing"],
   "title": "Comprehensive Robustness Analysis of LiDAR-based 3D Object Detection in Autonomous Driving",
-  "source": "arXiv:2607.02074 / https://arxiv.org/abs/2607.02074",
+  "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/4486 / arXiv:2607.02074 / https://arxiv.org/abs/2607.02074",
   "authors": ["Adwait Chandorkar", "Kai Krink", "Yerdana Maulenbay", "Hasan Tercan", "Tobias Meisen"],
   "affiliations": ["University of Wuppertal", "University of British Columbia"],
   "comment": "这篇论文系统分析 LiDAR-only 3D detection 在结构化点云扰动下的鲁棒性，提醒 benchmark 不能只奖励 mAP，也要看攻击下的误检、漏检和几何误差。"

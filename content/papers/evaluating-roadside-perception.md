@@ -3,7 +3,7 @@
   "id": "evaluating-roadside-perception",
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
-  "title": "Evaluating Roadside Perception for Autonomous Vehicles",
+  "title": "Evaluating Roadside Perception for Autonomous Vehicles: Insights from Field Testing",
   "source": "arXiv:2401.12392 / https://arxiv.org/abs/2401.12392",
   "authors": ["Rusheng Zhang", "Depu Meng", "Shengyin Shen", "Tinghan Wang", "Tai Karir", "Michael Maile", "Henry X. Liu"],
   "affiliations": ["University of Michigan (Mcity)"],

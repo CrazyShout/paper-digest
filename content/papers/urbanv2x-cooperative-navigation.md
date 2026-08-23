@@ -6,7 +6,7 @@
   "title": "UrbanV2X: A Multisensory Vehicle-Infrastructure Dataset for Cooperative Navigation in Urban Areas",
   "source": "IEEE ITSC 2025 / arXiv:2512.20224 / https://arxiv.org/abs/2512.20224 / https://polyu-taslab.github.io/UrbanV2X/",
   "authors": ["Qijun Qin", "Ziqi Zhang", "Yihan Zhong", "Feng Huang", "Xikun Liu", "Runzhi Hu", "Hang Chen", "Wei Hu", "Dongzhe Su", "Jun Zhang", "Hoi-Fung Ng", "Weisong Wen"],
-  "affiliations": ["The Hong Kong Polytechnic University and collaborators"],
+  "affiliations": ["Department of Aeronautical and Aviation Engineering, The Hong Kong Polytechnic University", "Hong Kong Applied Science and Technology Research Institute", "Nanyang Technological University"],
   "comment": "UrbanV2X 提供香港 C-V2X 测试场里的车端和路侧多传感器数据，价值在于把车路协同导航从仿真或单模态感知推进到真实城市数据资产。"
 }
 ---

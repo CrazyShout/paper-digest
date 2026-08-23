@@ -4,7 +4,7 @@
   "tag": "cooperative-autonomous-driving",
   "tags": ["cooperative-autonomous-driving"],
   "title": "Co-MTP: A Cooperative Trajectory Prediction Framework with Multi-Temporal Fusion for Autonomous Driving",
-  "source": "ICRA 2025 / arXiv:2502.16589 / https://arxiv.org/abs/2502.16589",
+  "source": "IEEE ICRA 2025 / https://doi.org/10.1109/ICRA55743.2025.11127303 / arXiv:2502.16589 / https://arxiv.org/abs/2502.16589",
   "authors": ["Xinyu Zhang", "Zewei Zhou", "Zhaoyi Wang", "Yangjie Ji", "Yanjun Huang", "Hong Chen"],
   "affiliations": ["Tongji University"],
   "comment": "Co-MTP 把 V2X 信息用于轨迹预测，而不只停留在单帧协同感知。它把基础设施历史观测、预测结果和 ego planning action 一起放进异构图，适合讨论车路协同如何真正服务未来行为建模。"

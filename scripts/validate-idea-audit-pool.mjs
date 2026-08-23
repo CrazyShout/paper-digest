@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 const ROOT = process.cwd();
 const AUDIT_ROOT = path.join(ROOT, "content", "idea-audits");
 const WORKFLOW_PATH = path.join(ROOT, "config", "idea-exploration-workflow.json");
+const IDEA_CENTER_PATH = path.join(ROOT, "content", "idea-center.json");
 const RUNTIME_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function assertValid(condition, message) {
@@ -519,10 +520,19 @@ export async function resolveAuditInputPath(
 }
 
 async function main() {
-  const inputPaths = process.argv.slice(2);
+  const explicitInputPaths = process.argv.slice(2);
+  const center = explicitInputPaths.length
+    ? null
+    : JSON.parse(await readFile(IDEA_CENTER_PATH, "utf8"));
+  const inputPaths = explicitInputPaths.length
+    ? explicitInputPaths
+    : [...new Set(
+        (center?.directions || []).flatMap((direction) => direction.candidatePoolPaths || [])
+      )].sort();
   assertValid(
     inputPaths.length > 0,
-    "Usage: node scripts/validate-idea-audit-pool.mjs <audit.json> [...]"
+    "No candidatePoolPaths found in content/idea-center.json. "
+      + "Pass explicit audit paths or add the reviewed pools to the center."
   );
   const workflow = JSON.parse(await readFile(WORKFLOW_PATH, "utf8"));
 
