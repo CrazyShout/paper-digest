@@ -111,6 +111,14 @@
 | rbft-net-radar-depth-completion | RbFT-Net: Rectify-Before-Fuse Temporal Radar Anchors for 4D Radar-Camera Depth Completion | 2608.13102 | 2026-08-17 |
 | geoup-unified-3d-perception | Geometry-Grounded Unified 3D Perception for Autonomous Driving | 2608.13147 | 2026-08-17 |
 | lgs-gaussian-structure-driving-reconstruction | Learning Gaussian Structure: Intervention-Guided Density Control for Feed-Forward Driving Reconstruction | 2608.11077 | 2026-08-17 |
+| multi-observer-vehicle-localization | Multi-Observer Vehicle Localization Case Study with Roadside Radar and Connected Vehicle Sensing | 2608.16966 | 2026-08-24 |
+| g-mark-cooperative-driving | G-MARK: Grounded Multi-Agent Reasoning for Cooperative Driving via Knowledge Graphs | 2608.19964 | 2026-08-24 |
+| traffic-element-aware-driving | Plug-and-Play Traffic Element Awareness for End-to-End Autonomous Driving | 2608.18035 | 2026-08-24 |
+| stabledrive-selective-memory | Not All History Helps: Velocity-Aware Selective Memory for Long-Horizon End-to-End Autonomous Driving | 2608.15573 | 2026-08-24 |
+| da-wam-decision-aligned-world-model | DA-WAM: Decision-Aligned Future Latents for Driving World Models | 2608.19085 | 2026-08-24 |
+| usr-drive-unified-scene-representation | USR-Drive: Unified Driving Scene Representation via Joint Denoising of 3D Gaussians and Boxes | 2608.19036 | 2026-08-24 |
+| scape-policy-evaluation | Scape: Scenario-Conditioned Simulation-Augmented Policy Evaluation | 2608.19425 | 2026-08-24 |
+| caviar-accident-reasoning | CAViAR: A Causal Video Dataset for Fine-Grained Accident Reasoning in Real-World Scenarios | 2608.19380 | 2026-08-24 |
 
 ## 使用说明
 

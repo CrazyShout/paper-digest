@@ -112,3 +112,25 @@ test("review links preserve verified dataset and archive semantics", () => {
     ["正式版", "数据集", "数据归档"]
   );
 });
+
+test("paper links do not present pending repositories as released code", () => {
+  assert.deepEqual(
+    buildPaperSourceLinks(
+      "arXiv:2608.16966 / https://arxiv.org/abs/2608.16966 / "
+        + "Planned code and data release: https://github.com/AppuriAalto/multi-observer-vehicle-tracking"
+    ),
+    [
+      { label: "arXiv", url: "https://arxiv.org/abs/2608.16966" },
+      {
+        label: "仓库（待发布）",
+        url: "https://github.com/AppuriAalto/multi-observer-vehicle-tracking"
+      }
+    ]
+  );
+  assert.equal(
+    buildPaperSourceLinks(
+      "Repository (release pending): https://github.com/LeapWM/da-wam"
+    )[0].label,
+    "仓库（待发布）"
+  );
+});

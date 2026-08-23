@@ -349,7 +349,23 @@ export function buildPaperSourceLinks(source) {
   return uniqueSourceLinks(
     [
       ...urls.map((url) => ({
-        label: sourceLinkLabel(url),
+        label: (() => {
+          const urlIndex = sourceText.indexOf(url);
+          const segmentStart = Math.max(
+            sourceText.lastIndexOf(" / ", urlIndex),
+            sourceText.lastIndexOf(";", urlIndex)
+          );
+          const context = sourceText
+            .slice(segmentStart < 0 ? 0 : segmentStart + 1, urlIndex)
+            .toLowerCase();
+          if (
+            urlMatchesHostname(url, "github.com")
+            && /release\s+pending|planned\s+(?:code|release)|待发布|即将发布/.test(context)
+          ) {
+            return "仓库（待发布）";
+          }
+          return sourceLinkLabel(url);
+        })(),
         url
       })),
       ...arxivIds.map((arxivId) => ({

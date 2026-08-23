@@ -12,6 +12,8 @@ content/
   research-landscape.json   # 首页全库趋势、热点和科研建议
   reviews/
     direction-id.json       # 每个长期方向一份持续更新的综述
+  digest-audits/
+    YYYY-MM-DD.json         # 每期真实查询、候选去向和独立复核记录
   digests/
     YYYY-MM-DD.md           # 每期简报索引
   papers/
@@ -42,6 +44,8 @@ content/templates/digest-template.md
 ```
 
 论文详细报告建议保持相同叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 1 张论文原图、官方项目图或 arXiv source/PDF 提取图；优先放 2 张，并在正文里解释图片支撑的结论。
+
+每期检索还必须保存 `content/digest-audits/YYYY-MM-DD.json`。简报里的检索数量不得只写在叙述中：查询端点、参数、每族结果 ID、规范化候选、排除理由和最终去向都要能从审计文件复算。扫描窗口与论文提交日期分开记录，出版状态和代码/数据仓库的实际可用性在入选后再次核验。
 
 作者单位必须从论文 PDF 首页、arXiv source、项目页或会议页面核验后填写。不要使用“作者单位见论文 PDF”“unknown”“not confirmed”这类占位。arXiv API 通常没有 affiliations；如果 API 没给单位，需要继续查 PDF/source。
 

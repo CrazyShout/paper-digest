@@ -1,121 +1,233 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17",
+  "updatedAt": "2026-08-24",
   "analysisWindowIssues": 4,
-  "title": "从可信反事实走向可审计的场景状态与测试证据链",
-  "summary": "本期八篇论文把研究重点从‘模型能否给出结果’推进到‘结果能否被解释、迁移和部署’：反事实世界模型必须保留同一次事件的事实身份，主动测试必须校准廉价代理与目标系统的偏差，VLA 需要把语义、预测动力学和实时推理解耦到可测接口，场景表示则要在传播或增密之前先判断证据是否可靠。最值得投入的共同问题，是为每个生成、融合和测试结论附上证据来源、适用范围、拒答条件与闭环后果。",
+  "title": "从证据来源到动作后果：场景状态开始为决策负责",
+  "summary": "本期八篇论文把来源、规则、时间、动作和代理偏差变成场景状态的一部分：真实多观察者实验说明弱雷达并不稳定提高定位精度，协同知识图谱则证明保留来源与可见性能在低带宽下改善遮挡推理；端到端规划开始显式选择交通规则与有效历史，世界模型开始为每条候选动作预测对应后果，统一三维表示也开始让表面与对象共同演化。测试侧进一步把场景级仿真偏差和事故责任推理拆开校准。最值得投入的共同方向，是让模型不仅输出一个状态，还说明该状态由谁观察、何时有效、约束哪个动作，以及证据不足时应该保留多解还是拒答。",
   "trends": [
     {
       "id": "testing-as-common-language",
       "title": "测试正在成为所有方向的共同语言",
-      "evidence": "主动评测开始把廉价 proxy 与昂贵 target 明确分开：Coverage Aware Active Evaluation 在代理相关性弱时自动降低其权重，并同时追求严重度与失败模式覆盖；SSP 则先冻结同一事件的角色、冲突关系和阶段，再比较合成、仿真与物理域。",
-      "judgement": "未来测试工作的核心不只是发现更多失败，而是证明候选为什么被选中、三个域是否仍是同一事件、代理结论能否迁移，以及失败集合和责任归因在目标系统上是否保持。",
-      "tags": ["autonomous-driving-testing"],
-      "evidencePaperIds": ["coverage-aware-active-evaluation", "ssp-syn2sim2phy-vla-evaluation", "commercial-av-failure-sampling", "rl-fuzz-testing-agents"]
+      "evidence": "Scape 用少量同场景 target-surrogate pair 校正大量仿真标签，再给每个场景输出 conformal 区间；CAViAR 则显示 VLM 的昼夜识别接近饱和，却在事故类型、角色和规则违反上明显低于感知表现。",
+      "judgement": "测试正在从总体分数转向场景级可迁移性与证据充分度。下一阶段应把 proxy bias、事件身份、责任证据和 abstention 串成同一流程，避免用平均准确率或自然语言流畅度替代安全判断。",
+      "tags": [
+        "autonomous-driving-testing",
+        "agentic-driving"
+      ],
+      "evidencePaperIds": [
+        "scape-policy-evaluation",
+        "caviar-accident-reasoning",
+        "coverage-aware-active-evaluation",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ]
     },
     {
       "id": "world-models-become-instruments",
       "title": "世界模型正在从生成器变成实验仪器",
-      "evidence": "反事实研究表明，根据共享历史和备选动作生成合理未来，并不等于保留同一次已发生事件；BrainWAM 又显示世界动作模型真正有用的接口可能是 action representation，而不是把视频、语言和动作 token 无差别混合。",
-      "judgement": "世界模型要成为实验仪器，必须同时回答事件身份是否保持、动作是否真的改变未来、预测证据在哪个接口进入规划、适用范围在哪里，以及模型何时应拒绝给出安全 verdict。",
-      "tags": ["world-models", "3d-reconstruction", "autonomous-driving-testing"],
-      "evidencePaperIds": ["counterfactual-driving-world-models", "brainwam-action-space-coordination", "geoworldad-geometry-world-action", "world-model-simulator-admissibility"]
+      "evidence": "DA-WAM 为每条候选轨迹预测独立 future latent，并让对应后果直接参与评分；USR-Drive 又让 dense Gaussian geometry 与 sparse boxes 在统一 metric coordinate 中共同去噪。两者分别把 action-consequence 与 surface-instance correspondence 写进模型接口。",
+      "judgement": "世界模型是否有用不再只由预测或画质决定，而取决于未来是否对应具体动作、状态是否可解码和校准、以及它是否改变了候选排序。非 expert 反事实真值与规划闭环仍是首要缺口。",
+      "tags": [
+        "world-models",
+        "3d-reconstruction",
+        "end-to-end-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "da-wam-decision-aligned-world-model",
+        "usr-drive-unified-scene-representation",
+        "counterfactual-driving-world-models",
+        "brainwam-action-space-coordination"
+      ]
     },
     {
       "id": "e2e-bottleneck-shifts",
-      "title": "端到端驾驶的瓶颈转向动作接口与运行时",
-      "evidence": "FlashDrive 把 VLA 推理拆成 Encode、Prefill、Decode 与 Action 四段后获得 4.7 倍端到端加速；BrainWAM 证明语义和预测动力学在 action token 层协调优于原始 token 混合；SSP 则暴露文本、语义、轨迹与响应延迟之间的接口断裂。",
-      "judgement": "下一阶段不应只比较一个总驾驶分数，而要联合报告阶段时延、语义—轨迹一致性、分支贡献、闭环失败与硬件边界，并检查加速或融合是否把风险转移到某一种驾驶错误。",
-      "tags": ["end-to-end-autonomous-driving", "agentic-driving"],
-      "evidencePaperIds": ["flashdrive-vla-inference", "brainwam-action-space-coordination", "ssp-syn2sim2phy-vla-evaluation", "policy-stitching-e2e-driving"]
+      "title": "端到端驾驶的瓶颈转向规则接口与选择性历史",
+      "evidence": "Traffic Element Awareness 在六类 planner 中显式注入三维灯牌与 ego-lane topology，并在 Bench2Drive 改善闭环分数；StableDrive 证明一周期选择性记忆优于二、四周期累积，长历史会在运动阶段切换时变成陈旧先验。",
+      "judgement": "值得做的端到端工作应说明哪些稀疏规则和历史真正改变动作，并同时报告安全、效率、跨周期稳定与时延。隐式融合更多语义或历史已不足以构成可信贡献。",
+      "tags": [
+        "end-to-end-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "traffic-element-aware-driving",
+        "stabledrive-selective-memory",
+        "da-wam-decision-aligned-world-model",
+        "flashdrive-vla-inference"
+      ]
     },
     {
       "id": "agentic-driving-grounded",
       "title": "Agentic Driving 从语言解释走向可验证行动",
-      "evidence": "BrainWAM 把语义先验与预测动力学的协调落到动作空间，FlashDrive 把慢推理的每个耗时阶段变成可干预对象，SSP 则用跨域能力矩阵区分无效输出、语义错误、轨迹不可行和响应过迟。",
-      "judgement": "Agentic Driving 的有效贡献应落在何时调用慢推理、哪类证据改变动作、输出能否按期到达以及何时拒绝或回退；CoT 可读性只能作为辅助证据，不能替代闭环行动质量。",
-      "tags": ["agentic-driving", "end-to-end-autonomous-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["brainwam-action-space-coordination", "flashdrive-vla-inference", "ssp-syn2sim2phy-vla-evaluation", "obsdrivebench-adverse-weather"]
+      "evidence": "CAViAR 将事故理解拆成事件、角色和规则映射，发现语言层微调无法弥补时序 grounding 缺口；G-MARK 则表明带 provenance、visibility 和 disagreement 的结构化证据比压平后的对象或长文本更适合协同推理。",
+      "judgement": "Agentic Driving 的新切口应是可验证证据链与有条件拒答：每个判断必须能回指对象、观察者、时间和规则，推理证据不足时不应强制生成完整责任或动作解释。",
+      "tags": [
+        "agentic-driving",
+        "autonomous-driving-testing",
+        "cooperative-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "caviar-accident-reasoning",
+        "g-mark-cooperative-driving",
+        "brainwam-action-space-coordination",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ]
     },
     {
       "id": "v2x-systemization",
-      "title": "V2X 开始按规划价值和信息新鲜度做协同",
-      "evidence": "最新工作一端用规划轨迹决定何时依赖协同特征，另一端在线学习只更新自车尚未覆盖的网格，把消息选择从固定融合规则推进到任务价值与 Age-of-Information 联合优化。",
-      "judgement": "协同方向的研究空间正从更复杂的融合网络转向通信、感知和规划的联合决策；关键问题不再是能否多发消息，而是每条消息何时值得发、何时值得信、最终是否改善闭环。",
-      "tags": ["cooperative-autonomous-driving"],
-      "evidencePaperIds": ["defer-to-plan-v2x-driving", "update-unseen-aoi-collaborative-perception", "deployed-vil-cooperative-perception", "cooperscene-cv2x-benchmark"]
+      "title": "V2X 开始区分证据来源、精度与持续性价值",
+      "evidence": "真实路口实验显示雷达融合只把 RMSE 从 0.84 m 小幅降到 0.81 m，遮挡时也未降低误差；G-MARK 保留 partner provenance 后，隐藏目标 F1 才不会在移除远端证据时从 0.494 直接归零。",
+      "judgement": "协同系统不应只问是否融合，而要分别估计远端证据能否收紧几何、延长目标存在性、解释遮挡或触发拒绝。来源和可用率应一直保留到规划任务，而非在感知入口被抹平。",
+      "tags": [
+        "cooperative-autonomous-driving",
+        "radar-occupancy-representation"
+      ],
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "g-mark-cooperative-driving",
+        "defer-to-plan-v2x-driving",
+        "deployed-vil-cooperative-perception"
+      ]
     },
     {
       "id": "radar-representation-from-measurement-to-state",
       "title": "4D 雷达研究正在从检测输入转向可审计场景状态",
-      "evidence": "RbFT-Net 说明多帧雷达叠加不会自动增加可信度：投影位置、量测深度和逐点可靠性必须在稠密传播之前校正，五帧有效而七帧反而退化；此前工作则分别检验时序雷达使用、Doppler 监督和多传感器物理接地。",
-      "judgement": "这周并没有出现 radar occupancy 突破，但给出了可迁移原则：任何跨帧占据或场景流方法都应先审计时空锚点，再表达 free/occupied/unknown 与运动多解，最后用固定规划器验证增密是否真的降低风险。",
-      "tags": ["radar-occupancy-representation", "agentic-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["rbft-net-radar-depth-completion", "radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "moral-sensor-grounded-vlm"]
+      "evidence": "Multi-Observer 的真实负结果说明低质量路侧雷达更可能在特定遮挡中延长轨迹可用性，而不是稳定提高定位精度；RbFT-Net 又表明多帧锚点在传播前必须校正位置、深度和可靠性。",
+      "judgement": "雷达 Occupancy 的突破口不是继续把更多点压进特征图，而是把几何精度、存在性支持、free/unknown 与 Doppler 多解分开建模，并用 calibration 和固定规划器检查每类证据的实际价值。",
+      "tags": [
+        "radar-occupancy-representation",
+        "cooperative-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "rbft-net-radar-depth-completion",
+        "radar4d-vlm-temporal-reasoning",
+        "star-vlm-radar-supervision"
+      ]
     }
   ],
   "hotspots": [
     {
       "level": "强热点",
-      "title": "代理校准与事件配对的跨域测试",
-      "evidence": "Coverage Aware Active Evaluation 用少量 target 反馈校正 proxy 风险，SSP 用事件身份审计隔离 domain gap，商业栈失效采样和强化学习 fuzzing 则持续扩大可搜索的真实与仿真失败集合。",
-      "whyItMatters": "它把‘找到失败’升级为‘知道失败为何值得测、是否属于同一事件、能否迁移到目标系统’，为昂贵实车评测提供可审计的预算分配方式。",
-      "tags": ["autonomous-driving-testing"],
-      "evidencePaperIds": ["coverage-aware-active-evaluation", "ssp-syn2sim2phy-vla-evaluation", "commercial-av-failure-sampling", "rl-fuzz-testing-agents"]
+      "title": "场景级代理校准与事故责任推理",
+      "evidence": "Scape 与 CAViAR 分别暴露仿真标签偏差和感知到因果映射的断裂。",
+      "whyItMatters": "它们把昂贵 target evidence、区间宽度、责任角色和规则证据变成测试结论的组成部分。",
+      "tags": [
+        "autonomous-driving-testing",
+        "agentic-driving"
+      ],
+      "evidencePaperIds": [
+        "scape-policy-evaluation",
+        "caviar-accident-reasoning",
+        "coverage-aware-active-evaluation",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ]
     },
     {
       "level": "强热点",
-      "title": "保留事件身份的反事实世界模型",
-      "evidence": "最新反事实基准用配对世界证明直接动作条件生成会遗漏事实中已出现的关键参与者；action-space coordination 又显示预测动力学应通过可测动作接口进入规划，而非被语义 token 淹没。",
-      "whyItMatters": "事故复盘和安全测试问的是同一个事件在另一动作下会怎样。若模型只生成另一个合理世界，画质再高也不能支撑责任归因或策略比较。",
-      "tags": ["world-models", "autonomous-driving-testing"],
-      "evidencePaperIds": ["counterfactual-driving-world-models", "brainwam-action-space-coordination", "world-model-simulator-admissibility", "geoworldad-geometry-world-action"]
+      "title": "候选动作专属的世界模型",
+      "evidence": "DA-WAM 证明共享未来甚至可能低于无未来，候选与后果的一一对应成为新接口。",
+      "whyItMatters": "它把世界模型的评价终点从预测质量推进到候选排序，但非 expert 未来仍缺反事实真值。",
+      "tags": [
+        "world-models",
+        "end-to-end-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "da-wam-decision-aligned-world-model",
+        "counterfactual-driving-world-models",
+        "brainwam-action-space-coordination",
+        "world-model-simulator-admissibility"
+      ]
     },
     {
       "level": "上升交叉",
-      "title": "VLA 的动作接口与实时推理",
-      "evidence": "FlashDrive 将重叠视频编码、KV prefill、推理 token 和 flow matching 分段优化，BrainWAM 在动作空间协调两个专家，SSP 则把语言有效性、语义、轨迹和延迟拆开评分。",
-      "whyItMatters": "这条线能同时解释模型为何做出动作、结果是否按期到达以及错误发生在哪个接口，比继续扩大骨干或只报总分更接近部署瓶颈。",
-      "tags": ["end-to-end-autonomous-driving", "agentic-driving"],
-      "evidencePaperIds": ["flashdrive-vla-inference", "brainwam-action-space-coordination", "ssp-syn2sim2phy-vla-evaluation", "s2-vla-semantic-spatial"]
+      "title": "稀疏规则约束与选择性时间记忆",
+      "evidence": "Traffic Element Awareness 和 StableDrive 分别过滤语义空间与历史时间中的高价值证据。",
+      "whyItMatters": "显式选择比无条件堆叠更容易形成可反驳的规划主张，也便于定位效率与安全的权衡。",
+      "tags": [
+        "end-to-end-autonomous-driving"
+      ],
+      "evidencePaperIds": [
+        "traffic-element-aware-driving",
+        "stabledrive-selective-memory",
+        "da-wam-decision-aligned-world-model",
+        "flashdrive-vla-inference"
+      ]
     },
     {
       "level": "工程转化",
-      "title": "可学习结构与统一几何场景资产",
-      "evidence": "LGS 让前馈 3DGS 学会增删 Gaussian 并显式查询跨帧邻居，GeoUP 则用重建预训练的几何 latent 联合读取深度、检测与占据，场景表征正在从固定输入密度走向可调整结构。",
-      "whyItMatters": "它有机会把车队日志快速转成统一三维状态与仿真资产，但必须继续验证动态几何、自由空间和策略行为，而不能把 PSNR 或单任务 mIoU 当成最终可用性。",
-      "tags": ["3d-reconstruction", "world-models"],
-      "evidencePaperIds": ["lgs-gaussian-structure-driving-reconstruction", "geoup-unified-3d-perception", "geoworldad-geometry-world-action", "instant-nurec-feedforward-3dgs"]
+      "title": "来源可追溯的协同状态",
+      "evidence": "G-MARK 与真实多观察者定位共同说明来源、可见性、刷新率和轨迹可用率不应在融合入口丢失。",
+      "whyItMatters": "结构化 evidence layer 有机会同时改善低带宽推理、异常拒绝和下游规划审计。",
+      "tags": [
+        "cooperative-autonomous-driving",
+        "radar-occupancy-representation"
+      ],
+      "evidencePaperIds": [
+        "g-mark-cooperative-driving",
+        "multi-observer-vehicle-localization",
+        "defer-to-plan-v2x-driving",
+        "update-unseen-aoi-collaborative-perception"
+      ]
     },
     {
       "level": "上升交叉",
-      "title": "雷达中心 Occupancy 与传感器可靠性",
-      "evidence": "RbFT-Net 用位置、深度和可靠性三项校正证明历史雷达点不能直接传播，且五帧优于七帧；此前时序推理和 Doppler 监督研究也显示‘加入雷达’不等于模型真正使用了它。",
-      "whyItMatters": "雷达的距离和径向速度能提供独立冗余，但错误锚点一旦被稠密化会扩大污染。先校正再传播，应成为走向 free/occupied/unknown 和未来 occupancy-flow 的基础审计层。",
-      "tags": ["radar-occupancy-representation", "autonomous-driving-security", "autonomous-driving-testing"],
-      "evidencePaperIds": ["rbft-net-radar-depth-completion", "radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "moral-sensor-grounded-vlm"]
+      "title": "统一三维状态与长期身份",
+      "evidence": "USR-Drive 联合去噪表面与 box，但明确缺少 global state、长期 identity 和实时推理。",
+      "whyItMatters": "这使 surface-instance-occupancy 的长期可更新表示成为比单一 PSNR 或检测 mAP 更清楚的下一步。",
+      "tags": [
+        "3d-reconstruction",
+        "world-models",
+        "radar-occupancy-representation"
+      ],
+      "evidencePaperIds": [
+        "usr-drive-unified-scene-representation",
+        "lgs-gaussian-structure-driving-reconstruction",
+        "geoup-unified-3d-perception",
+        "rbft-net-radar-depth-completion"
+      ]
     }
   ],
   "opportunities": [
     {
       "priority": "A",
-      "title": "保留事件身份的反事实测试准入",
+      "title": "候选动作一一对应的可验证未来状态",
       "question": "世界模型能否在替换 ego 动作后仍保留同一次事实事件，并让策略排名、失败集合和责任归因迁移到目标系统？",
       "whyNow": "新基准已证明直接动作条件预测经常遗漏事实延续中的参与者，SSP 也证明跨域比较前必须先审计事件身份；现有世界模型准入却尚未把两类约束合并。",
       "minimumStudy": "构造带事实延续、备选动作和目标域执行的事件配对集，比较直接预测、证据搬运和可交互生成；联合报告事件恢复率、动作响应、失败集合重合、策略排序、归因一致性和拒答覆盖率。",
       "risk": "短时静态反应假设无法覆盖他车因 ego 动作改变行为的长期反事实；首阶段应限制时间窗并明确不可识别区域，不把视觉补全当因果真值。",
-      "tags": ["world-models", "autonomous-driving-testing", "autonomous-driving-security"],
-      "evidencePaperIds": ["counterfactual-driving-world-models", "ssp-syn2sim2phy-vla-evaluation", "world-model-simulator-admissibility", "geoworldad-geometry-world-action"]
+      "tags": [
+        "world-models",
+        "autonomous-driving-testing",
+        "autonomous-driving-security"
+      ],
+      "evidencePaperIds": [
+        "da-wam-decision-aligned-world-model",
+        "counterfactual-driving-world-models",
+        "usr-drive-unified-scene-representation",
+        "world-model-simulator-admissibility"
+      ],
+      "evidence": "DA-WAM 已把每条候选与独立 future latent 绑定，反事实世界模型又要求保留同一事件事实；但非 expert 候选缺真实未来，latent 仍可能只编码轨迹身份。",
+      "proposal": "在可反应 simulator 中为稀疏候选生成 paired state/occupancy future，用可解码后果和不确定性监督 action-specific latent；其余候选只输出集合或拒答，并检查未来误差是否真正改变排序。",
+      "successSignal": "候选未来在 paired reference 上校准，危险近邻排序优于共享未来和 trajectory-only，且收益在固定 proposal set、相同 scorer 和闭环 planner 中保持。"
     },
     {
       "priority": "A",
-      "title": "通信受限下的协同闭环退化曲线",
+      "title": "区分几何精度与存在性价值的协同证据层",
       "question": "丢包、时延、带宽、定位漂移和异步采样如何共同改变协同感知与规划的最终闭环收益？",
       "whyNow": "已有方法分别学习规划阶段是否应依赖协同信息、哪些未覆盖区域需要更新，并提供真实 C-V2X 与 ViL 平台；现在可以把信息新鲜度、消息价值和闭环收益放进同一问题。",
       "minimumStudy": "在同一数据与 ViL 场景中联合控制 AoI、丢包、时延、带宽和定位漂移，比较全量共享、只更新未见区域、按规划价值选择和联合调度，同时测量感知、轨迹安全、通行效率与恢复时间。",
       "risk": "变量组合容易爆炸；需要先固定场景族，再用因果或分层设计减少实验数量。",
-      "tags": ["cooperative-autonomous-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["defer-to-plan-v2x-driving", "update-unseen-aoi-collaborative-perception", "deployed-vil-cooperative-perception", "cooperscene-cv2x-benchmark"]
+      "tags": [
+        "cooperative-autonomous-driving",
+        "autonomous-driving-testing"
+      ],
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "g-mark-cooperative-driving",
+        "defer-to-plan-v2x-driving",
+        "update-unseen-aoi-collaborative-perception"
+      ],
+      "evidence": "Multi-Observer 表明雷达不稳定降低定位误差，却在部分长遮挡中略保住 match rate；G-MARK 证明 partner provenance 对隐藏目标不可替代。",
+      "proposal": "为每个 observer evidence 同时预测 position covariance、existence support、age、visibility 和 conflict，把‘收紧几何’与‘延长假设’设为两种更新动作，再由固定下游规划器按场景学习使用或拒绝。",
+      "successSignal": "在真实/回放 V2X 的刷新率、遮挡、丢包和标定扰动下，分别改善 calibration、identity continuity 与规划风险；若只提高 match rate，系统不虚报位置精度收益。"
     },
     {
       "priority": "A",
@@ -124,8 +236,15 @@
       "whyNow": "Denial of Deadline 已证明合法突发请求可让正确的云端结果错过合并截止时间并抹去感知收益，但现有证据停在视频跟踪回放，尚未回答不同降级策略如何影响规划与控制。",
       "minimumStudy": "在同一边云感知栈中控制尾时延、慢路径触发率和场景风险，比较直接丢弃、延迟融合、租户隔离、保底容量与规划感知的动态回退；联合报告 p99、过期率、类别级感知损失、碰撞、舒适性和云成本。",
       "risk": "如果只复现网络排队或平均精度下降，会退化成系统性能实验；必须把相同延迟轨迹接入闭环并预注册任务级安全指标。",
-      "tags": ["autonomous-driving-security", "autonomous-driving-testing"],
-      "evidencePaperIds": ["denial-of-deadline-inference", "commercial-av-failure-sampling", "deployed-vil-cooperative-perception"]
+      "tags": [
+        "autonomous-driving-security",
+        "autonomous-driving-testing"
+      ],
+      "evidencePaperIds": [
+        "denial-of-deadline-inference",
+        "commercial-av-failure-sampling",
+        "deployed-vil-cooperative-perception"
+      ]
     },
     {
       "priority": "A",
@@ -134,86 +253,158 @@
       "whyNow": "端到端系统开始讨论 policy stitching 和后训练，但缺少面向版本变更的公开回归协议。",
       "minimumStudy": "构造多个感知或表征版本，冻结规划器，测量闭环回归、置信度漂移和最小适配成本，再比较轻量校准与完全重训。",
       "risk": "需要避免把普通域偏移重新命名为版本问题；必须明确更新前后接口和语义变化。",
-      "tags": ["end-to-end-autonomous-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["policy-stitching-e2e-driving", "s2-vla-semantic-spatial", "world-engine-post-training-driving", "wam-diff2-efficient-driving-vla"]
+      "tags": [
+        "end-to-end-autonomous-driving",
+        "autonomous-driving-testing"
+      ],
+      "evidencePaperIds": [
+        "policy-stitching-e2e-driving",
+        "s2-vla-semantic-spatial",
+        "world-engine-post-training-driving",
+        "wam-diff2-efficient-driving-vla"
+      ]
     },
     {
       "priority": "A",
-      "title": "不确定性触发的驾驶 Agent 与安全否决",
+      "title": "证据可回指且会拒答的事故推理 Agent",
       "question": "驾驶智能体能否只在语义与预测动力学冲突时启动慢推理，并在截止时间前给出带证据的动作，否则明确回退？",
       "whyNow": "BrainWAM 提供两条可比较的 action pathway，FlashDrive 把慢路径时延拆成可预算阶段，SSP 则能区分语义正确但轨迹或响应失败；三者提供了可组合部件，但 action-space 分歧能否被校准并形成统一触发、计算和验收接口仍待实现验证。",
       "minimumStudy": "在固定 VLA/WAM 栈上以动作分布分歧、事件风险和剩余 deadline 联合触发慢路径，比较常驻推理、语言置信度、单一分歧和预算感知门控；报告闭环收益、触发校准、过期率、回退质量和错误否决率。",
       "risk": "若 WAM 与 VLA 共享训练偏差，低分歧不代表安全；必须加入域外事件、错误工具和一条独立规则或可达性安全盾，且把超时作为失败而非漏记。",
-      "tags": ["agentic-driving", "end-to-end-autonomous-driving", "autonomous-driving-testing", "autonomous-driving-security"],
-      "evidencePaperIds": ["brainwam-action-space-coordination", "flashdrive-vla-inference", "ssp-syn2sim2phy-vla-evaluation", "obsdrivebench-adverse-weather"]
+      "tags": [
+        "agentic-driving",
+        "end-to-end-autonomous-driving",
+        "autonomous-driving-testing",
+        "autonomous-driving-security"
+      ],
+      "evidencePaperIds": [
+        "caviar-accident-reasoning",
+        "g-mark-cooperative-driving",
+        "brainwam-action-space-coordination",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ],
+      "evidence": "CAViAR 显示 VLM 能识别光照却不会稳定完成事故角色与规则映射；G-MARK 表明 provenance-aware structured evidence 可显著改善遮挡推理。",
+      "proposal": "将事故判断拆成事件时间窗、对象轨迹、观察来源、动作证据、规则检索和责任输出六步，每步保留支持/反证与置信度；证据不足时返回 undecidable，而非生成流畅单解。",
+      "successSignal": "在 CAViAR 跨域与同域 split 上提高 role/rule macro 指标、降低无证据断言，并通过人工审计证明每个结论能回指正确对象和时间片。"
     },
     {
       "priority": "B",
-      "title": "VLA 动作接口的分段归因与时延守恒",
+      "title": "规则感知且会遗忘的连续端到端规划器",
       "question": "语义、预测动力学、视频缓存、推理 token 和轨迹去噪各自贡献了多少动作收益与风险，系统加速是否只是把错误转移到另一阶段？",
       "whyNow": "BrainWAM 给出两条动作专家通路，FlashDrive 给出四段运行时账本，SSP 给出语义到轨迹的跨域能力槽；这些模块可以组合成少见的机制性端到端审计。",
       "minimumStudy": "对语义分支、WAM 步数、历史缓存、draft 接受长度和 flow 步数做受控干预，按事件类别同时测轨迹变化、碰撞、车道错误、语义—轨迹一致性、各阶段 p50/p99 和 deadline miss。",
       "risk": "组件来自不同代码栈，直接拼接可能把集成误差误判为科学结论；先在单一开放 VLA 上实现等价接口，并保留未优化模型作为逐样本参照。",
-      "tags": ["end-to-end-autonomous-driving", "agentic-driving", "autonomous-driving-testing"],
-      "evidencePaperIds": ["brainwam-action-space-coordination", "flashdrive-vla-inference", "ssp-syn2sim2phy-vla-evaluation", "s2-vla-semantic-spatial"]
+      "tags": [
+        "end-to-end-autonomous-driving",
+        "agentic-driving",
+        "autonomous-driving-testing"
+      ],
+      "evidencePaperIds": [
+        "traffic-element-aware-driving",
+        "stabledrive-selective-memory",
+        "da-wam-decision-aligned-world-model",
+        "flashdrive-vla-inference"
+      ],
+      "evidence": "Traffic Element Awareness 证明稀疏规则对象能稳定提高闭环规划，StableDrive 证明陈旧历史会在运动阶段切换时伤害当前计划。",
+      "proposal": "让每段 memory 同时携带 motion-stage compatibility 与 rule context fingerprint；交通灯、标志或 lane topology 改变时选择性清空受影响轨迹状态，稳定对象和自由空间则继续保留。",
+      "successSignal": "在 stop-go、灯态切换、临时标志、错误 topology 和 cut-in 闭环中同时降低 collision/rule violation 与跨周期漂移，且不会通过明显降低 progress 获得分数。"
     },
     {
       "priority": "B",
-      "title": "从可学习 Gaussian 结构到决策一致性资产",
+      "title": "带长期身份的 Surface-Instance-Occupancy 统一状态",
       "question": "Gaussian 的增删与跨时检索能否由几何—占据—规划一致性监督，而不只由渲染梯度决定？",
       "whyNow": "LGS 已证明前馈模型可以学习结构容量，GeoUP 证明重建式 latent 可同时服务深度、检测和占据；缺口是把两者连接到动态几何和下游策略，而不是继续单独追逐 PSNR。",
       "minimumStudy": "在同一日志上比较固定 LiDAR 锚点、渲染梯度增删和任务一致性增删，联合测量渲染、深度、occupancy 边界、动态轨迹、策略排序与失败集合重合率，并对被增删 primitive 做区域归因。",
       "risk": "冻结任务头可能把其偏差固化成结构监督；需要多任务头、独立几何指标和至少两类规划栈，防止只学习某一模型的脆弱点。",
-      "tags": ["3d-reconstruction", "world-models", "autonomous-driving-testing"],
-      "evidencePaperIds": ["lgs-gaussian-structure-driving-reconstruction", "geoup-unified-3d-perception", "geoworldad-geometry-world-action", "instant-nurec-feedforward-3dgs"]
+      "tags": [
+        "3d-reconstruction",
+        "world-models",
+        "autonomous-driving-testing"
+      ],
+      "evidencePaperIds": [
+        "usr-drive-unified-scene-representation",
+        "lgs-gaussian-structure-driving-reconstruction",
+        "geoup-unified-3d-perception",
+        "instant-nurec-feedforward-3dgs"
+      ],
+      "evidence": "USR-Drive 已证明 Gaussian geometry 与 boxes 联合去噪优于串联，但作者明确缺少全局状态、长期 identity、4D tracking 和实时性。",
+      "proposal": "以 persistent object/occupancy slots 连接局部 Gaussian patch，加入 free/unknown 和跨窗 identity consistency；训练时让 reconstruction、detection、tracking 与冻结规划表征共同约束状态更新。",
+      "successSignal": "在跨窗口对象身份、动态边界、占据校准和下游规划上优于等参数串联模型，同时用 few-step/causal update 达到可用延迟。"
     },
     {
       "priority": "A",
-      "title": "雷达时空 Occupancy 的独立真值与规划闭环资产",
+      "title": "存在性与几何解耦的雷达长期 Occupancy 记忆",
       "question": "现有公开资产能否组合出独立逐体素 free/occupied/unknown、教师错误和未来占据流真值，并在固定规划器下判断表示改进是否真的降低风险？",
       "whyNow": "方向综述已显示独立结果标签仍是主要闸门；本期 RbFT-Net 又给出直接证据，历史雷达点在传播前需要位置、深度和可靠性校正，且更长时间窗可能反而退化。",
       "minimumStudy": "冻结公开 radar scene-flow/occupancy 资产的版本与 schema，先复现 1/3/5/7 帧锚点校正和可靠性分组，再审计射线级状态、教师独立性、切向运动、未来时域和天气配对；最后在固定检测器与规划器上运行同日志 no-op 与功能等价基线。",
       "risk": "公开资产可能仍无法提供独立结果标签；若必须新建最小评测集，应先冻结预算、双人审计和禁止循环真值的规则。在这些闸门通过前，不能把任何 occupancy 模型收益表述为已验证 Idea。",
-      "tags": ["radar-occupancy-representation", "autonomous-driving-testing", "autonomous-driving-security"],
-      "evidencePaperIds": ["rbft-net-radar-depth-completion", "radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "moral-sensor-grounded-vlm"]
+      "tags": [
+        "radar-occupancy-representation",
+        "autonomous-driving-testing",
+        "autonomous-driving-security"
+      ],
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "rbft-net-radar-depth-completion",
+        "radar4d-vlm-temporal-reasoning",
+        "star-vlm-radar-supervision"
+      ],
+      "evidence": "Multi-Observer 的弱雷达只在部分遮挡中帮助轨迹持续，RbFT-Net 又显示历史点在传播前必须校正位置、深度与可靠性；二者都未形成 x-y-z-t occupancy。",
+      "proposal": "用雷达 Doppler 与跨观察者证据延长 existence/identity hypothesis，但只在 innovation、可见性和 covariance 校准通过时收紧空间 occupancy；显式维护 occupied/free/unknown 与多解速度。",
+      "successSignal": "在真实遮挡、低刷新率、恶劣天气和标定漂移下同时改善 occupancy calibration、identity continuity 与固定规划器风险，而不是只增加回波密度或检测 mAP。"
     }
   ],
   "directions": [
     {
       "tag": "cooperative-autonomous-driving",
-      "signal": "系统化",
-      "focus": "协同感知、通信和规划正在形成同一决策问题：发送端优先更新自车未见区域，接收端根据当前规划判断协同证据是否值得依赖，再由 ViL 检查真实闭环收益。",
-      "gap": "信息新鲜度、位姿误差、协同证据新颖性与规划价值仍由不同模块分别估计，系统难以解释一条消息何时值得发送、何时应被采纳以及为何改善或损害闭环。",
-      "ideaTitle": "从协同证据到联合行动的可归因协同栈",
-      "idea": "核心假设是：如果系统能联合估计协同证据的新鲜度、位姿可信度、预测校准度和规划风险，就能动态决定共享、融合、协商或回退，在相同带宽下获得更稳定的闭环安全收益。",
-      "method": "以 CooperScene/INTACT 的异构感知和 CAMASA 类轨迹证据为输入，构建连续时间协同状态；发送端按风险与 Age-of-Information 调度，接收端联合输出感知置信度和校准轨迹分布，规划端只在预计闭环收益为正时触发协商，并保留 ego-only 回退。通过逐层替换通信、感知、预测和规划输出做反事实归因。",
-      "validation": "在 ViL 或 CARLA-C-V2X 链路中组合丢包、时延、带宽、定位漂移和异步采样，对比无通信、全量通信、固定压缩、仅协同感知、仅协同预测和端到端协同；同时报告感知、ADE/FDE 与校准、碰撞率、行程进度、带宽、最坏场景和恢复时间。",
-      "novelty": "现有工作多在协同感知、轨迹预测或规划中只解决一段链路；该 idea 的区别是把消息价值、不确定性传播、闭环结果和失败归因放进同一实验协议。",
-      "evidencePaperIds": ["defer-to-plan-v2x-driving", "update-unseen-aoi-collaborative-perception", "deployed-vil-cooperative-perception", "cooperscene-cv2x-benchmark"]
+      "signal": "强热点",
+      "focus": "多观察者协同从特征融合转向 provenance、可见性、刷新率、冲突与任务按需读取。",
+      "gap": "真实结果显示弱传感器可能只提高轨迹持续性而不提高位置精度；当前尚无系统把这两种价值分开校准并闭合到规划。",
+      "ideaTitle": "来源保真的双价值协同证据层",
+      "idea": "核心假设是：每条远端证据应分别声明几何收紧价值和存在性延续价值，由下游任务选择吸收、仅保留或拒绝，而不是统一做一次融合更新。",
+      "method": "构建带 observer、age、visibility、position covariance、existence support 与 conflict 的 evidence graph；用 innovation consistency 校准几何更新，用 track survival 和遮挡恢复监督存在性，再让固定 planner 在通信预算下选择证据。",
+      "validation": "在真实路口与可控 V2X replay 中扫刷新率、遮挡、丢包和外参漂移，比较 LiDAR/radar only、EKF、feature fusion、KG 与双价值方法；报告 RMSE、match/drop、ECE、identity switch、通信量和闭环风险。",
+      "novelty": "Multi-Observer 量化了精度与可用率分离，G-MARK 保留来源证据；待检验的新意是把二者合成面向规划的双价值更新合同，而不是再做一个融合 backbone。",
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "g-mark-cooperative-driving",
+        "defer-to-plan-v2x-driving",
+        "update-unseen-aoi-collaborative-perception"
+      ]
     },
     {
       "tag": "agentic-driving",
-      "signal": "快速升温",
-      "focus": "驾驶 Agent 正从生成语言解释转向协调语义专家、预测动力学和运行时预算；动作分歧、事件风险、剩余 deadline 与回退结果开始成为比 CoT 文本更直接的系统变量。",
-      "gap": "现有工作分别优化 action-space coordination、推理加速和跨域能力评分，但还没有统一回答何时值得启动慢路径、哪条证据足以改变动作、结果过期时怎样 fail closed。",
-      "ideaTitle": "预算感知的动作分歧门控驾驶 Agent",
-      "idea": "核心假设是：把 VLA 与 WAM 的动作分布分歧和剩余计算预算作为联合触发信号，只在高风险且来得及时的场景调用慢推理，并让安全盾掌握最终否决权，可以保留复杂推理收益而减少超时和错误传播。",
-      "method": "保留快速基础策略与语义、预测两条 action expert，在线估计分布分歧、事件风险和各推理阶段尾时延；门控器选择直接执行、有限步 WAM、完整推理或回退。每次动作附证据来源、有效期和置信区间，过期或冲突输出由规则/可达性盾拒绝。",
-      "validation": "在 NAVSIM 与可执行闭环场景中比较无慢路径、常驻慢路径、仅置信度触发、仅分歧触发和预算感知门控；报告闭环分数、碰撞、wrong-lane、触发校准、p99、deadline miss、错误否决和回退恢复，并注入错误专家与时延突发。",
-      "novelty": "现有工作分别证明动作级协调或 VLA 加速有效；该 idea 把专家分歧、计算截止时间、证据有效期和安全否决写成同一可证伪动作接口。",
-      "evidencePaperIds": ["brainwam-action-space-coordination", "flashdrive-vla-inference", "ssp-syn2sim2phy-vla-evaluation", "obsdrivebench-adverse-weather"]
+      "signal": "问题升温",
+      "focus": "驾驶 Agent 从生成解释转向证据回指、时序角色分配、规则检索和不充分证据下的拒答。",
+      "gap": "CAViAR 暴露 perception-reasoning gap，现有 Agent 仍缺从对象轨迹到规则与责任的可审计中间状态。",
+      "ideaTitle": "证据链分解的事故推理 Agent",
+      "idea": "核心假设是：把事故推理拆成可校验工具步骤并允许 undecidable，能比端到端 CoT 更准确地处理角色、规则和域迁移。",
+      "method": "调用对象跟踪、事件时间定位、地图/规则检索和证据冲突检查工具，输出带对象 ID、时间窗和来源的 structured causal graph，再由 constrained reasoner 生成责任候选与 abstention。",
+      "validation": "在 CAViAR CCD-to-Nexar 与 CCD holdout 上比较直接 VLM、普通 CoT、tool chain 和完整方法；报告 macro-F1、judge、人审 evidence precision、无证据断言率、拒答覆盖和时延。",
+      "novelty": "CAViAR 定义了责任任务，G-MARK 证明来源结构有效；待验证的差异是将工具化证据链和可拒答责任推理闭合到同一真实事故 benchmark。",
+      "evidencePaperIds": [
+        "caviar-accident-reasoning",
+        "g-mark-cooperative-driving",
+        "brainwam-action-space-coordination",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ]
     },
     {
       "tag": "3d-reconstruction",
-      "signal": "评测转向",
-      "focus": "前馈场景重建开始同时学习 primitive 的结构容量与跨帧属性，重建式几何 latent 也开始统一深度、检测和 occupancy；重点从固定输入点回归转向什么结构值得被保留。",
-      "gap": "LGS 的增删监督仍来自渲染梯度，GeoUP 的统一几何仍由任务头分别读出；视觉与多任务精度尚不能证明动态边界、自由空间和闭环策略保持一致。",
-      "ideaTitle": "由场景状态与策略一致性共同监督的 Gaussian 结构学习",
-      "idea": "核心假设是：对驾驶真正重要的 primitive 集中在可行驶边界、遮挡释放和动态参与者；用独立几何、occupancy 与策略行为共同决定增删，可得到比单纯追求 PSNR 更紧凑、更可靠的场景资产。",
-      "method": "在前馈 3DGS 的 intervention-based density policy 上加入多任务一致性评分，分别估计 primitive 对深度表面、occupancy 边界、动态轨迹和冻结规划表征的边际影响；以多头一致或保守上界决定增删，并保留来源和时间戳以支持错误归因。",
-      "validation": "对同一日志比较固定锚点、随机等量增删、渲染梯度策略和任务一致性策略；联合报告 PSNR/SSIM、深度、occupancy、动态误差、primitive 数量、Kendall 策略排序、失败集合 IoU 与重建成本，至少覆盖两类任务头和规划器。",
-      "novelty": "LGS 让前馈模型显式学习 Gaussian 组成，GeoUP 证明重建 latent 可跨任务复用；该 idea 待检验的差异是让结构选择受独立场景状态和闭环行为约束，而非只由渲染损失决定，是否构成新颖贡献仍需站外竞品检索。",
-      "evidencePaperIds": ["lgs-gaussian-structure-driving-reconstruction", "geoup-unified-3d-perception", "geoworldad-geometry-world-action", "instant-nurec-feedforward-3dgs"]
+      "signal": "结构统一",
+      "focus": "重建正在从单帧渲染资产转向 surface、instance、occupancy 和时间身份共享的物理状态。",
+      "gap": "USR-Drive 联合了 Gaussian 与 box，却缺全局状态、长期身份、4D tracking 和实时更新；现有规划收益也未验证。",
+      "ideaTitle": "带长期身份的 Surface-Instance-Occupancy 状态",
+      "idea": "核心假设是：persistent slot 管理对象身份、局部 Gaussian 管理表面、显式 occupancy 管理 free/unknown，可减少跨窗口动态涂抹并为规划提供连续状态。",
+      "method": "用 metric anchors 对齐三类 token，以 identity-aware memory 跨窗口更新；由 reconstruction、box/track、occupancy calibration 和冻结 planner feature consistency 共同监督，加入 causal few-step updater。",
+      "validation": "在 nuScenes 与第二数据集比较 joint、decoupled、无 identity、无 occupancy 和等参数模型；报告重建、检测、跟踪、occupancy、跨窗一致性、规划排序和延迟。",
+      "novelty": "USR-Drive 已证明双模态联合去噪，GeoUP/LGS 提供统一几何和结构干预；新增点必须落在 persistent identity、free/unknown 和规划一致性的共同可证伪状态。",
+      "evidencePaperIds": [
+        "usr-drive-unified-scene-representation",
+        "lgs-gaussian-structure-driving-reconstruction",
+        "geoup-unified-3d-perception",
+        "instant-nurec-feedforward-3dgs"
+      ]
     },
     {
       "tag": "autonomous-driving-security",
@@ -225,55 +416,80 @@
       "method": "用结构化干预分别注入相机/LiDAR 扰动、特征漂移、预测偏差和控制执行误差，提取跨层残差、置信度变化与动作不一致性；以因果图或变点模型完成在线归因，并通过替换可疑模块输出构造反事实验证，驱动降速、切换备份感知或最小风险停车。",
       "validation": "在 Bench2Drive-Robust、实车扰动测试协议和世界模型 rollout 中比较统一异常检测、模块级检测与所提方法；报告归因准确率、检测延迟、碰撞率、误触发率、恢复时间和训练外扰动泛化。",
       "novelty": "现有鲁棒性工作多展示攻击成功或性能下降，真实扰动研究也指出离线指标无法预测实车失败；该 idea 进一步回答失败来自哪里以及系统如何恢复。",
-      "evidencePaperIds": ["vlm-gnss-spoofing-detection", "denial-of-deadline-inference", "commercial-av-failure-sampling", "reasonbreak-vla-vulnerability-driving"]
+      "evidencePaperIds": [
+        "vlm-gnss-spoofing-detection",
+        "denial-of-deadline-inference",
+        "commercial-av-failure-sampling",
+        "reasonbreak-vla-vulnerability-driving"
+      ]
     },
     {
       "tag": "autonomous-driving-testing",
       "signal": "强热点",
-      "focus": "测试正在从随机或单一 worst-case 搜索转向代理校准、覆盖保持与事件配对：便宜系统负责扩展候选，昂贵目标系统纠正偏差，跨域执行前先证明测试的是同一事件。",
-      "gap": "现有主动选择尚未联合事件身份与跨域 verdict 校准；SSP 的物理样本又只覆盖两类事件。失败数量增加后，严重度、责任和缓解结论是否迁移仍缺少统计保证。",
-      "ideaTitle": "事件配对约束下的主动跨域失效发现",
-      "idea": "核心假设是：只有同时满足事件身份保持、代理风险可校准和行为覆盖扩张的候选才值得消耗物理评测预算；不满足迁移证据时，系统应拒绝给出目标域安全结论。",
-      "method": "先把场景编译成角色、拓扑、触发、冲突和通过顺序不变量，剔除事件漂移；再用少量目标反馈估计局部 proxy-target 相关性，以风险、支持感知互信息和事件族多样性联合采样，最后用 conformal risk control 输出带覆盖保证的 verdict 或 abstention。",
-      "validation": "在合成、CARLA、高保真或封闭场地的配对事件上固定多种策略，比较随机、worst-case、coverage-only、proxy-calibrated 和完整方法；报告单位物理预算失败数、事件审计通过率、失败族覆盖、迁移错误率、risk-coverage 和策略排序。",
-      "novelty": "主动评测解决预算分配，SSP 处理内容混杂，世界模型准入强调可迁移 verdict；把三者组合成从候选生成到物理结论的流程，是需要站外检索和最小实验共同验证的新颖性假设，而不是本期论文已经证明的结论。",
-      "evidencePaperIds": ["coverage-aware-active-evaluation", "ssp-syn2sim2phy-vla-evaluation", "commercial-av-failure-sampling", "rl-fuzz-testing-agents"]
+      "focus": "仿真测试开始为每个场景校正 proxy-target 偏差，事故评测又要求角色、规则与证据充分度分层。",
+      "gap": "Scape 的驾驶验证仍是 sim-to-sim，CAViAR 是事后单视角视频；两者尚未形成从场景选择到责任解释的同一闭环证据链。",
+      "ideaTitle": "带责任槽与拒答区间的主动测试漏斗",
+      "idea": "核心假设是：只有同时高风险、proxy 可迁移且责任证据可判定的场景才应消耗高保真预算；其余样本应扩展信息或明确拒答。",
+      "method": "用 Scape 类校正器预测 target performance 与区间，以 CAViAR 类事件/角色/规则槽描述失败，再用 coverage-aware acquisition 选择能缩小区间和扩展失败族的下一批高保真测试。",
+      "validation": "跨日志、低保真、CARLA 与少量物理配对场景比较随机、worst-case、coverage-only 和完整方法；报告单位预算失败数、risk-coverage、责任一致率、事件保持和策略排序。",
+      "novelty": "现有三类工作分别解决 proxy 校准、主动选择和事故责任；组合是否具有新意取决于同事件多层资产和责任标签能否真实闭合。",
+      "evidencePaperIds": [
+        "scape-policy-evaluation",
+        "caviar-accident-reasoning",
+        "coverage-aware-active-evaluation",
+        "ssp-syn2sim2phy-vla-evaluation"
+      ]
     },
     {
       "tag": "end-to-end-autonomous-driving",
       "signal": "持续高位",
-      "focus": "VLA 的竞争点正在从单一骨干规模转向 action-space coordination、滑窗缓存、短推理并行验证、轨迹去噪预算，以及语义输出到可执行轨迹的跨域一致性。",
-      "gap": "当前加速论文和融合论文各自报告平均精度或总分，尚未回答每段计算贡献了哪类闭环收益、优化后 wrong-lane 等风险为何迁移，以及硬件与场景变化下 deadline 是否仍成立。",
-      "ideaTitle": "分段可归因且 deadline-aware 的驾驶 VLA",
-      "idea": "核心假设是：若 VLA 在每个控制周期动态分配视频、语言和轨迹预算，并为每段输出记录边际动作贡献，就能在固定 deadline 下比静态加速获得更稳健的闭环质量，同时定位风险被转移到哪一阶段。",
-      "method": "沿 Encode/Prefill/Decode/Action 建立在线时延与动作敏感度模型，结合语义—WAM action 分歧选择缓存长度、draft block、视频预测步与 flow 步；超预算时优先保留对当前事件影响最大的阶段，并输出逐阶段 provenance 供回归审计。",
-      "validation": "在多种 GPU 与 Jetson 上按事件风险、视频变化和系统负载分层，比较原模型、FlashDrive 静态配置、仅时延门控和贡献感知预算；联合报告 p50/p99、deadline miss、轨迹误差、碰撞、off-road、wrong-lane、事件能力槽和逐样本动作一致性。",
-      "novelty": "现有 VLA 加速优化固定阶段，BrainWAM 优化专家协调；该 idea 进一步把动作贡献和 deadline 联合成在线预算策略，并要求所有加速收益接受逐事件闭环审计。",
-      "evidencePaperIds": ["flashdrive-vla-inference", "brainwam-action-space-coordination", "ssp-syn2sim2phy-vla-evaluation", "policy-stitching-e2e-driving"]
+      "focus": "端到端规划开始选择稀疏规则、有效历史和候选专属未来，而不是无条件堆叠语义、时间与预测。",
+      "gap": "规则变化、历史陈旧和候选未来错配仍由不同论文分别处理，缺少统一机制说明何种证据在当前动作下仍有效。",
+      "ideaTitle": "规则指纹驱动的选择性规划记忆",
+      "idea": "核心假设是：memory 是否复用应同时由运动阶段和当前交通规则指纹决定；只清空受灯牌、车道拓扑或交互变化影响的部分，比全保留或全重置更稳定。",
+      "method": "为对象、TE、topology 与 planning query 绑定 age 和 rule-context fingerprint，使用 action-specific future disagreement 判断 stale state；局部失配时选择性 reset，并保留可审计更新原因。",
+      "validation": "在 Bench2Drive/CARLA 构造灯态切换、临时标志、stop-go、cut-in 和 topology error，比较无记忆、固定窗口、StableDrive、TE-only 和完整方法；联合测安全、规则、进度、TPC 与时延。",
+      "novelty": "Traffic Element Awareness 与 StableDrive 分别验证空间规则和时间选择；新意要由二者交互导致的特有失败及局部重置收益来证明。",
+      "evidencePaperIds": [
+        "traffic-element-aware-driving",
+        "stabledrive-selective-memory",
+        "da-wam-decision-aligned-world-model",
+        "flashdrive-vla-inference"
+      ]
     },
     {
       "tag": "world-models",
-      "signal": "平台化",
-      "focus": "世界模型正从合理未来生成转向事实条件反事实、动作空间协调和测试准入；事件身份、已观测证据、动作响应与模型适用范围成为一等输出。",
-      "gap": "最新方法只在短时、脚本化 CARLA 中搬运事实表面，BrainWAM 也主要在开环规划基准验证；长期交互中他车会响应 ego 动作，事件身份和未知反应无法靠几何搬运直接确定。",
-      "ideaTitle": "证据分层且会拒答的交互反事实世界模型",
-      "idea": "核心假设是：把已观测事实、由行为模型推断的交互反应和纯生成补全分层表示，并为后三者输出不确定性，能让反事实模型在证据不足时只回答可识别部分，而不是生成一个完整却不可审计的未来。",
-      "method": "以事实延续做 abduction，将可重投影表面设为硬证据；对受 ego 动作影响的参与者运行多模型 interaction rollout，保留响应集合而非单一路径；生成器只补全不可见区域。envelope predictor 综合事件新颖度、集合分歧和循环一致性决定局部 verdict 或 abstention。",
-      "validation": "从一秒无反应配对逐步扩展到多秒互动，在 CARLA 与日志反事实代理上比较直接条件生成、事实搬运、单解交互和集合式方法；报告事件恢复、交互覆盖、LPIPS、动作可区分性、错误 verdict、risk-coverage 与下游策略排序。",
-      "novelty": "现有反事实方法补上事实证据，准入研究要求声明资格；该 idea 的新增点是把事实、响应假设和生成补全逐像素/逐对象分层，并允许对不可识别的交互结果拒答。",
-      "evidencePaperIds": ["counterfactual-driving-world-models", "brainwam-action-space-coordination", "world-model-simulator-admissibility", "geoworldad-geometry-world-action"]
+      "signal": "决策对齐",
+      "focus": "世界模型开始为每条候选动作维护独立未来，并要求预测状态可对应事实事件、对象和表面。",
+      "gap": "非 expert 候选没有真实未来监督，NAVSIM 得分不能证明 latent 的反事实正确；长期交互和可解码状态仍缺。",
+      "ideaTitle": "稀疏配对监督的候选未来校准器",
+      "idea": "核心假设是：只要为少量安全边界候选获得 paired simulator future，就能校准大部分 action-specific latent，并对其余候选输出集合或拒答。",
+      "method": "主动选择 expert 邻域与高分歧候选做 reactive rollout，将 future 解码为 occupancy/agent state；用 paired latent loss、ranking consistency 和 conformal set 训练校准器，未覆盖动作不输出确定单解。",
+      "validation": "固定 proposal/scorer，在 paired CARLA 与 NAVSIM 上比较 trajectory-only、shared future、DA-WAM 与校准模型；报告 future error、危险近邻排序、risk-coverage、闭环分数和 rollout 预算。",
+      "novelty": "DA-WAM 建立候选专属未来，反事实工作建立配对 reference 原则；新增点是用稀疏主动配对校准非 expert latent，并把拒答纳入规划接口。",
+      "evidencePaperIds": [
+        "da-wam-decision-aligned-world-model",
+        "counterfactual-driving-world-models",
+        "usr-drive-unified-scene-representation",
+        "world-model-simulator-admissibility"
+      ]
     },
     {
       "tag": "radar-occupancy-representation",
-      "signal": "评测资产先行",
-      "focus": "从概率占据栅格、雷达张量三维占据和多模态融合，推进到锚点校正、显式时间演化、Doppler 约束和恶劣天气可观测性；严格区分 4D 成像量测与 x-y-z-time 占据。",
-      "gap": "RbFT-Net 证明历史点需要位置、深度与可靠性校正，但输出仍是相机深度；当前 radar occupancy 仍缺独立 free/unknown、教师错误和未来占据流真值，也未把 Doppler 切向不可识别性传播到规划后果。",
-      "ideaTitle": "雷达时空 Occupancy 的独立真值与规划闭环闸门",
-      "idea": "先回答现有资产是否足以独立识别监督删失、径向多解和未来占据误差，再决定是否启动新模型。若公开资产不能组合出所需真值，则把最小、可双人审计的评测集本身作为阶段成果，而不是在循环标签上宣称方法有效。",
-      "method": "建立版本与许可固定的资产矩阵，把 RbFT 类位置、深度、可靠性校正作为一个待消融的历史锚点候选基线，而非预设通用前端；再记录坐标、时间、射线状态、教师来源、对象或体素流、未来时域和天气配对。冻结检测器与规划器，比较 no-op、未校正累计、规则 mask、候选校正、单解 flow 和功能等价基线。只有独立真值与规划闭环都成立，才重启集合式 occupancy-flow 方法。",
-      "validation": "Gate 0 检查独立 free/occupied/unknown、教师错误与未来流标签能否获得；Gate 1 检查固定检测器和规划器能否复现危险假自由、碰撞、干预、舒适性与校准风险。任一门失败就发布资产缺口和负结果，不训练新模型；通过后再按天气、距离、动态边界和预测时域比较强基线。",
-      "novelty": "方向综述已经覆盖雷达张量占据、教师迁移、时序融合、scene flow、neural field 和 VLM 接地；当前可辩护的新切入不是再造 backbone，而是把传感器可观测性、标签独立性与规划结果写成同一套可证伪准入合同。",
-      "evidencePaperIds": ["rbft-net-radar-depth-completion", "radar4d-vlm-temporal-reasoning", "star-vlm-radar-supervision", "moral-sensor-grounded-vlm"]
+      "signal": "真实负证据推动",
+      "focus": "雷达时序状态开始区分位置精度、存在性延续、锚点可靠性与 Doppler 可观测方向。",
+      "gap": "真实融合尚未稳定降低误差，depth correction 也不是 occupancy；缺独立 free/unknown、长期 identity 和未来流真值。",
+      "ideaTitle": "存在性与几何解耦的多观察者 Radar Occupancy Memory",
+      "idea": "核心假设是：雷达在遮挡下首先提供存在性和径向运动证据，只有通过创新与可见性校准时才应收紧三维位置；分开更新可避免弱回波污染稠密 occupancy。",
+      "method": "以 occupied/free/unknown 加 persistent identity 为状态，分别学习 existence survival 与 geometric covariance update；融合 observer provenance、age、Doppler 多解和 RbFT 类锚点校正，冲突时保留集合。",
+      "validation": "从 Multi-Observer 真实数据和公开 radar 数据构建刷新率/遮挡/标定/天气分层，对比未校正累计、EKF、单解 occupancy-flow 和完整方法；测 ECE、free-space、identity、future occupancy 与固定 planner 风险。",
+      "novelty": "现有工作分别处理决策级定位、depth anchor 与 radar occupancy；可辩护差异是把存在性和几何价值拆成两类可校准状态更新，并闭合到长期 occupancy 与规划。",
+      "evidencePaperIds": [
+        "multi-observer-vehicle-localization",
+        "rbft-net-radar-depth-completion",
+        "radar4d-vlm-temporal-reasoning",
+        "star-vlm-radar-supervision"
+      ]
     }
   ]
 }
