@@ -37,7 +37,7 @@ import {
 test("digest navigation URL preserves the requested issue", () => {
   assert.equal(
     getDigestNavUrl("2026-07-17", "https://example.com/paper-digest"),
-    "https://example.com/paper-digest/index.html#2026-07-17"
+    "https://example.com/paper-digest/digests/2026-07-17/"
   );
 });
 

@@ -828,7 +828,7 @@ export function buildIdeaUpdateHtmlBody(center, currentSiteUrl) {
 }
 
 export function getDigestNavUrl(digestId, currentSiteUrl) {
-  return `${currentSiteUrl}/index.html#${encodeURIComponent(digestId)}`;
+  return `${currentSiteUrl}/digests/${encodeURIComponent(digestId)}/`;
 }
 
 export function buildTransportOptions(config) {
