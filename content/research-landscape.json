@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-24",
+  "updatedAt": "2026-08-27",
   "analysisWindowIssues": 4,
-  "title": "从证据来源到动作后果：场景状态开始为决策负责",
-  "summary": "本期八篇论文把来源、规则、时间、动作和代理偏差变成场景状态的一部分：真实多观察者实验说明弱雷达并不稳定提高定位精度，协同知识图谱则证明保留来源与可见性能在低带宽下改善遮挡推理；端到端规划开始显式选择交通规则与有效历史，世界模型开始为每条候选动作预测对应后果，统一三维表示也开始让表面与对象共同演化。测试侧进一步把场景级仿真偏差和事故责任推理拆开校准。最值得投入的共同方向，是让模型不仅输出一个状态，还说明该状态由谁观察、何时有效、约束哪个动作，以及证据不足时应该保留多解还是拒答。",
+  "title": "把有限预算投向决策边界：训练、感知与场景状态共同选择性化",
+  "summary": "最新七篇论文把选择机制推进到训练、记忆、传感和计划承诺四个位置：CL4AD 动态调度十亿级 RL interaction，MomADv2 过滤命令不一致的历史，CARE 为首次出现的新目标预留 LiDAR 射线，commitment gate 则在安全包络前尝试修复意图错误。GeoWAM 用未来三维点图替代未来 RGB，SkyDrive 从俯视交通中批量构造本地驾驶监督，SIREN 以应急车辆行为而非固定轨迹生成测试。共同机会是为每条证据声明它解决哪类未知、消耗多少预算、何时失效，以及失败时能否恢复；共同风险是平均成功率、整体 mAP 或语言流畅度仍会掩盖 realism、首次发现、类别风险和跨域误报。",
   "trends": [
     {
       "id": "testing-as-common-language",
       "title": "测试正在成为所有方向的共同语言",
-      "evidence": "Scape 用少量同场景 target-surrogate pair 校正大量仿真标签，再给每个场景输出 conformal 区间；CAViAR 则显示 VLM 的昼夜识别接近饱和，却在事故类型、角色和规则违反上明显低于感知表现。",
-      "judgement": "测试正在从总体分数转向场景级可迁移性与证据充分度。下一阶段应把 proxy bias、事件身份、责任证据和 abstention 串成同一流程，避免用平均准确率或自然语言流畅度替代安全判断。",
+      "evidence": "Scape 校正场景级 proxy-target 偏差，SIREN 又显示应急车辆交互中常速度预测器平均优于学习模型、最高 accuracy 的 VLM 对 Near-Miss/Collision 仍为 0 F1；commitment gate 的跨域误报达到 7.5/min。",
+      "judgement": "测试正在从总体分数转向行为条件、首次失败和可恢复时间。下一阶段应把 proxy bias、行为模板、类别风险、matched false-positive 和 abstention 串成同一流程，避免用平均准确率或更频繁触发替代安全判断。",
       "tags": [
         "autonomous-driving-testing",
         "agentic-driving"
@@ -17,15 +17,15 @@
       "evidencePaperIds": [
         "scape-policy-evaluation",
         "caviar-accident-reasoning",
-        "coverage-aware-active-evaluation",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "siren-emergency-interaction-benchmark",
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
       "id": "world-models-become-instruments",
       "title": "世界模型正在从生成器变成实验仪器",
-      "evidence": "DA-WAM 为每条候选轨迹预测独立 future latent，并让对应后果直接参与评分；USR-Drive 又让 dense Gaussian geometry 与 sparse boxes 在统一 metric coordinate 中共同去噪。两者分别把 action-consequence 与 surface-instance correspondence 写进模型接口。",
-      "judgement": "世界模型是否有用不再只由预测或画质决定，而取决于未来是否对应具体动作、状态是否可解码和校准、以及它是否改变了候选排序。非 expert 反事实真值与规划闭环仍是首要缺口。",
+      "evidence": "DA-WAM 为每条候选轨迹维护独立 future latent，GeoWAM 又直接预测未来稠密点图并让 action head 读取几何；USR-Drive 则让 Gaussian surface 与 boxes 共享 metric state。",
+      "judgement": "世界模型是否有用不再只由预测或画质决定，而取决于未来是否对应具体动作、状态是否可解码和校准、以及它是否改变候选排序。GeoWAM 缺消融、DA-WAM 缺非 expert 真值，二者共同指向 paired action-geometry future。",
       "tags": [
         "world-models",
         "3d-reconstruction",
@@ -35,14 +35,14 @@
         "da-wam-decision-aligned-world-model",
         "usr-drive-unified-scene-representation",
         "counterfactual-driving-world-models",
-        "brainwam-action-space-coordination"
+        "geowam-geometry-world-action-model"
       ]
     },
     {
       "id": "e2e-bottleneck-shifts",
       "title": "端到端驾驶的瓶颈转向规则接口与选择性历史",
-      "evidence": "Traffic Element Awareness 在六类 planner 中显式注入三维灯牌与 ego-lane topology，并在 Bench2Drive 改善闭环分数；StableDrive 证明一周期选择性记忆优于二、四周期累积，长历史会在运动阶段切换时变成陈旧先验。",
-      "judgement": "值得做的端到端工作应说明哪些稀疏规则和历史真正改变动作，并同时报告安全、效率、跨周期稳定与时延。隐式融合更多语义或历史已不足以构成可信贡献。",
+      "evidence": "Traffic Element Awareness 显式选择三维灯牌与拓扑，StableDrive 和 MomADv2 都证明历史不是越长越好；MomADv2 的 K=4 最优，K=8 的 PDMS 从 89.9 降到 87.7。",
+      "judgement": "值得做的端到端工作应说明哪些规则、历史和未来真正改变动作，并同时报告安全、效率、跨周期稳定与时延。选择机制还必须用命令突变和错误历史反例验证，而不只在平均日志上得分。",
       "tags": [
         "end-to-end-autonomous-driving"
       ],
@@ -50,14 +50,14 @@
         "traffic-element-aware-driving",
         "stabledrive-selective-memory",
         "da-wam-decision-aligned-world-model",
-        "flashdrive-vla-inference"
+        "momadv2-reliable-temporal-memory"
       ]
     },
     {
       "id": "agentic-driving-grounded",
       "title": "Agentic Driving 从语言解释走向可验证行动",
-      "evidence": "CAViAR 将事故理解拆成事件、角色和规则映射，发现语言层微调无法弥补时序 grounding 缺口；G-MARK 则表明带 provenance、visibility 和 disagreement 的结构化证据比压平后的对象或长文本更适合协同推理。",
-      "judgement": "Agentic Driving 的新切口应是可验证证据链与有条件拒答：每个判断必须能回指对象、观察者、时间和规则，推理证据不足时不应强制生成完整责任或动作解释。",
+      "evidence": "CAViAR 暴露时序 grounding 缺口，G-MARK 证明 provenance-aware 证据有效；最新 commitment gate 进一步显示语言分数在 matched FP 下 detection 为 0.234，而 geometry-only 为 0.800。",
+      "judgement": "Agentic Driving 的新切口应是可验证证据链、matched baseline 和有条件拒答。语言模块只有在几何不可约的规则、角色或社会意图上给出增量，才值得进入安全门控。",
       "tags": [
         "agentic-driving",
         "autonomous-driving-testing",
@@ -67,7 +67,7 @@
         "caviar-accident-reasoning",
         "g-mark-cooperative-driving",
         "brainwam-action-space-coordination",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
@@ -89,17 +89,18 @@
     {
       "id": "radar-representation-from-measurement-to-state",
       "title": "4D 雷达研究正在从检测输入转向可审计场景状态",
-      "evidence": "Multi-Observer 的真实负结果说明低质量路侧雷达更可能在特定遮挡中延长轨迹可用性，而不是稳定提高定位精度；RbFT-Net 又表明多帧锚点在传播前必须校正位置、深度和可靠性。",
-      "judgement": "雷达 Occupancy 的突破口不是继续把更多点压进特征图，而是把几何精度、存在性支持、free/unknown 与 Doppler 多解分开建模，并用 calibration 和固定规划器检查每类证据的实际价值。",
+      "evidence": "Multi-Observer 说明弱雷达更可能延长轨迹存在性而非提高位置精度，RbFT-Net 要先校正历史锚点；CARE 又证明历史 exploitation 会漏掉首次出现目标，必须为无法解释的新证据保留 exploration reserve。",
+      "judgement": "雷达 Occupancy 的突破口不是继续把更多点压进特征图，而是把几何精度、存在性、首次发现、free/unknown 与 Doppler 多解分开建模，并用 calibration 和固定规划器检查每类证据的实际价值。",
       "tags": [
         "radar-occupancy-representation",
-        "cooperative-autonomous-driving"
+        "cooperative-autonomous-driving",
+        "autonomous-driving-testing"
       ],
       "evidencePaperIds": [
         "multi-observer-vehicle-localization",
         "rbft-net-radar-depth-completion",
         "radar4d-vlm-temporal-reasoning",
-        "star-vlm-radar-supervision"
+        "care-adaptive-lidar-first-sightings"
       ]
     }
   ],
@@ -116,8 +117,8 @@
       "evidencePaperIds": [
         "scape-policy-evaluation",
         "caviar-accident-reasoning",
-        "coverage-aware-active-evaluation",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "siren-emergency-interaction-benchmark",
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
@@ -132,7 +133,7 @@
       "evidencePaperIds": [
         "da-wam-decision-aligned-world-model",
         "counterfactual-driving-world-models",
-        "brainwam-action-space-coordination",
+        "geowam-geometry-world-action-model",
         "world-model-simulator-admissibility"
       ]
     },
@@ -147,7 +148,7 @@
       "evidencePaperIds": [
         "traffic-element-aware-driving",
         "stabledrive-selective-memory",
-        "da-wam-decision-aligned-world-model",
+        "momadv2-reliable-temporal-memory",
         "flashdrive-vla-inference"
       ]
     },
@@ -181,7 +182,7 @@
         "usr-drive-unified-scene-representation",
         "lgs-gaussian-structure-driving-reconstruction",
         "geoup-unified-3d-perception",
-        "rbft-net-radar-depth-completion"
+        "geowam-geometry-world-action-model"
       ]
     }
   ],
@@ -201,7 +202,7 @@
       "evidencePaperIds": [
         "da-wam-decision-aligned-world-model",
         "counterfactual-driving-world-models",
-        "usr-drive-unified-scene-representation",
+        "geowam-geometry-world-action-model",
         "world-model-simulator-admissibility"
       ],
       "evidence": "DA-WAM 已把每条候选与独立 future latent 绑定，反事实世界模型又要求保留同一事件事实；但非 expert 候选缺真实未来，latent 仍可能只编码轨迹身份。",
@@ -243,7 +244,8 @@
       "evidencePaperIds": [
         "denial-of-deadline-inference",
         "commercial-av-failure-sampling",
-        "deployed-vil-cooperative-perception"
+        "deployed-vil-cooperative-perception",
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
@@ -280,8 +282,8 @@
       "evidencePaperIds": [
         "caviar-accident-reasoning",
         "g-mark-cooperative-driving",
-        "brainwam-action-space-coordination",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "ssp-syn2sim2phy-vla-evaluation",
+        "gating-before-commitment-intent-divergence"
       ],
       "evidence": "CAViAR 显示 VLM 能识别光照却不会稳定完成事故角色与规则映射；G-MARK 表明 provenance-aware structured evidence 可显著改善遮挡推理。",
       "proposal": "将事故判断拆成事件时间窗、对象轨迹、观察来源、动作证据、规则检索和责任输出六步，每步保留支持/反证与置信度；证据不足时返回 undecidable，而非生成流畅单解。",
@@ -303,7 +305,7 @@
         "traffic-element-aware-driving",
         "stabledrive-selective-memory",
         "da-wam-decision-aligned-world-model",
-        "flashdrive-vla-inference"
+        "momadv2-reliable-temporal-memory"
       ],
       "evidence": "Traffic Element Awareness 证明稀疏规则对象能稳定提高闭环规划，StableDrive 证明陈旧历史会在运动阶段切换时伤害当前计划。",
       "proposal": "让每段 memory 同时携带 motion-stage compatibility 与 rule context fingerprint；交通灯、标志或 lane topology 改变时选择性清空受影响轨迹状态，稳定对象和自由空间则继续保留。",
@@ -325,7 +327,7 @@
         "usr-drive-unified-scene-representation",
         "lgs-gaussian-structure-driving-reconstruction",
         "geoup-unified-3d-perception",
-        "instant-nurec-feedforward-3dgs"
+        "geowam-geometry-world-action-model"
       ],
       "evidence": "USR-Drive 已证明 Gaussian geometry 与 boxes 联合去噪优于串联，但作者明确缺少全局状态、长期 identity、4D tracking 和实时性。",
       "proposal": "以 persistent object/occupancy slots 连接局部 Gaussian patch，加入 free/unknown 和跨窗 identity consistency；训练时让 reconstruction、detection、tracking 与冻结规划表征共同约束状态更新。",
@@ -369,7 +371,7 @@
         "multi-observer-vehicle-localization",
         "g-mark-cooperative-driving",
         "defer-to-plan-v2x-driving",
-        "update-unseen-aoi-collaborative-perception"
+        "siren-emergency-interaction-benchmark"
       ]
     },
     {
@@ -386,7 +388,7 @@
         "caviar-accident-reasoning",
         "g-mark-cooperative-driving",
         "brainwam-action-space-coordination",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
@@ -403,7 +405,7 @@
         "usr-drive-unified-scene-representation",
         "lgs-gaussian-structure-driving-reconstruction",
         "geoup-unified-3d-perception",
-        "instant-nurec-feedforward-3dgs"
+        "geowam-geometry-world-action-model"
       ]
     },
     {
@@ -420,7 +422,7 @@
         "vlm-gnss-spoofing-detection",
         "denial-of-deadline-inference",
         "commercial-av-failure-sampling",
-        "reasonbreak-vla-vulnerability-driving"
+        "gating-before-commitment-intent-divergence"
       ]
     },
     {
@@ -436,8 +438,8 @@
       "evidencePaperIds": [
         "scape-policy-evaluation",
         "caviar-accident-reasoning",
-        "coverage-aware-active-evaluation",
-        "ssp-syn2sim2phy-vla-evaluation"
+        "siren-emergency-interaction-benchmark",
+        "care-adaptive-lidar-first-sightings"
       ]
     },
     {
@@ -453,8 +455,8 @@
       "evidencePaperIds": [
         "traffic-element-aware-driving",
         "stabledrive-selective-memory",
-        "da-wam-decision-aligned-world-model",
-        "flashdrive-vla-inference"
+        "momadv2-reliable-temporal-memory",
+        "geowam-geometry-world-action-model"
       ]
     },
     {
@@ -470,7 +472,7 @@
       "evidencePaperIds": [
         "da-wam-decision-aligned-world-model",
         "counterfactual-driving-world-models",
-        "usr-drive-unified-scene-representation",
+        "geowam-geometry-world-action-model",
         "world-model-simulator-admissibility"
       ]
     },

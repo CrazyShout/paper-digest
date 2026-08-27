@@ -119,6 +119,13 @@
 | usr-drive-unified-scene-representation | USR-Drive: Unified Driving Scene Representation via Joint Denoising of 3D Gaussians and Boxes | 2608.19036 | 2026-08-24 |
 | scape-policy-evaluation | Scape: Scenario-Conditioned Simulation-Augmented Policy Evaluation | 2608.19425 | 2026-08-24 |
 | caviar-accident-reasoning | CAViAR: A Causal Video Dataset for Fine-Grained Accident Reasoning in Real-World Scenarios | 2608.19380 | 2026-08-24 |
+| geowam-geometry-world-action-model | GeoWAM: Visual Geometry World Action Models for Autonomous Driving | 2608.23486 | 2026-08-27 |
+| care-adaptive-lidar-first-sightings | CARE: Camera-Residual Reserves for First Sightings in Adaptive LiDAR Sensing | 2608.24282 | 2026-08-27 |
+| siren-emergency-interaction-benchmark | SIREN-Bench: Behavior-Driven Generation and Evaluation of Emergency-Vehicle Interactions | 2608.24094 | 2026-08-27 |
+| cl4ad-curriculum-driving | Scaling Curriculum Learning For Autonomous Driving | 2608.22549 | 2026-08-27 |
+| skydrive-aerial-city-adaptation | SkyDrive: Learning to Drive in a New City from Aerial Traffic Monitoring | 2608.25142 | 2026-08-27 |
+| momadv2-reliable-temporal-memory | MomADv2: Reliable Temporal Memory for End-to-End Autonomous Driving | 2608.23405 | 2026-08-27 |
+| gating-before-commitment-intent-divergence | Gating Before Commitment: Anticipating Intent Divergence to Prevent Post-Interaction Decision Failures in Autonomous Driving | 2608.26074 | 2026-08-27 |
 
 ## 使用说明
 
