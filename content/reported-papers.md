@@ -126,6 +126,10 @@
 | skydrive-aerial-city-adaptation | SkyDrive: Learning to Drive in a New City from Aerial Traffic Monitoring | 2608.25142 | 2026-08-27 |
 | momadv2-reliable-temporal-memory | MomADv2: Reliable Temporal Memory for End-to-End Autonomous Driving | 2608.23405 | 2026-08-27 |
 | gating-before-commitment-intent-divergence | Gating Before Commitment: Anticipating Intent Divergence to Prevent Post-Interaction Decision Failures in Autonomous Driving | 2608.26074 | 2026-08-27 |
+| barrier-conformal-clearance-certification | Barrier Function Conformal Safety Clearance Certification with CVaR for Driving Trajectory Selection | 2608.26533 | 2026-08-31 |
+| public-road-assisted-lane-change-testing | Beyond the Proving Ground: Independent Public-Road Testing of Assisted Lane Change Systems using LiDAR | 2608.26669 | 2026-08-31 |
+| dpa-i2p-depth-guided-registration | DPA-I2P: Depth-Guided Projective Alignment for Image-to-Point-Cloud Registration in Autonomous Driving | 2608.26589 | 2026-08-31 |
+| cav-platoon-joining-rl | Reinforcement Learning-Based Control of CAV Platoon Joining Maneuvers in Mixed Traffic | 2608.26860 | 2026-08-31 |
 
 ## 使用说明
 

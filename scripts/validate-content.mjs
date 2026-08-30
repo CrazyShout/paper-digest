@@ -24,6 +24,10 @@ import {
   unusedAuditedSourceFamilies
 } from "../src/lib/review-audit.js";
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
+import {
+  CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM,
+  categoryCoverageSnapshotFingerprint
+} from "../src/lib/digest-audit.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SCRIPT_DIR, "..");
@@ -320,7 +324,7 @@ function validateArxivSourceLinks(source, file) {
   }
 }
 
-function validateDigestAudit(audit, digest, file) {
+function validateDigestAudit(audit, digest, file, categoryCoverageFingerprintRequiredFrom) {
   if (!audit || typeof audit !== "object" || Array.isArray(audit)) {
     addError(`${file} must contain a JSON object`);
     return;
@@ -347,6 +351,85 @@ function validateDigestAudit(audit, digest, file) {
       }
     }
   }
+
+  const categoryCoverage = audit.categoryCoverage;
+  const categoryCoverageRequired = digest.data.date >= categoryCoverageFingerprintRequiredFrom;
+  if (!isPlainObject(categoryCoverage)) {
+    if (categoryCoverageRequired) addError(`${file} must define categoryCoverage`);
+  } else {
+    const coverageRuns = categoryCoverage.runs;
+    if (!Array.isArray(coverageRuns) || !coverageRuns.length) {
+      addError(`${file} categoryCoverage.runs must be a non-empty array`);
+    } else {
+      const categories = new Set();
+      let coverageOccurrences = 0;
+      const coverageIds = new Set();
+
+      for (const [index, run] of coverageRuns.entries()) {
+        const runLabel = `${file} categoryCoverage.runs[${index}]`;
+        if (
+          !isPlainObject(run)
+          || typeof run.category !== "string"
+          || !run.category.trim()
+          || typeof run.searchQuery !== "string"
+          || !run.searchQuery.trim()
+          || !Number.isInteger(run.resultCount)
+          || run.resultCount < 0
+          || !Array.isArray(run.resultIds)
+          || !run.resultIds.every((id) => typeof id === "string" && id.trim())
+        ) {
+          addError(`${runLabel} must define category, searchQuery, resultCount, and resultIds`);
+          continue;
+        }
+        if (categories.has(run.category)) {
+          addError(`${file} categoryCoverage.runs has duplicate category: ${run.category}`);
+        }
+        categories.add(run.category);
+        if (new Set(run.resultIds).size !== run.resultIds.length) {
+          addError(`${runLabel}.resultIds must be unique within the category`);
+        }
+        if (run.resultCount !== run.resultIds.length) {
+          addError(`${runLabel}.resultCount must equal resultIds.length`);
+        }
+        coverageOccurrences += run.resultIds.length;
+        for (const resultId of run.resultIds) coverageIds.add(resultId);
+      }
+
+      if (categoryCoverage.queryOccurrences !== coverageOccurrences) {
+        addError(`${file} categoryCoverage.queryOccurrences must equal ${coverageOccurrences}`);
+      }
+      if (categoryCoverage.uniqueRecords !== coverageIds.size) {
+        addError(`${file} categoryCoverage.uniqueRecords must equal ${coverageIds.size}`);
+      }
+      if (
+        !Number.isInteger(categoryCoverage.screenedCandidates)
+        || !Number.isInteger(categoryCoverage.screenedOut)
+        || categoryCoverage.screenedCandidates < 0
+        || categoryCoverage.screenedOut < 0
+        || categoryCoverage.screenedCandidates + categoryCoverage.screenedOut !== coverageIds.size
+      ) {
+        addError(`${file} categoryCoverage screenedCandidates plus screenedOut must equal uniqueRecords`);
+      }
+    }
+
+    if (categoryCoverage.snapshotAlgorithm !== CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM) {
+      addError(
+        `${file} categoryCoverage.snapshotAlgorithm must be ${CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM}`
+      );
+    }
+    if (!/^[0-9a-f]{64}$/.test(categoryCoverage.snapshotFingerprint || "")) {
+      addError(`${file} categoryCoverage.snapshotFingerprint must be a SHA-256 digest`);
+    } else {
+      try {
+        if (categoryCoverage.snapshotFingerprint !== categoryCoverageSnapshotFingerprint(categoryCoverage)) {
+          addError(`${file} categoryCoverage.snapshotFingerprint does not match the stored coverage snapshot`);
+        }
+      } catch (error) {
+        addError(`${file} categoryCoverage snapshot cannot be canonicalized: ${error.message}`);
+      }
+    }
+  }
+
   if (!Array.isArray(audit.queryRuns) || !audit.queryRuns.length) {
     addError(`${file} must define non-empty queryRuns`);
   }
@@ -2482,6 +2565,8 @@ try {
 const requiredPaperSections = contentQuality.paperReports?.requiredSections;
 const minimumOfficialFigures = contentQuality.paperReports?.minimumOfficialFigures;
 const digestAuditRequiredFrom = contentQuality.digests?.auditRequiredFrom;
+const digestCategoryCoverageRequiredFrom =
+  contentQuality.digests?.categoryCoverageFingerprintRequiredFrom;
 const allowedDigestVisibilities = contentQuality.digests?.allowedVisibility;
 if (!isStringArray(requiredPaperSections)) {
   addError("content-quality.json paperReports.requiredSections must be a non-empty string array");
@@ -2491,6 +2576,11 @@ if (!Number.isInteger(minimumOfficialFigures) || minimumOfficialFigures < 2) {
 }
 if (!isValidIsoDate(digestAuditRequiredFrom)) {
   addError("content-quality.json digests.auditRequiredFrom must be a real YYYY-MM-DD date");
+}
+if (!isValidIsoDate(digestCategoryCoverageRequiredFrom)) {
+  addError(
+    "content-quality.json digests.categoryCoverageFingerprintRequiredFrom must be a real YYYY-MM-DD date"
+  );
 }
 if (!isStringArray(allowedDigestVisibilities) || !allowedDigestVisibilities.includes("public")) {
   addError("content-quality.json digests.allowedVisibility must include public");
@@ -2792,7 +2882,12 @@ for (const auditDoc of digestAuditDocs) {
   if (!digest) {
     addError(`${auditDoc.file} references missing digest: ${auditDoc.data.digestId}`);
   } else {
-    validateDigestAudit(auditDoc.data, digest, auditDoc.file);
+    validateDigestAudit(
+      auditDoc.data,
+      digest,
+      auditDoc.file,
+      digestCategoryCoverageRequiredFrom
+    );
   }
 }
 

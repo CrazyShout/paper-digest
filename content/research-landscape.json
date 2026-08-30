@@ -1,22 +1,23 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-27",
+  "updatedAt": "2026-08-31",
   "analysisWindowIssues": 4,
-  "title": "把有限预算投向决策边界：训练、感知与场景状态共同选择性化",
-  "summary": "最新七篇论文把选择机制推进到训练、记忆、传感和计划承诺四个位置：CL4AD 动态调度十亿级 RL interaction，MomADv2 过滤命令不一致的历史，CARE 为首次出现的新目标预留 LiDAR 射线，commitment gate 则在安全包络前尝试修复意图错误。GeoWAM 用未来三维点图替代未来 RGB，SkyDrive 从俯视交通中批量构造本地驾驶监督，SIREN 以应急车辆行为而非固定轨迹生成测试。共同机会是为每条证据声明它解决哪类未知、消耗多少预算、何时失效，以及失败时能否恢复；共同风险是平均成功率、整体 mAP 或语言流畅度仍会掩盖 realism、首次发现、类别风险和跨域误报。",
+  "title": "让系统在选择之后仍可验证：证书、法规边界与安全拒绝",
+  "summary": "最新四篇论文把可验证性推进到 planner selection、公共道路法规边界、跨模态 correspondence 和协同动作执行四个位置。Barrier certificate 证明校准必须覆盖候选选择，JRC 公路测试表明 type approval 之外仍需按规则边界采样，DPA-I2P 用投影支持限制错误匹配，CAV platoon joining 则把训练期 TTC penalty 与执行期 shield 的代价分开。与上一期的 curriculum、可靠记忆、首次发现 reserve 和 commitment gate 合在一起，当前共同机会是让每个动作、证据和拒绝都带可重算边界；共同风险是平均成功率、整体分数或零碰撞可能分别隐藏 selection bias、法规覆盖缺口和过度 abandonment。",
   "trends": [
     {
       "id": "testing-as-common-language",
       "title": "测试正在成为所有方向的共同语言",
-      "evidence": "Scape 校正场景级 proxy-target 偏差，SIREN 又显示应急车辆交互中常速度预测器平均优于学习模型、最高 accuracy 的 VLM 对 Near-Miss/Collision 仍为 0 F1；commitment gate 的跨域误报达到 7.5/min。",
-      "judgement": "测试正在从总体分数转向行为条件、首次失败和可恢复时间。下一阶段应把 proxy bias、行为模板、类别风险、matched false-positive 和 abstention 串成同一流程，避免用平均准确率或更频繁触发替代安全判断。",
+      "evidence": "Barrier certificate 在 150 个 held-out sessions 上校准最终选中轨迹而非单候选，JRC 又在 27 次公共道路 ALC 中发现 6 次潜在 R79 越界、3 次在测量不确定性下仍达 99% 置信；SIREN 与 commitment gate 继续暴露类别风险和跨域误报。",
+      "judgement": "测试正在从总体分数转向 selection-aware certificate、规则边界覆盖、行为条件和可恢复时间。下一阶段应把 proxy bias、法规边界、类别风险、matched false-positive 和 abstention 串成同一流程，避免用平均准确率或更频繁触发替代安全判断。",
       "tags": [
         "autonomous-driving-testing",
-        "agentic-driving"
+        "agentic-driving",
+        "autonomous-driving-security"
       ],
       "evidencePaperIds": [
-        "scape-policy-evaluation",
-        "caviar-accident-reasoning",
+        "barrier-conformal-clearance-certification",
+        "public-road-assisted-lane-change-testing",
         "siren-emergency-interaction-benchmark",
         "gating-before-commitment-intent-divergence"
       ]
@@ -24,8 +25,8 @@
     {
       "id": "world-models-become-instruments",
       "title": "世界模型正在从生成器变成实验仪器",
-      "evidence": "DA-WAM 为每条候选轨迹维护独立 future latent，GeoWAM 又直接预测未来稠密点图并让 action head 读取几何；USR-Drive 则让 Gaussian surface 与 boxes 共享 metric state。",
-      "judgement": "世界模型是否有用不再只由预测或画质决定，而取决于未来是否对应具体动作、状态是否可解码和校准、以及它是否改变候选排序。GeoWAM 缺消融、DA-WAM 缺非 expert 真值，二者共同指向 paired action-geometry future。",
+      "evidence": "DA-WAM 为每条候选轨迹维护独立 future latent，GeoWAM 直接预测未来稠密点图；DPA-I2P 又显示显式 metric depth、camera ray 和 projective support 能显著稳定图像到点云 correspondence。",
+      "judgement": "未来状态是否可用不仅取决于生成质量，也取决于动作绑定、几何可解码性和 observation-to-state alignment。GeoWAM 缺消融、DA-WAM 缺非 expert 真值、DPA 未闭合规划，三者共同指向可校准的 paired action-geometry state。",
       "tags": [
         "world-models",
         "3d-reconstruction",
@@ -33,9 +34,9 @@
       ],
       "evidencePaperIds": [
         "da-wam-decision-aligned-world-model",
+        "geowam-geometry-world-action-model",
         "usr-drive-unified-scene-representation",
-        "counterfactual-driving-world-models",
-        "geowam-geometry-world-action-model"
+        "dpa-i2p-depth-guided-registration"
       ]
     },
     {
@@ -73,8 +74,8 @@
     {
       "id": "v2x-systemization",
       "title": "V2X 开始区分证据来源、精度与持续性价值",
-      "evidence": "真实路口实验显示雷达融合只把 RMSE 从 0.84 m 小幅降到 0.81 m，遮挡时也未降低误差；G-MARK 保留 partner provenance 后，隐藏目标 F1 才不会在移除远端证据时从 0.494 直接归零。",
-      "judgement": "协同系统不应只问是否融合，而要分别估计远端证据能否收紧几何、延长目标存在性、解释遮挡或触发拒绝。来源和可用率应一直保留到规划任务，而非在感知入口被抹平。",
+      "evidence": "真实路口实验显示弱雷达可能只延长轨迹存在性，G-MARK 证明 partner provenance 不可丢；最新 CAV platoon joining 又显示 TTC shield 虽可把碰撞转近零，却把一部分动作转成 2.8%-8.3% abandonment。",
+      "judgement": "协同系统不应只问是否融合或是否零碰撞，而要分别估计远端证据能否收紧几何、延长存在性、触发 defer 以及何时恢复。来源、消息年龄和拒绝代价应一直保留到规划任务。",
       "tags": [
         "cooperative-autonomous-driving",
         "radar-occupancy-representation"
@@ -83,7 +84,7 @@
         "multi-observer-vehicle-localization",
         "g-mark-cooperative-driving",
         "defer-to-plan-v2x-driving",
-        "deployed-vil-cooperative-perception"
+        "cav-platoon-joining-rl"
       ]
     },
     {
@@ -107,16 +108,16 @@
   "hotspots": [
     {
       "level": "强热点",
-      "title": "场景级代理校准与事故责任推理",
-      "evidence": "Scape 与 CAViAR 分别暴露仿真标签偏差和感知到因果映射的断裂。",
-      "whyItMatters": "它们把昂贵 target evidence、区间宽度、责任角色和规则证据变成测试结论的组成部分。",
+      "title": "选择后证书与公共道路规则边界",
+      "evidence": "Barrier certificate 暴露候选选择后的覆盖问题，JRC 公路测试又把 R79 边界、测量区间和真实系统行为放到同一结果账本。",
+      "whyItMatters": "安全测试开始同时要求统计证书、规则合规、测量不确定性和真实 ODD 覆盖，而不只报告仿真总分。",
       "tags": [
         "autonomous-driving-testing",
         "agentic-driving"
       ],
       "evidencePaperIds": [
-        "scape-policy-evaluation",
-        "caviar-accident-reasoning",
+        "barrier-conformal-clearance-certification",
+        "public-road-assisted-lane-change-testing",
         "siren-emergency-interaction-benchmark",
         "gating-before-commitment-intent-divergence"
       ]
@@ -262,8 +263,8 @@
       "evidencePaperIds": [
         "policy-stitching-e2e-driving",
         "s2-vla-semantic-spatial",
-        "world-engine-post-training-driving",
-        "wam-diff2-efficient-driving-vla"
+        "wam-diff2-efficient-driving-vla",
+        "barrier-conformal-clearance-certification"
       ]
     },
     {
@@ -360,8 +361,8 @@
     {
       "tag": "cooperative-autonomous-driving",
       "signal": "强热点",
-      "focus": "多观察者协同从特征融合转向 provenance、可见性、刷新率、冲突与任务按需读取。",
-      "gap": "真实结果显示弱传感器可能只提高轨迹持续性而不提高位置精度；当前尚无系统把这两种价值分开校准并闭合到规划。",
+      "focus": "多观察者协同从特征融合转向 provenance、可见性、刷新率、冲突、动作拒绝与任务按需读取。",
+      "gap": "弱传感器可能只提高轨迹持续性，platoon shield 又可能只把碰撞转成 abandonment；当前尚无系统把证据价值、通信状态和可恢复 defer 一起闭合到规划。",
       "ideaTitle": "来源保真的双价值协同证据层",
       "idea": "核心假设是：每条远端证据应分别声明几何收紧价值和存在性延续价值，由下游任务选择吸收、仅保留或拒绝，而不是统一做一次融合更新。",
       "method": "构建带 observer、age、visibility、position covariance、existence support 与 conflict 的 evidence graph；用 innovation consistency 校准几何更新，用 track survival 和遮挡恢复监督存在性，再让固定 planner 在通信预算下选择证据。",
@@ -371,7 +372,7 @@
         "multi-observer-vehicle-localization",
         "g-mark-cooperative-driving",
         "defer-to-plan-v2x-driving",
-        "siren-emergency-interaction-benchmark"
+        "cav-platoon-joining-rl"
       ]
     },
     {
@@ -394,8 +395,8 @@
     {
       "tag": "3d-reconstruction",
       "signal": "结构统一",
-      "focus": "重建正在从单帧渲染资产转向 surface、instance、occupancy 和时间身份共享的物理状态。",
-      "gap": "USR-Drive 联合了 Gaussian 与 box，却缺全局状态、长期身份、4D tracking 和实时更新；现有规划收益也未验证。",
+      "focus": "重建正在从单帧渲染资产转向 surface、instance、occupancy、跨模态几何对齐和时间身份共享的物理状态。",
+      "gap": "USR-Drive 缺全局身份，DPA-I2P 又依赖离线 metric depth 且只验证 registration；长期状态、在线成本和规划收益仍未闭合。",
       "ideaTitle": "带长期身份的 Surface-Instance-Occupancy 状态",
       "idea": "核心假设是：persistent slot 管理对象身份、局部 Gaussian 管理表面、显式 occupancy 管理 free/unknown，可减少跨窗口动态涂抹并为规划提供连续状态。",
       "method": "用 metric anchors 对齐三类 token，以 identity-aware memory 跨窗口更新；由 reconstruction、box/track、occupancy calibration 和冻结 planner feature consistency 共同监督，加入 causal few-step updater。",
@@ -404,8 +405,8 @@
       "evidencePaperIds": [
         "usr-drive-unified-scene-representation",
         "lgs-gaussian-structure-driving-reconstruction",
-        "geoup-unified-3d-perception",
-        "geowam-geometry-world-action-model"
+        "geowam-geometry-world-action-model",
+        "dpa-i2p-depth-guided-registration"
       ]
     },
     {
@@ -419,17 +420,17 @@
       "validation": "在 Bench2Drive-Robust、实车扰动测试协议和世界模型 rollout 中比较统一异常检测、模块级检测与所提方法；报告归因准确率、检测延迟、碰撞率、误触发率、恢复时间和训练外扰动泛化。",
       "novelty": "现有鲁棒性工作多展示攻击成功或性能下降，真实扰动研究也指出离线指标无法预测实车失败；该 idea 进一步回答失败来自哪里以及系统如何恢复。",
       "evidencePaperIds": [
-        "vlm-gnss-spoofing-detection",
         "denial-of-deadline-inference",
-        "commercial-av-failure-sampling",
-        "gating-before-commitment-intent-divergence"
+        "gating-before-commitment-intent-divergence",
+        "barrier-conformal-clearance-certification",
+        "public-road-assisted-lane-change-testing"
       ]
     },
     {
       "tag": "autonomous-driving-testing",
       "signal": "强热点",
-      "focus": "仿真测试开始为每个场景校正 proxy-target 偏差，事故评测又要求角色、规则与证据充分度分层。",
-      "gap": "Scape 的驾驶验证仍是 sim-to-sim，CAViAR 是事后单视角视频；两者尚未形成从场景选择到责任解释的同一闭环证据链。",
+      "focus": "测试开始同时校正 proxy-target 偏差、selected-trajectory clearance、法规边界和行为级风险。",
+      "gap": "Barrier 保证仍是 marginal、公共道路证据只有一个 VUT，Scape 仍是 sim-to-sim；统计证书、规则合规与跨产品复现尚未形成同一闭环。",
       "ideaTitle": "带责任槽与拒答区间的主动测试漏斗",
       "idea": "核心假设是：只有同时高风险、proxy 可迁移且责任证据可判定的场景才应消耗高保真预算；其余样本应扩展信息或明确拒答。",
       "method": "用 Scape 类校正器预测 target performance 与区间，以 CAViAR 类事件/角色/规则槽描述失败，再用 coverage-aware acquisition 选择能缩小区间和扩展失败族的下一批高保真测试。",
@@ -437,9 +438,9 @@
       "novelty": "现有三类工作分别解决 proxy 校准、主动选择和事故责任；组合是否具有新意取决于同事件多层资产和责任标签能否真实闭合。",
       "evidencePaperIds": [
         "scape-policy-evaluation",
-        "caviar-accident-reasoning",
         "siren-emergency-interaction-benchmark",
-        "care-adaptive-lidar-first-sightings"
+        "barrier-conformal-clearance-certification",
+        "public-road-assisted-lane-change-testing"
       ]
     },
     {
