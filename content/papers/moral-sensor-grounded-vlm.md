@@ -2,7 +2,7 @@
 {
   "id": "moral-sensor-grounded-vlm",
   "tag": "radar-occupancy-representation",
-  "tags": ["radar-occupancy-representation", "agentic-driving"],
+  "tags": ["radar-occupancy-representation"],
   "title": "MoRAL: Sensor-Grounded BEV Reasoning for Compact VLMs toward Edge-Oriented Autonomous Driving",
   "source": "arXiv:2608.02449 / https://arxiv.org/abs/2608.02449 / Official model and artifacts: https://huggingface.co/AmbarishGK/moral-v4-nuscenes",
   "authors": ["Ambarish Govindarajulu Kaliamurthi", "Kaikai Liu"],

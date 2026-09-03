@@ -2,7 +2,7 @@
 {
   "id": "rbft-net-radar-depth-completion",
   "tag": "radar-occupancy-representation",
-  "tags": ["radar-occupancy-representation", "3d-reconstruction"],
+  "tags": ["radar-occupancy-representation", "dynamic-scene-representation"],
   "title": "RbFT-Net: Rectify-Before-Fuse Temporal Radar Anchors for 4D Radar-Camera Depth Completion",
   "source": "arXiv:2608.13102 / https://arxiv.org/abs/2608.13102 / HTML: https://arxiv.org/html/2608.13102",
   "authors": ["Wentao Zhao", "Shouxuan Wu", "Yongtao Cen", "Tianchen Deng", "Yuyang Zhang", "Jingchuan Wang"],

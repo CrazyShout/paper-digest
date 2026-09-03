@@ -1,0 +1,30 @@
+{
+  "candidateId": "censor-aware-multimodal-state-supervision",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "01a066cd-61e9-77c3-ae29-26c8b01dbd57",
+  "reviewedAt": "2026-09-03T18:30:33+08:00",
+  "scores": {
+    "novelty": 6,
+    "feasibility": 6,
+    "success-probability": 6,
+    "impact": 8,
+    "comparison-readiness": 7
+  },
+  "rationales": {
+    "novelty": "Radar Occupancy Prediction 已直接处理 LiDAR 与 radar 的可见性错配，Deep Radar ISM 已学习 free/occupied/unknown 的概率或 evidential measurement grid，UnsDrive 也显式输出三态。候选仅在三维多模态教师删失、独立四态 oracle、conflict 保留和同 coverage 风险这一收窄组合上具有新意。",
+    "feasibility": "CarlaOcc 的 mesh 与 ray-casting 资源支持合成四态 Gate 0，冻结 RadarOcc 后训练小型删失适配器也合理。主要风险是 K-Radar 体量、非商业且禁止演绎的许可、现实双人射线审计成本，以及现实遮挡后状态无法独立裁决。",
+    "success-probability": "受控删失下发现 false-free 很可能，但这只能证明故障可注入；真正关键的是自然教师错配是否有足够发生率，以及学习删失能否在相同 coverage 下超过简单可见性 mask。止损标准明确，所以最小实验较可能给出清楚结论，但正方法贡献并不稳。",
+    "impact": "若独立 oracle 证明来源相关教师删失造成危险假自由且学习修正超过规则，结果会直接改变 occupancy 标签生成和多模态监督实践。即使规则 mask 等价，负结果也能终止不必要的可靠性头开发。",
+    "comparison-readiness": "已有正式的 radar-LiDAR 可见性过滤、Deep Radar ISM、三态或 occluded 表示以及规则、ignore、随机等 coverage 基线，比较轴较完整。剩余不足是历史强基线多为二维 radar grid，而候选是三维多模态训练监督，跨任务功能适配必须谨慎。"
+  },
+  "strongestObjection": "CarlaOcc 中人为注入 teacher dropout 只能证明可测试性，不能证明真实训练标签中同类删失自然存在；K-Radar 对不可观测体素又没有独立真值，候选可能最终只复现已知的传感器可见性错配而无法建立新的三维问题。",
+  "requiredExperiment": "在任何学习修正前，先用不接触待测模型的 CarlaOcc 传感器仿真和 K-Radar 可观测射线审计，量化自然产生而非人工注入的教师错配发生率及其 dangerous false-free 后果；随后在固定有效监督量与 coverage 下比较原标签、ignore、最强规则 visibility mask、Deep Radar ISM 式三态监督和来源条件化删失，只有跨两种自然删失机制显著超过规则才继续。",
+  "evidenceReopened": [
+    "https://arxiv.org/abs/2112.04282",
+    "https://arxiv.org/abs/2305.12409",
+    "https://arxiv.org/abs/2603.27238",
+    "https://arxiv.org/abs/2608.09098"
+  ],
+  "overall": 7,
+  "dossierSnapshotFingerprint": "fb18786c752e86fb29ac6a62276c63562e4b72a0e6cd91a8957a0104e992b2f7"
+}

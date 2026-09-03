@@ -2,7 +2,7 @@
 {
   "id": "geoworldad-geometry-world-action",
   "tag": "end-to-end-autonomous-driving",
-  "tags": ["end-to-end-autonomous-driving", "world-models", "3d-reconstruction", "agentic-driving"],
+  "tags": ["end-to-end-autonomous-driving", "world-models", "dynamic-scene-representation"],
   "title": "GeoWorldAD: Geometry World Action Model for Autonomous Driving",
   "source": "arXiv:2607.17521 / https://arxiv.org/abs/2607.17521",
   "authors": ["Songyan Zhang", "Jinyuan Tian", "Hanbing Li", "Daqi Liu", "Hao Chen", "Wenhui Huang", "Fang Li", "Guang Chen", "Hangjun Ye", "Long Chen", "Kuiyuan Yang", "Chen Lv"],

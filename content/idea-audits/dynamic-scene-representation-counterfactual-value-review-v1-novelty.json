@@ -1,0 +1,30 @@
+{
+  "candidateId": "counterfactual-state-value-audit",
+  "lens": "novelty-reviewer",
+  "reviewerAgentId": "01a066cd-61e9-77c3-ae29-26c8b01dbd57",
+  "reviewedAt": "2026-09-03T18:30:33+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 5,
+    "impact": 7,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "Scene as Occupancy 已比较 occupancy 与 box 对规划的作用，VADv2 已让 scene token 直接参与概率规划；删除、置零和重训练消融本身也不新。候选的实质差异是把支持域、no-op、oracle、非法负控制和失败集合端点组合成冻结规划器下的条件状态审计，但贡献更像新的评测估计量而非新表示。",
+    "feasibility": "规则规划器上的结构化状态替换可实现，但 CarlaOcc 的显式 panoptic state 与 VADv2 的学习型 latent scene tokens 没有天然同构接口。只读 adapter 在不重训时很可能仍造成分布外输入，而条件生成器要只改一个字段并保持隐藏共同原因基本不可验证。",
+    "success-probability": "no-op 与 support classifier 能排除明显坏干预，却不能证明替换样本是同一场景的有效反事实。真实日志没有替代动作后果，两个规划器又可能读取不同语义，因此获得稳定、可解释且跨规划器一致的字段价值排序概率偏低。",
+    "impact": "成功的协议能把联合训练总分拆成字段级决策价值，并公开近零或 planner-specific 结果，对表示预算和消融规范有直接价值。影响仍局限于已验证的状态接口和规划器，不能称为通用因果价值。",
+    "comparison-readiness": "公开的 VADv2、OccNet、Scene as Occupancy 与 CarlaOcc 提供组件，但不存在公认的条件状态干预基准或同一 estimand 的直接竞品。置零、shuffle、均值替换和 leave-one-field-out 是必要对照，却不足以证明条件替换本身正确。"
+  },
+  "strongestObjection": "所谓反事实价值在当前设计中不可识别：改变 unknown、实例或 flow 时，条件生成器可能同步改变未记录的场景原因；support classifier 只能检测明显 OOD，不能证明替换保持了潜在因果状态，因此规划变化未必属于目标字段。",
+  "requiredExperiment": "先在可导出完整结构状态和成对替代 rollout 的 CARLA 场景中预设已知因果效应，使用精确结构干预而非学习生成替换，检验审计器能否恢复字段价值排序、零效应和交互效应；随后证明同一显式状态经冻结 adapter 输入 VADv2 与规则规划器时通过 no-op、同值替换和支持域门，恢复失败前不得进入主审计。",
+  "evidenceReopened": [
+    "https://arxiv.org/abs/2306.02851",
+    "https://arxiv.org/abs/2402.13243",
+    "https://arxiv.org/abs/2603.27238",
+    "https://arxiv.org/abs/2608.13147"
+  ],
+  "overall": 6,
+  "dossierSnapshotFingerprint": "d9f707c560af4119ea57f473a15f073219a1561794fc218a7694560bcd95e131"
+}

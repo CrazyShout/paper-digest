@@ -1,6 +1,7 @@
 ---
 const { center } = Astro.props;
 const directions = center?.directions || [];
+const directionGroups = center?.directionGroups || [];
 
 function formatDate(value) {
   if (!value) return "持续更新";
@@ -25,34 +26,44 @@ function formatDate(value) {
     </div>
   </header>
 
-  <div class="review-preview-grid">
-    {directions.map((direction) => {
-      const localCount = direction.references.filter((reference) => reference.origin === "local").length;
-      const externalCount = direction.references.length - localCount;
+  <div class="review-direction-groups">
+    {directionGroups.map((group) => (
+      <section class="review-direction-group" aria-labelledby={`preview-group-${group.id}`}>
+        <header>
+          <h3 id={`preview-group-${group.id}`}>{group.label}</h3>
+          <p>{group.description}</p>
+        </header>
+        <div class="review-preview-grid">
+          {group.directions.map((direction) => {
+            const localCount = direction.references.filter((reference) => reference.origin === "local").length;
+            const externalCount = direction.references.length - localCount;
 
-      return (
-        <article class="review-preview-card" style={`--review-color: ${direction.color}`}>
-          <div class="review-preview-card-top">
-            <span class="review-direction-mark" aria-hidden="true"></span>
-            <span>{direction.label}</span>
-          </div>
-          <h3><a href={`reviews/${direction.id}/`}>{direction.title}</a></h3>
-          <p>{direction.abstract}</p>
-          <dl>
-            <div>
-              <dt>复核日期</dt>
-              <dd>{formatDate(direction.reviewedAt)}</dd>
-            </div>
-            <div>
-              <dt>证据构成</dt>
-              <dd>{localCount} 本库 · {externalCount} 扩展</dd>
-            </div>
-          </dl>
-          <a class="review-preview-card-link" href={`reviews/${direction.id}/`}>
-            阅读方向综述 <span aria-hidden="true">→</span>
-          </a>
-        </article>
-      );
-    })}
+            return (
+              <article class="review-preview-card" style={`--review-color: ${direction.color}`}>
+                <div class="review-preview-card-top">
+                  <span class="review-direction-mark" aria-hidden="true"></span>
+                  <span>{direction.label}</span>
+                </div>
+                <h3><a href={`reviews/${direction.id}/`}>{direction.title}</a></h3>
+                <p>{direction.abstract}</p>
+                <dl>
+                  <div>
+                    <dt>复核日期</dt>
+                    <dd>{formatDate(direction.reviewedAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>证据构成</dt>
+                    <dd>{localCount} 本库 · {externalCount} 扩展</dd>
+                  </div>
+                </dl>
+                <a class="review-preview-card-link" href={`reviews/${direction.id}/`}>
+                  阅读方向综述 <span aria-hidden="true">→</span>
+                </a>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    ))}
   </div>
 </section>

@@ -2517,6 +2517,61 @@ for (const [index, interest] of interests.entries()) {
   }
   knownTags.add(interest?.id);
 }
+
+const directionGroups = Array.isArray(interestConfig.directionGroups)
+  ? interestConfig.directionGroups
+  : [];
+if (!directionGroups.length) {
+  addError("research-interests.json must define non-empty directionGroups");
+}
+const groupedDirectionIds = [];
+const directionGroupIds = new Set();
+for (const [index, group] of directionGroups.entries()) {
+  const label = `research-interests.json directionGroups[${index}]`;
+  validateRequiredStrings(group, ["id", "label", "description"], label);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(group?.id || "")) {
+    addError(`${label} id must use lowercase letters, numbers, and hyphens`);
+  }
+  if (directionGroupIds.has(group?.id)) {
+    addError(`research-interests.json has duplicate direction group id: ${group?.id}`);
+  }
+  directionGroupIds.add(group?.id);
+  if (!isStringArray(group?.directionIds)) {
+    addError(`${label}.directionIds must be a non-empty string array`);
+    continue;
+  }
+  if (new Set(group.directionIds).size !== group.directionIds.length) {
+    addError(`${label}.directionIds must not contain duplicates`);
+  }
+  for (const directionId of group.directionIds) {
+    groupedDirectionIds.push(directionId);
+    if (!knownTags.has(directionId)) {
+      addError(`${label}.directionIds references unknown direction: ${directionId}`);
+    }
+  }
+}
+if (
+  groupedDirectionIds.length !== knownTags.size
+  || new Set(groupedDirectionIds).size !== knownTags.size
+  || [...knownTags].some((tag) => !groupedDirectionIds.includes(tag))
+) {
+  addError("research-interests.json directionGroups must cover every direction exactly once");
+}
+
+const watchTopics = Array.isArray(interestConfig.watchTopics)
+  ? interestConfig.watchTopics
+  : [];
+const watchTopicIds = new Set();
+for (const [index, topic] of watchTopics.entries()) {
+  const label = `research-interests.json watchTopics[${index}]`;
+  validateRequiredStrings(topic, ["id", "label", "status", "promotionRule"], label);
+  if (topic?.status !== "watch") addError(`${label}.status must be watch`);
+  if (knownTags.has(topic?.id)) addError(`${label}.id must not duplicate a formal direction`);
+  if (watchTopicIds.has(topic?.id)) {
+    addError(`research-interests.json has duplicate watch topic id: ${topic?.id}`);
+  }
+  watchTopicIds.add(topic?.id);
+}
 const landscapeFile = "research-landscape.json";
 let landscapeConfig = {};
 const ideaCenterFile = "idea-center.json";

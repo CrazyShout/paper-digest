@@ -2,7 +2,7 @@
 {
   "id": "star-vlm-radar-supervision",
   "tag": "radar-occupancy-representation",
-  "tags": ["radar-occupancy-representation", "agentic-driving"],
+  "tags": ["radar-occupancy-representation"],
   "title": "STAR-VLM: Spatiotemporal Grounding Vision-Language Models for Motion and Velocity Estimation via Automotive Radar Supervision",
   "source": "arXiv:2608.01535 / https://arxiv.org/abs/2608.01535",
   "authors": ["Pou-Chun Kung", "Aryaman Rao", "Utkrisht Sahai", "Hemanth Murali", "Yi Liu", "Rui-Yu Lin", "Katherine A. Skinner"],

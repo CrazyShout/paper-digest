@@ -73,11 +73,18 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
       <p>条形长度表示全库覆盖；右侧小柱按时间从左到右展示最近六期收录数。</p>
     </div>
 
-    <div class="direction-evidence-list">
-      {landscape.directions.map((direction) => {
-        const maxIssueCount = Math.max(1, ...direction.issueCounts.map((issue) => issue.count));
-        return (
-          <article class="direction-evidence-row">
+    <div class="direction-evidence-groups">
+      {landscape.directionGroups.map((group) => (
+        <section class="direction-evidence-group" aria-labelledby={`landscape-group-${group.id}`}>
+          <header>
+            <h3 id={`landscape-group-${group.id}`}>{group.label}</h3>
+            <p>{group.description}</p>
+          </header>
+          <div class="direction-evidence-list">
+            {group.directions.map((direction) => {
+              const maxIssueCount = Math.max(1, ...direction.issueCounts.map((issue) => issue.count));
+              return (
+                <article class="direction-evidence-row">
             <div class="direction-evidence-name">
               <span class="direction-dot" style={`--tag-color: ${direction.color}`}></span>
               <div>
@@ -103,9 +110,12 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
                 ></span>
               ))}
             </div>
-          </article>
-        );
-      })}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
     <p class="landscape-compare-note">
       “近期 / 此前”对应 {landscape.corpus.recentDateRange} 与 {landscape.corpus.previousDateRange} 的收录数。它反映本库筛选变化，不等同于全领域发表量。

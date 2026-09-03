@@ -37,6 +37,7 @@ function formatDate(value) {
 }
 
 const directions = records(center.directions);
+const directionGroups = records(center.directionGroups);
 const workflow = record(center.workflow);
 const workflowSteps = records(workflow.steps);
 const stopRules = list(workflow.stopRules);
@@ -226,20 +227,25 @@ function auditMetric(pool, key) {
           <h2 id="workspaceTitle">方向审计</h2>
         </div>
         <div class="idea-direction-tabs" role="tablist" aria-label="研究方向">
-          {directions.map((direction) => (
-            <button
-              type="button"
-              role="tab"
-              id={`direction-tab-${direction.id}`}
-              aria-controls={`direction-panel-${direction.id}`}
-              aria-selected={direction.id === activeDirectionId ? "true" : "false"}
-              tabindex={direction.id === activeDirectionId ? "0" : "-1"}
-              data-direction-target={direction.id}
-              style={`--direction-color: ${direction.color}`}
-            >
-              <span>{direction.label}</span>
-              <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待深挖"}</small>
-            </button>
+          {directionGroups.map((group) => (
+            <div class="idea-direction-tab-group">
+              <strong>{group.label}</strong>
+              {records(group.directions).map((direction) => (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`direction-tab-${direction.id}`}
+                  aria-controls={`direction-panel-${direction.id}`}
+                  aria-selected={direction.id === activeDirectionId ? "true" : "false"}
+                  tabindex={direction.id === activeDirectionId ? "0" : "-1"}
+                  data-direction-target={direction.id}
+                  style={`--direction-color: ${direction.color}`}
+                >
+                  <span>{direction.label}</span>
+                  <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待深挖"}</small>
+                </button>
+              ))}
+            </div>
           ))}
         </div>
         <p class="idea-direction-note">“进入盲评”不等于推荐立项。候选的真实最低分、反对意见和淘汰记录均保留在下方。</p>

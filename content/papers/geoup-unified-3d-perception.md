@@ -1,10 +1,10 @@
 ---
 {
   "id": "geoup-unified-3d-perception",
-  "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction"],
+  "tag": "dynamic-scene-representation",
+  "tags": ["dynamic-scene-representation"],
   "title": "Geometry-Grounded Unified 3D Perception for Autonomous Driving",
-  "source": "arXiv:2608.13147 / https://arxiv.org/abs/2608.13147 / Project: https://buaa-colalab.github.io/geoup_page",
+  "source": "BMVC 2026 accepted / arXiv:2608.13147 / https://arxiv.org/abs/2608.13147 / Project: https://buaa-colalab.github.io/geoup_page",
   "authors": ["Longfei Xu", "Xiaohui Wang", "Zehao Huang", "Han Li", "Ya Yang", "Naiyan Wang", "Si Liu"],
   "affiliations": ["School of Computer Science and Engineering, Beihang University", "School of Computer Science, Beijing University of Posts and Telecommunications", "School of Artificial Intelligence, Beihang University"],
   "comment": "GeoUP 将 VGGT 的重建式几何 latent 适配到标定的多相机视频，再让深度、3D 检测和语义 occupancy 成为同一场景表征的表面、实例与体积读出。联合五个数据集后，Occ3D-nuScenes 达到 42.3 mIoU 和 47.0 RayIoU。"

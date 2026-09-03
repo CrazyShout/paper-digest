@@ -2,6 +2,7 @@
 {
   "id": "vadv2-probabilistic-planning",
   "tag": "end-to-end-autonomous-driving",
+  "tags": ["end-to-end-autonomous-driving", "dynamic-scene-representation"],
   "title": "VADv2: End-to-End Vectorized Autonomous Driving via Probabilistic Planning",
   "source": "ICLR 2026 / https://openreview.net/forum?id=0a4dA6eUHN / arXiv:2402.13243 / https://arxiv.org/abs/2402.13243 / https://hgao-cv.github.io/VADv2/",
   "authors": ["Bo Jiang", "Shaoyu Chen", "Hao Gao", "Bencheng Liao", "Qian Zhang", "Wenyu Liu", "Xinggang Wang"],

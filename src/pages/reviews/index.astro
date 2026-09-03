@@ -7,6 +7,8 @@ import { reviewCenterFingerprint } from "../../lib/review-fingerprint.js";
 const notebook = await getNotebookData(import.meta.env.BASE_URL);
 const center = notebook.reviewCenter;
 const directions = center.directions || [];
+const directionGroups = center.directionGroups || [];
+const watchTopics = center.watchTopics || [];
 const contentFingerprint = reviewCenterFingerprint(center);
 const referenceCount = directions.reduce(
   (sum, direction) => sum + direction.references.length,
@@ -31,7 +33,8 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
 }).format(new Date(`${center.updatedAt}T00:00:00+08:00`));
 const toc = [
   { depth: 2, title: "综述方法", url: "#reviewMethodTitle" },
-  { depth: 2, title: "方向综述", url: "#reviewDirectionsTitle" }
+  { depth: 2, title: "方向综述", url: "#reviewDirectionsTitle" },
+  { depth: 2, title: "观察题", url: "#reviewWatchTitle" }
 ];
 ---
 
@@ -132,40 +135,69 @@ const toc = [
           <p>每份综述都有独立地址，可直接分享并跳转到具体章节和参考文献。</p>
         </header>
 
-        <div class="review-index-grid">
-          {directions.map((direction, index) => {
-            const localCount = direction.references
-              .filter((reference) => reference.origin === "local").length;
-            const externalDirectionCount = direction.references.length - localCount;
-            return (
-              <article class="review-index-card" style={`--review-color: ${direction.color}`}>
-                <div class="review-index-card-number">{String(index + 1).padStart(2, "0")}</div>
-                <div class="review-index-card-copy">
-                  <p class="eyebrow">{direction.label}</p>
-                  <h3>
-                    <a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>
-                      {direction.title}
-                    </a>
-                  </h3>
-                  <p>{direction.subtitle}</p>
-                  <p>{direction.abstract}</p>
-                  <dl>
-                    <div>
-                      <dt>检索窗口</dt>
-                      <dd>{direction.searchWindow}</dd>
-                    </div>
-                    <div>
-                      <dt>文献构成</dt>
-                      <dd>{localCount} 篇本库 · {externalDirectionCount} 篇外部</dd>
-                    </div>
-                  </dl>
-                </div>
-                <a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>
-                  阅读 <span aria-hidden="true">→</span>
-                </a>
-              </article>
-            );
-          })}
+        <div class="review-direction-groups">
+          {directionGroups.map((group) => (
+            <section class="review-direction-group" aria-labelledby={`review-group-${group.id}`}>
+              <header>
+                <h3 id={`review-group-${group.id}`}>{group.label}</h3>
+                <p>{group.description}</p>
+              </header>
+              <div class="review-index-grid">
+                {group.directions.map((direction) => {
+                  const index = directions.findIndex((item) => item.id === direction.id);
+                  const localCount = direction.references
+                    .filter((reference) => reference.origin === "local").length;
+                  const externalDirectionCount = direction.references.length - localCount;
+                  return (
+                    <article class="review-index-card" style={`--review-color: ${direction.color}`}>
+                      <div class="review-index-card-number">{String(index + 1).padStart(2, "0")}</div>
+                      <div class="review-index-card-copy">
+                        <p class="eyebrow">{direction.label}</p>
+                        <h3>
+                          <a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>
+                            {direction.title}
+                          </a>
+                        </h3>
+                        <p>{direction.subtitle}</p>
+                        <p>{direction.abstract}</p>
+                        <dl>
+                          <div>
+                            <dt>检索窗口</dt>
+                            <dd>{direction.searchWindow}</dd>
+                          </div>
+                          <div>
+                            <dt>文献构成</dt>
+                            <dd>{localCount} 篇本库 · {externalDirectionCount} 篇外部</dd>
+                          </div>
+                        </dl>
+                      </div>
+                      <a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>
+                        阅读 <span aria-hidden="true">→</span>
+                      </a>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <section class="review-index-watch" aria-labelledby="reviewWatchTitle">
+        <header class="idea-section-head">
+          <div>
+            <p class="eyebrow">Watch List</p>
+            <h2 id="reviewWatchTitle">尚未升格的观察题</h2>
+          </div>
+          <p>只有形成独立方法谱系和稳定证据链后，观察题才会成为新的正式方向。</p>
+        </header>
+        <div class="review-watch-list">
+          {watchTopics.map((topic) => (
+            <article>
+              <h3>{topic.label}</h3>
+              <p>{topic.promotionRule}</p>
+            </article>
+          ))}
         </div>
       </section>
     </div>

@@ -2,7 +2,7 @@
 {
   "id": "radar4d-vlm-temporal-reasoning",
   "tag": "radar-occupancy-representation",
-  "tags": ["radar-occupancy-representation", "agentic-driving"],
+  "tags": ["radar-occupancy-representation"],
   "title": "Radar4D-VLM: Proposal-Grounded Temporal 4D Radar Reasoning Across Frozen Language Models",
   "source": "arXiv:2608.04130 / https://arxiv.org/abs/2608.04130",
   "authors": ["Jiaju Han", "Xuemeng Sun", "Qike Zhang", "Xiang Chen", "Luwei Yang", "Jiahuan Long", "Yiwei Wei", "Jiujiang Guo", "Chengyin Hu"],

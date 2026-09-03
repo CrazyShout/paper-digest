@@ -1,0 +1,80 @@
+{
+  "candidateId": "counterfactual-state-value-audit",
+  "direction": "dynamic-scene-representation",
+  "title": "固定规划器下的场景状态反事实价值审计",
+  "hook": "不再用重训后的总分判断某类场景 token 是否有用，而是在相同状态和固定规划器中替换一类信息，检查它究竟改变了哪些动作和失败。",
+  "output": "条件状态干预协议、双规划器审计器和不可归因失败清单",
+  "effort": "中等工程量，重点是有效干预而非训练新骨干",
+  "timeline": "首轮 8 至 10 周，前三周完成支持域与干预有效性止损",
+  "decision": "进入隔离盲评；只主张两个冻结规划器和指定状态接口内的条件价值",
+  "whyNow": "Scene as Occupancy、GeoUP、PanoOcc、VADv2 与 UnsDrive 都报告共享状态或显式 occupancy 对多任务/规划有益，但表示结构、辅助监督和 planner 往往一起变化。当前已有 OccNet、VADv2 与 CarlaOcc 固定资产，可以把问题收缩为同一 planner 输入支持域内的状态替换，而不是再训练一套更大的联合模型。",
+  "keyProblem": "直接把 occupancy、对象、地图、unknown 或流置零会制造 planner 从未见过的输入，测到的可能只是 OOD 脆弱性。研究对象是构造条件匹配的 state intervention：保持场景语义、可见性、运动和 token 统计，只替换目标状态字段，并用输入支持检测、no-op、oracle 与负控制确认干预有效，再估计其对候选动作排序和失败集合的条件边际价值。",
+  "currentLimitations": "现有消融通常重训模型或同时改变表示容量，无法在同一状态和同一 planner 下给状态变量定价。固定 planner 干预虽更直接，却受 conditional replacement 质量、隐藏共同原因、输入 OOD 和 planner 特异性限制；日志也不提供替代动作的现实后果，因此闭环结论必须限定到 CarlaOcc/CARLA 或固定代理。",
+  "hypothesis": "经支持域匹配和有效性检查后，unknown、对象 permanence 与 free-space provenance 对安全边界动作排序的条件价值将高于普通语义 token，而在简单直路场景接近零；若价值只是 planner 特异性，两个冻结 planner 的失败集合和方向将不一致，从而触发停止。",
+  "noveltyClaims": [
+    {"nearestWork": "Scene as Occupancy 与 GeoUP 通过多任务或规划结果展示共享状态价值。", "irreducibleDifference": "候选不重训表示或 planner，而以条件替换估计逐状态变量的动作与失败边际效应，并公开无效干预。"},
+    {"nearestWork": "VADv2、UnsDrive 与端到端方法提供 token 消融或联合状态规划。", "irreducibleDifference": "候选固定权重和输入预算，在两个 planner 中复用同一 state contract，区分状态价值、planner OOD 和联合训练收益。"},
+    {"nearestWork": "常规 feature attribution 与 ablation 可删除输入。", "irreducibleDifference": "候选要求条件支持、状态合法性、oracle/no-op/negative controls 和失败集合端点，不把任意置零解释为因果价值。"}
+  ],
+  "method": [
+    {"step": "条件状态替换生成器", "detail": "在 CarlaOcc 的显式语义、实例、可见性和运动约束内，使用最近邻匹配或条件生成替换单一字段；其余状态和 token 统计保持在预注册容忍区间。"},
+    {"step": "干预有效性防火墙", "detail": "训练独立 support classifier，执行原样 no-op、同值替换、随机非法替换和 oracle 字段替换；只有通过状态合法性和支持检验的样本进入主分析。"},
+    {"step": "双规划器冻结审计", "detail": "冻结 VADv2 planning head 与一个规则 occupancy-cost planner，不更新权重；对同一状态候选集报告动作排序、碰撞代理、进度和失败集合变化。"},
+    {"step": "条件价值与异质性", "detail": "按遮挡、交互、距离、unknown 比例和状态年龄估计配对效应与置信区间，并把 planner 间方向冲突标为不可迁移而非取平均。"}
+  ],
+  "implementationPath": [
+    {"asset": "CarlaOcc 41b774ac37b8f4118450d1122165d92cf7646978", "reuse": "复用 mesh-derived panoptic occupancy、实例、速度和可见性生成合法条件状态对。", "boundary": "合成状态支持和闭环结果不等于现实反事实；只用于机制可识别性。"},
+    {"asset": "VADv2 1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8", "reuse": "冻结公开 scene-token encoder 输出接口与 planning head，作为学习型 planner。", "boundary": "需编写只读 state adapter；不能重训以吸收干预，也不能把输入 OOD 当状态价值。"},
+    {"asset": "OccNet 6cce6c711f2c62fdbb6f8eb55161264057d7b264", "reuse": "提供 occupancy 状态和 OpenOcc 评测入口，用于现实日志旁证。", "boundary": "固定提交没有 planner；现实日志没有替代动作后果，只做输入支持和离线一致性。"},
+    {"module": "自建条件替换与支持检测器", "detail": "实现 matching、conditional sampler、state validity、support score、干预账本和配对统计；所有生成器只在开发集拟合。"},
+    {"module": "规则 occupancy-cost planner", "detail": "固定碰撞、路线进度与舒适代价，作为与 VADv2 架构不同的第二 planner；参数在主实验前冻结。"},
+    {"compute": "单机 1x48GB GPU 加 CPU replay", "detail": "不训练基础模型；约 500 个状态、每类四个干预和两个 planner，可在十周内多种子重放。"}
+  ],
+  "minimumStudy": [
+    {"phase": "第 1-2 周 Gate 0A", "plan": "在 50 个 CarlaOcc 状态构造 no-op、合法替换和非法替换，验证 support classifier 能拒绝明显 OOD 且 no-op 不改变 planner。"},
+    {"phase": "第 3 周 Gate 0B", "plan": "确认 conditional replacement 只改变目标字段，并用 oracle 替换产生预期方向；若干预不具有可解释性则停止。"},
+    {"phase": "第 4-6 周主审计", "plan": "对 500 个状态的 occupancy、unknown、instance、map 和 flow 字段做配对替换，报告两个 planner 的动作排序和失败集合。"},
+    {"phase": "第 7-8 周异质性", "plan": "按遮挡、交互、距离、unknown 比例和年龄预注册分层，比较状态价值是否只在合理场景出现。"},
+    {"phase": "第 9-10 周现实旁证", "plan": "在 OpenOcc/nuScenes 只做输入支持与离线 planner 一致性，不声称现实替代动作结果；重跑三种 sampler 和种子。"}
+  ],
+  "strongBaselines": [
+    "普通置零、随机 shuffle、均值替换和同值 no-op，在相同字段与样本上比较。",
+    "按场景类别或 unknown 比例直接预测 planner 变化的简单规则，以及独立 support score 基线。",
+    "重训式 leave-one-field-out 消融作为系统级参考，但不与冻结干预混为同一 estimand。",
+    "oracle 合法替换上界和随机非法替换负控制，验证主审计确实位于输入支持域。"
+  ],
+  "metrics": [
+    "干预有效性：目标字段变化、非目标字段漂移、support AUC、no-op invariance 和非法替换拒绝率。",
+    "规划效应：动作 pairwise ranking、轨迹差、碰撞代理、最小 TTC、进度、舒适和失败集合 Jaccard。",
+    "统计终点：以场景为单位的配对效应、bootstrap 置信区间、多重比较修正和两个 planner 方向一致率。",
+    "工程终点：每次条件采样与审计延迟、有效样本覆盖、拒绝率和状态日志大小。"
+  ],
+  "successCriteria": [
+    "至少一种状态字段在预注册的两个安全关键分层中通过 support/no-op 控制，并在两个 planner 上产生方向一致、置信区间不跨零的风险效应。",
+    "conditional replacement 相对置零/shuffle 显著降低 OOD 检测率，同时保留 oracle 正控制和非法替换负控制的分离。",
+    "结论能明确给出近零价值或 planner-specific 的字段，不只选择正结果。"
+  ],
+  "killCriteria": [
+    "条件替换无法保持非目标状态和输入支持，no-op 或同值替换也频繁改变 planner。",
+    "所有效应只在单一 planner、sampler 或合成场景族成立，或普通场景规则已解释同等变化。",
+    "现实日志旁证与合成机制方向完全冲突，且无法归因于已记录的域差异。"
+  ],
+  "risks": [
+    "条件生成器可能隐式改变未记录共同原因；状态差异、防火墙和多 sampler 一致性只能收窄而不能消除该风险。",
+    "固定 planner 可能把输入表示当接口实现细节；结论必须限定到两个具体 planner，不写成所有规划器的通用因果价值。",
+    "CarlaOcc 是合成世界，现实日志缺替代动作真值；现实部分只能作为输入支持与离线一致性旁证。",
+    "大规模字段和分层比较会产生选择偏差，必须预注册主字段与修正多重检验。"
+  ],
+  "impact": "正结果会给场景表示设计提供比重训总分更精确的状态预算，指出哪些信息在何种场景真正改变决策；负结果若显示干预不可识别或价值高度 planner-specific，也会阻止把任意 token 消融包装成通用表示贡献。",
+  "gates": {"gate0": "条件替换通过 support、no-op、oracle 与非法负控制后才进入价值估计。", "gate1": "合成双 planner 方向一致后才进行现实离线旁证。"},
+  "evidence": [
+    {"title": "Scene as Occupancy", "url": "https://doi.org/10.1109/ICCV51070.2023.00772", "role": "occupancy 作为多任务和规划共享描述符的直接基础，但没有逐字段冻结干预。", "sourceOrigin": "external"},
+    {"title": "VADv2: End-to-End Vectorized Autonomous Driving via Probabilistic Planning", "url": "https://openreview.net/forum?id=0a4dA6eUHN", "role": "提供固定学习型 planning head 与向量场景 token 接口。", "localPaperId": "vadv2-probabilistic-planning", "localLink": "papers/vadv2-probabilistic-planning/"},
+    {"title": "Geometry-Grounded Unified 3D Perception for Autonomous Driving", "url": "https://arxiv.org/abs/2608.13147", "role": "共享 geometry 对深度、检测、occupancy 和固定 planner 迁移的近期证据。", "localPaperId": "geoup-unified-3d-perception", "localLink": "papers/geoup-unified-3d-perception/"},
+    {"title": "PanoOcc: Unified Occupancy Representation for Camera-based 3D Panoptic Segmentation", "url": "https://doi.org/10.1109/CVPR52733.2024.01624", "role": "统一语义和实例 occupancy 的直接当前状态基线。", "sourceOrigin": "external"},
+    {"title": "An Instance-Centric Panoptic Occupancy Prediction Benchmark for Autonomous Driving", "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Feng_An_Instance-Centric_Panoptic_Occupancy_Prediction_Benchmark_for_Autonomous_Driving_CVPR_2026_paper.html", "role": "提供可控 panoptic state 和 mesh oracle，用于合法条件替换。", "sourceOrigin": "external"},
+    {"title": "UnsDrive: Towards Robust End-to-End Autonomous Driving in Unstructured Scenes", "url": "https://arxiv.org/abs/2608.09098", "role": "显式 unknown 状态连接规划，限定状态价值的直接应用。", "sourceOrigin": "external"},
+    {"title": "BeyondSight: Object Permanence for End-to-End Autonomous Driving", "url": "https://arxiv.org/abs/2607.09138", "role": "存在性与可观测性解耦的直接近邻，提供对象 permanence 干预对象。", "sourceOrigin": "external"}
+  ],
+  "frozenAt": "2026-09-03T16:00:00+08:00"
+}

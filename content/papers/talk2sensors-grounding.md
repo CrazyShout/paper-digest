@@ -2,7 +2,7 @@
 {
   "id": "talk2sensors-grounding",
   "tag": "radar-occupancy-representation",
-  "tags": ["radar-occupancy-representation", "agentic-driving"],
+  "tags": ["radar-occupancy-representation"],
   "title": "Talk2Sensors: 3D Visual Grounding in Autonomous Driving via Sensor-Adaptive Physical Cue Matching",
   "source": "arXiv:2608.04568 / https://arxiv.org/abs/2608.04568 / Official code and dataset: https://github.com/GuanRunwei/Talk2Sensors",
   "authors": ["Runwei Guan", "Di Tian", "Ningwei Ouyang", "Ruixiao Zhang", "Shaofeng Liang", "Haocheng Zhao", "Lianqing Zheng", "Xiaokai Bai", "Guotao Wang", "Daizong Liu", "Henghui Ding", "Hui Xiong"],

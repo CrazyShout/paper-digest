@@ -2,7 +2,7 @@
 {
   "id": "geowam-geometry-world-action-model",
   "tag": "world-models",
-  "tags": ["world-models", "end-to-end-autonomous-driving", "3d-reconstruction"],
+  "tags": ["world-models", "end-to-end-autonomous-driving", "dynamic-scene-representation"],
   "title": "GeoWAM: Visual Geometry World Action Models for Autonomous Driving",
   "source": "arXiv:2608.23486 / https://arxiv.org/abs/2608.23486 / HTML: https://arxiv.org/html/2608.23486v2 / Project: https://yiren-lu.com/project_pages/geowam/",
   "authors": ["Yiren Lu", "Xin Ye", "Jiaming Liu", "Philip Jacobson", "Jin Yao", "Yi-chung Chen", "Liam Merino", "Dhruva Dixith Kurra", "Min Cai", "Tom Lampo", "Yu Yin", "Danhua Guo", "Burhan Yaman"],

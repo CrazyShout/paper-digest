@@ -2,6 +2,7 @@
 {
   "id": "caad-causality-aware-driving",
   "tag": "end-to-end-autonomous-driving",
+  "tags": ["end-to-end-autonomous-driving", "dynamic-scene-representation"],
   "title": "Causality-Aware End-to-End Autonomous Driving via Ego-Centric Joint Scene Modeling",
   "source": "arXiv:2605.13646 / https://arxiv.org/abs/2605.13646",
   "authors": ["Seokha Moon", "Minseung Lee", "Joon Seo", "Jinkyu Kim", "Jungbeom Lee"],

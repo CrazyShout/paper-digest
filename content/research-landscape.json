@@ -1,9 +1,9 @@
 {
-  "version": 1,
-  "updatedAt": "2026-08-31",
+  "version": 2,
+  "updatedAt": "2026-09-03",
   "analysisWindowIssues": 4,
   "title": "让系统在选择之后仍可验证：证书、法规边界与安全拒绝",
-  "summary": "最新四篇论文把可验证性推进到 planner selection、公共道路法规边界、跨模态 correspondence 和协同动作执行四个位置。Barrier certificate 证明校准必须覆盖候选选择，JRC 公路测试表明 type approval 之外仍需按规则边界采样，DPA-I2P 用投影支持限制错误匹配，CAV platoon joining 则把训练期 TTC penalty 与执行期 shield 的代价分开。与上一期的 curriculum、可靠记忆、首次发现 reserve 和 commitment gate 合在一起，当前共同机会是让每个动作、证据和拒绝都带可重算边界；共同风险是平均成功率、整体分数或零碰撞可能分别隐藏 selection bias、法规覆盖缺口和过度 abandonment。",
+  "summary": "在最新论文证据之上，本次重新划定了九个正式方向的科学边界：策略与交互关注协同、Agent 和端到端决策；世界与表征区分当前动态状态、动作条件未来、可渲染重建资产和雷达专项；保障与生命周期承接测试、攻防、诊断与恢复。新增的动态场景表征方向专门讨论 occupied/free/unknown、对象身份、流和状态年龄，避免继续让三维重建或世界模型承担彼此不同的验证终点。当前共同机会仍是让每个动作、状态证据和拒绝都带可重算边界；共同风险是平均分数把来源、时效、选择偏差和不可观测区域一起隐藏。",
   "trends": [
     {
       "id": "testing-as-common-language",
@@ -176,6 +176,7 @@
       "whyItMatters": "这使 surface-instance-occupancy 的长期可更新表示成为比单一 PSNR 或检测 mAP 更清楚的下一步。",
       "tags": [
         "3d-reconstruction",
+        "dynamic-scene-representation",
         "world-models",
         "radar-occupancy-representation"
       ],
@@ -321,6 +322,7 @@
       "risk": "冻结任务头可能把其偏差固化成结构监督；需要多任务头、独立几何指标和至少两类规划栈，防止只学习某一模型的脆弱点。",
       "tags": [
         "3d-reconstruction",
+        "dynamic-scene-representation",
         "world-models",
         "autonomous-driving-testing"
       ],
@@ -394,19 +396,36 @@
     },
     {
       "tag": "3d-reconstruction",
-      "signal": "结构统一",
-      "focus": "重建正在从单帧渲染资产转向 surface、instance、occupancy、跨模态几何对齐和时间身份共享的物理状态。",
-      "gap": "USR-Drive 缺全局身份，DPA-I2P 又依赖离线 metric depth 且只验证 registration；长期状态、在线成本和规划收益仍未闭合。",
-      "ideaTitle": "带长期身份的 Surface-Instance-Occupancy 状态",
-      "idea": "核心假设是：persistent slot 管理对象身份、局部 Gaussian 管理表面、显式 occupancy 管理 free/unknown，可减少跨窗口动态涂抹并为规划提供连续状态。",
-      "method": "用 metric anchors 对齐三类 token，以 identity-aware memory 跨窗口更新；由 reconstruction、box/track、occupancy calibration 和冻结 planner feature consistency 共同监督，加入 causal few-step updater。",
-      "validation": "在 nuScenes 与第二数据集比较 joint、decoupled、无 identity、无 occupancy 和等参数模型；报告重建、检测、跟踪、occupancy、跨窗一致性、规划排序和延迟。",
-      "novelty": "USR-Drive 已证明双模态联合去噪，GeoUP/LGS 提供统一几何和结构干预；新增点必须落在 persistent identity、free/unknown 和规划一致性的共同可证伪状态。",
+      "signal": "资产准入",
+      "focus": "驾驶重建从逐场景拟合转向前馈 4DGS、紧凑资产、多传感器渲染和可编辑 Real2Sim，并开始检查物理与任务一致性。",
+      "gap": "训练轨迹外几何、动态参与者响应、相机/LiDAR 统计和规划 verdict 很少在同一资产上同时成立；PSNR 或点云误差不能决定是否可用于闭环。",
+      "ideaTitle": "带用途证书与拒绝域的重建资产",
+      "idea": "核心假设是：重建资产应针对新视角、感知回放或闭环仿真分别给出可用域和拒绝域，而不是以一套平均渲染指标宣称通用可用。",
+      "method": "为每个区域记录训练视锥覆盖、几何不确定性、动态对象来源和传感器残差；训练轻量准入头预测相机、LiDAR 与固定感知器的局部误差上界，越界时拒绝生成测试 verdict。",
+      "validation": "在 Waymo/nuScenes 多轨迹片段比较逐场景 3DGS、前馈方法和带准入头版本；按视角偏移、动态密度和传感器分别报告渲染、几何、感知误差、策略排序保持率与拒绝覆盖。",
+      "novelty": "现有工作分别优化重建速度、结构和物理一致性；差异点是把资产用途、局部误差上界和拒绝机制绑定到同一可复算准入协议。",
+      "evidencePaperIds": [
+        "lgs-gaussian-structure-driving-reconstruction",
+        "dpa-i2p-depth-guided-registration",
+        "physically-consistent-4d-driving-reconstruction",
+        "usr-drive-unified-scene-representation"
+      ]
+    },
+    {
+      "tag": "dynamic-scene-representation",
+      "signal": "主线成形",
+      "focus": "occupancy、对象、向量和 Gaussian 正在汇合为可供感知、预测与规划读取的显式状态，并从当前帧扩展到时间记忆和未来场。",
+      "gap": "现有统一模型仍缺 observed/free/unknown、长期身份、状态年龄和来源字段；联合系统总分也难证明哪一类状态真正影响规划。",
+      "ideaTitle": "来源保真的 Surface-Instance-Occupancy Memory",
+      "idea": "核心假设是：persistent slot 管理对象身份、局部 Gaussian 管理可见表面、显式 occupancy 管理 free/unknown，并让每次更新携带来源、年龄与不确定性，可减少跨窗口动态涂抹和错误自我确认。",
+      "method": "以 identity-aware memory 连接对象、表面和体素状态；用可见性与创新一致性决定更新几何、只延续存在性或拒绝证据，再由 reconstruction、tracking、occupancy calibration 和固定 planner intervention 共同验收。",
+      "validation": "在 nuScenes/Occ3D 与第二个含 radar 或多遍历序列的数据集比较无记忆、固定窗口、对象记忆、表面记忆和完整三态状态；报告 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划风险和延迟。",
+      "novelty": "USR-Drive、GeoUP、GaussianWorld 与 Scene as Occupancy 已覆盖若干组件；可辩护差异必须是来源、年龄、长期身份和 free/unknown 在同一状态合同中被独立干预验证。",
       "evidencePaperIds": [
         "usr-drive-unified-scene-representation",
-        "lgs-gaussian-structure-driving-reconstruction",
+        "geoup-unified-3d-perception",
         "geowam-geometry-world-action-model",
-        "dpa-i2p-depth-guided-registration"
+        "rbft-net-radar-depth-completion"
       ]
     },
     {

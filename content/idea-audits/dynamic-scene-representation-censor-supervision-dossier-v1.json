@@ -1,0 +1,182 @@
+{
+  "candidateId": "censor-aware-multimodal-state-supervision",
+  "direction": "dynamic-scene-representation",
+  "title": "跨模态教师删失感知的三维场景状态监督",
+  "hook": "不再把 LiDAR 没看到的位置自动教成 free，而是先区分已观测自由、已观测占据、未知和传感器冲突，再决定雷达与时间证据能否修正教师。",
+  "output": "独立射线四态审计集、删失监督适配器与风险校准报告",
+  "effort": "中等标注与模型适配工作量",
+  "timeline": "首轮 8 至 10 周，前 3 周完成真值可识别性止损",
+  "decision": "进入隔离盲评；只主张冻结数据协议内的教师可靠性，不把天气分层写成自然因果效应",
+  "whyNow": "MonoScene、TPVFormer 和 Scene as Occupancy 已使视觉三维 occupancy 成为成熟主线，Radar Occupancy Prediction 与 Deep Radar ISM 又说明 LiDAR/radar 可见性错配和学习型 inverse sensor model 并非空白。真正剩余的问题是：在三维体素中用不接触待测模型的独立射线四态审计集，检验来源相关教师删失是否导致危险 false-free，并判断学习型删失是否超过简单规则 mask。",
+  "keyProblem": "现有 occupancy 标签常由多帧 LiDAR 投影、可见性规则或伪标签生成。远距、遮挡、薄小物体、穿透和动态边界中，“教师无返回”可能被解释成 free、background 或 ignore。研究对象是估计 teacher observation/censoring 状态并把它与 radar、camera 和时间证据分离，使模型只在有独立支持时收紧 occupied/free，否则保留 unknown。",
+  "currentLimitations": "Radar Occupancy Prediction 已做可见性过滤，Deep Radar ISM 已学习 free/occupied measurement grid，UnsDrive 已显式建模 occupied/free/unknown，MR-Occ 又加入 occluded 类。真实遮挡后占据无法靠人工看穿，K-Radar 的 LiDAR 派生标签也不是独立真值；因此候选必须先在 CarlaOcc mesh oracle 上识别删失机制，再把现实数据限制为可观测射线和条件关联审计。",
+  "hypothesis": "在 CarlaOcc 中以固定 mesh truth 人为删失 camera/LiDAR teacher 时，来源条件化删失适配器应在同 coverage 下超过规则 mask；迁移到 K-Radar 后只检验可观测射线、teacher conflict 和风险排序是否同向，不宣称恢复真实遮挡体素。",
+  "noveltyClaims": [
+    {
+      "nearestWork": "Radar Occupancy Prediction 用 radar 可见性过滤 LiDAR 教师。",
+      "irreducibleDifference": "候选在三维射线四态真值上学习来源条件化删失，并以同 coverage 校准和 false-free 验收，不只做固定二维过滤。"
+    },
+    {
+      "nearestWork": "Deep Radar ISM 学习 free/occupied measurement grid 并结合 Doppler。",
+      "irreducibleDifference": "候选面向多模态三维训练标签，显式区分 teacher observation、冲突与 unknown，目标不是生成二维逆传感器图。"
+    },
+    {
+      "nearestWork": "MonoScene、TPVFormer 与当前 occupancy 蒸馏方法处理稀疏或跨模态监督。",
+      "irreducibleDifference": "候选冻结 backbone，只研究监督删失和独立四态风险，不以更大编码器或联合训练作为贡献。"
+    }
+  ],
+  "method": [
+    {
+      "step": "独立射线四态标注协议",
+      "detail": "CarlaOcc 由 mesh 与 sensor ray 生成 observed-free、observed-occupied、unknown、conflict；K-Radar 只标注多传感器可判定射线，其余保持 unknown。待测模型与训练 teacher 均不可读取测试裁决。"
+    },
+    {
+      "step": "来源条件化删失概率适配器",
+      "detail": "基于距离、入射、遮挡、teacher return、动态边界和传感器来源估计标签可观察概率，用 inverse-probability/soft weighting 控制监督而非直接删除难例。"
+    },
+    {
+      "step": "独立雷达与时间一致性约束",
+      "detail": "radar Doppler 和跨帧存在性仅作为附加证据；它们不能自证几何，冲突时输出 unknown 或集合。"
+    },
+    {
+      "step": "同覆盖率风险校准与代价",
+      "detail": "所有方法在相同已预测体素覆盖率下比较 false-free、NLL 和 ECE，并报告拒绝导致的无谓制动代价。"
+    }
+  ],
+  "implementationPath": [
+    {
+      "asset": "RadarOcc dbaa20d29909b03af5f77a84dc69340561f46011",
+      "reuse": "冻结 K-Radar 三维 occupancy、LiDAR 标签生成和 Doppler 编码作为主骨干。",
+      "boundary": "不更改 encoder、decoder 与训练预算；其 LiDAR 标签不能作为独立测试真值。"
+    },
+    {
+      "asset": "K-Radar f90c28993d1757ce0236632b4d912c92a14976b2",
+      "reuse": "仅在可获取的部分同步 radar、LiDAR、camera、RTK 与天气序列上选择现实审计帧。",
+      "boundary": "完整 4D tensor 约 15 TB 且可能需服务器/硬盘获取，CC BY-NC-ND 限制派生发布；天气不是同场景配对，遮挡后真实占据不可由人工确定。"
+    },
+    {
+      "asset": "OccNet 6cce6c711f2c62fdbb6f8eb55161264057d7b264",
+      "reuse": "提供非 radar 的三维 occupancy 预测与评测入口外部对照。",
+      "boundary": "固定提交没有可复现 planner；跨数据集只比较共同状态定义，不直接比较绝对 mIoU。"
+    },
+    {
+      "module": "自建四态标注与删失适配器",
+      "detail": "实现 blind annotation UI、双人一致性仲裁、ray coverage、teacher lineage、样本权重与风险曲线；训练脚本不接触测试裁决字段。"
+    },
+    {
+      "annotation": "现实可观测射线双人审计",
+      "detail": "两名标注者结合当前多视图、LiDAR/radar return 和有限未来确认，只裁决可观测射线与 conflict；遮挡后无法确认的单元必须保留 unknown，不能作为独立二值真值。"
+    },
+    {
+      "compute": "1x48GB GPU 与 CPU 标注工具",
+      "detail": "四个监督版本复用同一 checkpoint 初始化和训练步数；核心开销在审计标注而非基础模型训练。"
+    },
+    {
+      "asset": "CarlaOcc 41b774ac37b8f4118450d1122165d92cf7646978",
+      "reuse": "以 MIT 代码和 mesh-derived occupancy 生成可控 teacher censoring 与射线四态 oracle。",
+      "boundary": "主因果结论限定在 CARLA 合成机制；现实 K-Radar 只做外部关联探针。"
+    }
+  ],
+  "minimumStudy": [
+    {
+      "phase": "第 1-2 周 Gate 0",
+      "plan": "先在 CarlaOcc 20 帧重算 mesh/ray 四态并注入可控 teacher dropout；再用 K-Radar 20 帧建立只覆盖可观测射线的现实审计。任一协议不可复算则停止。"
+    },
+    {
+      "phase": "第 3 周错误存在性",
+      "plan": "冻结 RadarOcc 输出，先在 CarlaOcc 检验删失是否产生 dangerous false-free；K-Radar 只报告可观测射线的条件错误，不把天气或遮挡相关性写成因果真值。"
+    },
+    {
+      "phase": "第 4-6 周最小训练",
+      "plan": "匹配训练步数、参数和 coverage，比较原标签、ignore、规则可见性 mask、学习删失以及删失加 radar/时间一致性。"
+    },
+    {
+      "phase": "第 7-8 周风险终点",
+      "plan": "在 CarlaOcc 100 帧 held-out oracle 报告四态、NLL/ECE、selective risk；K-Radar 现实探针只报告可观测区域和固定 planner 风险排序。"
+    },
+    {
+      "phase": "第 9-10 周复核",
+      "plan": "重跑三种种子和无 radar、无时间、随机 mask、等 coverage 消融；只保留跨分层稳定且超过规则基线的结论。"
+    }
+  ],
+  "strongBaselines": [
+    "原始 LiDAR 派生标签、统一 ignore 与随机 mask，在相同有效监督量下比较。",
+    "Radar Occupancy Prediction 式固定可见性过滤和 Sless 式 occupied/free/unobserved 三态监督。",
+    "Deep Radar ISM 式学习 measurement grid，以及 4D-ROLLS/LiCROcc 类跨模态监督的功能等价适配。",
+    "只学习删失、只加 radar、只加时间一致性和完整方法的逐项消融。"
+  ],
+  "metrics": [
+    "四态终点：observed-occupied recall、dangerous false-free、unknown precision/coverage 和 conflict 保留率。",
+    "概率终点：NLL、Brier、ECE、risk-coverage AUC 与同 coverage selective risk。",
+    "分层终点：距离、遮挡、动态边界、晴天/雨雪各层的效果和 bootstrap 置信区间。",
+    "任务终点：固定 planner 的碰撞代理、最小 TTC、无谓制动和因 unknown 增加的 abstention cost。"
+  ],
+  "successCriteria": [
+    "先在 CarlaOcc 独立 mesh/ray oracle 中确认普通 teacher dropout 产生稳定 dangerous false-free，且该分层不依赖待测模型输出。",
+    "学习删失相对最强规则 mask 在 CarlaOcc 至少两个预注册删失机制上降低同 coverage selective risk，三种种子 95% 区间不跨零；K-Radar 可观测射线保持同方向。",
+    "加入 radar/时间证据后的增益不能由随机 mask、更多 ignore 或更低覆盖解释，固定 planner 代价不恶化。"
+  ],
+  "killCriteria": [
+    "CarlaOcc mesh/ray oracle 无法重算，普通标签没有可重复删失错误，或 K-Radar 结论必须依赖不可观测体素的人工猜测。",
+    "规则可见性 mask、统一 ignore 或随机等量删标达到与学习删失等价的校准和任务结果。",
+    "改善只来自降低 coverage、只在一个天气切片/种子成立，或 radar 证据引入新的过度自信几何。"
+  ],
+  "risks": [
+    "CarlaOcc 的完整四态是真值可控的合成诊断，不代表现实遮挡；K-Radar 无法确认的单元必须保持 unknown，现实结果只能写成关联探针。",
+    "天气切片不配对，结果只能写成条件分层关联，不能写成雨雪造成的净因果改善。",
+    "学习删失容易通过减少难例获得表面分数，必须固定 coverage 和有效监督量。",
+    "K-Radar 规模、许可和数据下载成本可能阻塞复现；启动前先完成最小数据与条款核验。"
+  ],
+  "impact": "正结果会把 occupancy 监督从二值伪真值改成可审计观测过程，直接减少危险假自由并给雷达、相机和 LiDAR 融合提供更诚实的状态接口。负结果同样有价值：若规则 mask 已足够或删失分层不存在，就应停止训练复杂可靠性头。",
+  "gates": {
+    "gate0": "四态标注可独立复现且教师错误分层存在。",
+    "gate1": "学习方法超过规则/随机等 coverage 基线后才进入规划代理。"
+  },
+  "evidence": [
+    {
+      "title": "Radar Occupancy Prediction with Lidar Supervision while Preserving Long-Range Sensing and Penetrating Capabilities",
+      "url": "https://doi.org/10.1109/LRA.2022.3144528",
+      "role": "正式发表的可见性过滤历史强基线，直接限制教师删失候选。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "Deep Radar Inverse Sensor Models for Dynamic Occupancy Grid Maps",
+      "url": "https://doi.org/10.1109/ITSC57777.2023.10422593",
+      "role": "学习 free/occupied measurement grid 和 Doppler 动态状态，限制 inverse sensor model 新颖性。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "UnsDrive: Towards Robust End-to-End Autonomous Driving in Unstructured Scenes",
+      "url": "https://arxiv.org/abs/2608.09098",
+      "role": "已显式输出 occupied、free、unknown 并连接闭环 planner，压缩通用三态主张。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "MR-Occ: Efficient Camera-LiDAR 3D Semantic Occupancy Prediction Using Hierarchical Multi-Resolution Voxel Representation",
+      "url": "https://arxiv.org/abs/2412.20480",
+      "role": "以 occluded 类和多模态分层 voxel 处理遮挡，是 unknown/效率的直接近邻。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "An Instance-Centric Panoptic Occupancy Prediction Benchmark for Autonomous Driving",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Feng_An_Instance-Centric_Panoptic_Occupancy_Prediction_Benchmark_for_Autonomous_Driving_CVPR_2026_paper.html",
+      "role": "提供合成 mesh-derived occupancy，可构造不依赖训练 teacher 的删失 oracle。",
+      "sourceOrigin": "external"
+    },
+    {
+      "title": "RbFT-Net: Rectify-Before-Fuse Temporal Radar Anchors for 4D Radar-Camera Depth Completion",
+      "url": "https://arxiv.org/abs/2608.13102",
+      "role": "本库证据显示历史 radar 锚点需校正位置和可靠性，支持先审计后融合。",
+      "localPaperId": "rbft-net-radar-depth-completion",
+      "localLink": "papers/rbft-net-radar-depth-completion/"
+    },
+    {
+      "title": "CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations",
+      "url": "https://doi.org/10.1109/LSP.2026.3680426",
+      "role": "本库时空 occupancy 强基线，用于检查监督变化是否保留未来结构。",
+      "localPaperId": "cascadeocc-occupancy-world-model",
+      "localLink": "papers/cascadeocc-occupancy-world-model/"
+    }
+  ],
+  "frozenAt": "2026-09-03T16:00:00+08:00"
+}

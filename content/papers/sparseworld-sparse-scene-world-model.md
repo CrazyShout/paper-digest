@@ -2,7 +2,7 @@
 {
   "id": "sparseworld-sparse-scene-world-model",
   "tag": "world-models",
-  "tags": ["world-models", "end-to-end-autonomous-driving"],
+  "tags": ["world-models", "dynamic-scene-representation", "end-to-end-autonomous-driving"],
   "title": "SparseWorld: Enhancing End-to-End Autonomous Driving via World Models with Sparse Scene Representation",
   "source": "arXiv:2605.24354 / https://arxiv.org/abs/2605.24354",
   "authors": ["Ruoyu Wang", "Jingke Wang", "Yukai Ma", "Yuehao Huang", "Shuangming Lei", "Guanglin Xu", "Aixue Ye", "Yong Liu"],

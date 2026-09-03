@@ -2,7 +2,7 @@
 {
   "id": "cascadeocc-occupancy-world-model",
   "tag": "world-models",
-  "tags": ["world-models", "3d-reconstruction", "end-to-end-autonomous-driving"],
+  "tags": ["world-models", "dynamic-scene-representation", "end-to-end-autonomous-driving"],
   "title": "CascadeOcc: Rethinking 3D Occupancy World Models with Cascaded VQ Representations",
   "source": "IEEE Signal Processing Letters 2026 / https://doi.org/10.1109/LSP.2026.3680426 / arXiv:2606.27644 / https://arxiv.org/abs/2606.27644",
   "authors": ["Kyumin Hwang", "Wonhyeok Choi", "Jaeyeul Kim", "Jihun Park", "Daehee Park", "Sunghoon Im"],

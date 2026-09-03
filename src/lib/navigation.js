@@ -122,10 +122,15 @@ export async function getNotebookData(basePath = "/") {
           name: "综述中心",
           url: routeUrl(base, "reviews")
         },
-        children: reviewCenter.directions.map((direction) => ({
-          type: "page",
-          name: direction.label,
-          url: routeUrl(base, `reviews/${direction.id}`)
+        children: reviewCenter.directionGroups.map((group) => ({
+          type: "folder",
+          name: group.label,
+          defaultOpen: false,
+          children: group.directions.map((direction) => ({
+            type: "page",
+            name: direction.label,
+            url: routeUrl(base, `reviews/${direction.id}`)
+          }))
         }))
       },
       {
@@ -160,18 +165,25 @@ export async function getNotebookData(basePath = "/") {
         type: "folder",
         name: `详细报告 · ${publicPapers.length}`,
         defaultOpen: false,
-        children: tags
-          .map((tag) => ({
+        children: reviewCenter.directionGroups
+          .map((group) => ({
             type: "folder",
-            name: `${tag.label} · ${papersByTag.get(tag.id)?.length || 0}`,
+            name: group.label,
             defaultOpen: false,
-            children: (papersByTag.get(tag.id) || [])
-              .sort((a, b) => a.title.localeCompare(b.title))
-              .map((paper) => ({
-                type: "page",
-                name: paper.title,
-                url: routeUrl(base, `papers/${paper.id}`)
+            children: group.directions
+              .map((tag) => ({
+                type: "folder",
+                name: `${tag.label} · ${papersByTag.get(tag.id)?.length || 0}`,
+                defaultOpen: false,
+                children: (papersByTag.get(tag.id) || [])
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map((paper) => ({
+                    type: "page",
+                    name: paper.title,
+                    url: routeUrl(base, `papers/${paper.id}`)
+                  }))
               }))
+              .filter((folder) => folder.children.length > 0)
           }))
           .filter((folder) => folder.children.length > 0)
       },

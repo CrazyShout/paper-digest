@@ -202,18 +202,43 @@ export async function getInterestConfig() {
   return JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
 }
 
+function projectDirectionGroups(interestConfig, directions) {
+  const directionMap = new Map(directions.map((direction) => [direction.id, direction]));
+  return (interestConfig.directionGroups || []).map((group) => ({
+    ...group,
+    directions: group.directionIds
+      .map((directionId) => directionMap.get(directionId))
+      .filter(Boolean)
+  }));
+}
+
 export async function getRuntimeConfig() {
   return JSON.parse(await readFile(path.join(CONFIG, "runtime.json"), "utf8"));
 }
 
 export async function getTags() {
   const interestConfig = await getInterestConfig();
+  const groupByDirection = new Map(
+    (interestConfig.directionGroups || []).flatMap((group, groupIndex) =>
+      group.directionIds.map((directionId, directionIndex) => [
+        directionId,
+        {
+          groupId: group.id,
+          groupLabel: group.label,
+          groupDescription: group.description,
+          groupIndex,
+          directionIndex
+        }
+      ])
+    )
+  );
   return interestConfig.interests.map((interest) => ({
     id: interest.id,
     label: interest.label,
     color: interest.color,
     description: interest.description,
-    priority: interest.priority
+    priority: interest.priority,
+    ...groupByDirection.get(interest.id)
   }));
 }
 
@@ -1067,13 +1092,18 @@ export async function projectIdeaCenterData(
 }
 
 export async function getIdeaCenter() {
-  const [ideaCenter, papers, workflow] = await Promise.all([
+  const [ideaCenter, papers, workflow, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "idea-center.json"), "utf8").then(JSON.parse),
     getPapers(),
-    readFile(path.join(CONFIG, "idea-exploration-workflow.json"), "utf8").then(JSON.parse)
+    readFile(path.join(CONFIG, "idea-exploration-workflow.json"), "utf8").then(JSON.parse),
+    getInterestConfig()
   ]);
 
-  return projectIdeaCenterData(ideaCenter, { papers, workflow });
+  const projected = await projectIdeaCenterData(ideaCenter, { papers, workflow });
+  return {
+    ...projected,
+    directionGroups: projectDirectionGroups(interestConfig, projected.directions)
+  };
 }
 
 const REVIEW_TYPE_LABELS = {
@@ -1098,11 +1128,12 @@ const REVIEW_STATUS_LABELS = {
 };
 
 export async function getReviewCenter() {
-  const [center, tags, papers, reviewDocs] = await Promise.all([
+  const [center, tags, papers, reviewDocs, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "review-center.json"), "utf8").then(JSON.parse),
     getTags(),
     getPapers(),
-    readJsonDir(path.join(CONTENT, "reviews"))
+    readJsonDir(path.join(CONTENT, "reviews")),
+    getInterestConfig()
   ]);
   const paperMap = new Map(papers.map((paper) => [paper.id, paper]));
   const reviewMap = new Map(reviewDocs.map((doc) => [doc.data.id, doc.data]));
@@ -1157,7 +1188,9 @@ export async function getReviewCenter() {
 
   return {
     ...center,
-    directions
+    directions,
+    directionGroups: projectDirectionGroups(interestConfig, directions),
+    watchTopics: interestConfig.watchTopics || []
   };
 }
 
@@ -1181,11 +1214,12 @@ function uniquePapersFromDigests(digests) {
 }
 
 export async function getResearchLandscape() {
-  const [landscapeConfig, tags, papers, digests] = await Promise.all([
+  const [landscapeConfig, tags, papers, digests, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "research-landscape.json"), "utf8").then(JSON.parse),
     getTags(),
     getPapers(),
-    getDigests()
+    getDigests(),
+    getInterestConfig()
   ]);
 
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
@@ -1291,6 +1325,7 @@ export async function getResearchLandscape() {
       windowSize
     },
     directions,
+    directionGroups: projectDirectionGroups(interestConfig, directions),
     trends: landscapeConfig.trends.map(attachTagInfo),
     hotspots: landscapeConfig.hotspots.map((hotspot) => ({
       ...attachTagInfo(hotspot),

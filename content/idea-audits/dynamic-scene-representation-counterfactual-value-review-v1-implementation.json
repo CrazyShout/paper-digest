@@ -1,0 +1,30 @@
+{
+  "candidateId": "counterfactual-state-value-audit",
+  "lens": "implementation-reviewer",
+  "reviewerAgentId": "01a066cd-84b7-78e1-a011-14feb6c12057",
+  "reviewedAt": "2026-09-03T18:36:00+08:00",
+  "scores": {
+    "novelty": 7,
+    "feasibility": 5,
+    "success-probability": 4,
+    "impact": 8,
+    "comparison-readiness": 5
+  },
+  "rationales": {
+    "novelty": "相较于置零、shuffle 或重训练式消融，带 support、no-op、oracle 和非法负控制的条件状态替换定义了更严格的审计对象；新意在于公开不可归因干预并比较两个冻结规划器，而不是再次证明 occupancy 或 scene token 有用。但该方案仍借用了成熟的条件匹配与反事实诊断思想，必须靠有效干预建立贡献。",
+    "feasibility": "CarlaOcc 的 MIT 生成链和 VAD 的 Apache-2.0 固定提交可合法用于原型，1x48 GB 对 500 个状态的冻结回放足够。实质缺口是 VADv2 固定提交只含配置和较小的 head 文件，依赖 Python 3.7、Torch 1.9.1、CUDA 11.1 与旧 MM 栈，且不原生暴露 occupancy、unknown、map、flow 等可独立替换字段；必须自建显式状态到 scene-token 的适配器、条件采样器和第二规划器，十周计划存在明显接口风险。",
+    "success-probability": "现有一手证据只说明共享 occupancy 或概率规划在联合系统中有用，并不保证单字段条件替换可识别。500 个状态还要覆盖多字段、多分层、多 sampler 和两个规划器，统计与支持域都偏薄；即使 support classifier 接受样本，也无法排除未记录共同原因，因此获得可解释且跨规划器一致的边际价值结论概率偏低。",
+    "impact": "若干预有效，这会比重训练总分更直接地回答哪些状态在何种场景改变动作排序，并可形成通用状态审计协议；若 Gate 0 证明多数 token 消融只是 OOD，负结论同样会改变场景表示论文的评测规范。影响力受限于只能对两个具体规划器和合成闭环作条件性解释。",
+    "comparison-readiness": "VADv2、规则 occupancy-cost planner、OccNet 以及置零、shuffle、同值替换、重训练消融都可构成明确对照；但没有公共 benchmark 使用同一 estimand，VADv2 也缺少显式字段接口，所以功能等价和支持域检查本身就是待实现研究内容，当前可比性中等偏低。"
+  },
+  "strongestObjection": "保持可见字段和一阶 token 统计并不能保证替换后的高维场景在语义上是同一个反事实世界；若隐藏共同原因或编码器耦合仍改变非目标信息，所谓字段价值只是生成器与规划器的联合伪影，任何因果措辞都不成立。",
+  "requiredExperiment": "前三周只做识别 Gate：从 CarlaOcc 构造 50 个具有显式 occupancy、unknown、instance、map 和 flow 的状态，先在规则 planner 上实现 exact no-op、同值替换、oracle 修正和明显非法替换，再把同一状态合同接入固定 VADv2 head。以交叉拟合 support detector 验证非目标字段漂移、no-op invariance、oracle 方向和非法替换拒绝率；任一 no-op 频繁改变动作、oracle 不按预期改善、目标字段无法单独操纵或两个 planner 的方向系统性冲突即停止。",
+  "evidenceReopened": [
+    "https://raw.githubusercontent.com/hustvl/VAD/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/README.md",
+    "https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/VADv2/VADv2_head.py",
+    "https://arxiv.org/abs/2306.02851",
+    "https://raw.githubusercontent.com/fengyi233/carlaocc/41b774ac37b8f4118450d1122165d92cf7646978/README.md"
+  ],
+  "overall": 5,
+  "dossierSnapshotFingerprint": "d9f707c560af4119ea57f473a15f073219a1561794fc218a7694560bcd95e131"
+}

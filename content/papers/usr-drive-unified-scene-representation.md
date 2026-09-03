@@ -1,8 +1,8 @@
 ---
 {
   "id": "usr-drive-unified-scene-representation",
-  "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction", "world-models"],
+  "tag": "dynamic-scene-representation",
+  "tags": ["dynamic-scene-representation", "3d-reconstruction", "world-models"],
   "title": "USR-Drive: Unified Driving Scene Representation via Joint Denoising of 3D Gaussians and Boxes",
   "source": "arXiv:2608.19036 / https://arxiv.org/abs/2608.19036 / HTML: https://arxiv.org/html/2608.19036",
   "authors": ["Li-Heng Chen", "Haokai Pang", "Chengye Su", "Jiarun Liu", "Qifeng Chen", "Ziqian Ni", "Jianxin Huang", "Shi-Sheng Huang", "Hongbo Fu", "Sheng Yang"],
