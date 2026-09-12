@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getNotebookData, routeUrl } from "../src/lib/navigation.js";
+import { getNotebookData, getNotebookSearchIndex, routeUrl } from "../src/lib/navigation.js";
+import { readingNavigationTree } from "../src/lib/reading-ui.js";
 
 function collectPageUrls(nodes, output = []) {
   for (const node of nodes || []) {
@@ -19,6 +20,7 @@ test("notebook navigation projects every content family under the deployment bas
   assert.equal(uniqueUrls.size, pageUrls.length);
   assert.ok(pageUrls.every((url) => url.startsWith("/paper-digest/")));
   assert.ok(pageUrls.includes("/paper-digest/"));
+  assert.ok(pageUrls.includes("/paper-digest/landscape/"));
   assert.ok(pageUrls.includes("/paper-digest/reviews/"));
   assert.ok(pageUrls.includes("/paper-digest/ideas/"));
   assert.ok(pageUrls.includes(`/paper-digest/digests/${notebook.digests[0].id}/`));
@@ -27,17 +29,18 @@ test("notebook navigation projects every content family under the deployment bas
 
 test("notebook search keeps one canonical record per rendered route", async () => {
   const notebook = await getNotebookData("/");
-  const ids = notebook.searchRecords.map((record) => record.id);
-  const urls = notebook.searchRecords.map((record) => record.url);
+  const searchRecords = await getNotebookSearchIndex("/");
+  const ids = searchRecords.map((record) => record.id);
+  const urls = searchRecords.map((record) => record.url);
 
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(urls.every((url) => url.startsWith("/")));
   assert.equal(
-    notebook.searchRecords.filter((record) => record.id.startsWith("paper-")).length,
+    searchRecords.filter((record) => record.id.startsWith("paper-")).length,
     notebook.papers.length
   );
   assert.equal(
-    notebook.searchRecords.filter((record) => record.id.startsWith("digest-")).length,
+    searchRecords.filter((record) => record.id.startsWith("digest-")).length,
     notebook.digests.length
   );
   assert.ok(notebook.papers.every((paper) => !paper.revisionOf));
@@ -76,4 +79,20 @@ test("routeUrl preserves root and repository deployment paths", () => {
     routeUrl("/paper-digest/", "/reviews/world-models/"),
     "/paper-digest/reviews/world-models/"
   );
+});
+
+test("search distinguishes the reading homepage from the full landscape", async () => {
+  const records = await getNotebookSearchIndex("/paper-digest/");
+  assert.equal(records.find((record) => record.id === "home").url, "/paper-digest/");
+  assert.equal(records.find((record) => record.id === "research-landscape").url, "/paper-digest/landscape/");
+});
+
+test("an older digest opens its parent folders without opening unrelated branches", async () => {
+  const { tree, digests } = await getNotebookData("/paper-digest/");
+  const projected = readingNavigationTree(tree, `/paper-digest/digests/${digests.at(-1).id}/`);
+  const archive = projected.children.find((node) => node.name === "简报归档");
+  assert.equal(archive.defaultOpen, true);
+  assert.equal(archive.children.find((node) => node.type === "folder").defaultOpen, true);
+  assert.equal(projected.children.find((node) => node.name === "方向综述").defaultOpen, false);
+  assert.equal(tree.children.find((node) => node.name === "简报归档").defaultOpen, false);
 });

@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../components/NotebookDocs.jsx";
+import ResearchLandscape from "../../components/ResearchLandscape.astro";
+import { getNotebookData } from "../../lib/navigation.js";
+
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const toc = [
+  { depth: 2, title: "方向覆盖与近期信号", url: "#directionCoverageTitle" },
+  { depth: 2, title: "趋势判断", url: "#trendTitle" },
+  { depth: 2, title: "当前热点", url: "#hotspotTitle" },
+  { depth: 2, title: "值得立项验证的问题", url: "#opportunityTitle" },
+  { depth: 2, title: "各方向研究建议", url: "#directionAdviceTitle" }
+];
+---
+
+<BaseLayout title="全库研究态势 · Paper Digest" description={notebook.landscape.summary} canonicalPath="landscape/">
+  <NotebookDocs tree={notebook.tree} pathname={Astro.url.pathname} params={Astro.params}
+    title="全库研究态势" description={notebook.landscape.summary}
+    eyebrow={`研究态势 · 更新于 ${notebook.landscape.updatedAt}`} toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`} homeUrl={notebook.base} client:load>
+    <ResearchLandscape landscape={notebook.landscape} basePath={notebook.base} embedded />
+  </NotebookDocs>
+</BaseLayout>

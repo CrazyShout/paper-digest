@@ -1,3 +1,5 @@
+import { memoizeContent, withContentSnapshot } from "./content-cache.js";
+import { buildNotebookSearchIndex } from "./notebook-search.js";
 import {
   getDigests,
   getIdeaCenter,
@@ -19,40 +21,19 @@ export function routeUrl(basePath, route = "") {
   return cleanRoute ? `${base}${cleanRoute}/` : base;
 }
 
-function flattenText(value) {
-  if (value == null) return "";
-  if (typeof value === "string" || typeof value === "number") {
-    return String(value);
-  }
-  if (Array.isArray(value)) return value.map(flattenText).join(" ");
-  if (typeof value === "object") {
-    return Object.values(value).map(flattenText).join(" ");
-  }
-  return "";
-}
-
-function searchRecord({
-  id,
-  url,
-  title,
-  description = "",
-  content = "",
-  breadcrumbs = [],
-  featured = false
-}) {
-  return {
-    id,
-    url,
-    title,
-    description,
-    content,
-    breadcrumbs,
-    featured
-  };
-}
-
-export async function getNotebookData(basePath = "/") {
+export function getNotebookData(basePath = "/") {
   const base = normalizeBasePath(basePath);
+  return withContentSnapshot(() => memoizeContent(`notebook:${base}`, () => loadNotebookData(base)));
+}
+
+export function getNotebookSearchIndex(basePath = "/") {
+  const base = normalizeBasePath(basePath);
+  return withContentSnapshot(() => memoizeContent(`notebook-search:${base}`, async () => (
+    buildNotebookSearchIndex(await getNotebookData(base))
+  )));
+}
+
+async function loadNotebookData(base) {
   const [
     digests,
     papers,
@@ -106,8 +87,13 @@ export async function getNotebookData(basePath = "/") {
     children: [
       {
         type: "page",
-        name: "研究态势",
+        name: "首页",
         url: routeUrl(base)
+      },
+      {
+        type: "page",
+        name: "研究态势",
+        url: routeUrl(base, "landscape")
       },
       {
         type: "separator",
@@ -145,17 +131,29 @@ export async function getNotebookData(basePath = "/") {
       {
         type: "folder",
         name: "简报归档",
-        defaultOpen: true,
+        defaultOpen: false,
         index: {
           type: "page",
           name: "全部简报",
           url: routeUrl(base, "digests")
         },
-        children: digests.map((digest) => ({
-          type: "page",
-          name: `${digest.displayDate || digest.date} · ${digest.title}`,
-          url: routeUrl(base, `digests/${digest.id}`)
-        }))
+        children: [
+          ...digests.slice(0, 5).map((digest) => ({
+            type: "page",
+            name: `${digest.displayDate || digest.date} · ${digest.title}`,
+            url: routeUrl(base, `digests/${digest.id}`)
+          })),
+          ...(digests.length > 5 ? [{
+            type: "folder",
+            name: "更早的简报",
+            defaultOpen: false,
+            children: digests.slice(5).map((digest) => ({
+              type: "page",
+              name: `${digest.displayDate || digest.date} · ${digest.title}`,
+              url: routeUrl(base, `digests/${digest.id}`)
+            }))
+          }] : [])
+        ]
       },
       {
         type: "separator",
@@ -202,97 +200,10 @@ export async function getNotebookData(basePath = "/") {
     ]
   };
 
-  const searchRecords = [
-    searchRecord({
-      id: "research-landscape",
-      url: routeUrl(base),
-      title: "全库研究态势",
-      description: landscape.title,
-      content: flattenText(landscape),
-      breadcrumbs: ["Paper Digest", "研究态势"],
-      featured: true
-    }),
-    searchRecord({
-      id: "review-center",
-      url: routeUrl(base, "reviews"),
-      title: reviewCenter.title,
-      description: reviewCenter.summary,
-      content: flattenText(reviewCenter.directions),
-      breadcrumbs: ["Paper Digest", "综述中心"],
-      featured: true
-    }),
-    ...reviewCenter.directions.map((direction) => searchRecord({
-      id: `review-${direction.id}`,
-      url: routeUrl(base, `reviews/${direction.id}`),
-      title: direction.title,
-      description: direction.abstract,
-      content: flattenText(direction),
-      breadcrumbs: ["方向综述", direction.label]
-    })),
-    searchRecord({
-      id: "idea-center",
-      url: routeUrl(base, "ideas"),
-      title: ideaCenter.title,
-      description: ideaCenter.summary,
-      content: flattenText(ideaCenter),
-      breadcrumbs: ["Paper Digest", "Idea 中心"],
-      featured: true
-    }),
-    searchRecord({
-      id: "archive-digests",
-      url: routeUrl(base, "digests"),
-      title: "简报归档",
-      description: `${digests.length} 期论文简报`,
-      content: flattenText(digests.map((digest) => ({
-        title: digest.title,
-        summary: digest.summary,
-        keywords: digest.keywords
-      }))),
-      breadcrumbs: ["Paper Digest", "简报归档"],
-      featured: true
-    }),
-    ...digests.map((digest, index) => searchRecord({
-      id: `digest-${digest.id}`,
-      url: routeUrl(base, `digests/${digest.id}`),
-      title: digest.title,
-      description: digest.summary,
-      content: [
-        digest.body,
-        digest.keywords?.join(" "),
-        ...digest.papers.map((paper) => [
-          paper.title,
-          paper.comment,
-          paper.authors.join(" "),
-          paper.affiliations.join(" ")
-        ].join(" "))
-      ].join(" "),
-      breadcrumbs: ["简报归档", digest.displayDate || digest.date],
-      featured: index < 3
-    })),
-    ...canonicalPapers.map((paper) => searchRecord({
-      id: `paper-${paper.id}`,
-      url: routeUrl(base, `papers/${paper.id}`),
-      title: paper.title,
-      description: paper.comment,
-      content: [
-        paper.body,
-        paper.source,
-        paper.authors.join(" "),
-        paper.affiliations.join(" ")
-      ].join(" "),
-      breadcrumbs: publicPaperIds.has(paper.id)
-        ? [
-            "论文报告",
-            tags.find((tag) => tag.id === paper.tags[0])?.label || "未分类"
-          ]
-        : ["人工核验修订", "人工核验版"]
-    }))
-  ];
 
   return {
     base,
     tree,
-    searchRecords,
     digests,
     papers: canonicalPapers,
     tags,

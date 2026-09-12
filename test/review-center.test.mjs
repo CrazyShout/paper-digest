@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
+import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
 import {
   buildPaperSourceLinks,
   buildReviewSourceLinks,
@@ -468,13 +469,18 @@ test("paper source metadata retains arXiv beside every recorded formal destinati
   }
 });
 
-test("local review searches separate raw hits and close every tagged candidate", async () => {
+test("local review searches separate raw hits and close every tagged candidate", async (t) => {
   const [center, papers] = await Promise.all([
     getReviewCenter(),
     getPapers()
   ]);
+  const config = JSON.parse(await readFile("config/content-quality.json", "utf8"));
+  const resolver = createReviewCorpusResolver(config.reviewCorpusSnapshot);
+  t.after(() => resolver.close());
 
   for (const direction of center.directions) {
+    const rawReview = JSON.parse(await readFile(`content/reviews/${direction.id}.json`, "utf8"));
+    const corpus = resolver.resolve(rawReview, papers, path.join(process.cwd(), "content", "papers"));
     const localRun = direction.searchAudit.queryRuns.find(
       (queryRun) => queryRun.sourceFamily === "local-corpus"
     );
@@ -488,10 +494,10 @@ test("local review searches separate raw hits and close every tagged candidate",
       direction.id
     );
     const snapshot = localCorpusSearchSnapshot(
-      papers,
+      corpus.papers,
       direction.id,
       localRun.query,
-      { corpusPath: path.join(process.cwd(), "content", "papers") }
+      { corpusPath: corpus.corpusPath }
     );
     assert.equal(localRun.rawHitCount, snapshot.rawHitPaperIds.length, direction.id);
     assert.deepEqual(

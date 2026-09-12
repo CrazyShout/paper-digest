@@ -1,64 +1,88 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import NotebookDocs from "../components/NotebookDocs.jsx";
-import DigestContent from "../components/DigestContent.astro";
-import ResearchLandscape from "../components/ResearchLandscape.astro";
 import ReviewCenterPreview from "../components/ReviewCenterPreview.astro";
-import { markdownToHtml } from "../lib/content.js";
-import { getNotebookData } from "../lib/navigation.js";
+import { getNotebookData, routeUrl } from "../lib/navigation.js";
+import { HOME_DESCRIPTION } from "../lib/reading-ui.js";
+import { getMarkdownHeadings } from "../lib/content.js";
 
 const notebook = await getNotebookData(import.meta.env.BASE_URL);
-const latestDigest = notebook.digests[0];
-const latestDigestHtml = markdownToHtml(latestDigest.body, { headingIds: true });
-const toc = [
-  { depth: 2, title: "方向覆盖与近期信号", url: "#directionCoverageTitle" },
-  { depth: 2, title: "趋势判断", url: "#trendTitle" },
-  { depth: 2, title: "当前热点", url: "#hotspotTitle" },
-  { depth: 2, title: "值得立项验证的问题", url: "#opportunityTitle" },
-  { depth: 2, title: "各方向研究建议", url: "#directionAdviceTitle" },
-  { depth: 2, title: "综述中心", url: "#reviewPreviewTitle" },
-  { depth: 2, title: "最新一期简报", url: "#digestArticle" },
-  { depth: 2, title: "阅读讨论", url: "#discussion" }
+const latest = notebook.digests[0];
+const latestUrl = routeUrl(notebook.base, `digests/${latest.id}`);
+const landscapeUrl = routeUrl(notebook.base, "landscape");
+const visiblePapers = latest.papers.slice(0, 5);
+const legacyDigestAnchors = [
+  "discussion",
+  ...getMarkdownHeadings(latest.body).map((heading) => heading.id),
+  ...latest.tags.flatMap((tag) => [`section-${tag.id}`, `title-${tag.id}`])
 ];
 ---
 
-<BaseLayout
-  title="Paper Digest · 论文简报与研究态势"
-  description={notebook.landscape.summary}
-  canonicalPath=""
->
-  <NotebookDocs
-    tree={notebook.tree}
-    pathname={Astro.url.pathname}
-    params={Astro.params}
-    title="全库研究态势"
-    description={notebook.landscape.summary}
-    eyebrow={`Research Landscape · 更新于 ${notebook.landscape.updatedAt}`}
-    toc={toc}
-    searchUrl={`${notebook.base}assets/notebook-search.json`}
-    notes={{
-      digestId: latestDigest.id,
-      issueLabel: latestDigest.displayDate || latestDigest.date,
-      seedNotes: latestDigest.notes || [],
-      commentsEndpoint: notebook.runtime.commentsEndpoint
-    }}
-    homeUrl={notebook.base}
-    client:load
-  >
-    <ResearchLandscape landscape={notebook.landscape} embedded />
-    <ReviewCenterPreview center={notebook.reviewCenter} />
-    <section class="doc-section">
-      <header>
-        <p class="eyebrow">Latest Digest · {latestDigest.displayDate || latestDigest.date}</p>
-        <h2 class="doc-section-title">{latestDigest.title}</h2>
-        <p>{latestDigest.summary}</p>
-      </header>
-      <DigestContent
-        digest={latestDigest}
-        basePath={notebook.base}
-        bodyHtml={latestDigestHtml}
-        headingLevel={3}
-      />
-    </section>
+<BaseLayout title="论文简报 · Paper Digest" description={HOME_DESCRIPTION} canonicalPath="">
+  <NotebookDocs tree={notebook.tree} pathname={Astro.url.pathname} params={Astro.params}
+    title="论文简报" description={HOME_DESCRIPTION} eyebrow="Paper Digest"
+    searchUrl={`${notebook.base}assets/notebook-search.json`} homeUrl={notebook.base}
+    showFooter={false} client:load>
+    <div class="reading-home">
+      <section class="home-latest" id="digestArticle" aria-labelledby="latest-title">
+        <header>
+          <p class="home-section-label">最新一期 · {latest.displayDate || latest.date} · {latest.papers.length} 篇论文</p>
+          <h2 id="latest-title"><a href={latestUrl}>{latest.title}</a></h2>
+        </header>
+        <ul class="home-paper-list">
+          {visiblePapers.map((paper) => (
+            <li>
+              <h3><a href={routeUrl(notebook.base, `papers/${paper.id}`)}>{paper.title}</a></h3>
+              <p>{paper.comment}</p>
+              <div class="home-paper-meta">
+                <span>{latest.tags.filter((tag) => paper.tags.includes(tag.id)).map((tag) => tag.label).join(" · ")}</span>
+                {paper.sourceLinks?.[0] && (
+                  <a href={paper.sourceLinks[0].url} target="_blank" rel="noopener noreferrer">
+                    {paper.sourceLinks[0].label} <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div class="home-section-links">
+          <a href={latestUrl}>阅读完整简报与讨论 <span aria-hidden="true">→</span></a>
+          <a href={routeUrl(notebook.base, "digests")}>全部 {notebook.digests.length} 期简报</a>
+        </div>
+      </section>
+
+      <ReviewCenterPreview center={notebook.reviewCenter} basePath={notebook.base} />
+
+      <section class="home-research" aria-labelledby="home-research-title">
+        <header>
+          <h2 id="home-research-title">研究态势与想法</h2>
+          <p class="home-section-label">更新于 {notebook.landscape.updatedAt}</p>
+        </header>
+        <p>{notebook.landscape.title}</p>
+        <div class="home-section-links">
+          <a href={landscapeUrl}>查看趋势、证据与研究建议 <span aria-hidden="true">→</span></a>
+          <a href={routeUrl(notebook.base, "ideas")}>研究想法与评审</a>
+        </div>
+      </section>
+    </div>
   </NotebookDocs>
+
+  <script is:inline define:vars={{ landscapeUrl, latestUrl, legacyDigestAnchors }}>
+    // Keep links shared before the compact homepage pointed at their full text.
+    function resolveReadingAnchor() {
+      let hash;
+      try { hash = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+      const landscapeAnchors = new Set([
+        "researchLandscape", "landscapeTitle", "directionCoverageTitle", "trendTitle",
+        "hotspotTitle", "opportunityTitle", "directionAdviceTitle"
+      ]);
+      if (landscapeAnchors.has(hash) || hash.startsWith("landscape-group-")) {
+        location.replace(`${landscapeUrl}#${encodeURIComponent(hash)}`);
+      } else if (legacyDigestAnchors.includes(hash)) {
+        location.replace(`${latestUrl}#${encodeURIComponent(hash)}`);
+      }
+    }
+    resolveReadingAnchor();
+    window.addEventListener("hashchange", resolveReadingAnchor);
+  </script>
 </BaseLayout>

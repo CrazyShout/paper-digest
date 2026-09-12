@@ -8,6 +8,7 @@ import {
   markdownToHtml
 } from "../../../lib/content.js";
 import { getNotebookData } from "../../../lib/navigation.js";
+import { getPaperImages } from "../../../lib/paper-images.js";
 
 export async function getStaticPaths() {
   const papers = await getPapers();
@@ -27,7 +28,8 @@ if (!result) {
 }
 
 const { paper, tags } = result;
-const reportHtml = markdownToHtml(paper.body, { headingIds: true });
+const images = await getPaperImages(paper.body, notebook.base);
+const reportHtml = markdownToHtml(paper.body, { headingIds: true, images });
 const toc = getMarkdownHeadings(paper.body)
   .filter((heading) => heading.level === 2)
   .map((heading) => ({
@@ -49,7 +51,7 @@ const toc = getMarkdownHeadings(paper.body)
     params={Astro.params}
     title={paper.title}
     description={paper.comment}
-    eyebrow="Paper Report"
+    eyebrow="论文报告"
     toc={toc}
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     homeUrl={notebook.base}
@@ -64,8 +66,8 @@ const toc = getMarkdownHeadings(paper.body)
     <section class="paper-detail-meta" aria-label="论文元数据">
       <dl class="paper-meta-list">
         <div>
-          <dt>抓取位置</dt>
-          <dd>
+          <dt>来源</dt>
+          <dd class="paper-source-row">
             {paper.sourceLinks?.length > 0 ? (
               <span class="paper-source-links">
                 {paper.sourceLinks.map((link) => (
@@ -76,6 +78,9 @@ const toc = getMarkdownHeadings(paper.body)
                 ))}
               </span>
             ) : paper.source}
+            <button class="share-link" type="button" data-share-button aria-label="分享论文链接">
+              <span data-share-label role="status" aria-live="polite">分享链接</span>
+            </button>
           </dd>
         </div>
         <div>
@@ -87,11 +92,6 @@ const toc = getMarkdownHeadings(paper.body)
           <dd>{paper.affiliations.join("; ")}</dd>
         </div>
       </dl>
-      <div class="paper-detail-actions">
-        <button class="share-link" type="button" data-share-button>
-          <span data-share-label role="status" aria-live="polite">分享链接</span>
-        </button>
-      </div>
     </section>
 
     <article class="paper-report" set:html={reportHtml} />

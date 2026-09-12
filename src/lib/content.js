@@ -1,5 +1,7 @@
-import { lstat, readFile, readdir, realpath } from "node:fs/promises";
+import { lstat, readFile as readFileFromDisk, readdir, realpath } from "node:fs/promises";
 import path from "node:path";
+import { renderToString } from "katex";
+import { memoizeContent } from "./content-cache.js";
 import { reviewSnapshotFingerprint } from "./review-fingerprint.js";
 import {
   canonicalUrlHostname,
@@ -9,6 +11,10 @@ import {
 const ROOT = path.resolve(process.cwd());
 const CONFIG = path.join(ROOT, "config");
 const CONTENT = path.join(ROOT, "content");
+
+function readFile(file, encoding) {
+  return memoizeContent(`file:${file}:${encoding}`, () => readFileFromDisk(file, encoding));
+}
 
 export function isValidIsoDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
@@ -32,29 +38,74 @@ function safeContentUrl(value) {
   return "";
 }
 
-function renderStrong(value) {
-  return escapeHtml(value).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+function renderMath(tex, displayMode = false) {
+  return renderToString(tex, {
+    displayMode,
+    output: "htmlAndMathml",
+    throwOnError: true,
+    trust: false,
+    strict: "error",
+    maxExpand: 1000,
+    maxSize: 20
+  });
 }
 
 function renderInlineMarkdown(value) {
   const text = String(value);
-  const links = /\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  // Parse math before escaping HTML, keeping code, links and TeX isolated.
+  const tokens = /\\([$`*\\|])|`([^`\n]+)`|\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)|\*\*([^*]+)\*\*|\$(?!\s)((?:\\.|[^\\$\n])+?)(?<![\s\\])\$(?!\d)/g;
   let html = "";
   let lastIndex = 0;
   let match;
 
-  while ((match = links.exec(text)) !== null) {
-    html += renderStrong(text.slice(lastIndex, match.index));
-    const href = safeContentUrl(match[2]);
-    const label = renderStrong(match[1]);
-    html += href
-      ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
-      : label;
+  while ((match = tokens.exec(text)) !== null) {
+    html += escapeHtml(text.slice(lastIndex, match.index));
+    if (match[1] !== undefined) {
+      html += escapeHtml(match[1]);
+    } else if (match[2] !== undefined) {
+      html += `<code>${escapeHtml(match[2])}</code>`;
+    } else if (match[3] !== undefined) {
+      const href = safeContentUrl(match[4]);
+      const label = renderInlineMarkdown(match[3]);
+      html += href
+        ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        : label;
+    } else if (match[5] !== undefined) {
+      html += `<strong>${renderInlineMarkdown(match[5])}</strong>`;
+    } else {
+      html += renderMath(match[6]);
+    }
     lastIndex = match.index + match[0].length;
   }
 
-  html += renderStrong(text.slice(lastIndex));
+  html += escapeHtml(text.slice(lastIndex));
   return html;
+}
+
+function tableCells(line) {
+  const row = line.trim();
+  if (!row.startsWith("|") || !row.endsWith("|")) return null;
+  const cells = [];
+  let cell = "";
+  let code = false;
+  let math = false;
+  for (let index = 1; index < row.length - 1; index += 1) {
+    const char = row[index];
+    if (char === "\\" && index < row.length - 2) {
+      cell += char + row[++index];
+      continue;
+    }
+    if (char === "`" && !math) code = !code;
+    if (char === "$" && !code) math = !math;
+    if (char === "|" && !code && !math) {
+      cells.push(cell.trim());
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  cells.push(cell.trim());
+  return cells;
 }
 
 function parseMarkdownFile(text, filePath) {
@@ -127,7 +178,7 @@ export function getMarkdownHeadings(markdown) {
     }));
 }
 
-export function markdownToHtml(markdown, { headingIds = false } = {}) {
+export function markdownToHtml(markdown, { headingIds = false, images = new Map() } = {}) {
   const lines = markdown.split(/\r?\n/);
   const html = [];
   const headingCounts = new Map();
@@ -146,12 +197,60 @@ export function markdownToHtml(markdown, { headingIds = false } = {}) {
     list = [];
   }
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
     const trimmed = line.trim();
 
     if (!trimmed) {
       flushParagraph();
       flushList();
+      continue;
+    }
+
+    if (trimmed === "$$" || /^\$\$.+\$\$$/.test(trimmed)) {
+      flushParagraph();
+      flushList();
+      let tex;
+      if (trimmed === "$$") {
+        const start = lineIndex;
+        const formula = [];
+        while (++lineIndex < lines.length && lines[lineIndex].trim() !== "$$") {
+          formula.push(lines[lineIndex]);
+        }
+        if (lineIndex === lines.length) {
+          throw new Error(`Unclosed display math at line ${start + 1}`);
+        }
+        tex = formula.join("\n");
+      } else {
+        tex = trimmed.slice(2, -2);
+      }
+      html.push(`<div class="reading-math" role="region" aria-label="公式" tabindex="0">${renderMath(tex, true)}</div>`);
+      continue;
+    }
+
+    const headers = tableCells(trimmed);
+    const separators = tableCells(lines[lineIndex + 1] || "");
+    if (headers && separators && headers.length === separators.length
+      && separators.every((cell) => /^:?-{3,}:?$/.test(cell))) {
+      flushParagraph();
+      flushList();
+      const aligns = separators.map((cell) => cell.endsWith(":")
+        ? (cell.startsWith(":") ? "center" : "right") : "left");
+      const rowHtml = (cells, tag) => `<tr>${cells.map((cell, index) =>
+        `<${tag}${tag === "th" ? ' scope="col"' : ""} style="text-align:${aligns[index]}">${renderInlineMarkdown(cell)}</${tag}>`
+      ).join("")}</tr>`;
+      const rows = [];
+      lineIndex += 1;
+      while (lineIndex + 1 < lines.length) {
+        const cells = tableCells(lines[lineIndex + 1]);
+        if (!cells) break;
+        if (cells.length !== headers.length) {
+          throw new Error(`Markdown table at line ${lineIndex + 2} has ${cells.length} cells; expected ${headers.length}`);
+        }
+        rows.push(rowHtml(cells, "td"));
+        lineIndex += 1;
+      }
+      html.push(`<div class="reading-table" role="region" aria-label="数据表格" tabindex="0"><table><thead>${rowHtml(headers, "th")}</thead><tbody>${rows.join("")}</tbody></table></div>`);
       continue;
     }
 
@@ -172,9 +271,17 @@ export function markdownToHtml(markdown, { headingIds = false } = {}) {
       const src = safeContentUrl(image[2]);
       if (src) {
         const alt = image[1].trim();
+        const metadata = images.get(src);
+        const dimensions = metadata?.width > 0 && metadata?.height > 0
+          ? ` width="${Number(metadata.width)}" height="${Number(metadata.height)}"` : "";
+        const sizes = "(max-width: 767px) calc(100vw - 48px), (max-width: 1279px) calc(100vw - 340px), 860px";
+        const img = `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"${dimensions} loading="lazy" decoding="async">`;
+        const picture = metadata?.srcset
+          ? `<picture><source type="image/webp" srcset="${escapeHtml(metadata.srcset)}" sizes="${sizes}">${img}</picture>`
+          : img;
         html.push(`
           <figure class="paper-figure">
-            <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" decoding="async">
+            <a href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer" aria-label="查看原图：${escapeHtml(alt)}">${picture}</a>
             ${alt ? `<figcaption>${renderInlineMarkdown(alt)}</figcaption>` : ""}
           </figure>
         `.trim());
@@ -198,7 +305,11 @@ export function markdownToHtml(markdown, { headingIds = false } = {}) {
   return html.join("\n");
 }
 
-export async function getInterestConfig() {
+export function getInterestConfig() {
+  return memoizeContent("getInterestConfig", loadInterestConfig);
+}
+
+async function loadInterestConfig() {
   return JSON.parse(await readFile(path.join(CONFIG, "research-interests.json"), "utf8"));
 }
 
@@ -212,11 +323,19 @@ function projectDirectionGroups(interestConfig, directions) {
   }));
 }
 
-export async function getRuntimeConfig() {
+export function getRuntimeConfig() {
+  return memoizeContent("getRuntimeConfig", loadRuntimeConfig);
+}
+
+async function loadRuntimeConfig() {
   return JSON.parse(await readFile(path.join(CONFIG, "runtime.json"), "utf8"));
 }
 
-export async function getTags() {
+export function getTags() {
+  return memoizeContent("getTags", loadTags);
+}
+
+async function loadTags() {
   const interestConfig = await getInterestConfig();
   const groupByDirection = new Map(
     (interestConfig.directionGroups || []).flatMap((group, groupIndex) =>
@@ -443,7 +562,11 @@ export function buildReviewSourceLinks(reference) {
   return uniqueSourceLinks(links);
 }
 
-export async function getPapers() {
+export function getPapers() {
+  return memoizeContent("getPapers", loadPapers);
+}
+
+async function loadPapers() {
   const paperDocs = await readMarkdownDir(path.join(CONTENT, "papers"));
   return paperDocs.map((doc) => {
     const tags = normalizePaperTags(doc.data);
@@ -458,7 +581,11 @@ export async function getPapers() {
   });
 }
 
-export async function getDigests({ includeAudit = false } = {}) {
+export function getDigests({ includeAudit = false } = {}) {
+  return memoizeContent(`getDigests:${includeAudit}`, () => loadDigests({ includeAudit }));
+}
+
+async function loadDigests({ includeAudit }) {
   const tags = await getTags();
   const tagMap = new Map(tags.map((tag) => [tag.id, tag]));
   const papers = await getPapers();
@@ -493,53 +620,6 @@ export async function getDigests({ includeAudit = false } = {}) {
       papers: digestPapers
     };
   }).sort((a, b) => b.date.localeCompare(a.date));
-}
-
-export function buildClientDigestData(digests) {
-  return digests.map((digest) => ({
-    id: digest.id,
-    date: digest.date,
-    displayDate: digest.displayDate,
-    title: digest.title,
-    summary: digest.summary,
-    keywords: digest.keywords,
-    notes: digest.notes,
-    bodyHtml: digest.bodyHtml,
-    tags: digest.tags,
-    papers: digest.papers.map((paper) => ({
-      id: paper.id,
-      title: paper.title,
-      source: paper.source,
-      authors: paper.authors,
-      affiliations: paper.affiliations,
-      comment: paper.comment,
-      tag: paper.tag,
-      tags: paper.tags,
-      link: paper.link
-    }))
-  }));
-}
-
-export function buildPaperSearchIndex(digests) {
-  return digests.flatMap((digest) => digest.papers.map((paper) => {
-    const tagLabels = digest.tags
-      .filter((tag) => paper.tags.includes(tag.id))
-      .map((tag) => tag.label);
-
-    return {
-      digestId: digest.id,
-      paperId: paper.id,
-      text: [
-        ...tagLabels,
-        paper.title,
-        paper.source,
-        ...paper.authors,
-        ...paper.affiliations,
-        paper.comment,
-        paper.body
-      ].filter(Boolean).join(" ").toLowerCase()
-    };
-  }));
 }
 
 export async function getPaperWithTag(id) {
@@ -1091,7 +1171,11 @@ export async function projectIdeaCenterData(
   };
 }
 
-export async function getIdeaCenter() {
+export function getIdeaCenter() {
+  return memoizeContent("getIdeaCenter", loadIdeaCenter);
+}
+
+async function loadIdeaCenter() {
   const [ideaCenter, papers, workflow, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "idea-center.json"), "utf8").then(JSON.parse),
     getPapers(),
@@ -1127,7 +1211,11 @@ const REVIEW_STATUS_LABELS = {
   dataset: "数据集发布"
 };
 
-export async function getReviewCenter() {
+export function getReviewCenter() {
+  return memoizeContent("getReviewCenter", loadReviewCenter);
+}
+
+async function loadReviewCenter() {
   const [center, tags, papers, reviewDocs, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "review-center.json"), "utf8").then(JSON.parse),
     getTags(),
@@ -1213,7 +1301,11 @@ function uniquePapersFromDigests(digests) {
   ).values()];
 }
 
-export async function getResearchLandscape() {
+export function getResearchLandscape() {
+  return memoizeContent("getResearchLandscape", loadResearchLandscape);
+}
+
+async function loadResearchLandscape() {
   const [landscapeConfig, tags, papers, digests, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "research-landscape.json"), "utf8").then(JSON.parse),
     getTags(),
