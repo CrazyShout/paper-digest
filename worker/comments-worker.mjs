@@ -1,7 +1,15 @@
+import { commentValidationError, validDigestId } from "../src/lib/comment-contract.js";
+
 const DEFAULT_COMMENTS_DIR = "comments";
-const MAX_COMMENT_LENGTH = 800;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const DEFAULT_MAX_COMMENTS_PER_DIGEST = 200;
+
+class HttpError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+}
 
 function jsonResponse(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -48,10 +56,6 @@ function corsHeaders(request, env) {
 function requireEnv(env, key) {
   if (!env[key]) throw new Error(`Missing env ${key}`);
   return env[key];
-}
-
-function validDigestId(value) {
-  return typeof value === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}(?:-[a-z0-9-]+)?$/.test(value);
 }
 
 function sanitizeText(value, maxLength) {
@@ -109,7 +113,7 @@ function maxCommentsPerDigest(env) {
 }
 
 async function githubFetch(url, env, init = {}) {
-  const response = await fetch(url, {
+  const options = {
     ...init,
     headers: {
       Accept: "application/vnd.github+json",
@@ -118,9 +122,12 @@ async function githubFetch(url, env, init = {}) {
       "X-GitHub-Api-Version": "2022-11-28",
       ...(init.headers || {})
     }
-  });
-
-  return response;
+  };
+  try {
+    return await fetch(url, options);
+  } catch {
+    throw new HttpError("GitHub request failed", 502);
+  }
 }
 
 async function readComments(env, digestId) {
@@ -132,7 +139,7 @@ async function readComments(env, digestId) {
   }
 
   if (!response.ok) {
-    throw new Error(`GitHub read failed: ${response.status}`);
+    throw new HttpError(`GitHub read failed: ${response.status}`, 502);
   }
 
   const data = await response.json();
@@ -149,24 +156,19 @@ async function requireExistingDigest(env, digestId) {
   const response = await githubFetch(url, env);
 
   if (response.status === 404) {
-    throw new Error("Unknown digestId");
+    throw new HttpError("Unknown digestId", 404);
   }
 
   if (!response.ok) {
-    throw new Error(`GitHub digest check failed: ${response.status}`);
+    throw new HttpError(`GitHub digest check failed: ${response.status}`, 502);
   }
 }
 
 function createComment(payload) {
+  const validationError = commentValidationError(payload);
+  if (validationError) throw new HttpError(validationError, 400);
   const digestId = payload.digestId;
-  if (!validDigestId(digestId)) {
-    throw new Error("Invalid digestId");
-  }
-
-  const text = sanitizeText(payload.text, MAX_COMMENT_LENGTH);
-  if (!text) {
-    throw new Error("Empty comment");
-  }
+  const text = payload.text.trim();
 
   const nickname = sanitizeText(payload.nickname, 40) || "匿名同学";
   const avatar = payload.avatar || {};
@@ -203,7 +205,7 @@ async function writeComments(env, digestId, comments, sha) {
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub write failed: ${response.status}`);
+    throw new HttpError(`GitHub write failed: ${response.status}`, response.status === 409 ? 409 : 502);
   }
 }
 
@@ -254,7 +256,7 @@ async function handlePost(request, env, cors) {
       await writeComments(env, comment.digestId, [...comments, comment], sha);
       return jsonResponse({ comment }, 201, cors);
     } catch (error) {
-      if (attempt === 1) throw error;
+      if (attempt === 1 || error.status !== 409) throw error;
     }
   }
 
@@ -274,16 +276,16 @@ export default {
 
     try {
       if (request.method === "GET") {
-        return handleGet(request, env, cors);
+        return await handleGet(request, env, cors);
       }
 
       if (request.method === "POST") {
-        return handlePost(request, env, cors);
+        return await handlePost(request, env, cors);
       }
 
       return jsonResponse({ error: "Method not allowed" }, 405, cors);
     } catch (error) {
-      return jsonResponse({ error: error.message || "Unexpected error" }, 500, cors);
+      return jsonResponse({ error: error.message || "Unexpected error" }, error.status || 500, cors);
     }
   }
 };

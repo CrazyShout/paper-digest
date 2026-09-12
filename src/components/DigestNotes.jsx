@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { MAX_COMMENT_LENGTH } from "../lib/comment-contract.js";
+import { saveComment } from "../lib/comments-client.js";
 
 const LOCAL_NOTES_KEY = "paper-digest-local-notes";
 const IDENTITY_KEY = "paper-digest-anon-identity";
@@ -17,7 +19,11 @@ function identity() {
   const created = {
     nickname: `匿名读者-${Math.floor(1000 + Math.random() * 9000)}`
   };
-  localStorage.setItem(IDENTITY_KEY, JSON.stringify(created));
+  try {
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(created));
+  } catch {
+    // A temporary nickname still allows remote comments without local storage.
+  }
   return created;
 }
 
@@ -47,7 +53,9 @@ export default function DigestNotes({
 
   useEffect(() => {
     const notes = readJson(LOCAL_NOTES_KEY, {});
-    setLocalNotes(notes[digestId] || []);
+    setLocalNotes(Array.isArray(notes[digestId]) ? notes[digestId] : []);
+    setRemoteNotes([]);
+    setStatus("");
 
     if (!endpoint) return;
     const controller = new AbortController();
@@ -78,8 +86,9 @@ export default function DigestNotes({
   ], [localNotes, remoteNotes, seedNotes]);
 
   function persistLocal(note) {
-    const all = readJson(LOCAL_NOTES_KEY, {});
-    all[digestId] = [...(all[digestId] || []), note];
+    const stored = readJson(LOCAL_NOTES_KEY, {});
+    const all = stored && typeof stored === "object" && !Array.isArray(stored) ? stored : {};
+    all[digestId] = [...(Array.isArray(all[digestId]) ? all[digestId] : []), note];
     localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(all));
     setLocalNotes(all[digestId]);
   }
@@ -99,27 +108,17 @@ export default function DigestNotes({
     setStatus("");
 
     try {
-      if (!endpoint) throw new Error("local-only");
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify(note)
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      setRemoteNotes((current) => [...current, data.comment || note]);
-      setStatus("评论已同步。");
-    } catch {
-      persistLocal({
-        ...note,
-        id: `local-${Date.now()}`
-      });
-      setStatus(endpoint ? "同步失败，已保存在本机。" : "评论已保存在本机。");
-    } finally {
+      const result = await saveComment(note, { endpoint, persistLocal });
+      if (result.mode === "remote") {
+        setRemoteNotes((current) => [...current, result.comment]);
+        setStatus("评论已同步。");
+      } else {
+        setStatus(endpoint ? "同步失败，已完整保存在本机。" : "评论已保存在本机。");
+      }
       setText("");
+    } catch {
+      setStatus("保存失败，输入内容已保留，请复制备份后重试。");
+    } finally {
       setSubmitting(false);
     }
   }
@@ -127,7 +126,7 @@ export default function DigestNotes({
   return (
     <section className="digest-comments" id="discussion" aria-labelledby="discussion-title">
       <header>
-        <p className="doc-eyebrow">Discussion · {issueLabel}</p>
+        <p className="doc-eyebrow">阅读讨论 · {issueLabel}</p>
         <h2 id="discussion-title">阅读讨论</h2>
         <p>{endpoint ? "评论会同步到共享仓库。" : "尚未配置评论服务，内容只保存在当前浏览器。"}</p>
       </header>
@@ -150,7 +149,8 @@ export default function DigestNotes({
           id={`digest-note-${digestId}`}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          maxLength={1200}
+          maxLength={MAX_COMMENT_LENGTH}
+          readOnly={submitting}
           rows={4}
           placeholder="记录疑问、复现线索或组会讨论点"
           required
