@@ -2,55 +2,177 @@
 {
   "id": "dust-cooperative-4d-reconstruction",
   "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction", "cooperative-autonomous-driving"],
+  "tags": [
+    "3d-reconstruction",
+    "cooperative-autonomous-driving"
+  ],
   "title": "One World, Dual Timeline: Decoupled Spatio-Temporal Gaussian Scene Graph for 4D Cooperative Driving Reconstruction",
-  "source": "arXiv:2605.07910 / https://arxiv.org/abs/2605.07910",
-  "authors": ["Yulong Chen", "Xiaoyun Dong", "Haoyu Zhang", "Zongxian Yang", "Lewei Xie", "Xinke Li", "Yifan Zhang", "Kai Wang", "Jianping Wang"],
-  "affiliations": ["City University of Hong Kong (Dongguan)", "City University of Hong Kong", "SLAI, Shenzhen"],
-  "comment": "DUST-GSG 把车端和路侧异步观测拆成双时间线，解决协同 4D Gaussian Scene Graph 在动态 agent 上的 ghosting 和梯度冲突。"
+  "source": "arXiv:2605.07910 / https://arxiv.org/abs/2605.07910 / Full text used: https://arxiv.org/html/2605.07910v1",
+  "authors": [
+    "Yulong Chen",
+    "Xiaoyun Dong",
+    "Haoyu Zhang",
+    "Zongxian Yang",
+    "Lewei Xie",
+    "Xinke Li",
+    "Yifan Zhang",
+    "Kai Wang",
+    "Jianping Wang"
+  ],
+  "affiliations": [
+    "City University of Hong Kong (Dongguan)",
+    "City University of Hong Kong",
+    "SLAI, Shenzhen"
+  ],
+  "comment": "DUST 共享物体高斯并为车端、路端保留独立时间线，结合静态锚点配准与位姿正则缓解异步重影；V2X-Seq 动态重建 PSNR 为 26.11 dB，理论独立性限于位姿参数。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文是一篇面向 Vehicle-to-Infrastructure Cooperative Autonomous Driving 数据的 4D 重建工作。核心判断是：协同驾驶重建中的问题不只是多视角融合，而是车端和路侧相机独立时钟导致同一动态 agent 在不同物理时间被观测，传统单时间线 Gaussian Scene Graph 会产生不可消除的 ghosting。
+DUST 把协同重建中的“同一物体”与“同一次观测”分开：车端和路端共用物体的 canonical 高斯，但各自保留按真实采集时间查询的位姿轨迹，再用静态锚点修正空间配准和轨迹正则稳定优化。它解决的是异步日志重建中的运动错配，不是在线通信延迟补偿或交通行为预测。
+
+- **核心证据**：V2X-Seq 26 序列重建的动态区域 PSNR 为 26.11 dB，比 PVG 的 22.91 高 3.20 dB；动态 FVD 从 OmniRe 的 63.7 降到 39.7，降低 37.7%（本报告按表值计算）。这两个基线不同，不能写成相对同一方法的两项收益。[表 1](https://arxiv.org/html/2605.07910v1#S4.T1)
+- **主要边界**：双时间线消除的是共享位姿带来的参数耦合；共享高斯形状仍会接收两端梯度，局部刚体理论也不能保证真实数据零误差。[附录 B.5](https://arxiv.org/html/2605.07910v1#A2.SS5)
 
 ## 论文要解决的问题
 
-现有 Gaussian Scene Graph 方法通常假设同一帧中不同视角已经同步，并给每个 agent 分配单一位姿。但在 VICAD 场景里，vehicle camera 和 infrastructure camera 捕获同一辆车或行人的时间可能不同，动态目标位置已经发生变化。把这些观测强行对齐到一条时间线，会产生互相矛盾的 photometric gradients，导致动态区域重建模糊或重影。论文把这个问题定义为 representation-level failure，而不是优化没调好。
+### 输入、输出与失效场景
+
+输入包括车端/路端图像、独立时间戳、相机标定与位姿、两端 LiDAR 和协同跟踪框。输出是含静态背景、天空和动态对象的 Gaussian Scene Graph，可按源、视角和时间渲染图像与深度。若两个相机在相差 70 ms 时拍到 10 m/s 的汽车，车身位置可相差 0.7 m；把两次观测硬绑定到同一个位姿，会让优化器同时把车放到两个位置。[§3.1–3.2](https://arxiv.org/html/2605.07910v1#S3)
+
+空间标定误差与时间错配不能混为一谈：对齐静态汽车可以估计两端坐标变换，却不能让异步移动汽车在现实中处于同一位置。DUST 先解决坐标初始化，再改变动态状态的参数化。
+
+### 相关工作与差异
+
+| 工作与一手来源 | 已有机制 | DUST 的具体差异 |
+| --- | --- | --- |
+| Yan 等，Street Gaussians，ECCV 2024（[§3](https://arxiv.org/html/2401.01339v3#S3)；[正式论文](https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/09243.pdf)） | 每辆车在对象坐标系保存高斯，优化跟踪位姿，并用随时间变化的球谐表达外观；背景与对象可组合。 | DUST 保留对象局部表示，改变跨平台观测对位姿轨迹的绑定，使两端使用各自时间线。已有的可编辑实例表示不能算新贡献。 |
+| Xu 等，CRUISE，2025 预印本（[§IV-A–B](https://arxiv.org/html/2507.18473v1#S4)） | 基于 Street Gaussians 处理 V2X 数据、剔除车端视图的自车框干扰，并通过编辑和生成层合成协同数据及标注。 | DUST 的重点是异步时间和空间配准，不是语言模型交通流编辑。不能因为 CRUISE 关注数据生成，就把它归为没有车路联合重建的工作。 |
+
+数值比较采用 DUST 文中相同训练/测试划分和重新生成的协同标签；这不等于对各基线所有原始功能作了公平、全面的终局排名。
 
 ## 方法和系统设计
 
-- DUST-GSG 为每个动态 agent 共享 canonical Gaussian set，以保持外观一致。
-- 同时为车端和路侧源维护 decoupled pose trajectories，使每个源的动态 agent 位姿对齐到真实 capture timestamp。
-- 使用 co-visible static vehicles 作为 anchors 做离线 pose correction，再通过 pose-regularized joint optimization 稳定优化，避免早期轨迹 jitter 和 drift。
+### 共享形状、分离位姿的数据流
+
+先按实例构建对象局部高斯；背景来自剔除动态点后的 LiDAR 与随机点，动态实例从跟踪框内累积点初始化。静态、刚体车辆和非刚体节点采用不同表示；非刚体保留共享的时间形变场。每个动态对象的高斯与形变参数跨两端共用，车端/路端的外部位姿则独立。
+
+离线空间修正选两端共同可见的静止车辆，以匈牙利匹配得到对应框，再用 L-BFGS 优化基础设施到车端的 6-DoF 修正，使框角点对齐。两端标签进入统一坐标；最多两帧的短缺口用平移线性插值、旋转 Slerp 补齐，然后在各源真实时间戳初始化轨迹。训练时联合优化高斯和两套位姿，加入平滑及早期防漂移约束。[§3.3、附录 C.1](https://arxiv.org/html/2605.07910v1#S3.SS3)
+
+### 关键公式与坐标约定
+
+以下合并原文式 1–3、附录式 9，说明真正分离的是哪一部分：
+
+$$
+\mathcal V_a^c(t)=T_a^c(t)\otimes f_t(G_a),\qquad
+\mu_n^c(t)=R_a^c(t)\bar\mu_n(t)+p_a^c(t),\qquad
+\Sigma_n^c(t)=R_a^c(t)\bar\Sigma_n(t)R_a^c(t)^\top.
+$$
+
+$a$ 是对象，$c$ 是车端或路端；$G_a$ 在对象局部坐标中定义，$f_t$ 是共享形变（刚体时为恒等）；$T_a^c=(R_a^c,p_a^c)$ 将该源时刻的对象变到世界坐标。随后另用相机外参投到该源图像。两源不是各自重建一辆完全无关的车，而是用不同状态放置同一套形状。[§3.1](https://arxiv.org/html/2605.07910v1#S3.SS1)
+
+原文定理 1 给出单一位姿的误差下界，并在附录说明姿态核的分块性：
+
+$$
+\mathcal L_{\mathrm{single}}^*\geq
+\frac{\lvert\Delta\tau\rvert^2\lVert v\rVert^2}{4}\sum_n\lambda_n,
+\qquad
+\frac{\partial\widehat I^{\mathrm{veh}}}{\partial\xi^{\mathrm{infra}}}=0,
+\quad
+\frac{\partial\widehat I^{\mathrm{infra}}}{\partial\xi^{\mathrm{veh}}}=0.
+$$
+
+$\Delta\tau$ 是时间差，$v$ 是该时间间隔内的近似恒定速度，$\lambda_n$ 是作者假定为正的渲染 Fisher 信息最小特征值，$\xi^c$ 是独立源位姿参数。下界依赖局部线性化、局部刚体/恒速和足够的几何可观测性；无运动、无时间差、完全遮挡或投影退化时不能直接沿用严格正下界。零交叉导数也只针对位姿，完整核仍包含共享 canonical 参数项。这里解释作者论证范围，不把它当作已经独立完成的数学证明审查。[式 4、附录 B.1–B.5](https://arxiv.org/html/2605.07910v1#S3.SS2)
+
+轨迹正则可按平移分量写成下式；这是对原文式 6–7 文字“3D position”的简写，避免把 SE(3) 矩阵直接当作欧氏向量插值：
+
+$$
+\mathcal L_{\mathrm{smooth}}=\frac1A\sum_a
+\left\lVert\widetilde p_i^a-[(1-w)\widetilde p_{i-1}^a+w\widetilde p_{i+1}^a]\right\rVert_2,
+\quad
+w=\frac{t_i-t_{i-1}}{t_{i+1}-t_{i-1}},
+\quad
+\mathcal L_{\mathrm{drift}}=\frac{\gamma(s)}A\sum_a\lVert\widetilde p_i^a-p_i^a\rVert_2.
+$$
+
+$A$ 是当前有有效邻帧的对象数，$p_i$ 是初始化位置，$\widetilde p_i$ 是优化位置，$s$ 是训练步，$\gamma(s)$ 线性衰减到零。前者抑制抖动，后者防止高斯尚未成形时位姿偏离；它们并不施加动力学或车辆运动学可行性。[§3.3](https://arxiv.org/html/2605.07910v1#S3.SS3)
+
+### 训练与推理
+
+RGB 使用 L1/SSIM，几何使用两端稀疏 LiDAR，另有透明度与高斯/非刚体节点正则；平滑、防漂移系数都为 0.01。背景初始约 80 万 LiDAR 点加 20 万随机点，每个动态实例至多 5,000 个初始高斯。每场景在单张 A100 上训练 30,000 次，附录给出约一小时；1080×1920 渲染约 20 FPS。[§4.1、附录 C](https://arxiv.org/html/2605.07910v1#S4.SS1)
+
+训练使用两端图像、LiDAR、协同框与时间戳；推理使用已拟合表示、目标源的轨迹和相机参数，不再需要目标图像监督。新场景需要重新优化；论文没有训练一个可以直接预测未见场景的通用模型。改变物体轨迹或新相机时，怎样获得统一物理时间下的可操纵状态还需额外定义。
 
 ## 关键图与可视化结果
 
-![图 1：单时间线表示和 DUST 双时间线表示的对比，展示异步协同观测如何导致 ghosting](https://arxiv.org/html/2605.07910v1/x1.png)
+![原论文图 1：异步车路观测在单时间线与双时间线中的状态绑定差异](https://arxiv.org/html/2605.07910v1/fig1.png)
 
-这张图是论文的核心问题定义：同一个黑车在车端和路侧观测中处于不同物理位置，单时间线会把矛盾梯度压到同一组动态 Gaussians 上。
+从中间的真实车路观测向两侧读：左边共用位姿导致车身重影，右边的蓝/黄轨迹分别对应车端与路端的状态。箭头表示梯度路径；图示支持错配机制与特定样例的改善，不能证明所有跨源梯度都不再干扰。[原图 1](https://arxiv.org/html/2605.07910v1#S1.F1)
 
-![图 2：DUST 的整体流程，包含静态 anchor pose correction、双时间线初始化和联合优化](https://arxiv.org/html/2605.07910v1/x2.png)
+![原论文图 2：静态框空间修正、双时间线场景图和位姿正则联合优化](https://arxiv.org/html/2605.07910v1/fig2.png)
 
-这张图说明方法不是简单给数据加时间戳，而是从 cooperative labels 修正、decoupled trajectories 到 regularized optimization 做完整重建管线。
+先看左下框角点对齐，再读中部共用高斯和独立旋转/平移轨迹，最后看右下初始化与优化轨迹的约束。这张图解释为何仅将时间戳拆开还不够：若初始化坐标有偏差，优化仍可用形状畸变补偿。它不是闭环协同驾驶性能图。[原图 2](https://arxiv.org/html/2605.07910v1#S3.F2)
 
 ## 实验结论与证据
 
-论文在 V2X-Seq 的 26 个序列上报告 state-of-the-art 结果，相比最强 baseline 动态区域 PSNR 提升 3.2 dB，Fréchet Video Distance 降低 37.7%，并在更大 temporal asynchrony 下保持鲁棒。这个证据链直接支撑“协同重建需要显式处理异步”的主张。
+### 设置与指标
+
+26 条 V2X-Seq 序列覆盖时段、天气与拥挤度。重建任务在全部帧训练并评估；NVS 每第十个协同时间点留出两端图像。所有基线用相同重新生成的标签、相同划分和 30,000 次迭代从头训练，避免把更好配准仅留给本文。原图分辨率 1080×1920。[§4.1](https://arxiv.org/html/2605.07910v1#S4.SS1)
+
+PSNR/SSIM 越高、LPIPS 越低越好。动态区域由 2D 框限定，包含框内背景。FVD 比较视频特征分布，越低越好；RAFT-EPE 比较生成/真实视频的估计光流，越低越好，它是估计器代理指标，不是三维轨迹真值误差。FVD 使用 16 帧片段，光流值不能解释成米。[附录 D.2](https://arxiv.org/html/2605.07910v1#A4.SS2)
+
+### 主要结果与比较
+
+| 26 序列 Full，表 1 | 动态重建 PSNR ↑ / FVD ↓ | 动态 NVS PSNR ↑ / FVD ↓ | 全图重建 PSNR ↑ |
+| --- | --- | --- | --- |
+| StreetGS | 22.54 / 103.0 | 20.01 / 214.8 | 28.88 |
+| OmniRe | 22.90 / 63.7 | 20.25 / 125.2 | 29.20 |
+| PVG | 22.91 / 131.9 | 20.09 / 262.3 | 28.97 |
+| DUST | 26.11 / 39.7 | 21.80 / 97.2 | 29.55 |
+
+DUST 对 OmniRe 的动态 NVS PSNR 增加 1.55 dB，比重建任务中的 3.21 dB 小，说明未见时间点仍更困难。全图重建差仅 0.35 dB，动态区域是主要收益位置。表 1 高拥挤分组动态重建 PSNR 为 24.49，而下面表 2 完整模型是 25.12；原文未解释两表聚合差异，因此不交叉减分。[表 1](https://arxiv.org/html/2605.07910v1#S4.T1)
+
+### 消融、鲁棒性与成本
+
+| High Crowd 消融，表 2 | 动态 PSNR ↑ | 动态 SSIM ↑ | 全图 LPIPS ↓ |
+| --- | --- | --- | --- |
+| 完整模型 | 25.12 | 0.837 | 0.125 |
+| 去掉空间位姿修正 | 23.98 | 0.821 | 0.128 |
+| 去掉双时间线 | 23.35 | 0.783 | 0.128 |
+| 去掉独立位姿 | 22.34 | 0.742 | 0.131 |
+| 去掉防漂移 | 24.99 | 0.832 | 0.126 |
+| 去掉平滑 | 24.96 | 0.833 | 0.134 |
+
+双时间线/独立位姿对动态质量的影响大于单独正则；防漂移的 PSNR 变化较小，其稳定性主张还借助选定的可视化。原文没有给出这些开关的完整配置差异或参数量匹配控制，不能把收益全部归于理论而排除增加轨迹自由度的作用。[表 2](https://arxiv.org/html/2605.07910v1#S4.T2)
+
+作者将路侧帧相对车端移动 1–3 步，测试 0–300 ms 时间差，图 4 显示 DUST 比 StreetGS 退化较慢；这仍是已知时间戳的偏移压力测试，不证明可估计未知时钟偏差。论文未报告多随机种子方差、显存或随对象数增长的训练成本。
 
 ## 应用场景与启发
 
-- 应用场景：车路协同 4D 重建、V2X 数据集重渲染、协同仿真资产生成和动态 agent 轨迹校正。
-- 方法启发：协同感知里的时间同步误差不能只在预处理层修补，表示本身也要允许多源时间线并存。
-- 讨论问题：双时间线能否进一步扩展到多车多路侧、异步 LiDAR-camera、通信延迟和动态 object tracking 的统一表示。
+- **作者主张**：用真实车路日志建立可编辑协同场景，支持数据生成和仿真。
+- **我的判断**：若正在重建异步相机/LiDAR日志，最值得借鉴的是按真实采集时间组织监督和对象状态；网络通信优化不在这篇证据范围内。
+- **待验证假设**：共享连续时间轨迹加源时钟偏差参数，可能以更少自由度达到接近双轨迹的质量，同时给仿真提供唯一世界状态；应与双轨迹在同预算下比较，不能预先断言优于本文。
 
 ## 局限与阅读风险
 
-DUST 主要解决重建层的异步观测，未直接说明重建结果如何提升下游感知、预测或规划。方法依赖 V2X-Seq 标注、静态 anchor 和源时间戳质量；真实部署中如果 pose、clock 和 object association 同时有误，双时间线可能仍需要更强的数据关联机制。
+### 作者承认的限制
+
+论文结论明确承认：对非刚体对象，异步时间带来的细粒度形状变化没有被显式解决，快速摆臂/行走仍可能模糊。双轨迹只处理整体位姿差异。[§5](https://arxiv.org/html/2605.07910v1#S5)
+
+### 理论、数据与用途的边界
+
+静态锚点需要存在且正确匹配；缺少共同静态车辆时的退化策略本次未在全文找到。定理的严格正下界依赖 Fisher 可观测性，独立位姿核不能扩大成整个模型梯度完全独立。更重要的是，两端轨迹在同一物理时刻是否一致缺少真值轨迹评测；渲染得更清楚不自动保证适合相互作用仿真。本文也没有下游检测或闭环驾驶提升数字。
 
 ## 后续跟进
 
-- 检查代码、V2X-Seq 处理脚本和时间偏移设置是否开放。
-- 和 Real2Sim、PointForward 对照：一个强调协同异步，一个强调物理可编辑，一个强调 feedforward 速度。
-- 记录它的理论证明，后续做协同 4DGS 时可以作为异步误差下界依据。
+### 最小验证与停止条件
+
+- **当前资源（2026-09-12）**：V2X-Seq 数据入口和全文可访问；本次搜索出现的[匿名代码地址](https://anonymous.4open.science/r/DUST-6A55)无法读取，仓库内容、配置和权重均未核实，不标为已可复现。需先取得对应版本实现及原始两端时间戳。
+- **最小实验**：固定一个多移动车场景、统一标定修正和初始化，用单轨迹、双轨迹、连续轨迹加时钟偏差三个配置；注入 0/100/200/300 ms 偏移，固定训练迭代、高斯数量和随机种子，测动态 NVS PSNR、RAFT-EPE、独立目标轨迹误差、两源同刻位姿差与显存。
+- **成功信号**：双轨迹在偏移增大时降低动态误差，而且两源同一时间的轨迹保持物理一致；连续轨迹候选若用更少参数达到近似质量，才支持替代假设。
+- **停止/转向条件**：只有训练视图变好、留出时间点退化，或两源轨迹明显分叉；此时应转向时钟/轨迹可辨识性，而非继续提高渲染网络容量。
+
+### 来源与核验记录
+
+报告固定于 arXiv:2605.07910v1（2026-05-08）的全文，2026-09-12 核对 §3–5、附录 B–D、式 1–8 与 37–42、表 1–2，逐张打开图 1、2；相关比较来自 Street Gaussians 与 CRUISE 自身原文。当前 arXiv 入口已显示 v2（2026-05-11），本文数字仍明确引用 v1，不混合版本。单位来自固定版本作者区；没有运行模型或证明检查程序，也没有宣称完成实验复现。

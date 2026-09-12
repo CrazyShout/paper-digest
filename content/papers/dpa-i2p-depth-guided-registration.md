@@ -2,68 +2,117 @@
 {
   "id": "dpa-i2p-depth-guided-registration",
   "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction"],
+  "tags": [
+    "3d-reconstruction"
+  ],
   "title": "DPA-I2P: Depth-Guided Projective Alignment for Image-to-Point-Cloud Registration in Autonomous Driving",
-  "source": "arXiv:2608.26589 / https://arxiv.org/abs/2608.26589 / PDF: https://arxiv.org/pdf/2608.26589",
-  "authors": ["Wenxin Zhang", "Hang Li", "Zhiwei Xu", "Qiankun Dong", "Gang Wang", "Tao Li"],
-  "affiliations": ["Nankai University", "Haihe Laboratory of Information Technology Application Innovation"],
-  "comment": "DPA-I2P 用 frozen metric depth、相机射线和 coarse-pose projection 同时约束图像与点云特征，再在早期剪掉无投影支撑的 correspondence queries。KITTI 注册误差明显下降；nuScenes 表值由作者报告但协议披露不足，在线耗时也未计 UniDepthV2 预计算。"
+  "source": "arXiv:2608.26589v1 / https://arxiv.org/abs/2608.26589v1",
+  "authors": [
+    "Wenxin Zhang",
+    "Hang Li",
+    "Zhiwei Xu",
+    "Qiankun Dong",
+    "Gang Wang",
+    "Tao Li"
+  ],
+  "affiliations": [
+    "Nankai University",
+    "Haihe Laboratory of Information Technology Application Innovation"
+  ],
+  "comment": "以冻结度量深度构造相机射线特征，再用粗位姿投影增强点特征和限制早期匹配；KITTI 定位误差降低，但深度预计算不在所报延迟内。"
 }
 ---
 
 ## 一句话定位
 
-DPA-I2P 解决的是单张图像在大规模道路点云中的 6-DoF pose registration。它没有把 monocular depth 当作额外通道简单拼接，而是把 metric depth、pixel ray、coarse projection 和 confidence 组织成两个方向的几何对齐，再只在 early refinement 删除没有投影支撑的 query；论文最有价值的结论是“几何先验必须进入 correspondence 生成机制”，而不是“再加一个 depth model 就会更准”。
+DPA-I2P 用度量深度、相机射线和粗位姿投影提高单图像到点云的对应质量，在 KITTI 合成误配协议上改善 6-DoF 定位；它处理的是配准，没有验证连续 SLAM 或下游驾驶收益。
 
 ## 论文要解决的问题
 
-图像特征密集且受纹理、光照影响，LiDAR 特征稀疏但保留三维结构。implicit correspondence methods 虽能端到端学习 2D-3D 匹配，初期 query 仍容易在重复纹理、弱纹理和稀疏区域建立错误关联，错误会被后续 pose refinement 放大。
+### 图像纹理与稀疏几何怎样对应
 
-直接拼接单目深度只给每个 pixel 一个标量，既没有相机射线方向，也没有说明 coarse pose 下某个 3D point 应该落到哪一块 image feature plane。论文因此把问题拆成 image-side metric geometry、point-side visual grounding 和 query-side support filtering 三个子问题。
+输入为同一场景 RGB、点云和相机内参，输出将点云与图像对齐的旋转、平移。重复纹理和弱纹理下，图像特征缺少尺度，点特征缺少视觉语义；错误对应还会污染后续精修。作者先学粗位姿，再用两侧几何约束辅助查询，依赖粗投影仍有一定支撑。[v1，§III](https://arxiv.org/html/2608.26589v1#S3)
+
+### 两个直接前身
+
+[ICLI2P 原版 CVPR 2025，§3](https://openaccess.thecvf.com/content/CVPR2025/papers/Li_Implicit_Correspondence_Learning_for_Image-to-Point_Cloud_Registration_CVPR_2025_paper.pdf)用视锥筛重叠、交替图像/点注意力生成对应，再以 MLP 回归位姿残差；不能照本文相关工作概括，把它写成概率 PnP。[UniDepthV2 自身 §III、原图 5](https://arxiv.org/html/2502.20110v1#S3)预测相机射线、度量深度与误差不确定性，置信度由不确定性的逆得到。DPA-I2P 使用这个冻结先验增强配准，不重新训练深度估计器。
 
 ## 方法和系统设计
 
-- RMDE 使用 frozen UniDepthV2 预先生成 metric depth 与 confidence。每个 pixel 沿相机射线均匀采样局部 3D points，编码 ray direction、depth、surface point 与 confidence，再聚合回 image token，避免 raw-depth concatenation 丢失相机几何。
-- PVL 用 coarse pose 与 intrinsics 把 3D points 投影到多尺度 image feature plane，收集局部视觉特征并用 projection validity 与 confidence 调制 point features；无效投影不会被当成可靠视觉证据。
-- CQP 从 coarse projection 构造 support heatmap，给 early-stage correspondence queries 加 support prior 并剪掉不可靠查询。论文只在前两层使用 pruning，因为 all-stage pruning 会限制后期局部修正。
-- 图像 backbone 为 ResNet-FPN，点云 backbone 为 KPFCNN；128 个 correspondence queries 经三层 refinement 和 differentiable probabilistic PnP 输出最终 pose。模型在单张 RTX 4090 上训练 40 epochs。
+### RMDE：在相机坐标中编码深度邻域
+
+在每个特征尺度调整内参，令 $\tilde d_i=[(u_i-c_x)/f_x,(v_i-c_y)/f_y,1]^\top$。简写式 (3)–(5)：
+
+$$
+s_i=s_{\min}+(s_{\max}-s_{\min})(1-\bar C_i),\qquad
+z_{ik}=\max(D_i+\rho_k s_i,\epsilon),\qquad p_{ik}=z_{ik}\tilde d_i.
+$$
+
+$D_i$ 是米制相机深度，$\rho_k\in[-1,1]$ 是固定采样偏移，$\epsilon$ 避免非正深度，$\bar C_i$ 越大表示越可靠，因此采样区间越窄。这里乘的是末维为 1 的射线，$z$ 是相机轴向深度，不能误用欧氏射程乘单位射线。三维点、单位方向、对数深度偏移与置信度经位置编码、加权汇聚和残差门控注入图像特征。[§III-B，式 (1)–(14)](https://arxiv.org/html/2608.26589v1#S3.SS2)
+
+### PVL 和 CQP：投影约束只在早期使用
+
+PVL 根据粗位姿把点投到特征图，取中心格特征，经映射得到 $\bar z_i$。式 (16) 为：
+
+$$
+\hat f_{P,i}=f_{P,i}+\delta m_i\bigl(\tanh(w)\odot\bar z_i\bigr).
+$$
+
+$m_i$ 是投影有效性，$\delta$ 表示启用阶段，$w$ 是可学习通道权重。该式直接使用有界残差与有效性门控，没有额外的深度置信度乘子；无效投影保持原点特征。[§III-C](https://arxiv.org/html/2608.26589v1#S3.SS3)
+
+CQP 将有效投影叠加为高斯支撑图 $S(x)$，式 (20) 把 $\beta\log(S+\epsilon)$ 加入查询与图像 token 的相似度，再屏蔽极低支撑位置。其作用是限制候选落点；原文没有完整交代如何将空间 mask 转成查询删除操作。RMDE 用全部四尺度，PVL/CQP 只用前三层精修中的前两层，避免后期被粗先验锁死。[§III-D](https://arxiv.org/html/2608.26589v1#S3.SS4)
+
+### 训练与推理
+
+ResNet-FPN、KPFCNN 输出 128 维特征，128 个对应查询精修三层，原图 2 标注末端为 Differentiable PnP。先训练粗分支，再用 GT 位姿的平移 L1、旋转测地距离及早期支撑 KL 正则端到端优化；UniDepthV2 深度与置信度离线预计算。单 RTX 4090、batch=4、40 epochs。部署同样需要深度先验，不能把训练时冻结解释为推理免费。[§III-E、§IV-A](https://arxiv.org/html/2608.26589v1#S4.SS1)
 
 ## 关键图与可视化结果
 
-![图 1：DPA-I2P 从 metric-depth image encoding、projection-consistent point lifting 到 query pruning 的完整架构](../../assets/papers/dpa-i2p-depth-guided-registration-figure-1.png)
+### 原图 2：从先验到位姿
 
-Figure 2 展示三个模块不是平行插件：RMDE 先让 image features 具有 metric/ray geometry，PVL 再用 coarse pose 把视觉证据送入 point features，CQP 则利用同一 projection support 约束 correspondence exploration。最终 PnP 消费的是经过双向几何校正的 cross-modal queries。
+![原图 2：RMDE、PVL、CQP 和可微 PnP 的数据流](https://arxiv.org/html/2608.26589v1/overview_new.png)
 
-![图 2：官方 Figure 5 中一组 2D-3D correspondence 可视化，绿色连线表示正确匹配](../../assets/papers/dpa-i2p-depth-guided-registration-figure-2.png)
+左侧区分冻结深度与两种主干，中间是图像和点特征增强，右侧是支撑约束与位姿输出。图中没有提供 PnP 的具体求解设置。
 
-这张官方 panel 让匹配误差具备可读性：彩色点云与道路图像结构对齐，绿色线显示 query 找到的 2D-3D 对应。它支持“对应关系更干净”的机制解释，但单个成功案例不能替代遮挡、恶劣天气、弱纹理和初始 pose 大误差下的 failure-rate 曲线。
+### 原图 5：保留全部四个例子
+
+![原图 5：四组 2D–3D 对应与配准误差](../../assets/papers/dpa-i2p-depth-guided-registration-v1-original-figure-5.png)
+
+绿色线是作者标记的正确对应，每组附 RTE/RRE。四个成功样例支持对应可视化，不给出低重叠或深度失效时的成功率。
 
 ## 实验结论与证据
 
-KITTI 按序列 0-8 训练、9-10 测试，输入为 `160x512` 图像和 40,960 个点；合成初始误配包含地面平移 `+/-10 m` 与 up-axis rotation。DPA-I2P 的 RTE/RRE/Acc 为 `0.11+/-0.12 m / 0.55+/-0.67 deg / 99.70%`，最强 implicit baseline ICLI2P 为 `0.20+/-0.21 m / 1.24+/-2.34 deg / 97.49%`。相对该对照，平均 RTE 和 RRE 分别下降约 45.0% 与 55.6%。
+### KITTI 主表及跨数据集边界
 
-作者在 Table I 为 nuScenes 报告 `0.54+/-0.37 m / 1.92+/-3.81 deg / 92.02%`，ICLI2P 为 `0.63+/-0.44 m / 2.13+/-3.75 deg / 90.94%`，并说明使用 150 个官方 test scenes、累积相邻帧点云提高密度。不过正文把这一部分称为 qualitative evaluation，没有交代是否训练或微调、初始 pose perturbation、实际 image-point pairs 数量，也没有重新定义 nuScenes 的 Acc threshold。因此这些数字只能视为作者报告的 cross-dataset table values，不能视为已具备完整可复现协议的独立量化验证。
+KITTI 0–8 序列训练、9–10 测试，160×512 图像、40,960 点；初始扰动为地面 ±10 m 平移及不限制范围的竖直轴旋转。RTE 为平移误差（m），RRE 为旋转误差（°）；Acc 要同时满足 RTE<2 m、RRE<5°。[§IV-B、表 I](https://arxiv.org/html/2608.26589v1#S4.SS2)
 
-消融中，移除 PVL 后 RRE 从 0.55 deg 升到 0.74 deg；移除 CQP 后 RTE 从 0.11 m 升到 0.18 m、Acc 降到 98.82%。raw depth concatenation 的 Acc 只有 99.63%，完整 RMDE 为 99.70%，说明主要收益来自 ray-aware structured encoding 而非 depth scalar 本身。early-only pruning 最优；all-stage pruning 的 RTE/RRE 为 0.14 m/0.66 deg，反而限制后期修正。
+| KITTI 方法 | RTE，越低越好 | RRE，越低越好 | Acc，越高越好 |
+| --- | --- | --- | --- |
+| ICLI2P | 0.20±0.21 m | 1.24±2.34° | 97.49% |
+| DPA-I2P | 0.11±0.12 m | 0.55±0.67° | 99.70% |
 
-网络推理在 RTX 4090 上为 36.81 ms、11.15 GB，ICLI2P 为 35.12 ms、10.74 GB；但 36.81 ms 不包含 UniDepthV2 depth/confidence 预计算，因此不能直接作为在线端到端 latency。
+均值相对下降 45.0%/55.6%，Acc 增加 2.21 个百分点；表中 ± 未明确其统计定义，不能当多种子置信区间。nuScenes 表 I 从 ICLI2P 的 0.63 m/2.13°/90.94% 到 0.54 m/1.92°/92.02%，但正文称“qualitative”，采用作者所称 150 test scenes 和相邻帧累积点云，训练/微调、配对数量和扰动协议披露不足。
+
+### 消融与成本
+
+表 II 去掉 RMDE/PVL/CQP 的 RRE 为 0.58°/0.74°/0.65°，完整为 0.55°；去 CQP 的 RTE 为 0.18 m。表 III 直接拼深度与完整 RMDE 的 Acc 为 99.63%/99.70%，只是 0.07 个百分点差；未报告重复试验，不能据此认定每项细设计独立显著。表 IV 全程剪枝 RTE/RRE 为 0.14 m/0.66°，弱于只剪早期。
+
+表 V 在 RTX 4090、batch=4 下按图点对平均：ICLI2P 35.12 ms、10.74 GB，DPA-I2P 36.81 ms、11.15 GB。两者网络大小为 175.92/179.93 MB，不是参数个数；DPA 的深度计算未计入延迟。[§IV-D/E](https://arxiv.org/html/2608.26589v1#S4.SS4)
 
 ## 应用场景与启发
 
-- 应用场景：跨季节地图重定位、camera-LiDAR extrinsic recovery、道路数字孪生对齐和 reconstruction map 的在线定位入口。
-- 方法启发：跨模态融合前先明确几何可见性与投影支持，避免让 attention 自行从所有 token 中学习物理可达关系。
-- 雷达启发：把 PVL 的 point support 扩展成 range-azimuth-elevation-Doppler support，用速度与不确定性决定哪些 camera/radar tokens 可以形成 occupancy correspondence。
-- 讨论问题：如果 depth prior 在雨雾或新相机内参下系统性偏移，support pruning 会抑制错误匹配，还是会把正确但低置信的 query 一起删除？
+### 待验证的几何可靠性假设
+
+本报告判断：最值得迁移的是早期使用投影支撑、后期放松约束的策略。待验证假设是它仅在粗投影具有足够支撑召回时有效；粗位姿误差可能把正确对应排除。深度尺度错误主要先影响 RMDE 特征，不直接定义 CQP 的点投影支撑，因此应单独测试两条路径，现有平均误差没有回答这一点。
 
 ## 局限与阅读风险
 
-核心 metric depth 由 frozen UniDepthV2 离线预计算，论文没有把它的运行时间计入 online latency，也没有比较 depth failure 对最终 pose 的敏感性。KITTI quantitative test 只含两个序列，初始 misregistration 是合成分布；没有按天气、昼夜、点云稀疏度、calibration drift 或 overlap 分桶。
+### 接口和评价仍有缺口
 
-nuScenes 使用相邻帧累积点云，和真实低延迟单帧定位的观测条件不同；其训练/微调、初始化扰动、pair sampling 和 metric protocol 也未完整披露。论文只评价 registration error，没有 SLAM drift、地图维护成本、定位丢失率或下游规划收益。当前只有 arXiv v1，未找到官方代码、checkpoint、训练 split manifest 或预计算 depth 资产。
+2026-09-12 [官方记录](https://arxiv.org/abs/2608.26589v1)未核实本模型代码、配置、检查点或预计算资产入口。深度置信度的 Norm、采样半径、剪枝阈值及 PnP 细节不充分；尤其需核对 UniDepthV2 的不确定性到“越大越可靠”置信度的转换。外部 ICLI2P 当前仓库已扩展为 ICL++，复现主表不能默认使用最新分支。[官方基线仓库](https://github.com/XinjunLi-ustc/ICL-I2PReg)
 
 ## 后续跟进
 
-- 复现 `ICLI2P -> +RMDE -> +PVL -> +CQP` 四级链路，并把 UniDepthV2 wall-clock 纳入端到端 latency。
-- 对深度尺度偏差、相机内参误差、粗 pose 偏差和点云 drop rate 做二维 sweep，绘制 query pruning 的失效边界。
-- 在雨夜和动态对象占比高的序列上分离 static-map registration 与 moving-object contamination。
-- 把 registration confidence 接到 localization fallback，评价误差检测与恢复时间，而不只看成功样本均值。
+### 一个固定初始误差的对照
+
+前提是取得原版基线和 DPA 配置、深度/置信度转换及测试 pair 列表。固定三组的主干初始化、训练步数与数据，比较无 CQP、早期 CQP、全程 CQP；对每个测试对在同一粗位姿上施加预设的相同平移/旋转偏差，按扰动后的投影支撑召回分层，且三组使用完全相同的扰动。另做独立深度尺度偏差试验，保持粗位姿与点云不变，不将深度误差直接归因为支撑图剪枝。记录 Acc、尾部 RTE/RRE、正确对应保留率，并计入深度的完整延迟。成功需早期 CQP 在正常与轻度偏差下均改善成功率；若低支撑组持续删除正确匹配，则停止推广剪枝，改用软支撑或回退机制。

@@ -4,7 +4,7 @@
   "tag": "world-models",
   "tags": ["world-models", "end-to-end-autonomous-driving"],
   "title": "DA-WAM: Decision-Aligned Future Latents for Driving World Models",
-  "source": "arXiv:2608.19085 / https://arxiv.org/abs/2608.19085 / HTML: https://arxiv.org/html/2608.19085 / Repository (release pending): https://github.com/LeapWM/da-wam",
+  "source": "arXiv:2608.19085 / https://arxiv.org/abs/2608.19085 / HTML: https://arxiv.org/html/2608.19085v2 / Repository (release pending): https://github.com/LeapWM/da-wam",
   "authors": ["Ruiguo Zhong", "Benshan Ma", "Xiaolong Chen", "Lang Zhang", "Mingyue Feng", "Yaonong Wang", "Pei Liu", "Jun Ma"],
   "affiliations": ["The Hong Kong University of Science and Technology (Guangzhou)", "Leapmotor", "The Hong Kong University of Science and Technology"],
   "comment": "DA-WAM 为每条候选轨迹预测独立未来 latent，并让该未来直接参与同一候选的因子化评分；在 NAVSIM-v1/v2 达到 93.7 PDMS 和 87.7 EPDMS，重点价值是修复世界模型预测与规划决策之间的接口错配。"
@@ -13,50 +13,163 @@
 
 ## 一句话定位
 
-DA-WAM 不把“预测一个看起来合理的未来”当作世界模型服务规划的充分条件，而要求每条候选轨迹都对应自己的未来 latent，并由同一个 scorer 读取当前场景、候选动作和该动作后果。它把世界模型的价值落到候选排序边界，而不是用未来预测做一个与决策松耦合的辅助损失。
+DA-WAM 研究的是：世界模型预测出的未来，怎样真正帮助自动驾驶选择轨迹。它让每条候选轨迹拥有对应的未来特征，再用这些特征给同一条轨迹评分；值得读的是预测、监督与决策之间的具体连接方式。
+
+- **核心证据**：在 NAVSIM-v1 的匹配消融中，逐候选未来比不预测未来高 0.15 PDMS 分，加入难负样本后总共高 0.37 分。这里的价值主要体现在机制对照，来源为原论文表 3。
+- **主要边界**：只有最接近专家轨迹的候选有真实未来特征监督，其余候选的未来是否准确没有直接真值验证。规划分数提高，还不足以证明它学会了可靠的反事实预测。
 
 ## 论文要解决的问题
 
-现有 driving world model 常在预训练阶段学习未来表示，规划阶段冻结或弱耦合；另一类方法虽把预测接到 planner，却让多条候选共享一个未来。前者会让 latent 无法适应具体决策目标，后者则造成 action-consequence mismatch：不同轨迹被同一场景未来评分，模型可能仍主要依赖轨迹几何，而非碰撞、越界和交通规则等候选特定后果。
+### 问题与假设
 
-离线日志只记录 expert 实际执行后的未来，不可能为所有反事实候选提供真值。论文因此必须同时解决“每个候选都有未来”与“只有一条候选有观察监督”的矛盾。
+设想车辆可以选择左转、直行或减速。如果先预测一个全局未来，再让所有候选读取同一组未来特征，评分器就不容易区分“采取不同动作会发生什么”。另一方面，若世界模型只在训练时提供辅助损失、推理时被移除，规划器也没有显式比较候选后果的接口。
+
+DA-WAM 试图把未来预测接入候选评分。但离线驾驶日志只记录专家实际执行的轨迹及其后续画面，没有同时记录另外几十种动作的结果。因此，论文既要为每条候选构造未来，又不能把同一个已观察未来当成所有候选的真值。这是方法设计的核心约束。[原文 §3.1](https://arxiv.org/html/2608.19085v2#S3.SS1)
+
+### 相关工作与差异
+
+下面比较的是已打开原文核对的机制，不能据此宣称全领域“首次”。
+
+| 工作与一手来源 | 已有机制 | DA-WAM 的具体差异 |
+| --- | --- | --- |
+| Zheng 等，World4Drive，ICCV 2025（[正式版](https://openaccess.thecvf.com/content/ICCV2025/html/Zheng_World4Drive_End-to-End_Autonomous_Driving_via_Intention-aware_Physical_Latent_World_Model_ICCV_2025_paper.html)；[方法 §3.3](https://arxiv.org/html/2507.00603v1#S3.SS3)） | 已为多种意图生成各自轨迹和未来 latent；用与观测未来最接近的模态标签训练 ScoreNet。 | 变化应落在监督和评分目标：用规划因子、效用和排序标签训练逐候选评分，并限制真实未来特征监督的对象。不能说此前方法全都共享一个未来。 |
+| Wang 等，Latent-WAM，2026 预印本（[§3.5](https://arxiv.org/html/2603.24581v1#S3.SS5)） | 训练时联合学习视觉表示与潜在动力学；推理只保留空间编码器和轨迹解码器。 | DA-WAM 在推理时保留逐候选未来预测，使其输出直接参与候选排序。是否值得额外计算，需要结合时延与规划增益判断。 |
+| Wang 等，BeyondDrive，2026 预印本（[原文](https://arxiv.org/html/2605.19771v1)） | 生成几何上接近专家、但不安全的轨迹，用排斥损失改变规划器的学习。 | DA-WAM 检索难负样本，加入规划因子、效用及排序监督，并为这些候选预测未来特征。难负样本本身已有先例。 |
 
 ## 方法和系统设计
 
-- 在线视觉编码器由 V-JEPA 2.1 初始化并通过 LoRA 适配，EMA target encoder 从实际未来帧提取稳定 latent，使预测监督在 planner 优化中持续存在。
-- proposal module 生成 32 条候选、每条 8 个 future ego pose；predictor 为每条候选预测 0.5 秒后的独立 future latent。
-- factorized scorer 联合读取当前 latent、trajectory action 与对应未来，预测可解释 planning factors 和总体 utility。
-- 只对 expert-matched candidate 使用观察未来做 JEPA 监督；另检索几何接近 expert、但 NC/DAC/TTC 结果更差的 hard negatives，迫使 scorer 学习安全边界而不是几何近似。
+### 输入输出与流程
+
+**输入**是前视相机的两个历史帧；proposal 模块生成 32 条候选轨迹，每条由 8 个未来自车位姿组成。世界模型预测的是 0.5 秒后的潜在特征，不是未来 RGB 视频；8 个位姿的间隔在本文实现说明中没有明确给出，不能直接换算成已核实的规划时长。[原文 §4.1](https://arxiv.org/html/2608.19085v2#S4.SS1)
+
+- **编码场景**：V-JEPA 2.1 初始化的视觉编码器把当前观测变成场景 token；基础权重冻结，通过 LoRA 更新适配参数。
+- **编码动作**：把每条候选的位姿序列转成动作表示，让“如何行驶”进入未来预测。
+- **预测后果**：共享 predictor 用动作表示查询场景 token，生成该候选自己的未来 latent。共享参数不等于共享预测结果。
+- **评估候选**：共享 scorer 读取当前场景、动作与对应未来，先预测碰撞、道路合规、进展、碰撞时间和舒适性等因子，再输出综合效用。
+- **输出轨迹**：选择预测效用最高的候选。它仍受 proposal 集合限制；如果没有生成合适的轨迹，评分器无法从集合外创造一条。
+
+### 关键公式与直觉
+
+先用一组简写表示推理的数据流，对应原文式 1、4–5、8–10 和 17。这里把评分内部的因子化分支合并记作 $S_\psi$，没有新增模型假设：
+
+$$
+\begin{aligned}
+Z_t &= E_\theta(X_t), \quad a_i=E_\tau(\tau_i),\\
+\widehat Z_i &= P_\phi(Z_t,a_i),\\
+\widehat s_i &= S_\psi(Z_t,a_i,\widehat Z_i),\\
+\tau^\star &= \arg\max_{\tau_i\in\mathcal T}\widehat s_i.
+\end{aligned}
+$$
+
+$X_t$ 是当前视觉输入，$Z_t$ 是场景 token，$\tau_i$ 是第 $i$ 条候选轨迹，$a_i$ 是它的动作表示，$\widehat Z_i$ 是它对应的预测未来，$\widehat s_i$ 是预测评分。关键在于：给左转轨迹评分时，读取的是左转条件下的未来，而不是所有动作共用的向量。[原文 §3](https://arxiv.org/html/2608.19085v2#S3)
+
+真实未来监督的使用方式更值得注意。原文式 6–7 先按平均位移误差（ADE）找到最接近专家的候选，再仅对它计算特征预测损失：
+
+$$
+\begin{aligned}
+i^{\mathrm{exp}} &= \arg\min_i\operatorname{ADE}(\tau_i,\tau^{\mathrm{exp}}),\\
+\mathcal L_{\mathrm{pred}} &= \frac{1}{M}\sum_{m=1}^{M}\ell\bigl(\widehat Z_{i^{\mathrm{exp}},m},Z_{t+\Delta,m}\bigr).
+\end{aligned}
+$$
+
+$\tau^{\mathrm{exp}}$ 是日志中的专家轨迹，$M$ 是 token 数量，$\ell$ 是特征回归损失。目标 $Z_{t+\Delta}$ 来自 EMA 目标编码器对实际未来画面的编码，并停止梯度传播。其余候选没有对应的真实未来特征，只通过规划评分等损失间接学习。还需留意：最接近专家也不一定与专家完全相同，这种匹配本身仍是一种近似。[原文 §3.3，式 6–7](https://arxiv.org/html/2608.19085v2#S3.SS3)
+
+总目标将预测损失与三个规划目标相加，下面只是将原文式 16 分行：
+
+$$
+\begin{aligned}
+\mathcal L={}&\lambda_{\mathrm{pred}}\mathcal L_{\mathrm{pred}}
++\lambda_{\mathrm{factor}}\mathcal L_{\mathrm{factor}}\\
+&+\lambda_{\mathrm{score}}\mathcal L_{\mathrm{score}}
++\lambda_{\mathrm{rank}}\mathcal L_{\mathrm{rank}}.
+\end{aligned}
+$$
+
+四项依次约束未来特征、可解释规划因子、综合效用和候选之间的相对排序。后面三项可覆盖所有候选；其标签来自规则或仿真评估的规划指标，不等于观察到了所有候选真正发生后的未来。各项权重 $\lambda$ 的具体数值未在本次检查的正文和附录中找到。[原文 §3.5，式 12–16](https://arxiv.org/html/2608.19085v2#S3.SS5)
+
+### 训练与推理
+
+训练时，从离线轨迹库检索几何上接近专家、但 NC/DAC/TTC 等安全指标更差的难负样本；这些样本参与评分与排序监督，不参与专家匹配和真实未来特征监督。这样可以迫使评分器分辨“看起来很像专家，但后果不同”的候选。[原文 §3.4](https://arxiv.org/html/2608.19085v2#S3.SS4)
+
+推理时保留在线编码器、未来预测器和评分器，移除 EMA 目标编码器、专家匹配和难负样本检索，因此不需要未来画面或专家轨迹。移除训练分支并不自动意味着推理足够快；论文没有给出可用于部署判断的端到端时延测量。
 
 ## 关键图与可视化结果
 
-![图 1：从无未来、单轨迹未来、共享未来到候选独立未来的接口对比](https://arxiv.org/html/2608.19085v2/Figures/pipeline_compare.png)
+![原论文图 1：无未来、单轨迹未来、共享未来与逐候选未来的接口对照](https://arxiv.org/html/2608.19085v2/Figures/pipeline_compare.png)
 
-图 1 是论文最关键的概念图：真正的变化不是是否拥有 future feature，而是预测和动作是否一一对应。它也揭示监督空缺：非 expert 候选的未来没有真实观测，因此 action-conditioned latent 的反事实正确性仍需额外验证。
+先看每个示意图中候选轨迹与未来表示之间的连线，再看这些信息是否进入评分。图中逐候选连接对应上式的 $\widehat Z_i$，解释的是本文要研究的接口；它不是穷尽相关工作的分类，也不证明图中各类一定存在性能高低关系。[原图与图注](https://arxiv.org/html/2608.19085v2#S1.F1)
 
-![图 2：相机、BEV 候选轨迹和逐场景规划分数的定性对比](https://arxiv.org/html/2608.19085v2/camera_bev_score_comparison_32.png)
+![原论文图 4：大角度左转、密集交通和让行冲突中的轨迹及评分对照](https://arxiv.org/html/2608.19085v2/camera_bev_score_comparison_32.png)
 
-图 2 展示左转、密集交通与让行冲突中，DA-WAM 选择的轨迹避免了基线的 NC/TTC 失败。它支持 candidate ranking 的实际作用，但仍来自 NAVSIM 评价管线，不是可反应交通中的真实闭环 rollout。
+按列看三个场景，再从相机画面向下读 BEV 轨迹和分数。蓝、橙、绿分别是 DiffusionDrive、DrivoR 和 DA-WAM，虚线是专家轨迹。左转样例体现行驶进展，后两个样例中 DA-WAM 避免了基线的 NC/TTC 失分。三个选定样例能够解释指标变化，但不能替代全量统计，也不能单凭静态图认定完成了交互式或实车闭环测试。[原图与图注](https://arxiv.org/html/2608.19085v2#S4.F4)
 
 ## 实验结论与证据
 
-主要评测使用 NAVSIM-v1 navtest 的 12,146 个场景，并在 NAVSIM-v2 扩展指标下复核。DA-WAM 在 v1 达到 93.7 PDMS，其中 NC 99.1、DAC 98.9、EP 90.0；相对最强已列 learned planner DriveSuprim 的 93.5 只高 0.2 分。NAVSIM-v2 达到 87.7 EPDMS，较列出的 DiffusionDriveV2 87.5 同样领先 0.2 分，优势应理解为接近饱和区间的窄幅提升，而非数量级突破。
+### 设置与指标
 
-匹配消融更能支撑机制：无未来 93.31、共享全局未来 92.81、current latent 93.25、action-conditioned future 93.46，加入 hard negative 后为 93.68。候选数从 1、8、16 到 32 时 PDMS 从 87.11、90.76、91.89 到 93.68，64 条不再改善。LoRA+dense objective+EMA target 也优于 frozen/shared 等变体，说明训练时持续对齐和候选专属后果都贡献收益。
+主评测是 NAVSIM-v1 的 navtest，含 12,146 个场景；另在 NAVSIM-v2 navtest 报告 EPDMS。本文主要 v1 变体训练 20 个 epoch，使用 8 张 GPU，每卡 batch size 为 8，按验证性能选择 checkpoint。[原文 §4.1](https://arxiv.org/html/2608.19085v2#S4.SS1)
+
+两个版本的评测范围要分开理解：[NAVSIM v1](https://arxiv.org/abs/2406.15349)使用日志回放的非反应式交通；[v2 的评测论文 §3](https://arxiv.org/html/2506.04218v3#S3)则引入双阶段伪仿真，并让背景车辆通过 IDM 规则响应自车，其他参与者仍沿日志运动。DA-WAM 报告的是 v2 navtest/EPDMS，没有充分展开双阶段评测的执行细节，因此不能直接认定它验证了完整双阶段协议，更不能等同于真实道路的交互安全性。
+
+PDMS 是综合规划指标，NC 测无责任碰撞，DAC 测可行驶区域合规，EP 测自车行驶进展，TTC 测碰撞时间相关安全性，Comfort 测舒适性。v2 的 EPDMS 扩展了合规维度，应与 v1 分开比较。下列分数均按论文乘以 100，数值越高越好；它们不是实际道路事故概率或通用“准确率”。
+
+### 主要结果与比较
+
+摘录原文表 1–2 中与判断最相关的行。表中的方法不是统一训练重跑，尤其 v2 的两个最高列出结果使用不同视觉骨干。
+
+| 评测与来源 | 方法 | 综合分数 ↑ | 比较条件 |
+| --- | --- | ---: | --- |
+| NAVSIM-v1，[表 1](https://arxiv.org/html/2608.19085v2#S4.T1) | DriveSuprim | 93.5 PDMS | 相机输入；训练配方未与本文统一 |
+| NAVSIM-v1，表 1 | DA-WAM | 93.7 PDMS | 相比上行高 0.2 分 |
+| NAVSIM-v2，[表 2](https://arxiv.org/html/2608.19085v2#S4.T2) | DiffusionDriveV2 | 87.5 EPDMS | ResNet-34 骨干 |
+| NAVSIM-v2，表 2 | DA-WAM | 87.7 EPDMS | ViT/L 骨干；相比上行高 0.2 分 |
+
+**我的判断**：这是相对于本文列出方法的小幅领先，不能全部归因于候选未来机制，也不能写成当前全领域最好。例如直接相关的 Latent-WAM 在其[原文表 1](https://arxiv.org/html/2603.24581v1#S4.T1)报告 89.3 EPDMS，而 DA-WAM 的比较表没有覆盖它；二者监督、训练与实现条件不同，数字排序也不能代替匹配实验。
+
+### 消融与证据边界
+
+表 3 更适合回答“未来是否在帮助选择”。作者称这些变体固定训练数据、初始化、proposal、训练计划、checkpoint 选择与评测协议。下面的差值由原表数值相减得到，单位是分，并非相对百分比。
+
+| NAVSIM-v1 配置 | PDMS ↑ | 相对无未来 | EP ↑ |
+| --- | ---: | ---: | ---: |
+| 不预测未来 | 93.31 | 0.00 | 91.36 |
+| 所有候选共享未来 | 92.81 | −0.50 | 88.68 |
+| 用当前 latent 作为条件 | 93.25 | −0.06 | 91.38 |
+| 逐候选未来，无难负样本 | 93.46 | +0.15 | 90.47 |
+| 逐候选未来，加难负样本 | 93.68 | +0.37 | 89.97 |
+
+[原文表 3](https://arxiv.org/html/2608.19085v2#S4.T3)显示：增加当前特征通路没有明显收益；逐候选未来在这组设置中优于共享未来；再加难负样本提高 0.22 分。但 EP 同时从无未来的 91.36 降至完整配置的 89.97，说明综合分改善伴随进展指标的代价，不能概括成每个维度都变好。
+
+另外两组消融提供补充证据。[表 4](https://arxiv.org/html/2608.19085v2#S4.T4)中，固定 LoRA 和 dense loss 后，目标编码器由 frozen 改为 EMA，PDMS 从 92.98 到 93.68；[表 5](https://arxiv.org/html/2608.19085v2#S4.T5)中，候选数从 1、8、16、32 增至 64，PDMS 依次为 87.11、90.76、91.89、93.68、93.68。候选覆盖本身会明显改变结果，所以比较世界模型前要先固定候选集合。
+
+这些实验支持“这一训练和评分设计在该协议下有用”，尚未证明非专家候选的未来语义准确。本文也没有报告重复种子的方差或置信区间，不能把 0.15 或 0.22 分称为已验证的统计显著提升。
 
 ## 应用场景与启发
 
-- 应用场景：基于 proposal 的端到端规划、world-action model、候选风险评分和难负样本挖掘。
-- 方法启发：评价 world model 时，应问“预测是否改变了候选排序”，而不是只看 latent loss 或生成画质。
-- 研究启发：为非 expert 候选引入因果 simulator、occupancy transition 或 conservative uncertainty，避免未监督反事实 latent 被 scorer 过度信任。
-- 讨论问题：0.2 分 leaderboard 增益中，多少来自更好的世界建模，多少来自候选数、hard-negative 标签和 scorer 容量？
+- **作者主张**：未来预测应与具体动作对应，并直接服务最终轨迹选择。
+- **我的判断**：最适合借鉴的是候选生成与评分分离的规划系统。应优先复核未来特征究竟提供了额外后果信息，还是训练标签和更强评分器已经解释了大部分收益。
+- **待验证假设**：如果 scorer 使用了候选特定的后果，同一场景内打乱“轨迹—未来 latent”的对应关系应使排序质量下降。可配合替换为当前 latent 的对照，检查下降是否只是输入分布被破坏；这是一项建议实验，不是论文已有结论。
 
 ## 局限与阅读风险
 
-NAVSIM 是基于日志与规则的 non-reactive/pseudo-simulation，不能证明候选轨迹会在真实交互中产生预测 latent 所描述的未来。只有 expert-matched 未来有直接监督，其他候选主要靠共享结构和规划标签约束，因此“每条候选的未来”未被反事实真值验证。公开榜单差距很小，部分对手骨干和训练配方不完全一致；论文也没有给出 candidate-wise future calibration、端到端时延或真实道路闭环。官方 GitHub 当前只有一行 “comming soon” 的 README，尚无实现、配置或权重，不能视为公开代码。
+**原文明确交代的约束**是离线日志只提供专家执行后的未来，其余候选无法获得直接特征监督；作者据此采用专家匹配。
+
+**从现有证据提出的疑问**包括：最接近专家的候选与已执行动作仍可能不同；v1 的非反应式回放和 v2 的规则响应都不能完整代表真实交通交互；窄幅榜单提升缺少种子稳定性说明；缺少候选未来校准、带感知反馈的连续闭环和端到端时延实验。这些是适用范围和证据缺口，不等于已证明方法在对应场景失效。
+
+复现信息也不完整。本次检查正文与附录，未找到优化器与学习率、图像分辨率、GPU 型号、LoRA rank/层位置、EMA 数值、损失权重、难负样本阈值和随机种子等完整配置。不能凭惯例补齐这些设置后，宣称复现了原论文。
 
 ## 后续跟进
 
-- 跟踪官方仓库；待实现、配置和权重实际发布后，再复现共享未来、action-conditioned future 和 hard-negative 三个匹配消融。
-- 在带反应参与者的 simulator 中为部分候选生成 paired future，测 latent 距离与实际安全后果是否单调相关。
-- 将未来 latent 解码为 occupancy/agent state 或风险因子，检查 scorer 是否真的读取后果而非隐式轨迹 ID。
+### 最小验证与停止条件
+
+- **资源状态**：2026-09-12 检查[官方仓库](https://github.com/LeapWM/da-wam)，仍只有预告 README，没有实现、训练配置或权重。外部 NAVSIM 数据的访问权限与 V-JEPA 2.1 预训练权重的下载可用性，本次未单独核实；未下载数据，也未运行训练或评测。
+- **前置条件**：获取作者实现或明确记录的替代实现、对应 NAVSIM 数据/split、V-JEPA 2.1 权重和完整训练配置。先核实显存、时长与数据访问条件，不能仅凭“8 张 GPU”估算可复现成本。
+- **最小实验**：固定视觉初始化、32 条候选、训练数据与预算，比较无未来、逐候选未来、逐候选未来加难负样本三种配置。记录 PDMS 及各分项、推理时延，并保留逐场景结果；资源允许时至少用 3 个种子检查稳定性。
+- **成功信号**：候选未来的收益跨种子方向一致，安全与进展的取舍可解释；再通过匹配打乱等诊断测试证明评分器确实依赖候选与未来的对应关系。
+- **停止或转向**：若固定候选/容量后收益消失、波动覆盖全部差值，或打乱对应关系基本不影响评分，应先修正“未来后果带来收益”的解释，转查监督、候选覆盖与 scorer 本身，而不是继续扩大世界模型。
+
+### 来源与核验记录
+
+本报告按 [arXiv:2608.19085v2 全文](https://arxiv.org/html/2608.19085v2)整理，核验日期为 2026-09-12。机制对应 §3.1–3.5、式 1–17；实验对应 §4.1–4.4、表 1–5；两张图片分别是原论文图 1 和图 4。相关工作的一手入口已在对照表中给出。
+
+本次完成了原文、机构、公式、表格、实际图片与仓库可用性的检查；未执行实验复现。本文的独立判断和后续实验建议均在正文中明确标出。

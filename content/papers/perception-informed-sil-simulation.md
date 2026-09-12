@@ -2,56 +2,140 @@
 {
   "id": "perception-informed-sil-simulation",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing", "autonomous-driving-security"],
+  "tags": [
+    "autonomous-driving-testing",
+    "autonomous-driving-security"
+  ],
   "title": "A Causal Probabilistic Framework for Perception-Informed Closed-Loop Simulation of Autonomous Driving",
   "source": "arXiv:2606.07186 / https://arxiv.org/abs/2606.07186",
-  "authors": ["Zhennan Fei", "Rickard Johansson", "Mikael Andersson", "Matthias Eng", "Mattias Eriksson", "Kaveh Kianfar", "Sadegh Rahrovani", "Chris van der Ploeg", "Michael Borth", "Maren Buermann", "Michiel Braat", "Henk Goossens", "Zijian Han", "Majid Khorsand Vakilzadeh", "Gabriel Rodrigues de Campos"],
-  "affiliations": ["Volvo Cars, Sweden", "TNO, The Netherlands", "Zenseact, Sweden", "Chalmers University of Technology, Sweden", "Eindhoven University of Technology, The Netherlands"],
-  "comment": "这篇论文把 SIL 闭环测试从理想 object list 推向 perception-informed failure injection，用因果概率模型把雾、雨、弱光、目标合并等触发条件转成检测丢失和定位误差。"
+  "authors": [
+    "Zhennan Fei",
+    "Rickard Johansson",
+    "Mikael Andersson",
+    "Matthias Eng",
+    "Mattias Eriksson",
+    "Kaveh Kianfar",
+    "Sadegh Rahrovani",
+    "Chris van der Ploeg",
+    "Michael Borth",
+    "Maren Buermann",
+    "Michiel Braat",
+    "Henk Goossens",
+    "Zijian Han",
+    "Majid Khorsand Vakilzadeh",
+    "Gabriel Rodrigues de Campos"
+  ],
+  "affiliations": [
+    "Volvo Cars, Sweden",
+    "TNO, The Netherlands",
+    "Zenseact, Sweden",
+    "Chalmers University of Technology, Sweden",
+    "Eindhoven University of Technology, The Netherlands"
+  ],
+  "comment": "将雾雨、弱光与目标重叠映射为对象级漏检和几何误差，再送入 SIL 闭环。三个示例显示控制可过滤短时漏检，合并目标则诱发制动；条件概率和实车相关性仍未经公开定量标定。"
 }
 ---
 
 ## 一句话定位
 
-这是一篇非常工程化的自动驾驶测试论文，关注 SIL 仿真中的“理想感知”问题。它不追求更逼真的全栈传感器渲染，而是用 causal probabilistic model 在 object-level SIL 中注入真实感知缺陷，让大规模测试更接近 SOTIF 风险。
+本文在理想目标列表与驾驶控制之间插入贝叶斯故障模型，用雾、雨、弱光和目标重叠推导漏检及定位误差，再观察闭环响应。依据 [2606.07186v1](https://arxiv.org/html/2606.07186v1)，这是相机感知错误的对象级 SIL 概念验证，**尚不是经过实车标定的传感器数字孪生**。
+
+- 核心证据：三个示例中，目标合并造成额外制动脉冲；黑暗漏检场景的控制曲线却基本不变。
+- 主要边界：没有实测错误分布、完整条件概率表、重复试验统计或计算吞吐，不能推导量产感知的真实失效率。
 
 ## 论文要解决的问题
 
-很多 SIL 仿真用 ground-truth object list 经过视场和遮挡过滤得到“传感器输出”，但这种输出几乎没有真实感知算法的功能不足，例如雾天漏检、弱光误检、目标合并导致定位偏差。全栈像素级仿真虽然更真实，但成本高，不适合大规模法规和安全评级场景。论文要解决的是在 object-level SIL 的效率下，系统注入由物理触发条件导致的感知错误。
+### 理想目标列表遗漏了什么
+
+理想 SIL 常把世界真值变换到传感器坐标，再做视场与遮挡过滤；这不会自然产生网络看漏目标或把两车合为一车的情况。本文输入仿真的目标与环境条件，输出被删减、合并或改动几何属性的目标消息。后续融合、规划和控制会改变自车状态，下一时刻再次采样错误，因此存在真实的软件闭环，但没有运行被评测相机网络。
+
+例如前车驶离车道后露出另一辆车，二维框重叠可能被模型映射为一个偏宽、偏近的目标，控制器随之减速。这是故障传播假设，不等于模型已测得现实网络在该场景的行为。
+
+### 与两类已有方法比较
+
+| 工作与自身原文 | 已有机制 | 本文改变的层次 |
+| --- | --- | --- |
+| Piazzoni 等，PEM，T-ITS 2024，[§IV–V](https://pure.tudelft.nl/ws/portalfiles/portal/176408023/PEM_Perception_Error_Model_for_Virtual_Testing_of_Autonomous_Vehicles.pdf) | 比较 nuScenes 真值和 Apollo 感知，用按位置及遮挡分区的 Markov 检出状态、联合高斯几何误差与空间平滑生成目标流 | 本文改从光学退化链与工程假设建立条件概率。PEM 已考虑时间相关性，不能概括成逐帧独立加噪 |
+| Pham 等，SimsV，[v1 §4.1–4.4](https://arxiv.org/html/2408.13686v1) | 修改 LGSVL 场景中的对象，运行 Apollo 实际感知，以神经元覆盖或漏检反馈保留场景 | 本文直接修改 OSI 对象消息，节省原始传感器和网络执行，但不能定位真实感知实现中的具体缺陷 |
+
+论文没有在相同场景、硬件和故障强度上比较三者的速度、分布拟合或安全结论；其优势首先是接口与建模方式。
 
 ## 方法和系统设计
 
-- 构建 causal probabilistic models，把雨、雾、光照、镜头划痕、前车、目标合并等触发条件映射到 contrast loss、CNR、sharpness loss、IoU increase 等中间变量。
-- 中间变量进一步影响 misdetection、sizing error、lateral/longitudinal positioning error 等功能不足。
-- 将错误注入标准 scenario-based simulation toolchain，使用 OpenSCENARIO、OpenDRIVE、esmini 和 OSI 接口。
-- 在 CCRs、CCRm、cut-out 等场景中比较 ideal sensing 与 injected perception errors 对 ego 行为的影响。
+### 从触发条件到对象消息
+
+模型图依据系统规格和失效模式分析构建，包含三条路径：
+
+- **对比度。** 雾的距离衰减、雨水与前车水雾、镜头划痕叠加对比度损失；照度影响数字化噪声和对比噪声比（CNR），最终改变漏检概率。
+- **清晰度。** 将雨滴、热畸变等表述为滤波，允许对称或不对称边缘改变，再映射到框大小及横纵向定位偏差。
+- **合并。** 将相机投影中的高重叠映射为两目标合一，并更改保留目标的尺寸与位置。这里的合并算子是故障模型假设；标准 NMS 的抑制动作本身并不必然把保留框扩大。
+
+esmini 根据 OpenSCENARIO/OpenDRIVE 更新环境，内部车辆模拟器提供理想相机目标。模型经 OSI 读取条件、推断故障概率并修改消息，再交给融合仿真和 ADAS 控制。scenariogeneration 负责生成场景文件；这些开放组件不等于完整内部测试栈已开放。
+
+### 概率结构与它没有保证的事
+
+§III-A 式 (1)–(2) 为：
+
+$$
+f(x_1,\ldots,x_n)=\prod_i f(x_i\mid pa(X_i)),
+\qquad X_i=g_i(pa(X_i))+\epsilon_i.
+$$
+
+$pa(X_i)$ 是父节点，$g_i$ 表示物理或经验关系，$\epsilon_i$ 描述噪声。把“照度→噪声→漏检”分开可定位假设来自哪一环；有向图的分解本身却不能证明因果关系或跨天气外推正确。
+
+概念上变量连续，实际 aGrUM 实现将先验和条件分布离散化。状态个数、边界与分辨率会改变故障概率及算时，而全文没有完整给出。每时刻推断概率也没有自动保留现实漏检的持续时长。
+
+### 参数与监督边界
+
+原文给出经验界限：所谓 normalized contrast 低于 10 常不足、高于 30 通常足够；CNR 低于 3 不足、高于 6 通常足够。前者没有明确统一归一化尺度，不应擅写成百分比；它们也不是所有相机网络通用的已验证阈值。
+
+本文没有训练新检测器，网络结构主要依赖规格、文献和工程假设。未来工作才包括对真实传感器数据标定。论文未给相机型号和完整响应曲线、控制器配置、概率表、随机种子及各模型的独立训练/验证分割；不补造训练损失或统计性能数字。
 
 ## 关键图与可视化结果
 
-![图 1：感知失效的因果链，包括对比度退化和目标合并](../../assets/papers/perception-informed-sil-simulation-figure-1.png)
+![原论文 Figure 1：环境与成像链退化通向漏检](../../assets/papers/perception-informed-sil-simulation-original-figure-1.png)
 
-图 1 展示了论文的核心建模方式：不是直接随机丢 detection，而是从物理或环境触发条件出发，经由图像质量和几何关系变量，最终导致功能不足。这个结构适合解释 SOTIF 风险来源。
+从顶部雨、雾、照度等条件向下读到 Possible misdetection。中间节点使模型可解释、可单独标定；箭头表示采用的功能依赖，不是实测因果效应大小。这里使用官方完整单图，避免将包含 Figure 1/3 的整页误标为一张图。
 
-![图 2：感知错误注入后，目标尺寸、距离、速度和加速度的闭环变化](../../assets/papers/perception-informed-sil-simulation-figure-2.png)
+![原论文 Figure 16：目标合并场景的自车纵向加速度](../../assets/papers/perception-informed-sil-simulation-original-figure-16.png)
 
-图 2 是测试结果页，显示注入 misdetection 后，目标宽高、距离估计、ego velocity 和 acceleration 的变化。它说明 perception error 在闭环中会转化成车辆响应差异，而不只是单帧检测指标下降。
+蓝线为理想感知，红线为加入模型；约五秒附近出现额外减速并伴随恢复脉冲。纵轴单位为 $\mathrm{m/s^2}$。它证明这一仿真配置下错误会传播到控制，不证明发生碰撞、所有控制器都会失败或现实中具有相同幅值。
 
 ## 实验结论与证据
 
-论文在标准场景中展示，理想 sensing 会掩盖感知退化导致的潜在风险；加入因果错误模型后，SIL 能暴露漏检、定位偏差和目标尺寸变化对闭环行为的影响。证据来自多个 EuroNCAP 相关场景中的 object-level failure injection 曲线，对比了 ideal sensing 和 causal model 输出对 ego control 的影响。
+### 三条因果路径得到不同响应
+
+| §IV 场景及原图 | 模型产生的变化 | 已展示的控制后果 |
+| --- | --- | --- |
+| 黑暗 CCRs，Figure 5–8：前方目标静止 | 间歇漏检，目标尺寸和距离曲线出现空缺 | 自车速度、减速度与理想感知近似一致 |
+| 雾雨 CCRm，Figure 9–12：跟随行驶目标 | 尺寸与距离抖动，短时漏检 | 速度基本一致，加速度明显更嘈杂 |
+| Cut-out，Figure 13–16：前车驶离露出后车 | 两车合成偏宽目标，距离出现异常 | 额外速度下降和制动脉冲 |
+
+CCRs/CCRm 是相应追尾测试情境的缩写，不是三组独立大规模试验。原文未报告每组重复次数、碰撞频率、置信区间或失败概率标定误差。因此能说明软件接口与故障传播路径可运行，尚不足以定量比较现实风险。
+
+### 哪些归因仍未隔离
+
+雾雨同时改变对比度与清晰度，没有单路径消融，不能把加速度噪声唯一归给其中一个节点。控制器能过滤短时漏检，也不保证能承受相同平均漏检率下更长的连续失明。本文还没有与独立随机注入、数据标定 PEM 或真实传感器回放比较。
 
 ## 应用场景与启发
 
-- 应用场景：SOTIF validation、法规场景批量 SIL、感知故障注入、EuroNCAP 场景扩展。
-- 方法启发：测试平台不必在“理想 object list”和“昂贵全栈像素仿真”之间二选一，可以用可解释因果错误模型补齐中间层。
-- 讨论问题：如何从真实传感器日志估计这些 causal model 的参数，而不是人工设定规则。
+- **作者主张：** 用可解释的对象级感知不足扩展 SOTIF 测试。
+- **我的判断：** 适合把环境假设传递到控制层，作为批量敏感性分析工具；在标定前应称假设驱动故障生成器。
+- **待验证假设：** 在匹配漏检率和几何误差边际分布后，加入由实测日志估计的故障持续时间，比逐时刻独立采样更能复现控制器的制动变化。PEM 已提供时间建模先例，这里要验证它与环境因果条件的结合。
 
 ## 局限与阅读风险
 
-因果模型的可信度取决于参数标定和触发条件覆盖，论文的实验更像方法验证而非完整认证。它主要面向 camera-related object-level errors，没有覆盖所有传感器融合、深度网络内部不确定性和交通参与者行为变化。若用于真实测试，需要把模型参数与实车数据闭环校准。
+作者承认后续需真实数据标定、扩展眩光和镜头遮挡。结论段称模型提高了 SIL 与物理行为的相关性，但本文没有给配对物理试验、相关系数或误差表，不能视为已证实结果。以较少渲染组件推测效率有合理动机，实际吞吐与离散化成本仍待测；模型也没有覆盖全部融合与系统时序故障。
 
 ## 后续跟进
 
-- 检查作者是否发布 OSI/esmini 集成配置和 causal model 参数。
-- 与 Bench2Drive-Robust 对照：一个注入部署扰动，一个注入感知功能不足。
-- 后续可把这个方法接入 RiskFlow 生成的 safety-critical scenario，形成“危险交互 + 感知退化”的组合测试。
+### 最小验证与停止条件
+
+- **资源（2026-09-12）：** 固定全文和官方图可读；[esmini](https://github.com/esmini/esmini)及[scenariogeneration](https://github.com/pyoscx/scenariogeneration)有公开实现。未从本文一手入口或题名/作者检索核实其贝叶斯网络、概率表、内部车辆与融合模块、场景配置、标定数据；没有本文新检测器权重可核实。
+- **最小实验：** 前置取得同一相机/控制器的 30 段故障日志及匹配目标真值，按整段拆成标定与留出集合。在同一对象级仿真器、控制器与环境轨迹下，比较理想感知、匹配边际分布的独立注入、额外匹配持续时间的条件 Markov 注入。每段每组固定 20 个相同种子和相同时长；在距离/天气分层内匹配漏检率与几何误差，不以提高错误总量制造差异。
+- **成功信号：** 时间模型在留出日志上更准确复现连续漏检长度、制动起始时刻和最大减速度，同时不恶化正常片段误差。
+- **停止或转向：** 若只靠提高漏检率才得到更多制动，或匹配持续时间后行为仍不接近实测，则优先检查融合/控制接口和错误耦合，不能宣称因果模型已经校准有效。
+
+### 来源与核验记录
+
+已读固定 v1 §III–V、式 (1)–(2) 与三组 Figure 5–16 的讨论，实际分别打开官方 Figure 1/16。相关比较读取 PEM 正式版 §IV–V 和 SimsV v1 §4。未运行内部栈、制造传感器故障或复现实验。

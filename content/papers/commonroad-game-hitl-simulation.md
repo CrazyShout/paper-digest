@@ -2,56 +2,123 @@
 {
   "id": "commonroad-game-hitl-simulation",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing", "cooperative-autonomous-driving"],
+  "tags": [
+    "autonomous-driving-testing",
+    "cooperative-autonomous-driving"
+  ],
   "title": "CommonRoad-Game: A Human-in-the-Loop Simulation Framework for Autonomous Driving",
-  "source": "arXiv:2607.01382 / https://arxiv.org/abs/2607.01382",
-  "authors": ["Yunfei Bi", "Youran Wang"],
-  "affiliations": ["Technical University of Munich"],
-  "comment": "CommonRoad-Game 把人类驾驶输入接入 CommonRoad 运动规划生态，适合用于交互式闭环测试和人机混行场景生成。"
+  "source": "arXiv:2607.01382 / https://arxiv.org/abs/2607.01382 / Fixed full text: https://arxiv.org/html/2607.01382v1",
+  "authors": [
+    "Yunfei Bi",
+    "Youran Wang"
+  ],
+  "affiliations": [
+    "Technical University of Munich"
+  ],
+  "comment": "CommonRoad-Game 把人类输入、异步规划和场景录制接入 CommonRoad。它展示更小的时序漂移，但仍有超时、低瞬时实时比与原表口径不一致，不能解释为严格实时或大规模安全验证。"
 }
 ---
 
 ## 一句话定位
 
-CommonRoad-Game 是一篇测试基础设施论文。它关心的问题不是训练一个更强 planner，而是让 planner 在 human-in-the-loop 环境里接受测试：人类驾驶输入可以实时影响仿真，系统再把交互过程记录成 CommonRoad-compatible scenario，用于后续复现、分析和回归测试。
+CommonRoad-Game 把键盘、方向盘/踏板输入接入 CommonRoad 规划生态，既能让人和自动驾驶 planner 交互，也能把过程保存为结构化场景。核心贡献是接口与时序组织，不是新的驾驶学习算法。
+
+- 核心证据：一个同步实验的末端误差由 naive 的 402.38 ms 降至 1.48 ms，但 proposed 仍有 37.7% 步骤超过预算。[表 I](https://arxiv.org/html/2607.01382v1#S4.T1)
+- 主要边界：短时示例和局部计时结果不等于严格实时保证，也不是参与者总体行为或安全覆盖的统计研究。
 
 ## 论文要解决的问题
 
-自动驾驶规划器经常在离线数据集或固定仿真脚本里评测，但真实交通交互是双向的：人类驾驶员会根据 AV 行为临时调整，而 AV 的小决策也会改变人类反应。传统仿真平台要么缺少实时人类输入接口，要么和 CommonRoad 等规划生态脱节，要么计算负担过重，不适合快速做早期测试。CommonRoad-Game 要补的是交互式测试工具链。
+### 为什么需要同时对齐空间与时间
+
+人类按照墙钟作出操作，而 planner 按场景时间网格产生轨迹。若规划耗时阻塞仿真，或者不同模块的初始坐标锚点不一致，记录下来的反应距离和交互时序就难以解释。本文输入 CommonRoad 路网、初始状态、人工控制和 planner；输出车辆状态、可视化及可复放 XML 日志。
+
+### 相关工作与差异
+
+| 一手工作 | 已有机制 | 本文的接口选择 |
+| --- | --- | --- |
+| Cao 等，CARLO/H-ReIL，RSS 2020；[原文 §IV-C](https://iliad.stanford.edu/pdfs/publications/cao2020reinforcement.pdf) | CARLO 以简化二维动力学、车辆状态观测支持控制研究；H-ReIL 在模仿驾驶模式间学习切换 | CommonRoad-Game 借鉴轻量交互，但重点是标准场景交换、日志与同步，不学习模式选择策略 |
+| Dosovitskiy 等，CARLA，CoRL 2017；[原文 §2](https://arxiv.org/pdf/1711.03938v1) | Unreal 场景/物理、可配置传感器和客户端控制接口 | 本文专注二维规划与人类输入，不能替代相机/LiDAR 传感器级仿真 |
 
 ## 方法和系统设计
 
-- 输入接口支持方向盘、踏板、键盘等人类控制方式，用于生成 human-driven vehicle 行为。
-- 多线程架构把游戏式实时仿真、CommonRoad 规划器和车辆状态同步起来，避免 wall-clock time 与 simulation time 漂移。
-- 系统记录人类驾驶日志，并转换为结构化测试场景，使一次人机交互可以变成可复现的 benchmark case。
-- 框架与 CommonRoad motion planner 兼容，方便测试 IDM、Reactive Planner 等不同规划算法。
+### 状态交换与异步规划
+
+初始化时，以模拟器放置的 AV 姿态与 planning problem 声明姿态计算固定刚体变换；人类车辆变为 CommonRoad 动态障碍物，planner 轨迹再变回模拟器参考。主循环更新状态、绘图与记录；独立 worker 处理 planner。单槽 request/result buffer 由 mutex、condition variable 和 busy 标记管理：worker 忙时跳过新触发，主循环继续执行最近轨迹。[§III-A/B](https://arxiv.org/html/2607.01382v1#S3)
+
+### 两组关键时序公式
+
+原式 6–10 的平面坐标变换可简写为：
+
+$$
+\Delta\psi=\mathrm{wrap}(\bar\psi_a^0-\psi_a^0),\quad d=\bar p_a^0-R(\Delta\psi)p_a^0,\quad
+p^{\mathrm{sc}}=Rp^{\mathrm{sim}}+d.
+$$
+
+上横线为 planning problem 初始锚点，$R$ 为平面旋转。它补偿固定初始姿态差，不是每帧重新估计定位，也没有改变米制尺度。
+
+$$
+\tau_n^*=t_0+n\Delta t,\quad e_n=(\tau_{n+1}-\tau_n)-\Delta t,\quad E_n=\sum_i e_i,\qquad
+N=\max(1,\operatorname{round}(\Delta t_c/\Delta t)),\quad\sigma\leftarrow\sigma+\Delta t/\Delta t_c.
+$$
+
+这是原式 11–15 的整理：$\tau$ 为墙钟、$\Delta t$ 为名义仿真步长，$\Delta t_c$ 为 planner 场景步长，$N$ 控制重规划频率，$\sigma$ 是轨迹进度。循环提前完成就等待；落后时跳过可视化；超过阈值时重置时间锚点。因此较小记录误差可能部分来自重置，不能证明一直无延迟。
+
+### 运行模型与训练边界
+
+这里没有训练 loss。HV 用裁剪后的实测墙钟间隔积分运动学模型；AV 在算法 2 中按 $\lfloor\sigma\rfloor$ 读取旧轨迹状态并覆写姿态/速度，新轨迹到达后对齐最近状态。这不是每步对 AV 执行真实动力学控制；worker 解耦也不能消除计划陈旧。CommonRoad drivability checker 监测 HV 碰撞与道路边界，不代表自动保证全系统安全。
+
+评测 nominal step 为 0.01 s，示意图间隔 0.2 s；主要人工交互通过键盘，方向盘能力与多 AV 示例不等于已有大规模用户研究。[§IV](https://arxiv.org/html/2607.01382v1#S4)
 
 ## 关键图与可视化结果
 
-![图 1：CommonRoad-Game 的地图示例，展示人机交互测试可以落在 CommonRoad 场景结构中](https://arxiv.org/html/2607.01382v1/figures/example_map.png)
+![原论文图 7：可视化模块的路网渲染示例](https://arxiv.org/html/2607.01382v1/figures/example_map.png)
 
-这张图说明 CommonRoad-Game 不是孤立小游戏，而是接入 CommonRoad 场景表示。它的价值在于把人类输入产生的交互过程变成后续可分析、可复现的规划问题。
+这是地图/道路几何的展示，不能单凭图片判断人类反应时、碰撞检测或记录复放精度。
 
-![图 2：系统时间同步过程，比较稳健同步和 naive 同步在实时交互中的差异](https://arxiv.org/html/2607.01382v1/figures/timing_progression.png)
+![原论文图 14(a)：proposed 同步的理想与实际时间](https://arxiv.org/html/2607.01382v1/figures/timing_progression.png)
 
-这张图支撑论文的工程主张：human-in-the-loop 测试必须保证仿真时间和真实时间一致，否则人类反应、planner 输出和记录日志会错位，导致测试结论不可复现。
+蓝线为理想时间、红线为实际时间，末端约 14,780 对 14,781.5 ms。保留文件只含 proposed 子图；naive 对照在原图 14(b)，不能把此单图描述成两套方法曲线。
 
 ## 实验结论与证据
 
-论文报告 CommonRoad-Game 能稳定同步仿真时间，支持多 agent 交互，并能和 CommonRoad-compatible motion planners 集成生成 interactive driving scenarios。它更像一个研究工具而非单篇算法 SOTA，但对自动驾驶测试有实际价值：可以把人类干预、激进 cut-in、让行博弈等固定数据集难覆盖的交互变成可保存测试样本。
+### 交互示例与时间测量
+
+IDM 在示例中对前方切入停车车辆减速停止；Reactive Planner 基于短时恒速/恒航向预测作换道；另有多 AV 交互。它们展示接口可运行，未报告覆盖多个参与者和场景的安全率比较。
+
+| 时间指标（原表 I） | Proposed | Naive |
+| --- | ---: | ---: |
+| 末端误差 | 1.48 ms | 402.38 ms |
+| 平均步误差 | 4.10 ms | 22.84 ms |
+| 最大累计误差 | 90.67 ms | 1998.47 ms |
+| 超预算步比例 | 37.7% | 56.4% |
+| 平均实时比 | 0.99 | 0.84 |
+| 最小实时比 | 0.10 | 0.04 |
+
+### 口径矛盾与推断范围
+
+表 I 支持 proposed 在所测运行中偏差更小，但正文称最大累计误差约 200 ms，与表中 90.67 ms 不一致。原文把 time efficiency 定义为总仿真时长/墙钟时长，却为 naive 报 34.36%，同时末端 realtime ratio 为 0.97；按给出的同类定义无法统一。本文保留可追溯数值，不据此重新推出“效率提高多少倍”。
+
+没有分别关闭 pacing、跳帧和 reset 的单因素实验，无法给每个模块分摊收益。未给充分的硬件、负载、重复运行和参与者统计；低瞬时实时比和高超时比例也限制反应时间研究中的解释。
 
 ## 应用场景与启发
 
-- 应用场景：运动规划器人机混行测试、交互式场景录制、planner 回归测试、驾驶行为数据采集。
-- 方法启发：闭环测试不一定只能靠完全自动 scenario generator，人类输入可以作为发现交互边界的低成本入口。
-- 讨论问题：人类参与生成的场景如何做标准化，才能既保留真实交互，又避免测试不可重复。
+- 作者主张：把人工驾驶交互保存为标准化 planner 测试资产。
+- 我的判断：适合早期接口检查与交互回归，尤其是保留人类输入和规划版本；不适合作为传感器真实性基准。
+- 待验证假设：独立记录未重置的全局墙钟偏差和计划年龄，可以发现仅靠局部同步指标遗漏的人机时序失真。
 
 ## 局限与阅读风险
 
-Human-in-the-loop 测试的代表性依赖参与者行为、输入设备和实验协议，不能直接等价于真实道路分布。论文主要展示框架稳定性和接口能力，对大规模安全覆盖率、参与者多样性和真实事故复现能力还没有充分证明。作为 benchmark 使用时，需要额外设计场景采样和统计协议。
+反事实复放固定人类日志后，人不再对新 planner 响应，与实时双向交互应分别报告。轨迹覆写、离散索引和旧计划执行也可能影响动作连续性。规划线程非阻塞与确定性日志，不自动保证多线程调度和人工操作可精确重演。
 
 ## 后续跟进
 
-- 跑通开源代码，确认是否能接入既有 planner 或 CommonRoad 场景。
-- 与 TrafficAlign、D-V2S、RiskFlow 对比，区分人机生成、LLM 生成和视频转场景三类测试入口。
-- 后续可记录少量人类 cut-in/merge 交互，作为 planner 行为回归集。
+### 最小验证与停止条件
+
+- 当前资源（2026-09-12）：[官方仓库](https://github.com/Yunfei-Bi8/CommonRoad-Game)包含控制接口、IDM/Reactive 入口、YAML 配置、scenarios 和时延实验工具；内置示例不依赖学习权重。已查看目录与说明，未安装依赖或验证场景包覆盖全部论文实验。
+- 最小实验：固定同一人工日志与地图，在单一 planner 下比较完整同步、仅 pacing、关闭 reset；保持画面分辨率/机器负载一致，记录全局偏差、reset 次数、计划年龄与车辆轨迹。
+- 成功信号：局部与未重置全局误差同时受控，轨迹及碰撞结果不随运行调度明显变化。
+- 停止条件：只是 reset 让误差归零，或者跳帧改变人工反应；先修正计时口径，不开展用户行为结论。
+
+### 来源与核验记录
+
+固定 arXiv:2607.01382v1；2026-09-12 核对 §III–IV、式 6–16、算法 1–2、表 I、原图 7/14(a)，并阅读 CARLO 与 CARLA 各自的原文。未运行仿真或招募参与者。

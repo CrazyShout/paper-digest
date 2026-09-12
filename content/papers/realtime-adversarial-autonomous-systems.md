@@ -2,55 +2,144 @@
 {
   "id": "realtime-adversarial-autonomous-systems",
   "tag": "autonomous-driving-security",
-  "tags": ["autonomous-driving-security", "autonomous-driving-testing"],
+  "tags": [
+    "autonomous-driving-security",
+    "autonomous-driving-testing"
+  ],
   "title": "Real-Time Evaluation of Autonomous Systems under Adversarial Attacks",
   "source": "arXiv:2605.03491 / https://arxiv.org/abs/2605.03491",
-  "authors": ["Adithya Mohan", "Xujun Xie", "Venkatesh Thirugnana Sambandham", "Torsten Schön"],
-  "affiliations": ["AI Motion Institute, Technische Hochschule Ingolstadt"],
-  "comment": "这篇论文用真实交叉口驾驶数据做离线轨迹学习和推理时 PGD 攻击评测，强调相近 nominal ADE 下模型鲁棒性可能差异很大。"
+  "authors": [
+    "Adithya Mohan",
+    "Xujun Xie",
+    "Venkatesh Thirugnana Sambandham",
+    "Torsten Schön"
+  ],
+  "affiliations": [
+    "AI Motion Institute, Technische Hochschule Ingolstadt"
+  ],
+  "comment": "在真实车载结构化状态上比较三种轨迹预测器的数字扰动敏感性；车辆开环推理不影响控制。重点是原始特征预算、配对与划分缺口，以及尚未测量的实时性。"
 }
 ---
 
 ## 一句话定位
 
-这是一篇自动驾驶策略对抗鲁棒性评测论文。它把 adversarial evaluation 从纯仿真拉回到真实 intersection driving data 上，对 MLP behavior cloning、Transformer object-tokenized behavior cloning 和 GAIL/IRL 范式做轨迹学习与推理时攻击评估。
+这篇工作在真实车载数据形成的 97 维状态上比较三种轨迹预测器，并在车辆运行时做开环推理与数字扰动测试：**正常误差很小，并不意味着输入被扰动后仍稳定**。它没有让受扰动轨迹控制车辆，也没有证明标题所说的实时性满足某个时限。[v1 §III-A/F、V](https://arxiv.org/html/2605.03491v1#S3.SS1)
+
+- 核心证据：表 I 的独立 clean 行 ADE 为 0.049–0.064 m；PGD 条件下 BC-MLP 在 Crossing 2 的 FDE 达到 7.987 m。
+- 主要边界：扰动同时作用于不同单位的原始特征、类别编号和有效性 mask；相同数值预算不代表相同物理误差，结果不能直接当作真实传感器攻击成功率。
 
 ## 论文要解决的问题
 
-自动驾驶策略的对抗评测常在仿真中完成，成本低且没有物理风险，但纯虚拟测试可能忽略真实数据中的结构不一致、监督约束和状态表示效应。不同模型在 nominal ADE/FDE 上接近，并不代表面对梯度攻击时稳定性相同。论文的问题是：如何基于真实交叉口驾驶数据构建一个离线轨迹学习与 adversarial robustness evaluation 框架，比较不同状态结构和模型归纳偏置的鲁棒性。
+### 从感知输出到轨迹，哪里容易被忽略
+
+相机/LiDAR 检测之后，策略往往接收位置、速度、道路几何等低维状态。即使没有明显图像损坏，状态数值失真也可能放大为错误的未来轨迹。作者固定输入维数和监督时域，比较普通 MLP、对象 token Transformer 与带判别器的离线模仿学习，考察它们在三个路口的敏感性。
+
+论文明确写到真实 Audi Q8 平台上的在线状态构造和开环推理；训练依赖离线日志，预测结果与事后取得的未来轨迹比较。故不能简单称为纯仿真或全部离线回放，也不能扩展成真实车辆接受攻击控制。[§III-A/B/F](https://arxiv.org/html/2605.03491v1#S3.SS2)
+
+### 与两项原始工作的区别
+
+| 工作与已读一手来源 | 原有机制 | 本文的变化与边界 |
+| --- | --- | --- |
+| Ho 与 Ermon，GAIL，NeurIPS 2016；[§5、算法 1](https://proceedings.neurips.cc/paper_files/paper/2016/file/cc7e2b878868cbae992d1fb743995d8f-Paper.pdf) | 从当前策略采样轨迹，交替更新判别器和 TRPO 策略，以匹配专家状态–动作占用分布 | 本文在固定日志状态上生成未来轨迹，仍使用监督回归并增加对抗判别项；不是完整复现原始在线 GAIL，也不能将它的结论推广到所有 IRL |
+| Sekaran 等，UrbanIng-V2X，NeurIPS 2025；[v1 §3、5.1](https://arxiv.org/html/2510.23478v1#S3) | 两车和三处基础设施联合采集、标定与标注，提供按序列及按路口划分的协同感知 benchmark | 本文只取单自车轨迹学习，未给出自己采用的具体 EIS/SIS 划分和样本清单；多源数据集的存在不等于这里使用了在线 V2X 协作 |
 
 ## 方法和系统设计
 
-- 在受控数据契约下训练三类 trajectory-learning paradigms：MLP-based behavior cloning、Transformer-based object-tokenized behavior cloning 和 GAIL 形式的 inverse reinforcement learning。
-- 使用 ADE 和 FDE 评价 nominal trajectory learning performance。
-- 在推理阶段对训练好的 policies 施加 gradient-based adversarial perturbations，形成多交叉口场景下的结构化鲁棒性矩阵。
+### 97 维状态与两秒预测
+
+状态由 4 维自车速度/加速度/角速度/航向、3 维车道相对几何、十个对象各 8 维特征、10 维有效性 mask 组成。对象限于 60 m 内，按距离排序，不足十个用零填充。对象特征包括相对位置、朝向、速度、尺寸、类别编号和距离；这些字段并非彼此独立，例如距离应与位置一致。[§III-C](https://arxiv.org/html/2605.03491v1#S3.SS3)
+
+监督目标为连续 20 步的局部位移、航向变化和速度。按论文标称 10 Hz，这对应约 2 s 预测；只保留未来完整、标注一致的样本。输入是当前结构化状态，没有额外给出历史序列编码。
+
+### 模型与监督目标
+
+BC-MLP 使用两个 512 单元 ReLU 隐层，输出 80 维并重排为 20×4。Transformer 将自车、道路、十个对象、mask 与 CLS 组成 14 tokens，采用 4 层、8 heads、192 隐维、768 前馈维和 0.1 dropout。离线 GAIL-style 策略沿用 BC-MLP，判别器的状态/轨迹支路各为 256 隐维。[§III-D](https://arxiv.org/html/2605.03491v1#S3.SS4)
+
+式 1 与算法 1 的监督部分可写成：
+
+$$
+\widehat\tau_t=\pi_\theta(s_t)\in\mathbb R^{20\times4},\qquad
+\mathcal L_{\rm BC}=\mathbb E_{(s_t,\tau_t)\sim\mathcal D}
+[\ell_{\rm SmoothL1}(\widehat\tau_t,\tau_t)].
+$$
+
+$s_t$ 为当前状态，$\tau_t$ 为未来真值，训练损失覆盖整个时域。IRL 变体另加判别器的生成损失和可选平滑正则，但全文没有写清两者权重、是否启用平滑，以及优化器、学习率、epoch、batch 和种子。因此三种范式的“同输入”有依据，“训练预算完全相同”尚无法核验。[§III-E](https://arxiv.org/html/2605.03491v1#S3.SS5)
+
+### 扰动集合与评测量
+
+论文使用白盒梯度方法 FGSM/PGD，在推理时增大预测 XY 与专家轨迹的均方误差。§III-G 明确 PGD 为 10 步、步长 0.01；这些数值与下文 ε=0.05 都作用于原始数值特征，不是统一物理单位。其约束可概括为：
+
+$$
+\widetilde s_t=s_t+\delta_t,\qquad
+\|\delta_t\|_\infty\le\epsilon,\qquad \epsilon=0.05.
+$$
+
+这个预算定义在未经逐特征归一化的原始数值空间，包括类别与 mask。它既不是“每个对象偏移 5 cm”，也没有保证扰动后类别合法、mask 为二值、距离与位置相容。攻击目标使用未来真值，故真实运行时何时取得监督、何时完成扰动优化还需时序日志；本次不把该设置解释成已验证的因果实时攻击。[§III-F/G](https://arxiv.org/html/2605.03491v1#S3.SS7)
+
+以 $\mathbf p_h$ 表示未来第 $h$ 步二维位置，以下是报告对 ADE/FDE 的标准数学解释，原文没有另列编号公式：
+
+$$
+\operatorname{ADE}=\frac1H\sum_{h=1}^{H}\|\widehat{\mathbf p}_h-\mathbf p_h\|_2,
+\qquad \operatorname{FDE}=\|\widehat{\mathbf p}_H-\mathbf p_H\|_2,\qquad H=20.
+$$
+
+二者单位 m，越低越好；它们度量对专家路径的偏离，不直接等于碰撞率。梯度扰动作用于感知后的状态，未攻击相机、LiDAR 回波或车辆通信链路。
 
 ## 关键图与可视化结果
 
-![图 1：真实数据驱动的 open-loop inference-time robustness evaluation pipeline](https://arxiv.org/html/2605.03491v1/x1.png)
+![原论文 Fig. 1：真实感知状态进入三种预测器，比较干净与扰动轨迹](https://arxiv.org/html/2605.03491v1/story_architecture.png)
 
-这张图说明评测链路的边界：它不是在线碰撞测试，而是在真实轨迹数据上做 open-loop inference-time attack，对比不同 policy 表示的敏感性。
+左侧是点云/对象，中部并列 BC-MLP、BC-Transformer、IRL-GAIL，右侧用绿、蓝、红表示专家、正常预测、扰动预测。图展示预测接口，没有向控制器反馈的箭头；不能据此把红色路径当作车辆实际驶过的路线。[Fig. 1](https://arxiv.org/html/2605.03491v1#S0.F1)
 
-![图 2：用于实时评测和攻击测试的三个交叉口 crossing 场景](https://arxiv.org/html/2605.03491v1/x2.png)
+![原论文 Fig. 2：三个交叉口的道路几何](https://arxiv.org/html/2605.03491v1/x2.png)
 
-这张图适合检查场景覆盖范围。交叉口是对抗鲁棒性评测的合理起点，但还不能代表高速、环岛、遮挡和混合交通所有风险。
+三幅地图有不同交叉角度和弯曲程度，用于理解测试场景差异。它们没有给出各路口样本量、拥挤程度或训练/测试边界，不能只看地图就把某一项误差归因于曲率。[Fig. 2](https://arxiv.org/html/2605.03491v1#S3.F2)
 
 ## 实验结论与证据
 
-摘要报告三类模型在 nominal prediction 上可能都达到 ADE 小于 0.08，但 PGD 攻击可导致最高约 8 米 final displacement error。结果说明状态结构设计和架构归纳偏置会显著影响 adversarial stability，即使常规预测精度相近，鲁棒性 profile 也可能完全不同。
+### 主表：没有跨路口一致最优的模型
+
+| 表 I，PGD 条件，FDE ↓（m） | BC-MLP | BC-Transformer | 离线 IRL |
+| --- | ---: | ---: | ---: |
+| Crossing 1 | 5.301 | 6.804 | 5.845 |
+| Crossing 2 | 7.987 | 5.358 | 7.966 |
+| Crossing 3 | 5.881 | 6.812 | 5.273 |
+
+三个路口分别由 MLP、Transformer、IRL 取得较低 FDE。Transformer 在 Crossing 2 有优势，在另两个路口反而更差；因此不能将“对象 token 更强”或“IRL 更鲁棒”当作一致结果。PGD 条件最大 FDE 约 8 m，支持数字状态扰动能显著放大误差。[Table I](https://arxiv.org/html/2605.03491v1#S4.T1)
+
+独立 clean 行的 FDE 范围为 0.047–0.078 m，FGSM 的扰动 FDE 为 1.887–2.951 m。相似正常误差说明模型都能拟合所评样本，不能单凭它排除容量、过拟合或数据量对鲁棒性的影响；原文 IV-A 的强归因缺少对应控制。
+
+### 配对、划分与归因缺口
+
+同模型同路口在不同 attack 行的 clean 列不完全相同，例如 Crossing 1 MLP 的 clean FDE 分别为 0.048、0.056、0.066。正文未说明这些行是否使用相同样本、重复运行或不同采集片段；应保留每行自己的参考，不能拿独立 clean 行重算所有增量。表中若干千分位差异还可能来自未舍入值，不擅自更正。
+
+三模型×三种条件×三路口共 27 组设置，但没有每组样本数、误差区间、重复种子、具体训练/测试划分或独立日夜分表。图 3 是挑选出的严重失败样例，不代表失败概率。没有按特征组、合法 mask 或物理一致性做消融，难以断言哪一类状态结构导致脆弱性。
+
+### 计算与实时性证据
+
+论文报告车载实时开环推理的执行方式，却把端到端时延、扰动生成成本和实时可行性列为未来工作；没有设备算力、FPS、平均/P95 时延或超时率表。现有证据支持其评测接口，尚不能证明全部流程满足 10 Hz 截止时间。[§V](https://arxiv.org/html/2605.03491v1#S5)
 
 ## 应用场景与启发
 
-- 应用场景：离线轨迹学习鲁棒性评测、自动驾驶策略攻击基准、intersection scenario safety analysis 和模型结构对比。
-- 方法启发：安全评测不能只看 nominal ADE/FDE，还要看对输入扰动、状态表示变化和攻击强度的敏感性。
-- 讨论问题：真实数据 open-loop 对抗评测如何和 CARS、MDrive 这类闭环 scenario benchmark 连接，形成从轨迹偏移到事故责任的证据链。
+- 作者主张：在真实数据条件下补充正常轨迹误差之外的鲁棒性评价。
+- 我的判断：最值得借鉴的是冻结感知后比较状态接口；报告应同时列出原始数字扰动与符合字段语义的误差，才能区分模型敏感性和无效输入造成的退化。
+- 待验证假设：在相同日志与训练预算下，保持类别/mask 和位置–距离关系有效后，模型鲁棒性排序会改变。该假设需要对照，不能由本文已有表格直接确认。
 
 ## 局限与阅读风险
 
-该框架主要是 open-loop offline evaluation，不等同于真实闭环 ADS 测试。PGD 扰动是否对应可实现的物理攻击、传感器攻击或 V2X 数据污染，需要进一步界定。三个交叉口场景能说明真实数据评测价值，但覆盖范围仍有限。
+三个固定路口、未公开的具体划分、变化的 clean 参考和缺失的运行时测量限制外推。真实数据来源不自动保证攻击在物理上可实现，平滑预测也不等于真实可行控制。本文没有碰撞、制动或驾驶员接管结果。
+
+“离线对抗模仿学习”中的对抗指策略与判别器训练，不等于用恶意扰动做鲁棒训练。相关结论只覆盖本文这三个实现，不能推广为 Transformer 或 IRL 普遍缺乏安全性。
 
 ## 后续跟进
 
-- 检查真实交叉口数据来源、状态表示定义和攻击约束。
-- 把 nominal ADE/FDE 与 attacked FDE 同时记录，避免把普通轨迹误差当作安全结论。
-- 和 Still Camouflage、MORPH-U、CARS 一起读，整理自动驾驶攻防从感知攻击、V2X 触发到策略鲁棒性的链路。
+### 资源、最小验证与停止条件
+
+- 资源核验（2026-09-12）：固定 v1 全文和两张官方图可访问；原文及本次精确题名检索未找到该评测的作者代码、97 维样本契约、训练配置或权重。上游 [UrbanIng-V2X 仓库](https://github.com/thi-ad/UrbanIng-V2X)有读取、转换、可视化及 OpenCOOD 工具，并链接 Harvard Dataverse；这些不是本文轨迹预测器的实现。本次未下载数据或核验归档许可。
+- 最小实验：先取得样本/划分清单，在相同未见序列上比较原始数字误差与遵守字段语义的误差；冻结模型、样本、评价时域和总计算预算，保留 clean/perturbed 一一配对。只在离线日志或受控仿真中测试，记录 ADE/FDE、无效状态比例、各特征组误差与全流程时延；不让扰动预测接管车辆。
+- 成功信号：正常误差可在独立序列重现，语义有效输入仍出现稳定退化，且不同模型的排序能跨重复运行核对。模型较小，但论文未报告最低硬件，先以小样本测实际资源。
+- 停止/转向条件：低正常误差依赖相邻帧泄漏、攻击收益主要来自非二值 mask/非法类别，或实时结果缺少配对日志，则先修数据契约和协议，不继续给模型排安全名次。
+
+### 核验记录
+
+固定 [arXiv:2605.03491v1](https://arxiv.org/html/2605.03491v1)，2026-05-05 版本；全文方法、训练、攻击范围、表 I 和两张实际图片已阅读。相关方法分别读 GAIL 原始算法与 UrbanIng-V2X v1 §3/5.1。未运行训练、推理、攻击或实车实验。

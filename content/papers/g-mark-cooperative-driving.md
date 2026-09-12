@@ -2,60 +2,184 @@
 {
   "id": "g-mark-cooperative-driving",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "agentic-driving"],
+  "tags": [
+    "cooperative-autonomous-driving",
+    "agentic-driving"
+  ],
   "title": "G-MARK: Grounded Multi-Agent Reasoning for Cooperative Driving via Knowledge Graphs",
   "source": "ICMLA 2026 oral (accepted; formal paper page unavailable at scan time) / arXiv:2608.19964 / https://arxiv.org/abs/2608.19964 / HTML: https://arxiv.org/html/2608.19964 / Code: https://github.com/bhavyagupta98/g-mark",
-  "authors": ["Bhavya Gupta", "Onat Gungor", "Tajana Rosing"],
-  "affiliations": ["University of California, San Diego", "West Virginia University"],
-  "comment": "G-MARK 不传 dense feature 或长文本，而把来源、可见性、不确定性、冲突和路径相关性保存在可追溯知识图谱中；在真实 V2V 数据衍生任务上显著改善遮挡推理，并把结构化通信量降到 V2V-GoT 的约 1/25.6。"
+  "authors": [
+    "Bhavya Gupta",
+    "Onat Gungor",
+    "Tajana Rosing"
+  ],
+  "affiliations": [
+    "University of California, San Diego",
+    "West Virginia University"
+  ],
+  "comment": "保留多车观测来源、可见性与分歧，再用轻量任务头做协同推理；低载荷结果值得关注，但当前公开构图路径含真值初始化，需先核对输入与实验版本。"
 }
 ---
 
 ## 一句话定位
 
-G-MARK 的价值不在“知识图谱”这个名词，而在于它把协同消息从一个被过早融合的对象状态，改造成带 provenance、ego/partner visibility、uncertainty 和 disagreement 的证据账本；不同任务按需查询同一账本，在遮挡推理上明显获益，同时保留低通信量和可追溯性。
+G-MARK 把多车对象观测保留为“谁看到了什么、哪些观测互相支持或冲突”的知识图谱，再用轻量检索、回归与分类头回答协同驾驶问题。它最有价值的设计是**保留观测来源和弱候选，让不同任务选择证据**。但当前公开代码会以真值框初始化对象轨迹，尚未证明论文数字来自纯检测输入；读其大幅推理收益时必须先核对这个输入边界。[论文 III–IV 节](https://arxiv.org/html/2608.19964v1#S3)、[固定代码版本的输入加载器](https://github.com/bhavyagupta98/g-mark/blob/de2eda27c7d2598fedfe58d39d4d62299e5ecd56/src/kg_coop_drive/infrastructure/v2vgot_processed_assets.py)
+
+全文采用 2026-08-20 的 arXiv:2608.19964v1，核验于 2026-09-12。作者在 arXiv Comments 声明获 ICMLA 2026 oral 接收；本次未核验正式会议论文页，因此保持 accepted 的表述。[版本与接收声明](https://arxiv.org/abs/2608.19964v1)
 
 ## 论文要解决的问题
 
-协同感知的中间特征融合通常带宽高且难解释，语言化协同虽然能回答复杂问题，却可能把数值几何转成冗长文本并丢失来源。更根本的问题是，多车对同一目标的观测若在入口处就折叠为单一状态，后续模型无法回答“谁看见了它”“是否只由 partner 支持”“两车是否冲突”，也无法针对遮挡、运动和控制任务选择不同证据。
+### 提前融合会丢掉哪些信息
 
-作者因此把 processed cooperative perception artifacts 映射成 provenance-aware KG，并在 V2V4Real 衍生的 V2V-GoT-QA 上同时评价对象选择、可见性、运动、控制和未来轨迹。论文关注的是协同证据如何进入推理，而不是重新训练前端检测器。
+假设邻车看见被卡车挡住的对象，自车没有看见。若入口处只留下一个融合框，下游无法区分它是两车共同支持，还是仅有一个低置信度邻车观测。若连弱候选也删掉，后续“找出自车不可见但靠近路径的对象”这个问题可能已无证据可用。
+
+G-MARK 的输入不是原始点云或图像，而是处理后的对象框或轨迹、类别、置信度、车辆位姿、时间及规划上下文；输出是对象集合、运动预测、动作类别或未来路点。其 delayed fusion 是推迟不可逆的信息合并，不是针对网络时延的时间补偿。来源可追踪也不等于来源可信，需要另行验证消息真实性与概率校准。[III 节](https://arxiv.org/html/2608.19964v1#S3)
+
+### 两个最接近的原始方法
+
+| 工作与已读一手来源 | 原有机制 | G-MARK 改变的环节 |
+| --- | --- | --- |
+| Chiu 等，V2V-LLM，2025；[v1 §4.1–4.2](https://arxiv.org/html/2502.09980v1#S4) | 每车 PointPillars 输出场景特征和对象向量，MLP projector 将其映射到 LLaVA/Vicuna 的语言空间；冻结检测器与 LLM 主干，训练 projector 和 LoRA | 换成显式对象证据及传统轻量任务头，减少大模型推理；原方法本来就保留对象向量，不能概括成只传自由文本 |
+| Chiu 等，V2V-GoT，2025；[v3 §III–IV、VI](https://arxiv.org/html/2509.18053v3#S3) | 当前和上一时刻的 PointPillars 特征进入 MLLM；九类问答构成有向依赖图，父问题答案作为子问题上下文；训练用真值父答案，推理用模型输出 | G-MARK 的“图”存车辆、观测和对象证据，不是问答之间的推理依赖图；统一特征库直接供检索和数值预测使用，省去自然语言逐节点生成 |
+
+特别要区分通信与内部推理：V2V-GoT 原文 VI 节明确说，接收节点缓存感知特征，除非被请求，中间问答文本无需在车与计算节点之间传输。因此 G-MARK 的通信差异主要是**结构化对象证据与感知特征载荷**的差异，不能解释成把跨车长推理文本压缩了 25.6 倍。
 
 ## 方法和系统设计
 
-- KG 节点和边保存目标框、置信度、来源车辆、支持数量、ego/partner 可见性、弱候选、跨车冲突、历史运动及相对规划路径的位置。
-- 同一图谱导出三类 typed view：对象检索用于 Q1-Q4，规则化回归用于 Q5/Q7/Q9，场景动作预测用于 Q6/Q8；任务头是 logistic regression、regularized regression 和轻量分类器。
-- 系统传输 compact KG evidence，而不是 dense feature 或自然语言中间推理；训练使用约 11 万问题，验证集约 3.1 万问题，CPU 环境即可运行。
+### 从本地观测到任务视图
+
+每辆车创建 agent 节点，每条本地观测创建 observation 节点，再用 hypothesis 节点表示可能存在的真实对象。`source` 关系保存观测来自哪辆车，`support` 关系连接观测与对象假设；把它们分开后，同一对象可以有多个互相不完全一致的支持来源。[III-A](https://arxiv.org/html/2608.19964v1#S3.SS1)
+
+跨车关联只考虑类别相同且距离足够近的候选。关联后保存位置汇总和置信度，同时保留来源、支持集合和不一致性；未关联的观测仍作为较弱候选存在。随后增加自车/邻车可见性、支持数量、弱置信度、不一致性、相对方向、运动线索及到给定路径的距离。最终导出对象检索、运动回归、场景动作三类 typed view，而不是由一个通用语言模型承担所有输出格式。[III-B–D](https://arxiv.org/html/2608.19964v1#S3.SS2)
+
+### 公式组一：保守关联的门限和亲和度
+
+原文 III-B 的未编号公式可写为：
+
+$$
+\delta(p,q)=\mathbf 1\!\left[\tau_p=\tau_q\;\land\;d(\mathbf x_p,\mathbf x_q)<\epsilon_{\tau_p,\tau_q}\right],\qquad
+\alpha_{pq}=\begin{cases}
+1-d(\mathbf x_p,\mathbf x_q)/\epsilon_{\tau_p,\tau_q},&\delta(p,q)=1,\\
+0,&\delta(p,q)=0.
+\end{cases}
+$$
+
+$p,q$ 是观测节点，$\tau$ 是类别，$\mathbf x$ 是已转到共同坐标系的位置，$d$ 是中心距离，$\epsilon$ 是类别相关关联门限。亲和度只在通过门限的候选中排序；它是线性距离启发式，不是学习出的关联概率。论文没有列出各类门限值，也未证明门限能处理时钟偏差、拥挤同类目标或位姿漂移。当前代码在若干调用处使用 3 m 关联和 1 m 合并门限，但本次未确认这些配置对应论文实验版本，不能替原文补成统一超参数。
+
+### 公式组二：汇总状态，同时保留支持证据
+
+对对象假设 $h$，$\mathcal S(h)$ 是支持观测集合，$c_o$ 是各观测置信度。将原文 III-B 对位置的文字定义与置信度公式并列：
+
+$$
+\mathbf x_h=\frac{\sum_{o\in\mathcal S(h)}c_o\mathbf x_o}{\sum_{o\in\mathcal S(h)}c_o},\qquad
+c_h=1-\prod_{o\in\mathcal S(h)}(1-c_o).
+$$
+
+位置式是对作者“按置信度加权平均”的展开，要求分母非零；论文未说明全零置信度的处理。$c_h$ 使用类似 noisy-or 的有界汇总。作者明确称其为 confidence summary，而非经过校准的概率融合：高度相关或共同出错的两个来源也会提高该值。图谱的意义在于保留 $\mathcal S(h)$ 与来源记录，让任务头有机会识别这种情况，而不是宣称上述汇总已解决不确定性。
+
+### 训练与推理：图谱构造没有可学习融合器
+
+图谱构造和几何关系计算是确定性处理。论文 IV-A 说明，Q1–Q4 用共享 logistic regression 排序器及任务 one-hot；阈值从训练集选择。Q5/Q7 共享正则化运动回归头，Q9 用独立轨迹头；Q6 是二分类头，Q8 分别预测速度与转向类别。所有头用约 110K 训练问题拟合，约 31K 验证问题只用于评价。上游检测器没有在这项工作中联合训练。
+
+公开 `default.yaml` 给出 logistic、ElasticNet 和梯度提升分类器配置，Q5/Q7 共享、Q9 单独，缺失值采用零值及缺失指示。论文没有给出这些模型的完整损失、全部特征维数、训练耗时或对应产物哈希；本次读取配置并未运行模型，故不把当前默认文件视为原表的已复现配置。[配置快照](https://github.com/bhavyagupta98/g-mark/blob/de2eda27c7d2598fedfe58d39d4d62299e5ecd56/configs/unified_heads/default.yaml)
+
+### 静态代码核验发现的输入边界
+
+对公开提交 `de2eda27` 的源码追踪发现：特征脚本调用 `prepare_sample`；加载器读取 `*_gt.npy` 和 `*_gt_object_id.npy`，以真值框中心、置信度 1.0、来源 `GT` 创建初始轨迹，同时加载可见性数组。`cooperative` 分支保留这些数据，enricher 将其注入场景；之后才增加检测支持与候选。统一特征库直接读取场景轨迹的坐标、支持与可见性，visibility reasoner 还保留已有可见性事实。[特征入口](https://github.com/bhavyagupta98/g-mark/blob/de2eda27c7d2598fedfe58d39d4d62299e5ecd56/scripts/build_unified_heads_features.py)、[场景准备](https://github.com/bhavyagupta98/g-mark/blob/de2eda27c7d2598fedfe58d39d4d62299e5ecd56/src/kg_coop_drive/application/qa/v2vgotqa_evaluator.py)、[特征构造](https://github.com/bhavyagupta98/g-mark/blob/de2eda27c7d2598fedfe58d39d4d62299e5ecd56/src/gmark/features/unified_feature_bank.py)
+
+这说明当前路径的 GT 不只是单独保存的评分答案。仓库确有 Q9 的 clean 分支和字段名称黑名单，禁止直接输入参考未来轨迹等字段，但名称检查不能代替完整数据来源检查。**本次没有论文运行 manifest，不能判定每个已发表分数使用了哪条路径；可以确定的是，公开实现尚不能直接作为纯检测输入复现的证据。** 这一点比“能在 CPU 上运行”更先决定比较是否公平。
 
 ## 关键图与可视化结果
 
-![图 1：G-MARK 从多车处理后观测构建带来源和可靠性属性的共享知识图谱](https://arxiv.org/html/2608.19964v1/gmark_arch.png)
+![原论文 Fig. 1：本地图谱、保守关联、合作上下文与统一任务头](https://arxiv.org/html/2608.19964v1/gmark_arch.png)
 
-图 1 展示 delayed evidence fusion 的核心：多观察者证据先保留分歧与来源，任务头再读取适合自己的图谱视图。它支持可审计协同推理，但也暴露出论文依赖上游已经生成可靠对象框和轨迹上下文。
+从左到右看：不同车辆的观测先分别存在；关联模块既合并兼容候选，也保留弱候选；再增加可见性、来源、分歧和规划信息；最后输出对象、运动与规划结果。它表达的是论文提出的信息组织方式，图中没有标明当前代码真值初始化的路径，不能单凭架构图确认部署输入均可获得。[Fig. 1、III 节](https://arxiv.org/html/2608.19964v1#S3.F1)
 
-![图 2：未来轨迹误差与每样本通信量的权衡](https://arxiv.org/html/2608.19964v1/gmark_comm_vs_l2_tradeoff.svg)
+![原论文 Fig. 2：未来轨迹平均 L2 与通信载荷的权衡](https://arxiv.org/html/2608.19964v1/gmark_comm_vs_l2_tradeoff.svg)
 
-图 2 说明 G-MARK 的目标不是在单一轨迹误差上压过所有模型，而是换到低带宽 operating point：通信量显著下降，轨迹精度接近语言协同基线。它不能证明完整 V2X 链路带宽或端到端时延，因为比较从 processed artifacts 之后开始。
+横轴是 MB，纵轴是轨迹平均 L2（m），左下更好。G-MARK 星点明显更靠左，但略高于 V2V-GoT，表示载荷减少与轨迹误差小幅增加同时发生。这里各点是不同系统，不是同一模型的连续码率扫描；没有网络实测、尾延迟或安全保证。[Fig. 2](https://arxiv.org/html/2608.19964v1#S4.F2)
+
+上述两图已分别打开；第二张由官方 SVG 原样栅格化后检查。还单独查看了 Fig. 4 的官方消融图，核实了下文标注值，未重绘作者结果。
 
 ## 实验结论与证据
 
-相对 V2V-GoT，G-MARK 在九项任务中八项改善：遮挡对象 F1 从 0.301 到 0.428，提升 42.2%；partner-only 隐藏目标 F1 从 0.440 到 0.494；两项 object motion L2 分别由 8.050/7.610 降到 3.822；控制 Action L1 从 0.088 降到 0.076。未来轨迹是唯一退步项，平均 L2 为 2.710 m，而 V2V-GoT 为 2.620 m，说明长时误差仍会积累。
+### 数据、任务与指标的真实含义
 
-每样本结构化通信量为 0.0159 MB，约比 V2V-GoT 低 25.6 倍；task solver 本身低于 1.4 ms，六类任务低于 1 ms。去掉 partner evidence 后隐藏目标 F1 直接从 0.494 降到 0；去掉 provenance 后降到 0.396，控制误差升到 0.152。这些消融较有力地证明收益来自协同来源结构，而不是换了一个分类头。
+G-MARK 在 V2V4Real 衍生的 V2V-GoT-QA 上做离线问答与数值预测，不是现场闭环驾驶。G-MARK 将评测集称为 validation；V2V-GoT v3 称其为 testing，给出的原始数量是 110610 训练问答、31014 测试问答。G-MARK 声称沿用官方划分，本次未下载数据逐 ID 验证二者完全相同。[G-MARK IV-A](https://arxiv.org/html/2608.19964v1#S4.SS1)、[数据集原文 III-B–F](https://arxiv.org/html/2509.18053v3#S3.SS2)
+
+Q1–Q4 以 0.5 m 位置容差计算对象选择 F1，0–1、越高越好。Q2 找遮挡物，Q3 找自车不可见的重要对象；Q6 虽被 G-MARK 简称 Agent Motion，原基准评分实际是“其他 CAV 是否为重要对象”的二分类准确率。Q5/Q7 用对象未来轨迹 L2，Q9 输出未来 3 s 的六个路点，并比较 1/2/3 s 的平均 L2（m）。Q8 评价离散速度/转向类别，G-MARK 将 Action L1 称为归一化误差，不能解释成真实转角或加速度误差。
+
+### 主表与对照来源
+
+| Table IV，沿用同一问答基准；基线为原论文报告值 | G-MARK | V2V-GoT | 可支持的观察 |
+| --- | ---: | ---: | --- |
+| Q1，F1 ↑ | 0.586 | 0.525 | 可见重要对象选择提高 |
+| Q2，F1 ↑ | 0.428 | 0.301 | 增加 0.127 F1，按所列数计算相对约 42.2% |
+| Q3，F1 ↑ | 0.494 | 0.440 | 增加 0.054 F1，不等于所有遮挡对象均能找出 |
+| Q4，F1 ↑ | 0.614 | 0.608 | 绝对差仅 0.006 |
+| Q5，对象 L2 ↓，m | 3.822 | 8.050 | 数值回归改善；输入公平性仍需确认 |
+| Q6，二分类准确率 ↑ | 0.905 | 0.874 | 非运动方向分类准确率 |
+| Q7，对象 L2 ↓，m | 3.822 | 7.610 | 与 Q5 共享头，不是两次独立验证 |
+| Q8，Action L1 ↓ | 0.076 | 0.088 | 无量纲动作标签误差降低 |
+| Q9，轨迹平均 L2 ↓，m | 2.710 | 2.620 | 增加 0.090 m，约差 3.4% |
+
+表中八项方向有利于 G-MARK，但基线不是在作者同一套前端、硬件和代码中重跑。已打开 V2V-GoT v3 的 Tables I–II 核对：原始 Q8 为 0.0876，G-MARK 表中四舍五入为 0.088；所以不要从已舍入的两行自行验证作者“13.1%”的精细百分比。也不能把 G-MARK 的输入来源疑问掩盖成轻量回归头的纯架构收益。原文未报告重复种子或置信区间。[G-MARK Table IV](https://arxiv.org/html/2608.19964v1#S3.T4)、[V2V-GoT Table II](https://arxiv.org/html/2509.18053v3#S5.T2)
+
+### 通信和耗时从哪里开始计量
+
+Fig. 2/IV-B 报告 G-MARK 0.0159 MB/sample，V2V-GoT 0.4068 MB/sample；后者除以前者约 25.6，是每样本载荷比，不是 Mbps、无线吞吐或传输时间。序列化格式、每字段编码位宽、协议头和重传开销在主文中没有完整给出，无法据此算真实 V2X 链路预算。
+
+8 核 CPU、24 GB RAM、Linux 上，作者计时从已得到 processed artifacts 之后开始：当前帧任务总计 10.3–14.2 ms，需历史帧的运动任务 32.4–33.4 ms；任务求解本身均低于 1.4 ms。Fig. 3 虽写 end-to-end，正文明确不包含原始感知前端。本文没有同机重测 V2V-GoT，故不把与别处几百毫秒的比较写成完整系统加速比。[IV-B、Fig. 3](https://arxiv.org/html/2608.19964v1#S4.F3)
+
+### 固定任务头的诊断消融
+
+| 原 Fig. 4 / IV-C，推理前修改证据、任务头固定 | Q3 隐藏对象 F1 ↑ | Q8 Action L1 ↓ |
+| --- | ---: | ---: |
+| 完整 G-MARK | 0.494 | 0.076 |
+| Ego-only，移除邻车证据 | 0.000 | 0.213 |
+| 去掉来源信息 | 0.396 | 0.152 |
+| Flat non-KG 对象表示 | 0.443 | 0.089 |
+
+这些值已与实际图上标签逐项核对。它们支持“现有头依赖邻车信息和来源字段”，但不能独立证明图这一数据结构本身更强：推理时删除字段造成分布变化，flat 组同时改变了信息内容，且没有给出使用相同字段重新训练的强表格/集合模型。Ego-only 还改变可获得对象集合，对 Q3 得零是信息缺失的强对照，并非学习能力的纯比较。[IV-C、Fig. 4](https://arxiv.org/html/2608.19964v1#S4.F4)
 
 ## 应用场景与启发
 
-- 应用场景：带宽受限 V2X、协同危险目标解释、消息审计、边缘端结构化场景共享和任务按需通信。
-- 方法启发：不要让 occupancy 或 object track 在进入协同模块时丢掉 observer provenance；分歧本身可能是遮挡、标定或欺骗的重要信号。
-- 研究启发：把 KG 中的离散候选和不确定性换成可校准的概率 occupancy，再用规划损失决定应请求哪辆车的哪类证据。
-- 讨论问题：图谱提供可解释结构后，如何保证其结构化字段不是由错误前端生成的“精确幻觉”？
+### 可以迁移的信息组织方式
+
+作者主张用紧凑、可追踪证据支撑多项驾驶任务。我的判断是，即使暂不接受其公平性能比较，也值得在协同对象消息中保留观测 ID、来源、时间、原始置信度、坐标变换和冲突记录。它们可用于解释某次目标选择、定位误差或融合拒绝，不必绑定知识图谱数据库或语言模型。
+
+### 一个更明确的可检验问题
+
+待验证假设是：在每车都只使用自身检测输出、通信字节数相等时，保留多来源支持与分歧，比只传一个置信度加权框更有利于隐藏目标检索。实验必须把两种表示都重新训练，并保证输入字段总量一致；否则无法分清收益来自图结构、更多信息还是训练分布差异。
 
 ## 局限与阅读风险
 
-实验基于 V2V4Real 的处理后感知产物和 QA 任务，没有把网络丢包、时钟误差、定位漂移及检测前端时延纳入端到端链路。主要比较采用 V2V-GoT 报告结果，而非所有基线在完全相同实现下重跑。当前任务头很轻，证明了结构化证据有效，却没有证明知识图谱优于强神经融合器；未来轨迹还略差，且没有闭环驾驶或安全终点。ICMLA 2026 oral 状态来自 arXiv 作者声明，扫描时尚无可核验的正式论文页，因此保留 arXiv 为论文入口并明确标为 accepted，而不写成已正式出版。
+### 作者证据支持到哪里
+
+作者明确工作运行在处理后观测之上，采用相关论文已报告基线，未来轨迹误差略差。尚未评估无线丢包、陈旧消息、位姿错误、恶意来源或驾驶闭环。保存“不确定性”“冲突”字段没有自动形成校准、拒绝策略或安全保证；多车重复错误还可能使 noisy-or 置信度升高。
+
+### 当前最优先的复现风险
+
+当前代码的 GT 初始化与论文“从检测/轨迹建立图谱”的宽泛说明之间存在重要信息边界。已核实五个关键源码文件的 Git blob 与提交 `de2eda27` 相符；尚无对应论文 Table IV 的运行清单与权重，不能据此确定最终实验路径，也不能将它略写成普通上游检测误差。
+
+路径相关特征同样需要按任务审计：V2V-GoT 问题本身会给参考规划轨迹，训练父问答还使用真值答案；这些属于基准条件，不能默认真实部署都能获得。G-MARK 当前代码区分了某些 clean Q9 字段，但本次未验证全部派生特征、样本重叠及历史上下文的来源。任何“消融已经证明图谱优于其他方法”的结论，都需先解决这些控制问题。
 
 ## 后续跟进
 
-- 用代码重建 provenance、partner removal 和 unstructured-object 三组关键消融。
-- 在延迟、丢包、姿态偏差和恶意 partner 下检查 conflict 字段是否真的能触发拒绝融合。
-- 将结构化 evidence payload 接入真实协同规划器，按 collision、progress 和通信预算联合评价。
+### 当前资源与执行前置条件
+
+截至 2026-09-12，[G-MARK 仓库](https://github.com/bhavyagupta98/g-mark) 有构图、特征、训练、评测、消融脚本和 YAML 配置，`pyproject.toml` 要求 Python 3.10+，但依赖列表为空。文件树未包含训练权重或结果 manifest，README 也没有可直接下载的对应权重入口；代码许可本次未找到明确 LICENSE 文件，不能把“公开可读”写成已确认某种开源许可。
+
+上游 [V2V-GoT-QA 数据页](https://huggingface.co/datasets/eddyhkchiu/V2V-GoT-QA/tree/main) 可访问，列出约 160 MB 的 QA JSON 压缩包、22.1 GB 的 processed features/GT 压缩包及大模型检查点。它们不是 G-MARK 的训练产物，本次没有下载大包。数据解压容量、特征库磁盘和峰值内存未实测；8 核/24 GB 只是作者报告的计算资源起点。
+
+### 最小验证、成功信号与停止条件
+
+先做输入来源检查：固定提交和官方划分，取每类问题少量训练/验证样本，逐字段记录对象坐标、可见性、参考路径及历史状态来自检测、问题上下文还是真值文件。将纯检测构图与 GT bootstrap 分别命名，禁止互相混报。没有原实验 manifest 时，不先追求重现表中第三位小数。
+
+输入可核实后，先只做 Q3：用同一检测器、同一候选集合和同一字节预算，训练“融合框”“带来源的平面特征”“图谱特征”三个轻量头；在独立序列上报 0.5 m F1、候选召回、消息字节数及重复运行差异。普通 CPU 工作站可用于头部实验，前提是已获得并校验检测产物；无需为此先部署完整 MLLM。
+
+成功信号是移除 GT 初始化后，来源/分歧特征仍在同输入控制下带来稳定收益。若收益只存在于 GT bootstrap，或平面特征已取得相同结果，就停止“图结构有额外优势”的主张，转向研究信息字段与消息协议；若纯检测路径缺失或依赖不可获得的答案字段，则停止性能复现，先完成输入适配。本次只阅读与检查来源，未执行任何训练、推理或基准。
+
+### 核验记录
+
+固定全文 [2608.19964v1](https://arxiv.org/html/2608.19964v1) 的 III-A–D 未编号公式、IV-A 设置、Table IV 与 Figs. 1–4 是主要证据；两项相关方法分别读取 [V2V-LLM v1](https://arxiv.org/html/2502.09980v1#S4) 和 [V2V-GoT v3](https://arxiv.org/html/2509.18053v3#S3)。官方 Fig. 1、Fig. 2、Fig. 4 均单独视觉检查；代码核验固定至 `de2eda27c7d2598fedfe58d39d4d62299e5ecd56`，并不等于确认论文实验使用该提交。

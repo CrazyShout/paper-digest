@@ -2,57 +2,109 @@
 {
   "id": "update-unseen-aoi-collaborative-perception",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving"],
+  "tags": [
+    "cooperative-autonomous-driving"
+  ],
   "title": "Update the Unseen Only: Minimizing AoI for Collaborative Perception through Online Learning",
   "source": "arXiv:2607.20967 / https://arxiv.org/abs/2607.20967",
-  "authors": ["Yanan Ma", "Zhuoyi Zhao", "Zhengru Fang", "Haonan An", "Xianhao Chen", "Yuguang Fang"],
-  "affiliations": ["Hong Kong JC STEM Lab of Smart City", "Department of Computer Science, City University of Hong Kong", "Department of Electrical and Computer Engineering, The University of Hong Kong"],
+  "authors": [
+    "Yanan Ma",
+    "Zhuoyi Zhao",
+    "Zhengru Fang",
+    "Haonan An",
+    "Xianhao Chen",
+    "Yuguang Fang"
+  ],
+  "affiliations": [
+    "Hong Kong JC STEM Lab of Smart City",
+    "Department of Computer Science, City University of Hong Kong",
+    "Department of Electrical and Computer Engineering, The University of Hong Kong"
+  ],
   "comment": "重新定义协同感知的信息年龄：车辆自己重新看见区域时，AoI 也应归零；LocMW 因而只广播“仍看不见且已经过时”的网格，把通信新鲜度和 3D 检测收益连接起来。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文把协同感知的通信目标从“更新最旧数据”改成“只更新车辆当前仍看不见的数据”。传统 AoI 假设接收端没有传感器，只有基站下发才能刷新信息；在车路协同里，车辆移动后可能自己重新看见某区域，继续广播就是浪费。论文给出闭式 AoI 刻画、在线 LocMW 调度和性能保证，并用真实交通轨迹与 V2X-Sim 证明新鲜度改善能够转成检测 mAP。
+LocMW 将车辆“自己重新看见区域”视为信息刷新，学习哪些盲区还会持续存在，再分配基站广播预算；它优化总信息年龄，尚未证明闭环驾驶安全。[固定全文 v1，§III–VIII、附录 A–C](https://arxiv.org/html/2607.20967v1)
 
 ## 论文要解决的问题
 
-有限下行带宽使路侧特征变旧，但简单“最旧优先”忽略了车辆自身持续感知。一个先前遮挡的网格可能在下一时隙进入车载传感器视野，其 AoI 已被本地感知重置；如果基站仍按旧反馈发送它，不仅浪费资源，还挤占真正不可见区域的更新。问题同时包含动态车辆集合、变化的感知覆盖、未知环境参数和反馈延迟，因此不能只用静态资源分配求解。
+广播旧区域不一定有价值：车辆可能已经靠本地传感器看清它，或离开了关注范围。基站还只能收到延迟的可见性反馈，因此要估计当前盲区需求，而不只是选择时间戳最旧的区域。
 
 ## 方法和系统设计
 
-- 将空间划分为区域，定义“感兴趣但不可观测”的车辆数，并允许 AoI 在收到基站更新时降为 1、被本地传感器看见时直接归零。
-- 用 INAR(1) 过程描述区域需求与可见性变化，推导长期平均总 AoI、均值场下界和已知参数下的最优平稳随机基准。
-- LocMW 通过投影岭回归在线估计环境参数，用确定性等价递推补偿延迟反馈，再按预期 AoI 降幅选择每时隙最多 K 个区域。论文证明其相对已知参数随机基准的累积超额 AoI 为次线性。
+### 状态为何包含本地刷新
+
+基站被假定能持续观察所有区域，广播可靠到达所有相关用户，每时隙最多更新 $K$ 个等大小区域。车辆可见或失去兴趣时，下一时隙 AoI 归零；仍不可见但收到广播时降为 1；其余递增。$N_b$ 表示区域 $b$ 中感兴趣却不可见的用户数，$A_b$ 为这些用户 AoI 之和。
+
+需求按 INAR(1) 建模：用户以概率 $\rho_b$ 留在盲区状态，新进入用户均值为 $\mu_b$，稳态需求 $\lambda_b=\mu_b/(1-\rho_b)$。§VII-A 式 30 用估计值跨越 $d$ 步反馈延迟：
+
+$$
+\hat N_b(t+1)=\hat\rho_b\hat N_b(t)+\hat\mu_b,\qquad
+\hat A_b(t+1)=\hat\rho_b(1-u_b(t))\hat A_b(t)+\hat\rho_b\hat N_b(t)+\hat\mu_b.
+$$
+
+$u_b=1$ 表示广播，历史动作已知。这里不是学习检测器；基站每步以二维岭回归估计 $[\rho_b,\mu_b]$，投影到有界可行域，再从最新延迟报告递推当前状态。
+
+### 调度规则与保证的范围
+
+式 35 选取最大的 $K$ 个权重：
+
+$$
+W_b(t)=\frac{\hat\rho_b\hat A_b(t)}{1-\hat\rho_b+\hat\rho_b\hat\eta_b^R},\qquad
+\hat\eta_b^R=\left[\frac{\sqrt{\hat\lambda_b\hat\rho_b/\nu}-(1-\hat\rho_b)}{\hat\rho_b}\right]_0^1.
+$$
+
+$\hat\eta_b^R$ 是式 16 的平稳随机基准广播概率，$\nu$ 以二分搜索满足总预算；实现还需处理估计 $\hat\rho_b=0$ 的边界。较低持续概率减少广播优先级，因为用户可能马上自行看清。
+
+作者定理 4 给出两个层级：已知参数时，相对最优平稳随机基准的上界；再结合均值场下界推导，得到至多两倍关系。后者是作者在该前提下给出的理论结果，不等于全体策略最优，本报告也未完成独立证明审计。定理 5 的累积超额 AoI 为 $O(KL_d^L\sqrt{T\log(BT)})+o(T)$，还要求持续激励、局部随机 Lipschitz 等条件。均值场预测输入方差趋零也并非“车多”自动保证；本文未独立证明这些条件在实测轨迹上成立。
+
+### 两项原始方法比较
+
+[Kadota 等，ToN 2018，§IV-D](https://www.mit.edu/~modiano/papers/CV_J_104.pdf) 在不可靠广播链路上按成功率与年龄构造 Max-Weight，用户靠收到包刷新；LocMW 则加入本地可见性及变化的需求人口，但其广播成功是建模假设。[Hu 等，Where2comm，2022 v1，§4.3–4.4](https://arxiv.org/html/2209.12836v1#S4) 以检测置信度和接收者请求图选稀疏特征，再做注意力融合；LocMW 选择的是跨时隙信息新鲜度，未直接优化瞬时检测置信度或规划风险。
 
 ## 关键图与可视化结果
 
-![图 1：基站根据延迟反馈决定哪些不可见区域值得广播](../../assets/papers/update-unseen-aoi-collaborative-perception-figure-1.png)
+![原文 Fig. 2：延迟反馈下的区域广播](../../assets/papers/update-unseen-aoi-collaborative-perception-figure-1.png)
 
-图 1 来自论文官方源码并按 PDF CropBox 提取。不同车辆对区域的 AoI 不同，而本地重新感知可以自动刷新状态；基站的任务不是重复发送所有旧网格，而是补齐车辆当前的真实盲区。
+各车拥有不同盲区和 AoI；基站补充其仍需接收的信息。此图不代表现场部署。
 
-![图 2：LocMW 与传统调度在 V2X-Sim 3D 检测中的定性对比](../../assets/papers/update-unseen-aoi-collaborative-perception-figure-2.png)
+![原文 Fig. 8：V2X-Sim 检测定性比较](../../assets/papers/update-unseen-aoi-collaborative-perception-figure-2.png)
 
-图 2 对比 LocMW、传统 Max-Weight/Max-Demand 与真值。LocMW 在外围和遮挡车辆上减少漏检，说明通信层指标确实影响下游感知，而不是只得到更漂亮的 AoI 曲线。
+红框为预测、绿框为真值，依次包含 oracle、LocMW 与三个调度基线；局部框更一致只能提供定性支撑。
 
 ## 实验结论与证据
 
-密集交通实验使用 pNEUMA 四天轨迹和 FLUID 信号路口数据，分别划分 543 与 201 个区域，以 0.1 s 为时隙；LocMW 在带宽、延迟和车流密度变化下均接近 perfect-estimation 基准，相对 Traditional Max-Demand 最多降低 31.6% 的总 AoI。
+### 场景与计量口径
 
-感知实验随机选择 10 个 V2X-Sim 场景，用 PointPillars 和 400 个特征网格，每格按 1 KB 计。随着通信预算增加，LocMW 的 mAP@50/70 始终领先传统调度，其中 mAP@70 相对 Traditional Max-Demand 最多提高 16.3%，且对 8 个时隙级别的反馈延迟更稳定。理论与任务指标形成了较完整的“调度目标—性能保证—感知收益”链条。
+pNEUMA 用四天 d6/d7 轨迹、543 区域，FLUID 为 201 区域；0.1 s 时隙，关注半径分别 80/60 m。可见性来自距离与密度的随机模型，并非逐帧实测遮挡。岭回归系数 1，$\rho_{\max}=0.99$，预热 500 步。总 AoI 随用户数与区域数累积，不是每车平均延迟。
+
+感知随机取 V2X-Sim 的 10 场景，PointPillars、400 网格，每格按 1 KB。以下是原 Fig. 6(b) 固定 $d=8$ 时的 mAP@70，单位 %；由官方源码 PDF 矢量柱顶与坐标轴反算并四舍五入，属于图读约值，不能当作原始评测日志。
+
+| $K/B$ | LocMW ↑ | Traditional MW ↑ | Max-Demand ↑ | Traditional Max-Demand ↑ |
+| --- | --- | --- | --- | --- |
+| 0.3 | 约 29.40 | 约 28.21 | 约 27.70 | 约 26.92 |
+| 0.6 | 约 31.44 | 约 30.17 | 约 29.69 | 约 28.51 |
+
+同预算下的最后一列差约 2.48/2.93 个百分点；若每格等大小，两个预算对应 120/240 KB 有效载荷／时隙，不含反馈、索引及协议头。[Fig. 6(b) 官方矢量图](https://arxiv.org/html/2607.20967v1/map70_vs_bandwidth_bar.svg)
+
+### 消融能说明什么
+
+Perfect Est. 只移除参数估计误差；传统 MW 忽略本地感知重置，Max-Demand 忽略累计年龄，因而可分别检验状态建模和新鲜度目标。图中 LocMW 与 oracle 接近，但无数值消融表、seed 方差或检测训练配置，不能量化每步模块贡献。
+
+正文 AoI 最大降幅称 31.6%，mAP 相对提升称 16.3%；贡献段却写 37.5%/6.79%，且结果段把多幅图都指作 Fig. 8。源码仍有此矛盾，本报告不把这些最大值作为已重算结论。作者给每步复杂度 $O(B\log B+dB)$，未报告实测运行时间，随机基准二分搜索精度的额外成本也需实现核对。
 
 ## 应用场景与启发
 
-- 应用场景：路侧特征广播、区域级语义通信、拥挤路口的有限带宽协同感知。
-- 方法启发：AoI 不应只绑定消息时间戳，还应绑定“接收者是否已经通过本地传感器恢复该信息”；这可进一步扩展到任务风险和规划价值。
-- 讨论问题：如果一个网格很旧但与当前轨迹无关，LocMW 是否还应发送，还是应把 AoI 与驾驶风险联合定义？
+适合区域级路侧广播。报告判断：把“接收者是否仍缺信息”加入调度，比仅压缩消息更贴近共享目的；但不可见且陈旧不一定意味着驾驶危险，需要另测任务风险。待验证假设：相同预算下，优先刷新即将占用自车路径的陈旧单元，可以改善关键目标召回。
 
 ## 局限与阅读风险
 
-真实数据只提供车辆轨迹，感知可见性由距离与密度模型模拟；V2X-Sim 也只有 10 个抽样场景，尚未形成真实路侧链路验证。下行信道未显式建模位置相关衰落、突发丢包与编码开销，反馈延迟也按时隙处理。检测收益没有继续传到预测、规划或闭环碰撞率，因此“更新不可见区域”是否总是最有驾驶价值仍未证明。
+恒定反馈延迟、可靠覆盖与完整基站视野限制现实适用性；检测置信度也不能直接等同于可见性真值。附录 C 式 61 的预测量条件于当前历史，而式 63 使用下一步状态的二阶矩；新增反馈带来的条件方差是否已被正确计入，需要独立核查这一衔接。这是证明审计的待查点，不能据此直接宣称定理错误。[附录 C，式 61–63](https://arxiv.org/html/2607.20967v1#A3.E61)。附录给出理论证明，官方源码包含论文及绘图 PDF，未见实验脚本、配置、训练权重或原始数值；当前限定检索未确认作者实现发布。没有真实链路或驾驶闭环实验。
 
 ## 后续跟进
 
-- 将区域状态替换为真实可见性/遮挡估计，并用实测 C-V2X trace 重放丢包和时延。
-- 把 LocMW 的权重从车辆数量与 AoI 扩展为 AoI、目标风险和规划敏感度的联合指标。
-- 与 Defer to Plan 结合：发送端选择“规划仍需要的盲区”，接收端再判断远端 token 是否可信。
+### 最小复核与停止条件
+
+先取得状态日志、图表原始数值和 10 场景 ID，复核最大值及可见性定义。随后固定 400 网格、同检测器、本地刷新规则、估计器和 $d=8$，对照原 LocMW 与仅加入当前估计 TTC/路径相关权重的版本；两组使用相同有效载荷和上行反馈预算。权重只使用推理时可见状态，在独立验证集定参，不使用测试未来真值。记录近路径/短 TTC 目标召回、总体 mAP/AoI 与反馈开销。关键召回改善且不以整体质量明显下降换得，才支持该扩展；若无对应收益或仅靠增加预算，就否定该假设。若无法恢复图表数据或可见性定义，停止数值复现。本次未运行调度或检测实验。

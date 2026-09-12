@@ -3,59 +3,191 @@
   "id": "evaluating-roadside-perception-gpt",
   "revisionOf": "evaluating-roadside-perception",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving"],
+  "tags": [
+    "cooperative-autonomous-driving"
+  ],
   "title": "Evaluating Roadside Perception for Autonomous Vehicles: Insights from Field Testing",
   "source": "arXiv:2401.12392 / https://arxiv.org/abs/2401.12392",
-  "authors": ["Rusheng Zhang", "Depu Meng", "Shengyin Shen", "Tinghan Wang", "Tai Karir", "Michael Maile", "Henry X. Liu"],
-  "affiliations": ["University of Michigan (Mcity)"],
-  "comment": "[GPT改] 大幅修正原版：删除原文不支持的 100 小时数据、5-50m 最优范围、4-6m 安装高度、50ms V2X 延迟等说法，并换回真实 Figure 1/2。"
+  "authors": [
+    "Rusheng Zhang",
+    "Depu Meng",
+    "Shengyin Shen",
+    "Tinghan Wang",
+    "Tai Karir",
+    "Michael Maile",
+    "Henry X. Liu"
+  ],
+  "affiliations": [
+    "University of Michigan (Mcity and UMTRI)",
+    "Huron High School",
+    "Ivie Communications"
+  ],
+  "comment": "用 RTK 轨迹和正反向匀速试验分离平均延迟与定位偏差，建立匿名路侧产品的输出层评测。重点是时间配对、身份连续性及指标实现的边界。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文提出一套用于评估路侧感知系统的实地测试方法论，并在 University of Michigan 的 Mcity 受控测试环境中，用三个 off-the-shelf perception systems 做示范性比较。
+本报告聚焦路侧产品的输出质量核验：将每套感知系统视为黑盒，用携带 RTK GPS 的车辆与行人提供独立真值，先通过正反向匀速行驶估计平均延迟，再评估定位、漏检和身份连续性。最值得借鉴的是**把时间错位与空间偏差分开处理的测试协议**，不是某个检测网络。Mcity 三套匿名产品的平均延迟分别为 48、145、1715 ms，说明“轨迹看起来贴合”并不足以判断输出是否及时。[原文 v1，IV–V 节、Table I](https://arxiv.org/html/2401.12392v1#S4)
+
+本报告依据 2024-01-22 的 arXiv:2401.12392v1，核验于 2026-09-12。结果覆盖一个封闭测试场路口、两辆车与一名行人；没有全路网部署、天气矩阵或自动驾驶闭环安全验证。
 
 ## 论文要解决的问题
 
-路侧感知系统正在用于 V2I/V2X 和协同驾驶，但这个方向缺少像 KITTI、nuScenes、Waymo 那样成熟的标准化评测。不同厂商系统的传感器组合、输出格式、延迟和定位误差不同，直接比较很难公平。论文要解决的是：如何用可复现的测量技术、指标和实验 trial 设计，对路侧感知系统进行系统评估。
+### 异步真值为什么会改变评测
+
+输入是路侧系统输出的时间戳、经纬度、类别、目标 ID，以及独立 RTK 设备记录的轨迹。输出是平均延迟、位置误差、检测与跟踪指标。作者不要求获得厂商的图像、点云、模型参数或内部处理时间，因此不同产品能接入同一个输出层接口。[III、IV-B 节](https://arxiv.org/html/2401.12392v1#S3)
+
+难点在于两个记录流既不同时采样，也不共享检测帧的人工标注。车辆沿道路运动时，检测点比真值落后，可能来自位置偏差，也可能来自延迟。如果只画出所有空间轨迹，时间抖动还会被隐藏；如果直接按相同时间比较，又会把延迟造成的位移全算成定位误差。协议必须先声明时间戳含义、进行延迟校准，再做空间匹配。
+
+### 与两项原始工作的机制比较
+
+| 工作与一手来源 | 原有机制 | 本文的区别与可比性 |
+| --- | --- | --- |
+| Luiten 等，HOTA，IJCV 2021；[作者版全文 §5，式 13–16](https://www.cvlibs.net/publications/Luiten2020IJCV.pdf) | 对每个匹配检测计算对应轨迹的关联 Jaccard 分数，按检测平均，并在多个定位阈值下分别匹配、积分 | 本文先对异步 GPS 做最近时间匹配，并以 1.5 m 距离筛选；其全局关联计数版本不是原 HOTA 的完整定义，不能与 MOTChallenge 的 HOTA 直接横比 |
+| Zimmer 等，TUMTraf-V2X，2024；[固定 v1，§3.2、§4](https://arxiv.org/html/2403.01316v1#S3.SS2) | 用基础设施与车端传感器、外参标定和跨视角 3D 框标注构建协同感知基准；CoopDet3D 在统一 BEV 中融合信息 | 这项后来发表的工作提供传感器级输入与标注，适合训练、比较协同检测模型；本文使用独立 RTK 轨迹评价已部署黑盒，不训练融合网络。两者是数据层与系统输出层的互补评测 |
+
+上述比较分别读取了相关工作的原文；本文没有在同一测试集上运行 HOTA 原版或 TUMTraf 模型，所以这里只比较协议，不给跨论文性能排序。
 
 ## 方法和系统设计
 
-- 在 Mcity 选择交叉口部署路侧感知系统，用 RTK GPS 获取车辆和行人的 ground truth。
-- 假设被测系统周期性输出检测实体列表，至少包括 latitude、longitude、category、id。
-- 将 latency 与 positioning error 分离估计，而不是简单把检测点和真值点做同时间戳比较。
-- 采用 point matching 和 association matching，并用 HOTA 等跟踪指标评估检测与关联能力。
-- 设计 latency trials、one-vehicle trials、one-vehicle-with-pedestrian trials、two-vehicle-with-pedestrian trials。
+### 采集、校准和匹配的流程
+
+测试车辆及行人携带 RTK GPS。作者在传感器适宜覆盖区选择匀速段，让车辆沿东西、南北两个方向分别往返；每个方向进行五轮，独立估计延迟后取平均，用于后续全部试验。[IV-A、IV-C、V-B1 节](https://arxiv.org/html/2401.12392v1#S4.SS1)
+
+后续处理有两种不同匹配。点匹配先从检测时间中减去估计平均延迟，找到最近时间的真值帧，再用 Hungarian 分配最小化帧内距离。关联匹配先在整段轨迹间用 Hungarian 最大化真阳性数，再在已配对轨迹内匹配点。1.5 m 是本文采用的匹配容差：越界点会影响 FP/FN，而不只是增加一个连续的位置误差。[IV-B2–3 节](https://arxiv.org/html/2401.12392v1#S4.SS2.SSS2)
+
+### 公式组一：往返行驶抵消静态空间偏差
+
+将原文式 1、3–6 重组如下。在一维匀速段，真实位置为 $G(t)=v_0t$，检测为 $D(t)$，延迟为 $l$，固定位置偏差为 $e_1$，零均值随机位置误差为 $e_2$。同一空间点在真值与检测流的时间分别为 $t_1,t_2$：
+
+$$
+D(t_2)=G(t_2-l)+e_1+e_2=G(t_1),\qquad
+\tau=t_2-t_1=l-\frac{e_1+e_2}{v_0}.
+$$
+
+$$
+\mathbb E[\tau]=\mathbb E[l]-\frac{e_1}{v_0},\qquad
+\mathbb E[\tau']=\mathbb E[l]+\frac{e_1}{v_0},\qquad
+\widehat l=\frac{\overline\tau+\overline{\tau'}}{2}.
+$$
+
+$\tau'$ 来自速度为 $-v_0$ 的反向行驶，横线是样本平均。直觉是同一个空间偏差对正、反方向的“时间差”产生相反影响，因此相加可消去它。成立条件包括两方向速度大小相当、对应位置的固定偏差一致、平均延迟可共用；这些条件失效时不能仍把该量称为准确的处理延迟。[IV-A1–2，式 1–6](https://arxiv.org/html/2401.12392v1#S4.SS1.SSS1)
+
+### 公式组二：补偿平均延迟没有消除延迟抖动
+
+位置误差估计器是原文 IV-A3 的 $\widetilde e_d=D(t)-G(t-\widehat l)$。作者证明在匀速和相应零均值假设下，其期望等于位置偏差。附录 B–C 进一步给出小速度波动时的近似：
+
+$$
+\operatorname{Var}(\tau)\approx\operatorname{Var}(l)+\frac{\operatorname{Var}(e_2)}{v_0^2},\qquad
+\operatorname{Var}(\widetilde e_d)\approx\operatorname{Var}(e_2)+v_0^2\operatorname{Var}(l).
+$$
+
+这里方差分别以秒平方和米平方计，$v_0$ 用 m/s；以上是原文式 14–15，省略协方差项的近似关系。它解释了为何慢速行人看上去准确、快速车辆却可能大量超出 1.5 m 阈值。我的判断是：作者的均值论证不能直接扩展为“已分离完整定位噪声分布”；速度、位置误差与延迟相关时，还需重新核对假设。[IV-A3、附录 A–C](https://arxiv.org/html/2401.12392v1#A0.SS2)
+
+### 公式组三：跟踪指标必须连同实现阅读
+
+MOTP 是已匹配真阳性点与真值的平均距离，单位 m，越低越好；MOTA 将 FP、FN 和 ID switch 数除以真值数量后从 1 中扣除，可以为负数。本文报告的 HOTA 可按式 10–11 和作者公开实现写成：
+
+$$
+\operatorname{HOTA}_{\mathrm{paper}}=
+\sqrt{\frac{TP}{TP+FP+FN}\cdot\frac{TPA}{TPA+FPA+FNA}}.
+$$
+
+$TP,FP,FN$ 来自点匹配；$TPA,FPA,FNA$ 来自整轨迹关联匹配。这里特意加上 paper 下标以区别原 HOTA：作者代码 `algo/hota.py` 的确直接使用这六个全局计数，未执行原论文逐 TP 的关联平均与定位阈值积分。[本文 IV-B](https://arxiv.org/html/2401.12392v1#S4.SS2)、[公开实现](https://github.com/michigan-traffic-lab/perception_evaluation/blob/main/algo/hota.py)
+
+### 离线评测边界
+
+本工作没有训练阶段、监督损失或模型权重更新。RTK 是评测真值，平均延迟是校准量，都不属于待测路侧产品的在线输入。公开 evaluator 还带有最近时间差超过 0.1 s 时不匹配的处理，以及按 GT/检测频率估算预期检测数的 FN 计算。其中 `compute_id_switch` 实际取真阳性检测的不同 ID 数减去真值 ID 数，并截断到非负值，不能统计反复切换后又回到旧 ID 的全部事件。本文的概念定义与当前实现还需分别记录。因此复核必须固定采样率、ROI 和匹配规则；不能把任意轨迹直接丢给通用 MOT 工具后声称复现了原表。[当前 evaluator 源码](https://github.com/michigan-traffic-lab/perception_evaluation/blob/main/evaluator.py)
 
 ## 关键图与可视化结果
 
-![图 1a：Mcity 中的传感器部署位置和测试场景视图](https://arxiv.org/html/2401.12392v1/extracted/5362748/figures/mcity.png)
+![原论文 Fig. 1(a)：Mcity 测试路口、相机、激光雷达和处理箱的位置](../../assets/papers/roadside-evaluation-official-figure-1a.png)
 
-![图 1b：实验车辆设置，用于采集车辆轨迹 ground truth](https://arxiv.org/html/2401.12392v1/extracted/5362748/figures/vehicle.png)
+先看左侧测试场平面位置，再看右侧 Main Street 与 State Street 路口的设备标记。这是采集现场与设备布置图，支持“同一路口比较不同系统”的理解；没有安装高度或角度扫描，不能据此寻找通用最佳安装参数。[原始图注，Fig. 1](https://arxiv.org/html/2401.12392v1#S3.F1)
 
-这两张图共同组成原文 Figure 1，展示的是 Mcity 实验设置，不是“指标体系和场景分类框架”。
+![原论文 Fig. 1(b)：携带 RTK GPS 的测试车辆与其已有设备](../../assets/papers/roadside-evaluation-official-figure-1b.png)
 
-![图 2：latency measurement 的实验路径，包含加速、匀速和减速区域](https://arxiv.org/html/2401.12392v1/extracted/5362748/figures/latency-measurement.png)
+图中 RTK GPS 是本文独立位置真值的关键设备。车辆图还列出了 DSRC 等装置，但“车上装有通信设备”并不证明论文测量了某种 V2X 无线链路的时延或丢包。
 
-原版把 Figure 2 写成“不同安装配置下高度和角度性能对比”，这是错误的。Figure 2 实际用于说明延迟测量实验如何设计。
+![原论文 Fig. 2：加速区、匀速测量区、减速区与正反向往返路线](../../assets/papers/roadside-evaluation-official-figure-2.png)
+
+中央黄色区的测量点与两条反向箭头对应式 6 的偏差抵消。两端加减速区应与估计段分开；这张图说明校准动作，而不是不同高度或角度下的性能结果。[Fig. 2](https://arxiv.org/html/2401.12392v1#S4.F2) 三张原始图片均已单独打开并与编号、图注核对。
 
 ## 实验结论与证据
 
-论文报告的是方法论示范和三套系统的比较，不是通用部署参数指南。关键发现包括：latency variation 会显著影响定位误差；LiDAR-based system 和 image-based systems 在 1.5 m SAE2945 距离阈值下表现差距明显；某些 image-based system 看起来检测点分布合理，但量化指标会因定位误差和 latency 波动而下降；行人检测受 latency 影响较小，因为行人运动速度更慢。
+### 日期、场景与比较控制
+
+实测发生于 2023-10-13，在 Mcity 的上述路口，日间约 13:00 与晚间 18:00 各执行试验。System A 使用 LiDAR，B/C 使用鱼眼相机；厂商名称因保密未公开。除两项延迟校准外，还有八项单车动作、两项单车与行人、三项双车与行人试验。没有训练/验证/测试划分；这是部署产品的受控场地评测。[IV-C、V-A](https://arxiv.org/html/2401.12392v1#S4.SS3)
+
+相同路线、RTK 真值和指标带来输出层可比性，但传感器、内部算法、处理硬件和安装位置没有逐项固定，所以差异不能单独归因于 LiDAR 或相机模态。下表只选同编号试验，避免混合不同场景。
+
+### 平均延迟与逐试验结果
+
+| 原文 Table I，单位 ms，越低越好 | 南北方向 | 东西方向 | 作者报告均值 |
+| --- | ---: | ---: | ---: |
+| System A | 41 | 54 | 48 |
+| System B | 137 | 153 | 145 |
+| System C | 1740 | 1690 | 1715 |
+
+这是检测输出相对 RTK 轨迹的估计平均延迟，不是单独的网络传输延迟。Table I 的 Std. 列没有标出单位；当前代码以秒返回标准差，但未核实论文运行所对应的代码提交，因此不替该列补单位，也不据此计算尾延迟。[Table I、V-B1](https://arxiv.org/html/2401.12392v1#S5.T1)
+
+| 同 Trial 3，车辆；Table II–VII | MOTA ↑，% | MOTP ↓，m | IDF1 ↑，% | 本文 HOTA ↑，% |
+| --- | ---: | ---: | ---: | ---: |
+| A，日间 | 92.0 | 0.402 | 96.3 | 96.3 |
+| B，日间 | 30.1 | 0.758 | 47.4 | 39.7 |
+| C，日间 | 93.0 | 0.458 | 55.1 | 60.8 |
+| A，晚间 | 92.1 | 0.342 | 96.3 | 96.3 |
+| B，晚间 | 25.8 | 0.817 | 43.9 | 35.7 |
+| C，晚间 | 91.7 | 0.519 | 55.3 | 60.6 |
+
+C 日间 MOTA 93.0% 略高于 A 的 92.0%，却有明显较低的 IDF1。这直接说明仅看 MOTA 或平均位置距离会漏掉身份连续性问题，也不能将 A 的总体优势写成“每个指标、每项试验都最好”。[Tables II–VII](https://arxiv.org/html/2401.12392v1#S5.T2)
+
+| 同 Trial 11，行人；Table IV–V | B 的 FP rate ↓，% | FN rate ↓，% | MOTA ↑，% | 本文 HOTA ↑，% |
+| --- | ---: | ---: | ---: | ---: |
+| 日间 | 5.9 | 5.5 | 88.6 | 91.4 |
+| 晚间 | 47.2 | 0.0 | 52.8 | 60.2 |
+
+同一产品在该晚间试验中漏检率下降、误检率大幅上升，故“相机夜间指标变化”不能只用召回率表达。这里只是两个采集时段的对应试验，没有重复日期、置信区间或随机化环境控制，不能称为已隔离光照的因果效应。
+
+### 敏感性分析与未完成的归因
+
+Fig. 6 改变匹配距离阈值，作者报告阈值放宽后各系统 FP/FN 下降，A 在较小阈值已接近较低水平。这支持“空间容差影响检测计数”的解释，不是去除模块的网络消融；图中没有提供可直接复核的数值表，本报告不猜曲线采样点。[V-C、Fig. 6](https://arxiv.org/html/2401.12392v1#S5.SS3)
+
+作者把 B 的车辆定位问题部分归于延迟抖动，但没有同一系统开关抖动补偿的对照，归因尚未独立验证。Table VIII 标为跨试验均值，其中 A 日间多项数字与 Table II 的 Trial 3 完全相同；其汇总权重未报告，本次无法从公开逐试验行复核该汇总，故这里保留逐试验证据。没有自行重算后替换作者数字。
 
 ## 应用场景与启发
 
-- 建立 RSU 或智慧路口感知系统验收测试流程。
-- 对比不同路侧感知供应商时，避免只看可视化效果，必须分离延迟、定位误差、检测和 ID association。
-- 对车路协同系统来说，路侧感知是否“能用”不只取决于检测率，还取决于输出时间对齐和定位精度是否满足下游规划要求。
+### 可直接借鉴的协议
+
+作者希望用这套输出层流程比较路侧产品。我的判断是，最适合迁移的是“先做往返校准，再同时看位置与身份”的验收思路，尤其适合厂商只提供目标消息的场合。对高速运动目标，还应保留每个检测时间戳与误差，而不是只展示累积轨迹图。
+
+### 待验证的研究问题
+
+一个可以被否定的假设是：在同一套传感器与冻结检测器下，按消息时间戳预测到接收时刻，比只减去一个平均延迟更能改善高速段的 1.5 m 匹配率。如果收益只来自错误的时间配对或过滤掉难点，该假设就不成立。此问题区别于本文的产品间比较，需要在同一输出流上控制变量。
 
 ## 局限与阅读风险
 
-论文没有报告“超过 100 小时数据”“5-50 m 最优范围”“4-6 m 最佳高度”“5G/V2X 50 ms 延迟”这类结论。实验环境是 Mcity，系统数量有限，且供应商系统以匿名 System A/B/C 方式呈现。它适合作为评估方法参考，而不是直接作为 RSU 部署参数标准。
+### 来源明确的范围限制
+
+作者明确匿名化产品，外部读者无法核对各自硬件、版本和配置。采集只有一个路口、一天两个时段及少量受控参与者；原文没有超过 100 小时的数据、5–50 m 最佳感知范围、4–6 m 最优高度、雨雪鲁棒性或 5G/V2X 链路低于 50 ms 的实验。这些说法不能作为本文结论。
+
+### 评测量与现实使用条件
+
+1.5 m 是作者引用 SAE 文献后选用的评测阈值，本次未核验该标准的完整适用条款，不能据此宣称符合标准或保证驾驶安全。补偿了约 1.7 s 平均延迟的 C 仍可能在离线位置指标上较好，但真实车辆收到的消息同样陈旧；离线补偿后的分数不等于在线可用性。原文也未报告由这些输出驱动的闭环车辆性能。
+
+本文 HOTA 与标准定义、当前代码与论文发表时提交、Table VIII 汇总规则均需要谨慎区分。附录对小速度变化与方差的近似依赖假设，不能当作任意加减速、非平稳网络条件下的无偏性保证。
 
 ## 后续跟进
 
-- 复查表格中的各系统 latency、localization、HOTA 和 threshold sensitivity。
-- 将该方法论和真实智慧路口部署中的网络抖动、遮挡、天气、成本一起评估。
-- 关注是否有后续标准化 benchmark 或公开数据集延伸。
+### 资源状态与最小验证
+
+截至 2026-09-12，[作者仓库](https://github.com/michigan-traffic-lab/perception_evaluation) 可读取，含 Python evaluator、指标和延迟代码、依赖表、JSON 示例与 YAML 配置；README 写明 Python 3.7+，仅在 Linux 测试，并声明 MIT 许可。配置示例分别给车辆真值 50 Hz、行人真值 10 Hz、检测 10 Hz；这些是仓库示例，不代指三套产品实际采样频率。样例目录并未证明公开了论文所有系统、所有日夜试验，完整原始日志本次未取得。没有训练模型，权重不适用。
+
+最小验证先用普通 CPU/Linux 工作站、上述代码与带纳秒时间戳的 JSON 做离线协议核对，无需 GPU。取得至少一对真实往返匀速日志后，固定 ROI、频率、匹配阈值和全局 ID，对照“不补偿”“本文平均延迟补偿”与“按接收时刻外推”；后者所用速度只能来自历史。分别报告正反向均值差、位置误差分位数、超阈值比例和 IDF1，按整次往返划分校准与评测，避免用同段数据同时定参数和报收益。
+
+成功信号是换一组往返数据后，平均延迟估计仍一致，且补偿在保留检测数的条件下稳定改善误差；若两方向结果随路线、速度系统性漂移，或收益依赖使用未来 RTK 来调参，就停止性能比较，先检查时钟、坐标偏差及估计假设。完整论文日志拿不到时，只能验证代码与协议，不声称重现三套匿名系统的分数。本次没有安装环境、运行 evaluator 或采集新数据。
+
+### 核验记录
+
+全文以 [2401.12392v1](https://arxiv.org/html/2401.12392v1) 为固定来源：IV-A 式 1–6、附录式 14–15、IV-B 匹配与指标、V 节 Tables I–VIII、Figs. 1–2 均已核对。相关工作读取 HOTA 作者版 §5 与 TUMTraf-V2X v1 §3.2–4；作者源码是 2026-09-12 读取的 main 快照，尚未证明与发表时实现完全一致。首页单位包括 University of Michigan、Huron High School 和 Ivie Communications，报告据此补齐机构信息。

@@ -3,56 +3,128 @@
   "id": "safer-safety-scenario-gpt",
   "revisionOf": "safer-safety-scenario",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing"],
+  "tags": [
+    "autonomous-driving-testing"
+  ],
   "title": "SaFeR: Safety-Critical Scenario Generation for Autonomous Driving Test via Feasibility-Constrained Token Resampling",
   "source": "arXiv:2603.04071 / https://arxiv.org/abs/2603.04071",
-  "authors": ["Jinlong Cui", "Fenghua Liang", "Guo Yang", "Chengcheng Tang", "Jianxun Cui"],
-  "affiliations": ["School of Traffic and Transportation, Harbin Institute of Technology", "Chongqing Research Institute of Harbin Institute of Technology", "Chongqing Changan Automobile Co., Ltd."],
-  "comment": "[GPT改] 原版整体可信，本版主要补强证据边界，并保留 LFR、MDA、token resampling 三条主线。"
+  "authors": [
+    "Jinlong Cui",
+    "Fenghua Liang",
+    "Guo Yang",
+    "Chengcheng Tang",
+    "Jianxun Cui"
+  ],
+  "affiliations": [
+    "School of Traffic and Transportation, Harbin Institute of Technology",
+    "Chongqing Research Institute of Harbin Institute of Technology",
+    "Chongqing Changan Automobile Co., Ltd."
+  ],
+  "comment": "从测试有效性看 SaFeR：CR、SR 与动作分布各有分母和边界，离线可行域及 top-20 重采样仍需校准与异常处理。"
 }
 ---
 
 ## 一句话定位
 
-SaFeR 是一篇安全关键场景生成论文：它把交通场景生成写成离散 next-token prediction，再通过 realism prior 和 Largest Feasible Region (LFR) 约束，在对抗性、物理可行性和行为真实性之间做权衡。
+SaFeR 的核心阅读问题是：一段“让日志自车碰撞、让反应式规划器仍可能脱险”的轨迹，能否成为有区分力的测试？它用自然动作词表和离线可行域估计接近这一目标，但结果应按经验筛选器理解，不能当成安全证书。
 
 ## 论文要解决的问题
 
-安全测试需要生成能挑战自动驾驶系统的场景，但直接追求碰撞率容易产生“不可规避碰撞”，这类样本不能有效评价 ego 系统的决策能力。另一方面，只追求自然驾驶分布又会稀释危险事件。SaFeR 试图回答的问题是：怎样生成高风险但仍可被理论规避、且动作分布接近自然驾驶的背景车行为。
+高碰撞率可能只是测试过度刁难；低碰撞率又可能没有暴露能力边界。作者把“自然、危险、可规避”拆成三个量：自然先验限制动作候选，距离目标推动冲突，可行域约束尽量保留规避空间。这样得到的挑战才有机会区分不同规划器，而不是让所有规划器都失败。
 
 ## 方法和系统设计
 
-- 将加速度和 yaw rate 分别离散为 63 个 bin，形成 63x63 motion token vocabulary。
-- 用 Transformer 形式的 realism prior 学习自然驾驶分布，并在 motion decoder 中加入 Multi-Head Differential Attention (MDA)，过滤密集交通中的注意力噪声。
-- 用 Hamilton-Jacobi reachability 启发的 LFR 判断哪些状态属于理论可规避区域，并通过 offline RL 近似可行值函数。
-- 采用两阶段 resampling：先在高概率 trust region 内筛选自然 token，再用 LFR 引导的 adversarial objective 选择更危险但可行的 token。
+### 先学习分布，再冻结模型查询
+
+固定 [arXiv v1 §II–III](https://arxiv.org/html/2603.04071v1#S2)使用 63×63 个加速度/偏航角速度 token，范围分别为 $[-5,5]$ 米/秒平方与 $[-1.5,1.5]$ 弧度/秒。三层、八头 Transformer 从地图和车体状态学习自然运动概率，并在时间、车车、车地图注意力中使用双 softmax 相减。先验训练在 WOMD 进行；生成时只从概率最大的 20 个动作中搜索。
+
+可行性网络的 300k 离线交互包括 SMART 与 DiffusionPlanner 自车各配自然背景的 100k，以及 SMART 配 SAFE-SIM 背景的 100k。网络训练后冻结，不在每个新测试场景中寻找真正的最优自车策略。
+
+### 理论可行域与网络输出有两层差别
+
+理论定义考虑最优策略能否在整个时域内避免约束违反：
+
+$$
+V_h^*(s)=\min_\pi\max_{t\in[0,T]}h(s_t),\qquad
+\mathcal S_f^*=\{s:V_h^*(s)\leq0\}.
+$$
+
+车体框最短距离大于 0.3 米时 $h=-1$，否则取罚值 16。实际网络通过反向 expectile 损失与折扣递推学习，原式 15–16 为：
+
+$$
+\mathcal L_V=\mathbb E\left[|\tau-\mathbf1(Q_h-V_h>0)|(Q_h-V_h)^2\right],\qquad
+\hat Q=(1-\gamma)h(s)+\gamma\max\{h(s),V_h(s')\}.
+$$
+
+其中 $\tau=0.8$、$\gamma=0.99$，$Q_h$ 拟合目标 $\hat Q$。离线数据覆盖有限，函数逼近和折扣又与理想最优值有差别。原文没有误差上界，也没有用独立可达性求解器校验整条边界，故不能把 $V_h\leq0$ 自动升级为精确的存在性证明。
+
+### 重采样优先可行，但没有硬拒绝
+
+原式 18–19 在候选动作 $w$ 下预测下一联合状态 $s'$，以可行时的车间距离或越界罚项排序：
+
+$$
+w^*=\arg\min_{w\in\mathcal W_{top-20}}\begin{cases}d(s'_{cbv},s'_{ego}),&V_h(s')\leq0,\\V_h(s')+50,&V_h(s')>0.\end{cases}
+$$
+
+如果所有候选都被判不可行，仍会选其中损失最小者；论文没有“拒绝当前场景”的分支。所谓 Trust Region 是概率排名截断，并非经 KL 半径约束的信赖域，也没有保证这些 token 覆盖足够概率质量。
+
+### 对照两项自身一手方法
+
+| 一手来源 | 机制关系 | 应如何理解贡献 |
+| --- | --- | --- |
+| [FREA v1 §3](https://arxiv.org/html/2406.02983v1) | 同样用离线最优可行值近似，并据当前与下一状态切换背景车学习目标 | SaFeR 将可行性引导放进离散候选重采样；理论对象与近似误差仍需分别说明 |
+| [Differential Transformer v1 §2](https://arxiv.org/html/2410.05258v1) | 提出双 softmax 差分、可学习系数及按层初始化 | SaFeR 将已有注意力设计用于交通先验，不能声称双 softmax 消噪思想首次出现 |
 
 ## 关键图与可视化结果
 
-![图 1：SaFeR 总览，展示 realism prior 生成分布后由 LFR 约束进行 adversarial token resampling](https://arxiv.org/html/2603.04071v1/x1.png)
+![原论文 Figure 1：高概率动作与可行域的联合筛选](https://arxiv.org/html/2603.04071v1/x1.png)
 
-图 1 说明论文的核心思想：不是在连续轨迹空间中直接优化，而是在生成模型给出的高概率 token 区域内做安全关键重采样。
+这张概念图把自然分布与可行性画成两种限制。应注意它并未画出候选集全越界的情况，因此图示不能补足算法缺失的异常处理。
 
-![图 2：SaFeR pipeline，包括 Realism Prior Modeling 和 Safety-Critical Token Resampling 两个组件](https://arxiv.org/html/2603.04071v1/x2.png)
+![原论文 Figure 2：SaFeR 两阶段流程与最终轨迹示意](https://arxiv.org/html/2603.04071v1/x2.png)
 
-图 2 是方法细节图：左侧负责 motion tokenization 与 differential attention realism prior，右侧负责 trust region、LFR 约束和 adversarial token selection。
+前一阶段提供模型，后一阶段做局部搜索。最终绿色轨迹只表示设计希望保留可规避路径，不等于对全部多车交互进行了严格验证。
 
 ## 实验结论与证据
 
-论文在 WOMD 和 nuPlan 上做闭环评估。评估协议区分两层：Log Replay 下的 Collision Rate 衡量场景是否有对抗冲突，reactive DiffusionPlanner 下的 Solution Rate 衡量 ego 是否仍有机会解决。论文报告 SaFeR 在 Solution Rate 和运动学真实性指标上优于基线，同时维持较强对抗性；消融显示去掉 LFR 会提高碰撞但显著损害可解决性，去掉 MDA 会削弱 realism prior。
+### 两阶段测试回答不同问题
+
+[Table III](https://arxiv.org/html/2603.04071v1#S3.T3)在 Waymax 使用 WOMD、nuPlan 各 1,000 个复杂交互场景，2 Hz 规划、10 次种子运行取均值。CR 测日志重放自车的碰撞，SR 测反应式 DiffusionPlanner 的解决情况；论文未充分交代 SR 的分母是否为 CR 子集，不能将两个比例当作同一混淆矩阵。
+
+| 场景集与方法 | CR | SR | 正确含义 |
+| --- | --- | --- | --- |
+| WOMD，SaFeR | 0.761 | 0.865 | 对日志有挑战，且此规划器较常解决 |
+| WOMD，ADV-BMT | 0.915 | 0.324 | 更容易诱发冲突，但此规划器解决较少 |
+| nuPlan，SaFeR | 0.757 | 0.801 | 跨数据集仍保留较高经验解决率 |
+| nuPlan，FREA | 0.590 | 0.691 | 与 SaFeR 的危险程度不同，不能只按 SR 解释可行域精度 |
+
+一个规划器失败不排除其他策略成功，故原文把低 SR 解释为“大多数理论上不可避免”过强。VJ/AJ 是速度/加速度分布的无量纲 Jensen–Shannon divergence；SaFeR 的 WOMD 值为 0.161/0.499，反映分布接近程度，不能认证每条轨迹的动力学可行性。
+
+### 候选数决定测试难度
+
+| Table V，候选数 $n$ | CR / SR | VJ / AJ |
+| --- | --- | --- |
+| 10 | 0.203 / 0.901 | 0.153 / 0.471 |
+| 20 | 0.761 / 0.865 | 0.161 / 0.499 |
+| 50 | 0.794 / 0.817 | 0.495 / 0.630 |
+| 100 | 0.805 / 0.801 | 0.517 / 0.796 |
+
+更宽候选集提高冲突，却降低解决率与自然性；正文称 50/100 带来 SR 增益，与表数相反。Table IV 移除 LFR 后 CR/SR 为 0.827/0.527，完整为 0.761/0.865，说明约束改变了难度分布，尚不足以证明值网络等于精确 LFR。选超参数让平均值接近零，也不等于边界误判率低。
 
 ## 应用场景与启发
 
-- 构建安全关键测试场景库，筛掉不可规避的“无效碰撞”。
-- 在闭环测试中区分“系统确实做错”与“场景物理上无解”。
-- 把生成模型的自然分布和可达性/可行性约束结合，是比纯碰撞率更合理的安全测试方向。
+### 报告分析与待验证假设
+
+它适合把规划器测试从“能撞就好”推进到“保留规避余量”。待验证假设是：固定 top-20 在低置信度跨域场景中容易产生过宽的实际动作选择，因此在相同候选评分预算下按概率累计质量缩小搜索集，能减少不自然的冲突。
 
 ## 局限与阅读风险
 
-LFR 是近似得到的，质量依赖 offline RL 数据覆盖和车辆动力学简化；论文主要控制 Critical Background Vehicle，多车协同攻击还不是重点。Solution Rate 的解释也依赖所选 reactive planner，因此不应把数值直接外推到任意自动驾驶栈。
+生成器依赖标注中的关键对象选择；复杂道路与多车约束未必能被局部状态覆盖。可行网络数据包含最终评估用 DiffusionPlanner，不宜将其 SR 当独立安全认证。自然先验的训练更新数、数据拆分、nuPlan 到 Waymax 的转换与异常候选处理不足，且没有运行时间或跨种子区间。结论仅来自状态级模拟。
 
 ## 后续跟进
 
-- 关注代码和数据配置是否发布。
-- 检查 LFR 近似在分布外场景中的鲁棒性。
-- 对比事故生成、语言条件场景生成和 planner-in-the-loop 测试方法。
+### 同预算的概率质量干预
+
+截至 2026-09-12，固定论文与精确标题/作者检索未核实官方代码、权重或交互集；需先取得上述协议，缺失时停止复现性主张。本次仅做文献核查。
+
+最小实验固定 WOMD 与 nuPlan 各 50 个留出场景、同一先验/LFR、5 组配对种子和 2 Hz 模拟。三组均先计算并评分相同 top-20：原样搜索；仅允许累计概率达到预设 0.8 前的最短前缀、最多 20 项；与第二组逐周期同数量的随机候选子集。记录未达到 0.8 的周期，不能冒充达标。保持场景时长与硬件预算一致，同时报告 CR、SR、VJ/AJ、概率质量与拒绝率。若改善不超过同数量随机子集，或只源于删去几乎所有危险动作，停止概率质量假设；这项干预检验新假设，不重新包装原文的 $n$ 扫描。

@@ -2,56 +2,150 @@
 {
   "id": "c2e-co-perception-distillation",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving"],
+  "tags": [
+    "cooperative-autonomous-driving"
+  ],
   "title": "C2E: Boosting Ego-Only 3D Object Detection via Multi-Teacher Contrastive Knowledge Distillation",
   "source": "ECCV 2026 / https://eccv.ecva.net/virtual/2026/poster/4362 / arXiv:2607.01827 / https://arxiv.org/abs/2607.01827",
-  "authors": ["Jinlong Wang", "Xun Huang", "Qiming Xia", "Shijia Zhao", "Chenglu Wen"],
-  "affiliations": ["Xiamen University", "Zhongguancun Academy"],
+  "authors": [
+    "Jinlong Wang",
+    "Xun Huang",
+    "Qiming Xia",
+    "Shijia Zhao",
+    "Chenglu Wen"
+  ],
+  "affiliations": [
+    "Xiamen University",
+    "Zhongguancun Academy"
+  ],
   "comment": "C2E 把协同感知当作训练期教师，把收益蒸馏回 ego-only 检测器，试图在不引入在线通信成本的情况下继承协同感知的遮挡补偿能力。"
 }
 ---
 
 ## 一句话定位
 
-C2E 的核心新意是把 multi-agent collaborative perception 从在线部署接口改造成训练期监督来源。论文不再要求车辆在推理时持续交换点云或 BEV 特征，而是用多个协同教师模型训练 ego-only 学生模型，让单车检测器在部署时不承担通信延迟和定位误差，却尽量继承协同感知对遮挡和远距目标的补偿能力。
+C2E 用三种协同检测教师训练只读自车 LiDAR 的学生，把在线多视角输入改为离线监督；贡献是针对多车密集特征与单车稀疏特征之间的差异，组合实例重建、全局蒸馏和局部对比，而不是让单车凭空拥有额外视野。
+
+- 核心证据：V2XSet test、AttFuse 单车输入下，AP@0.7 从 58.06 升至 66.70，即增加 8.64 个百分点，约 14.9% 相对提升；不是相对提升 8.64%。
+- 主要边界：推理不使用远端信息，所以也不能保证发现完全不可见、没有可推断线索的新目标；教师训练和按真值加权的成本转移到了离线。[表 1、§5](https://arxiv.org/html/2607.01827v1#S4.T1)
 
 ## 论文要解决的问题
 
-协同感知在 V2XSet、V2V4Real、DAIR-V2X 等数据集上能显著改善遮挡和远距目标检测，但真实部署会遇到通信带宽、延迟、丢包和 pose error。完全 ego-only 的检测器部署简单，却缺少其他视角。C2E 针对的技术矛盾是：协同信息是否可以不作为在线输入，而作为训练阶段的强教师，使学生模型在推理时仍只依赖 ego LiDAR。
+### 问题与假设
+
+协同检测教师可以融合其他车和路侧的点云，学生部署时却只有自车点云。直接匹配二者特征，会要求稀疏输入生成密集视角的表示，造成监督难度。本文 M2S 框架在训练时缓和这个差距，输出目标类别和七参数 3D 框；不依赖在线 V2X 消息，也不输出规划动作。[§3.1](https://arxiv.org/html/2607.01827v1#S3.SS1)
+
+主表的 AttFuse、V2X-ViT、Where2comm 等基线都被限制为单车输入，不能把它们的分数误读为在线完整协同系统的性能。学生保留相应协同架构的模块但只输入 ego agent；“无通信”不等于模型结构被全部简化成新的轻量检测器。[§4.2](https://arxiv.org/html/2607.01827v1#S4.SS2)
+
+### 相关工作与差异
+
+| 工作与一手来源 | 已有机制 | C2E 的区别与边界 |
+| --- | --- | --- |
+| Li 等，DiscoNet，NeurIPS 2021；[原文 v2 §2.1–2.3](https://arxiv.org/html/2111.00643v2#S2) | 整体点云视角教师监督协同学生的融合后特征；学生仍交换 BEV 消息并学习空间图边权重。 | C2E 把学生限制为部署时只读自车，三位教师提供离线知识。不能把“推理只保留学生”自动理解为 DiscoNet 也无通信。 |
+| Hu 等，Where2comm，NeurIPS 2022；[原文 v1 §4](https://arxiv.org/html/2209.12836v1#S4) | 以空间置信图挑选稀疏消息、逐位置注意力融合，按通信预算调整输入。 | Where2comm 保留在线互补观测；C2E 把额外信息压入训练参数。主表中的单车 Where2comm 并不是它完整协同模式，不能用这张表宣布 C2E 全面替代在线协同。 |
 
 ## 方法和系统设计
 
-- C2E paradigm：训练时使用 multi-agent cooperative perception 作为教师，推理时只保留 ego-only student。
-- M2S framework：把多教师 BEV dense features 融合为蒸馏监督，解决多 agent 到单 agent 的分布差异。
-- Multi-Level Feature Enhancement：从 channel、pillar 和 global 三个层级增强学生特征，使 ego-only 表征更稳定。
-- Auxiliary Point Cloud Reconstruction 和 Multi-Teacher Contrastive Distillation：同时约束点云分布和特征分布，避免只对最终检测框做浅层模仿。
+### 三个模块解决不同差距
+
+AttFuse、V2X-ViT 和 CoSDH 三个预训练教师读取同一样本的多主体点云并提供密集 BEV 特征；学生只读 ego 点云，先转换为 pillar 表示。MLFE 在通道、pillar 内点与全局 pillar 维度依次产生注意力，残差增强学生表示；这些操作属于学生前端，推理时保留。[§3.1–3.2](https://arxiv.org/html/2607.01827v1#S3.SS1)
+
+训练专用 APCR 从真值框内提取多车实例点云并重新体素化，让学生预测体素占据与点偏移，而非生成整幅场景点云。MTCD 一方面按教师框回归误差加权全局特征，另一方面在对应 BEV patch 内进行空间和通道对比，要求正确位置的师生特征接近。[§3.3–3.4](https://arxiv.org/html/2607.01827v1#S3.SS3)
+
+### 关键公式与监督来源
+
+教师权重依赖训练真值，原文式 8–9 为：
+
+$$
+ W_i=\frac{\exp(-0.8\mathcal L_{\rm loc}^{t_i})}{\sum_j\exp(-0.8\mathcal L_{\rm loc}^{t_j})},\qquad
+ \widehat F_k^t=\sum_iW_iF_k^{t_i}.
+$$
+
+$\mathcal L_{\rm loc}^{t_i}$ 是第 $i$ 位教师与真值框之间的 Smooth L1 误差，$k$ 是特征层。误差较小的教师对当前样本权重较大；这不是教师自己报告的可靠概率，更不在推理时使用真值。全局 KL 蒸馏比较学生与加权教师的 softmax 特征，三层权重为 0.2/0.3/0.5。[式 8–10](https://arxiv.org/html/2607.01827v1#S3.E8)
+
+实例重建按原文式 3 将体素中心与预测偏移组合：
+
+$$
+ l^{\rm rec}=(V_c+R_{\rm off})R_{\rm occ},\qquad \mathcal L_{\rm APCR}=\mathcal L_{\rm occ}+\mathcal L_{\rm off}.
+$$
+
+$V_c$ 是体素中心，$R_{\rm off}$ 是点偏移，$R_{\rm occ}$ 表示占据预测。监督来自真值框内的协同点云，分别训练占据与偏移；这是训练期增强，不是部署时再传点云。[式 3–5](https://arxiv.org/html/2607.01827v1#S3.E3)
+
+局部对比的正例为师生相同空间位置、负例为不同位置。保留原文式 6 的分母约定可写成：
+
+$$
+ \mathcal L_{{\rm CL},i}=-\frac1N\sum_m\log\frac{\exp(-d_{mm}^{i}/0.07)}{\sum_{n\ne m}\exp(-d_{mn}^{i}/0.07)},\qquad
+ \mathcal L_{\rm local}=\sum_iW_i\mathcal L_{{\rm CL},i}.
+$$
+
+$d$ 为师生特征平方欧氏距离，$N$ 为局部对比位置数。原式分母只含负例，不是常见把正例也放入分母的 InfoNCE；复现不能悄悄改式后声称遵循原文。空间/通道细分依赖文中所引附录，本次取得的 HTML 未含这些附录内容。[式 6–7](https://arxiv.org/html/2607.01827v1#S3.E6)
+
+### 训练与推理
+
+训练总损失由 focal 分类、Smooth L1 框回归、APCR、全局和局部蒸馏五项组成；教师冻结，由学生学习。正文没有完整给出五项总权重、optimizer、epoch、batch 及 teacher checkpoint 训练预算；其“详见附录”不能当作已经核实的配置。
+
+推理删除教师、GT 加权、APCR 和蒸馏分支，只保留增强后的学生检测器，因此免受远端消息延迟与相对位姿噪声影响；这不证明其自车传感器失真或自定位漂移鲁棒性。表 4 比较的是多主体 CoP 与单主体 M2S，不是相同单车输入下“额外模块完全零成本”。
 
 ## 关键图与可视化结果
 
-![图 1：Ego-only、Co-perception 与 C2E 的取舍，以及 M2S 对检测性能的提升](https://arxiv.org/html/2607.01827v1/x1.png)
+![原论文图 1：部署接口对照与 V2XSet 单车检测增益](../../assets/papers/c2e-co-perception-distillation-figure-1.png)
 
-这张图清楚说明 C2E 的定位：它不是替代协同感知，而是在部署成本受限时，把协同感知的训练信号迁移给单车模型。右侧性能对比用于判断 M2S 是否对不同 SOTA backbone 都有增益。
+左半部比较普通单车、在线协同和蒸馏单车；右半部各方法都是无/有 M2S 的单车配置。红色增量是 AP 百分点差，图中百分号不应被照搬成相对提升。[原图 1](https://arxiv.org/html/2607.01827v1#S1.F1)
 
-![图 2：M2S 多教师到单学生蒸馏框架，包括教师 BEV 特征融合、学生增强和对比蒸馏](https://arxiv.org/html/2607.01827v1/x2.png)
+![原论文图 2：冻结多教师、实例重建和学生特征蒸馏](../../assets/papers/c2e-co-perception-distillation-figure-2.png)
 
-这张图是方法主链路。读者应关注教师侧是否真的提供了学生不可见区域的信息，以及学生侧如何避免把多视角信息硬压成无法部署的隐式假设。
+上路为学生、下路为多教师；GT Boxes 同时参与实例裁剪及教师权重计算，剪刀标出推理移除的支路。读图重点是区分离线监督和学生实际输入，而不是将稠密教师点云当作部署条件。[原图 2](https://arxiv.org/html/2607.01827v1#S2.F2)
 
 ## 实验结论与证据
 
-论文在 V2XSet、V2V4Real 和 DAIR-V2X 上验证 M2S，并声称在不引入在线通信成本的情况下，结合 CoSDH 和其他 3D detector 可带来最高 8.64% 的 3D mAP 增益。这个证据链比较贴合部署问题：它承认实时协同有成本，并尝试把协同收益转成离线知识。它适合作为“协同感知是否必须在线”的反向基线。
+### 设置与主表
+
+使用模拟 V2XSet 和真实 V2V4Real、DAIR-V2X；分别报告 validation/test，不混合 split。AP@0.3/0.5/0.7 为对应 IoU 阈值的 3D 检测平均精度，越高越好；下表只摘录同学生、同单车输入的 AP@0.7。正文未列出各 split 样本数和独立训练 seed。[§4.1–4.3](https://arxiv.org/html/2607.01827v1#S4.SS1)
+
+| 位置与 AttFuse 设置 | 无 M2S | 有 M2S | AP@0.7 百分点增量 |
+| --- | ---: | ---: | ---: |
+| 表 1，V2XSet test | 58.06 | 66.70 | +8.64 |
+| 表 2，V2V4Real test | 21.49 | 26.88 | +5.39 |
+| 表 2，DAIR-V2X validation | 33.25 | 39.86 | +6.61 |
+
+真实数据也有收益，但不是模拟训练直接零样本迁移；本次没有核实跨数据集共用权重的协议，不能称域外泛化实验。[表 1–2](https://arxiv.org/html/2607.01827v1#S4.T2)
+
+### 组件消融与训练成本
+
+| 表 3，V2XSet test、AttFuse 学生 | AP@0.7 ↑ |
+| --- | ---: |
+| 原始单车基线 | 58.06 |
+| 单教师蒸馏 | 58.29 |
+| 多教师自适应全局蒸馏 | 62.76 |
+| 上行 + MLFE | 64.58 |
+| 上行 + APCR | 66.50 |
+| 上行 + 局部对比 | 66.70 |
+
+最大跃升发生在多教师全局蒸馏，最后局部对比只增 0.20 点；不能把完整 8.64 点全部归于对比学习。最后一步 AP@0.5 还从 79.32 降至 79.26，说明不是所有阈值同步改善。该递进消融没有参数量匹配及多 seed 区间。[表 3](https://arxiv.org/html/2607.01827v1#S4.T3)
+
+表 5 使用单张 RTX 3090，三教师组合训练 12.69 h、显存 10,992 MB；单 AttFuse 教师为 7.54 h、7,640 MB。此表没有明确标出 split，且完整组合的 73.73 与表 1 validation 行一致；单教师 73.26 不能直接与表 3 testing 的“仅加单教师”58.29 相减，需先统一划分与模块设置。表 4 的 AttFuse CoP/M2S 分别为 143.8/92.8 GFLOPs、10.3/20.7 FPS，通信延迟 266.6/0 ms；链路假设和完整单车端到端时延未充分展开。[表 4–5](https://arxiv.org/html/2607.01827v1#S4.T4)
 
 ## 应用场景与启发
 
-- 应用场景：通信不可用或低可靠场景下的 ego-only 3D detection、车路协同数据辅助训练、协同模型离线蒸馏。
-- 方法启发：V2X 数据集的价值不一定只在部署协同模型，也可以作为训练单车模型的多视角监督来源。
-- 讨论问题：蒸馏后的 ego-only 模型是否真的学到了遮挡区域的统计先验，还是只在同分布 benchmark 上受益。
+- 作者主张：多车数据可以在训练期帮助单车检测，部署时取消在线通信。
+- 我的判断：适合作为在线协同系统的降级或成本受限基线；收益应按目标可见点数分层，区分“稀疏可见但难检测”与“物理上完全不可见”。
+- 待验证假设：按教师间分歧和学生可见性共同调节蒸馏，可以减少不可见区域的高置信幻检；应同时观察漏检和误报，不能只统计 AP 上升。
 
 ## 局限与阅读风险
 
-C2E 推理阶段没有真实额外视角，因此对完全不可见且分布外的目标不能提供物理保证。教师模型和学生模型若共享数据偏差，蒸馏可能放大错误。论文主要报告检测指标，还没有证明这种离线协同蒸馏会改善下游预测、规划或闭环安全。
+作者承认当前只覆盖 LiDAR、教师权重依赖训练 GT，计划研究无 GT 的教师投票。离线监督可能学习数据集位置和目标先验，无法保证未知城市里恢复真正缺失的证据。
+
+主表没有证明相同资源下优于在线协同；噪声实验取消了受扰动远端输入，不能解释为学生学会纠正所有位姿误差。附录和代码配置的可用性缺口限制精确复现；APCR 原式 BCE 符号约定、局部对比分母及总损失权重都应以作者实现确认。
 
 ## 后续跟进
 
-- 检查代码和训练配置是否能复现实验中的 teacher/student 设置。
-- 与 CooperScene 结合，测试真实 C-V2X 通信限制下在线协同和离线蒸馏的边界。
-- 后续可以做一个小实验：同一 backbone 下比较 ego-only、online V2X、C2E distilled 三种部署接口。
+### 最小验证与停止条件
+
+- 当前资源（2026-09-12）：固定 v1 全文和官方图片已可读；论文正文未给出代码/权重链接，精确题名与作者检索未确认公开实现。三个数据集是已命名公开资源，但本次未下载；完整 teacher/student 配置和附录未核实。
+- 最小实验：取得配置后固定 V2XSet split、AttFuse 学生和训练步数，比较单车基线、多教师全局蒸馏、加 APCR、完整 M2S；保留真实 V2V4Real test 做独立核验。按目标距离与 ego 可见点数分桶记录 AP、误报、召回和 batch=1 时延；RTX 3090 是已报告成本平台，不是最低资源保证。
+- 成功信号：增益在稀疏可见目标上稳定存在，换场景后不过度增加盲区误报；局部对比增量大于重复运行波动。
+- 停止/转向条件：收益依赖教师真值匹配中的样本泄漏、只提升熟悉位置目标，或不可见目标误报明显升高，则先限制蒸馏区域与校准置信度，不进入规划安全结论。
+
+### 来源与核验记录
+
+依据 [arXiv:2607.01827v1](https://arxiv.org/html/2607.01827v1)，2026-07-02 版本，2026-09-12 核验；重点为 §3–4、式 3/5–11、表 1–5、图 1/2 实际图像。机构由首页核对；[ECCV 官方页面](https://eccv.ecva.net/virtual/2026/poster/4362)确认题名与作者；其所链 18 页会议 PDF 也未提供文中指向的附录训练配置。相关机制分别读 DiscoNet v2 §2、Where2comm v1 §4；未运行训练或推理。

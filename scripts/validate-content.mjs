@@ -24,6 +24,7 @@ import {
   unusedAuditedSourceFamilies
 } from "../src/lib/review-audit.js";
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
+import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
 import {
   CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM,
   categoryCoverageSnapshotFingerprint
@@ -36,6 +37,7 @@ const CONFIG = path.join(ROOT, "config");
 const PUBLIC = path.join(ROOT, "public");
 
 const errors = [];
+let reviewCorpusResolver;
 
 function addError(message) {
   errors.push(message);
@@ -1716,11 +1718,14 @@ function validateReviewCenter(
 
         let localSnapshot;
         try {
+          const corpus = reviewCorpusResolver.resolve(
+            review, [...paperById.values()], path.join(CONTENT, "papers")
+          );
           localSnapshot = localCorpusSearchSnapshot(
-            [...paperById.values()],
+            corpus.papers,
             review.id,
             queryRun.query,
-            { corpusPath: path.join(CONTENT, "papers") }
+            { corpusPath: corpus.corpusPath }
           );
         } catch (error) {
           addError(`${queryRunLabel}.query is not a valid regular expression: ${error.message}`);
@@ -2618,6 +2623,13 @@ try {
 }
 
 const requiredPaperSections = contentQuality.paperReports?.requiredSections;
+try {
+  reviewCorpusResolver = createReviewCorpusResolver(contentQuality.reviewCorpusSnapshot, ROOT);
+} catch (error) {
+  addError(error.message);
+  reviewCorpusResolver = createReviewCorpusResolver();
+}
+process.once("exit", () => reviewCorpusResolver.close());
 const minimumOfficialFigures = contentQuality.paperReports?.minimumOfficialFigures;
 const digestAuditRequiredFrom = contentQuality.digests?.auditRequiredFrom;
 const digestCategoryCoverageRequiredFrom =
@@ -2726,7 +2738,8 @@ const papers = paperDocs.map((doc) => {
   const id = doc.data.id;
   const revisionOf = typeof doc.data.revisionOf === "string" ? doc.data.revisionOf.trim() : "";
   const tags = normalizePaperTags(doc.data);
-  const arxivIds = extractArxivIds(doc.data.source, doc.body);
+  // The source field identifies this paper. Body citations identify related work.
+  const arxivIds = extractArxivIds(doc.data.source);
   const normalizedTitle = normalizeTitle(doc.data.title);
 
   if (id !== expectedId) {

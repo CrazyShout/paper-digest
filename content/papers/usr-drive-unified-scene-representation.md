@@ -2,61 +2,144 @@
 {
   "id": "usr-drive-unified-scene-representation",
   "tag": "dynamic-scene-representation",
-  "tags": ["dynamic-scene-representation", "3d-reconstruction", "world-models"],
+  "tags": [
+    "dynamic-scene-representation",
+    "3d-reconstruction",
+    "world-models"
+  ],
   "title": "USR-Drive: Unified Driving Scene Representation via Joint Denoising of 3D Gaussians and Boxes",
   "source": "arXiv:2608.19036 / https://arxiv.org/abs/2608.19036 / HTML: https://arxiv.org/html/2608.19036",
-  "authors": ["Li-Heng Chen", "Haokai Pang", "Chengye Su", "Jiarun Liu", "Qifeng Chen", "Ziqian Ni", "Jianxin Huang", "Shi-Sheng Huang", "Hongbo Fu", "Sheng Yang"],
-  "affiliations": ["NIO", "The Hong Kong University of Science and Technology", "Beijing Normal University"],
-  "comment": "USR-Drive 把稠密 3D Gaussian 几何与稀疏 3D box 当作共同世界状态联合去噪，在 nuScenes 同时提升重建和检测，并在 VKitti 做零样本验证；作者也明确指出当前缺少全局长期状态、4D 身份和实时性。"
+  "authors": [
+    "Li-Heng Chen",
+    "Haokai Pang",
+    "Chengye Su",
+    "Jiarun Liu",
+    "Qifeng Chen",
+    "Ziqian Ni",
+    "Jianxin Huang",
+    "Shi-Sheng Huang",
+    "Hongbo Fu",
+    "Sheng Yang"
+  ],
+  "affiliations": [
+    "NIO",
+    "The Hong Kong University of Science and Technology",
+    "Beijing Normal University"
+  ],
+  "comment": "USR-Drive 在共享度量坐标中联合去噪 3D Gaussian 与检测框，让几何和实例布局互相约束。它在离线重建与检测中有收益，但单段视频仍需多步生成，尚缺长期身份和实时性。"
 }
 ---
 
 ## 一句话定位
 
-USR-Drive 试图打破驾驶场景中“重建一套几何、检测再建一套对象”的双系统：稠密 3D Gaussian latent 与稀疏 box latent 在同一个 metric spatiotemporal coordinate 中联合去噪，让对象结构约束动态几何、几何反过来给 box 提供空间落点。它是场景表示方向很清晰的前沿稿，但目前仍是 50 步离线生成器，不是可直接部署的 4D 状态。
+USR-Drive 把驾驶视频中的稠密几何和稀疏检测框作为两类潜变量共同去噪：几何帮助框定位，框提供实例结构约束。它针对离线场景重建与感知，尚不是持续运行的全局 4D 世界状态。
+
+- 核心证据：nuScenes 上联合模型为 27.55 dB PSNR、0.552 检测 mAP，串联两阶段对照为 21.47 dB、0.473。[表 4](https://arxiv.org/html/2608.19036v1#S4.T4)
+- 主要边界：单 H800 处理六相机×八帧需要 45.2 秒、峰值 58.5 GB；没有长期身份或实时闭环验证。[附录 C](https://arxiv.org/html/2608.19036v1#A3)
 
 ## 论文要解决的问题
 
-纯重建模型容易在动态车体上出现 temporal smearing，也不输出规划可用的对象；纯 3D detector 则给出稀疏 box，却缺少可渲染表面和完整场景结构。串联“先重建再检测”会累积误差，两条支路也无法在生成过程中互相修正。论文希望用统一 latent 同时回答 surface reconstruction 与 instance layout，并检验这种耦合是否真的双向受益。
+### 问题与假设
+
+单独重建动态车辆时，几何可能拖影；单独检测只给出稀疏框，又缺少完整表面。串联两个模型意味着后一步无法在重建过程中反过来约束前一步。论文假设，让两种表征在同一度量坐标中联合生成，可以减少这种信息割裂。
+
+输入是已知相机位姿的多视角视频，输出为每帧 3D Gaussians 和检测框/类别/速度等。训练需要 LiDAR 深度与框/轨迹标注；推理不输入真实框和轨迹。已有相机位姿也仍是必需条件。
+
+### 相关工作与差异
+
+| 工作与一手来源 | 机制 | 本文的变化 |
+| --- | --- | --- |
+| Wang 等，2025，[VGGT v1 §3](https://arxiv.org/html/2503.11651v1#S3)，此处按固定预印本核对 | 多图像共享骨干同时预测相机、深度、点图及跟踪特征 | USR-Drive 添加实例框潜变量与条件生成过程，使用已知位姿；不能把多任务几何预测本身当成新概念 |
+| Xu 等，2026，[GeoUP v1 §3](https://arxiv.org/html/2608.13147v1#S3)，作者注明 BMVC 2026 accepted | 标定视频先经共享几何骨干，再由深度、检测、占据头读出 | 本文在去噪迭代中让几何与框互相作用，但没有占据头或对应的在线效率结论 |
 
 ## 方法和系统设计
 
-- Stage I 用双分支 autoencoder 分别压缩 dense geometry 与 slot-aligned 3D boxes；box 还包含类别、偏移、速度和辅助 token。
-- Stage II 的 MMDiT 对两类 latent 联合 rectified-flow denoising，共享 self-attention 允许结构信息双向交换。
-- Unified Positional Encoding 为 Gaussian patch 和 box anchor 都提供 metric 3D anchor 与归一化时间，避免只靠 token 序号对齐异构模态。
-- 输入是 6 路 posed camera、8 帧 clip；推理不使用 GT box/track，从 Gaussian noise 开始做 50 步去噪，长序列用重叠窗口。
+### 输入输出与流程
+
+Stage I 的几何编码器使用冻结 DA3-Base 第五层特征，经 1×1×1 卷积映射到潜空间，再由 DPT 解码几何，并用图像重建与 LiDAR 深度约束训练可学习部分。框自编码器则将八角点、类别和时间一致的槽位编码，监督角点、朝向、类别、存在性与 KL 正则。
+
+Stage II 用 Wan2.1-1.3B 初始化 MMDiT，把噪声几何和框 token 放进共享注意力；冻结 Wan-VAE 提供视频条件。六路相机各自编码八帧视频，而不是拼成 48 帧单视频。跨相机采用环形邻居注意力，仅作用于几何 token；框 token 在相机分支复制，最后平均得到布局预测。[§3、附录 A/B](https://arxiv.org/html/2608.19036v1#S3)
+
+### 关键公式与直觉
+
+原式 1、3–4 用共同位置编码对齐两类 token：
+
+$$
+\Phi(p,t)=\mathrm{MLP}([\gamma_{3D}(p),\gamma_t(t/(T-1))]),\qquad
+p^{\mathrm{GS}}=\frac{\sum_q\widetilde\alpha_q\overline\mu_q}{\sum_q\widetilde\alpha_q+\epsilon},\quad
+p_n^{\mathrm{Box}}=p_n^{\mathrm{BEV}}.
+$$
+
+几何锚点是冻结几何先验在对应图像 patch 内的高斯中心加权均值；框锚点来自固定 BEV 网格。二者转换到首帧自车坐标，并在整个去噪期间固定，不从真实框或干净生成目标计算。$t$ 是视频帧索引，与去噪时间不同。这让“同一处空间”比 token 序号更有意义，但不是显式长期对象身份。[§3.3](https://arxiv.org/html/2608.19036v1#S3.SS3)
+
+按原式 5、7 缩写训练目标：
+
+$$
+\mathcal L=\mathcal L_{\mathrm{geo}}+5\,
+\frac{\sum_i M_i\lVert v_i-\widetilde v_i\rVert_2^2}{\sum_i M_i}
++\mathcal L_{\mathrm{aux}}.
+$$
+
+$v_i$ 是框潜变量的预测流速度，$\widetilde v_i$ 是数据到噪声的目标速度，$M_i$ 只保留有效对象；辅助项训练所有锚点的存在置信度及有效框的偏移、速度和属性。原式分母没有给出空对象场景的保护项，实现时需核实，不能自行补成论文已有机制。此处流速度不等于车辆物理速度，后者是辅助变量。[附录 B.5](https://arxiv.org/html/2608.19036v1#A2.SS5)
+
+### 训练与推理
+
+几何 AE 训练 150k 次、框 AE 16k 次；联合模型 30 层、宽度 1536、12 个注意力头，8 张 H800、总 batch 8、1500k 次迭代，AdamW 学习率 $10^{-4}$ 余弦降至 $10^{-5}$。框 AE 最多 100 个轨迹槽位，联合扩散使用 40×30 网格的 1200 个固定查询；应按各阶段区分这些数量。附录给出逐步扩大高噪声范围的课程与 0.1 条件丢弃率。[附录 B.6–B.7](https://arxiv.org/html/2608.19036v1#A2.SS7)
+
+推理从几何、框及辅助变量的高斯噪声开始，做 50 步带 classifier-free guidance 的 rectified flow，解码后置信度筛选与逐帧 3D NMS；长序列用重叠八帧窗口。正文说位姿只用于锚点，而附录 B.3 又将位姿编码加入几何 token 与条件上下文，这一接口差异需要代码确认，不能省略。[附录 B.3、B.8](https://arxiv.org/html/2608.19036v1#A2.SS3)
 
 ## 关键图与可视化结果
 
-![图 1：双分支 autoencoder、共享 MMDiT 和 Unified Positional Encoding 的统一去噪框架](https://arxiv.org/html/2608.19036v1/overview_demo2.png)
+![原论文图 2：双分支自编码、联合扩散与推理](https://arxiv.org/html/2608.19036v1/overview_demo2.png)
 
-图 1 展示“统一”的严格含义：不是末端把两个输出一起展示，而是几何与 box 在去噪中共同演化。UPE 是维持物理对应的关键，否则不同 token 只共享注意力、没有共享空间。
+上左是两个自编码器，下左是有监督联合训练，右侧才是只输入视频的推理。雪花/火焰标记冻结与更新部分；训练中的框标注不能读成推理条件。图示是总体接口，跨视角细节需结合附录。[图 2](https://arxiv.org/html/2608.19036v1#S3.F2)
 
-![图 2：nuScenes 上场景重建、动态对象外观和 3D box 的定性对比](https://arxiv.org/html/2608.19036v1/main_exp.png)
+![原论文图 4：图像重建及检测框的定性对照](https://arxiv.org/html/2608.19036v1/main_exp.png)
 
-图 2 显示动态区域边缘和 box grounding 的改善，和对象级 PSNR/SSIM 结果相符。它仍不能说明长期身份、速度连续性或规划效用，这些正是作者在 limitations 中承认的缺口。
+上两行比较车辆局部重建，下两行比较框的漏检与定位。图中 28.01/28.22 dB 是所选图像的 PSNR，不是全测试集 27.55 dB；成功样例也没有证明持续身份、速度一致性或规划效用。[图 4](https://arxiv.org/html/2608.19036v1#S4.F4)
 
 ## 实验结论与证据
 
-模型只在 nuScenes 训练，使用官方 split；VKitti 抽取 400 个 case 做零样本测试。nuScenes 场景级重建达到 PSNR 27.55、SSIM 0.853、LPIPS 0.076、depth RMSE 4.59，均优于列出的 VGGT、DA3、Pi-3、AnySplat、STORM 和 DGGT。动态前景重建 PSNR 24.45、SSIM 0.833、LPIPS 0.083，提升尤其明显。
+### 设置与指标
 
-在 nuScenes vision-only 3D detection 上达到 NDS 0.625、mAP 0.552，高于列出的 RoPETR 0.614/0.529。VKitti 零样本重建为 26.45 PSNR、0.743 SSIM，检测 mAP 0.518、mATE 0.812；专用 nuScenes detector 在该跨域表中 mAP 只有 0.008-0.022。跨方法训练设置并非完全等价，因此这组数字更适合证明 unified representation 具有迁移潜力，而不是宣布通用检测器被彻底取代。
+只用 nuScenes 训练，官方划分评估；每样本六相机、八帧、112×168 图像。另抽取 400 个 VKitti case 做零样本测试。PSNR/SSIM 衡量图像重建，LPIPS 衡量感知差异，深度 RMSE 衡量几何；检测用 nuScenes mAP、NDS 及定位/朝向/速度等误差。主表检测基线数值引用各自发表结果，并未全部同预算重训。
 
-消融中 box-only 检测 mAP 仅 0.012，去掉 UPE 为 0.214，完整模型为 0.552；decoupled two-stage 为 mAP 0.473、PSNR 21.47。联合去噪优于串联的证据较完整，但默认 MMDiT 已有 1.418B 参数，50 步推理成本不可忽略。
+### 主要结果与比较
+
+| 原表与设置 | 对照 → USR-Drive | 结果 | 比较边界 |
+| --- | --- | --- | --- |
+| 表 1，场景重建 | DGGT → 本文 | PSNR 26.63 → 27.55 dB；LPIPS 0.122 → 0.076 | 训练与模型容量未严格匹配 |
+| 表 1，动态前景 | DGGT → 本文 | PSNR 19.73 → 24.45 dB；SSIM 0.791 → 0.833 | 以前景评测为条件，不是整场景增益 |
+| 表 2，nuScenes 检测 | RoPETR → 本文 | mAP 0.529 → 0.552；NDS 0.614 → 0.625 | 朝向误差 0.289 → 0.303、速度误差 0.229 → 0.251 反而增大 |
+| 表 4，结构消融 | 去掉 UPE → 完整模型 | mAP 0.214 → 0.552；PSNR 25.32 → 27.55 dB | 支持此框架需要共同位置参考 |
+
+nuScenes mAP 增益为 2.3 个百分点，不能写成所有检测指标都改善。VKitti 本文 mAP 为 0.518，而专用检测基线为 0.008–0.022；这是小型合成跨域设置，不能外推真实城市中的相同收益。[表 1–3](https://arxiv.org/html/2608.19036v1#S4.T2)
+
+### 消融与证据边界
+
+仅几何分支为 26.37 dB，加入框后为 27.55 dB；仅框分支 mAP 0.012，联合后 0.552。它们支持两条分支在该实现中互益，但“框分支单独失败”不是对所有检测架构的结论。串联模型与完整模型的差异也包含可用交互和计算结构，未报告完全等容量比较或跨种子方差。[表 4](https://arxiv.org/html/2608.19036v1#S4.T4)
+
+附录已给出实际成本：单 H800 一段六相机×八帧为 45.2 秒、58.5 GB，DA3 编码器自身为 1.3 秒、46.6 GB。这是 clip 级离线耗时，不能与单帧检测 FPS 直接换算成公平速度排名。[附录 C](https://arxiv.org/html/2608.19036v1#A3)
 
 ## 应用场景与启发
 
-- 应用场景：离线驾驶场景数字化、可渲染对象级重建、合成数据生成和统一几何预训练。
-- 方法启发：surface、instance 与后续 occupancy 不应只在输出端共享，而要在 metric latent 中互相施加约束。
-- 研究启发：加入 radar Doppler/return likelihood 作为第三类 token，让 geometry、box 与动态 occupancy 共享时空 anchor，并显式维护 unknown。
-- 讨论问题：统一模型同时提高 PSNR 和 mAP 后，怎样证明共享表示也提高了规划，而不是仅让两个离线任务互相正则化？
+- 作者主张：用统一生成表征同时改善重建和检测，向更完整的驾驶世界状态发展。
+- 我的判断：更适合离线数字化、教师表征和数据生产；当前八帧窗口不足以承担持续跟踪。
+- 待验证假设：将固定锚点替换为带可追踪身份的动态查询，可以改善重叠窗口间的一致性，而不仅提高单窗口图像质量。
 
 ## 局限与阅读风险
 
-作者明确承认当前 patch/frame-aligned geometry 没有 compact global state 和长期身份，不能直接支持 4D tracking；重叠 8 帧窗口也不能替代长时状态。50 步迭代去噪限制为离线估计，论文未报告真实延迟。检测比较引用不同专用模型的官方数字，统一模型参数更大；VKitti 是合成域且只取 400 case。扫描时没有代码或模型入口，因此可复现性暂时弱于有开放资产的入选论文。
+作者明确承认没有紧凑全局状态和长期身份，且多步去噪限制在线使用。还需保留位姿输入表述冲突、AE 槽位到固定查询的映射细节、空对象掩码处理，以及不同基线训练预算等实现问题。框和几何互相约束不等于物理守恒；没有闭环碰撞、规划或真实车辆实验来验证后续用途。
 
 ## 后续跟进
 
-- 先复核 UPE、decoupled pipeline 与 joint denoising 三组消融，而不是直接训练完整 1.4B 模型。
-- 用 causal/few-step distillation 测试延迟与重建、检测两端性能的 Pareto 曲线。
-- 增加 object identity、occupancy/free-space 和 radar Doppler token，建立可持续更新的全局场景状态。
+### 最小验证与停止条件
+
+- 资源状态（2026-09-12）：官方论文和补充材料可访问；所核验全文与 arXiv 页面未给出可确认的本方法代码、配置、权重或派生数据发布入口。底座和 nuScenes/VKitti 是独立资源，不能替代完整方法发布。
+- 最小实验：取得实现后先固定数据、几何先验、训练预算、去噪步数和容量，以联合/串联/无 UPE 确认基线；再增加固定锚点 UPE 与带持续身份动态查询的直接对照。共同评估单窗口 mAP、PSNR、跨窗口框位移、身份一致性与实测成本。
+- 成功信号：动态查询降低跨窗口跳变，并保留单窗口重建/检测收益。
+- 停止/转向：跨窗改善只来自平滑而明显增加定位滞后，或需要更多迭代才能保分，则先解决因果更新与算力问题，不直接扩展为实时世界模型。
+
+### 来源与核验记录
+
+依据 Chen 等 arXiv:2608.19036v1，2026-09-12 核对 PDF 首页、§3–4、表 1–4、附录 A–D、式 1/3–7，逐张打开原图 2/4。相关比较分别读取 VGGT v1 §3 与 GeoUP v1 §3。未执行训练、模型推理或实车验证。

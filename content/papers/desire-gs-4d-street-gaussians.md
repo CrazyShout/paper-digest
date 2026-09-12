@@ -2,55 +2,166 @@
 {
   "id": "desire-gs-4d-street-gaussians",
   "tag": "3d-reconstruction",
-  "tags": ["3d-reconstruction", "world-models"],
+  "tags": [
+    "3d-reconstruction",
+    "world-models"
+  ],
   "title": "DeSiRe-GS: 4D Street Gaussians for Static-Dynamic Decomposition and Surface Reconstruction for Urban Driving Scenes",
-  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html / arXiv:2411.11921 / https://arxiv.org/abs/2411.11921",
-  "authors": ["Chensheng Peng", "Chengwei Zhang", "Yixiao Wang", "Chenfeng Xu", "Yichen Xie", "Wenzhao Zheng", "Kurt Keutzer", "Masayoshi Tomizuka", "Wei Zhan"],
-  "affiliations": ["UC Berkeley"],
-  "comment": "DeSiRe-GS 用自监督 4D Gaussian Splatting 做城市驾驶场景的静动态分解和表面重建。它的价值在于把视觉渲染质量、动态对象处理和几何可信度放到同一个驾驶场景表示问题里。"
+  "source": "CVPR 2025 / https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html / arXiv:2411.11921 / https://arxiv.org/abs/2411.11921 / Full text: https://arxiv.org/html/2411.11921v2",
+  "authors": [
+    "Chensheng Peng",
+    "Chengwei Zhang",
+    "Yixiao Wang",
+    "Chenfeng Xu",
+    "Yichen Xie",
+    "Wenzhao Zheng",
+    "Kurt Keutzer",
+    "Masayoshi Tomizuka",
+    "Wei Zhan"
+  ],
+  "affiliations": [
+    "UC Berkeley"
+  ],
+  "comment": "DeSiRe-GS 将静态重建误差学成运动掩码，再约束 PVG 的速度与表面几何；Waymo 子集 NVS 比 PVG 高 1.64 dB，但仍依赖 LiDAR 和预训练特征，并以渲染速度换取质量。"
 }
 ---
 
 ## 一句话定位
 
-DeSiRe-GS 是 CVPR 2025 的驾驶场景 4D Gaussian Splatting 工作，目标是在没有额外 3D bounding box 标注的情况下，同时做好静动态分解、动态街景表示和高保真表面重建。它适合作为三维重建和驾驶仿真方向的高质量样本。
+DeSiRe-GS 用静态重建留下的动态区域误差学习运动掩码，再把掩码作为速度约束加入 PVG，并用几何正则与跨时刻视图一致性改善街景表面。值得读的是“二维误差怎样改变三维运动与几何”，而不是把它理解成一个新物理引擎。
+
+- **核心证据**：Waymo 的 PVG 子集上，新视角 PSNR 从 PVG 的 28.11 提高到 29.75 dB，渲染速度从 50 降到 36 FPS；这是质量与速度的交换。[表 1](https://arxiv.org/html/2411.11921v2#S5.T1)
+- **主要边界**：“自监督”指静动态分解不需要额外 3D 框；训练仍使用 LiDAR、标定、预训练 FiT3D 特征和 OmniData 伪法向，动态区域评测也使用真值框。[§5.1、附录 7](https://arxiv.org/html/2411.11921v2#S5.SS1)
 
 ## 论文要解决的问题
 
-普通 3DGS 在静态或受控场景里效果很好，但自动驾驶数据包含快速移动的车辆、行人、稀疏多视角、长距离道路和复杂遮挡。动态区域容易产生 ghosting、漂浮高斯和表面不一致，导致图像看起来能渲染，却难以作为仿真、地图更新或下游评测的可靠几何表示。DeSiRe-GS 的问题是：如何在自监督设置下从驾驶视频中分离静态背景和动态对象，并让动态区域的几何更贴合真实表面。
+### 问题与假设
+
+输入是带时间戳和相机内外参的驾驶图像序列，以及 LiDAR 点云；输出是随时间可渲染的 Gaussian 场、静动态分解、深度/法向图与表面重建。静态 3DGS 无法让同一辆移动车在不同时刻处于不同位置，因此容易产生模糊或残影。PVG 已允许高斯随时间移动，但只靠图像和稀疏深度难以保证道路高斯速度为零，外观正确也不保证表面正确。
+
+作者采用两个假设：静态模型在动态区域的预训练特征误差更大；静态表面的跨时刻重投影应该一致。第一项会受曝光、反射和遮挡影响，第二项要求可靠位姿及正确静态区域判断，不能直接施加到移动车辆上。[§4.1–4.3](https://arxiv.org/html/2411.11921v2#S4)
+
+### 相关工作与差异
+
+| 工作与一手来源 | 已有机制 | DeSiRe-GS 的具体差异 |
+| --- | --- | --- |
+| Chen 等，PVG，2023 预印本版本（[§3.2–3.4](https://arxiv.org/html/2311.18561v2#S3.SS2)） | 高斯中心周期振动、透明度随寿命衰减；利用固有运动做时间平滑，无须动态框。 | 本文直接继承 PVG 的时间参数化，增加由静态模型误差产生的速度约束与表面几何约束；不能把 PVG 本身归为本文创新。 |
+| Huang 等，S³Gaussian，2024 预印本（[§3.1–3.3](https://arxiv.org/html/2405.20323v1#S3)） | 多分辨率 HexPlane 编码位置和时间，多头解码器预测相对 canonical 高斯的位移及外观变化，分解从重建中学习。 | 本文采用显式 PVG 参数与两阶段掩码蒸馏；差异是运动归纳偏置和监督组织，不是此前方法完全不能自监督分解。 |
+
+这些原文说明方法来源；性能比较以下文本文重新列出的特定子集为准，不能拼接不同论文的原始分数排名。
 
 ## 方法和系统设计
 
-- 论文采用两阶段优化：先利用动态区域重建误差提取 2D motion masks，再将这些 motion priors 可微映射到 Gaussian 空间。
-- 表示层面构建 4D street Gaussian，将静态背景与动态对象分开建模，避免动态物体污染静态场景。
-- 正则设计包括 Gaussian scale、跨视角一致性和表面约束，目标是减少漂浮高斯，并提升动态区域几何质量。
+### 输入输出与坐标流程
+
+每个高斯保存世界坐标中心、三个尺度、旋转、透明度和颜色。第一阶段训练时间不变的 3DGS，把渲染图和真实图分别送入冻结的 FiT3D，比较逐像素特征，再训练轻量解码器预测保留静态区域的掩码。第二阶段用 PVG 增加速度、寿命中心和时间尺度，将每个时刻的中心、透明度送入普通 splatting；同时渲染 RGB、深度、法向和速度图。
+
+例如，路上同一辆车会在多个位置留下较大的静态模型误差；这些像素在第一阶段不强制拟合。第二阶段掩码约束的是周围道路的速度应接近零，移动车辆区域仍可利用时间参数解释。最终可以按高斯速度阈值分出静动态成分。这个分解不提供持久的实例 ID，也不等同于可操控单车的场景图。[§4.1–4.2](https://arxiv.org/html/2411.11921v2#S4.SS1)
+
+### 关键公式与直觉
+
+运动先验来自特征差异。以下对应原文式 6、8、10；最后一项沿用原文逐像素写法，求和与范数细节应以实现为准：
+
+$$
+D=\frac{1-\cos(\widehat F,F)}{2},\qquad
+M=\mathbb I(\delta>\varepsilon),\qquad
+\mathcal L_v=V\odot M.
+$$
+
+$F$、$\widehat F$ 是真实图和渲染图的冻结特征，$D$ 大表示不相似，$\delta$ 是解码器输出，$\varepsilon$ 是阈值，$V$ 是渲染速度图。**尽管原文称 $\delta$ 为 dynamicness，式 7 的优化方向与式 9 的遮罩使用表明 $M=1$ 对应保留的静态区域**；照名称把 $M$ 当成动态区域会把速度约束加反。这个先验间接约束世界空间高斯，不是真值 scene flow。[式 6–10](https://arxiv.org/html/2411.11921v2#S4.SS1)
+
+动态高斯采用继承的 PVG 表达：
+
+$$
+\widetilde\mu(t)=\mu+\frac{l}{2\pi}\sin\!\left(\frac{2\pi(t-\tau)}l\right)v,
+\qquad
+\widetilde o(t)=o\exp\!\left(-\frac{(t-\tau)^2}{2\beta^2}\right).
+$$
+
+$\mu$ 是参考中心，$v$ 是寿命峰值 $\tau$ 处的瞬时速度，$\beta$ 控制存在时间，$l$ 是预设周期，$o$ 是基础透明度。短寿命高斯只在局部时间范围内贡献，因此这里不是声称车辆实际作周期运动，也不能把归一化时间下的 $v$ 直接解释成 m/s。[§3，式 3–5](https://arxiv.org/html/2411.11921v2#S3)
+
+几何部分把高斯压成贴近表面的薄盘，并要求静态像素往返投影一致。下面将式 11、15–17 重写成显式透视除法的形式：
+
+$$
+\mathcal L_s=\lvert\min(s_1,s_2,s_3)\rvert,\qquad
+p_n=\pi\!\left(KT_nT_r^{-1}(d_rK^{-1}\widetilde p_r)\right),\qquad
+\mathcal L_{uv}=\lVert p_r-p_{nr}\rVert_2.
+$$
+
+$s_i$ 是三个主轴尺度；$K$ 是内参，$T_r,T_n$ 按世界到相机变换理解，$\widetilde p_r$ 为齐次像素，$d_r$ 是渲染深度，$\pi$ 表示透视归一化，$p_{nr}$ 是查询邻视图深度后投影回来的像素。这里省略了刚体变换所需的齐次坐标扩展。另有最长轴上限惩罚，以及从最短主轴旋转得到法向、对齐 OmniData 伪法向的损失。它们约束不同对象：尺度约束高斯形状，往返投影约束可见静态几何；都不等于完整的三维表面真值监督。[§4.3](https://arxiv.org/html/2411.11921v2#S4.SS3)
+
+### 训练与推理
+
+每场景初始化 100 万点，其中 60 万来自 LiDAR、40 万随机采样。第一阶段 30,000 次迭代，6,000 次后开始训练运动解码器；第二阶段 50,000 次，20,000 次后加入跨视图约束，30,000 次后使用运动掩码约束速度。实验硬件是 RTX A6000，使用 Adam。论文没有给出两阶段总墙钟时间和峰值显存，不能把 36 FPS 当成重建速度。[§5.1、附录 7](https://arxiv.org/html/2411.11921v2#S5.SS1)
+
+优化目标包括 RGB、LiDAR 深度、伪法向、静态速度、最短/最长尺度和跨视图一致性。新视角渲染只需要已优化高斯、目标相机与时间，无须目标真实图；完整新场景仍需重做两阶段优化。附录说明解码器也可对渲染图提取掩码，但这不意味着新场景无需拟合。
 
 ## 关键图与可视化结果
 
-![图 1：DeSiRe-GS pipeline，展示自监督 motion prior、静动态分解和 4D street Gaussian 优化流程](https://arxiv.org/html/2411.11921v2/figures_low_res/pipeline4.png)
+![原论文图 2：静态模型误差生成掩码，再约束动态高斯并重建表面](https://arxiv.org/html/2411.11921v2/figures_low_res/pipeline4.png)
 
-这张图是理解论文方法的入口。DeSiRe-GS 不依赖外部 3D 框标注，而是从渲染误差和 motion masks 中获得动态先验，再把二维动态线索转到 Gaussian 空间中约束场景表示。
+先看上半部真实/渲染特征比较，再沿蓝色箭头读下半部速度图约束、分解与网格输出。图中掩码背景为白、车辆为黑，与 $M=1$ 保留静态区域的含义一致。这个图解释模块关系，不证明掩码是真值分割。[原图 2](https://arxiv.org/html/2411.11921v2#S1.F2)
 
-![图 2：DeSiRe-GS 与 S3Gaussian、PVG 的定性对比，展示动态驾驶场景中的渲染和分解效果](https://arxiv.org/html/2411.11921v2/figures_low_res/qualitative_comp_2.png)
+![原论文图 5：S³Gaussian、PVG 与 DeSiRe-GS 的图像、分解、深度和高斯结构对照](https://arxiv.org/html/2411.11921v2/figures_low_res/qualitative_comp_2.png)
 
-这张定性对比图需要和表格一起读。它能展示 DeSiRe-GS 在动态对象边界、道路结构和局部表面质量上的优势，但定性图本身不能证明几何可用于闭环驾驶，还需要深度一致性和下游任务验证。
+从左到右比较重建、静态部分、动态部分、深度和高斯结构。红圈强调静态重建中的残留；本文一行把运动汽车与背景分得更干净。右侧结构图仍显示有限视角重建的复杂表面，不能仅凭这张成功样例推断碰撞网格准确度。[原图 5](https://arxiv.org/html/2411.11921v2#S5.F5)
 
 ## 实验结论与证据
 
-论文在 Waymo Open Dataset、KITTI 等驾驶数据上比较重建、novel view synthesis、静动态分解和渲染质量，并与自监督方法以及带 3D bbox 标注的方法对照。它的关键证据不只是 PSNR/SSIM/LPIPS，而是动态区域和表面重建质量的改善。多视角一致性深度图进一步说明方法在几何侧有收益，不只是生成更漂亮的图像。
+### 设置与指标
+
+表 1 使用 PVG 提供的 Waymo 四序列子集和 KITTI 子集；表 2 使用 OmniRe 的八个复杂动态序列；补充表 4 才是 NOTR 的 Dynamic-32/Static-32。Waymo 使用前三相机、首 50 帧、640×960 图像；时间归一化到 [0,1]。这些范围不能合称“整个 Waymo”。本文沿用的 PVG NVS 协议将每第四个时间点留出；这一划分来自 [PVG §4](https://arxiv.org/html/2311.18561v2#S4)，DeSiRe-GS 的不同附加子集不能自动视为同一帧清单。表 1 基线数字引自 PVG，表 2 基线引自 OmniRe，并非本次统一重跑。[附录 9](https://arxiv.org/html/2411.11921v2#S9)
+
+PSNR 以 dB 表示像素重建质量，SSIM 越高越好，LPIPS 越低越好。DPSNR/DSSIM 在投影的动态真值框内计算；Depth L1 测稀疏 LiDAR 位置的深度差。特别是**消融表 3 的 Depth L1 未还原场景缩放**，不能标为米，也不能与补充表 4 的原尺度值直接比较。[附录 10.1](https://arxiv.org/html/2411.11921v2#S10.SS1)
+
+### 主要结果与比较
+
+| 设置与位置 | 方法 | NVS PSNR / SSIM / LPIPS | 成本与边界 |
+| --- | --- | --- | --- |
+| Waymo PVG 子集，表 1 | PVG | 28.11 / 0.849 / 0.279 | 50 FPS |
+| 同上 | DeSiRe-GS | 29.75 / 0.878 / 0.213 | 36 FPS；PSNR 增加 1.64 dB，速度降低 28%，均为本报告计算 |
+| KITTI PVG 子集，表 1 | PVG → DeSiRe-GS | 27.43 / 0.896 / 0.114 → 28.87 / 0.901 / 0.106 | 59 → 41 FPS |
+| Waymo OmniRe 子集，表 2 | OmniRe → DeSiRe-GS | PSNR 32.57 → 31.49 | OmniRe 使用 3D 框且分数更高；不能宣称胜过所有框监督方法 |
+
+[表 1–2](https://arxiv.org/html/2411.11921v2#S5.T1)显示对直接自监督基线的收益，但额外预训练特征、伪法向和更长优化预算也属于方法成本。补充表 4 的 Dynamic-32 NVS 中，PVG 与本文的 PSNR 为 29.77/30.45、Depth L1 为 4.84/4.17；Static-32 中本文的深度误差 3.93 仍高于 EmerNeRF 的 3.89，几何优势同样不是每项成立。
+
+### 消融与证据边界
+
+| Waymo 消融，表 3 | PSNR ↑ | Depth L1 ↓，归一化场景单位 |
+| --- | --- | --- |
+| 完整模型 | 35.7598 | 0.0713 |
+| 去掉第一阶段运动掩码 | 34.7063 | 0.1017 |
+| FiT3D 换为 DINOv2 | 34.9551 | 0.0977 |
+| 去掉多视图一致性 | 35.3325 | 0.1154 |
+| 去掉最长尺度正则 | 35.6911 | 0.0802 |
+
+去掉多视图一致性只损失约 0.43 dB，却使 Depth L1 明显恶化；完整模型相对该消融降低约 38.2% 深度误差，说明“RGB 看起来接近”不代表几何相同。去掉最长尺度正则的 RGB 差别更小，读者应结合结构图理解其目的。没有报告多种随机种子方差或置信区间，不能声称统计显著；也没有闭环驾驶收益或网格碰撞正确率。[表 3](https://arxiv.org/html/2411.11921v2#S5.T3)
 
 ## 应用场景与启发
 
-- 应用场景：驾驶仿真资产构建、动态场景重放、闭环规划场景编辑、道路数字孪生和下游感知算法评测。
-- 方法启发：驾驶 3DGS 的成功标准不能只看新视角渲染，还要看动态对象是否分离、表面是否可信、几何是否能被下游任务消费。
-- 讨论问题：4DGS 场景表示能否成为世界模型 rollout 或闭环仿真的几何底座，而不是只做离线可视化。
+- **作者主张**：降低动态框依赖，得到更可信的街景分解和表面。
+- **我的判断**：适合研究“静态背景清理”和重建几何质量；若目标是可单独编辑交警或车辆的仿真，需要额外实例身份、动作及交互接口。
+- **待验证假设**：跨视图一致性对路面/杆件的收益可能比增加图像拟合步数更能改善三维感知；可在相同训练预算下，用独立留出的 LiDAR 点检验，而不是只优化训练深度分数。
 
 ## 局限与阅读风险
 
-自监督 motion prior 的质量是核心风险。夜间、雨雾、低纹理道路、稀有交通参与者和强反光场景可能破坏动态分解。另一个风险是 per-scene optimization 的效率和泛化能力；如果每个场景都需要较重优化，它更适合作为数据资产构建工具，而不一定适合实时驾驶系统。
+### 论文已说明的条件
+
+运动先验依赖预训练特征；FiT3D 与 DINOv2 的差异在表 3 有实测。稀疏 LiDAR 和少视图仍限制几何监督，动态表示也是局部时间高斯组合，不提供长期运动预测。表 3 深度尺度与表 4 不同是作者明确说明的评测条件。
+
+### 本报告的判断边界
+
+对表面可信度的证据主要是深度、法向与可视化，尚不足以证明可直接作为安全测试的碰撞几何。第一阶段较大的外观误差不唯一由运动造成；曝光变化或反射会如何影响最终分解，需要分层验证。表 1/2 引用外部基线结果，不能把差异完全归因于某一个正则项。
 
 ## 后续跟进
 
-- 检查代码开放情况、每个场景的优化时间和 Waymo/KITTI 数据预处理。
-- 复现时加入动态区域深度误差、表面一致性和下游感知评测，而不只看渲染指标。
-- 跟进 4DGS 与驾驶世界模型、闭环仿真 benchmark 的结合方式。
+### 最小验证与停止条件
+
+- **当前资源（2026-09-12）**：[官方代码](https://github.com/chengweialan/DeSiRe-GS)可访问，含训练、分解和评测脚本及两阶段 YAML 配置；Waymo/KITTI 数据需按各自入口准备。README 在 Evaluating 中提供[公开下载目录](https://drive.google.com/drive/folders/1fHQJy0cq9ofADpCxtlfmpCh6nCpcw-mH)，已核到示例数据 `084.zip` 与 checkpoint 包 `ckpt.zip`。未下载或检查包内内容、完整场景覆盖及可运行性。
+- **最小实验**：先固定一个含移动车辆和路杆的 Waymo 序列，保存独立 LiDAR 验证点；在相同初始化、图像划分、50,000 次第二阶段预算下比较完整模型与去掉跨视图约束，记录静态/动态分区 Depth L1、NVS PSNR、杆件完整率及墙钟时间。第一阶段掩码必须共用。
+- **成功信号**：独立静态深度与杆件几何同时改善，且不靠增加高斯数或明显降低动态渲染质量换取；再扩展到遮挡和低纹理序列。
+- **停止/转向条件**：收益只出现在训练 LiDAR 点、未见视角几何没有改善，或掩码把静态反射面持续当作运动；此时先修正先验或评测划分，不扩展为闭环仿真结论。
+
+### 来源与核验记录
+
+本报告固定依据 arXiv:2411.11921v2（2025-07-26，含补充材料），正式发表入口为 [CVPR 2025](https://openaccess.thecvf.com/content/CVPR2025/html/Peng_DeSiRe-GS_4D_Street_Gaussians_for_Static-Dynamic_Decomposition_and_Surface_Reconstruction_CVPR_2025_paper.html)。2026-09-12 核对全文 §3–5、附录 7–10、式 3–22、表 1–4；逐张打开原图 2、5；另打开 PVG、S³Gaussian 原文及官方代码。作者与 UC Berkeley 单位信息来自固定版本作者区。本次完成内容核验，未运行训练、渲染或复现实验。

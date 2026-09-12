@@ -3,7 +3,7 @@
 组内周期性论文抓取、阅读报告和简报分享站点。当前路线是：
 
 - Codex 或抓取脚本生成 Markdown 内容源。
-- Astro 作为静态站点模板层，负责页面、组件和构建。
+- Astro 7 负责静态页面生成，React 19 / Fumadocs 16 提供笔记本布局、搜索和评论交互。
 - GitHub Actions 自动构建并部署到 GitHub Pages。
 - Cloudflare Worker 可选接入匿名评论，把评论写回仓库。
 - Idea 中心用独立的方向审计工作流检索顶会前沿、判断研究余量并形成可证伪候选课题。
@@ -21,11 +21,13 @@ content/
   digests/                  # 每期简报 Markdown
   papers/                   # 每篇论文详细报告 Markdown
 src/
-  components/               # Astro 页面组件
+  components/               # Astro 内容组件与 React 笔记本、搜索、评论
   layouts/                  # 基础 HTML 布局
   lib/content.js            # 读取 Markdown 和配置并生成页面数据
+  lib/navigation.js         # 共享导航和页面数据，搜索索引单独生成
+  styles/global.css         # Tailwind / Fumadocs 与内容样式
   pages/                    # 首页、论文详情页、静态数据端点
-public/assets/              # 前端交互脚本和 CSS
+public/assets/              # Idea 交互脚本、论文原图与生成的图片预览
 dist/                       # Astro 本地构建产物，不提交仓库
 .github/workflows/          # GitHub Pages 自动部署 workflow
 worker/                     # 评论写回仓库的 Cloudflare Worker 示例
@@ -54,6 +56,14 @@ npm run dev
 ```bash
 npm run build
 ```
+
+开发和构建会自动为本地图生成 640 / 960 / 1600 / 1920 像素宽度的 WebP 预览，小图不会放大。原图保留在 `public/assets/papers/`，阅读页点击图片可以打开原图；生成的 `public/assets/paper-previews/` 和 `.generated/` 不提交仓库。开发过程中替换图片后，执行 `npm run images:prepare` 更新预览。
+
+首次引用新的远程 arXiv 图片时，运行 `npm run images:measure-remote` 测量宽高，并提交 `config/remote-figure-dimensions.json` 的更新。此命令使用 `curl` 读取官方图片头部，沿用当前环境的代理配置并缓存测量结果；普通开发和构建不依赖远程请求。
+
+搜索保留论文全文，并对综述和 Idea 的阅读内容单独建索引，排除重复投影和审计账本。标题匹配优先，可按论文、简报、综述和 Idea 筛选，也可继续展开结果。索引正文只在加载时规范化一次。
+
+首页提供最新一期论文、按方向阅读和研究入口，完整研究态势位于 `landscape/`。长摘要可展开阅读全文，论文元数据仍放在标题下方；侧栏默认只展开当前路径，简报归档先列近期五期。旧首页的研究态势和讨论锚点会转到对应完整页面。
 
 只运行内容校验：
 
@@ -129,6 +139,10 @@ content/papers/cooperative-driving-planning.md
 
 这里写详细阅读报告。
 ```
+
+新建或重写报告时，正文使用 [深读版固定模板](content/templates/paper-report-template.md)，保留八个章节，并补齐方法与关键公式、相关工作差异、实验条件与消融、独立判断和最小验证计划。[DA-WAM 报告](content/papers/da-wam-decision-aligned-world-model.md)是完整样例。
+
+页面支持管道表格、行内代码与 LaTeX 公式（`$...$` / 独立的 `$$` 块）。公式在构建时由 KaTeX 渲染；宽公式与表格在窄屏中可以横向滚动。正文仍不支持原始 HTML、围栏代码块和 Obsidian 专用语法。完整语法约定与人工核验清单见上述模板。
 
 每期简报一个 Markdown：
 
@@ -230,7 +244,7 @@ Worker 需要这些变量：
 - `COMMENTS_DIR`：默认 `comments`
 - `ALLOWED_ORIGIN`：建议填 `https://crazyshout.github.io`
 
-注意：匿名评论没有登录鉴权，任何能访问页面的人理论上都能提交评论。Worker 已做长度和字段校验；公开使用后建议再加 Cloudflare Turnstile、限流或人工 review。
+注意：匿名评论没有登录鉴权，任何能访问页面的人理论上都能提交评论。前后端共享 1200 字符限制，超长输入会被明确拒绝；同步失败时完整保存在本机，本机存储也失败时保留输入草稿。Worker 已做长度和字段校验；公开使用后建议再加 Cloudflare Turnstile、限流或人工 review。
 
 ## Feishu Wiki Publishing
 

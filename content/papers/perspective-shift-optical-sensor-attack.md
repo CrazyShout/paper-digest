@@ -2,57 +2,110 @@
 {
   "id": "perspective-shift-optical-sensor-attack",
   "tag": "autonomous-driving-security",
-  "tags": ["autonomous-driving-security"],
+  "tags": [
+    "autonomous-driving-security"
+  ],
   "title": "Perspective-Shift Attacks Against Optical Perception Sensors: A Novel Attack Vector on LiDAR and Camera",
   "source": "VehicleSec 2026: https://www.usenix.org/conference/vehiclesec26/presentation/calipari / DOI: https://doi.org/10.5281/zenodo.20395591 / Official PDF: https://zenodo.org/records/20395591/files/DTF_Vehiclesec2026.pdf",
-  "authors": ["Marco Calipari", "Michael Kühr", "Dominik Kulmer", "Maximilian Luedecke", "Mohammad Hamad", "Sebastian Steinhorst"],
-  "affiliations": ["TUM School of Computation, Information and Technology, Technical University of Munich", "TUM School of Engineering and Design, Technical University of Munich"],
-  "comment": "论文用 Direction Turning Film 把 LiDAR 或相机的视场整体偏转，而不是注入假回波或修改目标外观；20° 偏转已能破坏里程计和车道检测，同时目标检测置信度变化可能很小。它把传感器外部光学件本身提升为需要单独测试的攻击面。"
+  "authors": [
+    "Marco Calipari",
+    "Michael Kühr",
+    "Dominik Kulmer",
+    "Maximilian Luedecke",
+    "Mohammad Hamad",
+    "Sebastian Steinhorst"
+  ],
+  "affiliations": [
+    "TUM School of Computation, Information and Technology, Technical University of Munich",
+    "TUM School of Engineering and Design, Technical University of Munich"
+  ],
+  "comment": "光学视场偏移会让检测分数仍正常而几何位置失真；论文有数字与真实传感器证据，但研究车由人工驾驶，尚不能称已验证自动驾驶闭环事故。"
 }
 ---
 
 ## 一句话定位
 
-Perspective-Shift Attack 的关键不是让模型漏检某个特定物体，而是用预设偏转角的 Direction Turning Film（DTF）改变光路，使传感器继续输出看似正常、置信度未明显下降的数据，却把整个可见区域映射到错误方向；这类“坐标系被物理搬动”的攻击会同时污染 LiDAR 里程计、相机车道线和下游决策。
+Perspective-Shift 研究光学视场整体偏移：对象仍可能被高置信度识别，方向和位置却不再可信。论文结合数字仿真、实验室传感器与人工驾驶研究车数据，证明几何链路会受影响；没有展示自动驾驶车辆因攻击实际驶入对向车道。
 
 ## 论文要解决的问题
 
-已有光学传感器攻击多关注激光注入、对抗贴纸或环境中经过设计的目标，防御也常把低置信度、异常点或明显图像退化当作报警信号。论文指出另一种缺口：如果攻击者不修改场景内容，而是在传感器前方放置能以固定角度折转光线的薄膜，检测器仍可能高置信度地识别物体，只是物体、车道和运动轨迹被投影到了错误方位。系统若只看检测置信度，就可能把一致但错误的视场当成正常输入。
+### 威胁前提与相关工作
+
+本文假设攻击者有一次物理接近目标传感器的机会，改变其外部光路，但不需要模型梯度。DTF 是固定光学偏转材料，部署后不能任意在线调整。它与远程查询或仅修改环境物体的威胁模型不同。
+
+| 相关原文 | 作用对象 | 本文区别 |
+| --- | --- | --- |
+| Cao 等，CCS 2019，[LiDAR 感知攻击 §3/5](https://arxiv.org/pdf/1907.06826v2) | 伪造回波，诱导近处障碍物感知。 | 改变传感器可见方向，不以伪造某个障碍类别为目标。 |
+| Eykholt 等，CVPR 2018，[RP2 §3](https://arxiv.org/pdf/1707.08945v5) | 约束物体表面的扰动，使分类错误跨视角保持。 | 薄膜位于传感器侧，对整片可见几何起作用；不是针对同一模型和预算的强弱比较。 |
 
 ## 方法和系统设计
 
-- 用 Direction Turning Film 构造可控的光学偏转，使相机和 LiDAR 的 field of view 发生整体转向，并把这种攻击定义为 Perspective-Shift Attack。
-- 建立数字仿真框架，分别观察视场偏移对物体检测、LiDAR 里程计和相机车道检测的传播影响，而不是只报告传感器原始输出变化。
-- 在实验室和自动驾驶研究车上部署 DTF，检查数字结果能否转移到真实传感器；同时提出基于物理层伪影和跨语义一致性的检测思路。
+### 几何解释
+
+原文式 5 用水平角范围表示视场变化：
+
+$$
+\mathrm{HFoV}_{\mathrm{PSA}}=[\theta_{\min}+\Delta,\theta_{\max}+\Delta].
+$$
+
+$\Delta$ 是光学偏转角，不是模型输出误差。传感器仍按原标定解释光线，因此输出位置可能系统性错位。本文主要测试 20° 水平偏移；它是所选材料和实验条件，未证明是最小有效角度。
+
+数字 LiDAR 实验基于 KITTI odometry，以 150° 水平视场比较偏移前后 KISS-ICP；基准是相同裁剪视场下无偏移的算法输出，不能把其差值当作相对 GNSS 的绝对定位误差。相机从球面图重投影，再用 HybridNets 检查车道几何。[官方全文 §4](https://zenodo.org/records/20395591/files/DTF_Vehiclesec2026.pdf)
+
+### 训练、实测与防御
+
+主要检测器使用既有权重，未训练一个新的攻击神经网络。实验室先验证实际光路偏转；道路数据由人工持续控制的研究车在低交通区域以 10–50 km/h 采集，随后分析传感器输出。LiDAR、相机和同时受影响的双模态分别评估，并非独立多模态冗余一定失效的完整系统证明。
+
+LiDAR 防御利用反射率频谱的高频能量比，按式 8 整理为：
+
+$$
+\mathrm{HFR}=\frac{\sum_{f>f_c}|R(f)|^2}{\sum_f|R(f)|^2}.
+$$
+
+$R(f)$ 是空间反射率序列的 FFT，$f_c$ 是选定截止频率；低于正常参考阈值时报警。相机方案检查固定车身部件的几何形状。两者利用所选材料的物理伪影，仍缺乏跨传感器误报率、检测延迟和阈值迁移的完整评估。[§6](https://zenodo.org/records/20395591/files/DTF_Vehiclesec2026.pdf)
 
 ## 关键图与可视化结果
 
-![图 1：DTF 使 LiDAR 里程计轨迹与相机车道边界发生系统性偏移](../../assets/papers/perspective-shift-optical-sensor-attack-figure-1.png)
+![原论文图 1：视场变化对里程计和车道几何的影响示意](../../assets/papers/perspective-shift-optical-sensor-attack-figure-1.png)
 
-图 1 裁自正式论文 Figure 1。上排是正常视场，下排是施加 DTF 后的视场；中间的里程计轨迹和右侧车道边界均发生方向性偏移。它说明攻击作用于传感器坐标系，而不是某一个类别，因此“目标仍被检测到”不能证明几何输入仍可信。该示意图展示攻击机制与影响链路，不是攻击成功率统计。
+先看传感器光路，再比较上、下方里程计与车道输出。它说明高置信度识别与正确几何可能分离，不是事故成功率统计。
 
-![图 2：正式论文 Figure 2 对比 DTF 施加前后的 LiDAR 点云与相机画面](../../assets/papers/perspective-shift-optical-sensor-attack-figure-2.png)
+![原论文图 2：20° 视场偏移的数字仿真样例](../../assets/papers/perspective-shift-optical-sensor-attack-figure-2.png)
 
-图 2 裁自正式论文 Figure 2。上下两组分别给出 LiDAR 与相机在左偏、正常和右偏条件下的原始观测，直接显示薄膜如何把完整视场整体转向。它验证了攻击不是后处理伪造，但仍只是受控传感器层现象，不能单独证明所有下游规划器都会产生相同危险动作。
+上方是 KITTI 点云的数字处理，下方是球面道路图的重投影。左右偏移与中间基准支持仿真机制，不能用这张图证明实物薄膜已改变真实传感器；物理证据另见原图 5/6，研究车结果见图 8/9。
 
 ## 实验结论与证据
 
-正式会议摘要报告，20° 的中等视场偏移已经显著影响 LiDAR-based odometry 和 camera-based lane detection，并可能诱导车辆侵入对向车道；与此同时，物体位置虽已改变，目标检测置信度只出现轻微变化。论文同时给出数字仿真、受控实验室验证和研究车部署，因此证据覆盖“机制可实现”和“真实传感器会受影响”两层。
+### 哪些量真正测过
 
-这些结果支持的是：固定角度光学偏转可以在不触发常见低置信度报警的情况下破坏几何任务。它不等于证明任意车型、任意安装位置和开放道路速度下都能稳定造成同一种危险动作；研究车实验仍属于受控验证。
+| 官方原表/图及条件 | 结果 | 解释边界 |
+| --- | --- | --- |
+| 图 8：研究车 LiDAR，120° FoV、20° 偏移 | 相对 GNSS 的估计轨迹横向偏差约 100 m | 是估计位姿漂移，不是车辆实际横移 100 m。 |
+| 表 2：PointPillars 的 Car 平均置信度 | 68.39% → 68.90% | 位置受影响时分数仍可能保持。 |
+| 表 3：相机 Car 平均置信度 | Faster R-CNN 95.33% → 95.10%；YOLOv10 79.69% → 78.30% | 两模型检测阈值分别为 0.8、0.5。 |
+| 表 4：YOLOv10 的限速 30 标志 | 87.34% → 72.28% | 不是所有类别只轻微变化。 |
+
+表 2 中 PointPillars 的 Bike 为 69.39% → 0%，因此不能把“平均置信度变化小”推广为所有对象均保留。不同视场中出现的对象数量也不同；对已检出对象求平均置信度，不能代替固定真值集合的召回、AP或定位误差。原文图 9 显示车道消失点错位，但未报告完整规划闭环后的碰撞统计。
 
 ## 应用场景与启发
 
-- 应用场景：相机与 LiDAR 的物理红队测试、传感器外罩和维修件安全验收，以及车道与里程计跨模态一致性监控。
-- 方法启发：安全监控不能只检查类别置信度，应额外估计视场外参是否突然变化，并用 IMU、轮速、地图、雷达或多视角传感器验证几何方向。
-- 讨论问题：能否把在线外参估计与最小风险动作联动，在视场发生不可解释的整体偏移时拒绝更新地图和轨迹，而不是继续使用高置信度但错位的观测？
+- 作者主张：视场完整性应作为传感器安全的独立验证项。
+- 我的判断：适合外罩、维护及标定后的验收；应联合几何一致性和检测置信度，而非只检查是否还能识别汽车。
+- 待验证假设：固定车身参考与 IMU/轮速的几何残差联合检测，可能比单独 HFR 更能区分光学异常和普通照明变化；这仍需验证。
 
 ## 局限与阅读风险
 
-论文验证的是特定 DTF、安装方式和受控场景，攻击效果会受光学材料、视场覆盖比例、传感器外壳和车辆运动影响。20° 是论文展示的有效条件，不能直接外推成最小攻击角度。文中的对向车道侵入是安全后果示例，不应被解读为所有实车部署均完成了高速开放道路闭环复现。提出的物理伪影与语义一致性检测也需要在正常标定漂移、颠簸、遮挡和道路曲率变化下评估误报。
+作者指出真实薄膜会带来材料相关伪影，所提防御也可能依赖这些伪影。覆盖面积、外壳、传感器波段和有限 FoV 会改变结果。实验中的人工驾驶保障了数据采集安全；潜在对向车道侵入是风险推断，不是已经观察到的自动驾驶行为。缺少跨材料阈值和完整误报统计时不能称防御已解决问题。
 
 ## 后续跟进
 
-- 复现不同 DTF 偏转角、覆盖面积和安装偏心下的在线外参变化曲线。
-- 对比置信度监控、IMU/轮速几何残差和多传感器视场一致性三类检测器的检测延迟与误报。
-- 在封闭场地运行完整感知规划回退链路，记录从偏转发生到安全停车的最晚可接受响应时间。
+### 最小验证与停止条件
+
+- 资源（2026-09-12）：[作者仓库](https://github.com/tum-esi/PSA) 有 LiDAR/相机数字仿真和检测代码；README 链接 [参考测量数据 DOI](https://doi.org/10.14459/2026mp1852693)。已核实代码树和数据入口，未下载测量包或模型权重，未验证全部环境可运行。
+- 最小验证：先使用发布的正常/偏移记录，固定帧同步与检测阈值，复算共同可见对象的位置误差和召回，再对比置信度阈值、HFR 与车身几何残差。
+- 成功信号：几何检测在不同正常照明下仍能提前识别偏移，且召回统计不依赖视场中对象的更换。
+- 停止条件：报警主要依赖特定薄膜纹理，或正常遮挡造成同等误报；先校准传感器条件，不进入车辆控制验证。
+
+### 来源与核验
+
+依据 [VehicleSec 2026 正式页面](https://www.usenix.org/conference/vehiclesec26/presentation/calipari) 及 [官方 PDF](https://zenodo.org/records/20395591/files/DTF_Vehiclesec2026.pdf)，2026-09-12 阅读 §3–8、表 2–4、式 5/8，核对 PDF 首页并逐张打开保留图 1/2。相关比较依据两篇攻击原文；本次仅文献整理。

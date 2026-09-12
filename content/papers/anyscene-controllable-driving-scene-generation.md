@@ -2,55 +2,130 @@
 {
   "id": "anyscene-controllable-driving-scene-generation",
   "tag": "world-models",
-  "tags": ["world-models", "autonomous-driving-testing", "3d-reconstruction"],
+  "tags": [
+    "world-models",
+    "autonomous-driving-testing",
+    "3d-reconstruction"
+  ],
   "title": "AnyScene: Towards Highly Controllable Driving Scene Generation at Anywhere and Beyond",
-  "source": "arXiv:2605.26113 / https://arxiv.org/abs/2605.26113",
-  "authors": ["Haiming Zhang", "Junfei Zhou", "Feng Jiang", "Jingzhong Li", "Zhenglong Guo", "Penglin Dai", "Jifeng Dai", "Yan Xie", "Benjin Zhu"],
-  "affiliations": ["Li Auto", "Southwest Jiaotong University", "Tsinghua University"],
-  "comment": "AnyScene 用 BEV layout 条件生成 semantic occupancy，再做 geometry-grounded view expansion，目标是生成可控、多视角、长时域驾驶场景数据。"
+  "source": "arXiv:2605.26113 / https://arxiv.org/abs/2605.26113 / Fixed full text: https://arxiv.org/html/2605.26113v1 / Project: https://mind-omni.github.io/projects/mindsim/anyscene/index.html",
+  "authors": [
+    "Haiming Zhang",
+    "Junfei Zhou",
+    "Feng Jiang",
+    "Jingzhong Li",
+    "Zhenglong Guo",
+    "Penglin Dai",
+    "Jifeng Dai",
+    "Yan Xie",
+    "Benjin Zhu"
+  ],
+  "affiliations": [
+    "Li Auto",
+    "Southwest Jiaotong University",
+    "Tsinghua University"
+  ],
+  "comment": "AnyScene 从可编辑 BEV 布局生成语义占据，再用显式几何缓冲逐步扩展相机视频。它适合场景数据合成；量化视频比较采用有参考图的协议，任意相机与稀疏重建收益主要由定性示例支撑。"
 }
 ---
 
 ## 一句话定位
 
-AnyScene 是一篇可控驾驶场景生成论文。它从 BEV layout 出发，先生成 semantic occupancy sequence，再基于 occupancy 做多视角 driving video generation，目标是让合成数据既可按布局控制，又能支持 arbitrary camera rigs 和下游 3D reconstruction。
+AnyScene 以占据体连接 BEV 布局和多视角视频：先决定三维结构，再按相机位姿生成外观。它把“换场景布局”和“换相机配置”分成可组合操作。
+
+- 核心证据：I2V 协议下 49 帧 FVD 为 57.57，对照 GenieDrive 为 92.52；这不是任意相机、无参考图模式的等条件测试。[表 3](https://arxiv.org/html/2605.26113v1#S4.T3)
+- 主要边界：交通主体由预设 BEV 序列控制，没有针对 ego 行动的反应机制。
 
 ## 论文要解决的问题
 
-端到端自动驾驶需要大量长尾安全关键场景，但现有 occupancy-guided 视频生成通常依赖浅层条件机制和参考帧，难以从任意 BEV layout 精细控制，也不利于跨数据集和用户自定义场景。AnyScene 的问题是：如何把 BEV 布局转成可控的 occupancy 动态，再扩展成时序一致的多视角视频。
+### 布局控制如何保持几何一致
+
+BEV 只给二维布局，视频却需补足高度、遮挡和跨相机外观。作者先生成视角无关的占据，再将同一体积投影到各个相机，减少独立生成视角时的对应混乱。
+
+### 相关工作与差异
+
+| 一手工作 | 已有机制 | 本文改变 |
+| --- | --- | --- |
+| Li 等，[UniScene v1 §3](https://arxiv.org/html/2412.05435v1#S3)，CVPR 2025 | 布局→占据，再以 Gaussian 渲染的语义/深度指导视频，同时生成 LiDAR | 本文加强布局 token 交互和因果时序，并设计逐步视角外扩；没有同等 LiDAR 生成分支 |
+| Lu 等，[InfiniCube v1 §4](https://arxiv.org/html/2412.03934v1#S4)，ICCV 2025 | 稀疏体素外扩、语义/坐标缓冲指导 SVD，再前馈重建动态 3DGS | 本文沿用几何缓冲思路，重点改为多视角生成模式组合；不能把几何条件本身写成新概念 |
 
 ## 方法和系统设计
 
-- 使用 Spatial-Temporal Occupancy Diffusion Transformer，从 BEV layout sequences 生成 semantic occupancy sequences。
-- 将 occupancy 视为 canonical spatial representation，通过 Geometry-Grounded View Expansion 生成 temporally consistent multi-view driving videos。
-- 支持 cross-dataset、user-defined BEV inputs、arbitrary camera configurations，并评估 occupancy/video generation 和 downstream sparse-view 3D reconstruction。
+### 布局、占据与相机坐标
+
+BEV 为 256×256、0.4 m 分辨率的 15 通道 multi-hot 图，包含十类主体和五类地图元素；同一格可以激活多类。占据范围为 ego 周围 $[-51.2,51.2]^2\times[-5,5]$ m，体素 0.4 m，输出 256×256×25、21 类。布局编码将活跃类别嵌入相加，空格用独立嵌入；占据 VAE 将高度类别嵌入并入通道，用二维网络压缩。
+
+STOccDiT 将布局和噪声占据 token 拼接，先帧内注意力，再因果时间注意力。GGVE 用 fVDB 渲染语义、三维坐标缓冲和六通道 Plücker 相机射线；所有视角需对齐到同一占据坐标。主文称 ego ROI，附录组装在当前 LiDAR 系并做位姿校正，发布时仍需核对两坐标系映射。
+
+### 训练目标和自回归条件
+
+VAE 原式 2 为：
+
+$$
+L_{\rm VAE}=L_{\rm focal}+\lambda_1L_{\rm Lovasz}+\lambda_2L_{\rm KL}.
+$$
+
+focal 项侧重难例/稀有类，Lovász 项约束分割重叠，KL 规整潜变量；训练后 VAE 冻结。附录式 3 对占据潜变量加噪：
+
+$$
+z_t^{\tau}=(1-\tau)z_t+\tau\epsilon_t.
+$$
+
+$t$ 是场景时间、$\tau$ 是扩散时间。模型用加权速度 MSE 学习去噪，小目标权重来自布局；训练看到干净历史 token，推理只能回用自己已生成的占据，不能沿用 GT 历史。[§3.2、附录 B.2](https://arxiv.org/html/2605.26113v1#S3.SS2)
+
+### 冻结分支与视角扩展
+
+GGVE 基于冻结 Wan2.1-T2V-14B、T5 和视频 VAE，只训练八层 VACE 风格 ControlNet。训练混合无锚点生成及一/两锚点外扩；六相机无参考生成需四次调用：先前三视角，再补左右后视角，最后补正后方。已生成视频充当后续锚点，外部参考图可选。“无参考”是无需外部真实图，不是没有内部锚点。
+
+占据训练用八张 A100 80GB，STOccDiT 每 GPU batch 2，两阶段各 500 epoch、学习率 $2\times10^{-4}$；第二阶段启用时间层及历史扰动，推理 30 步 Euler、CFG 2。视频训练为 480×832、49 帧、学习率 $2\times10^{-5}$，但正文写 5k steps、附录写 10k，无法视为唯一完整配方。未给端到端时延；驾驶域数据仅 nuCraftv2，仍继承 Wan 的预训练知识。
 
 ## 关键图与可视化结果
 
-![图 1：AnyScene 从 BEV layout 生成 occupancy，再扩展为多视角驾驶视频](https://arxiv.org/html/2605.26113v1/x1.png)
+![原论文图 2：占据扩散与几何约束的视角外扩](https://arxiv.org/html/2605.26113v1/pipeline_v4.png)
 
-这张图概括了 AnyScene 的两阶段结构：先生成空间语义占据，再以几何为锚点扩展到多视角视频。
+上半部看 token 拼接和时间掩码，下半部看冻结视频主干、几何控制与生成视角成为锚点的顺序。虚拟相机通过改变查询位姿插入，无需为每台相机重训。[图 2](https://arxiv.org/html/2605.26113v1#S3.F2)
 
-![图 2：AnyScene 的 versatile generation，包括可控 occupancy、多视角和自定义相机配置](https://arxiv.org/html/2605.26113v1/x3.png)
+![原论文图 4：布局、占据、多视角与天气编辑示例](https://arxiv.org/html/2605.26113v1/qualitative_vis.png)
 
-这张图支撑“highly controllable”的主张。重点看它是否能在改变 BEV layout、文本属性和相机配置后保持时序一致性。
+(a) 对齐布局和视频，(b) 展示新视角/十二相机，(c) 改变天气文本。这些是精选外观控制例子，不是他车会主动响应 ego 的证据。[图 4](https://arxiv.org/html/2605.26113v1#S4.F4)
 
 ## 实验结论与证据
 
-摘要报告 AnyScene 在 occupancy 和 video generation 上达到 state-of-the-art，并能泛化到 unseen 和 customized layouts，还对 sparse-view 3D reconstruction 有 measurable benefits。证据链连接了生成质量、控制能力和下游任务，而不是只展示视频效果。
+### 指标的不同参照
+
+表 1 生成占据的体积 mIoU/IoU 为 19.01/15.58，BEV 对输入布局为 52.45/68.97；前者对 GT 体素，后者衡量条件遵从，不能当作同一指标的提升。VAE 表 2 的高重建分数也不等于从布局生成时同样准确。
+
+| 表 3，同帧数 I2V：GenieDrive → AnyScene | FVD ↓ |
+| --- | ---: |
+| 8 帧 | 55.93→35.98 |
+| 16 帧 | 63.65→43.19 |
+| 49 帧 | 92.52→57.57 |
+
+视频 mIoU/mAP 为 38.26/27.73，对照 30.97/19.17；它们由 BEVFormer 对生成视频预测后与标注比较，属于控制检查，不是用合成数据训练检测器后的提升。任意相机模式没有同等定量基线；附录图 17 仅展示 VGGT 点云更密，没有重建精度/完整率数值。
+
+### 消融与原文不一致
+
+表 4 完整占据模型 mIoU/IoU 为 19.61/11.94，移除 teacher forcing 为 3.23/0.98，改用加法布局条件为 13.59/7.60。该表完整行与表 1 数值不同，配置关系未明确；24→16 层的 mIoU 是 19.61→12.22，即降低 7.39 点，而正文写 4.25。表 5 16 帧视频 FVD：完整 43.19，去语义/坐标/二者为 47.05/52.59/112.20，较直接支持两种几何缓冲。[表 4–5](https://arxiv.org/html/2605.26113v1#S4.T4)
 
 ## 应用场景与启发
 
-- 应用场景：长尾驾驶场景合成、自动驾驶测试数据生成、可控多视角仿真、稀疏视角重建数据增强。
-- 方法启发：occupancy 可以作为连接 BEV layout、视频生成和 3D reconstruction 的中间几何表示。
-- 讨论问题：生成场景是否足以进入 closed-loop testing，还需要物理一致性、交通规则和 agent 行为约束。
+- 作者主张：可编辑布局形成可扩展的多视角数据生成接口。
+- 我的判断：适合离线场景合成与相机布置研究，尚不是反应式驾驶模拟器。
+- 待验证假设：新增虚拟视角能提高真实未见视角的几何精度，而不只是增加生成点的数量。
 
 ## 局限与阅读风险
 
-AnyScene 强调可控生成和下游重建收益，但不等于已经证明规划安全收益。生成数据的交通行为真实性、碰撞物理和与真实传感器噪声的一致性仍需进一步测试。
+作者明确不建模交通流或反应主体。nuCraftv2 还融合检测器、SAM3/SAM3D、KISS-ICP、静态重建及地图覆盖，GT 不是单纯传感器测量。正文的 12 Hz 与附录 20 Hz 构造如何对齐未说明；类映射与坐标也需统一。没有跨种子方差或闭环安全测试。
 
 ## 后续跟进
 
-- 检查项目页是否开放模型和自定义 BEV layout 工具。
-- 与 Bench2Drive-Robust 和 RS2AD-LiDAR 对照，整理测试场景生成、路侧数据生成和部署鲁棒评测的闭环关系。
-- 将 occupancy-conditioned generation 纳入后续安全关键场景生成候选路线。
+### 最小验证与停止条件
+
+- 资源（2026-09-12）：[官方项目页](https://mind-omni.github.io/projects/mindsim/anyscene/index.html)有演示，但 Code 按钮指向 `#`；未确认实现、配置、权重或 nuCraftv2 完整下载。
+- 前置条件：取得固定模型和数据，确认频率、GT 来源及 5k/10k 训练版本。
+- 最小实验：固定原六视角、VGGT 和重建过滤阈值，比较仅真实六视角、增加生成视角、增加重复视角；用独立留出的真实相机/激光几何评价精度、完整率及动态对象误差。
+- 成功信号：生成视角超过重复视角并降低未见实测误差；若只让点云更密却增加错误表面，停止将密度当重建收益，先检查生成几何。
+
+### 来源与核验记录
+
+2026-09-12 读取 arXiv:2605.26113v1 全文及附录 A–C、式 1–4、表 1–5，逐张打开图 2/4；比较来自 UniScene v1 与 InfiniCube v1 自身方法。项目页核对作者单位与发布入口。未进行生成或重建实验。

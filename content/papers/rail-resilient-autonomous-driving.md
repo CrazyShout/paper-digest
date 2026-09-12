@@ -2,57 +2,169 @@
 {
   "id": "rail-resilient-autonomous-driving",
   "tag": "autonomous-driving-security",
-  "tags": ["autonomous-driving-security", "agentic-driving"],
+  "tags": [
+    "autonomous-driving-security",
+    "agentic-driving"
+  ],
   "title": "RAIL: Risk-Aware Human-in-the-Loop Framework with Adaptive Intrusion Response for Autonomous Vehicles",
   "source": "VehicleSec 2026 official page: https://www.usenix.org/conference/vehiclesec26/presentation/wasif-rail / arXiv:2601.11781: https://arxiv.org/abs/2601.11781",
-  "authors": ["Dawood Wasif", "Terrence J. Moore", "Seunghyun Yoon", "Hyuk Lim", "Dan Dongseong Kim", "Frederica F. Nelson", "Jin-Hee Cho"],
-  "affiliations": ["Virginia Tech", "US DEVCOM Army Research Laboratory", "Korea Institute of Energy Technology (KENTECH)", "The University of Queensland"],
-  "comment": "RAIL 把曲率执行偏差、碰撞时间和 LiDAR 观测漂移融合为运行时风险分数，再由 contextual bandit 选择 shield、分级混合控制并把接管样本回灌学习。MetaDrive 与 CARLA 结果支持仿真鲁棒性，但不构成真实 CAN/LiDAR 攻击或真实驾驶员负担验证。"
+  "authors": [
+    "Dawood Wasif",
+    "Terrence J. Moore",
+    "Seunghyun Yoon",
+    "Hyuk Lim",
+    "Dan Dongseong Kim",
+    "Frederica F. Nelson",
+    "Jin-Hee Cho"
+  ],
+  "affiliations": [
+    "Virginia Tech",
+    "US DEVCOM Army Research Laboratory",
+    "Korea Institute of Energy Technology (KENTECH)",
+    "The University of Queensland"
+  ],
+  "comment": "将分来源风险、防护选择、连续动作混合和接管回放接成控制闭环；正式版新增防护层消融及0.215ms模块开销。结论限于脚本接管与模拟器，指标分母和公开实现仍需核清。"
 }
 ---
 
 ## 一句话定位
 
-RAIL 不是单独做入侵检测，而是把“发现异常、选择响应、分配人机控制权、用接管事件继续学习”接成控制频率下的闭环：三个异构风险线索经 Noisy-OR 汇成 Intrusion Risk Score（IRS），高风险时由 contextual bandit 选择针对性 shield，并按风险强度在原动作与安全动作之间连续混合。
+RAIL 将“风险识别—选择防护动作—分配控制权—回放学习”接成仿真控制闭环：融合曲率、碰撞时间和 LiDAR 分布偏移，再按风险混合原策略与防护策略。**主要增量是报警后的响应与学习接口，而非一种新的车载入侵检测器。** 本报告以 VehicleSec 2026 正式版为准，采用其 IRI 命名及新增消融、运行开销结果。[正式全文 §3–5](https://www.usenix.org/system/files/vehiclesec26-wasif-rail.pdf)
+
+- 核心证据：表 6 的 CAN 注入条件中，相对 HAIM-DRL，报告 ASR 从 0.65 降至 0.34；表 9 在固定策略权重下分开防护层和脚本接管，支持两者有不同贡献。
+- 主要边界：攻击在模拟器的动作/观测通道注入，“人类”由确定性脚本代替。部分指标公式、表格和当前代码的统计单位不一致，数值应连同这些限制阅读。
 
 ## 论文要解决的问题
 
-传统车载 IDS 常止于报警，安全 RL 又通常把风险压成固定 cost；两者都没有回答报警后应减速、纠偏还是请求接管，以及响应强度如何随场景变化。现有 HITL 方法也常把人类接管当作临时纠错，没有把接管前的风险状态、选择过的防护动作和后果作为结构化训练样本。RAIL 的切入点是让检测直接影响控制，同时把干预纳入后续策略更新。
+### 警报之后谁来控制
+
+普通 IDS 可以报告异常，却未必知道应当纠偏、减速还是接管。只在训练奖励里加安全惩罚，又不一定能解释当前危险来自哪个通道。RAIL 在策略与执行之间加入安全层，保存触发线索、所选防护、混合强度与接管结果，让下次学习能利用这些信息。
+
+输入包括自车运动、局部道路和 72 束 LiDAR 等模拟器状态，输出为转向与纵向动作。系统还需要干净观测的均值/协方差作为分布偏移参照；不是把原始相机图像直接变成风险。当前只覆盖三类线索，对 GNSS/V2X 扩展是接口建议，未完成相应实验。[§3.1–3.2]
+
+### 与原始人机协作方法的差异
+
+| 工作与已读一手来源 | 原有机制 | RAIL 的具体变化 |
+| --- | --- | --- |
+| Li 等，HACO，ICLR 2022；[§3.1–3.2、算法 1](https://arxiv.org/pdf/2202.10341) | 人类决定是否覆盖动作，以部分示范学习 proxy Q，并惩罚接管；不依赖环境奖励 | RAIL 在接管前加入按风险选择的自动防护，并显式使用任务奖励、安全惩罚和风险回放。不能把“利用接管学习”本身当作新贡献 |
+| Huang 等，HAIM-DRL，2024；[v3 §4.3](https://arxiv.org/html/2401.03160v3#S4.SS3) | 在 proxy Q 与显式接管成本之外，通过 IDM 估计对后车速度的扰动，形成隐式干预价值 | RAIL 增加分来源风险与连续动作混合；HAIM 原方法也有交通效率目标，不能将它简化为只有二值接管的基线 |
+
+这里分别读取原方法。RAIL 使用的模拟器配置和脚本接管是否完整保留这些原始机制，还需逐基线配置核对；不能从论文的统一描述直接认定复现一致。
 
 ## 方法和系统设计
 
-- 从计划曲率与执行曲率的偏差、time-to-collision、LiDAR observation shift 三类信号计算归一化风险，再用加权 Noisy-OR 形成 IRS，保留主导风险来源以支持解释。
-- IRS 超阈值时，contextual bandit 在曲率、TTC 与 OOD 三类 shield 中选择响应，并学习动作混合权重；低风险时保持原策略动作，人类仍可随时接管。
-- 以 Soft Actor-Critic 为主干，把安全违规、接管和低风险行为写入双重奖励，并在 risk-prioritized replay 中提高高风险与人类纠正转移的采样概率。
+### 三类线索如何形成风险
+
+曲率线索比较道路计划曲率与由横摆角速度/车速估计的已执行曲率；TTC 线索把路径上距离和接近速度转为碰撞迫近度；OOD 线索用 72 维 LiDAR 与干净分布的正则化 Mahalanobis 距离，再进行中心化和缩放。每项映射到 0–1，线索值越大表示越值得介入。[§3.2，式 2–4]
+
+式 1 的融合与主导来源为：
+
+$$
+\operatorname{IRI}_t=1-\prod_{i=1}^{3}(1-w_i r_i),\qquad
+ i^*=\operatorname*{argmax}_{i}w_i r_i,\qquad
+ (w_C,w_T,w_O)=(0.3,0.4,0.3).
+$$
+
+$r_i$ 是当前线索，$w_i$ 为固定权重，$i^*$ 用于记录主要来源。这个有界汇总不是已经校准的事故概率：低两两 Spearman 相关不等于条件独立，也没有可靠性曲线。按默认权重和 $r_i\le1$，其最大值为 $1-0.7\times0.6\times0.7=0.706$；因此阈值的意义不能直接按一般概率理解。
+
+### 防护选择与控制混合
+
+当 IRI 超过默认阈值 0.3，contextual bandit 根据三线索向量，在三类防护变换中选择一项。每个动作分支使用线性评分与 softmax 采样，依据随后一段时间内是否接管和防护动作幅度获得反馈。正文未给出完整防护参数、反馈时域和学习率；“收敛到最佳防护”没有单独理论或实验保证。[§3.3]
+
+式 5 的执行规则是：
+
+$$
+ u_t=(1-\alpha_t)a_t+\alpha_t\widetilde a_t,\qquad
+ 0\le\alpha_t\le1,\qquad \widetilde a_t=S_{k_t}(a_t,s_t).
+$$
+
+$a_t$ 为原动作，$\widetilde a_t$ 为所选防护动作，$u_t$ 为执行动作。风险越高，设计上防护权重越大，并进行 EMA 平滑与变化率限制；低风险原动作直通。凸组合只界定动作偏移量，不保证混合动作仍满足碰撞约束或安全集合不变性。曲率来自已执行运动，下一周期风险与当前动作的对齐也需保留时间戳。
+
+### 奖励、回放与脚本接管
+
+奖励由驾驶进度等任务项，减去碰撞、出路、接管、IRI 和防护幅度惩罚。正式版式 7 给出的五项权重依次为 1、1、0.5、0.1、0.05。SAC 使用实际执行动作更新，回放还保存原动作、防护动作、风险与触发来源。[§3.4–3.5]
+
+式 8 的采样优先级为：
+
+$$
+ p_t=|\delta_t|^{\eta}+\beta\operatorname{IRI}_t+\gamma H_t+\varepsilon_p,
+ \qquad (\eta,\beta,\gamma,\varepsilon_p)=(0.6,0.3,1,10^{-6}).
+$$
+
+$\delta_t$ 是 TD 误差，$H_t$ 表示接管，采样概率与 $p_t$ 成正比，并用重要性权重修正更新。加上接管项会提高其优先级，但并不数学保证每条接管记录都高于任意大 TD 误差记录。
+
+实验中的接管者是共享同一风险线索的脚本：超过较高阈值 0.7，或防护中危险线索持续时，执行制动和居中。它不是独立人类判断，接管次数只能代表该脚本的触发负担，不能证明真实驾驶员认知负担下降。[§4.5]
+
+### 训练与推理边界
+
+正式版报告 10 Hz 控制、batch 1024、学习率 0.0001、五个种子、验证集选择 checkpoint；单 RTX 3090 24 GB，RAIL 的 MetaDrive 30K steps 约需 2.5 h。CARLA 使用俯视语义图和相同控制头，表 5 另训练 8K steps，不能称为不训练的零样本迁移。
+
+正文称基线训练预算相同、甚至称所有方法使用 SAC，但表 4 明列 PPO/CPO/IL，且 RL 1M、离线 49K、HITL 30K 等不同样本预算。比较时应逐行保留真实预算，不照抄这两处总括描述。防护和风险参照在推理保留。正式附录 A.2.6 公开 MetaDrive 的 50 个训练地图种子 100–149、50 个留出地图种子 500–549，以及 CARLA Town02 / Town05；A.4.2 的评测示例使用 50 episodes。具体路线、验证集与检查点选择，以及各结果表是否均采用这条示例命令，仍缺逐表清单，不能将 50 直接填作所有表格的分母。
 
 ## 关键图与可视化结果
 
-![图 1：RAIL 把攻击输入、三类风险线索、IRS、shield 选择、控制混合与回放学习连成闭环](../../assets/papers/rail-resilient-autonomous-driving-figure-1.png)
+![正式版 Figure 2：风险、防护选择、动作混合、接管和回放的完整接口](../../assets/papers/rail-resilient-autonomous-driving-formal-figure-2.png)
 
-图 1 对应 arXiv 版本 Figure 2。右侧从 adversarial inputs 到风险线索和 IRS，随后触发 bandit over shields；中部把安全动作与策略动作混合，左侧的人类接管及高风险转移进入学习缓冲区。读图重点是检测不再是旁路报警，但所有模块共享同一个风险分数也意味着阈值失配可能同时影响响应和学习。
+按步骤 1–6 看自动控制路径，再看步骤 7 的可选接管和步骤 8 的回放。右侧 IRI 及各线索是正式版的标记；图里出现 V2X 背景并不表示实验已经测试无线消息攻击。图从正式 PDF 完整提取，保留原图注。
 
-![图 2：风险感知 HITL 在执行前加入安全层，并把环境和人工反馈回送策略](../../assets/papers/rail-resilient-autonomous-driving-figure-2.png)
+![正式版 Figure 1：位于原策略和环境之间的运行时安全层](../../assets/papers/rail-resilient-autonomous-driving-formal-figure-1.png)
 
-图 2 对应 arXiv 版本 Figure 1，给出更抽象的人机闭环。它支持论文的系统定位：人类既能提供情境线索和接管，也能让接管结果进入后续更新；但图本身不说明论文实验中的“人类”是否来自真实受试者，仍需结合实验设置判断。
+从 agent 提案向安全层，再到环境执行，构成与第一张一致的接口。上方人类图标表达系统设计；实际实验使用脚本替代者，不能由图推断存在真人受试者研究。[正式 PDF，pp.372/375](https://www.usenix.org/system/files/vehiclesec26-wasif-rail.pdf)
 
 ## 实验结论与证据
 
-MetaDrive 中各方法使用五个随机种子，论文报告 RAIL 在 30K interaction steps 下取得 Test Return 360.65、Test Success Rate 0.85、Test Safety Violation 0.75 和 Disturbance Rate 0.0027。跨仿真器测试在 CARLA 使用 8K steps，报告 return 1609.70、success rate 0.41。
+### 匹配预算下的名义性能
 
-攻击评测同样位于 MetaDrive：CAN/actuation injection 以最长 5 秒、每 30 秒一次的有界 steering 或 acceleration bias 模拟；LiDAR spoofing 则把 72-beam LiDAR 的连续方位扇区改成车前约 4 m 的 phantom obstacle。RAIL 在两类设置下分别报告 SR 0.68/0.80、DRA 0.37/0.03、ASR 0.34/0.11。相对论文基线，这支持分级 shield 在指定仿真扰动下减少攻击成功与接管，但不代表已抵抗真实 CAN 注入或物理 LiDAR 欺骗。
+| 正式版表 4，MetaDrive，均为 30K steps | Test return ↑ | 安全违规 ↓ | DR ↓ | TSR ↑ |
+| --- | ---: | ---: | ---: | ---: |
+| HACO | 350.01 ± 9.72 | 0.78 ± 0.85 | 0.038 ± 0.0083 | 0.83 ± 0.07 |
+| HAIM-DRL | 354.34 ± 11.08 | 0.76 ± 0.28 | 0.0023 ± 0.00072 | 0.85 ± 0.03 |
+| RAIL | 360.65 ± 23.06 | 0.75 ± 0.03 | 0.0027 ± 0.00052 | 0.85 ± 0.07 |
+
+表注明五种子的均值±标准差。RAIL 与 HAIM 的 TSR 相同，DR 略高；不是所有指标领先。Expert 行 TSR 为 1.00，RAIL 为 0.85，因此摘要的“expert-level success”不应直接转述为达到表中真人专家水平。CARLA 表 5 中 RAIL TSR 0.41 高于 HAIM 0.38，但 TSV 12.38 高于 HAIM 11.25，也存在安全/效率交换。
+
+### 攻击与防护层消融
+
+表 6 中，HAIM→RAIL 的 CAN ASR 为 0.65→0.34，相对下降约 47.7%；DRA 为 0.74→0.37。LiDAR 条件 ASR 为 0.20→0.11，DRA 为 0.17→0.03。它们来自定期、非自适应的模拟器动作偏差与幻影观测，不能据此断言抵御真实 CAN 总线或光学设备攻击。
+
+| 表 9，固定策略权重，CAN 条件 | TSR ↑ | ASR ↓ |
+| --- | ---: | ---: |
+| 两者均无 | 0.41 | 0.60 |
+| 只有脚本接管 | 0.52 | 0.53 |
+| 只有自动防护 | 0.64 | 0.39 |
+| 完整 RAIL | 0.68 | 0.34 |
+
+此控制支持自动防护贡献大于单独反应式接管。0.53→0.39 相对下降约 26.4%，并非正文所说的“接近减半”。无接管模块的 DRA 在原表填 0，仅表示不适用，不能据此认定人机效率最好。[§5.4，表 9]
+
+### 定义、消融和运行成本的边界
+
+移除 TTC 时，表 7 的 SR 从 0.85 降到 0.67；移除防护幅度惩罚时平均速度从 22.8 降到 16.6 km/h，支持过度防护会损害效率。表 8 在阈值 0.5 时 SR 为 0.75，与结论段“全部超过 0.79”不符。不同表的默认行还有 0.85/0.86 差别，未给出重复实验对应关系。
+
+指标需要先核清：式 15–16 的 DRA/ASR 以受攻击 episode 为分母，而当前作者 `eval_rail.py` 与 callback 在每个 episode 内按攻击 burst 计比例；`eval_rail.py` 的 TSV 取终止时两个布尔标记之和，callback 则累计每步危险标记，表 4/5 又有超过 2 的 TSV。当前代码不是原表计数口径的直接证明。表 4 另列 SAC-Lag TSR 的标准差 0.79，超出 0–1 种子成功率的可能范围；需要原始日志或勘误，不能用这些误差条证明显著优势。[正式版 §4.4，表 4–6；代码评测入口](https://github.com/dawoodwasif/RAIL/blob/58363ad49f1dd65c9135ff7d733f24a5f474cd4c/scripts/run_rail/eval_rail.py)
+
+正式版表 11 测得 1,000 控制步中风险管线新增开销为 0.215 ± 0.043 ms，其中 OOD 0.168 ± 0.037 ms；这是新增模块开销，不含完整感知、总线和策略时延。表 12 的 14.2%“误触发率”按介入后 50 步内未发生事件定义，但成功防护本来就会阻止事件；缺少不介入的反事实，不能将其直接视为检测误报率或概率校准证据。
 
 ## 应用场景与启发
 
-- 应用场景：自动驾驶运行时安全代理、仿真入侵响应评测、有人远程监督的车队，以及把 near miss 转成训练样本的持续学习流程。
-- 方法启发：检测器输出应带来源和风险强度，控制器才能选择不同 shield；同时需要记录 shield 前后动作与人工接管，才能审计安全收益是否来自过度保守。
-- 讨论问题：如果相机、雷达或地图给出的风险彼此相关，Noisy-OR 的独立性近似和固定阈值是否会重复计数风险，并造成不必要接管？
+- 作者主张：让异常来源直接决定响应，并通过接管/风险回放改善策略。
+- 我的判断：日志接口和防护/接管分离实验值得复用；当前最先要补的是指标分母、脚本来源与版本清单，而非增加更多安全线索。
+- 待验证假设：当 OOD 参照随天气漂移时，分布校准比继续增加回放中高风险样本的权重更能减少过度防护。需从相同初始策略进行同预算训练，再在未见天气下控制这两项因素。
 
 ## 局限与阅读风险
 
-核心证据来自 MetaDrive 与 CARLA，没有实车、硬件在环或真实攻击链验证。CAN attack 是控制通道 bias，LiDAR attack 是程序化扇区覆写，均比真实攻击者的时序、可达性和传感器物理约束更简化。论文把 human override 纳入框架，但没有报告真实驾驶员受试、接管反应时间、工作负荷或错误接管；DRA 因此是仿真指标，不等价于真实运营负担。三类风险线索、权重和阈值的跨城市、跨天气校准也尚未证明。
+现有形式性质只限制动作混合，不给事故概率或安全集合保证；三个风险线索共享模拟器状态，无法覆盖伪造多源一致性、长期缓慢偏移或针对防护选择器的自适应攻击。当前 `iri_calculator.py` 还对曲率归一化差值加入斜率 6、偏移 0.5 的 sigmoid 校准，超出正文式 2 的简写；复现应固定实现版本与干净数据统计。
+
+实验不含实车硬件链路或真人负担测试。代码公开提高了可检查性，但指标口径与论文仍有差异；在这些问题解决前，应把报告的收益视为特定配置下的仿真结果，而非部署安全证书。
 
 ## 后续跟进
 
-- 先复现相同 attack schedule 和五种子结果，再改变攻击持续时间、频率与组合方式，检查 IRS 是否对未见攻击保持校准。
-- 增加真实驾驶员或远程安全员实验，测量接管延迟、误接管和自动恢复后的信任变化。
-- 在硬件在环中接入真实 CAN 网关与传感器回放，比较“检测后固定急停”和 RAIL 分级响应的安全、通行效率与误报代价。
+### 当前资源与最小验证
+
+- 资源（2026-09-12）：[USENIX 正式页](https://www.usenix.org/conference/vehiclesec26/presentation/wasif-rail)有 PDF/幻灯片；[作者 RAIL 仓库](https://github.com/dawoodwasif/RAIL)有 MetaDrive/CARLA 训练、风险、防护和评测代码，MIT 许可。读取提交 `58363ad4` 的文件树与关键脚本；正式附录另给出 [Zenodo 归档](https://zenodo.org/records/20451598)，版本 `v1.1-vehiclesec26`、DOI `10.5281/zenodo.20451598`。对指定 `RAIL-main.zip` 的 611 个目录项做只读检查，确认包含源码，但只找到 `DIDrive_core/demo/simple_rl` 下的 `ckpt_best.pth.tar` 与 `iteration_0.pth.tar` 旧示例权重，未确认 RAIL 论文检查点。附录声称附带 49K 步 `data/human_demos.pkl`，该 ZIP 中却没有这个路径或其他 `.pkl` 文件，因此示范数据的可取得性仍未核实。归档 MD5 与官方元数据一致；没有加载模型或 pickle，也未安装执行代码。README 使用 Python 3.7/CUDA 11 的环境说明，当前依赖可安装性未验证。
+- 最小验证：先用少量模拟 episode，同步导出逐步事件、burst 与 episode 三层清单，分别复算 TSR/TSV/ASR/DRA；统一表 9 四变体的终止、计数和预算，不能把“无接管”当作 DRA 优胜。基础计数通过后，固定路网、种子和同一个初始检查点，将四组分别训练相同预定交互步数与 SAC 更新次数，仅改变“冻结或更新 OOD 参照”×“原始或提高风险回放权重”。OOD 更新统计只用正常训练场景，训练完成后冻结四组策略，在隔离天气与攻击场景评测；不能在冻结策略的纯推理实验里声称回放权重产生了学习效果。
+- 成功信号：表格计数和样本分母可重建，防护层收益在没有脚本接管时仍存在；新参照减少介入但不提高违规，且同时报告进度和速度。资源以论文单 3090/24 GB 为起点，小样本成本另行测量。
+- 停止/转向条件：收益依赖计数规则改变、风险参照使用测试数据，或少介入只因漏掉危险，则先修协议；指标矛盾未解释前不重复其显著性与误报率结论。
+
+### 核验记录
+
+以 [VehicleSec 2026 正式 PDF](https://www.usenix.org/system/files/vehiclesec26-wasif-rail.pdf) pp.371–388 为准，读取 §3–6、算法 1、表 4–12 与 Artifact Appendix A；两张正式原图完整提取并逐张检查。作者按正式 PDF 首页保留 Seunghyun Yoon，会议网页 BibTeX 的另一名字不用于覆盖。相关原文为 HACO §3 与 HAIM-DRL v3 §4.3；代码检查固定到上述提交，仅作静态核对，未复现实验。

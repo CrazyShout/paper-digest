@@ -2,56 +2,104 @@
 {
   "id": "intact-collaborative-perception",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving"],
+  "tags": [
+    "cooperative-autonomous-driving"
+  ],
   "title": "INTACT: Ego-Guided Typed Sparse Evidence Retrieval for Heterogeneous Collaborative Perception",
   "source": "arXiv:2606.04437 / https://arxiv.org/abs/2606.04437",
-  "authors": ["Chen Li", "Shengrong Yuan", "Jialong Zuo", "Xinzhong Zhu", "Nong Sang", "Changxin Gao"],
-  "affiliations": ["National Key Laboratory of Multispectral Information Intelligent Processing Technology, School of Artificial Intelligence and Automation, Huazhong University of Science and Technology", "Zhejiang Normal University"],
+  "authors": [
+    "Chen Li",
+    "Shengrong Yuan",
+    "Jialong Zuo",
+    "Xinzhong Zhu",
+    "Nong Sang",
+    "Changxin Gao"
+  ],
+  "affiliations": [
+    "National Key Laboratory of Multispectral Information Intelligent Processing Technology, School of Artificial Intelligence and Automation, Huazhong University of Science and Technology",
+    "Zhejiang Normal University"
+  ],
   "comment": "INTACT 把异构协同感知从全图特征对齐改成 ego 发起的 typed sparse evidence retrieval，重点解决新车、路侧单元和不同传感器加入时的协议可扩展性。"
 }
 ---
 
 ## 一句话定位
 
-INTACT 是本期 V2X/协同感知方向最值得读的技术论文。它的核心判断是：异构车辆和路侧单元不应被迫把整张 feature map 翻译成 ego 兼容空间，ego 只需要对可疑目标和证据不足区域发起 typed queries，让协作者返回局部证据。
+INTACT 让自车按位置发出两类查询，检索异构协作者的局部特征，再写回自车 BEV。核心证据是免额外训练接入时 AP 基本保持；这不等于所有协作者都会增加检测收益。依据 [固定 v1 正文及附录 A](https://arxiv.org/html/2606.04437v1)。
 
 ## 论文要解决的问题
 
-协同感知能扩展感知范围、缓解遮挡，但真实部署中车辆、卡车、相机车、LiDAR 车和 RSU 的传感器、backbone、分辨率和训练目标都不同。传统 intermediate feature fusion 假设表示可兼容，导致新协作者加入时需要 pair-specific adapter 或重训。论文要解决的是异构协作者如何以低通信量、低参数增量和低重训成本参与 ego detection。
+### 接入成本与两项前作
+
+新车更换传感器或骨干后，特征通常不能直接融合。[HEAL，Lu 等，2024，§4.2](https://arxiv.org/html/2401.13964v1#S4.SS2) 冻结公共融合器和检测头，只训练新类型的编码器；它并不要求每对车辆共同重训。[STAMP，Gao 等，2025，§3.3](https://arxiv.org/html/2501.18616v1#S3.SS3) 则训练本地 adapter/reverter，在本地与公共协议表示间转换。INTACT 试图省去新类型的额外训练，把兼容要求缩到可比较的局部响应；并非完全取消表示接口。
 
 ## 方法和系统设计
 
-- Ego 从自身 BEV 状态生成两类 typed evidence queries：hypothesis queries 用于验证疑似目标，coverage queries 用于询问证据不足区域。
-- 协作者不发送整张 dense feature map，而是在 query anchors 附近返回局部 response，降低通信体积。
-- Ego 通过 sparse per-query routing 选择有用 response，并用 gated residual write-back 写回 BEV。
-- 训练阶段只学习 ego-issued query interface；推理阶段新异构协作者可以通过 checkpoint merging 或接口复用直接加入，不需要为每个 pair 训练 translator。
+### 查询、选择、写回
+
+自车 BEV 的响应头选高响应位置作为 hypothesis query，另用稀疏网格覆盖低响应区域。查询包含任务/类型嵌入、局部先验、位置和可靠性分数。协作者仍须提供位姿变换，先几何对齐，再在查询位置采样特征；不是自然语言问答，也不直接返回物体真值。
+
+式（7）–（9）的核心是同一查询在协作者间竞争：
+
+$$
+r_{kj}=\langle\operatorname{Norm}(\eta_q(q_k)),\operatorname{Norm}(\eta_v(v_{kj}))\rangle,\qquad
+\tilde v_k=\sum_j\operatorname{softmax}_j(r_{kj}/\tau_n)v_{kj}.
+$$
+
+$q_k$ 是查询，$v_{kj}$ 是协作者 $j$ 的局部响应；训练用上述软权重，推理改为选取最高分协作者。可靠性加权后的响应散射回 BEV，重复位置取平均，再经局部卷积、归一化与裁剪得到残差 $\Delta$。式（11）为：
+
+$$
+g=\operatorname{clip}_{[\rho,1]}\{\sigma(\Gamma([F_e,\Delta]))\},\qquad F_e^+=F_e+g\odot\Delta.
+$$
+
+$g$ 控制写入强度，附录设下限 $\rho=0.08$、残差裁剪 5.0；门控不是可完全拒绝坏消息的安全证明。
+
+### 训练与通信边界
+
+接口在 $m_1$ 上训练 31 epoch，Adam、初始学习率 $10^{-3}$，四张 RTX 4090、总 batch 4；最多 512 个查询，hypothesis 比例 0.75，coverage 使用 8×8 anchor grid。新协作者插入后不再梯度更新。检测监督沿基准流程，但完整损失权重、骨干冻结清单及跨通道响应投影实现未说明。
+
+仿真先取得候选响应再评分。部署时“先回置信度、再请求选中响应”的两阶段通信只是实现建议，未给网络往返实验；推理只留下一个响应不代表此前候选传输免费。
 
 ## 关键图与可视化结果
 
-![图 1：INTACT 将协同接口从 feature translation 改成 ego-issued query](../../assets/papers/intact-collaborative-perception-figure-1.png)
+![原文 Figure 1：异构协同接口比较](../../assets/papers/intact-collaborative-perception-figure-1.png)
 
-图 1 对比了 prior translation-first methods 和 INTACT。关键是接口语义发生变化：协作者不需要证明自己的全局 feature map 可解释，只需要回答 ego 发出的局部证据请求。
+已核对 [Figure 1](https://arxiv.org/html/2606.04437v1#S1.F1)：由左侧整图翻译读到中间查询、局部响应与写回。它表达接口假设，不证明任意异构模型均兼容。
 
-![图 2：INTACT 的两阶段 query interface 与直接推理流程](../../assets/papers/intact-collaborative-perception-figure-2.png)
+![原文 Figure 2：训练一次与直接插入](../../assets/papers/intact-collaborative-perception-figure-2.png)
 
-图 2 展示了完整 pipeline：第一阶段学习 ego query interface，第二阶段复用该接口接入新异构协作者。这张图支撑了论文最重要的部署主张，即 train once, plug in heterogeneous collaborators。
+已核对 [Figure 2](https://arxiv.org/html/2606.04437v1#S3.F2)：上半训练接口，下半合并已有 checkpoint 推理。图中雷达属于概念示例，结果表没有单列雷达验证。
 
 ## 实验结论与证据
 
-论文在模拟和真实异构协同感知 benchmark 上验证。摘要报告在 OPV2V-H 上，INTACT 以 0.52M 额外参数和 18.0 log2 通信量达到 80.1 AP70，相比 dense feature transmission 约 16 倍压缩；在 DAIR-V2X 上达到 43.8 AP50。证据重点不是单一 AP 提升，而是异构插入、通信效率和不为每个协作者重训的组合优势。
+### 插入保持与组件消融
+
+OPV2V-H 为模拟数据；$m_1$ 是 PointPillars，$m_2$ 是相机 EfficientNet。下表 AP70 为 IoU 0.7 的 AP 比例，越高越好，来源为 Table 4/5。
+
+| 同框架设置 | AP70 |
+| --- | ---: |
+| 自身 $m_1$，未插入协作者 | 0.8037 |
+| 完整 $m_1+m_2$ | 0.8009 |
+| 去查询引导检索，重新训练 | 0.7934 |
+| 去门控写回，重新训练 | 0.7656 |
+| 去 typed queries，重新训练 | 0.6374 |
+
+组件确实重要，但完整协同结果比自身基线低 0.0028，即本报告计算的 0.28 个 AP 百分点。不能仅凭保持率证明净协同增益。Figure 7 是推理时抑制组件的可视化，不能与这些重训消融逐一等同。
+
+Table 1 的 DAIR-V2X AP50 为 0.4382，STAMP 为 0.3913；来源混合已发表值与本地复现，训练条件并未统一。通信量以 $\log_2$ 报告，18 对密集基线 22 对应同口径下 $2^4=16$ 倍缩减；字节精度、查询请求与协议开销未完整列明。0.52M 是额外启用参数，Table 2 的最终模型为 25.40M，不能混作总参数。没有统一时延或多种子区间。
 
 ## 应用场景与启发
 
-- 应用场景：车路协同感知系统、异构车队接入、RSU 与车辆之间的低带宽证据交换协议。
-- 方法启发：协同不一定要共享特征，query-response 协议可能比全局 feature alignment 更适合开放 V2X 系统。
-- 讨论问题：typed evidence query 是否可以扩展到 prediction/planning，让车辆询问“这一区域是否有让行风险”而不只是检测证据。
+作者主张减少异构接入重训。本报告更看重“保留自车基线、按查询审查外部增量”的接口；待验证假设是只对确实提高局部检测质量的响应放行，能避免强自车被协作者拖累。
 
 ## 局限与阅读风险
 
-INTACT 仍在特定 benchmark 和检测任务上验证，真实 V2X 中的时间同步、定位误差、丢包和恶意协作者没有被充分展开。query interface 是否能覆盖复杂语义证据，也需要更高层任务验证。它解决的是异构协同接口，不是完整车路协同安全协议。
+几何对齐仍是前提；位姿/时延曲线不涵盖完整丢包、恶意响应和实际带宽协议。通道可比较性、coverage 的固定网格与不足区域采样细节还需代码确认。所有主结果为检测，未验证规划闭环。
 
 ## 后续跟进
 
-- 查代码是否开放，重点看 query 类型、通信量统计和异构插入协议。
-- 与 CAMASA 结合思考：真实 CAM/DENM 轨迹数据能否支持 query-based 协同预测。
-- 后续复现可先用 DAIR-V2X 做 camera/LiDAR/RSU 异构组合，而不是只跑同构 OPV2V。
+### 资源与最小验证
+
+截至 2026-09-12，固定全文无 INTACT 代码、配置或权重入口；精确主题仓库查询为零，不能认证已开源。OPV2V-H 等数据与基线虽公开，本次未下载或运行。
+
+取得作者 checkpoint 后，用一张容量经加载确认的 GPU，固定 200 个留出测试场景、查询和请求/响应预算，比较原门控与可拒绝响应的质量门控；后者仅使用预测置信度、几何一致性等推理可见量，在独立验证集上校准，不能读取测试 GT。两组都测正常与打乱响应，并保留自车独立检测对照；记录 AP70、遮挡目标召回及实际字节。只有新门控保留正常响应增益，并减少坏响应对强自车的拖累，才支持增量放行假设；若必须靠测试 GT 选择响应、正常收益消失或通信漏计，则停止推广。

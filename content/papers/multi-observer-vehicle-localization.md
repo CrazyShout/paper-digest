@@ -2,60 +2,100 @@
 {
   "id": "multi-observer-vehicle-localization",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "radar-occupancy-representation"],
+  "tags": [
+    "cooperative-autonomous-driving",
+    "radar-occupancy-representation"
+  ],
   "title": "Multi-Observer Vehicle Localization Case Study with Roadside Radar and Connected Vehicle Sensing",
   "source": "arXiv:2608.16966 / https://arxiv.org/abs/2608.16966 / HTML: https://arxiv.org/html/2608.16966 / Planned code and data release: https://github.com/AppuriAalto/multi-observer-vehicle-tracking",
-  "authors": ["Aleksi Pippuri", "Nilusha Jayawickrama", "Risto Ojala"],
-  "affiliations": ["Department of Mechanical Engineering, Aalto University"],
+  "authors": [
+    "Aleksi Pippuri",
+    "Nilusha Jayawickrama",
+    "Risto Ojala"
+  ],
+  "affiliations": [
+    "Department of Mechanical Engineering, Aalto University"
+  ],
   "comment": "论文在赫尔辛基真实路口融合固定路侧雷达与联网车辆 LiDAR，诚实给出雷达没有稳定提升定位精度的负结果；它把传感器几何、刷新率、遮挡和轨迹可用率对协同定位的影响量化出来。"
 }
 ---
 
 ## 一句话定位
 
-这是一篇比“融合后平均误差更低”更值得读的真实系统案例：在 19 段道路数据上，高质量联网车 LiDAR 几乎决定了完整刷新率下的定位表现，路侧雷达只带来很小的平均收益，甚至在模拟遮挡中不能降低误差；论文因此提供了判断协同传感器何时真正互补、何时只是重复弱证据的直接依据。
+真实赫尔辛基路口的异构目标级融合案例：路侧雷达加车载 LiDAR 并未自动胜过强 LiDAR 基线；微小定位改善和轨迹可用率变化取决于几何、更新频率和关联条件。[全文 v1，§III–V](https://arxiv.org/html/2608.16966v1)
 
 ## 论文要解决的问题
 
-车路协同常假设路侧传感器和联网车辆能通过观测互补提高目标定位，但实际系统同时面对视角差异、固定安装几何、时钟和外参误差、不同刷新率，以及传感器质量严重不对称。若只报告融合结果而不保留单传感器基线和 track availability，就无法知道收益来自协同，还是来自其中一个强传感器。
-
-作者在赫尔辛基城市路口布置固定路侧雷达，由一辆联网车上传 LiDAR 检测，再使用另一辆带 GNSS/INS 的目标车提供独立参考轨迹。任务不是一般检测，而是把异构 object-level observations 变换到同一雷达坐标系后持续定位目标车辆。
+道路上普通车辆不能主动上报位置，基础设施可借联网车观测补充跟踪。但雷达位置偏差、动态车载坐标转换和不同时钟会使融合反而变差。论文检验两种 EKF 更新方式，重点是现实互补性，不是提出新的学习架构。
 
 ## 方法和系统设计
 
-- LiDAR 检测先结合联网车 GNSS 轨迹完成地理配准，雷达检测与其时间对齐，二者进入共同的 radar-centric ENU 坐标系。
-- 轨迹由 CTRV 运动模型传播，并比较 LiDAR-only、radar-only、Sequential EKF 和 Averaged EKF；后两者分别顺序更新或先平均异构量测再更新。
-- 论文不仅看 RMSE/MAE，还同时报告 match rate 和 drop rate，并主动降低 LiDAR 到 5、3、2、1、0.5 Hz，模拟 3-10 秒遮挡，再按静止、低速、运动状态分层。
+### 预处理、标定和跟踪边界
+
+车载 10 Hz VLP-32C 点云由预训练 PointPillars 检测，置信度低于 0.2 被丢弃；50 Hz GNSS/INS 将检测转换到路侧雷达 ENU 坐标。路侧 UMRR-11 也以 10 Hz 提供目标位置。所有数据本地记录后离线处理，未评估实时无线传输。
+
+五次标定运行上估计平移、偏航和时钟偏移，先差分进化再 Powell 优化；滤波参数也仅在标定集网格搜索。十次评估运行中的一段雷达文件损坏，最终 19 段；独立目标车 GNSS 只用于评价，不输入正常跟踪。
+
+CTRV 状态是 $\mathbf x=[p_x,p_y,v,\psi,\dot\psi]^T$。两种传感器日常更新都只使用二维位置，雷达速度／方向仅辅助新轨迹初始化。Mahalanobis 门控后做一对一贪心关联；一条有效观测即确认，连续超过 50 个雷达帧未命中才删除。
+
+### 顺序更新与协方差加权
+
+SEKF 先雷达后 LiDAR 校正；AEKF 在两者关联到同一轨迹时先融合观测，再校正一次。§III-B 式 5–6：
+
+$$
+\bar R=(R_r^{-1}+R_l^{-1})^{-1},\qquad
+\bar z=\bar R(R_r^{-1}z_r+R_l^{-1}z_l).
+$$
+
+$z_r,z_l$ 是位置，$R_s=\sigma_s^2I_2$ 是固定测量协方差，假设误差条件独立。缺一路就单传感器更新，两路都缺则仅预测。共享标定误差可能破坏独立假设。
+
+报告分析：在相同关联、先验及协方差下，线性位置观测的顺序校正与上述信息加权校正应等价。表 I 的过程噪声、关联门和 LiDAR 噪声分别调过，因此不能把最终差值解释为“平均更新天然更准”。
+
+### 两项原始机制对照
+
+[Lang 等，PointPillars，2018 v1，§2](https://arxiv.org/pdf/1812.05784v1) 学习柱状点集特征、散射伪图像并用二维卷积回归框；本文只采用其预训练检测输出，不联合优化检测器与滤波器。[Yu 等，V2X-Seq，CVPR 2023，§4](https://openaccess.thecvf.com/content/CVPR2023/papers/Yu_V2X-Seq_A_Large-Scale_Sequential_Dataset_for_Vehicle-Infrastructure_Cooperative_Perception_and_CVPR_2023_paper.pdf) 的 FF-Tracking 传输压缩特征及时间导数，补偿延迟后检测，再用 AB3DMOT 跟踪；本文传位置级结果，通过预测应对缺测，不做学习式特征时间外推。
 
 ## 关键图与可视化结果
 
-![图 1：真实路侧雷达、联网车 LiDAR、目标车参考轨迹及决策级融合流程](https://arxiv.org/html/2608.16966v1/figures/intro_flowchart.png)
+![原文 Fig. 1：路侧雷达与联网车 LiDAR 的目标级融合](https://arxiv.org/html/2608.16966v1/figures/intro_flowchart.png)
 
-图 1 明确了三辆/端角色：路侧雷达和联网车辆是待融合观察者，目标车辆的 GNSS/INS 只用于评价。这个隔离避免把目标真值泄漏进滤波输入，也说明实验验证的是 infrastructure-side object localization，而不是车端完整感知闭环。
+两类观测用于估计同一个独立目标车，真实道路采集与离线融合应分开理解。
 
-![图 2：LiDAR、雷达、顺序 EKF 与平均 EKF 相对参考轨迹的定位误差云](https://arxiv.org/html/2608.16966v1/error_cloud_methods_row.png)
+![原文 Fig. 7：相对目标车参考轨迹的定位误差点云](https://arxiv.org/html/2608.16966v1/error_cloud_methods_row.png)
 
-图 2 的宽散雷达误差云与三组几乎重合的 LiDAR/融合结果，是本论文最重要的可视化结论：融合并没有自动创造互补信息。读者还需结合 match rate 阅读，因为只在成功匹配样本上较小的 RMSE 不代表轨迹更连续。
+虚线圈为 1、2、5 m。雷达误差更分散且有结构性偏移；这张图汇集样本，正文主表则先逐段求指标再平均，两者权重不同。
 
 ## 实验结论与证据
 
-完整数据下，LiDAR-only 的 RMSE/MAE 为 0.84/0.74 m，match rate 0.983；radar-only 为 3.27/3.12 m，match rate 仅 0.215。SEKF 与 LiDAR 基本相同，AEKF 取得 0.81/0.73 m 和 0.984 match rate，提升很小。作者据此明确判断：全速条件下结果由 LiDAR 主导，雷达单独不足以连续定位。
+### 误差必须与可用率一起读
 
-降低 LiDAR 频率后，误差在 3 Hz 前仍较稳定，2 Hz 以下明显上升；运动目标在 2 Hz 时 LiDAR/SEKF/AEKF RMSE 分别为 1.51/1.32/1.21 m，显示弱雷达在特定运动状态可能有价值。但 3、5、7、10 秒人工遮挡中，LiDAR-only 始终具有最低 RMSE；SEKF 只在 7 秒和 10 秒时略保住更多匹配。结果支持“雷达偶尔提高可用性”，不支持“雷达融合普遍提高精度”。
+表 IV，19 段等权平均；RMSE 仅对距离门内匹配样本计算，括号是段间标准差。评价门 5 m，粘性跟踪同一 ID，失配 10 帧后允许重新捕获。
+
+| 方法 | RMSE，m ↓ | MAE，m ↓ | 匹配率 ↑ |
+| --- | --- | --- | --- |
+| LiDAR EKF | 0.84 (0.30) | 0.74 | 0.983 |
+| Radar EKF | 3.27 (0.65) | 3.12 | 0.215 |
+| SEKF | 0.84 (0.29) | 0.74 | 0.982 |
+| AEKF | 0.81 (0.29) | 0.73 | 0.984 |
+
+AEKF 对 LiDAR 约减少 0.03 m，而匹配率只多 0.1 个百分点。它不能与仅匹配 21.5% 样本的雷达 RMSE 脱离可用率直接比较，也没有配对显著性检验。
+
+### 降频与遮挡消融
+
+表 VI 保持全频调参配置、将 LiDAR 降至 2 Hz 时，LiDAR/SEKF/AEKF 的 RMSE 分别 1.20/1.12/1.03 m；若改用 1 Hz 调参，变为 1.01/1.04/1.07 m，排序反转。表中的百分比是相同频率下相对最佳行，不是相对 10 Hz 的退化量。
+
+表 VII 人工删除目标参考位置 2.5 m 内的 LiDAR 检测，在每段 25%、50%、75% 位置开始遮挡。下列指标只在遮挡区间统计，再对三个遮挡起点平均，不是整段指标。7 s 遮挡时 LiDAR/SEKF 为 2.42/2.49 m，匹配率 0.692/0.724：SEKF 增加 3.2 个百分点可用率，却没有改善已匹配位置误差。这不是实物遮挡试验。论文未报告运行硬件、处理延迟或通信字节量。[§III-G、表 VI–VII](https://arxiv.org/html/2608.16966v1#S3.SS7)
 
 ## 应用场景与启发
 
-- 应用场景：路侧目标追踪、车端观测回传、稀疏 V2X 更新和交通管理侧多观察者状态估计。
-- 方法启发：协同占据或跟踪应把 observer identity、测量质量、刷新率和可见性写进状态，按场景决定是否吸收远端证据，而不是固定平均。
-- 研究启发：对雷达 occupancy，可把 match availability 与几何误差分开建模；低质量量测可能只适合延长存在性，不适合直接收紧位置分布。
-- 讨论问题：当融合只提高轨迹持续性而不降低定位误差时，下游规划应如何给这类证据定价？
+联网车可帮助基础设施补足观测，即使只共享低频目标位置。更值得迁移的是同时衡量精度、缺测与错误关联；只优化 RMSE 可能奖励主动丢弃困难样本。论文自己的结论也限定为场景相关收益。待验证假设：这里 AEKF/SEKF 的部分差异来自 Q/R 与关联配置，而非位置观测下更新顺序本身；同配置和共同观测回放可直接检验。
 
 ## 局限与阅读风险
 
-数据只有单一路口、固定雷达位置和 19 段轨迹，传感器能力明显偏向 LiDAR，不能把“雷达帮助有限”外推为其他 4D 成像雷达或多路侧布局的性能上限。遮挡通过删除 LiDAR 观测模拟，没有重现真实遮挡引起的误检和关联错误。绝对误差还包含标定与两套 GNSS/INS 参考的不确定性；论文也没有同公共 V2X benchmark 的数值对照，更没有语义占据或规划闭环。官方 GitHub 目前只有 README，并明确说明实现和数据要等论文发表后开放，因此当前不能据此复现。
+仅一次采集会话、一个路口、两种车辆相对排列；独立 GNSS 是有误差的参考轨迹。式 10 写关联门为 5，最终表 I 却为 24/44/32/36，需以实际配置核清。固定全文未含附录。摘要宣称发布数据和实现，但当前[官方仓库](https://github.com/AppuriAalto/multi-observer-vehicle-tracking)只有 README，写明发表后提供；代码、数据、配置及本实验检测权重尚不可核验。
 
 ## 后续跟进
 
-- 跟踪官方仓库；待实现和数据真正发布后，再复现按刷新率和运动状态分层的结果，避免把占位页面当成可用资产。
-- 加入 innovation consistency 或学习式 covariance calibration，检查何时应拒绝雷达更新。
-- 将多观察者 evidence 写入 occupied/free/unknown 状态，并测量它对规划风险而非仅定位误差的影响。
+### 先做可比性复核
+
+等仓库提供 5/10 次运行划分、标定参数、检测缓存和 GNSS 后，先用固定一段共同观测、相同 $Q/R$ 与关联结果，比较 SEKF/AEKF 数值等价性，再重算 19 段等权表 IV。成功条件是表内舍入一致且所有方法公布同一匹配样本集的误差及完整可用率；若参数或划分缺失，停止准确率复现。未开展跟踪实验。

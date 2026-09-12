@@ -2,69 +2,137 @@
 {
   "id": "skydrive-aerial-city-adaptation",
   "tag": "end-to-end-autonomous-driving",
-  "tags": ["end-to-end-autonomous-driving", "autonomous-driving-testing"],
+  "tags": [
+    "end-to-end-autonomous-driving",
+    "autonomous-driving-testing"
+  ],
   "title": "SkyDrive: Learning to Drive in a New City from Aerial Traffic Monitoring",
   "source": "arXiv:2608.25142 / https://arxiv.org/abs/2608.25142 / HTML: https://arxiv.org/html/2608.25142v1",
-  "authors": ["Weijiang Xiong", "Lan Feng", "Alexandre Alahi", "Nikolas Geroliminis"],
-  "affiliations": ["École Polytechnique Fédérale de Lausanne (EPFL)"],
+  "authors": [
+    "Weijiang Xiong",
+    "Lan Feng",
+    "Alexandre Alahi",
+    "Nikolas Geroliminis"
+  ],
+  "affiliations": [
+    "École Polytechnique Fédérale de Lausanne (EPFL)"
+  ],
   "comment": "SkyDrive 把 137.2 小时无人机交通监控中的每辆车转成 virtual ego，形成约 65 万规划样本，证明新城市适配不一定先派测试车采数据；但派生数据与代码尚未发布，协议也不是反应式闭环。"
 }
 ---
 
 ## 一句话定位
 
-SkyDrive 把城市适配的数据采集视角从单辆 instrumented vehicle 提到空中：无人机一次观察一个路口中的大量车辆，每条地理配准轨迹都可变成 virtual ego demonstration。论文从 Songdo 20 个路口、137.2 小时监控中构建约 65 万片段，并同时测试 trajectory planning 与 motion prediction，说明少量目标城市俯视数据可以显著缓解跨城域移。
+SkyDrive 把无人机观察到的每辆合格车辆变成 virtual ego，从同一段路口监控中构造大量局部规划和运动预测监督。它的价值是把城市适配拆成数据构建、视觉表征适配和行为学习，而不是提出一个通用的全新 planner。
+
+- 核心证据：SongdoDrive 标准划分中，RAP 的四秒 FDE 从零样本 8.116 m 降到目标域微调后的 2.730 m，TTC 违规率从 25.56% 降到 5.89%。[原文表 4](https://arxiv.org/html/2608.25142v1#Sx4.T4)
+- 主要边界：规划器看到的是从轨迹和地图渲染的语义视图，安全指标使用不响应自车的日志交通；没有验证真实相机输入下的目标城市部署。
 
 ## 论文要解决的问题
 
-端到端 planner 在新城市会遇到道路形态、交通规则和本地驾驶行为变化。传统适配需要装有多相机、LiDAR 和定位系统的车辆逐路采集，单次只能记录一个 ego，覆盖长尾成本很高。公开 aerial dataset 虽能看见更多参与者，通常只被当作交通流或 motion prediction 数据，没有转成 planner 可直接使用的 ego-centric 监督。
+### 问题与假设
 
-SkyDrive 的关键问题是：能否从俯视轨迹构造与车端 planner 接口相似的历史、语义场景和未来计划，并量化零样本模型在新城市究竟错在哪里、需要多少本地监控数据才能恢复。
+车辆进入新城市后，道路形状、行驶规则和停车起步习惯都可能变化。车载采集通常围绕单个 ego，而俯视监控同时覆盖多个路口参与者，能把他们各自的行为转成示范。但空中相机与车载视角相差很大，不能直接把无人机 RGB 当作车端相机输入。
+
+论文采用中间语义世界：先得到地理配准轨迹、车辆尺寸和地图，再放置虚拟相机。这个选择降低了纹理外观差异，却同时改变了传感器可观测性；“本地行为学到了多少”与“语义图像更容易理解了多少”需要分开判断。[原文方法](https://arxiv.org/html/2608.25142v1#Sx3)
+
+### 相关工作与差异
+
+| 工作与一手来源 | 已有机制 | SkyDrive 的变化与边界 |
+| --- | --- | --- |
+| Fonod 等，2025，Transportation Research Part C；[接受稿 §3](https://arxiv.org/html/2411.02136v3#S3)，[正式 DOI](https://doi.org/10.1016/j.trc.2025.105205) | 检测跟踪、用车辆掩码辅助图像稳定、通过正射影像与地面控制点地理配准，产出 Songdo Traffic。 | SkyDrive 使用已有采集成果，追加 virtual ego、场景切片、地图派生与驾驶协议；不能把上游无人机采集和跟踪全部算成本文的新方法。 |
+| Feng 等，RAP，2025 预印本；[原文 §3.1–3.3](https://arxiv.org/html/2510.04333v1#S3) | 将日志地图和 3D 车辆框栅格化成语义相机视图，用跨参与者视角、恢复扰动和 raster-to-real 特征对齐扩充规划训练。 | SkyDrive 把输入数据源扩展到空中轨迹，复用渲染思想并量化城市适配。跨参与者虚拟视角和语义栅格化已有直接先例。 |
 
 ## 方法和系统设计
 
-- 从 Songdo Traffic 的地理配准轨迹中选择速度中位数大于 10 km/h 的车辆作为 virtual ego，以其坐标系切分 8 秒场景、4 秒 stride，并清除缺失、尺寸异常和近重复片段。
-- 规划任务使用 2 秒历史、2 Hz 四帧语义视图，预测 4 秒八个 waypoint；二维俯视要素通过平地假设和车型经验高度构造前后左右等 ego-centric semantic views。
-- motion prediction 使用 2 秒历史、6 秒未来、10 Hz，输出六条候选；同时评估从 nuScenes 零样本迁移的 MTR 与在 SongdoDrive 上训练的 AutoBot、Wayformer、MTR。
-- 数据覆盖 20 个路口、4 天、800 sessions。训练为 116.23 小时、549,929 ego segments，测试为 20.97 小时、99,629 segments，总计 649,558。
+### 数据从监控变成规划样本
+
+从韩国 Songdo 的 20 个路口、4 天、800 个监控 session 开始，筛选速度中位数超过 10 km/h 的车辆；再按八秒窗口、四秒步长抽片段，删除长度不足、位置缺失、尺寸异常和近重复样本。筛选针对整条车辆轨迹，并不意味着每个最终片段都持续运动，因此仍有 stationary 类。[原文数据构建](https://arxiv.org/html/2608.25142v1#Sx3.SSx2)
+
+标准 train/test 分别有 680/120 个 session、116.23/20.97 小时、549,929/99,629 个 ego 片段，总共 649,558。片段会共享道路、时间和背景车辆，不能把约 65 万样本当作约 65 万独立驾驶事件。路口、session、车辆 ID 和时间区间应随样本保存，用于核查划分泄漏。
+
+### 两个任务的输入、输出和定义
+
+| 任务 | 输入 | 输出与评测 |
+| --- | --- | --- |
+| 轨迹规划 | 两秒历史的四帧语义多相机图像、精确 ego 位置/速度/朝向及高层方向 | 四秒内八个二维 waypoint，2 Hz；ADE、FDE、TTC 违规率、NCT。具体模型可以只使用当前图像。 |
+| 运动预测 | 两秒、10 Hz 的 21 帧自车及邻车历史与地图 | 六条六秒候选，每条 60 个未来点及概率；minADE、minFDE、BrierFDE、Miss Rate。 |
+
+规划语义图由二维车辆框在平地与按车型设定高度的假设下抬升到三维，再用虚拟相机投影；不是原始车载 RGB。left/right/straight 命令来自离线未来轨迹，因此测试默认提供正确导航方向，并未评估实时路线识别。[原文 §Trajectory Planning Task、表 3](https://arxiv.org/html/2608.25142v1#Sx3.SSx3)
+
+本文没有提出新的优化损失公式；决定解读的是任务定义。下式是对原文指标文字的数学整理，并非原文编号公式：
+
+$$
+\mathrm{ADE}=\frac1H\sum_{h=1}^{H}\lVert\widehat p_h-p_h^\star\rVert_2,\qquad
+\mathrm{FDE}=\lVert\widehat p_H-p_H^\star\rVert_2.
+$$
+
+$H$ 是未来点数，$p^\star$ 是该 virtual ego 实际走过的位置；二者单位为米，越低越好，但贴近专家不是安全的充分条件。NCT 统计存在任一点驶出可行驶多边形的轨迹比例。TTC 违规在每个预测点按恒速、恒朝向向前投影 0.3/0.6/0.9 秒，若与按日志运动的其他车发生碰撞即记违规；这里的百分比越低越好，与 NAVSIM 中越高越好的 TTC 子分数方向不同。
+
+预测任务的 BrierFDE 为 $\min_k\mathrm{FDE}_k+(1-p_{k^\star})^2$，$k^\star$ 是终点误差最小的候选，$p_{k^\star}$ 是其预测概率。它给准确却低置信度的候选加罚，不应把整体数值简单称为物理距离。Miss Rate 在表中以比例给出，例如 0.148 对应 14.8%；正文仅举出 2 m 阈值示例，精确配置仍需发布实现确认。[指标定义](https://arxiv.org/html/2608.25142v1#Sx3.SSx4)
+
+### 训练与推理、资源成本
+
+零样本模型直接使用作者发布的 DrivoR/RAP checkpoint。目标域实验中 DrivoR 从头训练 20 epoch，约 3 小时/epoch；RAP 因缺少本地真实—语义配对图像而从零样本 checkpoint 微调 5 epoch，约 10 小时/epoch。两者均用两张 H100、batch 32，总训练墙钟分别约 60 和 50 小时，按原文时长相乘得到，不包含上游预训练或数据构建。[原文实验设置](https://arxiv.org/html/2608.25142v1#Sx4.SSx1)
+
+二者都生成候选再评分。作者将训练简化为模仿真实轨迹：DrivoR 使用 ADE/FDE 均值的负值作评分目标，RAP 使用其 Rater Feedback Score 选项，不直接监督本文 TTC/NCT。后两项改善因而是重要旁证，但并未证明规划器学到了通用交通规则。推理输入仍是完整轨迹与地图生成的语义场景；真实车载感知接口属于下一步工程。
 
 ## 关键图与可视化结果
 
-![图 1：从无人机交通监控、virtual ego 切片到规划与预测评测的 SkyDrive 流程](https://arxiv.org/html/2608.25142v1/workflow_illustration.png)
+![原论文图 1：空中监控、virtual ego 监督与规划及预测评测](https://arxiv.org/html/2608.25142v1/workflow_illustration.png)
 
-Figure 1 展示 aerial data 的规模优势：同一观察时段中的多个车辆都能成为监督来源。流程同时评价准确性、道路合规和 TTC，但这些指标仍由离线轨迹与地图计算，不是闭环交通响应。
+从左侧多路口监控读到中间的两条任务支路：上方使用语义相机图像做规划，下方使用地图和轨迹做预测。右侧准确性、规则和安全三类评价来自离线计算，图中相撞示意不代表已经执行了交互闭环。[原图注](https://arxiv.org/html/2608.25142v1#Sx3.F1)
 
-![图 3：繁忙换道事件的俯视场景及前、后、左、右 ego-centric 语义视图](https://arxiv.org/html/2608.25142v1/figures/rendering_example.png)
+![原论文图 3：繁忙换道场景的俯视图和前后左右语义视图](https://arxiv.org/html/2608.25142v1/figures/rendering_example.png)
 
-Figure 3 说明 planner 实际读取的是由轨迹和地图渲染出的语义视图，不是无人机 RGB 或真实车载相机。它降低了外观域移，也同时移除了传感噪声、遮挡和三维道路起伏。
+左侧红星是 virtual ego，后四幅依次为前、后、左、右。色块保留了车辆几何与道路边界，移除了真实纹理和成像噪声；三维框间仍可发生投影遮挡，但不能把这种简化可见性等同真实传感器观测。[原图注](https://arxiv.org/html/2608.25142v1#Sx3.F3)
 
-![图 4：SkyDrive 规划任务中直行、普通转弯、急转和静止等轨迹类型](https://arxiv.org/html/2608.25142v1/turning_type_decisions.png)
+![原论文图 4：按四秒终点位移与方向划分规划轨迹类别](https://arxiv.org/html/2608.25142v1/turning_type_decisions.png)
 
-Figure 4 把数据价值落到行为覆盖。后续结果显示 stationary 与复杂转弯正是零样本误差放大的类别，因此按轨迹类型而不是只按路口划分更适合设计适配课程。
+位移不足 3 m 为静止；其余用 30°、60° 分界区分直行、普通转弯和急转。图表达的是评价分组规则，不是模型预测的离散动作词表。规划与六秒运动预测的轨迹分类也不能直接互换。[原图注](https://arxiv.org/html/2608.25142v1#Sx3.F4)
 
 ## 实验结论与证据
 
-规划任务上，DrivoR 零样本 ADE/FDE/TTC/NCT 为 3.702 m、8.855 m、38.10%、8.24%，使用完整本地数据后为 1.589、3.774、10.82%、4.80%。RAP 从 3.399、8.116、25.56%、1.12% 改善到 1.263、2.730、5.89%、0.13%。数据量消融显示约每路口 30 分钟监督已带来明显改善，但论文只给曲线，不能从图上反推精确点值。
+### 主结果和比较范围
 
-motion prediction 中，nuScenes 训练的 MTR* 零样本 BrierFDE/minADE/minFDE/MissRate 为 3.953/1.497/3.369/0.494；目标域训练的 Wayformer 为 1.763/0.564/1.157/0.148。MTR* 相对目标域 MTR 的 BrierFDE 与 minADE 分别高 108% 和 120%，stationary 类 BrierFDE 从 0.457 放大到 2.017，说明“停还是走”的城市行为差异比普通轨迹形状更难迁移。
+| 标准 test，原表 4 | ADE ↓，m | FDE ↓，m | TTC 违规 ↓，% | NCT ↓，% |
+| --- | ---: | ---: | ---: | ---: |
+| DrivoR 零样本 | 3.702 | 8.855 | 38.10 | 8.24 |
+| DrivoR 目标域从头训练 | 1.589 | 3.774 | 10.82 | 4.80 |
+| RAP 零样本 | 3.399 | 8.116 | 25.56 | 1.12 |
+| RAP 目标域微调 | 1.263 | 2.730 | 5.89 | 0.13 |
 
-17 路口训练、3 路口留出的 cross-intersection 结果与标准 split 差距不大，说明同一城市区域内部分路口可共享行为先验。但这不是 cross-city 验证：训练和测试仍来自 Songdo 同一监控系统与道路文化。
+RAP 的 FDE 按表中数值下降约 66.4%，TTC 违规下降 19.67 个百分点。两种模型都受益支持目标域监督的价值；RAP 绝对结果更好同时受益于事先真实/语义图对齐和不同训练方式，不能只归因于本地行为学习，也不是同预训练预算的架构排名。
+
+运动预测表 6 中，同结构 MTR 从 nuScenes 零样本迁移时 BrierFDE/minADE/minFDE/Miss Rate 为 3.953/1.497/3.369/0.494，目标域 MTR 为 1.902/0.680/1.516/0.273。目标域 Wayformer 为 1.763/0.564/1.157/0.148。表 8 的 stationary BrierFDE 中 MTR 零样本为 2.017、本地训练为 0.457，支持停车起步存在明显域移；这个比值不是事故率。[原文表 6–8](https://arxiv.org/html/2608.25142v1#Sx4.T6)
+
+### 数据量与同城泛化
+
+图 7 用按路口轮转选取的 session 组成训练子集，1%、5%、10%、20%、50% 对应 6、34、68、136、340 个 session，约 1.0、5.8、11.7、23.3、58.3 小时。曲线显示少量监督已有效，作者以“每地点约 30 分钟”概括实用数据量；原文未列曲线逐点表，不能读出未经核实的精确阈值或宣称任何城市都只需 30 分钟。
+
+表 5 在标准/留路口两个 test 的交集上比较，训练为 17 个路口、测试留出 3 个。DrivoR 的 NCT 从标准训练 4.72% 增至留路口训练 7.87%；RAP 的 TTC 从 4.07% 增至 5.09%。这说明同城迁移并非所有指标都不退化，更不等于第二个城市的 cross-city 验证。[原文图 7、表 5](https://arxiv.org/html/2608.25142v1#Sx4.SSx2)
 
 ## 应用场景与启发
 
-- 应用场景：新城市 planner 适配、路口级行为建模、低成本 motion prediction 数据构建和城市部署前数据预算估算。
-- 方法启发：将“每个被观察车辆都变成 ego”可以显著放大监督，但必须保留路口、时间段和车辆身份，防止相邻片段泄漏到不同 split。
-- 研究启发：可用 aerial supervision 学本地 traffic prior，再用少量车载 Radar/Camera 校准可观测性，把行为域移与传感域移分开。
-- 讨论问题：本地行为先验应该进入 planner 权重、检索记忆，还是作为不确定性校准层，才能避免换城市时灾难性遗忘？
+- 作者主张：空中交通监控能为新城市提供高效监督，减少专用采集车的需求。
+- 我的判断：适合作为本地行为先验的数据来源，尤其用于交通预测与语义输入规划；目前证据不足以替代目标城市车载感知采集和闭环验证。
+- 待验证假设：先用 aerial supervision 微调行为层，再用少量真实相机—语义配对数据只校准视觉接口，可以在相同车载采集预算下优于纯车载微调；应同时测旧城市遗忘和目标城市安全。
 
 ## 局限与阅读风险
 
-实验只覆盖韩国 Songdo 一个目标城市。语义视图依赖平地与经验车辆高度，高层 left/right/straight 指令由未来轨迹离线生成；TTC 使用不会响应 ego 计划的 logged background，因此不能外推为反应式闭环安全。没有真实车辆部署，也没有相机、雷达、定位误差和天气测试。
+论文主要限制是单一目标城市、简化三维几何、准确 ego 历史及未来导出的方向指令。没有道路坡度、真实相机误差和完整交互反馈，不能从较低离线 TTC 违规推导实车事故减少。上游监控需要无人机、稳定/地理配准和地图处理；监控小时数不是完整货币成本，也未包括飞行和标注工程。
 
-表 1 报告 367,806 valid vehicles 与 649,558 ego segments，表 2 却写 646.5k unique tracks/650k scenarios，当前稿未解释，报告不把二者混为同一计数。作者写明数据与代码将公开，但核验时没有 SongdoDrive 下载、训练代码或 checkpoint；只有上游 Songdo Traffic 的 Zenodo 数据已存在，不能称派生 benchmark 已发布。AAAI 2027 模板不是投稿或录用证据。
+表 1 的 367,806 valid vehicles、649,558 ego segments 与表 2 的 646.5k unique tracks 是不同且未充分对齐的统计口径，本文保留原值，不擅自把 unique tracks 改名为片段。数据量曲线和跨路口比较未报告多种子区间；同一监控片段内多个 virtual ego 的相关性可能影响误差估计。
 
 ## 后续跟进
 
-- 待派生数据发布后，核对 session、vehicle、segment 三层去重和 split，重算论文中的 367,806、646.5k、649,558 三组计数。
-- 用真实 route command 替代由未来轨迹生成的高层指令，并在反应式 simulator 中重测 TTC/NCT。
-- 选择第二个城市做真正 cross-city transfer，比较 aerial adaptation、少量车载微调和检索式本地行为记忆。
+### 最小验证与停止条件
+
+- 资源状态（2026-09-12）：[Songdo Traffic v2](https://zenodo.org/records/17924857) 已有真实数据文件和上游 [Geo-trax](https://github.com/rfonod/geo-trax) 入口；SkyDrive v1 仍声明将发布数据和代码。本次未找到 SongdoDrive 派生数据、划分清单、训练配置或目标域权重，不能把上游资源算作完整本文发布。
+- 最小实验：派生数据可用后先按 session/车辆/重叠时间检查划分，复核三组样本计数；固定 RAP 起点和优化更新量，比较零样本、少量本地监督和等量旧域监督，分别统计 stationary、普通转弯、急转的 ADE/FDE/TTC/NCT。
+- 成功信号：按 session 重采样后的本地监督收益仍稳定，且不靠未来精确命令或同车辆泄漏；加入少量真实相机输入后能够保持大部分行为收益。
+- 停止/转向条件：去掉重叠片段后增益消失，或语义视图上的改善无法迁移到真实感知接口。此时应先做表征对齐和数据协议修复，不扩大无人机采集规模。
+
+### 来源与核验记录
+
+依据 [arXiv:2608.25142v1](https://arxiv.org/html/2608.25142v1)，2026-09-12 核对 PDF 首页单位、数据与任务章节、表 1–8；逐张打开原图 1、3、4。相关机制另读 Songdo Traffic 接受稿 v3 与 RAP v1。本文 AAAI 2027 模板不构成录用证据。本次未运行训练、下载大型数据或完成复现。

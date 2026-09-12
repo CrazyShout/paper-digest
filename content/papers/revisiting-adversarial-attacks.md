@@ -2,59 +2,112 @@
 {
   "id": "revisiting-adversarial-attacks",
   "tag": "autonomous-driving-security",
-  "tags": ["autonomous-driving-security", "end-to-end-autonomous-driving"],
+  "tags": [
+    "autonomous-driving-security",
+    "end-to-end-autonomous-driving"
+  ],
   "title": "Revisiting Adversarial Perception Attacks and Defense Methods on Autonomous Driving Systems",
-  "source": "DSN-W 2025 / https://doi.org/10.1109/DSN-W65791.2025.00071 / arXiv:2505.11532 / https://arxiv.org/abs/2505.11532",
-  "authors": ["Cheng Chen", "Yuhong Wang", "Nafis S Munir", "Xiangwei Zhou", "Xugui Zhou"],
-  "affiliations": ["Louisiana State University"],
-  "comment": "这篇论文系统性地重新评估了自动驾驶感知系统的对抗攻击和防御方法，发现许多经典攻击在现实约束下失效，为自动驾驶安全评估提供了更务实的基线。"
+  "source": "DSN-W 2025 / https://doi.org/10.1109/DSN-W65791.2025.00071 / arXiv:2505.11532 / https://arxiv.org/abs/2505.11532 / HTML: https://arxiv.org/html/2505.11532v1",
+  "authors": [
+    "Cheng Chen",
+    "Yuhong Wang",
+    "Nafis S Munir",
+    "Xiangwei Zhou",
+    "Xugui Zhou"
+  ],
+  "affiliations": [
+    "Louisiana State University"
+  ],
+  "comment": "对 YOLOv8 检测和 Supercombo 距离预测分开评测；攻击强弱与防御收益随任务、距离而变，且原文距离指标以干净模型预测为参照。"
 }
 ---
 
 ## 一句话定位
 
-这是一篇自动驾驶感知安全方向的 workshop 论文，在真实的 Level-2 生产级 ADS（OpenPilot）上，针对路标识别和前车距离检测两个关键任务，系统检验对抗扰动的影响，并评估对抗训练、图像处理、对比学习和扩散模型四类防御方法的效果与局限。
+这篇 DSN-W 2025 论文把 YOLOv8 停止标志检测与 OpenPilot Supercombo 前车距离预测分开审查。最值得注意的是攻击排序随任务变化，以及“距离误差”实际以干净模型预测作参照；它不是生产车辆闭环安全实测。
 
 ## 论文要解决的问题
 
-自动驾驶系统的感知模块（如路标识别、前车检测与距离估计）依赖深度学习模型，而这些模型已被证明对对抗性扰动敏感。以往的对抗攻击研究多在学术基准数据集和实验室环境下完成，缺乏在生产级自动驾驶系统上的端到端验证。本文聚焦一个具体问题：在真实可部署的 Level-2 ADS 中，对抗扰动对路标识别和前车距离检测任务到底有多大影响？现有的主流防御方法能否有效缓解这些攻击？
+### 工程模型不等于道路验证
+
+同一种扰动既可能降低检测召回，也可能移动距离预测；前者有目标标注，后者未使用独立真实距离。研究目标是检查常见攻击/防御迁移到两类模型接口后的表现，不是证明经典攻击在现实约束下普遍失效。
+
+### 两项直接相关工作
+
+| 原工作 | 方法范围 | 本文改变的评测对象 |
+| --- | --- | --- |
+| Croce、Hein，2020，[AutoAttack §3–5](https://arxiv.org/pdf/2003.01690v1) | 自适应步长的 APGD 和互补攻击组合，用于稳健分类评估。 | 将 Auto-PGD 用于单类检测与距离回归；不能把一个改编组件等同完整 AutoAttack。 |
+| Zhu 等，2023，[DiffPIR §3](https://arxiv.org/pdf/2305.08995v1) | 将生成式扩散先验与观测一致性结合以恢复图像。 | 将恢复用于感知防御，必须重新评价语义和时延，不能从画质推导安全。 |
 
 ## 方法和系统设计
 
-- 使用 OpenPilot（comma.ai 开发的 Level-2 生产级自动驾驶系统）作为实验平台，使结论更贴近实际部署。
-- 感知模型采用广泛使用的 YOLO 目标检测器，重点覆盖路标识别和前车相对距离检测与预测两个任务。
-- 系统性地注入对抗性扰动，检验其对感知输出的影响程度。
-- 对比评估四类防御策略：对抗训练（adversarial training）、图像处理（image processing）、对比学习（contrastive learning）和扩散模型（diffusion models），分析各类方法在应对复杂攻击时的表现。
+### 两条独立数据流
+
+停止标志分支使用 Traffic Signs Detection 数据中的 stop sign，把 YOLOv8 配成单类别检测；距离分支使用 Comma2k19 视频和 Supercombo，在前车区域加入扰动，再对照同帧干净预测。这里没有“OpenPilot 使用 YOLO 完成所有感知”的统一系统。
+
+攻击候选包括 Gaussian、FGSM、Auto-PGD、SimBA、RP2 与 CAP；并非每种方法都用于两任务。表中的 CAP/RP2 合并行分别代表回归与检测任务使用不同攻击，不是两攻击串联。白盒梯度、黑盒查询和物体区域约束也不能混成同一预算。[§III、§V-A/B](https://arxiv.org/html/2505.11532v1#S5)
+
+### 指标的正负号
+
+按 §V-B 的对照关系，本报告用下式区分预测偏差和绝对误差：
+
+$$
+\Delta d_i=\hat d_i^{\mathrm{processed}}-\hat d_i^{\mathrm{clean}},\qquad
+\overline{\Delta d}=\frac1n\sum_i\Delta d_i,\qquad
+\mathrm{MAE}_{\mathrm{clean}}=\frac1n\sum_i|\Delta d_i|.
+$$
+
+这不是原文编号公式。原表 Avg. Error 有负值，不能称作非负 MAE；接近零的均值也可能由正负偏差抵消。两种量都以模型自身为参照，尚不是真实米制距离准确率。检测则报告 IoU 阈值 0.5 的 AP、precision 和 recall。
+
+### 训练与部署条件
+
+图像处理和 DiffPIR 在输入侧增加步骤；对抗训练和对比学习会重训模型。单攻击训练使用 416 张停止标志图或 9,600 帧行车图；混合训练各取四种攻击样本的 25%，再另取 25% 测试。原文没有充分说明帧与视频序列的隔离方式；完整模型版本、所有扰动预算和训练超参数仍需脚本核对。
 
 ## 关键图与可视化结果
 
-![图 1：论文用于路牌检测与前车距离回归的两类数据样例](../../assets/papers/revisiting-adversarial-attacks-figure-1.png)
+![原论文图 1：停止标志检测与前车距离预测的两类输入](../../assets/papers/revisiting-adversarial-attacks-figure-1.png)
 
-图 1 来自官方 arXiv 源码，左侧是 Traffic Signs Detection 中的 stop sign，右侧是 Comma2k19 行车视频。它说明论文并非在同一个任务上汇总攻击成功率，而是分别检查 YOLOv8 单类检测与 OpenPilot Supercombo 前车距离回归；两套协议的输入、指标和安全后果不能混为一个“鲁棒性分数”。
+两幅图对应不同数据与任务，不能把各自指标平均成 ADS 总体鲁棒性。也不能从行车视频图推断测试接入了控制器。[图 1](https://arxiv.org/html/2505.11532v1#S5.F1)
 
-![图 2：不同攻击下 stop sign 检测的 mAP50、Precision 与 Recall](../../assets/papers/revisiting-adversarial-attacks-figure-2.png)
+![原论文图 2：单类停止标志检测在不同扰动下的表现](../../assets/papers/revisiting-adversarial-attacks-figure-2.png)
 
-图 2 从官方 PDF 的矢量图提取。FGSM 与 Gaussian noise 使 mAP50 和 Recall 明显下降，而 Auto-PGD 在这个单类别检测设置里没有成为最强攻击。该结果支持“攻击强弱依赖任务和模型接口”，但不能证明这些数字能直接外推到多类别检测、BEV 融合或规划闭环。
+看蓝色 AP 与青色 recall 的共同下降；Auto-PGD 比 FGSM/Gaussian 弱是此实现的结果，不是对攻击算法的一般排序。图轴用 0–1，表格以百分比表示。[图 2](https://arxiv.org/html/2505.11532v1#S5.F2)
 
 ## 实验结论与证据
 
-两类任务给出的结论并不相同。Supercombo 距离回归中，Auto-PGD 在 0–20 m 区间造成 34.45 m 的平均误差，明显高于 FGSM 的 18.34 m；到了 60–80 m，二者分别为 8.49 m 和 4.65 m。近距离目标占据更大视觉区域，因此扰动后果更严重，但实验使用的是离线视频帧和相对干净预测作参照，不是道路真值距离。
+### 攻击排序随任务改变
 
-stop sign 检测中，无攻击时 mAP50 为 0.9949；FGSM 与 Gaussian noise 分别降到 0.7265 和 0.7050，而 Auto-PGD 仍有 0.9509。防御实验显示 median blur、混合对抗训练和 diffusion restoration 只在部分攻击/任务组合上有效，有时还会损伤正常或弱攻击样本。论文真正支持的判断是“防御必须按任务、距离和攻击机制分层评估”，不是某一种防御已经解决了 ADS 对抗安全。
+| 原表位置与指标 | Gaussian | FGSM | Auto-PGD |
+| --- | ---: | ---: | ---: |
+| 表 I：0–20 m 组，Avg. Error | 0.30 m | 18.34 m | 34.45 m |
+| 表 I：60–80 m 组，Avg. Error | 0.14 m | 4.65 m | 8.49 m |
+| 表 II 无防御行：stop sign AP50 | 70.49% | 72.65% | 95.09% |
+
+数字支持近距离预测更敏感及任务排序不同，但近处物体面积更大只是作者解释，尚未用等面积扰动排除混杂。不能从单类 Auto-PGD 较弱得出其一般无效。[表 I–II](https://arxiv.org/html/2505.11532v1#S5.T1)
+
+### 防御收益和副作用
+
+表 II 中 Auto-PGD 的近距离偏差经 randomization 从 34.45 降到 5.04 m，但 60–80 m 变成 −21.25 m。表 III 混合对抗训练在 Auto-PGD 近距离为 5.84 m，在 Gaussian 的 60–80 m 却出现 −43.04 m。表 V DiffPIR 的近距离 Auto-PGD 为 4.98 m，但弱 Gaussian 输入也引入负偏差。不存在覆盖所有距离和攻击的统一赢家。
 
 ## 应用场景与启发
 
-- 应用场景：Level-2 ADAS 系统的安全测试与对抗鲁棒性评估、生产级自动驾驶系统的防御方案选型。
-- 方法启发：在真实 ADS 平台上直接评估防御方法，比纯学术数据集实验更具工程参考价值；四类防御的对比为工程落地提供了选型依据。
-- 讨论问题：生产系统中的防御不仅要考虑鲁棒性，还需兼顾推理延迟和正常场景性能；扩散模型作为防御手段的实用性仍有待进一步验证。
+- 作者主张：感知防御应按任务、攻击与代价综合评估。
+- 我的判断：最有价值的是保留干净预测参照和距离分组，避免只报均值；检测 precision 高也不能替代召回。
+- 待验证假设：加入独立距离真值和视频级划分后，部分“防御改善”会缩小；若仍能降低真实距离绝对误差，才支持工程使用。
 
 ## 局限与阅读风险
 
-这是一篇 workshop 论文，篇幅仅 8 页，实验范围有限。论文仅涉及路标识别和前车距离检测两个任务，未覆盖车道线检测、行人识别等其他关键感知任务。评估的攻击和防御类型数量有限，不能代表对抗安全研究的全貌。此外，OpenPilot + YOLO 的组合虽然具有工程代表性，但结论是否能迁移到其他 ADS 架构（如端到端驾驶模型）需要谨慎对待。
+生产模型来源不等于生产系统验证；没有车道控制、碰撞或闭环规划测量。有符号误差、未知的序列划分、缺少多种子区间及完整自适应防御评测，限制防御强度判断。§VI 报输入处理约 20 ms、DiffPIR 约 1–2 s/张，但硬件和端到端测时边界不完整，不能把后者说成实时部署已解决。
 
 ## 后续跟进
 
-- 关注作者是否有后续完整版本（如期刊或会议长文）扩展实验范围。
-- 在自己的 ADS 测试流程中，参考本文的四类防御对比框架，建立基线。
-- 跟进扩散模型作为防御手段的研究进展，评估其在实时感知系统中的可行性。
-- 结合端到端自动驾驶对抗训练（如 MA2T）的工作，思考感知层防御如何与规划层安全机制联动。
+### 最小验证与停止条件
+
+- 资源（2026-09-12）：[作者仓库](https://github.com/DepCPS/revisiting_adversarial_ADS) 有 CAP-Attack、评估/训练脚本和 DiffPIR 配置，文件树也列出基础及部分对抗训练权重；缺少顶层 README。已核实文件列表，未下载二进制或验证完整数据划分。
+- 最小验证：先读取同帧干净/处理后预测，按视频划分固定测试集，分别复算有符号均值、MAE、95 分位误差和前车召回；加入独立距离标注。
+- 成功信号：防御降低真实距离误差且不恶化远距离尾部；停止标志召回和单帧总时延同时达标。
+- 停止条件：所谓改善只来自偏差抵消、样本重叠或漏检后不计分；先修指标与数据协议。
+
+### 来源与核验
+
+技术内容固定依据 [arXiv:2505.11532v1](https://arxiv.org/html/2505.11532v1)，发表入口保留 [DSN-W DOI](https://doi.org/10.1109/DSN-W65791.2025.00071)。2026-09-12 阅读 §III–VI、表 I–V，核对 PDF 首页并逐张打开图 1/2，另读 APGD 与 DiffPIR 原文。没有执行攻击或实验。

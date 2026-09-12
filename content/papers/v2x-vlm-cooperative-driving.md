@@ -2,55 +2,165 @@
 {
   "id": "v2x-vlm-cooperative-driving",
   "tag": "cooperative-autonomous-driving",
-  "tags": ["cooperative-autonomous-driving", "end-to-end-autonomous-driving"],
+  "tags": [
+    "cooperative-autonomous-driving",
+    "end-to-end-autonomous-driving"
+  ],
   "title": "V2X-VLM: End-to-End V2X Cooperative Autonomous Driving Through Large Vision-Language Models",
   "source": "arXiv:2408.09251 / https://arxiv.org/abs/2408.09251",
-  "authors": ["Junwei You", "Haotian Shi", "Zhuoyu Jiang", "Zilin Huang", "Rui Gan", "Keshu Wu", "Xi Cheng", "Xiaopeng Li", "Bin Ran"],
-  "affiliations": ["Department of Civil and Environmental Engineering, University of Wisconsin-Madison", "College of Computing and Data Science, Nanyang Technological University", "College of Transportation, Tongji University", "Zachry Department of Civil and Environmental Engineering, Texas A&M University", "School of Civil and Environmental Engineering, Cornell University"],
+  "authors": [
+    "Junwei You",
+    "Haotian Shi",
+    "Zhuoyu Jiang",
+    "Zilin Huang",
+    "Rui Gan",
+    "Keshu Wu",
+    "Xi Cheng",
+    "Xiaopeng Li",
+    "Bin Ran"
+  ],
+  "affiliations": [
+    "Department of Civil and Environmental Engineering, University of Wisconsin-Madison",
+    "College of Computing and Data Science, Nanyang Technological University",
+    "College of Transportation, Tongji University",
+    "Zachry Department of Civil and Environmental Engineering, Texas A&M University",
+    "School of Civil and Environmental Engineering, Cornell University"
+  ],
   "comment": "V2X-VLM 尝试让车端和路侧图像、语义文本与轨迹规划在同一个端到端框架里对齐。它适合评估视觉语言模型是否能把车路协同从感知增强推进到安全规划。"
 }
 ---
 
 ## 一句话定位
 
-V2X-VLM 是一篇把大型视觉语言模型引入车路协同端到端驾驶的论文。它的主要价值不是“使用 VLM”本身，而是尝试用多视角图像和语义文本统一车辆端与基础设施端信息，并将这种融合结果直接用于轨迹规划。
+V2X-VLM 把车端与路侧图像拼接后输入 Florence-2，并用场景文本、图文对比学习和师生蒸馏训练轨迹 token 输出；最值得评估的是语义监督是否在同一输入条件下提供额外规划价值，以及人工文本和通信成本是否进入了部署口径。
+
+- 核心证据：DAIR-V2X 开放环评测中，平均 L2 为 1.21 m；同模型去掉图文对齐为 1.51 m，差 0.30 m，约 19.9%（据表 5 计算）。
+- 主要边界：文本训练含人工修订，正式推理流程还需在线描述模型；表 4 的 353.36 ms 是每 batch 耗时、11.32 FPS 是吞吐，不能把它理解为已验证的单车 10 Hz 全链路响应。[§5、附录 B](https://arxiv.org/html/2408.09251v3#S5)
 
 ## 论文要解决的问题
 
-车路协同的直观优势是基础设施可以补足 ego 车被遮挡或视野不足的区域。但车辆和路侧视角存在几何差异、语义粒度差异、传感器质量差异和通信成本差异，直接拼接特征容易产生错配。与此同时，端到端驾驶需要最终输出可执行轨迹，单纯提升检测或语义理解不一定改善碰撞率。V2X-VLM 因此尝试把多源视觉输入、文本化场景描述和规划目标放在同一个语义空间里学习。
+### 输入、任务与前提
+
+路侧相机可以看到车端盲区，但视角和语义差异使直接学习轨迹更困难。本文输入为车端图像 $I_v$、路侧图像 $I_i$ 和文本 $E$；文本包含场景描述、自车当前位置及规划任务。输出是未来地面平面上的二维自车坐标序列，而非逐轮在线执行的方向盘控制。[§3–4.1](https://arxiv.org/html/2408.09251v3#S3)
+
+论文希望大型视觉语言模型把双视角与文字统一起来。需要明确的是：双图首先沿宽度拼接，随后由视觉编码器处理；图文对齐约束的是组合图像和描述的全局表示，并没有显式建立车路相机的几何对应。训练文本先由模型生成再人工 QA；它包含的信息量、正确率和成本都可能影响结果。[§4.2、算法 2](https://arxiv.org/html/2408.09251v3#S4.SS2)
+
+### 相关工作与差异
+
+| 工作与一手来源 | 已有机制 | V2X-VLM 的具体变化与比较边界 |
+| --- | --- | --- |
+| Yu 等，UniV2X，2024；[原文 v2 §3.3–3.7](https://arxiv.org/html/2404.00717v2#S3.SS3) | 路侧传 agent/lane query 和占据概率及其 flow；车端作时间补偿、旋转感知坐标转换、匹配融合，再输出规划。 | V2X-VLM 传原图并使用图文联合 token 生成轨迹，省去显式中间任务但增加原图和文本链路。基线与本文不仅融合器不同，预训练、输入和监督也不同。 |
+| Liu 等，CoDriving，2025 T-PAMI 接收版；[原文 v2 §IV](https://arxiv.org/html/2404.09496v2#S4) | 将计划转成空间请求图，选择 BEV 特征，融合后用 MotionNet 预测 waypoint、PID 执行，且有 CARLA 闭环评测。 | V2X-VLM 研究图文语义与轨迹 token；没有直接在 CoDriving 的同一闭环路线和通信预算下对照，不能仅凭开放环 L2 声称驾驶系统更安全。 |
 
 ## 方法和系统设计
 
-- 输入包括车辆端相机图像、基础设施端相机图像和语义文本 prompt，经过 VLM backbone 做多视角、多模态融合。
-- 论文使用对比学习做视觉特征与文本语义对齐，缓解车端和路侧信息在语义层面的错位。
-- 训练中加入知识蒸馏以稳定复杂端到端任务，评估时关注 L2 error、collision rate、传输成本、扰动鲁棒性和推理效率。
+### 从双图、文本到轨迹
+
+车端与路侧图像在宽度方向串接，视觉编码器输出池化视觉向量；文本编码器输出池化文字向量，两者用于对比对齐，同时进入 Florence-2 的序列生成流程。轨迹通过下一个 token 预测学习，输出再解码成坐标并做 refinement。正文和算法仅给出 refinement 的接口，未提供可复现的具体滤波规则、参数或它对最终分数的独立贡献。[§4.1–4.4、附录 B](https://arxiv.org/html/2408.09251v3#S4)
+
+教师为 Florence-2-large，学生为 Florence-2-base；教师参数冻结，学生视觉编码器也冻结，学生其余可训练参数通过轨迹、对齐和蒸馏损失更新。因而“对齐”主要适配语言及跨模态映射，不应描述为重新训练完整视觉前端。
+
+### 关键公式与监督含义
+
+归一化视觉向量 $\widehat z_i$ 与文本向量 $\widehat h_j$ 的相似度构成批内对比损失，下面保留原文式 3–4、10 的核心：
+
+$$
+\begin{aligned}
+ S_{ij}&=\widehat z_i^\top\widehat h_j/\kappa,\\
+ \mathcal L_{\rm align}&=-\frac1K\sum_{i=1}^{K}\log\frac{\exp S_{ii}}{\sum_{j=1}^{K}\exp S_{ij}}.
+\end{aligned}
+$$
+
+$K$ 是 batch 大小，正确配对为 $i=j$，其他文字为负例；$\kappa$ 是对比温度，具体数值未在本次检查的实现段找到。损失鼓励图文相符，但若不同样本采用几乎相同的模板，批内负例未必代表真实语义冲突；它也没有验证每个危险目标都被描述准确。[§4.2、式 10](https://arxiv.org/html/2408.09251v3#S4.SS2)
+
+第二组将式 5–12 改用明确的词元概率表示，以免把 log-probability 当作概率分布：
+
+$$
+\begin{aligned}
+ p_T&=\operatorname{softmax}(a_T/\mathcal T),\quad p_S=\operatorname{softmax}(a_S/\mathcal T),\\
+ \mathcal L_{\rm KD}&=\mathcal T^2\sum_u p_T(u)\log\frac{p_T(u)}{p_S(u)},\\
+ \mathcal L&=\mathcal L_{\rm token}+0.1\mathcal L_{\rm align}+0.5\mathcal L_{\rm KD}.
+\end{aligned}
+$$
+
+$a_T,a_S$ 为教师、学生 logits，$u$ 遍历预测类别，$\mathcal T=2$；$\mathcal L_{\rm token}$ 是真值轨迹序列的交叉熵。原文式 8 使用类似 PyTorch 调用的写法，数学方向以展开式 11 的 $\operatorname{KL}(p_T\Vert p_S)$ 为准。蒸馏对齐的是模型预测分布，教师错误也可能传给学生，不是独立安全约束。[式 9–12](https://arxiv.org/html/2408.09251v3#S4.SS4)
+
+通信负载可直接复算，原文附录 A 式 13 定义的是字节每秒：
+
+$$
+ B=s^2WHCf.
+$$
+
+$s$ 为每轴缩放，$W,H$ 为图像尺寸，$C=3$ 为颜色通道，$f=2$ Hz 为传输频率。原尺寸 1920×1080 得 12,441,600 byte/s，约 99.53 Mbit/s；文中 BPS 不是 bit/s。该式未计编码压缩、包头、重传和网络调度开销。[附录 A](https://arxiv.org/html/2408.09251v3#A1)
+
+### 训练与推理
+
+训练使用一张 RTX 4090，10 epoch、batch size 4、AdamW、学习率 0.000001 和线性调度。附录 B 的训练流程先用教师产生初始描述、人工修订，再用同一输入计算教师与学生输出；本文没有充分说明教师的驾驶适配 checkpoint 来源，因此不能默认它只是未经驾驶训练的通用权重。[§5.2、算法 2](https://arxiv.org/html/2408.09251v3#S5.SS2)
+
+推理算法同时启动车端描述生成和路侧图像发送，等待两者完成，再由学生生成、解码和平滑轨迹。教师蒸馏分支不必保留，但在线描述模型仍是额外依赖；算法列举 GPT-4o 或 Florence-2-large，却没有明确表 4 是否包含这一独立生成任务和通信等待。训练人工 QA 与在线自动文字的分布差异也未单独量化。[算法 1](https://arxiv.org/html/2408.09251v3#alg1)
 
 ## 关键图与可视化结果
 
-![图 1：V2X-VLM 框架，展示车辆端和基础设施端图像、文本语义、对比对齐、知识蒸馏与轨迹规划输出](https://arxiv.org/html/2408.09251v3/x2.png)
+![原论文图 2：双视角拼接、场景文本、图文对齐和知识蒸馏](../../assets/papers/v2x-vlm-figure-2.png)
 
-这张图说明论文不是把路侧图像粗暴拼到车端输入后面，而是利用语义 prompt 和 VLM backbone 做统一场景理解。读者需要重点看 contrastive alignment 与 knowledge distillation 的位置，因为这两个设计承担了异构信息对齐和训练稳定化的责任。
+先看上半部文本的三项输入，再看明确标出的 Concatenate 箭头；下半部分别是冻结图像编码器的对齐分支和教师到学生的蒸馏。图中的“Perception/Fusion/Planning”是功能概括，不代表提供了独立可审计的检测、几何融合及控制模块。[原图 2](https://arxiv.org/html/2408.09251v3#S4.F2)
 
-![图 2：V2X-VLM 在三类常见驾驶场景中的轨迹规划可视化，连续帧以 1 Hz 展示](https://arxiv.org/html/2408.09251v3/x3.png)
+![原论文图 3：直行、右转和左转的双视角画面及规划轨迹](../../assets/papers/v2x-vlm-figure-3.png)
 
-这张可视化结果把论文从“感知增强”拉回“规划输出”。它能帮助判断路侧视角是否真的改变了 ego 轨迹选择，但仍需要结合碰撞率和通信成本表格一起看，不能只凭轨迹图判断系统可靠。
+列从左到右为直行、右转、左转；每列有相隔 1 s 的两帧。比较 BEV 中的规划点与真值轨迹，可以看到所选场景的道路走向一致性。它展示日志中的轨迹输出，不能仅凭连续帧推断系统已实车闭环执行。[原图 3](https://arxiv.org/html/2408.09251v3#S5.F3)
 
 ## 实验结论与证据
 
-论文报告了 L2 轨迹误差、碰撞率、通信传输成本、扰动鲁棒性和 latency/FPS，并通过消融说明对比对齐、知识蒸馏等组件会影响规划精度。这个证据结构比只做 V2X 检测更贴近应用，因为它同时考虑规划安全、传输代价和实时性。需要特别关注的是，VLM 的语义能力是否在碰撞率上带来稳定收益，而不仅是让模型解释更自然。
+### 设置与指标
+
+论文称数据来自 DAIR-V2X，列出 22,325 车端帧、10,084 路侧帧，但未给出本文轨迹样本的训练/验证/测试数量、序列拆分和文本 QA 的独立划分。不能把数据集概况当作本文测试样本数。L2 是规划与日志位置的距离误差（m），碰撞率是离线规划安全代理（%），均越低越好；这里没有交互式交通对自车行动的反馈。[§5.1–5.3](https://arxiv.org/html/2408.09251v3#S5.SS1)
+
+### 匹配数字与额外资源
+
+| 原表 1 的报告值 | L2 2.5/3.5/4.5 s ↓（m） | 碰撞率 2.5/3.5/4.5 s ↓（%） | 传输 ↓（byte/s） |
+| --- | --- | --- | ---: |
+| UniV2X | 2.59 / 3.35 / 4.49 | 0.00 / 0.44 / 0.59 | 809,000 |
+| V2X-VLM | 1.09 / 1.12 / 1.42 | 0.02 / 0.03 / 0.03 | 12,400,000 |
+
+V2X-VLM 的距离误差明显较小，3.5/4.5 s 碰撞指标也较低，但 2.5 s 的 UniV2X 为 0.00%、本文为 0.02%，所以不能写成全部时域安全性最高。本文全分辨率通信量约为 UniV2X 的 15.3 倍；跨方法差值还混合了图像、语义描述和基础模型监督差异。[表 1](https://arxiv.org/html/2408.09251v3#S5.T1)
+
+### 消融、分辨率和时延
+
+| 表 5，同一 V2X-VLM 框架 | 平均 L2 ↓（m） | 平均碰撞率原表值 ↓（%） |
+| --- | ---: | ---: |
+| 仅车端图像 | 1.49 | 0.03 |
+| 去蒸馏 | 1.42 | 0.03 |
+| 去场景描述 | 1.43 | 0.03 |
+| 去图文对齐 | 1.51 | 0.03 |
+| 完整模型 | 1.21 | 0.03 |
+
+消融支持各组件改善 L2，但以表格保留精度看，平均碰撞率没有区分开这些组件。正文称去路侧输入误差最高，与表中去对齐的 1.51 大于 1.49 不符，本报告按表读数。没有多 seed 或置信区间，无法认定每个模块的碰撞收益。[表 5](https://arxiv.org/html/2408.09251v3#S5.T5)
+
+表 2 把每轴降采样到 0.1 后，通信从约 12.4 MB/s 降至 0.124 MB/s，L2 从 1.21 增至 1.53 m；这是约 100 倍传输减少与 0.32 m 精度代价的交换。表 4 的 353.36 ms/batch 中预处理占 269.01 ms、前向占 72.72 ms。11.32 FPS 与每批约四个样本的吞吐计算一致，不能换成单个驾驶决策已满足 100 ms 截止时间。[表 2、4](https://arxiv.org/html/2408.09251v3#S5.T2)
+
+图像高斯噪声与 10% 文本扰动联合设置的 4.5 s L2 为 1.76 m，基准为 1.42 m，增加 0.34 m。随机文本扰动不等价于关键交通状态被系统性描述错误；也没有带定位误差、通信延迟和突发丢包的完整在线测试。[表 3](https://arxiv.org/html/2408.09251v3#S5.T3)
 
 ## 应用场景与启发
 
-- 应用场景：路侧相机辅助交叉口通行、遮挡区域车辆提前识别、施工或拥堵场景下的语义提示式协同驾驶。
-- 方法启发：基础设施信息进入端到端模型时，可以通过语义对齐和蒸馏约束来控制异构融合，而不是只做 BEV 特征拼接。
-- 讨论问题：车路协同中的语言语义是必要中间层，还是目前主要起到正则化、对齐和可解释化作用。
+- 作者主张：基础模型的语义对齐可以改善多视角理解，推动协同端到端驾驶。
+- 我的判断：证据更直接支持“额外视觉与文本监督改善离线轨迹生成”，尚不能确认对话式推理本身是收益来源；碰撞消融和实际响应时间尤其需要补证据。
+- 待验证假设：在完全相同的双图和训练预算下，仅保留可自动获得的动态目标描述，比丰富人工场景描述更容易迁移部署；应同时测试正确、缺失和关键语义错误的 prompt，而不是只随机改字。
 
 ## 局限与阅读风险
 
-VLM 引入了更高计算成本，也可能带来不可解释的语义错误。文本 prompt 的生成方式、模板化程度和数据集偏差会直接影响结论。另一个风险是基础设施传感器失效、通信降采样和极端遮挡是否被充分覆盖；如果这些退化场景不够强，论文中的鲁棒性结论可能偏乐观。
+作者承认长尾泛化和传输成本需要改善。本次另发现几个影响复现的口径缺口：未公开本次轨迹 split 和文本标注清单；教师适配来源与 refinement 规则未展开；表 1 部分基线平均碰撞值不等于列出三个时域的算术平均，而作者未说明额外聚合规则，因此本报告主要引用逐时域数字。
+
+表 2 的 0.2 缩放行还写作 316×384，与 1080×1920 每轴乘 0.2 的 216×384 不符，不据该行重算负载。以上是可定位的文本/表格不一致，不足以判定实验不存在；它们说明需要代码和原始结果才能确认比较口径。
 
 ## 后续跟进
 
-- 检查数据集来源、文本 prompt 构造方式和是否包含真实基础设施传感器。
-- 复现时同时记录 L2 error、collision rate、传输成本和延迟，不只比较规划误差。
-- 跟进 V2X-VLM 与纯 BEV V2X 方法、纯 VLM 单车方法之间的公平对比。
+### 最小验证与停止条件
+
+- 当前资源（2026-09-12）：[项目页](https://www.huang-zilin.com/V2X-VLM-website/)有论文和案例；[作者代码仓库](https://github.com/zilin-huang/V2X-VLM)只有 README 与 LICENSE，并称正在整理代码。本文的训练配置文件、轨迹权重、文本 QA 数据及 split 尚未在该仓库找到；DAIR-V2X 是已命名公开数据源，本次未下载。
+- 最小实验：取得 split、学生/教师 checkpoint 和 refinement 实现后，固定双图、分辨率与模型，比较人工 QA 描述、同一在线生成器描述、去描述、关键危险语义错误四组；记录逐时域 L2/碰撞、无效坐标率以及 batch=1 的图像采集到轨迹输出 P50/P95 延迟。单张 RTX 4090 是论文训练配置，其他硬件适配未验证。
+- 成功信号：自动描述仍保留相对无文本的配对样本收益；在危险文本错误下不过度改变安全轨迹，且完整在线等待计入后满足事先设定的控制周期。
+- 停止/转向条件：收益主要依赖人工文字、未知教师泄漏或轨迹后处理，或关键文本错误使预测显著更危险，则先补数据和提示协议，停止从表 1 推断实车安全。
+
+### 来源与核验记录
+
+依据 [arXiv:2408.09251v3 全文](https://arxiv.org/html/2408.09251v3)，版本日期 2025-06-19，核验日 2026-09-12；核对 §3–5、式 3–13、表 1–5、附录 A/B 和图 2/3 实际图片。机构由全文首页列出，作者顺序仍保留站点既有元数据；本次没有据 HTML 排版重新排序。相关方法核对 UniV2X v2 §3 和 CoDriving v2 §IV；没有运行模型或下载私有/未公开资源，不构成复现。

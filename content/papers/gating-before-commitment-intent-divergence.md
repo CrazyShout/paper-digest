@@ -2,69 +2,137 @@
 {
   "id": "gating-before-commitment-intent-divergence",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing", "agentic-driving", "end-to-end-autonomous-driving", "autonomous-driving-security"],
+  "tags": [
+    "autonomous-driving-testing",
+    "agentic-driving",
+    "end-to-end-autonomous-driving",
+    "autonomous-driving-security"
+  ],
   "title": "Gating Before Commitment: Anticipating Intent Divergence to Prevent Post-Interaction Decision Failures in Autonomous Driving",
   "source": "arXiv:2608.26074 / https://arxiv.org/abs/2608.26074 / HTML: https://arxiv.org/html/2608.26074v1 / Supplementary video: https://arxiv.org/src/2608.26074v1/anc/supplementary.mp4",
-  "authors": ["Cong Xu", "Ravi Sankar"],
-  "affiliations": ["iCONS Lab, Department of Electrical Engineering, University of South Florida"],
-  "comment": "论文在规划承诺前用 intent-geometry divergence 触发门控修复，并用一次失败的预注册准则和跨域高误报约束结论；其最大价值是证明门控机制可救主案例，同时证明小语言模型并未在匹配误报率下优于几何规则。"
+  "authors": [
+    "Cong Xu",
+    "Ravi Sankar"
+  ],
+  "affiliations": [
+    "iCONS Lab, Department of Electrical Engineering, University of South Florida"
+  ],
+  "comment": "在代理规划器提交轨迹前门控并修复，主案例十次回放均未出界。几何包络其实更早报警但未执行保护；语言分数在匹配误报率下弱于几何规则，收益应限定为当前修复机制。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文研究“安全包络介入时是否已经太晚”：当 ego 在一次会车、超车或让行交互后选错了意图，传统 corridor/envelope 往往等轨迹接近边界才反应。作者在 commitment 前计算 language-guided intent 与几何运动的 divergence，先冻结或修复计划，再由 envelope 做最后 backstop。它值得读的原因不是证据规模大，而是作者保留了预注册失败、跨域高误报和语言模块负消融，没有把一个窄机制包装成通用 agentic safety。
+本文在下一段轨迹交给执行器前，用“意图标签与几何运动是否冲突”触发门控和计划修复。依据 [2608.26074v1](https://arxiv.org/html/2608.26074v1)，它验证的是重建代理栈中的决策干预机制，**不是语言模型已经优于安全包络或通用几何规则**。
+
+- 核心证据：主案例十次确定性回放均被修复；但 gate 在漂移开始后约 67.7 ms 才触发。
+- 主要边界：几何包络更早报警，实验却没有让它执行保护；另外四个事故片段均未恢复到走廊内。
 
 ## 论文要解决的问题
 
-碰撞避免、RSS 或 control barrier 通常检查已形成轨迹是否即将违反安全边界。如果 planner 在交互结束时就误解了双方意图，例如把“对向车辆已通过”理解成“可以继续向路肩偏移”，等几何走廊报警时可能只剩紧急覆盖，无法重新选择行为。
+### 门控究竟放在哪里
 
-论文试图把检测点前移到 maneuver commitment：结构化感知先描述车道、相对运动和交互状态，小语言模型输出 pass/block/merge/yield/uncertain 概率，几何分歧与置信度再组成平滑 divergence。真正需要验证的是门控是否在可恢复窗口内触发、是否比 envelope 更早、以及模型是否比简单几何规则提供了额外信息。
+一次会车后，错误车道估计可能让规划器做不合理的横向修正。本文读取相对位置、航向、车道、遮挡和交互阶段，判断 pass、block、merge、yield 或 uncertain，再限制可提交的动作并修复轨迹。输入已经是结构化文本，小语言模型看不到原始像素，也不直接输出方向盘控制。
+
+### 相关机制不能简单归为“事后反应”
+
+| 工作与自身原文 | 已有机制 | 本文区别及证据边界 |
+| --- | --- | --- |
+| Ames 等，CBF-QP，IEEE TAC 2017，[作者 v2 §III–IV](https://arxiv.org/pdf/1609.06408v2) | 将控制屏障的不变集约束写入实时二次规划，在动力学和可行控制等条件下选取满足安全约束的输入 | 本文用离散意图冲突触发启发式修复，没有同类不变性证明；CBF 不必等发生越界才动作 |
+| Shalev-Shwartz 等，RSS，[v6 §3.1](https://arxiv.org/pdf/1708.06374v6) | 安全距离包含响应时间和制动边界，危险状态对应明确的 proper response | 本文强调提交前修改计划，但其仅记录信号的 envelope 对照并不等价于完整 RSS 保护控制 |
+
+两项原工作提供不同层级的保护定义，论文没有实现与它们等预算、等执行权限的直接比较。
 
 ## 方法和系统设计
 
-- YOLOv8s、ByteTrack、颜色车道线拟合和单目地平面生成每帧结构化 descriptor；远距离 closing speed 不可信时保留噪声标记，而不是把异常值伪装成物理真值。
-- Qwen2.5-0.5B 以 LoRA 在 55,433 个 nuScenes rule-labelled 窗口上微调，只读取五个标签 token 的 logits。merge 和 yield 样本很少，held-out class accuracy 只有 0.23 和 0.05。
-- v1 分数为置信度项与 intent-geometry conflict 的组合，再经 EWMA；首次实验发现 uncertain 被当成半个 conflict，产生大量误报。
-- 预注册 v2 把 uncertain 改成 abstention，并以 `θon=0.35`、`θoff=0.25` 做迟滞门控。gate 位于计划承诺前，安全 envelope 位于其后，便于分别测“修复计划”和“事后拦截”。
+### 从感知到修复
+
+YOLOv8s、ByteTrack、颜色车道线和单目地平面构成感知；道路走廊半自动确定。代理规划器沿感知车道中心做 pure pursuit，并加横向修正。意图模块输出状态后，Red 会抑制交互后的横向修正，并按限幅把计划拉回车道；包络检查已提交的一秒轨迹是否越界。
+
+**实验包络只发拒绝信号，没有执行最小风险动作。** 因而 Envelope Only 仍然出界，不是证明一般包络控制无效。原实现丢失后作者于 2026 年 8 月重建了这套代理栈；真实视频中的生产规划器并未被读取或运行。
+
+### 分数、记忆和弃权
+
+式 (1) 用温度 softmax 得到五类概率，$c_t$ 是最大类别概率；式 (2) 为：
+
+$$
+s_t=(1-c_t)+\lambda d_t,
+\qquad \bar s_t=\alpha\bar s_{t-1}+(1-\alpha)s_t.
+$$
+
+$d_t$ 来自固定的意图—运动查表，几何模式也包括自车已经出现的横向趋势。因此“意图分歧”并不必然来自对其他车辆的提前理解。低置信度本身也会增大分数；它不是校准后的事故概率。
+
+v1 把 uncertain 当作半个冲突。v2 将其冲突项置零，并禁止本周期 uncertain 直接升为 Red；但其 $1-c_t$ 仍进入记忆。v2b 再使用迟滞：
+
+$$
+\mathrm{activate}:\ \bar s_t\geq0.35\land\neg a_t,
+\qquad \mathrm{release}:\ \bar s_t<0.25.
+$$
+
+$a_t$ 表示本周期弃权；activate/release 分别表示触发与解除。$\lambda=1$、$\alpha=0.7$ 保持固定。作者称 v2 仅重调开启阈值；迟滞主要延长已触发状态，并非误报下降的全部来源。
+
+### 训练与在线成本
+
+Qwen2.5-0.5B 使用 LoRA，rank 16、alpha 32，更新 q/k/v/o 投影；训练输入来自 55,433 个 nuScenes 窗口，按场景 80/20 划分。标签由未来两秒运动规则生成，属于训练监督；推理只读当前描述。温度 0.885 在验证集拟合。报告总体准确率 0.889，但 merge/yield 分别只有 0.23/0.05，不能把多数类表现当成可靠社会意图理解。
+
+推理在 RTX 5090 laptop GPU、bfloat16 下运行，200 次调用中位数 32.7 ms；门控加修复约 38 ms。视频感知预先离线处理，**不包含在这些时延内**。没有公开完整优化器、训练步数、冻结模型文件与逐案例运行配置。
 
 ## 关键图与可视化结果
 
-![图 1：结构化感知、意图模块、commitment 前门控修复和安全 envelope 的顺序关系](https://arxiv.org/html/2608.26074v1/fig1_overview.svg)
+![原论文 Figure 1：结构化描述、意图门控、代理规划器和安全包络](https://arxiv.org/html/2608.26074v1/fig1_overview.svg)
 
-Figure 1 是论文最重要的系统边界：gate 不是另一个碰撞检测器，而是位于 planner 提交 maneuver 前的状态机。这个位置选择可以复用于其他 uncertainty critic，即使最后证明 LLM 本身没有额外收益。
+先看下方修复箭头返回规划器，再看已提交轨迹送往包络。它清楚表达两个干预位置，但图中的 backstop 不表示实验真的执行了保护控制。
 
-![图 2：主案例 frame 968 的检测、跟踪、车道拟合和输入 intent module 的序列化描述](https://arxiv.org/html/2608.26074v1/fig4_pipeline.png)
+![原论文 Figure 4：主案例分数与提交、包络、门控时间](https://arxiv.org/html/2608.26074v1/fig3_timeline.svg)
 
-Figure 2 让读者看到模型并不读取原始视频，而读取人工结构化接口；其中远距 closing speed 达 299.7 m/s 的噪声也被披露。门控表现因此同时受 descriptor 工程和语言分类器影响，不能全部归因于 LLM reasoning。
-
-![图 4：v1/v2b divergence、commitment、gate、envelope 与迟滞阈值时间线](https://arxiv.org/html/2608.26074v1/fig3_timeline.svg)
-
-Figure 4 支撑“门控早于 envelope”这一窄主张，并展示迟滞如何让 Red 状态保持。重复 replay 中轨迹决策是确定的，图中误差条主要反映计算时间抖动，不代表十个独立道路案例。
+先定位 $t_0$，再比较 $t_{env}$ 与 $t_{gate}$：包络先报警，门控后修复。下图分数维持在解除阈值之上，Red 因而持续。正文给出的解除阈值为 0.25；图内标签邻近的辅助线存在位置歧义，不能从黄色线重新估计实现阈值。
 
 ## 实验结论与证据
 
-主案例每个配置重复 10 次：baseline 与 envelope-only 都是 10/10 出界，只有 intent gate 的配置保持 0/10 出界；v2b 在漂移开始后 67.7 ms 触发，但比 corridor exit 早 165.6 ms。它证明 gate 能修复这一重建案例，也明确没有满足“漂移前触发”的更强说法。
+### 先区分时间锚点
 
-四个 Car Crash Dataset 片段中，v2b 的预注册 A2 只在 3/5 总案例满足漂移前触发，因此正式判定失败；四个 5 秒 crash clips 在两轮都 0/4 恢复到走廊内。nominal proxy 上误报从 v1 的 1.537/min 降到 v2 的 0.341/min，但 comma2k19 OOD probe 仍有 7.5/min，说明校准无法跨域。
+主案例 $t_0$ 是对向车通过；漂移始于其后约 167 ms，走廊退出在 400 ms。十次回放的决策完全相同，标准差仅反映计算抖动，不是十个独立事故。
 
-语言模块贡献的消融是结论边界：在相同 FP=0.093 下，full score detection 为 0.234、提前标记 21 条、median lead 1.5 s；不使用模型的 geometry-only detection 为 0.800、提前 19 条、lead 2.5 s。block-only 上几何规则也更高，二者都没有提前检测。证据支持的是“门控机制和 abstention 修复有效”，不支持“小语言模型改善检测或判别”。
+| Table I，主案例 | 相对 $t_0$ 的检测时刻 | 出界 / 修复 |
+| --- | --- | --- |
+| Baseline | 无干预 | 10/10 出界 |
+| Envelope Only | $100.0\pm0.0$ ms | 10/10 出界；仅记录拒绝 |
+| v1 Full | $239.6\pm2.3$ ms | 0/10；修复 |
+| v2b Intent / Full | $234.4\pm3.7$ ms | 0/10；修复 |
+
+v2b 比漂移晚 67.7 ms、比退出早 165.6 ms；其价值是这个窗口内仍能改计划。作者预注册要求五案例全部在漂移前触发，实际仅 3/5，明确判失败。四个 CCD 片段均为五秒事故前剪辑，两轮恢复率均为 0/4；提前量与可恢复性不是同一指标。
+
+### 语言模块的作用有多大
+
+| 原表和口径 | 完整分数 | 几何规则 / 对照 |
+| --- | --- | --- |
+| Table V，匹配 FP=0.093 | 检出 0.234；提前 21 条；中位提前 1.5 s | 检出 0.800；提前 19 条；2.5 s |
+| Table IV，703 周期、5.86 分钟 nominal proxy | v2b：2 次，0.341/min | v1：9 次，1.537/min |
+| 同表，8 分钟 comma2k19 | v2b：60 次，7.5/min | v1：203 次，25.4/min |
+
+Table V 使用 394 条规则正例、1,863 条其他轨迹，也是调门限的数据，不能视为独立留出验证。几何规则还共享标签的运动成分；结论限于这一口径。nominal 为 2 Hz，事故与公路为 10 Hz，固定 $\alpha$ 导致平滑时间常数不同，跨集合每分钟误报不能直接公平比较。
+
+作者也披露曾有消融开关被忽略、三变体都运行 full 的缺陷。修正后的五案例结果保留部分速度优势及弃权否决作用，但不足以推翻匹配误报率下的负结果。
 
 ## 应用场景与启发
 
-- 应用场景：planner commitment monitor、交互意图冲突检查、VLA safety critic、故障前置门控和可恢复性测试。
-- 方法启发：安全模块应分别报告 detection、lead、recoverability 和 false trigger，不能用“更早报警”替代“能够恢复”。
-- Agentic 启发：LLM critic 必须与模型无关规则在 matched false-positive 下比较；否则更频繁触发会伪装成更强 anticipation。
-- 讨论问题：如果几何规则已经更准，语言模块应该负责哪类几何不可约的规则、角色或社会意图，才能证明存在增量价值？
+- **作者主张：** 把异常交互解释转成承诺前修复信号。
+- **我的判断：** 适合研究干预时机和弃权语义；当前证据没有隔离语言模型增益，也没有公平比较实际执行的安全保护。
+- **待验证假设：** 给门控与包络相同观测、限幅和执行权限后，承诺前修复仍可比提交后保护减少横向偏移与紧急控制代价；这一收益未必需要语言模型。
 
 ## 局限与阅读风险
 
-原实现和 artifacts 已丢失，论文使用 2026 年 8 月重建的 surrogate stack，不是生产 planner。感知离线预处理且未计入延迟；道路 corridor 半自动，标签由未来运动规则生成，v2 重用 v1 数据，nuScenes tracks 也参与阈值校准。五个 failure 过少，无法支持跨场景泛化。
-
-论文还披露过 replay driver 忽略消融开关、三种变体实际都运行 full score 的缺陷，虽然后续修正并重算，但公开源码包没有代码、LoRA adapter、日志、预注册文件或文中 artifact bundle，只有 TeX、图片和补充视频。arXiv comment 只是 submitted to IROS 2026 PPNIV workshop，官方通知尚未发生，不能写成已接收。
+远距单目速度可出现 299.7 m/s，作者只做噪声标记而未裁剪；OOD 黄线识别失败进一步污染意图。道路走廊来自同一感知拟合，缺独立道路真值。规则未来标签、少数类低准确率、五个筛选失败和重用校准数据，共同限制对新交互的结论。
 
 ## 后续跟进
 
-- 以公开日志重建 matched-FP 几何基线，先确认门控机制，不把复现成功归因于语言模型。
-- 扩展到模型首次看到其他车辆语义线索、ego 几何尚未异常的案例，测试语言模块真正可能有增量的区域。
-- 将门控输出接到可恢复轨迹生成器，并分别统计提前量、修复率、误触发成本和 OOD 拒绝率。
+### 最小验证与停止条件
+
+- **资源（2026-09-12）：** arXiv 正文和补充视频可访问，官方源码包实际仅含 TeX、类文件、四张 PDF 图和视频，没有代码、LoRA、日志或预注册文件。因而预注册时间顺序是作者报告，未由公开原始记录独立确认；arXiv 仅注明投往 IROS 2026 PPNIV workshop，未核实接受。
+- **最小实验：** 先取得可执行代理栈及 20 个新交互/20 个正常片段。统一到 10 Hz，固定感知、动力学、控制限幅和每周期 100 ms 预算，做“语言/几何触发 × 承诺前修复/提交后实际保护”四组，所有组都真正执行干预。门限仅在独立正常校准片段调到相同事件误报率，每个留出片段四组各回放一次；另存无干预轨迹。
+- **成功信号：** 前置修复在两类触发器下均降低最大横向误差、出界率和控制突变，且未增加正常路段干预；按片段比较，不靠重复计算次数扩充分母。
+- **停止或转向：** 若同权限包络已同样有效，或优势仅由更早获得信息、更多算时产生，则不支持位置优势；若几何组同样好，保留门控机制，移除语言增益主张。
+
+### 来源与核验记录
+
+已读固定 v1 §III–VI、式 (1)–(3)、Table I–V；官方 Figure 1/4 原 SVG 分别栅格化后实际打开，未改内容。相关机制来自 CBF-QP 与 RSS 各自原文；只检查文献和源码包目录，未运行回放或模型。

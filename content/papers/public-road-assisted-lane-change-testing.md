@@ -2,70 +2,129 @@
 {
   "id": "public-road-assisted-lane-change-testing",
   "tag": "autonomous-driving-testing",
-  "tags": ["autonomous-driving-testing", "autonomous-driving-security"],
+  "tags": [
+    "autonomous-driving-testing",
+    "autonomous-driving-security"
+  ],
   "title": "Beyond the Proving Ground: Independent Public-Road Testing of Assisted Lane Change Systems using LiDAR",
   "source": "arXiv:2608.26669 / https://arxiv.org/abs/2608.26669 / PDF: https://arxiv.org/pdf/2608.26669",
-  "authors": ["Marcello Cellina", "Akos Kriston", "Antonio Migneco", "Davide Maggi", "Stefano Favelli", "Fabrizio Re", "Fabrizio Minarini", "Andrea Nuovo", "Riccardo Dona", "Biagio Ciuffo"],
-  "affiliations": ["European Commission Joint Research Centre"],
-  "comment": "JRC 团队用车载 LiDAR、RTK-GNSS 和三车协同，在法国 A31 公路独立测试量产 Assisted Lane Change 对 UNECE R79 临界距离的遵从性。27 次试验中出现 6 次潜在越界，考虑测量不确定性后 3 次仍达 99% 置信，但证据只覆盖一个匿名 VUT。"
+  "authors": [
+    "Marcello Cellina",
+    "Akos Kriston",
+    "Antonio Migneco",
+    "Davide Maggi",
+    "Stefano Favelli",
+    "Fabrizio Re",
+    "Fabrizio Minarini",
+    "Andrea Nuovo",
+    "Riccardo Dona",
+    "Biagio Ciuffo"
+  ],
+  "affiliations": [
+    "European Commission Joint Research Centre"
+  ],
+  "comment": "用 LiDAR 在功能地理围栏内独立测量辅助换道，并与 R79 距离参照比较。27 次请求中作者识别 6 次潜在越界，但跨线测量缺失、时间误差和原文案例编号仍需澄清，不能外推市场失效率。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文的贡献不是一个新的 ALC controller，而是一套不依赖厂商配合、能在量产功能真实 geofence 内执行的公共道路合规测试方法。测试车队用 LiDAR 估计 approaching vehicle 的距离和速度，用少量 RTK fixed 片段校准测量误差，再把每次 lane change 的实际轨迹放回 UNECE Regulation No. 79 的 critical-distance boundary；它把“证明场测试通过”与“真实 ODD 中每个边界组合都遵从规则”明确区分开。
+本文把辅助换道测试带到功能允许使用的真实高速路，用车载 LiDAR 测量相对距离和速度，并与论文采用的 R79 临界距离比较。依据 [2608.26669v1 固定 PDF](https://arxiv.org/pdf/2608.26669v1)，贡献在独立测量与边界覆盖；**一次单车试验不能估计市场不合规率，也不等于事故风险评定**。
+
+- 核心证据：27 次换道请求中 18 次完成、9 次抑制；作者把 6 次完成操作列为潜在临界距离越界，其中 3 次被其不确定性分析判为较有把握。
+- 主要边界：有完成操作缺少跨线时刻测量，时间标注为一秒分辨率，误差传播与案例编号仍有未解释之处。
 
 ## 论文要解决的问题
 
-量产 ADAS 的 type approval 通常在封闭 proving ground 上运行少量、可重复的标准场景。Assisted Lane Change 又经常被 geofence 到指定高速路，独立机构若没有厂商协作，可能连功能都无法在试验场触发。与此同时，公共道路上 RTK-GNSS 会因隧道、峡谷和卫星可见性失效，传统高精度双车测量不具备持续可用性。
+### 独立测试为何困难
 
-论文选择 R79 的 Suppression of Lane Change Procedure 作为可测责任：当后车在 lane crossing 时低于由双方速度、0.4 s reaction、3 m/s² deceleration 和 1 s final headway 共同定义的 critical distance，VUT 应拒绝或中止 ALC。问题因此是能否用独立 LiDAR instrumentation 在真实高速路上判断量产系统是否越过该边界。
+量产辅助换道可能受高速路地理围栏限制，独立机构难以在试验场直接启用。公共道路的 RTK 定位又未必连续可用。本文用外部仪器观察功能，输入为车辆轨迹、转向灯和跨线时刻，不依赖厂商提供内部规划状态；输出是请求完成/抑制，以及实际间距相对于参照边界的位置。
+
+### 相关工作的实际范围
+
+| 工作与自身原文 | 已有机制 | 本文区别 |
+| --- | --- | --- |
+| Mattas 等，[2508.09233v1 的 Methods](https://arxiv.org/pdf/2508.09233v1) | 在 I-24 公路用 GNSS/IMU 和视频观察多辆量产车；按换道轨迹筛选事件，安全子集分析 161 次有后车的操作，并以 R171 距离、模糊安全模型和后车减速度比较 | 本文改用 LiDAR 相对测量、指定速度距离组合，并记录系统抑制的请求；不能说此前没有量产车公路换道研究 |
+| Madigan 等，PLOS ONE 2018，[Method](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0192190) | 29 名参与者在模拟器内重复体验手动、需接管后换道的部分自动化、由拨杆请求自动换道，比较启动时机、间距和控制 | 本文评测量产功能与法规参照的关系，研究对象是系统行为；与人因模拟结果不构成性能排名 |
+
+不同工作中的法规、驾驶责任、事件筛选和交通条件均不同，不能直接合并越界比例。
 
 ## 方法和系统设计
 
-- 三车编队包含一个匿名量产 VUT、一个从相邻车道接近的 Take-Over vehicle 和一个 support vehicle。support 通过 ACC 保持与 VUT 的间距，并作为触发 ALC 的相对位置标记，减少人工驾驶误差。
-- TO 搭载 Ouster OS1 128-layer LiDAR、commercial vehicle detection/tracking 和相机；VUT、TO、support 搭载 GNSS/INS。LiDAR 以 10 Hz 输出目标位置、速度、航向和尺寸，RTK 只用于量化 LiDAR precision，不作为持续测试信号。
-- 测试矩阵覆盖 VUT/TO 100-130 km/h、20-60 m 触发距离和不同 delta-v。turn indicator activation 为 TSP，VUT 跨线为 TSM；每次 TSM 的 bumper-to-bumper distance 与 R79 critical curve 比较。
-- 测量不确定性来自 LiDAR position/velocity error 和人工跨线标注的 1 s resolution。作者用 RTK integer-fix 重叠片段估计标准差，再判断潜在 overshoot 是否达到 3-sigma。
+### 三车协作和离线测量
+
+2026 年 3 月，车队沿法国 A31 第戎至南锡方向行驶。VUT 是一辆匿名、具 R79 ACSF-C 辅助换道的量产车；TO 在相邻车道接近；support 在 VUT 后方用 ACC 保持间距，兼作请求启动的位置标记。当 TO 与 support 对齐，VUT 驾驶员打开方向灯。
+
+LiDAR 检测跟踪离线输出 10 Hz 的位置、速度、航向和尺寸；相机用于人工标注转向灯启动 TSP 和跨线 TSM。RTK 固定解只用于校准测量误差，不是每次试验必须具备的持续输入。本文没有训练新感知或控制网络，也没有修改量产 ALC 策略。
+
+设备归属存在原文矛盾：方法与 Figure 2 把 LiDAR 放在 TO，随后设备段却将 Ouster OS1 和相应 GNSS 系统写在 VUT。可以确认使用了该仪器体系，不能据这些相互冲突的句子重建确定的安装清单。
+
+### 临界距离与单位
+
+固定论文式 (1) 为：
+
+$$
+S_{crit}=\Delta v\,t_B+\frac{(\Delta v)^2}{2a}+v_{ALC}t_G,
+\qquad \Delta v=v_{app}-v_{ALC}.
+$$
+
+$t_B=0.4$ s 为后车开始制动前的反应时间，$a=3\,\mathrm{m/s^2}$ 为减速度界限，$t_G=1$ s 为最终间隔。速度必须换为 m/s，结果才是米。三项分别表示反应阶段相对距离消耗、减小速度差所需距离及剩余时距。后车速度差很小时，第三项仍不为零。
+
+实际比较在跨线 TSM 使用保险杠间距，而不是只看拨杆时 TSP 的距离。论文参考曲线与 [R79 文本 §5.6.4.7](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=OJ:L_202500003)的公式相符；该文本还将后车速度封顶为 130 km/h，本试验速度范围不超过此值。论文没有公开该车批准所适用的具体修订系列，本报告据此分析作者的参照测试，不另作法律裁定。
+
+### 不确定性如何进入判定
+
+可以把测量余量写为 $m=S_{measured}-S_{crit}$；负值是论文所称的潜在 overshoot，但必须同时考虑位置、双方速度和 TSM 误差。作者仅在两车均有 RTK integer fix 的片段估计 LiDAR 误差：位置标准差 0.83 m、速度标准差 1.40 km/h。相机标注的一秒分辨率不是已经给出的时间标准差，不能直接并入高斯误差公式。
 
 ## 关键图与可视化结果
 
-![图 1：27 次 ALC 试验在 VUT/TO 速度、速度差和触发距离上的覆盖](../../assets/papers/public-road-assisted-lane-change-testing-figure-1.png)
+![原论文 Figure 3：换道请求与跨线测量的速度和距离覆盖](../../assets/papers/public-road-assisted-lane-change-testing-figure-1.png)
 
-Figure 3 说明这不是随机自然驾驶日志，而是受现实交通限制的 factorial test matrix。绿色/红色分别表示 completed 与 suppressed，蓝色表示 completed 后仍在 LiDAR range 内、可在 TSM 测量的样本；3 个 completed maneuvers 因超出 LiDAR range 没有 TSM measurement，这一缺失不能被忽略。
+四格分别看两车速度、速度差和距离。红/绿是抑制/完成请求，蓝色是完成操作在 TSM 的可测值；不同时间点不能当同一分布。3 次完成操作超出 LiDAR 跟踪范围，因此蓝色样本少于完成请求。
 
-![图 2：VUT 115 km/h 时实际轨迹与 R79 critical-distance 曲线](../../assets/papers/public-road-assisted-lane-change-testing-figure-2.png)
+![原论文 Figure 4 的 115 km/h 子图：实际轨迹与临界距离边界](../../assets/papers/public-road-assisted-lane-change-testing-figure-2.png)
 
-Figure 4 的 115 km/h panel 把每次试验的 delta-v、纵向距离与时间轨迹放在同一合规平面。橙色阴影是低于 R79 critical distance 的区域；绿色 completed 轨迹若在 TSM 落入该区域，就是潜在 Critical Completed case。插图放大了低 delta-v 边界附近最难判断的样本。
-
-![图 3：考虑不确定性后的 27 次试验最终分类](../../assets/papers/public-road-assisted-lane-change-testing-figure-3.png)
-
-Figure 5 将证据压缩为最终 ledger：12 次 non-critical completed、6 次 critical completed，其中 3 次是 99% 置信 overshoot、3 次不显著；另有 2 次 non-critical suppressed 与 7 次 critical suppressed。它展示的是这辆 VUT 在该试验域的行为分布，不是市场总体失效率。
+固定 VUT 速度后，横轴为速度差，纵轴是带符号的后车纵向位置。橙色区域表示按该曲线不足的间距；看方形跨线标记，不能把整段轨迹上的任意越界都算成失败。红色抑制操作没有真正跨线，原文未充分说明它们绘图及分类时采用的替代参考时刻。
 
 ## 实验结论与证据
 
-2026 年 3 月的 A31 French motorway campaign 共触发 27 次 ALC，18 次完成、9 次被系统抑制，速度范围 100-130 km/h、触发距离 20-60 m。18 次 completed 中有 6 次在 TSM 的测量距离低于 R79 critical distance，即 33% 的 completed sample 被标为 potential overshoot；其中 3 次在考虑误差后仍达到 3-sigma/99% confidence。
+### 请求、完成与可测样本
 
-LiDAR 与 RTK fixed 重叠数据给出的 position standard deviation 为 0.83 m、velocity standard deviation 为 1.40 km/h。关键现实约束是两车同时拥有 RTK integer fix 的数据只占 2.3%，反而说明 LiDAR 的可用性高于 RTK；但 lane crossing 仍由人工相机标注，时间 resolution 只有 1 s。
+| 原文 Results / Discussion | 报告值 | 分母或解释 |
+| --- | --- | --- |
+| 换道请求 | 27 次 | 速度 100–130 km/h，触发距离 20–60 m |
+| 完成 / 抑制 | 18 / 9 次 | 单辆 VUT 的受控请求，不是自然驾驶随机样本 |
+| 潜在距离越界 | 6 次 | 作者以 6/18≈33% 表示完成组比例 |
+| 作者称较高把握的越界 | 3 次 | 其空间与时间不确定性分析所得，未提供完整复算数据 |
+| 两车共同 RTK fixed | 2.3% | 全记录中可用于高精度参照的覆盖比例 |
 
-六个 overshoot 都出现在较小 delta-v 区域，测试人员也没有主观感到危险。这意味着结果更接近“规则边界与量产实现的低相对速度 edge case”而非六次 imminent crash。现行 type-approval 只要求一个 VUT 低于 100 km/h 的 critical abort case，本研究覆盖的高速低 delta-v 组合正是 proving ground 程序没有充分覆盖的 ODD 区域。
+6/18 包含全部完成请求，而其中 3 次没有 TSM LiDAR 测量；这些缺失如何进入最终 12 次非临界完成分类未交代，不能默认为已测安全。六个潜在越界集中在低相对速度区，测试人员没有主观感到危险；这不消除形式上的边界问题，也不证明发生紧急碰撞威胁。
+
+### 证据仍需澄清
+
+原文将 3σ 与 99% 置信并称；若采用标准高斯双侧区间，3σ 约为 99.73%，且速度/距离协方差与一秒时间误差的传播过程没有展开。因此保留为作者判定，不标为本报告独立重算的置信证明。
+
+案例清单将第六项列为 16c，而较高把握段落写 16d；未有原始日志可消歧。TO 的 ACC 还会对 VUT 横向移动提前减速，TSP 至 TSM 的延迟也不固定，所以实际覆盖没有严格等于设计中的全因子矩阵。
 
 ## 应用场景与启发
 
-- 应用场景：监管机构的 in-service monitoring、量产 ADAS market surveillance、geofenced function 的独立复测和 R79 revision evidence。
-- 测试启发：把 regulation boundary 直接变成 scenario coverage coordinate；相比按道路片段收集日志，这更容易知道哪些组合尚未被验证。
-- 工程启发：高可用 LiDAR 可以承担公共道路相对测量，稀疏 RTK fixed 片段只用于 uncertainty calibration，从而降低对连续高精度 GNSS 的依赖。
-- 讨论问题：当规则在低 delta-v 区域给出保守边界而驾驶员主观风险很低时，应修订规则、改进实现，还是增加更接近伤害后果的独立 safety metric？
+- **作者主张：** 为独立市场监测和在用功能核查提供可行测量工具。
+- **我的判断：** 用边界余量组织测试，比单看完成率更有解释力；当前首要改进是事件时间、缺失数据和误差账本。
+- **待验证假设：** 在相同 LiDAR 轨迹下，帧级跨线标注及联合误差传播可减少边界案例的分类不稳定性；它可能改变越界数量，并不预设数量应增加。
 
 ## 局限与阅读风险
 
-研究只测试一个匿名 VUT 的一个 ALC implementation，27 次操作远不足以估计车队或市场 prevalence。试验发生在单条法国高速、有限天气和交通条件下，system version、车辆品牌和具体传感策略因商业/监管原因没有公开，难以跨产品复现。
-
-LiDAR 位置误差为 0.83 m，人工 TSM 标注只有 1 s resolution；三次不显著 overshoot 对这些误差高度敏感。support vehicle 的 ACC、TO 对 VUT lateral motion 的提前减速，以及不固定的 TSP-to-TSM delay 都改变了目标 test matrix。论文没有开放原始轨迹、标注、VDT pipeline 或自动化 scenario controller，当前也只有 arXiv v1。
+只有一辆匿名 VUT、一条高速路和 27 次操作，未公开软件版本和厂商内部判据。LiDAR 商业跟踪链与稀疏 RTK 参照的误差可能随距离和遮挡变化，单一总体标准差不能自动覆盖所有位置。文中的潜在越界比例不能外推到品牌、市场或其他法规体系。
 
 ## 后续跟进
 
-- 在多个 VUT、软件版本和国家高速路上复现同一 R79 boundary coverage map，避免把单车 edge case 外推为行业结论。
-- 把 lane marking crossing 改为高帧率自动视觉/LiDAR event detection，显著降低 1 s temporal uncertainty。
-- 公开去标识化的相对轨迹、sensor validity mask 和 uncertainty calculation，允许第三方重算 3-sigma 分类。
-- 将规则越界与 TTC、required deceleration、driver intervention 和 near-miss 指标并列，区分形式不合规与实际风险。
+### 最小验证与停止条件
+
+- **资源（2026-09-12）：** 固定 PDF 和原图可读；未从作者一手入口及论文链接核实原始轨迹、视频时间标注、检测跟踪代码或完整不确定性脚本。车辆是商用系统，本文没有可核实的训练数据或模型权重发布。
+- **最小实验：** 取得原相机帧时间戳与 LiDAR 日志后，仅做离线重算。固定同一批可测操作、距离定义与轨迹处理，对比一秒标注和双人独立帧级标注；误差传播两组都使用同一预先固定置信水平、同一标定残差与每例 1,000 次配对抽样。缺失 TSM 保留为缺失，不补成安全样本。用未参与标注调参的操作评估余量区间宽度、分类翻转和标注者一致性。
+- **成功信号：** 精细标注组区间缩窄且分类对标注者及合理同步偏移更稳定，不牺牲独立参照下的覆盖率。
+- **停止或转向：** 若空间跟踪偏差仍主导不确定性，或所谓改进只是丢掉难测操作，转向距离分层校准，不再把精细时间标注当作充分解决方案。
+
+### 来源与核验记录
+
+已读固定 v1 全文、式 (1)、Figure 1–5 及误差讨论；分别打开保留的 Figure 3 与 Figure 4 子图。相关比较来自 Mattas v1 Methods 和 Madigan 原文 Method，法规公式用官方欧盟公布文本交叉核对。未接入车辆、重算原始数据或执行道路测试。

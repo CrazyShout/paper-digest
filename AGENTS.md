@@ -14,8 +14,8 @@ The main data source is Markdown content under `content/`, with JSON frontmatter
 - CI Node version: Node 22, configured in `.github/workflows/deploy-pages.yml`.
 - Local required Node version: `>=22.12 <25`, declared in `package.json`.
 - Literature-review validation executes `rg` against raw Markdown; CI installs ripgrep explicitly.
-- Site framework: Astro `^5.16.2`, static output.
-- Frontend: Astro components plus vanilla JavaScript and CSS in `public/assets/`.
+- Site framework: Astro `^7.2.4`, static output.
+- Frontend: React 19 and Fumadocs 16 notebook layout with Astro content slots; Tailwind CSS 4 and `src/styles/global.css`. The Idea direction tabs use `public/assets/ideas.js`.
 - Content format: Markdown files with JSON frontmatter, parsed by local code in `src/lib/content.js`.
 - Comments backend: optional Cloudflare Worker in `worker/comments-worker.mjs`.
 - Database: none.
@@ -26,6 +26,7 @@ The main data source is Markdown content under `content/`, with JSON frontmatter
 config/
   research-interests.json   # Long-term topic/tag configuration
   runtime.json              # Public runtime config, currently commentsEndpoint
+  remote-figure-dimensions.json # Measured dimensions for official remote figures
 content/
   README.md                 # Content authoring instructions
   reported-papers.md        # Deduplication ledger for reported papers
@@ -33,13 +34,18 @@ content/
   papers/                   # One Markdown file per paper report
   templates/                # Content templates and selection rubric
 src/
-  components/               # Astro UI components
+  components/               # Astro content components and React notebook/search/comments
   layouts/                  # Base page layout
   lib/content.js            # Reads config/content and converts limited Markdown to HTML
+  lib/navigation.js         # Shared notebook data and navigation tree
+  lib/notebook-search.js    # Explicit search projection, without audit ledgers
+  lib/content-cache.js      # Request snapshots and production build cache
+  styles/global.css         # Notebook styles and responsive content styles
   pages/                    # Static pages and generated asset endpoints
 public/assets/
-  site.js                   # Client-side navigation, search, notes, comments
-  styles.css                # Site styles
+  ideas.js                  # Idea direction tabs
+  papers/                   # Original official figures
+  paper-previews/           # Generated responsive WebP variants; ignored
 scripts/
   validate-content.mjs      # Content integrity checks
 worker/
@@ -49,7 +55,7 @@ worker/
   deploy-pages.yml          # GitHub Pages deployment
 ```
 
-Generated or local-only directories such as `dist/`, `.astro/`, `.npm-cache/`, `node_modules/`, `worker/.wrangler/`, and `.claude/` should not be edited manually.
+Generated or local-only directories such as `dist/`, `.astro/`, `.generated/`, `public/assets/paper-previews/`, `.npm-cache/`, `node_modules/`, `worker/.wrangler/`, and `.claude/` should not be edited manually.
 
 ## Setup Commands
 
@@ -78,7 +84,7 @@ wrangler deploy
 npm run dev
 ```
 
-Starts Astro development server with `ASTRO_TELEMETRY_DISABLED=1`. Use the URL printed by Astro; the exact local port is not guaranteed.
+Prepares local figure previews, then starts Astro with `ASTRO_TELEMETRY_DISABLED=1`. Use the URL printed by Astro; the exact local port is not guaranteed. After adding or replacing a local figure during development, rerun `npm run images:prepare`.
 
 ```bash
 npm run preview
@@ -100,7 +106,7 @@ The confirmed validation command is:
 npm run validate
 ```
 
-This runs `node scripts/validate-content.mjs` and checks Markdown frontmatter, IDs, tags, digest references, duplicate arXiv IDs/titles, and `content/reported-papers.md` consistency.
+This runs `scripts/validate-content.mjs` and `scripts/validate-idea-center.mjs`, checking content integrity, references, deduplication, and Idea review contracts.
 
 Unit tests:
 
@@ -109,7 +115,8 @@ npm test
 ```
 
 This runs the Node test suite for content projection, review-center contracts,
-raw-corpus ripgrep audits, idea-center data, and email publishing helpers.
+raw-corpus ripgrep audits, idea-center data, search ranking and pagination data,
+content caching, figure preparation, comment persistence, and email publishing helpers.
 
 End-to-end tests: not confirmed.
 
@@ -119,7 +126,7 @@ End-to-end tests: not confirmed.
 npm run build
 ```
 
-This runs `npm run validate` first, then `astro build` with telemetry disabled. Output goes to `dist/`.
+This runs `npm run validate`, generates local figure previews with `npm run images:prepare`, then runs `astro build` with telemetry disabled. Output goes to `dist/`. Figure originals are preserved. Builds do not fetch remote figure metadata.
 
 GitHub Pages deployment uses:
 
@@ -135,14 +142,16 @@ Do not commit `dist/`; it is an ignored build artifact uploaded by GitHub Action
 
 - Use ES modules and keep the existing semicolon style.
 - Use two-space indentation in JavaScript, Astro, JSON, and Markdown examples.
-- Keep frontend behavior in vanilla JavaScript unless the project explicitly adopts another library.
+- Keep notebook, search, and comment interactions in the existing React/Fumadocs components. Use vanilla JavaScript for the existing Idea direction tabs; do not reintroduce the retired homepage shell.
 - Keep content frontmatter as strict JSON between `---` delimiters. Do not use YAML syntax, comments, or trailing commas.
 - Keep paper IDs lowercase with numbers and hyphens, and make each `id` match its filename without `.md`.
 - Use only topic IDs that exist in `config/research-interests.json` for `tag` and `tags`.
 - Do not use affiliation placeholders such as `作者单位见论文 PDF`, `unknown`, or `not confirmed`. If arXiv API lacks affiliations, inspect the paper PDF, arXiv source, project page, or venue page and record verified institutions.
 - Every new paper report must include at least one official figure image, preferably two. Use arXiv HTML/project-page URLs when available; otherwise extract a figure from the official PDF/source into `public/assets/papers/` and reference it from paper detail Markdown as `../../assets/papers/<file>.png`.
+- After adding a new remote arXiv figure URL, run `npm run images:measure-remote` and include the measured `config/remote-figure-dimensions.json` update. Failed measurements are reported; never guess dimensions.
 - Prefer existing helper functions in `src/lib/content.js` for content parsing and HTML escaping.
-- `markdownToHtml` supports only a limited Markdown subset: headings, paragraphs, bullet lists, images, links, and `**strong**`. Do not assume tables, raw HTML, fenced code blocks, or arbitrary Markdown extensions will render.
+- New or substantially rewritten paper reports follow `content/templates/paper-report-template.md`: keep the eight level-two headings and use level-three subsections for mechanisms, equations, related-work comparisons, experimental evidence, and a concrete follow-up plan. Verify comparisons against each related work's own primary source; distinguish author claims from report analysis.
+- `markdownToHtml` supports headings (levels 1–3), paragraphs, bullet lists, images, links, bold text, inline code, pipe tables, and `$...$` / `$$...$$` math. Tables need outer pipes and consistent column counts; display-math delimiters may each occupy their own line. KaTeX renders during the build with untrusted commands disabled. Escape literal dollars as `\$`. Raw HTML, fenced code blocks, Obsidian syntax, and arbitrary extensions remain unsupported.
 
 ## Dynamic Literature Review Workflow
 
@@ -209,15 +218,18 @@ or `workshop-accepted` while the formal page is still unavailable.
 
 - `astro.config.mjs` sets `output: "static"` and `outDir: "./dist"`.
 - `src/lib/content.js` reads `config/` and `content/` from `process.cwd()`. Commands should be run from the repository root.
-- `src/pages/index.astro` renders the shell and loads generated scripts:
-  - `assets/runtime-config.js`
-  - `assets/data.js`
-  - `assets/site.js`
-- `src/pages/assets/data.js.js` generates JavaScript that assigns `window.PAPER_DIGESTS`.
-- `src/pages/assets/runtime-config.js.js` generates JavaScript that assigns `window.PAPER_DIGEST_RUNTIME`.
+- Pages share `NotebookDocs.jsx` with a Fumadocs notebook, lazy search dialog, and optional digest comments.
+- The homepage is a compact reading index; the full research landscape lives at `src/pages/landscape/index.astro`. Keep its search record and the homepage's legacy anchor redirects consistent when changing routes.
+- `src/styles/reading.css` controls the shared reading layout. Preserve full abstracts behind the expand control and keep author/institution metadata below titles; avoid adding decorative homepage visuals.
+- `getNotebookData()` builds navigation and page data; `getNotebookSearchIndex()` separately generates the search index. Do not reattach the index to every page's data or index entire audit objects.
+- `content-cache.js` shares promises within each data snapshot and across production build routes. Development requests and direct Node validation calls see fresh data.
+- Historical local-corpus audits can use the hash-pinned archive in `config/content-quality.json` only when the entire review fingerprint matches its recorded binding. `review-corpus-snapshot.js` restores the captured raw Markdown to a temporary directory so validation still executes `rg`; any changed review uses the current corpus. Do not regenerate or rebind the archive just to silence an audit failure. Its capture provenance is distinct from the original search date.
+- Paper identity deduplication reads the primary `source` frontmatter. Related-work citations in the body are not additional identities of the report.
+- `src/pages/assets/notebook-search.json.js` exposes the complete searchable reading content. Its `.json.gz.js` sibling emits a compressed static asset; `search-index-client.js` loads it with native decompression and falls back to JSON for older browsers or unavailable assets. Keep both projections identical. The browser prepares text once, ranks title matches first, and offers type filters and more results.
 - `src/pages/assets/research-interests.json.js` exposes `config/research-interests.json` as JSON.
-- `src/pages/papers/[id]/index.astro` statically generates one detail page for each paper ID.
-- `public/assets/site.js` handles digest navigation, search, local notes, optional remote comments, and UI state in `localStorage`.
+- `src/pages/papers/[id]/index.astro` statically generates detail pages, adding measured figure dimensions and responsive previews while linking to original images.
+- `scripts/prepare-paper-images.mjs` produces ignored WebP variants and `.generated/paper-images.json`; changed source bytes get new content-addressed URLs. Do not replace original paper images with previews.
+- Comment validation and the 1200-character limit are shared through `src/lib/comment-contract.js`. Failed local persistence must retain the editor's draft.
 - `index.html` at the repository root redirects to `dist/` for quick local static viewing. The deployed Pages workflow uses `dist/` directly.
 
 ## Database, Environment Variables, and Secrets
@@ -241,8 +253,9 @@ or `workshop-accepted` while the formal page is still unavailable.
 - `node_modules/`
 - `.npm-cache/`
 - `.astro/`
+- `.generated/`
+- `public/assets/paper-previews/`
 - `dist/`
-- `docs/`
 - `.claude/`
 - `.DS_Store` files
 - `worker/.wrangler/`
@@ -250,6 +263,8 @@ or `workshop-accepted` while the formal page is still unavailable.
 - `.github/workflows/` unless the task is specifically about CI or deployment
 - `package-lock.json` unless dependencies actually change
 - `index.html` unless the task is specifically about the root redirect/local static entrypoint
+
+Update `docs/` when the documentation directly supports the requested change; this is part of the authorized task. Avoid unrelated documentation rewrites.
 
 Be careful with `content/reported-papers.md`: it is not generated, but it is a deduplication ledger. When adding, removing, or renaming non-revision papers, update it consistently with `content/papers/` and `content/digests/`.
 
@@ -279,7 +294,7 @@ For frontend behavior changes, also run the dev server and inspect the site in a
 npm run dev
 ```
 
-Use the URL printed by Astro. Check the homepage, search, digest switching, paper detail pages, and notes drawer when relevant.
+Use the URL printed by Astro. Check the homepage, search ranking/type filters/more results, digest navigation, paper figures, and inline comments when relevant.
 
 ## Pull Request and Commit Guidance
 
@@ -306,5 +321,5 @@ Use the URL printed by Astro. Check the homepage, search, digest switching, pape
 - Every paper report, including archived reports and revisions, fails validation if it omits an official image or uses an affiliation placeholder; there is no legacy exception list.
 - Do not place drafts or explanatory Markdown files inside `content/digests/` or `content/papers/`; every `.md` file there is parsed as production content.
 - The Worker accepts `digestId` values in `YYYY-MM-DD` form, with optional lowercase suffixes such as `YYYY-MM-DD-gpt`, and checks that the referenced `content/digests/<digestId>.md` file exists before reading or writing comments.
-- Files like `src/pages/assets/data.js.js` have double extensions because they are Astro endpoint source files that output asset routes. Renaming them can break script paths in `src/pages/index.astro`.
+- Asset endpoints such as `src/pages/assets/notebook-search.json.js` intentionally have double extensions. Keep their generated URLs consistent with `NotebookDocs` search props.
 - `npm run build` updates `dist/`; this is expected locally, but `dist/` remains an ignored artifact and should not be committed.
