@@ -130,6 +130,18 @@
 | public-road-assisted-lane-change-testing | Beyond the Proving Ground: Independent Public-Road Testing of Assisted Lane Change Systems using LiDAR | 2608.26669 | 2026-08-31 |
 | dpa-i2p-depth-guided-registration | DPA-I2P: Depth-Guided Projective Alignment for Image-to-Point-Cloud Registration in Autonomous Driving | 2608.26589 | 2026-08-31 |
 | cav-platoon-joining-rl | Reinforcement Learning-Based Control of CAV Platoon Joining Maneuvers in Mixed Traffic | 2608.26860 | 2026-08-31 |
+| plannerforge-scenario-testing | PlannerForge: LLM Agents for Scenario-Based Testing of Motion Planners in Autonomous Driving | 2609.08965 | 2026-09-14 |
+| qwen-drive-foundation-model | Qwen-Drive-1.0: An Initial Step towards a Vision-Language Foundation Model for Autonomous Driving | 2609.00111 | 2026-09-14 |
+| part-class-agnostic-radar | If It Moves, Radar Knows: A Physics-Aware Radar Transformer for Class-Agnostic Moving-Object Detection | 2609.02289 | 2026-09-14 |
+| vips-cooperative-planning-benchmark | VIPS: Vehicle-Infrastructure Cooperative Planning Benchmark via Pseudo-Simulation | 2609.02462 | 2026-09-14 |
+| sv-wam-surround-view-world-action | SV-WAM: An Efficient Surround-View World-Action Model for End-to-End Autonomous Driving | 2609.03602 | 2026-09-14 |
+| cascade-causal-driving-representation | CASCADE: A Spatio-Temporal-Causal Reasoning Representation and Dataset for Driving | 2609.07094 | 2026-09-14 |
+| radar-3d-point-splatting | 3D Point Splatting for mmWave Radar Novel View Synthesis | 2609.11894 | 2026-09-14 |
+| colmin-multi-decision-negotiation | CoLMIN: LLM-based Multi-Decision Path Negotiation for Cooperative Autonomous Driving | 2609.04807 | 2026-09-14 |
+| intention-sharing-delay-resilience | Mitigating Degradation Attacks in Cooperative Autonomous Driving via Intention Sharing: A Vehicle-in-the-Loop Study | 2609.10232 | 2026-09-14 |
+| stu-road-anomaly-dataset | Spotting the Unexpected (STU): A 3D LiDAR Dataset for Anomaly Segmentation in Autonomous Driving | 2505.02148 | 2026-09-14-stu |
+| ndp-lidar-distribution-prior | Neural Distribution Prior for LiDAR Out-of-Distribution Detection | 2604.09232 | 2026-09-14-stu |
+| lido-lidar-anomaly-segmentation | Learning to Identify Out-of-Distribution Objects for 3D LiDAR Anomaly Segmentation | 2604.23604 | 2026-09-14-stu |
 
 ## 使用说明
 

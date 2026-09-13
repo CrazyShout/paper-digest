@@ -1,0 +1,887 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent child agent /root/review_policy_release",
+  "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+  "localDate": "2026-09-14",
+  "status": "PASS",
+  "scope": "Four production paper reports only; digest/ledger integration excluded by parent task. No production files edited.",
+  "reviewBasis": [
+    "content/templates/paper-report-template.md",
+    "research-lit primary-source and independent-verification principles"
+  ],
+  "notPerformed": [
+    "model execution",
+    "training",
+    "experiment reproduction",
+    "network attacks",
+    "simulation",
+    "vehicle tests",
+    "deployment",
+    "email",
+    "build as substitute for content review"
+  ],
+  "sourceAccessNotes": [
+    "四篇官方 arXiv 全文均通过 web 重新打开。三篇长文使用固定 v1 PDF 正文及 HTML 交叉检查；VIL 使用包含公式与算法的完整官方 HTML。",
+    "九篇相关 arXiv 全文的指定版本均重新打开，并从缓存官方 HTML 独立读取对应方法；VIL 三篇直接前作读取其一手 PDF。",
+    "重新打开官方资源页和仓库文件树，未下载完整模型或数据。",
+    "八张生产原始 PNG 已分别实际打开；前六张 SHA 与作者原图清单一致，VIL 两图与 root 缓存官方原图一致。",
+    "独立审核针对报告是否准确转述一手来源，不代表完成模型、控制器或实验复现。"
+  ],
+  "summary": {
+    "papers": 4,
+    "pass": 4,
+    "needsFix": 0,
+    "initialRequiredFindings": 4,
+    "initialSuggestedFindings": 2,
+    "resolvedFindings": 6,
+    "openFindings": 0,
+    "actualImagesViewed": 8,
+    "imagePass": 8
+  },
+  "papers": [
+    {
+      "paperId": "vips-cooperative-planning-benchmark",
+      "status": "PASS",
+      "findings": [
+        {
+          "id": "VIPS-NC",
+          "lines": [
+            55
+          ],
+          "severity": "required",
+          "claim": "P 包括不碰撞",
+          "primaryReason": "NC is No at-fault Collision; supplemental S2.1 penalizes ego-front collisions and specific ego-side collisions, not every collision.",
+          "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+          "primaryLocation": "PDF section 3.2 and supplementary S2.1, pp.6 and 30",
+          "requestedFix": "改为无自车责任碰撞（NC），需要时简述其责任判定范围。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第55行已改为无自车责任碰撞（NC），并补充自车前向及特定侧撞责任规则，符合 PDF §3.2 / 补充 S2.1。",
+          "resolvedAgainstSha256": "ff50774d1f935054cf47571134f2bc9f72ba5865eb75bbbb16baafd41fba443b"
+        },
+        {
+          "id": "VIPS-SPLIT",
+          "lines": [
+            93
+          ],
+          "severity": "suggested",
+          "claim": "只给10场景/643/180 headline子集",
+          "primaryReason": "The full paper provides 12,944 training and 1,233 test frames, while official code identifies the smaller no-stop headline subset. Both should be explicit for reproducibility.",
+          "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+          "primaryLocation": "PDF section 3.1, p.6; official VIPS README Benchmark scene subset",
+          "requestedFix": "补12,944 training / 1,233 test frames，与10 scenes、643 Stage1 / 180 Stage2 tokens分开。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第93行已补12,944训练帧与1,233测试帧，并保持官方headline子集10场景/643/180 tokens的区分，符合§3.1及官方README。",
+          "resolvedAgainstSha256": "ff50774d1f935054cf47571134f2bc9f72ba5865eb75bbbb16baafd41fba443b"
+        }
+      ],
+      "checks": [
+        "作者、KAIST 单位与 PDF 首页一致；ECCV 录用由项目页和官方名单支持，未声称已核实正式出版 DOI。",
+        "核对式 1–3：NC/DAC/DDC 乘法项、EP/TTC/LK/HC 权重 5/5/2/2、Stage 2 高斯权重及逐样本两阶段乘积。NC 中文名称已在第二轮修正。",
+        "核对式 5、7、8：分类置信度选择 top-K、对应 anchor 加权融合、双向注意力与 bank 回传。",
+        "伪仿真预生成视角，非逐动作连续渲染；横向 1 m 间隔至左右 2 m、纵向 5 m、Hermite 历史及 7,168 个生成样本均吻合。",
+        "官方 README 的 10 个场景、643 / 180 token 与报告一致；第二轮已补论文完整训练和测试帧数。",
+        "表 2 的 43.26 / 43.79 / 50.88、7.62 点差值，表 3 上游感知数值、表 4 的 0.2 / 6.4 FPS 和 6.95 / 4.81 GB 均吻合。",
+        "补充 S3 明说 UniV2X 因 OOM 把 BEV 从 200×200 缩成 160×160；报告保留这一可比性限制。",
+        "补充 S2.2 的 225,200 + 26,400 = 251,600 byte/frame，10 Hz 下 2.516 MB/s 可复算；UniV2X 原论文 2 Hz 口径差异保留。",
+        "消融 43.26 / 45.80 / 47.56 / 48.78 / 50.88 吻合；延迟 77.51、空白消息 77.00、航向噪声 76.38 均为 Stage 1，报告没有混同两阶段成绩。",
+        "表 5 七位十年以上驾龄标注者、τ-b 0.84 / pairwise 0.94，表 7 实测/合成 S1 78.69 / 77.60，补充 IDM 51.00 均吻合。",
+        "VIPS / CoS-V2X 仓库确有代码、配置和脚本，并分别给资产与权重入口；未下载完整数据或运行模型。"
+      ],
+      "primarySources": [
+        {
+          "url": "https://arxiv.org/pdf/2609.02462v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.02462.pdf",
+          "sha256": "5a1efbc4aac247156023448379635657655ac3aa7598c94804b4641b77bf39d4",
+          "coverage": "Main paper sections1-7, equations1-8, Figures1/4, Tables1-7; supplementsS1-S6"
+        },
+        {
+          "url": "https://arxiv.org/html/2609.02462v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.02462.html",
+          "sha256": "36063710b0b0a7c132be795689c2e1f16649382dccc085854a69703f48f3ba96",
+          "coverage": "Live reopened, captions and methodology cross-check; PDF controls numbering"
+        }
+      ],
+      "relatedSources": [
+        {
+          "url": "https://arxiv.org/html/2506.04218v3",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2506.04218.html",
+          "sha256": "f235a770c2d4354dd1863ab557d4b2e9db94279b4f38f8e6d81fbbd85a1216aa",
+          "coverage": "Own introduction and method: pre-generated observations and endpoint-proximity stage weighting"
+        },
+        {
+          "url": "https://arxiv.org/html/2404.00717v3",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2404.00717.html",
+          "sha256": "ab1c0f985c76e7a312b423ddd8446b367a41e87e51e17c2e76e13ddca4aee687",
+          "coverage": "Own methodology: sparse queries plus dense occupied-probability maps, synchronization and flow prediction"
+        },
+        {
+          "url": "https://arxiv.org/html/2405.19620v2",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2405.19620.html",
+          "sha256": "8c3471e232a47a2f0b9897d14411867f8efc9deaf2b815180f3a2ac0a34fa66e",
+          "coverage": "Own method: symmetric sparse perception, parallel motion planner and collision-aware rescoring"
+        }
+      ],
+      "resourceUrls": [
+        "https://github.com/mickeykang16/VIPS",
+        "https://github.com/mickeykang16/CoS-V2X",
+        "https://vips2026.github.io/",
+        "https://eccv.ecva.net/Conferences/2026/AcceptedPapers"
+      ],
+      "path": "/Users/atlas/work/repo/paper-digest/content/papers/vips-cooperative-planning-benchmark.md",
+      "sha256": "ff50774d1f935054cf47571134f2bc9f72ba5865eb75bbbb16baafd41fba443b",
+      "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+      "figures": [
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/vips-cooperative-planning-benchmark-figure-1.png",
+          "sha256": "51af690bf40c388651e7f00efcd09adf8bb9d13ad7428a88d2278aedeaa0a979",
+          "dimensions": [
+            1536,
+            709
+          ],
+          "officialFigure": "PDFFigure1",
+          "sourceUrl": "https://arxiv.org/html/2609.02462v1/teaser_ver8.png",
+          "captionLocation": "PDFp.2Figure1",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图右侧蓝框为 Stage 1，下方橙框为 Stage 2，左侧为权重与乘积评分；车端与路侧一致移动的画面和图注相符。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        },
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/vips-cooperative-planning-benchmark-figure-2.png",
+          "sha256": "ad7797d269f410165e7b9f0928e1f01d9ca8962ddfa23a508cdd91cfacd212f7",
+          "dimensions": [
+            1714,
+            976
+          ],
+          "officialFigure": "PDFFigure4",
+          "sourceUrl": "https://arxiv.org/html/2609.02462v1/method_v3.png",
+          "captionLocation": "PDFp.9Figure4;HTMLFigure3",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图呈现车路对称分支、top-K、双向 cross-attention、置信度融合与两侧 bank 更新；PDF 图 4 标号正确。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        }
+      ],
+      "templateCheck": {
+        "exactEightH2": true,
+        "methodEquationsResultsLimitsFollowup": "reviewed"
+      },
+      "initialReview": {
+        "sha256": "b2735a4f8040c53c15637afa266218c4dac7ccbcce86f41f9e95fcf59d526db6",
+        "status": "needs-fix",
+        "reviewedAt": "2026-09-13T19:42:44.824555+00:00",
+        "findings": [
+          {
+            "id": "VIPS-NC",
+            "lines": [
+              55
+            ],
+            "severity": "required",
+            "claim": "P 包括不碰撞",
+            "primaryReason": "NC is No at-fault Collision; supplemental S2.1 penalizes ego-front collisions and specific ego-side collisions, not every collision.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+            "primaryLocation": "PDF section 3.2 and supplementary S2.1, pp.6 and 30",
+            "requestedFix": "改为无自车责任碰撞（NC），需要时简述其责任判定范围。"
+          },
+          {
+            "id": "VIPS-SPLIT",
+            "lines": [
+              93
+            ],
+            "severity": "suggested",
+            "claim": "只给10场景/643/180 headline子集",
+            "primaryReason": "The full paper provides 12,944 training and 1,233 test frames, while official code identifies the smaller no-stop headline subset. Both should be explicit for reproducibility.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+            "primaryLocation": "PDF section 3.1, p.6; official VIPS README Benchmark scene subset",
+            "requestedFix": "补12,944 training / 1,233 test frames，与10 scenes、643 Stage1 / 180 Stage2 tokens分开。"
+          }
+        ],
+        "checks": [
+          "作者、KAIST 单位与 PDF 首页一致；ECCV 录用由项目页和官方名单支持，未声称已核实正式出版 DOI。",
+          "核对式 1–3：NC/DAC/DDC 乘法项、EP/TTC/LK/HC 权重 5/5/2/2、Stage 2 高斯权重及逐样本两阶段乘积。NC 中文名称需要修正。",
+          "核对式 5、7、8：分类置信度选择 top-K、对应 anchor 加权融合、双向注意力与 bank 回传。",
+          "伪仿真预生成视角，非逐动作连续渲染；横向 1 m 间隔至左右 2 m、纵向 5 m、Hermite 历史及 7,168 个生成样本均吻合。",
+          "官方 README 的 10 个场景、643 / 180 token 与报告一致；建议补论文完整训练和测试帧数。",
+          "表 2 的 43.26 / 43.79 / 50.88、7.62 点差值，表 3 上游感知数值、表 4 的 0.2 / 6.4 FPS 和 6.95 / 4.81 GB 均吻合。",
+          "补充 S3 明说 UniV2X 因 OOM 把 BEV 从 200×200 缩成 160×160；报告保留这一可比性限制。",
+          "补充 S2.2 的 225,200 + 26,400 = 251,600 byte/frame，10 Hz 下 2.516 MB/s 可复算；UniV2X 原论文 2 Hz 口径差异保留。",
+          "消融 43.26 / 45.80 / 47.56 / 48.78 / 50.88 吻合；延迟 77.51、空白消息 77.00、航向噪声 76.38 均为 Stage 1，报告没有混同两阶段成绩。",
+          "表 5 七位十年以上驾龄标注者、τ-b 0.84 / pairwise 0.94，表 7 实测/合成 S1 78.69 / 77.60，补充 IDM 51.00 均吻合。",
+          "VIPS / CoS-V2X 仓库确有代码、配置和脚本，并分别给资产与权重入口；未下载完整数据或运行模型。"
+        ]
+      },
+      "currentStatus": "PASS",
+      "currentSnapshotPath": "/tmp/paper-digest-20260914/policy-review-snapshots/vips-cooperative-planning-benchmark.md",
+      "recheck": {
+        "round": 2,
+        "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+        "scope": "重读全部定向变更并检查SHA；CoLMIN与首轮完全相同。",
+        "deltaProof": "前三篇草稿SHA等于首轮审核SHA，逐行diff仅包含约定修改；VIL还原第108行原段后SHA等于首轮，故仅该段改变。",
+        "imageProof": "全部8张原图SHA保持一致，保留首轮逐张实际查看结论。",
+        "resolvedFindingIds": [
+          "VIPS-NC",
+          "VIPS-SPLIT"
+        ],
+        "newFindings": [],
+        "status": "PASS"
+      }
+    },
+    {
+      "paperId": "colmin-multi-decision-negotiation",
+      "status": "PASS",
+      "findings": [],
+      "checks": [
+        "标题、六名作者、四个单位与 PDF 首页一致；IEEE TMM accepted 是论文声明，未升级为已核实正式 DOI。",
+        "核对 §III–IV、式 2–9；报告明确重写 best-so-far 索引以包含初始轮，没有冒充逐字原式。",
+        "联合候选通过低层 waypoint 评估；安全和效率来自轨迹，共识含固定提示下的 LLM 评分，表述准确。",
+        "0.5S + 0.2E + 0.3C、阈值 0.85、最大 3 轮、k=2 与配置一致；ESRM 当前反馈与 LDRM 多轮历史准确区分。",
+        "LMin LoRA Qwen2.5-3B、LDRM Qwen2.5-7B、固定低层权重、四张 A100 与 5 Hz 得到原文支持；未编造训练配方。",
+        "十种 CARLA/V2Xverse 场景是闭环模拟；§VI 将真实数据/场景回放验证列为未来工作，报告保持此边界。",
+        "表 I–II 的总分、成功率与报告一致；汇入 SR 0.92→0.90、变道 RC 93.41→82.45 的退步未隐藏。",
+        "表 IV 容量控制实验 59.21 / 59.15 / 62.30 / 66.00 / 67.20，表 VII 3→4 候选的 DS 80.07→80.25 均吻合。",
+        "表 V 高层总推理 31.74→29.67 s 与表 VIII 局部协商 8.06→9.51 s 是不同聚合；tokens 4487→5053、轮数 2.52→1.90、收敛 33.90%→86.25% 均保留。",
+        "表 IX 评分差 0.031 / 0.043 / 0.059 和失败案例准确；未用均值评分差代替极端危险情况验证。",
+        "官方仓库确有 MLLMs、codriving、simulation、scripts 和配置；CARLA 0.9.10.1 / Python 3.7、独立 vLLM 与 Google Drive checkpoint 入口吻合，未声称权重已下载验证。"
+      ],
+      "primarySources": [
+        {
+          "url": "https://arxiv.org/pdf/2609.04807v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.04807.pdf",
+          "sha256": "29ac92dc05f5190d6b17b8b030bf596f708d3036faddd32850f8c2e5189d7602",
+          "coverage": "Full main paper sectionsI-VII, equations1-9, Figures2/3, TablesI-IX"
+        },
+        {
+          "url": "https://arxiv.org/html/2609.04807v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.04807.html",
+          "sha256": "700d4f8709dfe6b6ac5c600db93be66df44e197271f8716fc87fae8d4548dff4",
+          "coverage": "Live reopened; method, captions and real-world applicability"
+        }
+      ],
+      "relatedSources": [
+        {
+          "url": "https://arxiv.org/html/2503.08683v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2503.08683.html",
+          "sha256": "1a1cc381386ec8f45a2c2c602a7b97826e2669a1a1ae5383a40e4b098d46c8a4",
+          "coverage": "Own method: parallel asynchronous negotiation and intention-guided waypoint control, actor-critic feedback"
+        },
+        {
+          "url": "https://arxiv.org/html/2404.09496v2",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2404.09496.html",
+          "sha256": "899bbb75ca8ecc78f99ccacabe0202fa642ebc1c99788cb651fbdac7423bd73e",
+          "coverage": "Own method and appendix: driving-request regions, communication budget and V2Xverse closed-loop simulation"
+        },
+        {
+          "url": "https://arxiv.org/html/2312.07488v2",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2312.07488.html",
+          "sha256": "cb2ef54bcedf9749a4bc6c9ae23a49a75dd45db0bf77cf3829a7a6cbbc647e07",
+          "coverage": "Own method and dataset: multimodal language-conditioned driving, navigation/notice instructions and64K clips"
+        }
+      ],
+      "resourceUrls": [
+        "https://github.com/HuangZhe885/CoLMIN"
+      ],
+      "path": "/Users/atlas/work/repo/paper-digest/content/papers/colmin-multi-decision-negotiation.md",
+      "sha256": "7a722a20ae4913cb9592560cfc66e9b2ab918d282b08b1177878f9c66a3d526f",
+      "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+      "figures": [
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/colmin-multi-decision-negotiation-figure-1.png",
+          "sha256": "d53d5218f1aed310fd2bd99c65d15debb1ec639884c5e79d55c14e06ece30d24",
+          "dimensions": [
+            2224,
+            800
+          ],
+          "officialFigure": "Figure2",
+          "sourceUrl": "https://arxiv.org/html/2609.04807v1/img/Structure.png",
+          "captionLocation": "PDFp.5Figure2",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图左侧感知/意图、中部 LMin、右侧 ESRM/LDRM、底部感知特征直连控制路径均与报告一致。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        },
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/colmin-multi-decision-negotiation-figure-2.png",
+          "sha256": "253b34e5122e7aa0ff6ebbc2254cf85834f884d18d59ffaf5d354facee65e8cd",
+          "dimensions": [
+            1514,
+            1366
+          ],
+          "officialFigure": "Figure3",
+          "sourceUrl": "https://arxiv.org/html/2609.04807v1/img/reflect.png",
+          "captionLocation": "PDFp.6Figure3",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图上方为当前安全/效率反馈，下方为历史中重复 go fast 的纠正；报告正确说明其为机制示例。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        }
+      ],
+      "templateCheck": {
+        "exactEightH2": true,
+        "methodEquationsResultsLimitsFollowup": "reviewed"
+      },
+      "initialReview": {
+        "sha256": "7a722a20ae4913cb9592560cfc66e9b2ab918d282b08b1177878f9c66a3d526f",
+        "status": "PASS",
+        "reviewedAt": "2026-09-13T19:42:44.824555+00:00",
+        "findings": [],
+        "checks": [
+          "标题、六名作者、四个单位与 PDF 首页一致；IEEE TMM accepted 是论文声明，未升级为已核实正式 DOI。",
+          "核对 §III–IV、式 2–9；报告明确重写 best-so-far 索引以包含初始轮，没有冒充逐字原式。",
+          "联合候选通过低层 waypoint 评估；安全和效率来自轨迹，共识含固定提示下的 LLM 评分，表述准确。",
+          "0.5S + 0.2E + 0.3C、阈值 0.85、最大 3 轮、k=2 与配置一致；ESRM 当前反馈与 LDRM 多轮历史准确区分。",
+          "LMin LoRA Qwen2.5-3B、LDRM Qwen2.5-7B、固定低层权重、四张 A100 与 5 Hz 得到原文支持；未编造训练配方。",
+          "十种 CARLA/V2Xverse 场景是闭环模拟；§VI 将真实数据/场景回放验证列为未来工作，报告保持此边界。",
+          "表 I–II 的总分、成功率与报告一致；汇入 SR 0.92→0.90、变道 RC 93.41→82.45 的退步未隐藏。",
+          "表 IV 容量控制实验 59.21 / 59.15 / 62.30 / 66.00 / 67.20，表 VII 3→4 候选的 DS 80.07→80.25 均吻合。",
+          "表 V 高层总推理 31.74→29.67 s 与表 VIII 局部协商 8.06→9.51 s 是不同聚合；tokens 4487→5053、轮数 2.52→1.90、收敛 33.90%→86.25% 均保留。",
+          "表 IX 评分差 0.031 / 0.043 / 0.059 和失败案例准确；未用均值评分差代替极端危险情况验证。",
+          "官方仓库确有 MLLMs、codriving、simulation、scripts 和配置；CARLA 0.9.10.1 / Python 3.7、独立 vLLM 与 Google Drive checkpoint 入口吻合，未声称权重已下载验证。"
+        ]
+      },
+      "currentStatus": "PASS",
+      "currentSnapshotPath": "/tmp/paper-digest-20260914/policy-review-snapshots/colmin-multi-decision-negotiation.md",
+      "recheck": {
+        "round": 2,
+        "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+        "scope": "重读全部定向变更并检查SHA；CoLMIN与首轮完全相同。",
+        "deltaProof": "前三篇草稿SHA等于首轮审核SHA，逐行diff仅包含约定修改；VIL还原第108行原段后SHA等于首轮，故仅该段改变。",
+        "imageProof": "全部8张原图SHA保持一致，保留首轮逐张实际查看结论。",
+        "resolvedFindingIds": [],
+        "newFindings": [],
+        "status": "PASS"
+      }
+    },
+    {
+      "paperId": "qwen-drive-foundation-model",
+      "status": "PASS",
+      "findings": [
+        {
+          "id": "QWEN-FEATURES",
+          "lines": [
+            43
+          ],
+          "severity": "required",
+          "claim": "结合VLM多层特征送入BEV transformer",
+          "primaryReason": "The paper reads image-token outputs after the full VLM at one coarse scale, then expands them using a simple feature pyramid. It does not describe extracting features from multiple VLM layers for this BEV path.",
+          "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+          "primaryLocation": "section2.1 BEV Perception Head, p.4; Figure3a",
+          "requestedFix": "改为VLM最终输出经特征金字塔扩成多尺度后送入BEV transformer。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第43行已改为VLM最终输出经特征金字塔扩为多尺度，符合§2.1对单尺度Fm和simple feature pyramid的描述。",
+          "resolvedAgainstSha256": "d920383e8a45536e47b62d19062b433e35397a5949a03a656221c078a47b6ead"
+        },
+        {
+          "id": "QWEN-CONTROL",
+          "lines": [
+            115
+          ],
+          "severity": "required",
+          "claim": "相同SigLIP-Qwen特征下",
+          "primaryReason": "The comparison uses the same pretrained vision-encoder initialization, but Qwen Stage2 jointly updates vision encoder/VLM/head. The resulting features are not held fixed equal across models.",
+          "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+          "primaryLocation": "section2.2 Stage2; section3.1 Comparison Methods and Table1",
+          "requestedFix": "改为同为SigLIP-Qwen初始化/编码器类型，保留联合更新与跨数据训练差异。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第115行已改为同为SigLIP-Qwen初始化/编码器类型，不再断言实际特征相同；Stage2联合更新仍在第79行附近明确说明。",
+          "resolvedAgainstSha256": "d920383e8a45536e47b62d19062b433e35397a5949a03a656221c078a47b6ead"
+        },
+        {
+          "id": "QWEN-644",
+          "lines": [
+            95
+          ],
+          "severity": "suggested",
+          "claim": "同时给标准644例和held-out700帧",
+          "primaryReason": "The paper explicitly says the standard644-example split overlaps public training data by official construction; the700-frame subset exists to avoid that overlap.",
+          "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+          "primaryLocation": "section3.3 Benchmarks2; Table5",
+          "requestedFix": "在644例后补其与公开训练数据有重叠，不把两split视为同等held-out证据。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第95行已明确644例与公开训练数据重叠，并解释另设700帧held-out子集，符合§3.3及表5。",
+          "resolvedAgainstSha256": "d920383e8a45536e47b62d19062b433e35397a5949a03a656221c078a47b6ead"
+        }
+      ],
+      "checks": [
+        "作者与 Qwen Team / HUST 单位吻合；首次提交 2026-08-31 17:59:54 UTC 与 PDF 日期 2026-09-02 正确区分。",
+        "Qwen3.5-4B、约 1.1B 的 32 层 expert、8 个 GQA KV cache 各连接 4 层 expert 吻合；第二轮已将 BEV 分支改为最终输出经金字塔扩成多尺度。",
+        "式 6 的 50 点 / 5 s / 10 Hz、自车 x/y/heading 及 165 m / 25 m / π/2 归一化吻合。",
+        "式 7–8 的 clean endpoint、诱导速度、目标速度平方误差、时间差分 Huber 与 2e-4 / 2e-5 系数、t 截断 0.9 均吻合。",
+        "式 13 的 G=8 理由与轨迹组、低频随机转移和 on-policy expert 更新与 §2.2 / 式 9–14 一致。",
+        "四阶段冻结范围与图 4 一致；Stage 3 仅监督轨迹，Stage 4 保持 VLM 冻结。",
+        "Stage 2 重复前 1.54M、Stage 3 约 2.83M、24.2% 带理由、4 Hz→10 Hz 重采样及四帧 0.5 s 间隔吻合。",
+        "表 4b test RFS 7.78→7.91、5 s ADE 2.65→2.67 吻合；validation RFS 8.45 的标注参与 RL，不能解释成超越人类 8.13 的泛化表现。",
+        "NAVSIM 单次查询、周车非反应式；表 6 单轨迹 88.2 / 90.7 与评测器 best-of-6 的 89.3 / 91.4 正确分开。",
+        "表 7 的 AlpaSim 916 场景、PAI-AV-NuRec 26.02、越界 24%→12%、进度 54%→48%、责任分 0.27→0.37 对照 0.45 及近距事件口径均吻合。",
+        "表 5 的 700 帧子集 ADE 数值吻合；第二轮已明确 644 例标准集与公开训练数据重叠。",
+        "表 1 修改 NDS、占据 25.72 对 19.82 和表 8 的 15 epoch、RFS 7.88 / 7.91 / 7.96 均吻合；第二轮已澄清仅初始化/编码器类型相同。",
+        "图 13 跨 rig 仅定性、缺统一真值边界正确；GitHub 推理/感知/demo/文档及 HF 主干和三个子目录存在，未声称完整四阶段已复现。"
+      ],
+      "primarySources": [
+        {
+          "url": "https://arxiv.org/pdf/2609.00111v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.00111.pdf",
+          "sha256": "b53c66b6797c053dc6238944ec38080acc9efd7ef9712395b85e083573fbc4aa",
+          "coverage": "Main sections1-5, equations6-14, Figures3/4, Tables1/4-8 andAppendixA"
+        },
+        {
+          "url": "https://arxiv.org/html/2609.00111v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.00111.html",
+          "sha256": "445a11418bbfa9923f767b83e67a01573db833aa9784186828593149590f4c54",
+          "coverage": "Live reopened; method/captions/benchmarks"
+        }
+      ],
+      "relatedSources": [
+        {
+          "url": "https://arxiv.org/html/2511.00088v2",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2511.00088.html",
+          "sha256": "d0d3157e03139b0f8d44a33caf2780760f94b0a520d76914c4b8ca62fc7dbc71",
+          "coverage": "Own method: separate flow-matching action expert conditions on VLM KV cache; reasoning-action alignment training"
+        },
+        {
+          "url": "https://arxiv.org/html/2506.13757v3",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2506.13757.html",
+          "sha256": "d3ad189035bb8c3efe5aeba9817aa0db4455940e6a48c8b453d4283b65eab3cf",
+          "coverage": "Own method: discrete physical action tokens and GRPO with adaptive reasoning"
+        },
+        {
+          "url": "https://arxiv.org/html/2211.10439v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-related/2211.10439.html",
+          "sha256": "a755518bed0d14b29440a556f4e0cc5f6d713cda66e99a01272c4c2ee00e3ce3",
+          "coverage": "Own method: perspective supervision and perspective proposals augment BEV object queries"
+        }
+      ],
+      "resourceUrls": [
+        "https://github.com/QwenLM/Qwen-Drive-1.0",
+        "https://huggingface.co/Qwen/Qwen-Drive-1.0-4B/tree/main",
+        "https://github.com/NVlabs/alpamayo1.5"
+      ],
+      "path": "/Users/atlas/work/repo/paper-digest/content/papers/qwen-drive-foundation-model.md",
+      "sha256": "d920383e8a45536e47b62d19062b433e35397a5949a03a656221c078a47b6ead",
+      "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+      "figures": [
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/qwen-drive-foundation-model-figure-1.png",
+          "sha256": "beb438c442644f8a7ce9bd927c8167c5a9f1b6dad9a3c00b55802cc109ec45bb",
+          "dimensions": [
+            2044,
+            707
+          ],
+          "officialFigure": "Figure3",
+          "sourceUrl": "https://arxiv.org/html/2609.00111v1/head.png",
+          "captionLocation": "PDFp.5Figure3",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图左侧体素几何与特征金字塔进入 BEV，右侧 8 组 VLM cache 各连接 4 层 expert；图号与图注一致。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        },
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/qwen-drive-foundation-model-figure-2.png",
+          "sha256": "27e7aa91cd6fb030bca4ab372faf116978b8d3cbfbd9f91c9d52d73139615697",
+          "dimensions": [
+            2005,
+            579
+          ],
+          "officialFigure": "Figure4",
+          "sourceUrl": "https://arxiv.org/html/2609.00111v1/training_recipe.png",
+          "captionLocation": "PDFp.6Figure4",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图四阶段火焰/雪花显示 head-only、联合适配、冻结主干 SFT expert、冻结主干 RL expert；报告冻结范围准确。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        }
+      ],
+      "templateCheck": {
+        "exactEightH2": true,
+        "methodEquationsResultsLimitsFollowup": "reviewed"
+      },
+      "initialReview": {
+        "sha256": "7f1bc6bd8cd2b9e2210b31303240aeaae9fe46e3a8c475a357d784117c700871",
+        "status": "needs-fix",
+        "reviewedAt": "2026-09-13T19:42:44.824555+00:00",
+        "findings": [
+          {
+            "id": "QWEN-FEATURES",
+            "lines": [
+              43
+            ],
+            "severity": "required",
+            "claim": "结合VLM多层特征送入BEV transformer",
+            "primaryReason": "The paper reads image-token outputs after the full VLM at one coarse scale, then expands them using a simple feature pyramid. It does not describe extracting features from multiple VLM layers for this BEV path.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section2.1 BEV Perception Head, p.4; Figure3a",
+            "requestedFix": "改为VLM最终输出经特征金字塔扩成多尺度后送入BEV transformer。"
+          },
+          {
+            "id": "QWEN-CONTROL",
+            "lines": [
+              115
+            ],
+            "severity": "required",
+            "claim": "相同SigLIP-Qwen特征下",
+            "primaryReason": "The comparison uses the same pretrained vision-encoder initialization, but Qwen Stage2 jointly updates vision encoder/VLM/head. The resulting features are not held fixed equal across models.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section2.2 Stage2; section3.1 Comparison Methods and Table1",
+            "requestedFix": "改为同为SigLIP-Qwen初始化/编码器类型，保留联合更新与跨数据训练差异。"
+          },
+          {
+            "id": "QWEN-644",
+            "lines": [
+              95
+            ],
+            "severity": "suggested",
+            "claim": "同时给标准644例和held-out700帧",
+            "primaryReason": "The paper explicitly says the standard644-example split overlaps public training data by official construction; the700-frame subset exists to avoid that overlap.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section3.3 Benchmarks2; Table5",
+            "requestedFix": "在644例后补其与公开训练数据有重叠，不把两split视为同等held-out证据。"
+          }
+        ],
+        "checks": [
+          "作者与 Qwen Team / HUST 单位吻合；首次提交 2026-08-31 17:59:54 UTC 与 PDF 日期 2026-09-02 正确区分。",
+          "Qwen3.5-4B、约 1.1B 的 32 层 expert、8 个 GQA KV cache 各连接 4 层 expert 吻合；BEV 分支的多层特征说法需要修正。",
+          "式 6 的 50 点 / 5 s / 10 Hz、自车 x/y/heading 及 165 m / 25 m / π/2 归一化吻合。",
+          "式 7–8 的 clean endpoint、诱导速度、目标速度平方误差、时间差分 Huber 与 2e-4 / 2e-5 系数、t 截断 0.9 均吻合。",
+          "式 13 的 G=8 理由与轨迹组、低频随机转移和 on-policy expert 更新与 §2.2 / 式 9–14 一致。",
+          "四阶段冻结范围与图 4 一致；Stage 3 仅监督轨迹，Stage 4 保持 VLM 冻结。",
+          "Stage 2 重复前 1.54M、Stage 3 约 2.83M、24.2% 带理由、4 Hz→10 Hz 重采样及四帧 0.5 s 间隔吻合。",
+          "表 4b test RFS 7.78→7.91、5 s ADE 2.65→2.67 吻合；validation RFS 8.45 的标注参与 RL，不能解释成超越人类 8.13 的泛化表现。",
+          "NAVSIM 单次查询、周车非反应式；表 6 单轨迹 88.2 / 90.7 与评测器 best-of-6 的 89.3 / 91.4 正确分开。",
+          "表 7 的 AlpaSim 916 场景、PAI-AV-NuRec 26.02、越界 24%→12%、进度 54%→48%、责任分 0.27→0.37 对照 0.45 及近距事件口径均吻合。",
+          "表 5 的 700 帧子集 ADE 数值吻合；建议明确 644 例标准集与公开训练数据重叠。",
+          "表 1 修改 NDS、占据 25.72 对 19.82 和表 8 的 15 epoch、RFS 7.88 / 7.91 / 7.96 均吻合；实际特征并非固定相同，措辞需要修正。",
+          "图 13 跨 rig 仅定性、缺统一真值边界正确；GitHub 推理/感知/demo/文档及 HF 主干和三个子目录存在，未声称完整四阶段已复现。"
+        ]
+      },
+      "currentStatus": "PASS",
+      "currentSnapshotPath": "/tmp/paper-digest-20260914/policy-review-snapshots/qwen-drive-foundation-model.md",
+      "recheck": {
+        "round": 2,
+        "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+        "scope": "重读全部定向变更并检查SHA；CoLMIN与首轮完全相同。",
+        "deltaProof": "前三篇草稿SHA等于首轮审核SHA，逐行diff仅包含约定修改；VIL还原第108行原段后SHA等于首轮，故仅该段改变。",
+        "imageProof": "全部8张原图SHA保持一致，保留首轮逐张实际查看结论。",
+        "resolvedFindingIds": [
+          "QWEN-FEATURES",
+          "QWEN-CONTROL",
+          "QWEN-644"
+        ],
+        "newFindings": [],
+        "status": "PASS"
+      }
+    },
+    {
+      "paperId": "intention-sharing-delay-resilience",
+      "status": "PASS",
+      "findings": [
+        {
+          "id": "VIL-REPEATS",
+          "lines": [
+            108
+          ],
+          "severity": "required",
+          "claim": "没有独立多次重复",
+          "primaryReason": "SectionIV-2 explicitly states multiple trials per controller-delay combination. It does not provide clear repeat counts, independent-design details or confidence intervals; categorical no-repeat wording is not supported.",
+          "primaryUrl": "https://arxiv.org/html/2609.10232v1",
+          "primaryLocation": "sectionIV-2 Vehicle Gap and Collision Analysis, opening paragraph",
+          "requestedFix": "改为原文称每个控制器—延迟组合进行了多次试验，但未报告具体重复次数、独立性及置信区间。",
+          "state": "resolved",
+          "resolvedAt": "2026-09-13T19:47:45.609454+00:00",
+          "resolution": "第108行已承认每个控制器—延迟组合多次试验，同时准确限定未披露次数、独立性及置信区间，符合§IV-2。",
+          "resolvedAgainstSha256": "e6f7ba13c705114544358ae255b47a0a2f8d9cd67f25090d1ac05b9edee59ab7"
+        }
+      ],
+      "checks": [
+        "作者和三个单位吻合；arXiv comments 的 TVT Correspondence accepted 与首页 2026-09-08 录用日期一致，未声称正式 DOI 已核实。",
+        "§II-B / III 明确实体自车在两车和三车配置中都位于第二位、前车虚拟；V2I2V 的 RSU/PC5/OBU 链路和实体直连区别保留。",
+        "威胁模型是 RSU 处理/排队退化导致合法消息延迟，不能篡改消息、时间戳或控制；没有扩张成 PC5 干扰或攻击检测。",
+        "实测硬件延迟轮廓用于校准受控延迟注入，报告未将所有控制试验说成直接运行相同攻击流量。",
+        "式 1 末端跟踪、控制代价和松弛项重排正确；状态 [s,v,a] 及约束未被解释为一般安全保证。",
+        "式 6 的 p=i+γ、时间差/Δt 和越界 v/a 取零、s 保留 N−1 吻合；算法 1 的 p+γ 与 N−γ 不一致已显式说明。",
+        "20 Hz / 0.05 s 通信控制更新与 0.5 s 预览网格分开，N=32 约 16 s；Xeon 4.8 GHz、Gurobi 约低于 25 ms 与 43.52 kbit/s 可核实。",
+        "每配置 13 个攻击场景，PCF 各 7 次虚拟碰撞、意图版本 0 次吻合；事件由有效保险杠间距越界定义，非实体事故。",
+        "图 4 上图为各控制器相对自身无攻击条件的 RMS 百分比变化，三车曲线平均两段跟驰；下图为最低车距米值。报告按实际轴读图正确。",
+        "速度误差和控制代价三组范围均与 §IV 一致；保守补偿可能付出更多控制代价的限制保留。",
+        "末段 single-preceding 与前文三车配置表述不一致已记录；多次试验及未披露细节的措辞已在第二轮修正。",
+        "一手全文和 arXiv 未发现官方代码、配置、硬件日志或数据下载入口；这只是本次检索结果，不是不存在资源的绝对断言。"
+      ],
+      "primarySources": [
+        {
+          "url": "https://arxiv.org/html/2609.10232v1",
+          "localPath": "/tmp/paper-digest-20260914/root-sources/2609.10232.html.html",
+          "sha256": "4518f8e8fdf2e635d50815e5cf3bfb65f4f46b3db70ca8ea24a0a77261464e7e",
+          "coverage": "FulltextI-V,equations1-6,Algorithm1,TablesI-II,Figures1/4; live page reopened"
+        },
+        {
+          "url": "https://arxiv.org/pdf/2609.10232v1",
+          "localPath": "/tmp/paper-digest-20260914/policy-sources/2609.10232.pdf",
+          "sha256": "c941359aec32b5635c354100b9973e68ccbb55befff6d3222bb3abf8a0050cbf",
+          "coverage": "Availablefixedv1PDF identity; maincontentcheckedusingcompleteofficialHTML"
+        }
+      ],
+      "relatedSources": [],
+      "otherRelatedSources": [
+        {
+          "url": "https://arxiv.org/pdf/2009.07872",
+          "localPath": "/tmp/paper-digest-20260914/root-sources/ard2021.pdf",
+          "sha256": "4f2d882fdecc63854aacac247dae6bb449f9fc50c44a650a2b19a1039aa8e275",
+          "coverage": "读取前作自身的 MPC、概率约束和 VIL 方法；正式 TRC 身份由出版商和机构书目记录交叉核实。"
+        },
+        {
+          "url": "https://websites.umich.edu/~orosz/articles/2023_TIV_Wang_Avedisov_Altintas_Orosz.pdf",
+          "localPath": "/tmp/paper-digest-20260914/root-sources/tiv2023.pdf",
+          "sha256": "b3b53cdf4aefc87cdfbd145da4036fb581b4d50e8a16ee4a72b608cb6a1699d8",
+          "coverage": "读取前作自身的可达性、时延及真实高速数据驱动数值验证。在线 web 工具因体积限制失败，使用本轮已缓存的一手 PDF。"
+        },
+        {
+          "url": "https://websites.umich.edu/~orosz/articles/2023_VNC_Wang_Avedisov_Altintas_Orosz.pdf",
+          "localPath": "/tmp/paper-digest-20260914/root-sources/vnc2023.pdf",
+          "sha256": "bf273df97b345873708ceb9d31086a751e6a6cf2ce66119a9add5e70e7367769",
+          "coverage": "读取前作 §II–IV：两类意图、商用通信设备、公共高速 PDR 试验及数值模拟协同收益。在线 web 工具超时，使用本轮已缓存的一手 PDF。"
+        }
+      ],
+      "resourceUrls": [
+        "https://arxiv.org/abs/2609.10232",
+        "https://www.sciencedirect.com/science/article/abs/pii/S0968090X21001868"
+      ],
+      "path": "/Users/atlas/work/repo/paper-digest/content/papers/intention-sharing-delay-resilience.md",
+      "sha256": "e6f7ba13c705114544358ae255b47a0a2f8d9cd67f25090d1ac05b9edee59ab7",
+      "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+      "figures": [
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/intention-sharing-delay-resilience-figure-1.png",
+          "sha256": "0445e4e554284d3901e72ea4a97991061756de39cd8e04e02827447404b5b782",
+          "dimensions": [
+            890,
+            510
+          ],
+          "officialFigure": "Figure1",
+          "sourceUrl": "https://arxiv.org/html/2609.10232v1/Fig1_vil_r1.png",
+          "captionLocation": "HTMLFigure1",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际图左侧 SUMO/RSU、右侧 OBU/车载计算/实体车、红色攻击与蓝色合法数据通路均与图注相符。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        },
+        {
+          "path": "/Users/atlas/work/repo/paper-digest/public/assets/papers/intention-sharing-delay-resilience-figure-4.png",
+          "sha256": "ce8d2298f8d17dc50e52fbd7fa243d7e47931e2b4c92f608d28458a7f6688118",
+          "dimensions": [
+            687,
+            690
+          ],
+          "officialFigure": "Figure4",
+          "sourceUrl": "https://arxiv.org/html/2609.10232v1/Fig4_performance_R1.png",
+          "captionLocation": "HTMLFigure4andIV-1/IV-2",
+          "actualView": true,
+          "viewer": "independent reviewer using tools.view_image on production original PNG",
+          "actualViewCompletedBefore": "2026-09-13T19:42:44.824555+00:00",
+          "captionAndBodyCompared": true,
+          "result": "PASS",
+          "observation": "实际两幅曲线分别为百分比速度误差变化、最低车距 [m]；圆点实线 n=2、方点虚线 n=3，蓝色 PCF 多次过零，橙黄保持正间距。",
+          "unchangedVerifiedAt": "2026-09-13T19:47:45.609454+00:00",
+          "currentReview": "PASS; original actual-view record remains applicable because bytes are unchanged."
+        }
+      ],
+      "templateCheck": {
+        "exactEightH2": true,
+        "methodEquationsResultsLimitsFollowup": "reviewed"
+      },
+      "initialReview": {
+        "sha256": "42dd9d5fffe3a8f928abea0d325762b0e48cc3f5cfa0ea614b605f02e2eced08",
+        "status": "needs-fix",
+        "reviewedAt": "2026-09-13T19:42:44.824555+00:00",
+        "findings": [
+          {
+            "id": "VIL-REPEATS",
+            "lines": [
+              108
+            ],
+            "severity": "required",
+            "claim": "没有独立多次重复",
+            "primaryReason": "SectionIV-2 explicitly states multiple trials per controller-delay combination. It does not provide clear repeat counts, independent-design details or confidence intervals; categorical no-repeat wording is not supported.",
+            "primaryUrl": "https://arxiv.org/html/2609.10232v1",
+            "primaryLocation": "sectionIV-2 Vehicle Gap and Collision Analysis, opening paragraph",
+            "requestedFix": "改为原文称每个控制器—延迟组合进行了多次试验，但未报告具体重复次数、独立性及置信区间。"
+          }
+        ],
+        "checks": [
+          "作者和三个单位吻合；arXiv comments 的 TVT Correspondence accepted 与首页 2026-09-08 录用日期一致，未声称正式 DOI 已核实。",
+          "§II-B / III 明确实体自车在两车和三车配置中都位于第二位、前车虚拟；V2I2V 的 RSU/PC5/OBU 链路和实体直连区别保留。",
+          "威胁模型是 RSU 处理/排队退化导致合法消息延迟，不能篡改消息、时间戳或控制；没有扩张成 PC5 干扰或攻击检测。",
+          "实测硬件延迟轮廓用于校准受控延迟注入，报告未将所有控制试验说成直接运行相同攻击流量。",
+          "式 1 末端跟踪、控制代价和松弛项重排正确；状态 [s,v,a] 及约束未被解释为一般安全保证。",
+          "式 6 的 p=i+γ、时间差/Δt 和越界 v/a 取零、s 保留 N−1 吻合；算法 1 的 p+γ 与 N−γ 不一致已显式说明。",
+          "20 Hz / 0.05 s 通信控制更新与 0.5 s 预览网格分开，N=32 约 16 s；Xeon 4.8 GHz、Gurobi 约低于 25 ms 与 43.52 kbit/s 可核实。",
+          "每配置 13 个攻击场景，PCF 各 7 次虚拟碰撞、意图版本 0 次吻合；事件由有效保险杠间距越界定义，非实体事故。",
+          "图 4 上图为各控制器相对自身无攻击条件的 RMS 百分比变化，三车曲线平均两段跟驰；下图为最低车距米值。报告按实际轴读图正确。",
+          "速度误差和控制代价三组范围均与 §IV 一致；保守补偿可能付出更多控制代价的限制保留。",
+          "末段 single-preceding 与前文三车配置表述不一致已记录；不过多次试验披露的措辞需要修正。",
+          "一手全文和 arXiv 未发现官方代码、配置、硬件日志或数据下载入口；这只是本次检索结果，不是不存在资源的绝对断言。"
+        ]
+      },
+      "currentStatus": "PASS",
+      "currentSnapshotPath": "/tmp/paper-digest-20260914/policy-review-snapshots/intention-sharing-delay-resilience.md",
+      "recheck": {
+        "round": 2,
+        "reviewedAt": "2026-09-13T19:47:45.609454+00:00",
+        "scope": "重读全部定向变更并检查SHA；CoLMIN与首轮完全相同。",
+        "deltaProof": "前三篇草稿SHA等于首轮审核SHA，逐行diff仅包含约定修改；VIL还原第108行原段后SHA等于首轮，故仅该段改变。",
+        "imageProof": "全部8张原图SHA保持一致，保留首轮逐张实际查看结论。",
+        "resolvedFindingIds": [
+          "VIL-REPEATS"
+        ],
+        "newFindings": [],
+        "status": "PASS"
+      }
+    }
+  ],
+  "initialReviewSummary": {
+    "reviewedAt": "2026-09-13T19:42:44.824555+00:00",
+    "status": "needs-fix",
+    "summary": {
+      "papers": 4,
+      "pass": 1,
+      "needsFix": 3,
+      "requiredFindings": 4,
+      "suggestedFindings": 2,
+      "actualImagesViewed": 8,
+      "imagePass": 8
+    },
+    "paperSnapshots": [
+      {
+        "paperId": "vips-cooperative-planning-benchmark",
+        "sha256": "b2735a4f8040c53c15637afa266218c4dac7ccbcce86f41f9e95fcf59d526db6",
+        "status": "needs-fix",
+        "findings": [
+          {
+            "id": "VIPS-NC",
+            "lines": [
+              55
+            ],
+            "severity": "required",
+            "claim": "P 包括不碰撞",
+            "primaryReason": "NC is No at-fault Collision; supplemental S2.1 penalizes ego-front collisions and specific ego-side collisions, not every collision.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+            "primaryLocation": "PDF section 3.2 and supplementary S2.1, pp.6 and 30",
+            "requestedFix": "改为无自车责任碰撞（NC），需要时简述其责任判定范围。"
+          },
+          {
+            "id": "VIPS-SPLIT",
+            "lines": [
+              93
+            ],
+            "severity": "suggested",
+            "claim": "只给10场景/643/180 headline子集",
+            "primaryReason": "The full paper provides 12,944 training and 1,233 test frames, while official code identifies the smaller no-stop headline subset. Both should be explicit for reproducibility.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.02462v1",
+            "primaryLocation": "PDF section 3.1, p.6; official VIPS README Benchmark scene subset",
+            "requestedFix": "补12,944 training / 1,233 test frames，与10 scenes、643 Stage1 / 180 Stage2 tokens分开。"
+          }
+        ]
+      },
+      {
+        "paperId": "colmin-multi-decision-negotiation",
+        "sha256": "7a722a20ae4913cb9592560cfc66e9b2ab918d282b08b1177878f9c66a3d526f",
+        "status": "PASS",
+        "findings": []
+      },
+      {
+        "paperId": "qwen-drive-foundation-model",
+        "sha256": "7f1bc6bd8cd2b9e2210b31303240aeaae9fe46e3a8c475a357d784117c700871",
+        "status": "needs-fix",
+        "findings": [
+          {
+            "id": "QWEN-FEATURES",
+            "lines": [
+              43
+            ],
+            "severity": "required",
+            "claim": "结合VLM多层特征送入BEV transformer",
+            "primaryReason": "The paper reads image-token outputs after the full VLM at one coarse scale, then expands them using a simple feature pyramid. It does not describe extracting features from multiple VLM layers for this BEV path.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section2.1 BEV Perception Head, p.4; Figure3a",
+            "requestedFix": "改为VLM最终输出经特征金字塔扩成多尺度后送入BEV transformer。"
+          },
+          {
+            "id": "QWEN-CONTROL",
+            "lines": [
+              115
+            ],
+            "severity": "required",
+            "claim": "相同SigLIP-Qwen特征下",
+            "primaryReason": "The comparison uses the same pretrained vision-encoder initialization, but Qwen Stage2 jointly updates vision encoder/VLM/head. The resulting features are not held fixed equal across models.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section2.2 Stage2; section3.1 Comparison Methods and Table1",
+            "requestedFix": "改为同为SigLIP-Qwen初始化/编码器类型，保留联合更新与跨数据训练差异。"
+          },
+          {
+            "id": "QWEN-644",
+            "lines": [
+              95
+            ],
+            "severity": "suggested",
+            "claim": "同时给标准644例和held-out700帧",
+            "primaryReason": "The paper explicitly says the standard644-example split overlaps public training data by official construction; the700-frame subset exists to avoid that overlap.",
+            "primaryUrl": "https://arxiv.org/pdf/2609.00111v1",
+            "primaryLocation": "section3.3 Benchmarks2; Table5",
+            "requestedFix": "在644例后补其与公开训练数据有重叠，不把两split视为同等held-out证据。"
+          }
+        ]
+      },
+      {
+        "paperId": "intention-sharing-delay-resilience",
+        "sha256": "42dd9d5fffe3a8f928abea0d325762b0e48cc3f5cfa0ea614b605f02e2eced08",
+        "status": "needs-fix",
+        "findings": [
+          {
+            "id": "VIL-REPEATS",
+            "lines": [
+              108
+            ],
+            "severity": "required",
+            "claim": "没有独立多次重复",
+            "primaryReason": "SectionIV-2 explicitly states multiple trials per controller-delay combination. It does not provide clear repeat counts, independent-design details or confidence intervals; categorical no-repeat wording is not supported.",
+            "primaryUrl": "https://arxiv.org/html/2609.10232v1",
+            "primaryLocation": "sectionIV-2 Vehicle Gap and Collision Analysis, opening paragraph",
+            "requestedFix": "改为原文称每个控制器—延迟组合进行了多次试验，但未报告具体重复次数、独立性及置信区间。"
+          }
+        ]
+      }
+    ]
+  },
+  "currentStatus": "PASS",
+  "approvalBinding": "PASS applies only to the four current report SHA256 values and eight unchanged image SHA256 values recorded here. Further content changes require renewed review."
+}
