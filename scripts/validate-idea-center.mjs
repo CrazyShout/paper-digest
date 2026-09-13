@@ -734,6 +734,26 @@ export async function validateReviewedCenter(center, workflow, { requireGlobal =
   let latestArtifactTimestamp = 0;
 
   for (const direction of center.directions) {
+    if (direction.status === "planned" && !requireGlobal) {
+      assertValid(
+        substantive(direction.scope) && substantive(direction.outcome?.summary),
+        `${direction.id}: planned direction needs its scope and pending-work explanation.`
+      );
+      assertValid(
+        !direction.ideas?.length
+          && !direction.candidateRefs?.length
+          && !direction.candidatePoolPath
+          && !direction.candidatePoolPaths?.length
+          && !direction.selectionReportPaths?.length
+          && !direction.legacyAuditPath
+          && !direction.panelReview
+          && !direction.explorationRun
+          && !direction.outcome?.passedCount
+          && !direction.outcome?.reviewedCount,
+        `${direction.id}: planned direction cannot expose candidates, scores, or completed audits.`
+      );
+      continue;
+    }
     assertValid(direction.status === "reviewed", `${direction.id}: direction is not reviewed.`);
     assertValid(
       !Array.isArray(direction.ideas) || direction.ideas.length === 0,

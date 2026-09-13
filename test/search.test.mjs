@@ -23,6 +23,24 @@ test("search preserves every match for pagination and combines terms across fiel
   assert.equal(searchRecords(records, "", "paper").length, 40);
 });
 
+test("whole-word acronyms outrank partial title matches without dropping them", () => {
+  const records = prepareSearchRecords([
+    { id: "partial", title: "Study of driving", kind: "paper" },
+    { id: "embedded", title: "A case study of sensing", kind: "paper" },
+    { id: "dataset", title: "Spotting the Unexpected (STU): A LiDAR Dataset", kind: "paper" },
+    { id: "later-word", title: "Study of STU", kind: "paper" },
+    { id: "prefix", title: "STU dataset report", kind: "paper" }
+  ]);
+  assert.deepEqual(searchRecords(records, "ＳＴＵ").map((item) => item.id), [
+    "prefix", "dataset", "later-word", "partial", "embedded"
+  ]);
+  const chinese = prepareSearchRecords([
+    { id: "body", title: "场景分析", content: "自动驾驶", kind: "paper" },
+    { id: "title", title: "自动驾驶研究", kind: "paper" }
+  ]);
+  assert.equal(searchRecords(chinese, "自动驾驶")[0].id, "title");
+});
+
 test("the compressed index stays within the transfer budget and retains full reports", async () => {
   const index = await getNotebookSearchIndex("/paper-digest/");
   const records = prepareSearchRecords(index);
@@ -31,6 +49,7 @@ test("the compressed index stays within the transfer budget and retains full rep
   assert.ok(compressed.length < 1_600_000);
   assert.ok(compressed.length < Buffer.byteLength(serialized) * 0.6);
   assert.equal(searchRecords(records, "DA-WAM")[0].id, "paper-da-wam-decision-aligned-world-model");
+  assert.equal(searchRecords(records, "STU", "paper")[0].id, "paper-stu-road-anomaly-dataset");
   assert.ok(searchRecords(records, "打乱对应关系", "paper")
     .some((item) => item.id === "paper-da-wam-decision-aligned-world-model"));
   const vla = searchRecords(records, "VLA", "paper");

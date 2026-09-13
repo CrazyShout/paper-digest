@@ -46,6 +46,33 @@ test("draft status cannot expose reviewed candidates", async () => {
   );
 });
 
+test("an in-progress center can track a direction before its Idea audit", async () => {
+  const direction = {
+    id: "new-direction",
+    status: "planned",
+    scope: "Road LiDAR anomaly segmentation with point and object evidence.",
+    outcome: { summary: "Literature collected; candidate selection and blind review have not started." },
+    ideas: []
+  };
+  await validateReviewedCenter({ directions: [direction] }, {}, { requireGlobal: false });
+  await assert.rejects(
+    validateReviewedCenter({ directions: [direction] }, {}),
+    /direction is not reviewed/
+  );
+  for (const extra of [
+    { ideas: [{ id: "unreviewed" }] },
+    { candidateRefs: [{ reviewStatus: "passed" }] },
+    { candidatePoolPaths: ["content/idea-audits/unreviewed.json"] },
+    { explorationRun: { verdict: "passed" } },
+    { outcome: { ...direction.outcome, passedCount: 1 } }
+  ]) {
+    await assert.rejects(
+      validateReviewedCenter({ directions: [{ ...direction, ...extra }] }, {}, { requireGlobal: false }),
+      /planned direction cannot expose/
+    );
+  }
+});
+
 test("reviewed direction cannot fall back to embedded legacy ideas", async () => {
   await assert.rejects(
     validateReviewedCenter({

@@ -27,6 +27,11 @@ export function prepareSearchRecords(records) {
 export function searchRecords(records, search, kind = "all") {
   const query = normalizeSearchText(search).trim();
   const terms = query.split(/\s+/).filter(Boolean);
+  const wordQuery = /^[a-z0-9][a-z0-9 ._-]*$/.test(query);
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const phrasePattern = wordQuery
+    ? new RegExp(`(^|[^\\p{L}\\p{N}_])${escapedQuery}($|[^\\p{L}\\p{N}_])`, "u")
+    : null;
   const matches = [];
 
   for (const record of records) {
@@ -38,8 +43,11 @@ export function searchRecords(records, search, kind = "all") {
     if (!terms.every((term) => record.searchText.includes(term))) continue;
 
     const title = record.searchTitle;
+    const phraseMatch = phrasePattern?.exec(title);
+    const wholePhrase = Boolean(phraseMatch);
     const score = title === query ? 1000
-      : title.startsWith(query) ? 800
+      : title.startsWith(query) && (!wordQuery || phraseMatch?.index === 0) ? 800
+      : wholePhrase ? 700
       : title.includes(query) ? 600
       : terms.every((term) => title.includes(term)) ? 400
       : terms.filter((term) => title.includes(term)).length * 40
