@@ -142,6 +142,13 @@
 | stu-road-anomaly-dataset | Spotting the Unexpected (STU): A 3D LiDAR Dataset for Anomaly Segmentation in Autonomous Driving | 2505.02148 | 2026-09-14-stu |
 | ndp-lidar-distribution-prior | Neural Distribution Prior for LiDAR Out-of-Distribution Detection | 2604.09232 | 2026-09-14-stu |
 | lido-lidar-anomaly-segmentation | Learning to Identify Out-of-Distribution Objects for 3D LiDAR Anomaly Segmentation | 2604.23604 | 2026-09-14-stu |
+| opted-render-free-teacher | OPTED: On-Policy Fine-Tuning for End-to-End Driving using a Render-Free Teacher | 2609.20756 | 2026-09-22 |
+| miler-semantic-sim-to-real | MILER: Semantic Mid-Level Representation for Sim-to-Real Reinforcement Learning in Unstructured Autonomous Driving | 2609.20747 | 2026-09-22 |
+| mm-future-multimode-world-action | MM-Future: Multi-Mode Joint World-Action Modeling for Autonomous Driving | 2609.20377 | 2026-09-22 |
+| drtr-direct-radar-teach-repeat | DRT&R: Direct Radar Teach & Repeat | 2609.17766 | 2026-09-22 |
+| star-task-aware-radar-preprocessing | STAR: Scene- and Task-Aware 4D Radar Preprocessing Towards End-to-End Cognitive Radar | 2609.24151 | 2026-09-22 |
+| illusion-of-depth-stereo-attack | Illusion of Depth: Revealing Hidden Stereo Vision Vulnerabilities in Depth Estimation | 2609.16336 | 2026-09-22 |
+| lidar-hallu-spatiotemporal-benchmark | Do LiDAR Language Models Really Understand Spatio-temporal Relationships? | 2609.24452 | 2026-09-22 |
 
 ## 使用说明
 

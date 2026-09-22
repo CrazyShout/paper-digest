@@ -3,9 +3,9 @@
   "id": "end-to-end-autonomous-driving",
   "title": "端到端自动驾驶：从联合优化到可验证闭环",
   "subtitle": "沿表征、规划分布、学习信号、交互建模与证据等级梳理端到端驾驶",
-  "abstract": "端到端自动驾驶的核心不是取消所有中间结构，而是让传感器、场景表征与规划或控制目标形成可联合优化、可审计的信息流。领域已从行为克隆与特权教师蒸馏推进到统一规划网络、概率/生成式轨迹、VLA、世界-动作模型和策略诱发状态训练。本次刷新增加两条互补前沿：MOJITO 让图像、LiDAR 与动作 token 逐层双向交互，在 NAVSIM 上验证联合接口但仍是非反应式评测；Pictura 用四路低分辨率透视栅格图进行 50B 步 CARLA 自博弈，展示可见性约束下的训练规模，却没有真实纹理、传感器噪声或实车迁移。综合结论不变：反应性、视觉真实性、时域、覆盖、时延和可回滚性必须分别报告，任何单一榜单或“闭环”标签都不足以支持部署安全。",
-  "reviewedAt": "2026-08-01",
-  "searchWindow": "2019 至 2026-08-01 的核心文献综合；本地候选审计更新至 2026-08-24，未重跑站外检索或改写核心综合。",
+  "abstract": "端到端自动驾驶的核心不是取消所有中间结构，而是让传感器、场景表征与规划或控制目标形成可联合优化、可审计的信息流。领域已从行为克隆与特权教师蒸馏推进到统一规划网络、概率/生成式轨迹、VLA、世界-动作模型和策略诱发状态训练。既有核心综合增加两条互补前沿：MOJITO 让图像、LiDAR 与动作 token 逐层双向交互，在 NAVSIM v1 日志评测与 v2 分阶段伪仿真中验证联合接口；Pictura 用四路低分辨率透视栅格图，在 CARLA 地图几何上的 PufferDrive 模拟器进行 50B 步自博弈，展示可见性约束下的训练规模，却没有真实纹理、传感器噪声或实车迁移。综合结论不变：反应性、视觉真实性、时域、覆盖、时延和可回滚性必须分别报告，任何单一榜单或“闭环”标签都不足以支持部署安全。",
+  "reviewedAt": "2026-09-22",
+  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
   "researchQuestions": [
     "端到端驾驶应按网络结构、训练目标，还是传感器到动作的信息流来界定？",
     "结构化 BEV/向量表征、概率或生成式规划、VLA 与世界—动作模型分别解决了什么问题，又引入了什么新风险？",
@@ -37,7 +37,7 @@
       "kind": "evolution",
       "title": "演化主线：从复制专家轨迹到学习策略诱发状态与可见信息",
       "thesis": "新一代方法同时修补离线模仿的状态分布偏移和特权信息错位，但联合注意力或视觉自博弈仍需跨反应性与真实传感器验证。",
-      "body": "第一阶段以行为克隆、航点回归和特权教师蒸馏为主。Learning by Cheating 在 CARLA/NoCrash 中证明特权教师能显著改善视觉策略训练，但闭环成功仍发生在模拟器内。随后 UniAD 把感知、预测和规划纳入统一的规划导向网络，在 nuScenes 开环任务上展示联合优化价值；Hidden Biases 则指出 CARLA 排名提升可能来自目标点跟随和多模态航点平均等隐含偏置，提醒研究者不能把单一闭环榜单增益直接归因于主干架构。[learning-by-cheating-2020, uniad-2023, hidden-biases-2023]\n\n第二阶段把任务条件与闭环训练显式纳入策略。LMDrive 用 64K 语言指令片段训练 CARLA/LangAuto 中的指令条件闭环策略；Think2Drive 则在 CARLA v2 的潜在世界模型内用模型式强化学习学习驾驶。二者分别证明语言任务条件和策略诱发状态可以参与训练，但证据都留在 CARLA。OpenDriveVLA 将 2D/3D 实例感知表示、车辆状态和高层命令对齐到自回归轨迹生成，在 nuScenes 开环与驾驶问答上发表了正式结果；这填补了本地 VLA 谱系，却不是实车闭环证明。[lmdrive-2024, think2drive-2024, opendrivevla-2026]\n\n第三阶段把重点移到多模态与生成式规划。GenAD 在结构潜空间联合生成他车运动和自车规划，VADv2 通过 planning vocabulary 学习动作概率分布，DiffusionDrive 用锚点截断扩散减少去噪步数，GuideFlow 则把运动学与安全约束引入 flow matching。其共同动机是避免单轨迹回归把多个合理行为压成平均解；但 GenAD 主要是 nuScenes 开环，DiffusionDrive 的主结果是 NAVSIM 非反应式评测，GuideFlow 同时覆盖 nuScenes、NAVSIM、ADV-NuScenes 与 Bench2Drive/CARLA，VADv2 又覆盖 CARLA、NAVSIM、3DGS 和有限受控实车演示，必须逐协议解读而不能按一个总分排序。[genad-2024, vadv2, diffusiondrive-2025, guideflow-2026]\n\n第四阶段试图学习策略自身分布与环境反馈。Raw2Drive、Think2Drive 和 RAD 分别在 CARLA 或 3DGS 重建环境中进行模型式强化学习；Scaling Self-Play 用简化像素仿真和 self-play DAgger 扩展策略诱发状态；DAWN 让世界假设与动作去噪递归互相条件化。FlowAD 则以日志重放中的自车—场景相对流缓解 ego-motion 分布偏移，ReCogDrive 结合 VLM、扩散规划和强化后训练。它们推进了闭环训练和长尾推理，但“在线”“自博弈”“世界模型”或“相对流”均不自动意味着其他交通参与者具有真实因果响应，更不等于完成真实道路验证。[raw2drive-2025, think2drive-2024, rad-2025, scaling-self-play, dawn-world-action, flowad-2026, recogdrive-2026]\n\n2026 年 7 月底的 MOJITO 与 Pictura 分别推进了“接口联合”和“观察可部署性”。MOJITO 不再让规划器只读取压缩后的感知上下文，而是在每层让动作、相机和 LiDAR token 双向更新；Pictura 则拒绝让自博弈策略直接读取被遮挡参与者的全知向量，改用每车四路透视图像学习策略诱发状态。前者的收益停留在 NAVSIM 非反应式/伪闭环协议，后者的规模来自低分辨率合成 CARLA 渲染；两者共同缩小了训练接口与部署观察的差距，却都没有解决真实相机域、车辆控制栈和开放道路因果响应。[mojito-2026, pictura-2026]",
+      "body": "第一阶段以行为克隆、航点回归和特权教师蒸馏为主。Learning by Cheating 在 CARLA/NoCrash 中证明特权教师能显著改善视觉策略训练，但闭环成功仍发生在模拟器内。随后 UniAD 把感知、预测和规划纳入统一的规划导向网络，在 nuScenes 开环任务上展示联合优化价值；Hidden Biases 则指出 CARLA 排名提升可能来自目标点跟随和多模态航点平均等隐含偏置，提醒研究者不能把单一闭环榜单增益直接归因于主干架构。[learning-by-cheating-2020, uniad-2023, hidden-biases-2023]\n\n第二阶段把任务条件与闭环训练显式纳入策略。LMDrive 用 64K 语言指令片段训练 CARLA/LangAuto 中的指令条件闭环策略；Think2Drive 则在 CARLA v2 的潜在世界模型内用模型式强化学习学习驾驶。二者分别证明语言任务条件和策略诱发状态可以参与训练，但证据都留在 CARLA。OpenDriveVLA 将 2D/3D 实例感知表示、车辆状态和高层命令对齐到自回归轨迹生成，在 nuScenes 开环与驾驶问答上发表了正式结果；这填补了本地 VLA 谱系，却不是实车闭环证明。[lmdrive-2024, think2drive-2024, opendrivevla-2026]\n\n第三阶段把重点移到多模态与生成式规划。GenAD 在结构潜空间联合生成他车运动和自车规划，VADv2 通过 planning vocabulary 学习动作概率分布，DiffusionDrive 用锚点截断扩散减少去噪步数，GuideFlow 则把运动学与安全约束引入 flow matching。其共同动机是避免单轨迹回归把多个合理行为压成平均解；但 GenAD 主要是 nuScenes 开环，DiffusionDrive 的主结果是 NAVSIM 非反应式评测，GuideFlow 同时覆盖 nuScenes、NAVSIM、ADV-NuScenes 与 Bench2Drive/CARLA，VADv2 又覆盖 CARLA、NAVSIM、3DGS 和有限受控实车演示，必须逐协议解读而不能按一个总分排序。[genad-2024, vadv2, diffusiondrive-2025, guideflow-2026]\n\n第四阶段试图学习策略自身分布与环境反馈。Raw2Drive、Think2Drive 和 RAD 分别在 CARLA 或 3DGS 重建环境中进行模型式强化学习；Scaling Self-Play 用简化像素仿真和 self-play DAgger 扩展策略诱发状态；DAWN 让世界假设与动作去噪递归互相条件化。FlowAD 则以日志重放中的自车—场景相对流缓解 ego-motion 分布偏移，ReCogDrive 结合 VLM、扩散规划和强化后训练。它们推进了闭环训练和长尾推理，但“在线”“自博弈”“世界模型”或“相对流”均不自动意味着其他交通参与者具有真实因果响应，更不等于完成真实道路验证。[raw2drive-2025, think2drive-2024, rad-2025, scaling-self-play, dawn-world-action, flowad-2026, recogdrive-2026]\n\n2026 年 7 月底的 MOJITO 与 Pictura 分别推进了“接口联合”和“观察可部署性”。MOJITO 不再让规划器只读取压缩后的感知上下文，而是在每层让动作、相机和 LiDAR token 双向更新；Pictura 则拒绝让自博弈策略直接读取被遮挡参与者的全知向量，改用每车四路透视图像学习策略诱发状态。前者的收益来自 NAVSIM 日志/分阶段伪仿真协议，后者的规模来自 PufferDrive 和低分辨率 CUDA 栅格渲染；两者共同缩小了训练接口与部署观察的差距，却都没有解决真实相机域、车辆控制栈和开放道路因果响应。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "learning-by-cheating-2020",
         "uniad-2023",
@@ -91,7 +91,7 @@
       "kind": "evidence",
       "title": "证据不是单调阶梯：反应性、真实感、时域、覆盖、时延与审计性分栏",
       "thesis": "同一协议可能真实视觉强而交通反应弱，也可能反应强而传感器极简；任何闭环主张都要说明观测生成、参与者响应、时域、算力和失败可追溯性。",
-      "body": "**日志开环**使用真实采集观测，UniAD、GenAD 与 OpenDriveVLA 均可在这一设置比较轨迹误差、感知辅助任务和推理成本；但策略输出不会改变后续观测，因而反应性为零。FlowAD 利用日志重放中的自车—场景相对流，在特征学习中编码 ego-motion 对观测表征的反馈；它不合成测试动作对应的新观测，也没有学习或规则交通参与者逐步响应。真实视觉与高可复现性不能补上策略诱发状态、长时反馈和真实执行时延。[uniad-2023, genad-2024, opendrivevla-2026, flowad-2026]\n\n**NAVSIM v1**不是交互闭环：它在约 4 秒短时域内，以固定环境计算进度、碰撞、舒适等规划指标，适合规模化比较 DiffusionDrive、VADv2、CaAD 等同协议结果，但应报告场景覆盖和各指标分项，不能报告不存在的姿态匹配失败率。**Pseudo-Simulation/NAVSIM v2**则预先生成自车位置、航向与速度扰动，再按接近程度匹配未来观测；Pseudo-Simulation 报告其跨方法闭环分数拟合 R²=0.8，最佳传统开环为 R²=0.7，这不是 Spearman 或 Kendall 排名相关。GuideFlow 的 Navhard EPDMS=43.0 属于 NAVSIM v2 两阶段 pseudo-simulation，不能与 NAVSIM v1 PDMS 混排；v2 还必须报告扰动覆盖和匹配失败。两种协议都没有交通参与者按测试动作逐步响应。[navsim-2024, pseudo-simulation-2025, diffusiondrive-2025, vadv2, caad, guideflow-2026]\n\n**CARLA/Bench2Drive**提供规则或脚本交通参与者的反应式闭环和长于日志片段的路线执行。Learning by Cheating、LMDrive、Think2Drive、Raw2Drive、VADv2、CaAD、GuideFlow 与 ReCogDrive 可在这里暴露误差累积、路线完成和互动失败；Bench2Drive 的 44 类场景与 220 条路线以及 Bench2Drive-Robust 的帧流、自车状态和时延故障提高了可审计性。代价是视觉、动力学、代理行为与真实交通有域差，且路线随机性和驾驶分数方差必须用多次运行和置信区间控制。[learning-by-cheating-2020, lmdrive-2024, think2drive-2024, raw2drive-2025, vadv2, caad, guideflow-2026, recogdrive-2026, bench2drive-2024, bench2drive-robust]\n\n**3DGS 重建环境**提高真实场景的外观和几何保真，同时允许改变自车视点。VADv2 使用 337 个重建环境、每段 8 秒的稠密交通场景；HUGSIM 汇集超过 70 个真实采集序列并构造 400 余个场景。RAD 在照片级 3DGS 重建环境中用 PPO 进行闭环强化学习，并未通过渲染器反向传播；其其他交通参与者采用日志轨迹回放。这里的自车观测随动作变化，部分参与者由轨迹回放或 IDM 等模型驱动，但传感器噪声、重建伪影、参与者反应和 ODD 覆盖仍不同于真实道路；必须分别报告重建质量、参与者模型和失败可追溯性。[vadv2, hugsim-2026, rad-2025]\n\n**受控实车与公共道路**是另一组证据维度。VADv2 的公开材料只支持有限、定性的受控车辆演示，没有里程、接管、覆盖、对照、尾延迟或安全事件统计。Sim2Real-AD 把 CARLA 训练策略零样本部署到一辆 Ford E-Transit，在三个隔离低速场景中各做 20 次试验并报告 90%/80%/75% 成功率；证据仍限于单车、单场地和单日。ViLaD 展示实车交互停车，但部署的是停车位 waypoint 选择器，后续规划控制沿用既有栈。RAD-2 声称复杂城市交通中的实车感知安全性与平顺性改善，却未公开可复核的量化协议。AutoVLA、OpenDriveVLA 使用真实数据集，Scaling Self-Play 做真实感知适配，也不能据此升级为实车证据。现有材料证明受控部署并非空白，但仍不足以支持公共道路、车队规模或净安全收益结论。[vadv2, sim2real-ad-2026, vilad-2025, rad2-2026, autovla-2025, opendrivevla-2026, scaling-self-play]\n\n**新增协议边界。**MOJITO 在 NAVSIM v1 得到 88.9 PDMS、v2 Stage-1 得到 88.4 EPDMS，navhard 相机分支为 29.0；这些数字使用真实日志抽象，却没有其他交通参与者按测试动作逐步响应，因此不能升级为反应式闭环。Pictura 的训练确实让多智能体在 CARLA 仿真中相互作用，并以 50B 步扩大策略诱发状态；但图像是 96x54 扁平几何渲染，WOMD 结果只重用 44,073 个道路/轨迹布局后重新合成观察。其满密度 0.006 碰撞率与 0.858 目标完成率证明布局迁移，不证明真实 Waymo 相机或道路部署；盲角接管中其他参与者沿日志轨迹运动，也应与完全反应式自博弈分开。[mojito-2026, pictura-2026]",
+      "body": "**日志开环**使用真实采集观测，UniAD、GenAD 与 OpenDriveVLA 均可在这一设置比较轨迹误差、感知辅助任务和推理成本；但策略输出不会改变后续观测，因而反应性为零。FlowAD 利用日志重放中的自车—场景相对流，在特征学习中编码 ego-motion 对观测表征的反馈；它不合成测试动作对应的新观测，也没有学习或规则交通参与者逐步响应。真实视觉与高可复现性不能补上策略诱发状态、长时反馈和真实执行时延。[uniad-2023, genad-2024, opendrivevla-2026, flowad-2026]\n\n**NAVSIM v1**不是交互闭环：它在约 4 秒短时域内，以固定环境计算进度、碰撞、舒适等规划指标，适合规模化比较 DiffusionDrive、VADv2、CaAD 等同协议结果，但应报告场景覆盖和各指标分项，不能报告不存在的姿态匹配失败率。**Pseudo-Simulation/NAVSIM v2**则预先生成自车位置、航向与速度扰动，再按接近程度匹配未来观测；Pseudo-Simulation 报告其跨方法闭环分数拟合 R²=0.8，最佳传统开环为 R²=0.7，这不是 Spearman 或 Kendall 排名相关。GuideFlow 的 Navhard EPDMS=43.0 属于 NAVSIM v2 两阶段 pseudo-simulation，不能与 NAVSIM v1 PDMS 混排；v2 还必须报告扰动覆盖和匹配失败。NAVSIM v1 的背景交通按日志回放；Pseudo-Simulation/NAVSIM v2 在各阶段的 BEV 评分中让背景车辆通过 IDM 响应自车，但自车每阶段执行固定 4 秒轨迹，Stage-2 传感观测仍是预生成和匹配。[navsim-2024, pseudo-simulation-2025, diffusiondrive-2025, vadv2, caad, guideflow-2026]\n\n**CARLA/Bench2Drive**提供规则或脚本交通参与者的反应式闭环和长于日志片段的路线执行。Learning by Cheating、LMDrive、Think2Drive、Raw2Drive、VADv2、CaAD、GuideFlow 与 ReCogDrive 可在这里暴露误差累积、路线完成和互动失败；Bench2Drive 的 44 类场景与 220 条路线以及 Bench2Drive-Robust 的帧流、自车状态和时延故障提高了可审计性。代价是视觉、动力学、代理行为与真实交通有域差，且路线随机性和驾驶分数方差必须用多次运行和置信区间控制。[learning-by-cheating-2020, lmdrive-2024, think2drive-2024, raw2drive-2025, vadv2, caad, guideflow-2026, recogdrive-2026, bench2drive-2024, bench2drive-robust]\n\n**3DGS 重建环境**提高真实场景的外观和几何保真，同时允许改变自车视点。VADv2 使用 337 个重建环境、每段 8 秒的稠密交通场景；HUGSIM 汇集超过 70 个真实采集序列并构造 400 余个场景。RAD 在照片级 3DGS 重建环境中用 PPO 进行闭环强化学习，并未通过渲染器反向传播；其其他交通参与者采用日志轨迹回放。这里的自车观测随动作变化，部分参与者由轨迹回放或 IDM 等模型驱动，但传感器噪声、重建伪影、参与者反应和 ODD 覆盖仍不同于真实道路；必须分别报告重建质量、参与者模型和失败可追溯性。[vadv2, hugsim-2026, rad-2025]\n\n**受控实车与公共道路**是另一组证据维度。VADv2 的公开材料只支持有限、定性的受控车辆演示，没有里程、接管、覆盖、对照、尾延迟或安全事件统计。Sim2Real-AD 把 CARLA 训练策略零样本部署到一辆 Ford E-Transit，在三个隔离低速场景中各做 20 次试验并报告 90%/80%/75% 成功率；证据仍限于单车、单场地和单日。ViLaD 展示实车交互停车，但部署的是停车位 waypoint 选择器，后续规划控制沿用既有栈。RAD-2 声称复杂城市交通中的实车感知安全性与平顺性改善，却未公开可复核的量化协议。AutoVLA、OpenDriveVLA 使用真实数据集，Scaling Self-Play 做真实感知适配，也不能据此升级为实车证据。现有材料证明受控部署并非空白，但仍不足以支持公共道路、车队规模或净安全收益结论。[vadv2, sim2real-ad-2026, vilad-2025, rad2-2026, autovla-2025, opendrivevla-2026, scaling-self-play]\n\n**新增协议边界。**MOJITO 在 NAVSIM v1 得到 88.9 PDMS、v2 Stage-1 得到 88.4 EPDMS，navhard 相机分支为 29.0；NAVSIM v1 为非反应式日志抽象；v2/navhard 使用预生成合成观测及分阶段 BEV 评分，其背景车辆反应性应按所用 v2 版本和 IDM 配置披露。两者都不能等同于持续传感器反馈或真实道路闭环。，因此不能等同于持续传感器反馈的反应式闭环。Pictura 在基于 PufferDrive 的高速模拟器中让多智能体相互作用，场景采用 CARLA 地图几何，视觉由自定义 CUDA 栅格器生成，并以 50B 步扩大策略诱发状态；但图像是 96x54 扁平几何渲染，WOMD 结果只重用 44,073 个道路/轨迹布局后重新合成观察。其满密度 0.006 碰撞率与 0.858 目标完成率证明布局迁移，不证明真实 Waymo 相机或道路部署；盲角接管中其他参与者沿日志轨迹运动，也应与完全反应式自博弈分开。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "uniad-2023",
         "genad-2024",
@@ -126,7 +126,7 @@
       "kind": "challenges",
       "title": "瓶颈正从平均规划分转向信息瓶颈、可见性因果、尾部风险与生命周期维护",
       "thesis": "榜单增益可能来自更大联合计算、合成状态覆盖或协议机制；必须通过等预算消融、动作干预、真实传感器转移和回归门禁分辨。",
-      "body": "第一类风险是因果混淆与分布偏移。离线日志主要覆盖专家状态，策略犯错后会进入稀疏区域；Hidden Biases 进一步说明目标点和输出平均等捷径会抬高 CARLA 表现。Scaling Self-Play 用 on-policy 自博弈扩展状态覆盖，但其 Gigapixel 是简化 bounding-box 像素世界。CaAD 的 ego-centric joint modeling 和基准增益支持“交互联合建模有效”，却没有足以建立严格因果识别的干预与混杂控制；DAWN 在低分辨率消融中由非交互基线 PDMS 85.2 提升到双向交互 87.9，并在 NAVSIM v1 perception-free 组报告 89.1；但同表 iPad 为 91.7、DriveSuprim 为 93.5，NAVSIM v2 EPDMS 83.2 也低于 DriveSuprim 87.1 和 Drive-JEPA 87.8，低分辨率 4 秒/4 轮配置延迟为 1067.975 ms。数值支持特定组件有效，却仍来自非反应式或伪闭环协议，不支持把统计互馈改写成已验证交通因果机制。[hidden-biases-2023, scaling-self-play, caad, dawn-world-action]\n\n第二类风险是多模态生成不等于风险控制。VADv2 的规划词表、DiffusionDrive 的锚点扩散和 GuideFlow 的约束流能产生多种候选，但候选覆盖、概率校准、低概率高损失事件和最终选择器仍决定安全上限。AutoVLA 与 ReCogDrive 的强化后训练、Cognitive Dual-Process 的规则验证提高特定规划指标；但自然语言理由、规则一致性或离散动作正确率都不能替代连续轨迹、车辆动力学、慢路径漏触发率和端到端尾时延验证。[vadv2, diffusiondrive-2025, guideflow-2026, autovla-2025, recogdrive-2026, cognitive-dual-process]\n\n第三类风险是“闭环”标签隐藏环境差异。Pseudo-Simulation 的预生成姿态扰动、FlowAD 的日志相对流、CARLA 的代理交通和 HUGSIM 的重建场景分别修复不同偏差，任何一个都不是其他协议的替代品。研究应在相同初始状态和动作干预下比较环境响应，报告动作盲基线、匹配失败、模拟器随机种子与排名转移；否则更高闭环分数可能来自渲染或指标机制，而不是策略真正学会互动。[pseudo-simulation-2025, flowad-2026, bench2drive-2024, hugsim-2026]\n\n第四类风险是部署和维护。Policy Stitching 表明更换感知器、传感器或训练域会破坏冻结策略依赖的潜表示，它给出的跨域适配收益仍是预印本结果，且保留旧策略分数不等于证明新系统安全。Bench2Drive-Robust 表明帧丢失、局部观测、自车状态误差和推理延迟会在 CARLA 闭环中累积，但该基准本身不是硬件在环或真实道路测试。未来系统必须把版本契约、尾延迟、故障注入、拒绝与回滚作为一等接口，而不是只在模型冻结后补做平均性能评测。[policy-stitching, bench2drive-robust, bench2drive-2024]\n\nMOJITO 的关键风险是把逐层联合注意力收益与模型规模、预训练骨干和更高计算混在一起；相机单模态 86.8、完整模型 88.9 的差异需要多种子等预算复核，而且 navhard 只能移除 LiDAR。Pictura 则揭示“可见信息训练”并不自动等于安全：CARLA 中 Alberti 相对 Vectorized-dagger 的碰撞率为 0.060 对 0.037、闯红灯率为 0.058 对 0.009，每次违规里程也更低；32 张 H100 的训练规模和低分辨率交通灯进一步限制复现与迁移。二者都要求报告负结果和算力，而不能只呈现联合分数或吞吐。[mojito-2026, pictura-2026]",
+      "body": "第一类风险是因果混淆与分布偏移。离线日志主要覆盖专家状态，策略犯错后会进入稀疏区域；Hidden Biases 进一步说明目标点和输出平均等捷径会抬高 CARLA 表现。Scaling Self-Play 用 on-policy 自博弈扩展状态覆盖，但其 Gigapixel 是简化 bounding-box 像素世界。CaAD 的 ego-centric joint modeling 和基准增益支持“交互联合建模有效”，却没有足以建立严格因果识别的干预与混杂控制；DAWN 在低分辨率消融中由非交互基线 PDMS 85.2 提升到双向交互 87.9，并在 NAVSIM v1 perception-free 组报告 89.1；但同表 iPad 为 91.7、DriveSuprim 为 93.5，NAVSIM v2 EPDMS 83.2 也低于 DriveSuprim 87.1 和 Drive-JEPA 87.8，低分辨率 4 秒/4 轮配置延迟为 1067.975 ms。数值支持特定组件有效，却仍来自非反应式或伪闭环协议，不支持把统计互馈改写成已验证交通因果机制。[hidden-biases-2023, scaling-self-play, caad, dawn-world-action]\n\n第二类风险是多模态生成不等于风险控制。VADv2 的规划词表、DiffusionDrive 的锚点扩散和 GuideFlow 的约束流能产生多种候选，但候选覆盖、概率校准、低概率高损失事件和最终选择器仍决定安全上限。AutoVLA 与 ReCogDrive 的强化后训练、Cognitive Dual-Process 的规则验证提高特定规划指标；但自然语言理由、规则一致性或离散动作正确率都不能替代连续轨迹、车辆动力学、慢路径漏触发率和端到端尾时延验证。[vadv2, diffusiondrive-2025, guideflow-2026, autovla-2025, recogdrive-2026, cognitive-dual-process]\n\n第三类风险是“闭环”标签隐藏环境差异。Pseudo-Simulation 的预生成姿态扰动、FlowAD 的日志相对流、CARLA 的代理交通和 HUGSIM 的重建场景分别修复不同偏差，任何一个都不是其他协议的替代品。研究应在相同初始状态和动作干预下比较环境响应，报告动作盲基线、匹配失败、模拟器随机种子与排名转移；否则更高闭环分数可能来自渲染或指标机制，而不是策略真正学会互动。[pseudo-simulation-2025, flowad-2026, bench2drive-2024, hugsim-2026]\n\n第四类风险是部署和维护。Policy Stitching 表明更换感知器、传感器或训练域会破坏冻结策略依赖的潜表示，它给出的跨域适配收益仍是预印本结果，且保留旧策略分数不等于证明新系统安全。Bench2Drive-Robust 表明帧丢失、局部观测、自车状态误差和推理延迟会在 CARLA 闭环中累积，但该基准本身不是硬件在环或真实道路测试。未来系统必须把版本契约、尾延迟、故障注入、拒绝与回滚作为一等接口，而不是只在模型冻结后补做平均性能评测。[policy-stitching, bench2drive-robust, bench2drive-2024]\n\nMOJITO 的关键风险是把逐层联合注意力收益与模型规模、预训练骨干和更高计算混在一起；相机单模态 86.8、完整模型 88.9 的差异需要多种子等预算复核，而且 navhard 只能移除 LiDAR。Pictura 则揭示“可见信息训练”并不自动等于安全：CARLA 地图几何的 PufferDrive 环境中，Alberti 相对 Vectorized-dagger 的碰撞率为 0.060 对 0.037、闯红灯率为 0.058 对 0.009，每次违规里程也更低；32 张 H100 的训练规模和低分辨率交通灯进一步限制复现与迁移。二者都要求报告负结果和算力，而不能只呈现联合分数或吞吐。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "hidden-biases-2023",
         "scaling-self-play",
@@ -153,7 +153,7 @@
       "kind": "outlook",
       "title": "三个可证伪切口：接口因果、跨协议排序与可回滚训练部署",
       "thesis": "下一步应把联合模态接口和视觉自博弈放进等预算、跨协议、可否决的实验，而不是继续用单一 NAVSIM 分数或仿真里程证明部署。",
-      "body": "**切口一：动作条件响应是否真的被学到。**以 DAWN、CaAD 作为响应模型候选，以 VADv2 作为动作干预或规划基线，在相同初始状态对自车动作做受控干预，并与动作盲、打乱动作、等参数和等算力模型比较。世界响应需在预注册的 1/2/4 秒原生时域同时满足参与者轨迹误差、碰撞风险校准和物理一致性；具备原生 8 秒协议的模型另列 8 秒结果，不用外推帧补齐。若动作盲基线非劣，或响应方向在跨城市/跨交通代理测试中反转，就拒绝“可交互世界模型”主张并回退为条件生成器。[dawn-world-action, caad, vadv2, hugsim-2026]\n\n**切口二：一种评测能否预测另一种评测。**在固定策略集合与相同场景语义上，联合执行日志开环、NAVSIM v1、Pseudo-Simulation、CARLA/Bench2Drive、HUGSIM/3DGS 和受控实车；预注册风险排序相关性的下置信界、碰撞/违规率差异的置信区间与场景覆盖。只有当新协议在控制视觉指标后仍显著提高对预先指定目标协议、尤其受控实车结果的增量预测力，才声称它更接近部署；若排序下界不达阈值或只由少数场景驱动，就拒绝代理有效性。这个切口先复核 Pseudo-Simulation 报告的跨方法分数拟合 R²，并把 Spearman/Kendall 排名相关作为新的预注册指标，也可约束 RAD 与 Scaling Self-Play 的 sim-to-real 叙事。[pseudo-simulation-2025, bench2drive-2024, hugsim-2026, rad-2025, scaling-self-play]\n\n**切口三：VLA 慢路径和版本兼容必须可回滚。**让 OpenDriveVLA、AutoVLA 或 ReCogDrive 仅在可解释触发器判定高不确定/语义异常时进入慢路径，固定报告触发精确率、召回率、漏触发风险、99 分位端到端时延和安全收益置信区间；若慢路径安全收益区间跨零或尾时延超预算，则关闭慢路径。感知器或模型升级时，用固定锚点、策略探针和故障注入衡量行为漂移；若碰撞/违规上界、恢复时间或兼容性阈值失守，自动回滚旧版本，而不是以平均分抵消尾部退化。[opendrivevla-2026, autovla-2025, recogdrive-2026, policy-stitching, bench2drive-robust]\n\n三个切口共享一套报告契约：公开场景 ID、版本、种子、干预、失败轨迹和置信区间；把反应性、视觉真实性、时域、覆盖与可审计性分栏；分别标注日志开环、NAVSIM v1、Pseudo-Simulation/NAVSIM v2、反应式仿真、3DGS 重建环境和受控实车证据；硬件在环作为第七栏，未执行时明确留空。可信端到端系统未必结构最简单，但必须能表达不确定性、拒绝越界动作、复现失败并在升级后安全回滚。[navsim-2024, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, policy-stitching]\n\n**接口联合与可见性自博弈对照。**对 MOJITO 固定骨干、参数量、训练步数和扩散步，比较后融合、单向 cross-attention、逐层双向 attention，并在同一初态的 NAVSIM、Bench2Drive/CARLA 与受控场地上预注册碰撞/进度差值、99 分位延迟和模态失效回退；若反应式收益区间跨零或延迟超预算，就拒绝联合接口净收益。对 Pictura 固定 PPO 样本量和网络容量，依次提高渲染分辨率、真实纹理/噪声与交通灯可见性，并以特权向量、去辅助变量向量和视觉策略做三方对照；若 CARLA 的碰撞/闯灯劣势未收敛，或 WOMD 布局排名不能预测真实图像/受控车辆结果，就把它限定为高吞吐难例生成器而非可部署视觉策略。[mojito-2026, pictura-2026]",
+      "body": "**切口一：动作条件响应是否真的被学到。**以 DAWN、CaAD 作为响应模型候选，以 VADv2 作为动作干预或规划基线，在相同初始状态对自车动作做受控干预，并与动作盲、打乱动作、等参数和等算力模型比较。世界响应需在预注册的 1/2/4 秒原生时域同时满足参与者轨迹误差、碰撞风险校准和物理一致性；具备原生 8 秒协议的模型另列 8 秒结果，不用外推帧补齐。若动作盲基线非劣，或响应方向在跨城市/跨交通代理测试中反转，就拒绝“可交互世界模型”主张并回退为条件生成器。[dawn-world-action, caad, vadv2, hugsim-2026]\n\n**切口二：一种评测能否预测另一种评测。**在固定策略集合与相同场景语义上，联合执行日志开环、NAVSIM v1、Pseudo-Simulation、CARLA/Bench2Drive、HUGSIM/3DGS 和受控实车；预注册风险排序相关性的下置信界、碰撞/违规率差异的置信区间与场景覆盖。只有当新协议在控制视觉指标后仍显著提高对预先指定目标协议、尤其受控实车结果的增量预测力，才声称它更接近部署；若排序下界不达阈值或只由少数场景驱动，就拒绝代理有效性。这个切口先复核 Pseudo-Simulation 报告的跨方法分数拟合 R²，并独立复核论文已报告的 Spearman 排名相关，并预注册 Kendall、分场景与跨域相关性的补充检验，也可约束 RAD 与 Scaling Self-Play 的 sim-to-real 叙事。[pseudo-simulation-2025, bench2drive-2024, hugsim-2026, rad-2025, scaling-self-play]\n\n**切口三：VLA 慢路径和版本兼容必须可回滚。**让 OpenDriveVLA、AutoVLA 或 ReCogDrive 仅在可解释触发器判定高不确定/语义异常时进入慢路径，固定报告触发精确率、召回率、漏触发风险、99 分位端到端时延和安全收益置信区间；若慢路径安全收益区间跨零或尾时延超预算，则关闭慢路径。感知器或模型升级时，用固定锚点、策略探针和故障注入衡量行为漂移；若碰撞/违规上界、恢复时间或兼容性阈值失守，自动回滚旧版本，而不是以平均分抵消尾部退化。[opendrivevla-2026, autovla-2025, recogdrive-2026, policy-stitching, bench2drive-robust]\n\n三个切口共享一套报告契约：公开场景 ID、版本、种子、干预、失败轨迹和置信区间；把反应性、视觉真实性、时域、覆盖与可审计性分栏；分别标注日志开环、NAVSIM v1、Pseudo-Simulation/NAVSIM v2、反应式仿真、3DGS 重建环境和受控实车证据；硬件在环作为第七栏，未执行时明确留空。可信端到端系统未必结构最简单，但必须能表达不确定性、拒绝越界动作、复现失败并在升级后安全回滚。[navsim-2024, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, policy-stitching]\n\n**接口联合与可见性自博弈对照。**对 MOJITO 固定骨干、参数量、训练步数和扩散步，比较后融合、单向 cross-attention、逐层双向 attention，并在同一初态的 NAVSIM、Bench2Drive/CARLA 与受控场地上预注册碰撞/进度差值、99 分位延迟和模态失效回退；若反应式收益区间跨零或延迟超预算，就拒绝联合接口净收益。对 Pictura 固定 PPO 样本量和网络容量，依次提高渲染分辨率、真实纹理/噪声与交通灯可见性，并以特权向量、去辅助变量向量和视觉策略做三方对照；若该模拟器中的碰撞/闯灯劣势未收敛，或 WOMD 布局排名不能预测真实图像/受控车辆结果，就把它限定为高吞吐难例生成器而非可部署视觉策略。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "dawn-world-action",
         "vadv2",
@@ -176,7 +176,7 @@
   ],
   "takeaways": [
     "端到端描述的是信息流和最终目标的联合优化，不要求删除 BEV、模态 token、轨迹词表、世界模型或独立安全接口。",
-    "MOJITO 说明逐层图像-LiDAR-动作联合值得研究，但 88.9 PDMS/88.4 EPDMS 仍是 NAVSIM 非反应式证据，约 187.65 ms/H200 也必须计入部署预算。",
+    "MOJITO 说明逐层图像-LiDAR-动作联合值得研究，但 88.9 PDMS 对应 NAVSIM v1 日志评测，88.4 EPDMS 对应 v2 分阶段伪仿真，均非持续传感器闭环，约 187.65 ms/H200 也必须计入部署预算。",
     "Pictura 把视觉自博弈扩展到 50B 步和 WOMD 派生布局，但 96x54 CARLA 合成图像、较高碰撞/闯灯率和未开放完整代码限制了现实外推。",
     "日志开环、NAVSIM、预生成 pseudo-simulation、CARLA 自博弈、3DGS 重建和受控实车应分栏报告反应性、视觉真实性、时域、覆盖、算力和审计性。",
     "最值得做的是等预算检验模态联合的因果增益、评测协议间的风险排序，以及训练或模型升级失败时可触发的拒绝与回滚。"
@@ -414,8 +414,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "pmlr:v305:cao25a",
       "sourceFamily": "publisher-and-venue",
-      "supports": "预生成自车位置、航向和速度扰动，并按轨迹接近度匹配未来观测；报告与闭环分数的跨方法拟合 R²=0.8，最佳传统开环为 R²=0.7。",
-      "limitation": "扰动和观测离线预生成，其他参与者不会随测试时动作逐步响应；R² 不是排名相关，也不能证明个体失败或真实安全可被充分预测。",
+      "supports": "预生成 Stage-2 自车位置、航向和速度变化的合成观测，并按 Stage-1 自车终点接近度加权；每阶段执行固定 4 秒轨迹，背景车辆以 IDM 响应自车。跨方法闭环分数拟合 R²=0.8，最佳单阶段基线为 R²=0.7；论文同时报告 Pearson 和 Spearman 相关。",
+      "limitation": "Stage-2 观测离线预生成，被测自车在各 4 秒阶段内不重新接收感知反馈或重规划，因而仍不能替代连续传感器闭环；但背景车辆在 BEV 评分中会通过 IDM 响应自车。R² 不是排名相关，也不能证明逐个失败或真实道路安全都可被预测。",
       "url": "https://proceedings.mlr.press/v305/cao25a.html",
       "links": [
         {
@@ -685,18 +685,26 @@
       "title": "MOJITO: Modal Joint Learning for Unified End-to-End Autonomous Driving",
       "authors": "Zhijing Cheng; Xuancheng Zhang; Donglin Di; Lei Fan; Baorui Ma; Hao Li; Xun Yang",
       "year": 2026,
-      "venue": "arXiv",
+      "venue": "ECCV 2026 (accepted; proceedings pending)",
       "publicationType": "method",
-      "publicationStatus": "preprint",
+      "publicationStatus": "accepted",
       "canonicalId": "arxiv:2607.23511",
-      "sourceFamily": "arxiv",
+      "sourceFamily": "publisher-and-venue",
       "supports": "用逐层 Modal Joint Attention 双向更新图像、LiDAR 和扩散动作 token；NAVSIM v1 PDMS 88.9、v2 Stage-1 EPDMS 88.4，并公开代码仓库。",
-      "limitation": "NAVSIM 仍是 non-reactive/logged 规划评测；v2 navhard 只能使用相机分支且 EPDMS 为 29.0，127M 模型单张 H200 延迟约 187.65 ms，模型权重截至审计日仍待发布，ECCV 模板也未获正式页面核验。",
-      "url": "https://arxiv.org/abs/2607.23511",
+      "limitation": "NAVSIM v1 是非反应式规划评测；v2/navhard 属分阶段伪仿真，应披露所用版本和 IDM 反应式背景车配置。navhard 仅相机分支 EPDMS 为 29.0，127M 模型在单 H200 上平均延迟约 187.65 ms。代码、官方权重和 ECCV 2026 录用已获本轮一手入口核验，但未重跑训练评测，也未核到正式 proceedings。",
+      "url": "https://eccv.ecva.net/Conferences/2026/AcceptedPapers",
       "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2607.23511"
+        },
         {
           "label": "代码",
           "url": "https://github.com/mumucc01/MOJITO"
+        },
+        {
+          "label": "项目页",
+          "url": "https://huggingface.co/mumucc1/MOJITO/tree/main"
         }
       ],
       "localPaperId": "mojito-modal-joint-driving"
@@ -712,7 +720,7 @@
       "canonicalId": "arxiv:2607.26005",
       "sourceFamily": "arxiv",
       "supports": "以 GPU 原生透视栅格器为每个智能体生成四路相机观察，用 PPO 进行 50B agent-step 自博弈，并在 44,073 个 WOMD 派生布局上分析视觉策略与特权状态策略差异。",
-      "limitation": "观察是 96x54 的 CARLA 几何图元，不含真实纹理、天气和传感器噪声；WOMD 只提供布局而非真实相机，视觉策略在 CARLA 中仍有更高碰撞与闯红灯，代码截至审计日尚未完整发布。",
+      "limitation": "策略在基于 PufferDrive 的高速多智能体模拟器上运行，使用 CARLA 地图几何和自定义 CUDA 栅格器生成 96×54 的扁平图元观察，没有真实纹理、天气或传感器噪声；WOMD 只提供布局。域内视觉策略仍有更高碰撞与闯灯率，代码本轮仍显示 coming soon。",
       "url": "https://arxiv.org/abs/2607.26005",
       "links": [
         {
@@ -725,9 +733,9 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-08-31",
+    "searchedAt": "2026-09-22",
     "cutoffDate": "2026-08-01",
-    "evidenceBoundary": "截至 2026-08-31，本轮仅重跑本地 ripgrep 并按 end-to-end-autonomous-driving frontmatter tag 与 revisionOf 闭合候选；站外查询沿用 2026-08-01 保存的一手检索，不声称重新执行外部检索或改写核心 synthesis。本地查询得到 75 个原始文件命中、58 篇规范候选，其中 10 篇已纳入当前综述、48 篇以明确理由暂缓、17 个原始命中文件完成范围筛除。",
+    "evidenceBoundary": "原站外查询族及执行日期保留，不倒填为本轮检索。2026-09-22 对既有核心引用、正文关键数字与范围重新检查一手来源；出版版本差异以正式版为准，资源可访问与实验复现分开。当前本库查询单独重跑并闭合去向；近期新文献使用本期digest-audit独立记录。",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -753,35 +761,42 @@
       "VLA、世界-动作模型、自博弈、感知升级和部署扰动方法仍缺长期运行、99 分位延迟、故障回退与跨版本安全回归数据。"
     ],
     "counts": {
-      "candidates": 119,
-      "deduplicated": 89,
+      "candidates": 124,
+      "deduplicated": 94,
       "included": 31,
-      "excluded": 58
+      "excluded": 63
     },
     "independentReview": {
-      "completedAt": "2026-08-31",
+      "completedAt": "2026-09-22",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 6,
-      "snapshotFingerprint": "6e539796dfe148b88f013ecfea07b4f7f924330a911fb8b41eca0a7fad6c1818"
+      "rounds": 2,
+      "reviewerAgentId": "/root/review_existing_refresh_sep22",
+      "review_independence": "same-family",
+      "acceptance_status": "provisional",
+      "snapshotFingerprint": "00bfecf8eead0f0ae12fcf23bbf0623a5eb7c514e265da64dea9326675f1050e",
+      "artifactPath": "docs/research-updates/2026-09-22/review-existing-round2.json"
     },
     "queryRuns": [
       {
         "family": "模仿学习与规划导向端到端驾驶",
         "sourceFamily": "local-corpus",
         "query": "端到端|end-to-end|imitation|planning-oriented|end-to-end-autonomous-driving",
-        "executedAt": "2026-08-31",
-        "resultCount": 58,
-        "rawHitCount": 75,
-        "screenedOutCount": 17,
-        "screeningNote": "2026-08-31 重跑 rg -l -i，全文正则共命中 75 个 Markdown 文件；按 end-to-end-autonomous-driving 标签与 revisionOf 归并为 58 篇规范候选，其余 17 个文件完成范围筛除。",
+        "executedAt": "2026-09-22",
+        "resultCount": 63,
+        "rawHitCount": 97,
+        "screenedOutCount": 34,
+        "screeningNote": "2026-09-22 对当前原始 Markdown 执行记录中的 rg -l -i；97 个原始文件命中按方向标签和 revisionOf 归并为 63 篇规范候选，其余 34 个文件为跨文引用或其他范围命中。核心引用本轮重新核对一手来源；其余本库候选保留逐篇去向，不据题录认定质量低。",
         "resultIdSample": [
           "arxiv:2608.06008",
           "arxiv:2606.21172",
+          "arxiv:2608.26533",
           "arxiv:2605.18059",
           "arxiv:2608.12854",
           "arxiv:2605.13646",
-          "doi:10.1109/lsp.2026.3680426",
+          "arxiv:2608.24282",
+          "arxiv:2606.27644",
+          "arxiv:2608.22549",
           "arxiv:2605.17284",
           "arxiv:2607.19194",
           "arxiv:2606.07464",
@@ -797,43 +812,45 @@
           "arxiv:2412.19505",
           "arxiv:2605.14696",
           "arxiv:2608.12932",
+          "arxiv:2608.26074",
+          "arxiv:2608.23486",
           "arxiv:2607.17521",
           "arxiv:2409.07321",
           "arxiv:2605.10904",
+          "arxiv:2609.20747",
+          "arxiv:2609.20377",
           "arxiv:2607.23511",
+          "arxiv:2608.23405",
           "arxiv:2606.03159",
+          "arxiv:2609.20756",
           "arxiv:2607.26005",
           "arxiv:2606.21509",
+          "arxiv:2609.00111",
           "arxiv:2607.04953",
           "arxiv:2605.29114",
-          "doi:10.1109/dsn-w65791.2025.00071",
+          "arxiv:2505.11532",
           "arxiv:2605.23406",
           "arxiv:2607.13926",
           "arxiv:2606.19641",
           "arxiv:2607.07844",
+          "arxiv:2608.25142",
           "arxiv:2605.24354",
           "arxiv:2411.16816",
           "arxiv:2608.14024",
           "arxiv:2608.15573",
+          "arxiv:2609.03602",
           "arxiv:2605.10388",
           "arxiv:2607.13028",
           "arxiv:2608.18035",
           "arxiv:2606.29097",
           "arxiv:2408.09251",
           "arxiv:2402.13243",
-          "doi:10.1609/aaai.v40i16.38386",
+          "arxiv:2503.23463",
           "arxiv:2606.12706",
           "arxiv:2606.12396",
           "arxiv:2608.01035",
           "arxiv:2606.19836",
-          "arxiv:2606.28758",
-          "arxiv:2608.24282",
-          "arxiv:2608.22549",
-          "arxiv:2608.26074",
-          "arxiv:2608.23486",
-          "arxiv:2608.23405",
-          "arxiv:2608.25142",
-          "arxiv:2608.26533"
+          "arxiv:2606.28758"
         ],
         "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
         "retrieval": {
@@ -881,11 +898,15 @@
             "geoworldad-geometry-world-action",
             "maat-e2e-adversarial-training",
             "mdrive-closed-loop-cooperative-driving",
+            "miler-semantic-sim-to-real",
+            "mm-future-multimode-world-action",
             "mojito-modal-joint-driving",
             "momadv2-reliable-temporal-memory",
             "omnidreams-closed-loop-world-model",
+            "opted-render-free-teacher",
             "pictura-perspective-self-play",
             "policy-stitching-e2e-driving",
+            "qwen-drive-foundation-model",
             "real-world-perturbation-testing",
             "reasonbreak-vla-vulnerability-driving",
             "revisiting-adversarial-attacks",
@@ -898,6 +919,7 @@
             "splatad-realtime-3dgs",
             "ssp-syn2sim2phy-vla-evaluation",
             "stabledrive-selective-memory",
+            "sv-wam-surround-view-world-action",
             "temporal-sampling-e2e-trajectory",
             "terrazero-self-play-driving",
             "traffic-element-aware-driving",
@@ -914,14 +936,17 @@
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "这些论文的主要方向属于本综述，但本轮只完成截至 2026-08-31 的本地候选合规性复核；在未重跑站外直接竞品、重写核心综合并完成独立用途级复核前，不自动升级为核心引用。",
+              "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
               "localPaperIds": [
                 "clap-v2x-prompt-optimization",
                 "compact-va-planning-token-compression",
                 "driveteach-vla-trajectory-guided-prompts",
                 "flashdrive-vla-inference",
                 "geoworldad-geometry-world-action",
+                "miler-semantic-sim-to-real",
                 "momadv2-reliable-temporal-memory",
+                "opted-render-free-teacher",
+                "qwen-drive-foundation-model",
                 "s2-vla-semantic-spatial",
                 "skydrive-aerial-city-adaptation",
                 "stabledrive-selective-memory",
@@ -934,7 +959,7 @@
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "这些论文以当前方向为跨方向标签，可作为邻域证据；本轮只完成截至 2026-08-31 的本地候选合规性复核，未重跑站外检索或改写核心综合，因此不升级为核心引用。",
+              "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
               "localPaperIds": [
                 "adaptive-wam-early-exit-planning",
                 "baddreamer-world-model-backdoor",
@@ -956,6 +981,7 @@
                 "geowam-geometry-world-action-model",
                 "maat-e2e-adversarial-training",
                 "mdrive-closed-loop-cooperative-driving",
+                "mm-future-multimode-world-action",
                 "omnidreams-closed-loop-world-model",
                 "real-world-perturbation-testing",
                 "reasonbreak-vla-vulnerability-driving",
@@ -965,6 +991,7 @@
                 "sparseworld-sparse-scene-world-model",
                 "splatad-realtime-3dgs",
                 "ssp-syn2sim2phy-vla-evaluation",
+                "sv-wam-surround-view-world-action",
                 "trafficalign-traffic-scenario-generation",
                 "v2x-vlm-cooperative-driving",
                 "vladrivebench-cot-action-vla",
@@ -1249,8 +1276,8 @@
       }
     ],
     "sourceLimitations": [
-      "Semantic Scholar 匿名 API 在本轮受限，只记录真实尝试，不把搜索摘要或聚合器字段作为论据。",
-      "OpenAlex 只承担候选发现、别名与出版元数据交叉核对；支撑论断和局限仍来自论文、正式页面或官方项目。"
+      "历史检索记录：Semantic Scholar 匿名 API 在本轮受限，只记录真实尝试，不把搜索摘要或聚合器字段作为论据。",
+      "历史检索记录：OpenAlex 只承担候选发现、别名与出版元数据交叉核对；支撑论断和局限仍来自论文、正式页面或官方项目。"
     ],
     "qualityChecksApplied": [
       "query-family-alignment",
@@ -1268,12 +1295,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-08-31",
+        "executedAt": "2026-09-22",
         "query": "端到端|end-to-end|imitation|planning-oriented|end-to-end-autonomous-driving",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 8,
-        "note": "2026-08-31 重跑本库 rg：75 个原始命中文件归并为 58 篇带方向标签的规范候选；8 篇已在核心引用中，其余逐项进入本地方向或跨方向暂缓组。acceptedCount=8 仍与 references[].sourceFamily=local-corpus 对账。"
+        "note": "2026-09-22 对当前原始 Markdown 执行记录中的 rg -l -i；97 个原始文件命中按方向标签和 revisionOf 归并为 63 篇规范候选，其余 34 个文件为跨文引用或其他范围命中。核心引用本轮重新核对一手来源；其余本库候选保留逐篇去向，不据题录认定质量低。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1282,8 +1309,9 @@
         "query": "端到端自动驾驶：从联合优化到可验证闭环 模仿学习与规划导向端到端驾驶 BEV、占用与结构化中间表征 概率、生成式与多模态轨迹规划 VLA、语言推理与世界动作模型 闭环训练、反事实评测与部署 模型更新、可维护性与安全约束",
         "endpoint": "https://export.arxiv.org/api/query",
         "limit": 50,
-        "acceptedCount": 5,
-        "note": "本轮检索证据通过 arXiv API、摘要页与官方 TeX/PDF 交叉核对；预印本状态不因模板或作者自述升级。"
+        "acceptedCount": 4,
+        "note": "本轮检索证据通过 arXiv API、摘要页与官方 TeX/PDF 交叉核对；预印本状态不因模板或作者自述升级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+        "primarySourceRevalidatedAt": "2026-09-22"
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -1292,28 +1320,49 @@
         "query": "端到端自动驾驶：从联合优化到可验证闭环 official proceedings journal DOI",
         "endpoint": "https://www.google.com/search",
         "limit": 50,
-        "acceptedCount": 18,
-        "note": "逐条回到 DOI、PMLR、CVF、OpenReview、NeurIPS 或其他正式页面核对书目和出版状态；正式页存在时保留 arXiv 入口。"
+        "acceptedCount": 19,
+        "note": "逐条回到 DOI、PMLR、CVF、OpenReview、NeurIPS 或其他正式页面核对书目和出版状态；正式页存在时保留 arXiv 入口。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+        "primarySourceRevalidatedAt": "2026-09-22"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "limited",
-        "executedAt": "2026-08-01",
-        "query": "端到端自动驾驶：从联合优化到可验证闭环",
-        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
-        "limit": 10,
+        "status": "success",
+        "executedAt": "2026-09-22",
+        "query": "DOI:10.1109/tpami.2024.3435937",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/",
+        "limit": 1,
         "acceptedCount": 0,
-        "note": "匿名 API 本轮仍受限，仅作候选发现尝试；没有引用以聚合器记录作为最终核验来源。"
+        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "historicalAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-08-01",
+          "query": "端到端自动驾驶：从联合优化到可验证闭环",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "匿名 API 本轮仍受限，仅作候选发现尝试；没有引用以聚合器记录作为最终核验来源。"
+        }
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "端到端自动驾驶：从联合优化到可验证闭环",
-        "endpoint": "https://api.openalex.org/works",
-        "limit": 10,
+        "executedAt": "2026-09-22",
+        "query": "DOI:10.1109/tpami.2024.3435937",
+        "endpoint": "https://api.openalex.org/works/",
+        "limit": 1,
         "acceptedCount": 0,
-        "note": "用于出版元数据与 DOI/arXiv 别名交叉核对；最终方法、实验和限制均回到一手来源。"
+        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "historicalAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-08-01",
+          "query": "端到端自动驾驶：从联合优化到可验证闭环",
+          "endpoint": "https://api.openalex.org/works",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "用于出版元数据与 DOI/arXiv 别名交叉核对；最终方法、实验和限制均回到一手来源。"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -1323,7 +1372,8 @@
         "endpoint": "https://www.google.com/search",
         "limit": 50,
         "acceptedCount": 0,
-        "note": "核对作者项目页、代码仓库和数据入口的存在与当前发布状态；项目自述不用于升级出版或道路安全证据等级。"
+        "note": "核对作者项目页、代码仓库和数据入口的存在与当前发布状态；项目自述不用于升级出版或道路安全证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+        "primarySourceRevalidatedAt": "2026-09-22"
       }
     ],
     "candidateLedger": [
@@ -1453,7 +1503,7 @@
         ]
       },
       {
-        "canonicalId": "openreview:m4JpoJRgAr",
+        "canonicalId": "openreview:m4jpojrgar",
         "occurrences": 2,
         "disposition": "included",
         "queryFamilies": [
@@ -1476,9 +1526,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "BEV、占用与结构化中间表征",
-          "VLA、语言推理与世界动作模型"
+          "VLA、语言推理与世界动作模型",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1495,9 +1545,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "概率、生成式与多模态轨迹规划",
-          "闭环训练、反事实评测与部署"
+          "闭环训练、反事实评测与部署",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1505,9 +1555,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "VLA、语言推理与世界动作模型",
-          "闭环训练、反事实评测与部署"
+          "闭环训练、反事实评测与部署",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1515,9 +1565,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "VLA、语言推理与世界动作模型",
-          "闭环训练、反事实评测与部署"
+          "闭环训练、反事实评测与部署",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1525,8 +1575,8 @@
         "occurrences": 2,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
-          "模型更新、可维护性与安全约束"
+          "模型更新、可维护性与安全约束",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1534,8 +1584,8 @@
         "occurrences": 2,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
-          "闭环训练、反事实评测与部署"
+          "闭环训练、反事实评测与部署",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1543,9 +1593,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "闭环训练、反事实评测与部署",
-          "模型更新、可维护性与安全约束"
+          "模型更新、可维护性与安全约束",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1553,9 +1603,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "VLA、语言推理与世界动作模型",
-          "模型更新、可维护性与安全约束"
+          "模型更新、可维护性与安全约束",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1591,9 +1641,9 @@
         "occurrences": 3,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
           "BEV、占用与结构化中间表征",
-          "概率、生成式与多模态轨迹规划"
+          "概率、生成式与多模态轨迹规划",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1601,8 +1651,8 @@
         "occurrences": 2,
         "disposition": "included",
         "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶",
-          "闭环训练、反事实评测与部署"
+          "闭环训练、反事实评测与部署",
+          "模仿学习与规划导向端到端驾驶"
         ]
       },
       {
@@ -1686,427 +1736,22 @@
         ]
       },
       {
-        "canonicalId": "arxiv:2606.21172",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "baddreamer-world-model-backdoor",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.1109/lsp.2026.3680426",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "cascadeocc-occupancy-world-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.17284",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "clap-v2x-prompt-optimization",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.07464",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "compact-va-planning-token-compression",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.16938",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "cvaa-driving-interpretability",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.19774",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "defer-to-plan-v2x-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.12987",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "diffusion-transformer-wam-scene-prediction",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.01658",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "driveteach-vla-trajectory-guided-prompts",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.28544",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "drivewam-world-action-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2412.19505",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "driving-world-model-video",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.14696",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "eponav2-driving-world-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.17521",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "geoworldad-geometry-world-action",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2409.07321",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "maat-e2e-adversarial-training",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.10904",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "mdrive-closed-loop-cooperative-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.03159",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "omnidreams-closed-loop-world-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.04953",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "real-world-perturbation-testing",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.29114",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "reasonbreak-vla-vulnerability-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.1109/dsn-w65791.2025.00071",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "revisiting-adversarial-attacks",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.23406",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "rs2ad-lidar-roadside-to-vehicle-generation",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.13926",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "s2-vla-semantic-spatial",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.07844",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "shift-drift-planning-benchmark",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.24354",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "sparseworld-sparse-scene-world-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2411.16816",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "splatad-realtime-3dgs",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.10388",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "temporal-sampling-e2e-trajectory",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.13028",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "terrazero-self-play-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.29097",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "trafficalign-traffic-scenario-generation",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2408.09251",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "v2x-vlm-cooperative-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.12706",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "vladrivebench-cot-action-vla",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.12396",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "vlga-geometry-action-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.19836",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "world-engine-post-training-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.28758",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "x-mind-visual-cot-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
         "canonicalId": "arxiv:2608.06008",
-        "occurrences": 1,
         "disposition": "deferred",
         "localPaperId": "adaptive-wam-early-exit-planning",
         "queryFamilies": [
           "模仿学习与规划导向端到端驾驶"
-        ]
+        ],
+        "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.01761",
-        "occurrences": 1,
+        "canonicalId": "arxiv:2606.21172",
         "disposition": "deferred",
-        "localPaperId": "decouplegs-interactive-driving-testing",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.01755",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "deft-rlvr-verifiable-driving-reasoning",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.01035",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "wam-diff2-efficient-driving-vla",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.12854",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "brainwam-action-space-coordination",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.12932",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "flashdrive-vla-inference",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.14024",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "ssp-syn2sim2phy-vla-evaluation",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.19085",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "da-wam-decision-aligned-world-model",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.15573",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "stabledrive-selective-memory",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.18035",
-        "occurrences": 1,
-        "disposition": "deferred",
-        "localPaperId": "traffic-element-aware-driving",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.24282",
-        "disposition": "deferred",
+        "localPaperId": "baddreamer-world-model-backdoor",
         "queryFamilies": [
           "模仿学习与规划导向端到端驾驶"
         ],
-        "occurrences": 1,
-        "localPaperId": "care-adaptive-lidar-first-sightings"
-      },
-      {
-        "canonicalId": "arxiv:2608.22549",
-        "disposition": "deferred",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ],
-        "occurrences": 1,
-        "localPaperId": "cl4ad-curriculum-driving"
-      },
-      {
-        "canonicalId": "arxiv:2608.26074",
-        "disposition": "deferred",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ],
-        "occurrences": 1,
-        "localPaperId": "gating-before-commitment-intent-divergence"
-      },
-      {
-        "canonicalId": "arxiv:2608.23486",
-        "disposition": "deferred",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ],
-        "occurrences": 1,
-        "localPaperId": "geowam-geometry-world-action-model"
-      },
-      {
-        "canonicalId": "arxiv:2608.23405",
-        "disposition": "deferred",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ],
-        "occurrences": 1,
-        "localPaperId": "momadv2-reliable-temporal-memory"
-      },
-      {
-        "canonicalId": "arxiv:2608.25142",
-        "disposition": "deferred",
-        "queryFamilies": [
-          "模仿学习与规划导向端到端驾驶"
-        ],
-        "occurrences": 1,
-        "localPaperId": "skydrive-aerial-city-adaptation"
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2608.26533",
@@ -2116,8 +1761,473 @@
           "模仿学习与规划导向端到端驾驶"
         ],
         "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.12854",
+        "disposition": "deferred",
+        "localPaperId": "brainwam-action-space-coordination",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.24282",
+        "disposition": "deferred",
+        "localPaperId": "care-adaptive-lidar-first-sightings",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.27644",
+        "disposition": "deferred",
+        "localPaperId": "cascadeocc-occupancy-world-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.22549",
+        "disposition": "deferred",
+        "localPaperId": "cl4ad-curriculum-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.17284",
+        "disposition": "deferred",
+        "localPaperId": "clap-v2x-prompt-optimization",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.07464",
+        "disposition": "deferred",
+        "localPaperId": "compact-va-planning-token-compression",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.16938",
+        "disposition": "deferred",
+        "localPaperId": "cvaa-driving-interpretability",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.19085",
+        "disposition": "deferred",
+        "localPaperId": "da-wam-decision-aligned-world-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01761",
+        "disposition": "deferred",
+        "localPaperId": "decouplegs-interactive-driving-testing",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.19774",
+        "disposition": "deferred",
+        "localPaperId": "defer-to-plan-v2x-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01755",
+        "disposition": "deferred",
+        "localPaperId": "deft-rlvr-verifiable-driving-reasoning",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.12987",
+        "disposition": "deferred",
+        "localPaperId": "diffusion-transformer-wam-scene-prediction",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.01658",
+        "disposition": "deferred",
+        "localPaperId": "driveteach-vla-trajectory-guided-prompts",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.28544",
+        "disposition": "deferred",
+        "localPaperId": "drivewam-world-action-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2412.19505",
+        "disposition": "deferred",
+        "localPaperId": "driving-world-model-video",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.14696",
+        "disposition": "deferred",
+        "localPaperId": "eponav2-driving-world-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.12932",
+        "disposition": "deferred",
+        "localPaperId": "flashdrive-vla-inference",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26074",
+        "disposition": "deferred",
+        "localPaperId": "gating-before-commitment-intent-divergence",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.23486",
+        "disposition": "deferred",
+        "localPaperId": "geowam-geometry-world-action-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.17521",
+        "disposition": "deferred",
+        "localPaperId": "geoworldad-geometry-world-action",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2409.07321",
+        "disposition": "deferred",
+        "localPaperId": "maat-e2e-adversarial-training",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10904",
+        "disposition": "deferred",
+        "localPaperId": "mdrive-closed-loop-cooperative-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.20747",
+        "disposition": "deferred",
+        "localPaperId": "miler-semantic-sim-to-real",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.20377",
+        "disposition": "deferred",
+        "localPaperId": "mm-future-multimode-world-action",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.23405",
+        "disposition": "deferred",
+        "localPaperId": "momadv2-reliable-temporal-memory",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.03159",
+        "disposition": "deferred",
+        "localPaperId": "omnidreams-closed-loop-world-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.20756",
+        "disposition": "deferred",
+        "localPaperId": "opted-render-free-teacher",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.00111",
+        "disposition": "deferred",
+        "localPaperId": "qwen-drive-foundation-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.04953",
+        "disposition": "deferred",
+        "localPaperId": "real-world-perturbation-testing",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.29114",
+        "disposition": "deferred",
+        "localPaperId": "reasonbreak-vla-vulnerability-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2505.11532",
+        "disposition": "deferred",
+        "localPaperId": "revisiting-adversarial-attacks",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.23406",
+        "disposition": "deferred",
+        "localPaperId": "rs2ad-lidar-roadside-to-vehicle-generation",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.13926",
+        "disposition": "deferred",
+        "localPaperId": "s2-vla-semantic-spatial",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07844",
+        "disposition": "deferred",
+        "localPaperId": "shift-drift-planning-benchmark",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.25142",
+        "disposition": "deferred",
+        "localPaperId": "skydrive-aerial-city-adaptation",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.24354",
+        "disposition": "deferred",
+        "localPaperId": "sparseworld-sparse-scene-world-model",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2411.16816",
+        "disposition": "deferred",
+        "localPaperId": "splatad-realtime-3dgs",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.14024",
+        "disposition": "deferred",
+        "localPaperId": "ssp-syn2sim2phy-vla-evaluation",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.15573",
+        "disposition": "deferred",
+        "localPaperId": "stabledrive-selective-memory",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.03602",
+        "disposition": "deferred",
+        "localPaperId": "sv-wam-surround-view-world-action",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10388",
+        "disposition": "deferred",
+        "localPaperId": "temporal-sampling-e2e-trajectory",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.13028",
+        "disposition": "deferred",
+        "localPaperId": "terrazero-self-play-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.18035",
+        "disposition": "deferred",
+        "localPaperId": "traffic-element-aware-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.29097",
+        "disposition": "deferred",
+        "localPaperId": "trafficalign-traffic-scenario-generation",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2408.09251",
+        "disposition": "deferred",
+        "localPaperId": "v2x-vlm-cooperative-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.12706",
+        "disposition": "deferred",
+        "localPaperId": "vladrivebench-cot-action-vla",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.12396",
+        "disposition": "deferred",
+        "localPaperId": "vlga-geometry-action-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01035",
+        "disposition": "deferred",
+        "localPaperId": "wam-diff2-efficient-driving-vla",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.19836",
+        "disposition": "deferred",
+        "localPaperId": "world-engine-post-training-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.28758",
+        "disposition": "deferred",
+        "localPaperId": "x-mind-visual-cot-driving",
+        "queryFamilies": [
+          "模仿学习与规划导向端到端驾驶"
+        ],
+        "occurrences": 1
       }
     ],
-    "incrementalLocalAuditAt": "2026-08-31"
+    "refreshMode": "primary-source-revalidation-and-current-local-corpus",
+    "sourceRevalidation": {
+      "checkedAt": "2026-09-22",
+      "referenceCount": 31,
+      "priorCoreReviewedAt": "2026-08-01",
+      "manifestPath": "docs/research-updates/2026-09-22/review-source-manifest.json",
+      "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
+      "claimRecordsPath": "docs/research-updates/2026-09-22/review-policy-claims.json",
+      "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+    },
+    "metadataCorroboration": {
+      "checkedAt": "2026-09-22",
+      "artifactPath": "docs/research-updates/2026-09-22/review-metadata-corroboration.json",
+      "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
+      "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
+    }
   }
 }
