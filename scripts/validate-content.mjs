@@ -27,7 +27,8 @@ import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
 import {
   CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM,
-  categoryCoverageSnapshotFingerprint
+  categoryCoverageSnapshotFingerprint,
+  isDigestQueryEndpoint
 } from "../src/lib/digest-audit.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -458,7 +459,7 @@ function validateDigestAudit(audit, digest, file, categoryCoverageFingerprintReq
     if (
       typeof queryRun?.family !== "string"
       || !queryRun.family.trim()
-      || !isHttpsUrl(queryRun?.endpoint)
+      || !isDigestQueryEndpoint(queryRun?.endpoint)
       || typeof queryRun?.searchQuery !== "string"
       || !queryRun.searchQuery.trim()
       || !Number.isInteger(queryRun?.resultCount)

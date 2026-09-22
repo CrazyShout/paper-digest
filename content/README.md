@@ -47,6 +47,8 @@ content/templates/digest-template.md
 
 自 `config/content-quality.json` 的 `digests.auditRequiredFrom` 起，每期检索还必须保存 `content/digest-audits/YYYY-MM-DD.json`。此前简报作为遗留内容保留，不补造当时并未执行的检索账本。简报里的检索数量不得只写在叙述中：查询端点、参数、每族结果 ID、规范化候选、排除理由和最终去向都要能从审计文件复算。扫描窗口与论文提交日期分开记录，出版状态和代码/数据仓库的实际可用性在入选后再次核验。
 
+查询端点按实际调用记录。工具搜索可写 `web.run.search_query` 并保存查询串和返回结果，不猜测其背后的搜索引擎 URL；ARIS 助手使用的 `http://export.arxiv.org/api/query` 也保留原值。其他网络端点使用 HTTPS。本地筛查官方目录时保留目录来源 URL，并在参数中记录快照、筛查规则和分页信息。
+
 作者单位必须从论文 PDF 首页、arXiv source、项目页或会议页面核验后填写。不要使用“作者单位见论文 PDF”“unknown”“not confirmed”这类占位。arXiv API 通常没有 affiliations；如果 API 没给单位，需要继续查 PDF/source。
 
 1. 为每篇入选论文新建一个文件：
@@ -88,6 +90,7 @@ content/papers/example-world-model.md
 - `tags`：可选数组，用于跨方向论文；数组里的每个 id 都必须来自 `config/research-interests.json`。如果省略，构建脚本会退回使用 `tag`。
 - `title`：论文标题。
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。
+- `source` 中多个 URL 用空格或 ` / ` 分隔；中文分号、句号不要紧贴 URL，避免它们和后面的说明被解析进链接。
 - `authors` / `affiliations`：作者和单位数组。
 - `affiliations`：必须是已核验的真实单位，不能写占位。单位来自 arXiv source/PDF 时按论文作者区块原文归并即可。
 - `comment`：首页卡片上显示的短评。

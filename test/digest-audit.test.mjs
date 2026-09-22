@@ -4,8 +4,18 @@ import test from "node:test";
 import {
   CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM,
   categoryCoverageSnapshot,
-  categoryCoverageSnapshotFingerprint
+  categoryCoverageSnapshotFingerprint,
+  isDigestQueryEndpoint
 } from "../src/lib/digest-audit.js";
+
+test("digest queries preserve native tool and official API endpoints without inventing transport URLs", () => {
+  for (const endpoint of ["web.run.search_query", "http://export.arxiv.org/api/query", "https://arxiv.org/list/cs.RO/2026-09"]) {
+    assert.equal(isDigestQueryEndpoint(endpoint), true);
+  }
+  for (const endpoint of [undefined, "", "local snapshot", "web.run.unknown", "http://example.com/search", "http://export.arxiv.org.evil.test/api/query", "file:///tmp/results.json"]) {
+    assert.equal(isDigestQueryEndpoint(endpoint), false);
+  }
+});
 
 function fixture() {
   return {

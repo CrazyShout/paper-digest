@@ -2,6 +2,19 @@ import { createHash } from "node:crypto";
 
 export const CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM = "sha256-canonical-json-v1";
 
+export function isDigestQueryEndpoint(value) {
+  // Tool-backed searches do not disclose a search-engine HTTP endpoint.
+  if (value === "web.run.search_query") return true;
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:"
+      || value === "http://export.arxiv.org/api/query";
+  } catch {
+    return false;
+  }
+}
+
 function canonicalJson(value) {
   if (value === null || typeof value === "boolean" || typeof value === "number" || typeof value === "string") {
     return JSON.stringify(value);
