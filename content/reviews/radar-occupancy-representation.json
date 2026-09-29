@@ -3,9 +3,9 @@
   "id": "radar-occupancy-representation",
   "title": "雷达中心的时空占据与场景表征",
   "subtitle": "从二维概率栅格、当前三维占据到可验证的 x-y-z-t 场景状态",
-  "abstract": "本综述以雷达可观测性而不是任务名称组织证据：Elfes 的 occupancy-grid 框架可用于多维（通常二维或三维）表示；本综述后续聚焦的道路 OGM/DOGM 通常在二维地平面估计占用与速度，当前 3D occupancy 在单一时刻预测体素状态，真正的 4D occupancy 显式建模 x-y-z-t 中的当前与未来占据。汽车领域所谓 4D imaging radar 的四维是 range、azimuth、elevation、Doppler，不包含时间。RadarOcc、4D-ROLLS 因此是以 4D 成像雷达输入预测当前 3D 占据；scene flow、radar neural field 与 VLM 只提供运动、传感器生成和语言接地邻域证据。历史三态监督、动态 inverse sensor model、三维占据与雷达 scene flow 已显著压缩通用方法空间；当前优先任务是建立独立 free/unknown、教师错误和未来流真值，再决定是否提出新模型。",
-  "reviewedAt": "2026-08-10",
-  "searchWindow": "1989-01-01 至 2026-08-10；历史基础全量回溯，2024 年后前沿重点复核；本地候选审计更新至 2026-08-24，未重跑站外检索或改写核心综合。",
+  "abstract": "本综述以雷达可观测性而不是任务名称组织证据：Elfes 的 occupancy-grid 框架可用于多维（通常二维或三维）表示；本综述后续聚焦的道路 OGM/DOGM 通常在二维地平面估计占用与速度，当前 3D occupancy 在单一时刻预测体素状态，真正的 4D occupancy 显式建模 x-y-z-t 中的当前与未来占据。汽车领域所谓 4D imaging radar 的四维是 range、azimuth、elevation、Doppler，不包含时间。RadarOcc、4D-ROLLS 因此是以 4D 成像雷达输入预测当前 3D 占据；scene flow、radar neural field 与 VLM 只提供运动、传感器生成和语言接地邻域证据。历史三态监督、动态 inverse sensor model、三维占据与雷达 scene flow 已显著压缩通用方法空间。RaUF 已处理雷达空间不确定性，TriO 开始连接多模态未来占据与道路障碍，RCVLA 将雷达语义和轨迹仲裁分开；独立 free/unknown、教师错误、未来流及闭环风险仍需按各自协议核验。",
+  "reviewedAt": "2026-09-30",
+  "searchWindow": "1989-01-01 至 2026-08-10 的历史核心检索保留；2026-09-30 对原有 78 条引用完成分层来源再核，并补入经独立审阅建议接受的 RaUF 与本期独立选文接受的 TriO、RCVLA，共 81 条。三条新增引用的精确来源重开为本轮真实记录，不倒填进历史搜索；最终本库候选审计另行闭合。",
   "researchQuestions": [
     "如何严格区分 2D OGM/DOGM、当前 3D occupancy、真正 x-y-z-t 4D occupancy、scene flow、radar neural field 与语言接地表示，并设置不互相冒充的终点？",
     "4D 成像雷达的距离、方位、俯仰与 Doppler，哪些能直接约束占据、自由空间、未知和运动，哪些仍依赖跨模态教师或时序先验？",
@@ -18,7 +18,7 @@
       "kind": "scope",
       "title": "定义与边界：两个 4D 不能混用",
       "thesis": "4D 成像雷达是四个测量维度，4D occupancy 是三维空间加时间；输入维度、输出状态和评测终点必须分别命名。",
-      "body": "本综述采用六层边界。第一层是经典 occupancy-grid framework：Elfes 以多维（通常二维或三维）随机单元递归融合测量；在本综述的道路基线中通常投影为二维地平面 occupied/free belief，但原始框架并不限定为二维。第二层是 2D DOGM：PHD/MIB DOGM 在地平面单元中加入动态状态与速度分布，radar-centric DOGM 针对雷达视场、逆传感器模型和状态估计做适配，但仍不是 3D 体素场。Probably Unknown、Radar Occupancy Prediction 与 NVRadarNet 属于雷达逆传感器模型、二维占据或 BEV 自由空间。\n\n第三层是当前 3D occupancy：预测单一时刻 x-y-z 体素的 occupied/free/unknown 或语义。RadarOcc、4D-ROLLS、LiCROcc、TEOcc、OccFusion、MetaOcc、Doracamom、REOcc、4DRC-OCC 都以当前 3D 占据为主要终点。汽车领域 4D imaging radar 的四维明确是 range、azimuth、elevation、Doppler，不包含时间；TEOcc 即使使用历史训练分支也不输出未来。第四层才是真正的 4D occupancy：显式输出 x-y-z-t 当前与未来状态，Cam4DOcc、UnO 和 Occupancy Flow Fields 提供定义参照；后者主要是 BEV 代理占据流，并非完整三维世界。\n\n第五层 scene flow 为观测点估计位移，CMFlow、TARS 与 RaLiFlow 能提供运动约束，但不回答未返回区域是 free 还是 unknown。第六层 neural field 与 VLM：Radar Fields、RadarSim、NeuRadar、RF4D、RadarSplat 主要验证测量合成、重建或隐式几何；本地 Radar4D-VLM、Talk2Sensors、MoRAL、STAR-VLM 研究 token、指代、BEV 推理或雷达教师。它们可提供表示与监督线索，但都不得作为 occupancy 成功证据。",
+      "body": "本综述采用六层边界。第一层是经典 occupancy-grid framework：Elfes 以多维（通常二维或三维）随机单元递归融合测量；在本综述的道路基线中通常投影为二维地平面 occupied/free belief，但原始框架并不限定为二维。第二层是 2D DOGM：PHD/MIB DOGM 在地平面单元中加入动态状态与速度分布，radar-centric DOGM 针对雷达视场、逆传感器模型和状态估计做适配，但仍不是 3D 体素场。Probably Unknown、Radar Occupancy Prediction 与 NVRadarNet 属于雷达逆传感器模型、二维占据或 BEV 自由空间。\n\n第三层是当前 3D occupancy：预测单一时刻 x-y-z 体素的 occupied/free/unknown 或语义。RadarOcc、4D-ROLLS、LiCROcc、TEOcc、OccFusion、MetaOcc、Doracamom、REOcc、4DRC-OCC 都以当前 3D 占据为主要终点。汽车领域 4D imaging radar 的四维明确是 range、azimuth、elevation、Doppler，不包含时间；TEOcc 即使使用历史训练分支也不输出未来。第四层才是真正的 4D occupancy：显式输出 x-y-z-t 当前与未来状态，Cam4DOcc、UnO 和 Occupancy Flow Fields 提供定义参照；后者主要是 BEV 代理占据流，并非完整三维世界。TriO 明确使用 x-y-z-t 查询，输出占据、障碍概率和三维流，属于时空表示；但其雷达证据来自未公开 LRR，AV2 与 STU 实验没有雷达。\n\n第五层 scene flow 为观测点估计位移，CMFlow、TARS 与 RaLiFlow 能提供运动约束，但不回答未返回区域是 free 还是 unknown。第六层 neural field 与 VLM：Radar Fields、RadarSim、NeuRadar、RF4D、RadarSplat 主要验证测量合成、重建或隐式几何；本地 Radar4D-VLM、Talk2Sensors、MoRAL、STAR-VLM 研究 token、指代、BEV 推理或雷达教师。它们可提供表示与监督线索，但都不得作为 occupancy 成功证据。\n\n新增邻域证据也按终点区分：RaUF 学习雷达空间协方差并增强点云，评测重建、杂波及位姿/自车速度；RCVLA 用占据 queries 辅助轨迹仲裁，主要报告问答与开环规划。二者都不自动构成独立三态占据校准或闭环安全证明。",
       "referenceIds": [
         "elfes-1989",
         "evidential-radar-map-2006",
@@ -32,7 +32,10 @@
         "radar-fields-2024",
         "radar4d-vlm-2026",
         "talk2sensors-2026",
-        "star-vlm-2026"
+        "star-vlm-2026",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     },
     {
@@ -40,7 +43,7 @@
       "kind": "evolution",
       "title": "演化主线：从贝叶斯单元到带物理约束的时空状态",
       "thesis": "领域不是从 2D 直接跳到名为 4D 的网络，而是依次解决未知状态、动态传播、高度、跨模态监督、未来状态和传感器物理。",
-      "body": "1989 年 OGM 建立 occupied/free belief。2006 年毫米波雷达地图开始比较 evidential 与 Bayesian 更新并显式处理虚警、漏检；2010 年两条汽车支线分别把 LiDAR/雷达 OGM 加速到 GPU 并用于道路边界，以及把 OGM 与模型化跟踪双向融合。2012 年的雷达 sensor model 从逐 bin 检测概率构造 occupancy，同年的汽车 OGM 工作把地图准确性单列为评价对象。2015 年 Radar Gridmap Representations 比较 RCS 幅度图和适配 ISM，激光-雷达 SMC Bayesian occupancy filter 又用 Doppler 抑制 ghost movement。\n\n2016 年统计雷达模型已经生成三维 OGM，2018 年高分辨率雷达 OGM 把静态占据接到轨迹自由空间。2019 至 2021 年，Dual ISM、Deep Radar Network、Sless、Radar DOGM、Deep Open Space、3D Semantic Grids、弱监督 road segmentation 与 PolarNet 依次覆盖无检测负证据、二维栅格生成、三态监督、纯雷达动态栅格、开放空间、三维输入、相机弱监督和极坐标网络。教师可靠性、二维 free-space 或 data-driven radar OGM 因此都不是空白问题。\n\n2022 至 2024 年出现三条分叉。K-Radar 公开 Doppler-range-azimuth-elevation 张量与多天气数据，RadarOcc 在 2024 年把终点推进到当前 3D occupancy；Radar Occupancy Prediction、Deep Radar ISM、raw range-Doppler OGM、双权重 DOGM 和 state correction 继续强化二维动态地图与教师错配建模。Occupancy Flow Fields、Cam4DOcc 与 UnO 则把一般占据表示推向 x-y-z-t 和连续时空，但不是雷达中心终点。TEOcc 于 2024 年进入正式会议；LiCROcc 与 OccFusion 的 2024 预印本在 2025 年形成正式期刊版本。\n\n2025 至 2026 年，多模态与轻量雷达占据明显加速：4D-ROLLS、MetaOcc、Doracamom、REOcc、4DRC-OCC 与 4DR360 覆盖蒸馏、联合检测、恶劣天气和全景场景，单芯片 GRT 把原始雷达训练扩展到百万样本。RaFlow、CMFlow、TARS、RaLiFlow、RadarMP 与 IterFlow 提供不同监督制度的雷达点运动，但没有完整 occupied/free/unknown 终点；DIO 给出 LiDAR occupancy-flow 强基线，却没有雷达观测模型。\n\n2024 年后的物理场支线把频域、功率、噪声、多径和时间纳入 DART、Radar Fields、RadarSim、RadarSplat 与 RF4D，NeuRadar 做多传感器新视角合成。它们让测量一致性可检查，但渲染、几何和下游 occupancy 仍是不同证据层级。EvOcc 与 occupancy survey 则把未知、冲突和信息融合重新放回可靠性中心。",
+      "body": "1989 年 OGM 建立 occupied/free belief。2006 年毫米波雷达地图开始比较 evidential 与 Bayesian 更新并显式处理虚警、漏检；2010 年两条汽车支线分别把 LiDAR/雷达 OGM 加速到 GPU 并用于道路边界，以及结合 OGM 与模型化对象跟踪。2012 年已有雷达 sensor model 与汽车 OGM 准确性评价题录；2015 年 Radar Gridmap Representations 比较 RCS 幅度图和适配 ISM，同期也有激光-雷达 SMC Bayesian occupancy filter。部分历史 IEEE 正文在本轮受限，相关记录仅承担研究主题和年代定位，具体机制与性能不据题录推断。\n\n2016 年统计雷达模型已经生成三维 OGM，2018 年高分辨率雷达 OGM 把静态占据接到轨迹自由空间。2019 至 2021 年，Dual ISM、Deep Radar Network、Sless、Radar DOGM、Deep Open Space、3D Semantic Grids、弱监督 road segmentation 与 PolarNet 覆盖逆传感器模型、栅格生成、三态监督、纯雷达动态栅格、开放空间、三维输入、相机弱监督和极坐标网络。教师可靠性、二维 free-space 或 data-driven radar OGM 因此都不是空白问题。\n\n2022 至 2024 年出现三条分叉。K-Radar 公开 Doppler-range-azimuth-elevation 张量与多天气数据，RadarOcc 在 2024 年把终点推进到当前 3D occupancy；Radar Occupancy Prediction、Deep Radar ISM、raw range-Doppler OGM、双权重 DOGM 和 state correction 继续强化二维动态地图与教师错配建模。Occupancy Flow Fields、Cam4DOcc 与 UnO 则把一般占据表示推向 x-y-z-t 和连续时空，但不是雷达中心终点。TEOcc 于 2024 年进入正式会议；LiCROcc 与 OccFusion 的 2024 预印本在 2025 年形成正式期刊版本。\n\n2025 至 2026 年，多模态与轻量雷达占据明显加速：4D-ROLLS、MetaOcc、Doracamom、REOcc、4DRC-OCC 与 4DR360 覆盖蒸馏、联合检测、恶劣天气和全景场景，单芯片 GRT 把原始雷达训练扩展到百万样本。RaFlow、CMFlow、TARS、RaLiFlow、RadarMP 与 IterFlow 提供不同监督制度的雷达点运动，但没有完整 occupied/free/unknown 终点；DIO 给出 LiDAR occupancy-flow 强基线，却没有雷达观测模型。\n\n2024 年后的物理场支线把频域、功率、噪声、多径和时间纳入 DART、Radar Fields、RadarSim、RadarSplat 与 RF4D，NeuRadar 做多传感器新视角合成。它们让测量一致性可检查，但渲染、几何和下游 occupancy 仍是不同证据层级。EvOcc 与 occupancy survey 则把未知、冲突和信息融合重新放回可靠性中心。\n\n2026 年的 RaUF 已把各向异性空间不确定性与 Doppler 一致性纳入雷达增强，不能再把雷达不确定性描述为空白。九月公开的 TriO 延续 UnO/DIO 的连续占据路线，加入障碍伪标签与雷达流监督；RCVLA 则把语言对齐和物理测量驱动的候选仲裁分阶段检验。进展分别落在点云、未来场和开环规划三个终点上。",
       "referenceIds": [
         "gpu-lidar-radar-ogm-2010",
         "ogm-tracking-fusion-2010",
@@ -54,7 +57,10 @@
         "dual-radar-ism-2019",
         "deep-radar-network-ogm-2019",
         "sless-radar-occupancy-2019",
-        "radar-dogm-2020"
+        "radar-dogm-2020",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     },
     {
@@ -62,7 +68,7 @@
       "kind": "taxonomy",
       "title": "方法分类：按状态变量、监督来源和传感器访问权组织",
       "thesis": "先问输出是否包含自由、未知、高度和未来，再问输入与监督来自哪里；网络结构相似不代表科学任务相同。",
-      "body": "按输出分五类：A 是 2D 占据/自由空间与 DOGM，其中又要区分手工 ISM、证据栅格、深度分割、稀疏 Bayesian reconstruction 与多模态融合；B 是当前 3D semantic occupancy；C 是真正 x-y-z-t occupancy/occupancy flow；D 是点级 scene flow；E 是传感器生成和隐式场。B 类即使输入 Doppler 或历史帧也不能改称 4D occupancy，D/E 类若服务占据还须另做射线自由空间、未知状态和体素校准。\n\n按监督可分雷达自监督、LiDAR 教师、相机/开放词汇伪标签和多模态联合训练。LiDAR 教师能快速提供几何，却在远距、遮挡、穿透与天气区形成删失标签；网络补全稀疏回波后，置信度必须区分观测与先验。EvOcc 的 evidential 标签和 ProOOD 的 voxel OOD 可借鉴，但前者是相机 occupancy，后者不是雷达专用。\n\n按访问权还要区分原始 4D tensor、检测后点云和训练期教师。RadarOcc访问原始张量，多数 nuScenes 工作只用稀疏雷达点。本地 STAR-VLM用 range/Doppler 教相机，另外三篇把雷达压缩为语言或 BEV 接口；它们没有 occupied/free/unknown 输出，只能归为邻域证据。",
+      "body": "按输出分五类：A 是 2D 占据/自由空间与 DOGM，其中又要区分手工 ISM、证据栅格、深度分割、稀疏 Bayesian reconstruction 与多模态融合；B 是当前 3D semantic occupancy；C 是真正 x-y-z-t occupancy/occupancy flow；D 是点级 scene flow；E 是传感器生成和隐式场。B 类即使输入 Doppler 或历史帧也不能改称 4D occupancy，D/E 类若服务占据还须另做射线自由空间、未知状态和体素校准。\n\n按监督可分雷达自监督、LiDAR 教师、相机/开放词汇伪标签和多模态联合训练。LiDAR 教师能快速提供几何，却在远距、遮挡、穿透与天气区形成删失标签；网络补全稀疏回波后，置信度必须区分观测与先验。EvOcc 的 evidential 标签和 ProOOD 的 voxel OOD 可借鉴，但前者是相机 occupancy，后者不是雷达专用。RaUF 是更直接的雷达邻域基线：用 LiDAR 派生监督学习各向异性空间不确定性，区别于独立 observed-free/unobserved 标签的概率校准；点云杂波减少不能替代后者。TriO 属于 C 类时空表示，其障碍/地面软标签描述几何可通行性，不能改称未知语义类检测。\n\n按访问权还要区分原始 4D tensor、检测后点云和训练期教师。RadarOcc访问原始张量，多数 nuScenes 工作只用稀疏雷达点。本地 STAR-VLM用 range/Doppler 教相机，另外三篇把雷达压缩为语言或 BEV 接口；它们没有 occupied/free/unknown 输出，只能归为邻域证据。\n\nRCVLA 在语言对齐后另用对象/占据 queries、雷达簇和 TTC 做轨迹仲裁。这里占据分支是条件与辅助监督，问答准确率、轨迹 L2 和开环碰撞率必须分别报告，不能只凭语义问答进步推出占据可靠性或驾驶安全。",
       "referenceIds": [
         "deep-open-space-radar-2020",
         "radar-3d-semantic-grids-2020",
@@ -76,7 +82,10 @@
         "raw-radar-ogm-2023",
         "dual-weight-radar-grid-2023",
         "clustered-sparse-ogm-2024",
-        "radar-lidar-sparse-ogm-2024"
+        "radar-lidar-sparse-ogm-2024",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     },
     {
@@ -84,7 +93,7 @@
       "kind": "evidence",
       "title": "证据版图：数据覆盖在增长，可靠性链条仍未闭合",
       "thesis": "雷达已能生成有用的二维/三维状态与运动线索，但跨数据集、真实天气、概率校准和规划收益很少在同一协议内成立。",
-      "body": "K-Radar 的正式基准首先是 3D detection，稠密 occupancy 由后续方法构造；View of Delft 也以检测和里程计为主。OmniHD-Scenes 新增 360 度多雷达和自动稠密 occupancy，为 MetaOcc、4DR360 等提供融合协议，但自动标签、已标注子集和天气构成仍需审计。DSERT-RoLL覆盖更多天气和传感器，却仍以 boxes/detection 为终点。\n\n单模态路径并非从 RadarOcc 才开始：统计 3D OGM、高分辨率 free-space、Dual ISM、Deep Radar Network、SCORP/PolarNet、raw range-Doppler OGM、双权重 DOGM、state correction、cGAN OGM 和 unrolled SBL 已形成连续二维与浅三维谱系。Probably Unknown 与 Radar Occupancy Prediction 分别突出二维不确定性和教师错配，RadarOcc 才把终点推进到当前 3D tensor occupancy，4D-ROLLS 再做轻量迁移。多数标签仍由 LiDAR产生，天气常是定性图；mIoU 也不区分危险的 occupied-as-free。融合路径提高当前 3D 分数，却没有共同回答摄像头失明时雷达能否独立维持自由空间、外参与时间偏移失效曲线、未观测置信度，以及规划碰撞或无谓制动。\n\nCam4DOcc、UnO 与 Occupancy Flow Fields定义时空终点，CMFlow/TARS/RaLiFlow提供雷达运动，RF4D/RadarSplat/Radar Fields/RadarSim/NeuRadar提供物理生成或重建。把它们组合成雷达中心 x-y-z-t occupancy 是合理研究假设，不是现有结果。纳入工作主要是离线日志、仿真或新视角合成，尚不足以声称开放道路闭环可靠。",
+      "body": "K-Radar 的正式基准首先是 3D detection，稠密 occupancy 由后续方法构造；View of Delft 也以检测和里程计为主。OmniHD-Scenes 新增 360 度多雷达和自动稠密 occupancy，为 MetaOcc、4DR360 等提供融合协议，但自动标签、已标注子集和天气构成仍需审计。DSERT-RoLL覆盖更多天气和传感器，却仍以 boxes/detection 为终点。\n\n单模态路径并非从 RadarOcc 才开始：统计 3D OGM、高分辨率 free-space、Dual ISM、Deep Radar Network、SCORP/PolarNet、raw range-Doppler OGM、双权重 DOGM、state correction、cGAN OGM 和 unrolled SBL 已形成连续二维与浅三维谱系。Probably Unknown 与 Radar Occupancy Prediction 分别突出二维不确定性和教师错配，RadarOcc 才把终点推进到当前 3D tensor occupancy，4D-ROLLS 再做轻量迁移。多数标签仍由 LiDAR产生，天气常是定性图；mIoU 也不区分危险的 occupied-as-free。融合路径提高当前 3D 分数，却没有共同回答摄像头失明时雷达能否独立维持自由空间、外参与时间偏移失效曲线、未观测置信度，以及规划碰撞或无谓制动。\n\nCam4DOcc、UnO 与 Occupancy Flow Fields定义时空终点，CMFlow/TARS/RaLiFlow提供雷达运动，RF4D/RadarSplat/Radar Fields/RadarSim/NeuRadar提供物理生成或重建。TriO 已给出多模态 x-y-z-t 占据与流的实例，因此不能再把这一组合只写成未来设想；但 AV2/STU 无雷达，雷达增量仍局限于未公开 LRR，不能把跨数据集结果合并成三模态外推证据。本节已纳入工作主要是离线日志、仿真或新视角合成，尚不足以声称开放道路闭环可靠。2026-09-30 重开资源时，MetaOcc 仓库仍以说明和图示为主，RadarSim 仍把代码、数据标为 coming soon；相对地，TEOcc、Doracamom、IterFlow 与 ProOOD 已有实现或权重入口。资源入口可读与完整数据、权重可取得，以及独立复现成功，是三层不同结论。\n\n三项新增证据各有边界。RaUF 的可靠性主要由点云 CD/F-score、杂波比例和 TE/EVE 检验，未报告独立 free/unknown 的 ECE/Brier。TriO 的 STU 是 train 地面负例与 val 障碍正例组成的二类任务，带前相机视场和 z 范围过滤，并在该评估集选最优 F1 阈值；其分数不能直接并入 STU 标准异常隐藏测试。完整 TriO 在 RTX 5000、20k 查询负载下为 489.32 ms，60.81 ms 属于去相机版，这个查询负载也不是闭环部署测量。RCVLA-Sem 到 Phys 的开环碰撞均值由 0.576% 降至 0.175%；但单加语义雷达的 0.576% 高于无雷达消融的 0.391%，说明语义收益与规划代理指标不是同一件事。",
       "referenceIds": [
         "radar-ogm-error-analysis-2024",
         "radar-lidar-robust-sparse-ogm-2025",
@@ -98,7 +107,10 @@
         "single-chip-radar-foundation-2025",
         "licrocc-2024",
         "teocc-2024",
-        "occfusion-2024"
+        "occfusion-2024",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     },
     {
@@ -106,7 +118,7 @@
       "kind": "challenges",
       "title": "关键缺口：监督删失、切向运动与未知状态",
       "thesis": "瓶颈首先是观测和标签模型，其次才是网络容量；不处理这些缺口，更多融合层只会把不可辨识性藏进高分。",
-      "body": "第一，LiDAR/相机教师是带条件的删失观测，不是完美真值；把远距、穿透、低照或遮挡区域直接标成 free/background 可能惩罚正确雷达证据，但是否形成删失取决于教师可见性、标签生成和射线覆盖，必须用独立真值而非同一雷达自证。需要 observed-free、observed-occupied、unobserved、conflict 四态监督。EvOcc提供概念工具；Dual ISM、空间证据模型与稀疏 Bayesian fusion 提供可比较的传统/模型驱动基线，但都尚未统一覆盖雷达多径、天气与独立教师错误真值。\n\n第二，Doppler主要约束径向速度；若没有静态场景、刚体或自车运动先验，切向分量、静止体和自车运动在单帧中不可唯一辨识。RaFlow、CMFlow、TARS、RaLiFlow、RadarMP 与 IterFlow 的点流若接入占据传播，还须处理稀疏点、遮挡新生、非刚体和多模态未来；应输出概率流，并分别校验径向一致性、质量守恒、未来占据和不确定性。\n\n第三，旁瓣、多径、接收饱和、分辨率、外参漂移和时间错位会制造结构化假象。Radar Fields、RadarSim、RadarSplat、RF4D和MetaOcc提供部分组件，ProOOD与DSERT提供 OOD/天气邻域证据，但缺统一 corruption sweep。第四，mIoU、PSNR、scene-flow EPE、VLM准确率不能替代规划风险；应报告 false-free、unknown ECE/Brier、未来时距、延迟，以及固定规划器的碰撞、TTC、无谓制动和回退。实车结论还须说明平台、访问权限、天气、路线、重复、控制接口和是否开放道路。",
+      "body": "第一，LiDAR/相机教师是带条件的删失观测，不是完美真值；把远距、穿透、低照或遮挡区域直接标成 free/background 可能惩罚正确雷达证据，但是否形成删失取决于教师可见性、标签生成和射线覆盖，必须用独立真值而非同一雷达自证。需要 observed-free、observed-occupied、unobserved、conflict 四态监督。EvOcc提供概念工具；Dual ISM、空间证据模型与稀疏 Bayesian fusion 提供可比较的传统/模型驱动基线，RaUF 已处理雷达标签歧义、各向异性不确定性与杂波，因此新方法需要与它比较；剩余缺口是独立教师错误真值、free/unknown 校准及其与天气的统一协议，不是“尚无人学习雷达不确定性”。TriO 的几何软标签同样依赖 Metric3Dv2 和 LiDAR 地面估计，不能作为独立真值自证。\n\n第二，Doppler主要约束径向速度；若没有静态场景、刚体或自车运动先验，切向分量、静止体和自车运动在单帧中不可唯一辨识。RaFlow、CMFlow、TARS、RaLiFlow、RadarMP 与 IterFlow 的点流若接入占据传播，还须处理稀疏点、遮挡新生、非刚体和多模态未来；应输出概率流，并分别校验径向一致性、质量守恒、未来占据和不确定性。TriO 已直接展示切向流退化以及用流扭曲后的占据不一致；RaUF 的 Doppler 一致性推导又以静态散射体为条件，二者都提示运动假设需要单列。\n\n第三，旁瓣、多径、接收饱和、分辨率、外参漂移和时间错位会制造结构化假象。Radar Fields、RadarSim、RadarSplat、RF4D和MetaOcc提供部分组件，ProOOD与DSERT提供 OOD/天气邻域证据，但缺统一 corruption sweep。第四，mIoU、PSNR、scene-flow EPE、VLM准确率不能替代规划风险；应报告 false-free、unknown ECE/Brier、未来时距、延迟，以及固定规划器的碰撞、TTC、无谓制动和回退。实车结论还须说明平台、访问权限、天气、路线、重复、控制接口和是否开放道路。\n\n数据协议本身也影响结论。TriO 主文与补充材料的 AV2 训练序列数（700/750）及 STU 序列数（22 与 2+19）不一致，不能擅自选择一个数当作已核定配置。RCVLA 只给出 QA 样本划分数量，尚缺可复核的序列级隔离清单；其 TTC 采用常速度和径向速度近似，延迟测试仅延迟参考轨迹、保留当前对象/占据/雷达条件，不能代表整个感知系统异步失效。",
       "referenceIds": [
         "metaocc-2025",
         "doracamom-2026",
@@ -120,7 +132,10 @@
         "dsert-roll-2026",
         "cmflow-2023",
         "tars-2025",
-        "raliflow-2026"
+        "raliflow-2026",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     },
     {
@@ -128,7 +143,7 @@
       "kind": "outlook",
       "title": "可证伪路线：先建设独立真值，再决定是否训练新方法",
       "thesis": "现有证据已经覆盖三态监督、动态逆传感器模型、三维占据和多种 scene flow；当前最可靠的切入点是补齐可识别评测资产，而不是先提出新网络。",
-      "body": "阶段零先做 Teacher-Error Audit：冻结 RadarOcc、K-Radar 与公开 LiDAR 标签生成，另行盲标一小批 ray-level occupied、free、unobserved、conflict 和教师来源，不让被评模型参与真值构造。按天气、距离、遮挡、穿透和动态边界比较 Sless 式 ignore、规则可见性、Deep Radar ISM 与现有三维蒸馏。如果独立盲标不能稳定复现教师错误分层，或同 coverage 下学习型方法不能超过简单规则，就停止“删失头”方向。\n\n阶段一只在独立真值成立后评估条件化监督可靠度：固定同一 RadarOcc backbone、标签预算和计算量，主要终点是 false-free、occupied recall、unknown ECE/Brier 与 selective risk，而非只看 mIoU。跨 K-Radar、OmniHD-Scenes 和单芯片 GRT 数据只声明共同观测包络；天气不是同场景配对时不得写成因果增益。\n\n阶段二先建设 Radial-Flow Audit：以 RaFlow、CMFlow、TARS、RaLiFlow、RadarMP、IterFlow 为雷达点流基线，以 UnO、Cam4DOcc、DIO 和 Occupancy Flow Fields 为时空终点。Doppler只作径向速度似然，在静态场景、刚体与自车运动先验分别开关时测可识别性；没有逐体素未来 flow 或独立 future occupancy 真值前，不训练集合式 4D occupancy。DART、Radar Fields、RadarSim、RadarSplat 与 RF4D只作测量一致性工具，生成损失不能替代 free/unknown、规划风险或闭环证据。",
+      "body": "阶段零先做 Teacher-Error Audit：冻结 RadarOcc、K-Radar 与公开 LiDAR 标签生成，另行盲标一小批 ray-level occupied、free、unobserved、conflict 和教师来源，不让被评模型参与真值构造。按天气、距离、遮挡、穿透和动态边界比较 Sless 式 ignore、规则可见性、Deep Radar ISM 与现有三维蒸馏，并纳入 RaUF 的不确定性路线。RaUF 的点级协方差与点云指标应单列，先在统一传感器和标签预算下比较，再检验能否转化为逐体素错误识别。如果独立盲标不能稳定复现教师错误分层，或同 coverage 下学习型方法不能超过简单规则，就停止“删失头”方向。\n\n阶段一只在独立真值成立后评估条件化监督可靠度：固定同一 RadarOcc backbone、标签预算和计算量，主要终点是 false-free、occupied recall、unknown ECE/Brier 与 selective risk，而非只看 mIoU。跨 K-Radar、OmniHD-Scenes 和单芯片 GRT 数据只声明共同观测包络；天气不是同场景配对时不得写成因果增益。\n\n阶段二先建设 Radial-Flow Audit：以 RaFlow、CMFlow、TARS、RaLiFlow、RadarMP、IterFlow 为雷达点流基线，以 UnO、Cam4DOcc、DIO、TriO 和 Occupancy Flow Fields 为时空终点。TriO 的公开 AV2 路线、STU 几何迁移和私有 LRR 雷达实验分开复查；先固定数据清单与阈值选择，不能宣称其三模态结果已在公开数据完整复现。Doppler只作径向速度似然，在静态场景、刚体与自车运动先验分别开关时测可识别性；没有逐体素未来 flow 或独立 future occupancy 真值前，不训练集合式 4D occupancy。DART、Radar Fields、RadarSim、RadarSplat 与 RF4D只作测量一致性工具，生成损失不能替代 free/unknown、规划风险或闭环证据。\n\n若进一步评估规划用途，可按 RCVLA 的分解冻结语义参考、候选集合和场景条件，分别开关雷达测量、占据 queries 与 TTC 校准。先确认序列级训练/测试隔离，再在同一反应式闭环评测碰撞、无谓制动、尾部时延和回退；开环改善只能作为进入这一步的线索，不能作为现实安全结论。",
       "referenceIds": [
         "moral-2026",
         "uno-2024",
@@ -142,17 +157,20 @@
         "rf4d-2026",
         "radarsplat-2025",
         "evocc-2025",
-        "proood-2026"
+        "proood-2026",
+        "rauf-2026",
+        "trio-2026",
+        "rcvla-2026"
       ]
     }
   ],
   "takeaways": [
     "4D imaging radar 的四维是 range、azimuth、elevation、Doppler；RadarOcc 和 4D-ROLLS 的终点是当前 3D occupancy，不是 x-y-z-t 4D occupancy。",
     "道路 OGM/DOGM、当前 3D 占据、未来 4D 占据、scene flow、neural field 和 VLM 必须分别评测；邻域任务分数不能替代 occupied/free/unknown。",
-    "从 2006 年 evidential radar mapping、2010 年实时汽车 OGM、2012 年 sensor model 和评价方法，到 2026 年 unrolled SBL，二维/浅三维雷达栅格、自由空间、学习型 ISM、稀疏融合和状态校正已有完整谱系；Sless、Radar Occupancy Prediction 与 Deep Radar ISM 还覆盖三态、教师无覆盖忽略、可见性错配和学习型 measurement grid；新的教师删失方法必须先获得独立逐体素错误真值。",
-    "Doppler只直接观测径向速度；没有静态场景、刚体或自车运动先验时，未来占据应保留切向不可识别性，并用独立 future occupancy 验证。",
+    "从 2006 年 evidential radar mapping、2010 年实时汽车 OGM、2012 年 sensor model 和评价方法，到 2026 年 unrolled SBL，二维/浅三维雷达栅格、自由空间、学习型 ISM、稀疏融合和状态校正已有连续谱系；Sless、Radar Occupancy Prediction 与 Deep Radar ISM 还覆盖三态、教师无覆盖忽略、可见性错配和学习型 measurement grid；新的教师删失方法必须先获得独立逐体素错误真值。",
+    "Doppler只直接观测径向速度；没有静态场景、刚体或自车运动先验时，未来占据应保留切向不可识别性，并用独立 future occupancy 验证。 TriO 已提供雷达监督的时空表示实例，但公开数据与私有雷达实验必须分开，切向流失败仍需核验。",
     "天气证据多停留在受限数据、定性图或 detection；可靠性结论需要同场景或可控 corruption、false-free、校准和固定规划器终点。",
-    "本地四篇 VLM/语言接地工作只说明雷达 token、Doppler 教师和传感器选择接口潜力，没有直接 occupancy endpoint。"
+    "原四篇 VLM/语言接地工作主要提供雷达 token、Doppler 教师和传感器选择接口；RCVLA 新增物理候选仲裁，但其安全相关结果仍是开环代理。RaUF 的空间不确定性、TriO 的时空占据及 RCVLA 的规划用途应作为三条不同证据链。"
   ],
   "references": [
     {
@@ -194,7 +212,7 @@
       "canonicalId": "doi:10.1109/IVS.2010.5548091",
       "sourceFamily": "publisher-and-venue",
       "supports": "把 LiDAR 与雷达 OGM 更新并行化到 GPU，并用雷达超分辨率和直方图边界提取实现毫秒级道路边界估计，确立早期实时工程基线。",
-      "limitation": "这是手工二维多传感器地图与道路边界流程，不能隔离雷达贡献，也不包含语义 unknown、未来占据或风险校准。",
+      "limitation": "论文分别讨论 LiDAR 与雷达图，并展示雷达超分辨率与边界估计；桌面 CUDA 的毫秒级计算不等于车规嵌入式端到端部署，也没有三维语义、未来占据或闭环风险评测。",
       "url": "https://doi.org/10.1109/IVS.2010.5548091"
     },
     {
@@ -207,8 +225,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/IVS.2010.5548106",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把 occupancy map 与模型化多目标跟踪双向耦合，引入关联动态单元并在真实激光与雷达上实时运行，说明栅格和对象层协同并非近期才出现。",
-      "limitation": "动态状态依赖对象模型和多传感器输入；论文没有雷达单模态三维语义体素、未来分布或逐体素校准证据。",
+      "supports": "正式题录确认 2010 年已有将 occupancy grid mapping 与模型化对象跟踪结合、使用激光和雷达的驾驶辅助研究。",
+      "limitation": "本轮 DOI 出版题录可核验，但正文入口受限；不以题名断言双向融合机制、实时测量值、三维语义或闭环安全收益。",
       "url": "https://doi.org/10.1109/IVS.2010.5548106"
     },
     {
@@ -221,8 +239,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/IROS.2012.6386255",
       "sourceFamily": "publisher-and-venue",
-      "supports": "由 24 GHz 近距雷达的逐 bin 噪声、杂波与目标测量估计虚警和检测概率，再把测量功率映射为 occupancy，建立物理测量到栅格概率的直接先例。",
-      "limitation": "传感器只覆盖约 2.2 至 45 米近距二维场景，并依赖固定阈值；没有现代成像雷达的高度、语义、时序未来或规划评测。",
+      "supports": "正式题录确认 2012 年已有专门面向雷达 occupancy mapping 的传感器建模研究，是历史逆传感器模型检索入口。",
+      "limitation": "本轮仅重开正式出版元数据，未取得可读全文；24 GHz、2.2–45 米与逐 bin 阈值细节本轮未重新核验，不作为当前定量证据。",
       "url": "https://doi.org/10.1109/IROS.2012.6386255"
     },
     {
@@ -235,14 +253,14 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/ICVES.2012.6294297",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把汽车 occupancy grid 的准确性本身作为独立评价对象，说明地图质量、而非仅下游检测分数，早已是应单独核验的研究轴。",
-      "limitation": "正式记录不支持把该评价外推为 4D 成像雷达的逐体素语义、free/unknown 独立真值或未来占据流基准。",
+      "supports": "正式题录以汽车 occupancy grid 的准确性评价为主题，说明地图质量评价是早期研究轴。",
+      "limitation": "本轮正文受限，只保留可核验的书目信息和研究主题；不能据题名外推为现代成像雷达的逐体素语义、free/unknown 或未来流基准。",
       "url": "https://doi.org/10.1109/ICVES.2012.6294297"
     },
     {
       "id": "automotive-radar-gridmaps-2015",
       "title": "Automotive Radar Gridmap Representations",
-      "authors": "Klaudius Werber, Matthias Rapp, Jens Klappstein, Markus Hahn, Juergen Dickmann, Klaus Dietmayer, Christian Waldschmidt",
+      "authors": "Klaudius Werber, Matthias Rapp, Jens Klappstein, Markus Hahn, Jürgen Dickmann, Klaus Dietmayer, Christian Waldschmidt",
       "year": 2015,
       "venue": "IEEE MTT-S International Conference on Microwaves for Intelligent Mobility (ICMIM 2015)",
       "publicationType": "method",
@@ -263,8 +281,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/IVS.2015.7225827",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把雷达 Doppler 融入激光 SMC Bayesian occupancy filter，显著减少静态大目标的 ghost movement 并加快动态状态收敛，是径向速度约束动态栅格的直接先例。",
-      "limitation": "输出仍是激光-雷达二维动态栅格，且动态改善依赖跨模态融合；没有雷达单模态三维语义、独立 future flow 真值或多模态未来分布。",
+      "supports": "正式题录确认使用 sequential Monte Carlo Bayesian occupancy filter 融合激光和雷达的历史路线。",
+      "limitation": "本轮正文受限，未重新核验 ghost movement 与收敛改善的具体效果；该记录不承担三维语义、future flow 或开放道路风险论断。",
       "url": "https://doi.org/10.1109/IVS.2015.7225827"
     },
     {
@@ -306,7 +324,7 @@
       "canonicalId": "doi:10.1007/s11036-019-01378-5",
       "sourceFamily": "publisher-and-venue",
       "supports": "以衰减 Bayesian OGM 分离静动态障碍，再用 modified RANSAC 从静态图估计道路边界，展示毫米波雷达二维可行驶区域的实时工程路径。",
-      "limitation": "只评估 30 米内道路边界并假设直线模型，弯道和稀疏反射会失败；不输出三维语义、unknown 或未来状态。",
+      "limitation": "官方摘要确认在配有 Continental ARS 408-21 的实验 UGV 上实时估计二维道路边界；本轮未取得付费全文，因此不复述旧记录中的 30 米、直线假设或弯道失败细节，也不外推为三维语义或未来占据。",
       "url": "https://doi.org/10.1007/s11036-019-01378-5"
     },
     {
@@ -373,8 +391,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/IVS.2019.8813772",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把雷达 ISM 分成检测产生的正证据与射线无检测产生的负证据，使多雷达、多帧下不相关的假警可被持续削弱。",
-      "limitation": "仍是手工二维概率模型；没有语义、独立 unknown 校准、三维体素或未来状态验证。",
+      "supports": "正式题录确认雷达 occupancy grid 的 dual inverse sensor model 已在 IV 2019 发表，属于手工逆传感器模型的历史参照。",
+      "limitation": "本轮正文受限，正负证据的更新公式和多传感器虚警收益未重新核验；不以题名推出独立 unknown 校准、三维体素或未来状态性能。",
       "url": "https://doi.org/10.1109/IVS.2019.8813772"
     },
     {
@@ -387,8 +405,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/ITSC.2019.8916897",
       "sourceFamily": "publisher-and-venue",
-      "supports": "在 2019 年已直接把深度雷达网络用于自动驾驶占据栅格生成，压缩了把二维 data-driven radar OGM 作为新任务的空间。",
-      "limitation": "正式记录不支持把结果外推为三维语义、unknown 校准或未来占据；后续新方法必须在明确终点上超过这一早期基线。",
+      "supports": "正式题录确认 2019 年已有以 Deep Radar Network 生成自动驾驶 occupancy grids 的研究。",
+      "limitation": "本轮未取得可读全文，仅保留历史定位；不能据题名外推具体网络机制、三维语义、unknown 校准或未来占据性能。",
       "url": "https://doi.org/10.1109/ITSC.2019.8916897"
     },
     {
@@ -643,8 +661,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.23919/EuRAD50154.2022.9784520",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把高分辨率雷达自由空间直接交给 CNN 处理，补齐传统 OGM 与后续 raw-tensor occupancy 之间的二维学习支线。",
-      "limitation": "四页会议论文只建立当前二维 drivable free space；没有三维体素、语义 unknown、未来状态或概率校准。",
+      "supports": "正式题录确认已有使用 CNN 进行高分辨率雷达 drivable free-space detection 的会议研究。",
+      "limitation": "本轮正文受限，保留方法家族与书目定位，不复述未重核的输出维度、性能数字或校准结论。",
       "url": "https://doi.org/10.23919/EuRAD50154.2022.9784520"
     },
     {
@@ -739,8 +757,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/CCET62233.2024.10838065",
       "sourceFamily": "publisher-and-venue",
-      "supports": "把 radar OGM vehicle network 的漏检和误警本身作为分析对象，为 false-free 与结构化假象审计提供直接邻域证据。",
-      "limitation": "会议记录不足以支持统一可靠性结论；没有公开三维语义、逐体素 unknown、跨天气校准或闭环风险基准。",
+      "supports": "正式题录以 radar occupancy-grid vehicle detection 的漏检与误警分析为主题，可作为错误类型研究的检索入口。",
+      "limitation": "本轮正文受限，不能据题名把检测误差等同于 voxel false-free，也不能宣称已有跨天气校准或闭环风险基准。",
       "url": "https://doi.org/10.1109/CCET62233.2024.10838065"
     },
     {
@@ -767,8 +785,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/ICC52391.2025.11161287",
       "sourceFamily": "publisher-and-venue",
-      "supports": "以 Bayesian filtering 把雷达测量变成概率 OGM，并与 LiDAR 融合评估不同雾密度下的检测稳健性和同步问题。",
-      "limitation": "结果是 OGM 辅助 object detection，相比 LiDAR-only 的改善不能直接等同于雷达三维 occupancy、unknown 校准或规划安全。",
+      "supports": "正式题录确认 ICC 2025 已有面向雾天感知的 Radar-Driven Occupancy Grid Maps 研究。",
+      "limitation": "本轮正文受限，未重新核验 Bayesian 更新、雷达-LiDAR 融合及雾密度实验细节；不据题名推出雷达三维 occupancy、unknown 校准或规划安全收益。",
       "url": "https://doi.org/10.1109/ICC52391.2025.11161287"
     },
     {
@@ -821,8 +839,8 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/IV55156.2024.10588786",
       "sourceFamily": "publisher-and-venue",
-      "supports": "在经典雷达 DOGM 后增加语义分割式状态校正，并用启发式融合保留传统滤波安全边界，直接覆盖静态/动态误分问题。",
-      "limitation": "评测基于 nuScenes 稀疏雷达和二维 DOGM；没有原始成像雷达、三维语义、未来占据或校准不确定性。",
+      "supports": "在经典雷达 DOGM 后增加语义分割式状态校正，并通过启发式融合限制更新区域、保留原始占据、按置信度调整静动态类别，直接覆盖静态/动态误分问题。",
+      "limitation": "评测基于 nuScenes 稀疏雷达和二维 DOGM；保留原始占据的启发式规则不构成闭环碰撞率或形式化安全保证，也没有三维语义、未来占据或校准不确定性终点。",
       "url": "https://doi.org/10.1109/IV55156.2024.10588786",
       "links": [
         {
@@ -1012,7 +1030,7 @@
       "canonicalId": "arxiv:2501.15384",
       "sourceFamily": "arxiv",
       "supports": "在 360 度 4D radar-camera 输入上做高度注意、分层多尺度时空融合和半监督 3D occupancy。",
-      "limitation": "终点仍是当前 3D 占据；伪标签与融合混合观测证据和模型补全，尚缺未知校准及标定/异步曲线。",
+      "limitation": "终点仍是当前 3D 占据；伪标签与融合混合观测证据和模型补全，尚缺未知校准及标定/异步曲线。论文写有代码入口，但 2026-09-30 官方仓库仍只见 README、assets 和许可证，代码标为 soon。",
       "url": "https://arxiv.org/abs/2501.15384"
     },
     {
@@ -1254,7 +1272,7 @@
       "canonicalId": "arxiv:2605.18507",
       "sourceFamily": "publisher-and-venue",
       "supports": "用图像实例线索、里程计与雷达运动提示迭代学习 scene flow，进一步压缩了以弱监督作为雷达运动新意的空间。",
-      "limitation": "正式 OpenReview 页面确认 ICML 2026；其终点仍是点级 flow，实例伪标签和静态刚体先验不能作为逐体素未来占据真值。",
+      "limitation": "ICML 2026 官方论文页与既有 OpenReview 记录相互对应；终点仍是点级 flow，实例伪标签和静态刚体先验不能作为逐体素未来占据真值。",
       "url": "https://openreview.net/forum?id=MCu8SOjPad",
       "links": [
         {
@@ -1298,7 +1316,7 @@
       "canonicalId": "doi:10.1109/3DV69130.2026.00124",
       "sourceFamily": "publisher-and-venue",
       "supports": "用相机初始化的多模态 neural field 可微生成单芯片 Doppler range 图，补足跨传感器几何先验和低层雷达模拟主线。",
-      "limitation": "手持自建数据与低层 range-image 合成不是汽车三维语义 occupancy；相机初始化也不能作为雷达独立 free/unknown 或未来流真值。",
+      "limitation": "手持自建数据与低层 range-image 合成不是汽车三维语义 occupancy；相机初始化不能作为独立 free/unknown 或未来流真值。2026-09-30 项目页仍将代码、数据标为 coming soon。",
       "url": "https://doi.org/10.1109/3DV69130.2026.00124",
       "links": [
         {
@@ -1307,7 +1325,7 @@
         },
         {
           "label": "项目页",
-          "url": "https://sally-chen.github.io/radarsim/"
+          "url": "https://sally-chen.github.io/radar-sim"
         }
       ]
     },
@@ -1510,15 +1528,71 @@
       "canonicalId": "arxiv:2607.09629",
       "sourceFamily": "arxiv",
       "supports": "把当前 semantic occupancy 作为跨阶段持久状态，以 Doppler 时序融合联合 detection，在两数据集评测。",
-      "limitation": "输出仍以当前 detection/occupancy 为主，扩展标签含卫星地图自动生成；代码和标签尚未完整公开。",
+      "limitation": "输出仍以当前 detection/occupancy 为主，扩展标签含卫星地图自动生成；重开的论文仍承诺录用后释放代码和标签，本轮未取得完整发布资产，不能据此声称已复现。",
       "url": "https://arxiv.org/abs/2607.09629"
+    },
+    {
+      "id": "rauf-2026",
+      "title": "RaUF: Learning the Spatial Uncertainty Field of Radar",
+      "authors": "Shengpeng Wang, Kuangyu Wang, Wei Wang",
+      "year": 2026,
+      "venue": "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2026)",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2603.01026",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_RaUF_Learning_the_Spatial_Uncertainty_Field_of_Radar_CVPR_2026_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2603.01026"
+        }
+      ],
+      "supports": "以 LiDAR 派生占据监督学习雷达各向异性空间不确定性，用强度与 Doppler 双向注意抑制杂波，并在点云重建、杂波比例及位姿/自车速度估计中评估。",
+      "limitation": "主要终点为 CD、F-score、CPR 和 TE/EVE；部分跨传感器评测包含微调，Doppler 一致性推导以静态散射体为条件。不能把这些结果或作者的 calibrated 表述当作独立 free/unknown、ECE/Brier、未来占据或规划安全证据。"
+    },
+    {
+      "id": "trio-2026",
+      "title": "TriO: Tri-Modal Unsupervised Occupancy World Model for Anything Perception",
+      "authors": "Quinlan Sykora, Sourav Biswas, Christopher Diehl, Andrew Cunningham, Thomas Gilles, Raquel Urtasun",
+      "year": 2026,
+      "venue": "European Conference on Computer Vision (ECCV 2026)",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2609.32013",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://eccv.ecva.net/virtual/2026/poster/4951",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2609.32013"
+        }
+      ],
+      "localPaperId": "trio-trimodal-anything-perception",
+      "supports": "以连续 x-y-z-t 查询联合预测占据、障碍/地面概率和三维流，用相机/LiDAR 几何伪标签与雷达径向 Doppler 构造监督；在 AV2、STU 与 LRR 分别验证未来表示、几何障碍迁移和雷达增量。",
+      "limitation": "AV2/STU 无雷达，雷达证据限未公开 LRR；STU 重组 train 地面和 val 障碍并做视场/高度过滤、评估集最优 F1 阈值选择，不是标准异常隐藏测试。原文 AV2 700/750、STU 22/2+19 序列口径冲突；完整模型20k查询为489.32ms/RTX5000，60.81ms属于去相机版。未证明闭环安全，切向流仍失败；无监督只限本方法新增标注，语义占据微调仍用车辆框。"
+    },
+    {
+      "id": "rcvla-2026",
+      "title": "RCVLA: 4D Radar-Grounded Semantic Reasoning and Trajectory Arbitration for Autonomous Driving",
+      "authors": "Lianqing Zheng, Xiaokai Bai, Yixuan Luo, Runwei Guan, Minghao Liu, Zhiqiang Wei, Hui-liang Shen, Xichan Zhu, Zhixiong Ma",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2609.32681",
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2609.32681",
+      "localPaperId": "rcvla-radar-grounded-arbitration",
+      "supports": "区分雷达语言语义阶段和轨迹仲裁阶段；以占据/对象 queries、雷达簇及 TTC 风险校准细化候选，在 OmniHD-QA 的开环规划中相对语义阶段降低 L2 与碰撞代理指标。",
+      "limitation": "全部下游结果在 OmniHD-QA，358185/161976 是 QA 样本数，原文未给出可复核的序列级拆分清单。0.576%到0.175%是1/2/3s开环碰撞均值；语义雷达单独加入反而高于无雷达0.391%。TTC采用常速度与补偿径向速度，延迟实验仍用当前场景条件；不是闭环、实车安全或全部传感器延迟验证。"
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-08-31",
+    "searchedAt": "2026-09-30",
     "cutoffDate": "2026-08-10",
-    "evidenceBoundary": "截至 2026-08-31，本轮仅重跑本地 ripgrep 并按 radar-occupancy-representation frontmatter tag 与 revisionOf 闭合候选；站外查询沿用 2026-08-10 保存的一手检索，不声称重新执行外部检索或改写核心 synthesis。本地查询得到 50 个原始文件命中、6 篇规范候选，其中 4 篇已纳入当前综述、2 篇以明确理由暂缓、44 个原始命中文件完成范围筛除。",
+    "evidenceBoundary": "原核心站外检索日期与参数保持在历史记录中。2026-09-30 对原有78条引用分层再核，其中9条历史IEEE-only记录仅保留正式题录定位；本轮依独立审阅建议纳入RaUF，并加入独立选文接受的TriO、RCVLA。新增引用的精确primary lookup与原查询合并展示但分开溯源，不声称8月已检得九月论文或重新执行旧广检索。近期广泛发现由本期digest-audit维护，最终本库审计由父流程在全部报告集成后更新。",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -1745,32 +1819,46 @@
         "sourceFamily": "local-corpus",
         "query": "radar|occupancy|占据|Doppler|4D",
         "scopeRationale": "可复现宽检索发现本库雷达文件，再只将带当前方向标签的规范论文纳入；四篇均是语言/推理邻域证据。",
-        "rawHitCount": 50,
-        "screenedOutCount": 44,
-        "screeningNote": "2026-08-31 重跑 rg -l -i，全文正则共命中 50 个 Markdown 文件；按 radar-occupancy-representation 标签与 revisionOf 归并为 6 篇规范候选，其余 44 个文件完成范围筛除。",
+        "rawHitCount": 55,
+        "screenedOutCount": 43,
+        "screeningNote": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；55 个文件命中，按方向标签与 revisionOf 归并为 12 篇规范候选，其余 43 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。",
         "resultIdSample": [
+          "arxiv:2609.17766",
           "arxiv:2608.02449",
           "arxiv:2608.16966",
+          "arxiv:2609.02289",
+          "arxiv:2609.11894",
           "arxiv:2608.04130",
           "arxiv:2608.13102",
+          "arxiv:2609.32681",
+          "arxiv:2609.24151",
           "arxiv:2608.01535",
-          "arxiv:2608.04568"
+          "arxiv:2608.04568",
+          "arxiv:2609.32013"
         ],
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
+            "drtr-direct-radar-teach-repeat",
             "moral-sensor-grounded-vlm",
             "multi-observer-vehicle-localization",
+            "part-class-agnostic-radar",
+            "radar-3d-point-splatting",
             "radar4d-vlm-temporal-reasoning",
             "rbft-net-radar-depth-completion",
+            "rcvla-radar-grounded-arbitration",
+            "star-task-aware-radar-preprocessing",
             "star-vlm-radar-supervision",
-            "talk2sensors-grounding"
+            "talk2sensors-grounding",
+            "trio-trimodal-anything-perception"
           ],
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "这些论文的主要方向属于本综述，但本轮只完成截至 2026-08-31 的本地候选合规性复核；在未重跑站外直接竞品、重写核心综合并完成独立用途级复核前，不自动升级为核心引用。",
+              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
               "localPaperIds": [
-                "rbft-net-radar-depth-completion"
+                "drtr-direct-radar-teach-repeat",
+                "part-class-agnostic-radar",
+                "star-task-aware-radar-preprocessing"
               ]
             },
             {
@@ -1778,6 +1866,20 @@
               "reason": "这些论文以当前方向为跨方向标签，可作为邻域证据；本轮只完成截至 2026-08-31 的本地候选合规性复核，未重跑站外检索或改写核心综合，因此不升级为核心引用。",
               "localPaperIds": [
                 "multi-observer-vehicle-localization"
+              ]
+            },
+            {
+              "reasonCode": "cross-direction-support",
+              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
+              "localPaperIds": [
+                "radar-3d-point-splatting"
+              ]
+            },
+            {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "这些论文的主要方向属于本综述，但本轮只完成截至 2026-08-31 的本地候选合规性复核；在未重跑站外直接竞品、重写核心综合并完成独立用途级复核前，不自动升级为核心引用。",
+              "localPaperIds": [
+                "rbft-net-radar-depth-completion"
               ]
             }
           ]
@@ -1796,8 +1898,8 @@
             ]
           }
         },
-        "executedAt": "2026-08-31",
-        "resultCount": 6
+        "executedAt": "2026-09-30",
+        "resultCount": 12
       },
       {
         "family": "雷达单模态三维语义占据与场景补全",
@@ -1838,8 +1940,10 @@
       {
         "family": "雷达-相机和雷达-LiDAR 多模态占据融合",
         "sourceFamily": "openalex",
-        "query": "radar camera occupancy",
-        "scopeRationale": "复放 OpenAlex 前 50 条，保留直接 3D occupancy、低层 grid fusion 与正式多模态工作；检测-only 明确排除，再沿直接工作的一手引用补齐 2025-2026 前沿。",
+        "query": "radar camera occupancy [historical result set] + exact primary lookup arxiv:2609.32013",
+        "scopeRationale": "本项是历史候选与本轮精确来源重开的合并台账，不是一次新执行的旧搜索。historicalRun 完整保留原日期、真实查询、参数与候选样本；新增 TriO: Tri-Modal Unsupervised Occupancy World Model for Anything Perception 由独立审阅/选文决定纳入，实际重开链接与时间见 currentLookups。当前 family 的任务边界不因合并改变。",
+        "executedAt": "2026-09-30",
+        "resultCount": 14,
         "resultIdSample": [
           "doi:10.1109/LRA.2024.3511427",
           "doi:10.3233/FAIA240480",
@@ -1853,71 +1957,166 @@
           "doi:10.1109/IROS60139.2025.11246246",
           "arxiv:2603.07794",
           "arxiv:2607.09629",
-          "doi:10.1109/TPAMI.2026.3663672"
+          "doi:10.1109/TPAMI.2026.3663672",
+          "arxiv:2609.32013"
         ],
         "retrieval": {
-          "provider": "openalex-works-api-plus-primary-page-verification",
-          "endpoint": "https://api.openalex.org/works",
-          "sort": "relevance_score-desc",
-          "limit": 50,
+          "provider": "historical-candidate-union-plus-current-primary-lookup",
+          "endpoint": "https://arxiv.org/abs/2609.32013",
+          "sort": "historical-candidate-order-then-new-exact-lookup",
+          "limit": 14,
           "parameters": {
-            "search": "radar camera occupancy",
-            "filter": "from_publication_date:1989-01-01,to_publication_date:2026-08-10",
-            "per_page": 50,
-            "select": "id,doi,title,publication_year,primary_location,authorships"
-          },
-          "citationExpansion": {
-            "method": "backward/forward primary-page expansion from direct occupancy results",
-            "seedCanonicalIds": [
-              "doi:10.1109/LRA.2024.3511427",
-              "doi:10.3233/FAIA240480",
-              "doi:10.1109/TIV.2024.3453293",
-              "doi:10.1109/TCSVT.2026.3657111"
+            "query": "radar camera occupancy [historical result set] + exact primary lookup arxiv:2609.32013",
+            "composition": "historical-result-set-plus-current-exact-primary-lookup",
+            "historicalExecutedAt": "2026-08-10",
+            "newCanonicalIds": [
+              "arxiv:2609.32013"
             ],
-            "resultIdSample": [
-              "arxiv:2501.15384",
-              "doi:10.1109/IROS60139.2025.11246246",
-              "arxiv:2603.07794",
-              "arxiv:2607.09629",
-              "doi:10.1109/TPAMI.2026.3663672"
-            ],
-            "edges": [
-              {
-                "seedCanonicalId": "doi:10.1109/TIV.2024.3453293",
-                "resultCanonicalId": "arxiv:2501.15384",
-                "direction": "forward-citation-result-cites-seed"
-              },
-              {
-                "seedCanonicalId": "doi:10.3233/FAIA240480",
-                "resultCanonicalId": "doi:10.1109/IROS60139.2025.11246246",
-                "direction": "forward-citation-result-cites-seed"
-              },
-              {
-                "seedCanonicalId": "doi:10.1109/TIV.2024.3453293",
-                "resultCanonicalId": "arxiv:2603.07794",
-                "direction": "forward-citation-result-cites-seed"
-              },
-              {
-                "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
-                "resultCanonicalId": "arxiv:2607.09629",
-                "direction": "forward-citation-result-cites-seed"
-              },
-              {
-                "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
-                "resultCanonicalId": "doi:10.1109/TPAMI.2026.3663672",
-                "direction": "backward-reference-seed-cites-result"
-              }
+            "newLookupUrls": [
+              "https://arxiv.org/abs/2609.32013",
+              "https://arxiv.org/html/2609.32013v1",
+              "https://eccv.ecva.net/virtual/2026/poster/4951"
             ]
-          }
+          },
+          "currentLookups": [
+            {
+              "canonicalId": "arxiv:2609.32013",
+              "url": "https://arxiv.org/abs/2609.32013",
+              "executedAt": "2026-09-29T17:38:22.796666+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/c984ec31dfd9a9a1.raw",
+              "status": 200,
+              "finalUrl": "https://arxiv.org/abs/2609.32013",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "b45296d67a24fc0881eaf9b160fb09237803206dbfdd78a1ef396a674fb045d1",
+              "byteLength": 40680,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/c984ec31dfd9a9a1.raw",
+              "sourceFamily": "arxiv"
+            },
+            {
+              "canonicalId": "arxiv:2609.32013",
+              "url": "https://arxiv.org/html/2609.32013v1",
+              "executedAt": "2026-09-29T17:38:22.938691+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/de3bb555d7e10fa1.raw",
+              "status": 200,
+              "finalUrl": "https://arxiv.org/html/2609.32013v1",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "7233d8fd213de230a7c1a94cb2777077559170d7c6d25f6026020606bae621f8",
+              "byteLength": 883995,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/de3bb555d7e10fa1.raw",
+              "sourceFamily": "arxiv"
+            },
+            {
+              "canonicalId": "arxiv:2609.32013",
+              "url": "https://eccv.ecva.net/virtual/2026/poster/4951",
+              "executedAt": "2026-09-29T17:38:22.942188+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/a4b23d00015f8e29.raw",
+              "status": 200,
+              "finalUrl": "https://eccv.ecva.net/virtual/2026/poster/4951",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "aa8c94fbb796a76c0c824d8f0a1d41c0b1e8ed2d9908a6d2dfee4c49f07132ba",
+              "byteLength": 69988,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/a4b23d00015f8e29.raw",
+              "sourceFamily": "publisher-and-venue"
+            }
+          ],
+          "countBasis": {
+            "historicalCandidateCount": 13,
+            "newUniqueCandidateCount": 1,
+            "crossRunDuplicateCount": 0,
+            "currentBroadSearchExecuted": false
+          },
+          "sourceFamilyInterpretation": "Top-level sourceFamily preserves the historical discovery family; currentLookups explicitly identify their actual primary-source families. This composition record is not a new broad search."
         },
-        "executedAt": "2026-08-10",
-        "resultCount": 13,
-        "rawHitCount": 50,
-        "screenedOutCount": 42,
-        "screeningNote": "固定 per_page=50 的首屏中 6 篇直接 occupancy/grid 工作纳入、LXL 与 RVDet 两篇 detection-only 进入排除账本，其余 42 条为综述、室内占用、detection-only 或无 occupancy 终点；另有 5 个候选由四个 seed 的可见前向引用或后向参考文献边扩展。",
-        "directCandidateCount": 8,
-        "aliasMergedCount": 0,
-        "citationExpansionCount": 5
+        "historicalRun": {
+          "family": "雷达-相机和雷达-LiDAR 多模态占据融合",
+          "sourceFamily": "openalex",
+          "query": "radar camera occupancy",
+          "scopeRationale": "复放 OpenAlex 前 50 条，保留直接 3D occupancy、低层 grid fusion 与正式多模态工作；检测-only 明确排除，再沿直接工作的一手引用补齐 2025-2026 前沿。",
+          "resultIdSample": [
+            "doi:10.1109/LRA.2024.3511427",
+            "doi:10.3233/FAIA240480",
+            "doi:10.1109/ACCESS.2020.3032034",
+            "doi:10.1109/TIV.2024.3453293",
+            "doi:10.1109/TCSVT.2026.3657111",
+            "doi:10.1109/DSD.2019.00038",
+            "doi:10.1109/TIV.2023.3321240",
+            "doi:10.1109/ITSC48978.2021.9564627",
+            "arxiv:2501.15384",
+            "doi:10.1109/IROS60139.2025.11246246",
+            "arxiv:2603.07794",
+            "arxiv:2607.09629",
+            "doi:10.1109/TPAMI.2026.3663672"
+          ],
+          "retrieval": {
+            "provider": "openalex-works-api-plus-primary-page-verification",
+            "endpoint": "https://api.openalex.org/works",
+            "sort": "relevance_score-desc",
+            "limit": 50,
+            "parameters": {
+              "search": "radar camera occupancy",
+              "filter": "from_publication_date:1989-01-01,to_publication_date:2026-08-10",
+              "per_page": 50,
+              "select": "id,doi,title,publication_year,primary_location,authorships"
+            },
+            "citationExpansion": {
+              "method": "backward/forward primary-page expansion from direct occupancy results",
+              "seedCanonicalIds": [
+                "doi:10.1109/LRA.2024.3511427",
+                "doi:10.3233/FAIA240480",
+                "doi:10.1109/TIV.2024.3453293",
+                "doi:10.1109/TCSVT.2026.3657111"
+              ],
+              "resultIdSample": [
+                "arxiv:2501.15384",
+                "doi:10.1109/IROS60139.2025.11246246",
+                "arxiv:2603.07794",
+                "arxiv:2607.09629",
+                "doi:10.1109/TPAMI.2026.3663672"
+              ],
+              "edges": [
+                {
+                  "seedCanonicalId": "doi:10.1109/TIV.2024.3453293",
+                  "resultCanonicalId": "arxiv:2501.15384",
+                  "direction": "forward-citation-result-cites-seed"
+                },
+                {
+                  "seedCanonicalId": "doi:10.3233/FAIA240480",
+                  "resultCanonicalId": "doi:10.1109/IROS60139.2025.11246246",
+                  "direction": "forward-citation-result-cites-seed"
+                },
+                {
+                  "seedCanonicalId": "doi:10.1109/TIV.2024.3453293",
+                  "resultCanonicalId": "arxiv:2603.07794",
+                  "direction": "forward-citation-result-cites-seed"
+                },
+                {
+                  "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
+                  "resultCanonicalId": "arxiv:2607.09629",
+                  "direction": "forward-citation-result-cites-seed"
+                },
+                {
+                  "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
+                  "resultCanonicalId": "doi:10.1109/TPAMI.2026.3663672",
+                  "direction": "backward-reference-seed-cites-result"
+                }
+              ]
+            }
+          },
+          "executedAt": "2026-08-10",
+          "resultCount": 13,
+          "rawHitCount": 50,
+          "screenedOutCount": 42,
+          "screeningNote": "固定 per_page=50 的首屏中 6 篇直接 occupancy/grid 工作纳入、LXL 与 RVDet 两篇 detection-only 进入排除账本，其余 42 条为综述、室内占用、detection-only 或无 occupancy 终点；另有 5 个候选由四个 seed 的可见前向引用或后向参考文献边扩展。",
+          "directCandidateCount": 8,
+          "aliasMergedCount": 0,
+          "citationExpansionCount": 5
+        }
       },
       {
         "family": "时空占据、动态占据、场景流与未来预测",
@@ -1983,8 +2182,10 @@
       {
         "family": "恶劣天气、不确定性、标定与时序错位",
         "sourceFamily": "arxiv",
-        "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar",
-        "scopeRationale": "纳入定义未知/OOD 的 occupancy 方法和多天气数据，同时标明哪些没有 radar occupancy endpoint。",
+        "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar [historical result set] + exact primary lookup arxiv:2603.01026",
+        "scopeRationale": "本项是历史候选与本轮精确来源重开的合并台账，不是一次新执行的旧搜索。historicalRun 完整保留原日期、真实查询、参数与候选样本；新增 RaUF: Learning the Spatial Uncertainty Field of Radar 由独立审阅/选文决定纳入，实际重开链接与时间见 currentLookups。当前 family 的任务边界不因合并改变。",
+        "executedAt": "2026-09-30",
+        "resultCount": 16,
         "resultIdSample": [
           "doi:10.1109/ICRA.2019.8793263",
           "doi:10.1109/LRA.2022.3144528",
@@ -2000,25 +2201,108 @@
           "doi:10.1109/CCET62233.2024.10838065",
           "doi:10.1109/JSEN.2025.3592023",
           "doi:10.1109/ICC52391.2025.11161287",
-          "arxiv:2606.00416"
+          "arxiv:2606.00416",
+          "arxiv:2603.01026"
         ],
         "retrieval": {
-          "provider": "arxiv-and-cvf-primary-search",
-          "endpoint": "https://arxiv.org/search",
-          "sort": "relevance-then-submitted-date",
-          "limit": 25,
+          "provider": "historical-candidate-union-plus-current-primary-lookup",
+          "endpoint": "https://arxiv.org/abs/2603.01026",
+          "sort": "historical-candidate-order-then-new-exact-lookup",
+          "limit": 16,
           "parameters": {
-            "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar"
-          }
+            "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar [historical result set] + exact primary lookup arxiv:2603.01026",
+            "composition": "historical-result-set-plus-current-exact-primary-lookup",
+            "historicalExecutedAt": "2026-08-10",
+            "newCanonicalIds": [
+              "arxiv:2603.01026"
+            ],
+            "newLookupUrls": [
+              "https://arxiv.org/abs/2603.01026",
+              "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_RaUF_Learning_the_Spatial_Uncertainty_Field_of_Radar_CVPR_2026_paper.html"
+            ]
+          },
+          "currentLookups": [
+            {
+              "canonicalId": "arxiv:2603.01026",
+              "url": "https://arxiv.org/abs/2603.01026",
+              "executedAt": "2026-09-29T17:38:22.168033+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/a52d12116dbada2f.raw",
+              "status": 200,
+              "finalUrl": "https://arxiv.org/abs/2603.01026",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "8376d3cc919c25654cea0c34a03905b24c1e996bd10448689dcdd84129e0f02e",
+              "byteLength": 41087,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/a52d12116dbada2f.raw",
+              "sourceFamily": "arxiv"
+            },
+            {
+              "canonicalId": "arxiv:2603.01026",
+              "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_RaUF_Learning_the_Spatial_Uncertainty_Field_of_Radar_CVPR_2026_paper.html",
+              "executedAt": "2026-09-29T17:38:22.168197+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/4a70694a5bff73c6.raw",
+              "status": 200,
+              "finalUrl": "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_RaUF_Learning_the_Spatial_Uncertainty_Field_of_Radar_CVPR_2026_paper.html",
+              "contentType": "text/html; charset=UTF-8",
+              "curlExit": 0,
+              "sha256": "a54504c3e578cad1159c2bf59549038190332dea7b0ff278fce6cd10f985308a",
+              "byteLength": 6234,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/4a70694a5bff73c6.raw",
+              "sourceFamily": "publisher-and-venue"
+            }
+          ],
+          "countBasis": {
+            "historicalCandidateCount": 15,
+            "newUniqueCandidateCount": 1,
+            "crossRunDuplicateCount": 0,
+            "currentBroadSearchExecuted": false
+          },
+          "sourceFamilyInterpretation": "Top-level sourceFamily preserves the historical discovery family; currentLookups explicitly identify their actual primary-source families. This composition record is not a new broad search."
         },
-        "executedAt": "2026-08-10",
-        "resultCount": 15
+        "historicalRun": {
+          "family": "恶劣天气、不确定性、标定与时序错位",
+          "sourceFamily": "arxiv",
+          "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar",
+          "scopeRationale": "纳入定义未知/OOD 的 occupancy 方法和多天气数据，同时标明哪些没有 radar occupancy endpoint。",
+          "resultIdSample": [
+            "doi:10.1109/ICRA.2019.8793263",
+            "doi:10.1109/LRA.2022.3144528",
+            "doi:10.1109/LRA.2024.3511427",
+            "doi:10.1109/CVPR52734.2025.02558",
+            "arxiv:2604.01081",
+            "doi:10.52202/068431-0276",
+            "doi:10.1109/TPAMI.2026.3663672",
+            "arxiv:2604.03685",
+            "doi:10.1109/ICCV51701.2025.02562",
+            "doi:10.1016/j.inffus.2024.102671",
+            "doi:10.1038/s42256-020-00288-6",
+            "doi:10.1109/CCET62233.2024.10838065",
+            "doi:10.1109/JSEN.2025.3592023",
+            "doi:10.1109/ICC52391.2025.11161287",
+            "arxiv:2606.00416"
+          ],
+          "retrieval": {
+            "provider": "arxiv-and-cvf-primary-search",
+            "endpoint": "https://arxiv.org/search",
+            "sort": "relevance-then-submitted-date",
+            "limit": 25,
+            "parameters": {
+              "query": "3D occupancy uncertainty evidence theory OOD adverse weather calibration temporal misalignment 4D radar"
+            }
+          },
+          "executedAt": "2026-08-10",
+          "resultCount": 15
+        }
       },
       {
         "family": "数据集、实时部署、规划效用与闭环验证",
         "sourceFamily": "publisher-and-venue",
-        "query": "4D radar occupancy",
-        "scopeRationale": "复放 OpenAlex 前 50 条定位 RadarOcc、4D-ROLLS 与正式 Doracamom，显式合并正式版、预印本和镜像别名；再沿 RadarOcc 与 Doracamom 的一手引用核对 K-Radar、VoD 与 OmniHD-Scenes。",
+        "query": "4D radar occupancy [historical result set] + exact primary lookup arxiv:2609.32681",
+        "scopeRationale": "本项是历史候选与本轮精确来源重开的合并台账，不是一次新执行的旧搜索。historicalRun 完整保留原日期、真实查询、参数与候选样本；新增 RCVLA: 4D Radar-Grounded Semantic Reasoning and Trajectory Arbitration for Autonomous Driving 由独立审阅/选文决定纳入，实际重开链接与时间见 currentLookups。当前 family 的任务边界不因合并改变。",
+        "executedAt": "2026-09-30",
+        "resultCount": 9,
         "resultIdSample": [
           "doi:10.52202/079017-3222",
           "doi:10.1109/IROS60139.2025.11246471",
@@ -2027,198 +2311,324 @@
           "doi:10.1109/IV55156.2024.10588397",
           "doi:10.52202/068431-0276",
           "doi:10.1109/LRA.2022.3147324",
-          "doi:10.1109/TPAMI.2026.3663672"
+          "doi:10.1109/TPAMI.2026.3663672",
+          "arxiv:2609.32681"
         ],
         "retrieval": {
-          "provider": "openalex-works-api-plus-primary-page-verification",
-          "endpoint": "https://api.openalex.org/works",
-          "sort": "relevance_score-desc",
-          "limit": 50,
-          "retrievedAt": "2026-08-10T03:55:00+08:00",
-          "reportedTotal": 1204,
-          "rankedSnapshotSha256": "0e2264d6d19b0e34d6905454709329855c3cdefe960234b8b5e62300e9eef3dc",
+          "provider": "historical-candidate-union-plus-current-primary-lookup",
+          "endpoint": "https://arxiv.org/abs/2609.32681",
+          "sort": "historical-candidate-order-then-new-exact-lookup",
+          "limit": 9,
           "parameters": {
-            "search": "4D radar occupancy",
-            "filter": "from_publication_date:1989-01-01,to_publication_date:2026-08-10",
-            "per_page": 50,
-            "select": "id,display_name,doi,publication_year"
+            "query": "4D radar occupancy [historical result set] + exact primary lookup arxiv:2609.32681",
+            "composition": "historical-result-set-plus-current-exact-primary-lookup",
+            "historicalExecutedAt": "2026-08-10",
+            "newCanonicalIds": [
+              "arxiv:2609.32681"
+            ],
+            "newLookupUrls": [
+              "https://arxiv.org/abs/2609.32681",
+              "https://arxiv.org/html/2609.32681v1"
+            ]
           },
-          "rankedOpenAlexIds": [
-            "W4415796123",
-            "W3118293846",
-            "W4387245323",
-            "W3172931637",
-            "W4398796377",
-            "W7125638982",
-            "W4406849707",
-            "W4205642952",
-            "W4292968279",
-            "W4386951719",
-            "W4386472944",
-            "W3167138498",
-            "W4388228562",
-            "W4400649817",
-            "W4387951294",
-            "W3211855636",
-            "W4406983055",
-            "W3201215469",
-            "W4408696856",
-            "W4415020709",
-            "W4416748388",
-            "W4312210192",
-            "W4282981352",
-            "W4415538290",
-            "W2504322816",
-            "W4400650045",
-            "W3034816125",
-            "W3010503765",
-            "W4389051313",
-            "W4389317747",
-            "W4413300407",
-            "W4229441715",
-            "W4383176164",
-            "W4390906613",
-            "W3127803571",
-            "W3204549466",
-            "W4381537943",
-            "W2946188561",
-            "W3094012284",
-            "W1850076581",
-            "W4318464607",
-            "W4224947594",
-            "W4393156295",
-            "W2080134555",
-            "W2928632794",
-            "W4392012792",
-            "W4307549278",
-            "W4409353303",
-            "W4362009298",
-            "W3146968685"
-          ],
-          "aliasMerges": [
+          "currentLookups": [
             {
-              "rankedOpenAlexIds": [
-                "W4415796123",
-                "W4398796377"
-              ],
-              "primaryCanonicalId": "doi:10.52202/079017-3222",
-              "reason": "RadarOcc 正式 NeurIPS 记录与 arXiv 记录合并。"
+              "canonicalId": "arxiv:2609.32681",
+              "url": "https://arxiv.org/abs/2609.32681",
+              "executedAt": "2026-09-29T17:38:23.418902+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/37293607588e0e81.raw",
+              "status": 200,
+              "finalUrl": "https://arxiv.org/abs/2609.32681",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "5546a641c05b5168a4fa90232c22c967f52853674060573e60f6056bbb0e2fc5",
+              "byteLength": 43625,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/37293607588e0e81.raw",
+              "sourceFamily": "arxiv"
             },
             {
-              "rankedOpenAlexIds": [
-                "W4387245323",
-                "W4400649817",
-                "W4383176164"
-              ],
-              "primaryCanonicalId": "doi:10.1109/TIV.2023.3321240",
-              "reason": "LXL 期刊版、会议别名记录与机构镜像合并。"
-            },
-            {
-              "rankedOpenAlexIds": [
-                "W4415020709",
-                "W4416748388"
-              ],
-              "primaryCanonicalId": "doi:10.1109/IROS60139.2025.11246471",
-              "reason": "4D-ROLLS arXiv 与 IROS 正式记录合并。"
+              "canonicalId": "arxiv:2609.32681",
+              "url": "https://arxiv.org/html/2609.32681v1",
+              "executedAt": "2026-09-29T17:38:23.454122+00:00",
+              "lookupType": "exact-primary-record-or-resource-reopen",
+              "path": "/tmp/paper-digest-20260929/radar/incremental/92c92b79f489bb03.raw",
+              "status": 200,
+              "finalUrl": "https://arxiv.org/html/2609.32681v1",
+              "contentType": "text/html; charset=utf-8",
+              "curlExit": 0,
+              "sha256": "51f59cd8dd9e06741b45bd6cc206c9cf903bc188427ea33796f04557aef6eb55",
+              "byteLength": 219473,
+              "rawArtifact": "/tmp/paper-digest-20260929/radar/incremental/92c92b79f489bb03.raw",
+              "sourceFamily": "arxiv"
             }
           ],
-          "citationExpansion": {
-            "method": "verified backward-reference edges from direct 4D-radar occupancy papers",
-            "seedCanonicalIds": [
-              "doi:10.52202/079017-3222",
-              "doi:10.1109/TCSVT.2026.3657111"
-            ],
-            "resultIdSample": [
-              "doi:10.52202/068431-0276",
-              "doi:10.1109/LRA.2022.3147324",
-              "doi:10.1109/TPAMI.2026.3663672"
-            ],
-            "edges": [
-              {
-                "seedCanonicalId": "doi:10.52202/079017-3222",
-                "resultCanonicalId": "doi:10.52202/068431-0276"
-              },
-              {
-                "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
-                "resultCanonicalId": "doi:10.1109/LRA.2022.3147324"
-              },
-              {
-                "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
-                "resultCanonicalId": "doi:10.1109/TPAMI.2026.3663672"
-              }
-            ]
-          }
+          "countBasis": {
+            "historicalCandidateCount": 8,
+            "newUniqueCandidateCount": 1,
+            "crossRunDuplicateCount": 0,
+            "currentBroadSearchExecuted": false
+          },
+          "sourceFamilyInterpretation": "Top-level sourceFamily preserves the historical discovery family; currentLookups explicitly identify their actual primary-source families. This composition record is not a new broad search."
         },
-        "executedAt": "2026-08-10",
-        "resultCount": 8,
-        "rawHitCount": 50,
-        "screenedOutCount": 41,
-        "screeningNote": "2026-08-10 03:55 +08:00 重放时 OpenAlex 返回总量 1204。固定 per_page=50 的首屏含 RadarOcc、4D-ROLLS、Doracamom 三篇纳入论文，LXL 与路侧 occupancy heat map 两篇明确排除，另有 4 条正式版/预印本/镜像别名行和 41 条范围筛出项。沿主论文可直接核验的引用边只扩展 K-Radar、View of Delft 与 OmniHD-Scenes，故本 family 为 8 个去重候选。",
-        "directCandidateCount": 5,
-        "aliasMergedCount": 4,
-        "citationExpansionCount": 3
+        "historicalRun": {
+          "family": "数据集、实时部署、规划效用与闭环验证",
+          "sourceFamily": "publisher-and-venue",
+          "query": "4D radar occupancy",
+          "scopeRationale": "复放 OpenAlex 前 50 条定位 RadarOcc、4D-ROLLS 与正式 Doracamom，显式合并正式版、预印本和镜像别名；再沿 RadarOcc 与 Doracamom 的一手引用核对 K-Radar、VoD 与 OmniHD-Scenes。",
+          "resultIdSample": [
+            "doi:10.52202/079017-3222",
+            "doi:10.1109/IROS60139.2025.11246471",
+            "doi:10.1109/TCSVT.2026.3657111",
+            "doi:10.1109/TIV.2023.3321240",
+            "doi:10.1109/IV55156.2024.10588397",
+            "doi:10.52202/068431-0276",
+            "doi:10.1109/LRA.2022.3147324",
+            "doi:10.1109/TPAMI.2026.3663672"
+          ],
+          "retrieval": {
+            "provider": "openalex-works-api-plus-primary-page-verification",
+            "endpoint": "https://api.openalex.org/works",
+            "sort": "relevance_score-desc",
+            "limit": 50,
+            "retrievedAt": "2026-08-10T03:55:00+08:00",
+            "reportedTotal": 1204,
+            "rankedSnapshotSha256": "0e2264d6d19b0e34d6905454709329855c3cdefe960234b8b5e62300e9eef3dc",
+            "parameters": {
+              "search": "4D radar occupancy",
+              "filter": "from_publication_date:1989-01-01,to_publication_date:2026-08-10",
+              "per_page": 50,
+              "select": "id,display_name,doi,publication_year"
+            },
+            "rankedOpenAlexIds": [
+              "W4415796123",
+              "W3118293846",
+              "W4387245323",
+              "W3172931637",
+              "W4398796377",
+              "W7125638982",
+              "W4406849707",
+              "W4205642952",
+              "W4292968279",
+              "W4386951719",
+              "W4386472944",
+              "W3167138498",
+              "W4388228562",
+              "W4400649817",
+              "W4387951294",
+              "W3211855636",
+              "W4406983055",
+              "W3201215469",
+              "W4408696856",
+              "W4415020709",
+              "W4416748388",
+              "W4312210192",
+              "W4282981352",
+              "W4415538290",
+              "W2504322816",
+              "W4400650045",
+              "W3034816125",
+              "W3010503765",
+              "W4389051313",
+              "W4389317747",
+              "W4413300407",
+              "W4229441715",
+              "W4383176164",
+              "W4390906613",
+              "W3127803571",
+              "W3204549466",
+              "W4381537943",
+              "W2946188561",
+              "W3094012284",
+              "W1850076581",
+              "W4318464607",
+              "W4224947594",
+              "W4393156295",
+              "W2080134555",
+              "W2928632794",
+              "W4392012792",
+              "W4307549278",
+              "W4409353303",
+              "W4362009298",
+              "W3146968685"
+            ],
+            "aliasMerges": [
+              {
+                "rankedOpenAlexIds": [
+                  "W4415796123",
+                  "W4398796377"
+                ],
+                "primaryCanonicalId": "doi:10.52202/079017-3222",
+                "reason": "RadarOcc 正式 NeurIPS 记录与 arXiv 记录合并。"
+              },
+              {
+                "rankedOpenAlexIds": [
+                  "W4387245323",
+                  "W4400649817",
+                  "W4383176164"
+                ],
+                "primaryCanonicalId": "doi:10.1109/TIV.2023.3321240",
+                "reason": "LXL 期刊版、会议别名记录与机构镜像合并。"
+              },
+              {
+                "rankedOpenAlexIds": [
+                  "W4415020709",
+                  "W4416748388"
+                ],
+                "primaryCanonicalId": "doi:10.1109/IROS60139.2025.11246471",
+                "reason": "4D-ROLLS arXiv 与 IROS 正式记录合并。"
+              }
+            ],
+            "citationExpansion": {
+              "method": "verified backward-reference edges from direct 4D-radar occupancy papers",
+              "seedCanonicalIds": [
+                "doi:10.52202/079017-3222",
+                "doi:10.1109/TCSVT.2026.3657111"
+              ],
+              "resultIdSample": [
+                "doi:10.52202/068431-0276",
+                "doi:10.1109/LRA.2022.3147324",
+                "doi:10.1109/TPAMI.2026.3663672"
+              ],
+              "edges": [
+                {
+                  "seedCanonicalId": "doi:10.52202/079017-3222",
+                  "resultCanonicalId": "doi:10.52202/068431-0276"
+                },
+                {
+                  "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
+                  "resultCanonicalId": "doi:10.1109/LRA.2022.3147324"
+                },
+                {
+                  "seedCanonicalId": "doi:10.1109/TCSVT.2026.3657111",
+                  "resultCanonicalId": "doi:10.1109/TPAMI.2026.3663672"
+                }
+              ]
+            }
+          },
+          "executedAt": "2026-08-10",
+          "resultCount": 8,
+          "rawHitCount": 50,
+          "screenedOutCount": 41,
+          "screeningNote": "2026-08-10 03:55 +08:00 重放时 OpenAlex 返回总量 1204。固定 per_page=50 的首屏含 RadarOcc、4D-ROLLS、Doracamom 三篇纳入论文，LXL 与路侧 occupancy heat map 两篇明确排除，另有 4 条正式版/预印本/镜像别名行和 41 条范围筛出项。沿主论文可直接核验的引用边只扩展 K-Radar、View of Delft 与 OmniHD-Scenes，故本 family 为 8 个去重候选。",
+          "directCandidateCount": 5,
+          "aliasMergedCount": 4,
+          "citationExpansionCount": 3
+        }
       }
     ],
     "sourceAttempts": [
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-08-31",
+        "executedAt": "2026-09-30",
         "query": "radar|occupancy|占据|Doppler|4D",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 4,
-        "note": "2026-08-31 重跑本库 rg：50 个原始命中文件归并为 6 篇带方向标签的规范候选；4 篇已在核心引用中，其余逐项进入本地方向或跨方向暂缓组。acceptedCount=4 仍与 references[].sourceFamily=local-corpus 对账。"
+        "note": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；55 个文件命中，按方向标签与 revisionOf 归并为 12 篇规范候选，其余 43 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。"
       },
       {
         "sourceFamily": "arxiv",
+        "executedAt": "2026-09-30",
+        "acceptedCount": 4,
+        "historicalAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-08-10",
+          "query": "4D radar occupancy scene flow neural field uncertainty dataset",
+          "endpoint": "https://arxiv.org",
+          "limit": 100,
+          "acceptedCount": 3,
+          "note": "逐篇打开 arXiv 页面核对标题、作者和版本；仅对截止日无正式页的 MetaOcc、4DRC-OCC 与 4DR360 保留 arXiv 来源身份。"
+        },
         "status": "success",
-        "executedAt": "2026-08-10",
-        "query": "4D radar occupancy scene flow neural field uncertainty dataset",
-        "endpoint": "https://arxiv.org",
-        "limit": 100,
-        "acceptedCount": 3,
-        "note": "逐篇打开 arXiv 页面核对标题、作者和版本；仅对截止日无正式页的 MetaOcc、4DRC-OCC 与 4DR360 保留 arXiv 来源身份。"
+        "query": "既有引用的规范 arXiv 页面逐条重开；八个配置族以 submittedDate 2026-09-21..29 做增量检索",
+        "endpoint": "https://arxiv.org/ ; https://export.arxiv.org/api/query",
+        "limit": 60,
+        "note": "既有3条arxiv主引用和其他引用的作者版本可读；八族增量API两次超时、六次429，不能把零返回解释为无相关论文。旧核心查询的日期和样本保留；本轮补充检索见 supplementalDiscovery。 来源族状态 success 仅表示已通过该来源族核验并保留上述引用；增量检索/部分全文访问受限情况仍按本条说明与逐篇账本保留，不代表完整召回或全篇通读。 本次另以实际2026-09-30精确重开加入3条引用：RaUF和TriO归正式来源族，RCVLA归arXiv；acceptedCount已按81条当前引用重算，访问限制仍保留。",
+        "discoveryOrFullTextAccessStatus": "limited"
       },
       {
         "sourceFamily": "publisher-and-venue",
+        "executedAt": "2026-09-30",
+        "acceptedCount": 73,
+        "historicalAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-08-10",
+          "query": "search=radar occupancy grid&filter=from_publication_date:1989-01-01,to_publication_date:2026-08-10&per_page=100",
+          "endpoint": "https://api.openalex.org/works",
+          "limit": 100,
+          "acceptedCount": 71,
+          "note": "OpenAlex 仅用于候选发现；逐条回到 DOI、IEEE、Nature、SCITEPRESS、AAAI、ECAI、NeurIPS、CVF、OpenReview 与机构正式页核对。正式版作为主链接，并同时保留可用 arXiv。"
+        },
         "status": "success",
-        "executedAt": "2026-08-10",
-        "query": "search=radar occupancy grid&filter=from_publication_date:1989-01-01,to_publication_date:2026-08-10&per_page=100",
-        "endpoint": "https://api.openalex.org/works",
-        "limit": 100,
-        "acceptedCount": 71,
-        "note": "OpenAlex 仅用于候选发现；逐条回到 DOI、IEEE、Nature、SCITEPRESS、AAAI、ECAI、NeurIPS、CVF、OpenReview 与机构正式页核对。正式版作为主链接，并同时保留可用 arXiv。"
+        "query": "78条既有引用的正式页面、作者版本与出版者登记元数据精确重开",
+        "endpoint": "https://doi.org/ ; https://openaccess.thecvf.com/ ; https://ojs.aaai.org/ ; https://icml.cc/ ; https://api.crossref.org/works/",
+        "limit": 78,
+        "note": "CVF、NeurIPS、AAAI、ICML及多份作者机构全文/摘要可读；9条旧IEEE-only正文受限，只保留正式题录支持的主题定位，未把HTTP202/418当正文。acceptedCount是最终reference.sourceFamily对账，不是成功HTTP数量或全文阅读数。 来源族状态 success 仅表示已通过该来源族核验并保留上述引用；增量检索/部分全文访问受限情况仍按本条说明与逐篇账本保留，不代表完整召回或全篇通读。 本次另以实际2026-09-30精确重开加入3条引用：RaUF和TriO归正式来源族，RCVLA归arXiv；acceptedCount已按81条当前引用重算，访问限制仍保留。",
+        "discoveryOrFullTextAccessStatus": "limited"
       },
       {
         "sourceFamily": "semantic-scholar",
+        "executedAt": "2026-09-30",
+        "acceptedCount": 0,
+        "historicalAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-08-10",
+          "query": "radar occupancy 4D scene flow autonomous driving",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+          "limit": 30,
+          "acceptedCount": 0,
+          "note": "API 出现限流，仅用于部分候选发现；最终引用全部回到一手页面。"
+        },
         "status": "limited",
-        "executedAt": "2026-08-10",
-        "query": "radar occupancy 4D scene flow autonomous driving",
+        "query": "radar scene flow occupancy",
         "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
         "limit": 30,
-        "acceptedCount": 0,
-        "note": "API 出现限流，仅用于部分候选发现；最终引用全部回到一手页面。"
+        "note": "本轮真实API返回429；不据聚合器摘要支持主张，acceptedCount=0。请求参数和结果见 radar-retrieval.json。"
       },
       {
         "sourceFamily": "openalex",
+        "executedAt": "2026-09-30",
+        "acceptedCount": 0,
+        "historicalAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-08-10",
+          "query": "radar camera occupancy",
+          "endpoint": "https://api.openalex.org/works",
+          "limit": 50,
+          "acceptedCount": 0,
+          "note": "实际复放 search=radar camera occupancy、per_page=50；仅用于发现和元数据交叉核对，最终接纳身份全部回到一手出版页或 arXiv。"
+        },
         "status": "success",
-        "executedAt": "2026-08-10",
-        "query": "radar camera occupancy",
+        "query": "radar occupancy",
         "endpoint": "https://api.openalex.org/works",
         "limit": 50,
-        "acceptedCount": 0,
-        "note": "实际复放 search=radar camera occupancy、per_page=50；仅用于发现和元数据交叉核对，最终接纳身份全部回到一手出版页或 arXiv。"
+        "note": "本轮时间过滤检索实际返回50条元数据/365总匹配；另以21个DOI交叉查询开放版本。只作发现与元数据补充，未接受新引用，acceptedCount=0；全部原始条目与候选交独立筛选。"
       },
       {
         "sourceFamily": "official-project",
-        "status": "success",
-        "executedAt": "2026-08-10",
-        "query": "Radar Fields NeuRadar RF4D RadarSplat OmniHD Scenes official project code",
-        "endpoint": "https://github.com/search",
-        "limit": 30,
+        "executedAt": "2026-09-30",
         "acceptedCount": 0,
-        "note": "核查代码、项目页和数据入口；没有仅凭项目页接纳论文。"
+        "historicalAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-08-10",
+          "query": "Radar Fields NeuRadar RF4D RadarSplat OmniHD Scenes official project code",
+          "endpoint": "https://github.com/search",
+          "limit": 30,
+          "acceptedCount": 0,
+          "note": "核查代码、项目页和数据入口；没有仅凭项目页接纳论文。"
+        },
+        "status": "success",
+        "query": "重开已纳入引用的官方代码、项目与模型入口",
+        "endpoint": "https://github.com/ ; https://huggingface.co/ ; https://sally-chen.github.io/radar-sim",
+        "limit": 30,
+        "note": "实际读取README/目录和资源说明；MetaOcc代码与RadarSim代码/数据仍soon，MoRAL模型入口401，TEOcc/Doracamom/IterFlow/ProOOD有实现或权重入口。没有下载大型数据、运行训练或宣称复现。"
       }
     ],
     "deduplicationKeys": [
@@ -2305,7 +2715,10 @@
       "doi:10.52202/068431-0276",
       "doi:10.1109/LRA.2022.3147324",
       "doi:10.1109/TPAMI.2026.3663672",
-      "arxiv:2607.09629"
+      "arxiv:2607.09629",
+      "arxiv:2603.01026",
+      "arxiv:2609.32013",
+      "arxiv:2609.32681"
     ],
     "exclusionCriteria": [
       "仅做 detection、跟踪、语言推理或协同感知且无 occupied/free/unknown、必要 scene-flow 邻接或场表示终点者不纳入正文证据。",
@@ -2381,12 +2794,15 @@
       "尚缺同时提供原始 4D 雷达张量、射线级 free/occupied/unknown、独立教师错误标注、连续未来 x-y-z-t 和分级真实天气元数据的统一公开基准。",
       "尚缺雷达 occupancy 外参漂移、时间偏移、旁瓣、多径与接收饱和 corruption sweep 及概率校准失效曲线。",
       "尚缺将 radar current/future occupancy 改进连接到固定规划器、硬件在环、封闭场地全尺寸车辆和开放道路车队的分级闭环证据。",
-      "生成场的测量似然能否约束 occupancy，仍缺跨数据集独立复现和与纯判别模型的公平比较。"
+      "生成场的测量似然能否约束 occupancy，仍缺跨数据集独立复现和与纯判别模型的公平比较。",
+      "本轮旧 IEEE-only 9 条记录正文入口受限，当前只保留可重开的正式书目与主题，不据搜索摘要复述方法或效果；今后取得作者全文后可恢复细节。"
     ],
     "sourceLimitations": [
-      "Semantic Scholar 受限流影响，未作为最终证据源；OpenAlex只用于发现和元数据交叉核对。",
-      "2026 预印本与 accepted 记录若无正式页面，仅按可核验状态记录，不将作者接收声明升级为 peer-reviewed。",
-      "多篇工作使用自动/伪标签、专有数据或定性天气图；限制已逐篇记录，不能跨协议比较单一分数。"
+      "原核心站外检索保留2026-08-10时间与候选样本；当前补充检索单列，不把旧结果改日期。",
+      "八族增量arXiv API本轮遇到两次超时和六次429，Semantic Scholar也429；完整官方目录覆盖由本期总检索维护。",
+      "9条旧IEEE-only记录本轮仅核出版元数据，supports已收窄为主题定位，具体方法与性能不作为本轮已核证据。",
+      "部分作者稿与正式导出元数据存在作者顺序/数量冲突；Sless和NVRadarNet按正式或作者PDF署名保留，不机械采用聚合器导出。",
+      "资源网页可访问与完整可下载、实验可复现分别记录；未运行模型或取得大型数据集。"
     ],
     "candidateLedger": [
       {
@@ -3129,21 +3545,134 @@
         "queryFamilies": [
           "4D 成像雷达张量、点云与自监督表征"
         ]
+      },
+      {
+        "canonicalId": "arxiv:2609.17766",
+        "disposition": "deferred",
+        "localPaperId": "drtr-direct-radar-teach-repeat",
+        "queryFamilies": [
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.02289",
+        "disposition": "deferred",
+        "localPaperId": "part-class-agnostic-radar",
+        "queryFamilies": [
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.11894",
+        "disposition": "deferred",
+        "localPaperId": "radar-3d-point-splatting",
+        "queryFamilies": [
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.24151",
+        "disposition": "deferred",
+        "localPaperId": "star-task-aware-radar-preprocessing",
+        "queryFamilies": [
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2603.01026",
+        "disposition": "included",
+        "queryFamilies": [
+          "恶劣天气、不确定性、标定与时序错位"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.32013",
+        "disposition": "included",
+        "queryFamilies": [
+          "雷达-相机和雷达-LiDAR 多模态占据融合",
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2609.32681",
+        "disposition": "included",
+        "queryFamilies": [
+          "数据集、实时部署、规划效用与闭环验证",
+          "4D 成像雷达张量、点云与自监督表征"
+        ],
+        "occurrences": 2
       }
     ],
     "counts": {
-      "candidates": 116,
-      "deduplicated": 89,
-      "included": 78,
-      "excluded": 11
+      "candidates": 125,
+      "deduplicated": 96,
+      "included": 81,
+      "excluded": 15
     },
     "independentReview": {
-      "completedAt": "2026-08-31",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 12,
-      "snapshotFingerprint": "e6cf21f7e50159b475966474072813afc854911b1bd21b9196691c540b897d3f"
+      "rounds": 2,
+      "completedAt": "2026-09-30",
+      "finding": "Independent round2 PASS: original78 revalidation boundary retained; RaUF,TriO,RCVLA primary claims/formal links and final local-corpus closure verified. Nine legacy primary-text access limitations remain explicit. Same-family provisional; no experimental reproduction.",
+      "reviewIndependence": "same-family",
+      "acceptanceStatus": "provisional",
+      "snapshotFingerprint": "ea624fda747f81fbdccc27c5c46cd2e0247bbcc62af755c3a1663e135d3b4ca2",
+      "artifactPath": "docs/research-updates/2026-09-29/radar-review-round2.json",
+      "artifactSha256": "756eac08144833ce15f7e068ef6aace901f411c9eca9257c9b8f17c2edcce56b",
+      "priorReviewArtifactPath": "docs/research-updates/2026-09-29/radar-review-round1.json"
     },
-    "incrementalLocalAuditAt": "2026-08-31"
+    "refreshMode": "primary-source-revalidation-with-supplemental-discovery",
+    "sourceRevalidation": {
+      "checkedAt": "2026-09-30",
+      "referenceCount": 78,
+      "priorCoreReviewedAt": "2026-08-10",
+      "manifestPath": "docs/research-updates/2026-09-29/radar-source-manifest.json",
+      "claimRecordsPath": "docs/research-updates/2026-09-29/radar-reference-checks.json",
+      "correctionsPath": "docs/research-updates/2026-09-29/radar-claim-corrections.json",
+      "boundary": "书目与阅读深度逐条记录；9 条旧 IEEE-only 记录本轮仅能核到出版元数据，其支持项已收窄为主题定位。Elfes 扫描 PDF 通过页面图像阅读；Mullane 2006 使用已打开的作者上传正文。未运行模型或实验；正式代码/权重入口不等于下载完整或复现成功。",
+      "manifestSha256": "087e5dfa2956ab430cad1f4a8f216b3909da133015dbee8f435035430f7db631",
+      "claimRecordsSha256": "683e1b722e1e2aae1346cfdd30c7f9f44b85cf023c90cef3f2b9465288698671",
+      "primaryTextChecked": 69,
+      "currentPrimaryAccessLimited": 9
+    },
+    "supplementalDiscovery": {
+      "executedAt": "2026-09-30",
+      "submissionWindow": [
+        "2026-09-21",
+        "2026-09-29"
+      ],
+      "artifactPath": "docs/research-updates/2026-09-29/radar-retrieval.json",
+      "note": "八族各一次 arXiv API，另有两批 Web 查询及 OpenAlex/Semantic Scholar；结果与失败真实保存，新增候选等待独立筛选，不混入既有台账计数。",
+      "artifactSha256": "38e584bde74cf2c09fe8231bcf0c679d18b4814f3ef19ba999845dcd498ee354",
+      "adjudicationNote": "原 extraHistoricalCandidate RaUF 的 awaiting-independent-screening 状态是当时历史快照；review-radar round1 要求将其纳入，本轮已执行。TriO/RCVLA由本期selection/digest-selection.json独立选择；新增正式引用与精确来源记录见incrementalSourceRevalidation。"
+    },
+    "localRefreshNote": "2026-09-30 仅在本期入库后更新受影响的原始 Markdown 本库候选审计；核心综合复核日期与既有站外检索记录分别保留。",
+    "incrementalSourceRevalidation": {
+      "checkedAt": "2026-09-30",
+      "baseReferenceCount": 78,
+      "newReferenceCount": 3,
+      "currentReferenceCount": 81,
+      "canonicalIds": [
+        "arxiv:2603.01026",
+        "arxiv:2609.32013",
+        "arxiv:2609.32681"
+      ],
+      "manifestPath": "docs/research-updates/2026-09-29/radar-incremental-source-manifest.json",
+      "claimRecordsPath": "docs/research-updates/2026-09-29/radar-incremental-reference-checks.json",
+      "correctionsPath": "docs/research-updates/2026-09-29/radar-incremental-corrections.json",
+      "closureProofPath": "docs/research-updates/2026-09-29/radar-incremental-query-closure.json",
+      "boundary": "原78条证据artifact冻结；新增3条单列真实来源与阅读范围。独立复审给出RaUF纳入意见，本期独立选择者接受TriO/RCVLA；本写作者不自行批准内容，最终local-corpus仍待全部报告集成。",
+      "manifestSha256": "4ba241cc6a926ce52dfc730fdb539327b34530a5fdf8f85ae75c240cd3ef4050",
+      "claimRecordsSha256": "bde67be370af5319baca003108da2dc35d910c94d93d1aab85a37633703f8ce1",
+      "correctionsSha256": "39562b75836711256e0f979d85ea17484c018420e1e3fc82eff67c13e43d0de9",
+      "closureProofSha256": "8d56afe235b2ebcf32c616c4600b7fc7c02fa7bb89a6040f9498fd585e05f5c6"
+    }
   }
 }

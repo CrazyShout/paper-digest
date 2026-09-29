@@ -156,3 +156,11 @@
 1. 读取此文件获取已收录论文的 arXiv ID 列表
 2. 候选论文的 arXiv ID 必须不在上表中
 3. 新论文入选后，更新此文件
+| trio-trimodal-anything-perception | TriO: Tri-Modal Unsupervised Occupancy World Model for Anything Perception | 2609.32013 | 2026-09-29 |
+| roadocc-persist-transport-refresh | RoadOcc Learns When to Persist, Transport, or Refresh Memory for Roadside Occupancy Prediction | 2609.27677 | 2026-09-29 |
+| rcvla-radar-grounded-arbitration | RCVLA: 4D Radar-Grounded Semantic Reasoning and Trajectory Arbitration for Autonomous Driving | 2609.32681 | 2026-09-29 |
+| teach-to-crash-student-teacher | Teach-to-Crash: A Closed-Loop Student-Teacher LLM Framework for Collision-Inducing Test Scenario Generation | 2609.27296 | 2026-09-29 |
+| semrd-v2x-bounded-reconstruction | SemRD-V2X: Closure-Guided Communication with Bounded Inference for Cooperative Perception | 2609.34353 | 2026-09-29 |
+| eco-endpoint-constrained-optimization | Guiding End-to-End Driving Models with Endpoint-Constrained Trajectory Optimization | 2609.31383 | 2026-09-29 |
+| metric-validity-driving-execution | When the Score Becomes the Target: Rethinking Metric Validity in Autonomous Driving | 2609.34440 | 2026-09-29 |
+| trackflood-nms-free-tracker-latency | TrackFlood: Relocating Latency Attacks from NMS-Free Detectors to Real-Time Trackers | 2609.33948 | 2026-09-29 |
