@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "release-integration-delta-review",
+  "issueId": "2026-09-29",
+  "round": 2,
+  "deltaId": "ideas-timezone-formatting",
+  "verdict": "PASS",
+  "completedAt": "2026-09-30T02:27:24+08:00",
+  "timezone": "Asia/Kuala_Lumpur",
+  "reviewerProvenance": {
+    "actualRuntimeModel": "gpt-6",
+    "reviewIndependence": "bounded fresh delta review",
+    "assessmentFamily": "same-family provisional"
+  },
+  "summary": "PASS for the exact one-line timezone patch. The formatter now renders both date-only values and offset-bearing timestamps in the intended Asia/Shanghai calendar day under UTC CI. The UTC production build emits an ideas page byte-identical to the saved correct UTC+8 page, all tests pass, and the digest plus all ten direction-review semantic fingerprints remain unchanged. This preserves the round-one content approval.",
+  "approval": {
+    "deltaStatus": "approved-current-code-bytes",
+    "preservesRound1ContentApproval": true,
+    "approvedCodeSha256": "d4d299129cd2e55aed0932c62a3ac54853d39ab06e1c4efecc78ac517b4fab30",
+    "futureCodeChangesApproved": false,
+    "deploymentApprovedByThisReview": false
+  },
+  "scope": {
+    "reviewedProductionDelta": [
+      "src/pages/ideas/index.astro"
+    ],
+    "reviewedEvidence": [
+      "/tmp/paper-digest-20260929/live-verification-before-timezone-fix.json",
+      "/tmp/paper-digest-20260929/ideas-live.diff",
+      "/tmp/paper-digest-20260929/timezone-fix-verification.json",
+      "/tmp/paper-digest-20260929/ideas-before-timezone-fix.html",
+      "/tmp/paper-digest-20260929/build-utc.txt",
+      "/tmp/paper-digest-20260929/tests-after-timezone-fix.txt",
+      "dist/ideas/index.html",
+      "/tmp/paper-digest-20260929/review-release-integration/round1.json"
+    ],
+    "excluded": [
+      "repeat source and image audits for the eight reports",
+      "candidate reranking",
+      "new external retrieval",
+      "deployment",
+      "email or other notification",
+      "approval of later code or content changes"
+    ]
+  },
+  "sourceBinding": {
+    "baseCommit": "a76e9663a045d77a6ef3723fb206b7fd6fa383c2",
+    "path": "src/pages/ideas/index.astro",
+    "line": 33,
+    "currentCodeSha256": "d4d299129cd2e55aed0932c62a3ac54853d39ab06e1c4efecc78ac517b4fab30",
+    "baseFileSha256": "3449073996ba99d8e07254bf1fff636fc66d0832505dcbc99e931f2e1656a13c",
+    "patchSha256": "b79c3854a945a4eea2c502f328224de55ae598aec37310956d7acc6e5179fe2f",
+    "numstat": {
+      "insertions": 1,
+      "deletions": 0
+    },
+    "change": "Add timeZone: Asia/Shanghai to the existing Intl.DateTimeFormat options.",
+    "otherWorkingTreeDiffs": 0,
+    "diffCheck": "PASS"
+  },
+  "checks": {
+    "observedBug": {
+      "status": "PASS",
+      "deploymentCommit": "a76e9663a045d77a6ef3723fb206b7fd6fa383c2",
+      "workflowRunId": 36611135276,
+      "liveResourcesChecked": 42,
+      "resourcesMatching": 41,
+      "soleMismatch": "ideas/index.html",
+      "cause": "UTC build formatted UTC instants with the process default timezone, shifting the center date from Sep 30 to Sep 29 and the radar audit date from Aug 10 to Aug 09.",
+      "searchJsonGzipIdentical": true
+    },
+    "formatterContract": {
+      "status": "PASS",
+      "dateOnlyHandling": "YYYY-MM-DD inputs remain anchored at T00:00:00+08:00 before parsing and format to the same calendar day in Asia/Shanghai.",
+      "timestampHandling": "Offset-bearing and Z timestamps retain their instant and are rendered in Asia/Shanghai, matching the repository's intended UTC+8 review calendar.",
+      "invalidHandling": "Missing or invalid values still return 未记录.",
+      "actualRenderedInputShapes": {
+        "dateOnly": 1,
+        "explicitPlus08Timestamp": 8,
+        "utcZTimestamp": 1,
+        "missing": 1
+      },
+      "actualExamples": [
+        {
+          "input": "2026-09-30",
+          "utcBuildOutput": "2026/09/30"
+        },
+        {
+          "input": "2026-08-10T01:15:00+08:00",
+          "utcBuildOutput": "2026/08/10"
+        },
+        {
+          "input": "2026-08-01T13:49:19Z",
+          "utcBuildOutput": "2026/08/01"
+        }
+      ],
+      "utcBoundaryExamples": [
+        {
+          "input": "2026-09-29T15:59:59Z",
+          "output": "2026/09/29"
+        },
+        {
+          "input": "2026-09-29T16:00:00Z",
+          "output": "2026/09/30"
+        },
+        {
+          "input": "2026-09-29T16:30:00Z",
+          "output": "2026/09/30"
+        }
+      ],
+      "oldLocalPlus08EqualsNewUtcForActualInputs": true
+    },
+    "utcBuild": {
+      "status": "PASS",
+      "command": "TZ=UTC GITHUB_ACTIONS=true npm run build",
+      "contentValidation": "PASS: 21 digests, 158 papers, 10 direction reviews",
+      "ideaValidation": "PASS: 10 directions, 26 reviewed candidates, 0 exact-score passes; global independent review pending",
+      "pagesBuilt": 192,
+      "buildLogSha256": "b30bfad2a783af026cb5c079a7ea108b565c73af13f767872df2d2df1b5f08b9"
+    },
+    "htmlEquivalence": {
+      "status": "PASS",
+      "priorCorrectPlus08HtmlSha256": "2c55cfe5c431af9849d0344ac4a5afca5f6af8d6a11a46ef1ba017fb4f9b038a",
+      "currentUtcBuildHtmlSha256": "2c55cfe5c431af9849d0344ac4a5afca5f6af8d6a11a46ef1ba017fb4f9b038a",
+      "byteIdentical": true,
+      "normalizedHtmlSha256": "69eeb6dc0b1cf88c491a8efddc319747b39cb8775c9849fbf6e71b7215502149",
+      "dateLabelsChecked": 22,
+      "renderedDateSet": [
+        "2026/08/01",
+        "2026/08/10",
+        "2026/09/03",
+        "2026/09/30"
+      ]
+    },
+    "tests": {
+      "status": "PASS",
+      "total": 292,
+      "passed": 285,
+      "skipped": 7,
+      "failed": 0,
+      "logSha256": "59f44028e90482ab6f6a283b61c32866e941f250741ce552fd3910223ea12d9d"
+    },
+    "contentPreservation": {
+      "status": "PASS",
+      "round1BoundProductionReportFigureFilesChecked": 29,
+      "round1FileHashMismatches": 0,
+      "digestSnapshotFingerprintMatch": true,
+      "directionReviewFingerprintMatches": 10,
+      "productionContentDiffs": 0
+    }
+  },
+  "contentFingerprints": {
+    "digestAudit": "f7c7a05aafba74412dcc7391f93192a3b8bb1eaa7dacb42a3c77afa41370060b",
+    "directions": {
+      "cooperative-autonomous-driving": "dcfca916e60fdf9725f3484174d56890b215aeeb66e99ae14555b1dd03d2e168",
+      "agentic-driving": "fdf512ab0fc117ebc20cdadb41d7b1c19c1fbc8a9ea7527801eea4e8785031a3",
+      "3d-reconstruction": "926dbc5153e31deff2d9ecc57b9900445f96cff4e9af17ad3882863199c6d923",
+      "dynamic-scene-representation": "a0321a49e7cc3cc748b2a2c35578cc619a43e778fafd66deb91dd898d46df841",
+      "autonomous-driving-security": "cb6df59a5f672a702e2d626c4d0863dfac02aafc2e93e5d9a20ba798a811c858",
+      "autonomous-driving-testing": "9cfbd88049be29abecd31abe042fd8cf877d87255bbad8600d74357d96c639ff",
+      "end-to-end-autonomous-driving": "c329c31a14848ceb1b2da4c892e2fb38634ffc8d0ab14b648f1f8940d338b0bc",
+      "world-models": "2b29829fa2f13e8a7e495cff00a680ec921d8a2d91460f41cb41e6015de82c1c",
+      "radar-occupancy-representation": "ea624fda747f81fbdccc27c5c46cd2e0247bbcc62af755c3a1663e135d3b4ca2",
+      "lidar-anomaly-segmentation": "15809970d70050bdf8c69bc91d3ce8c0c7c12d6e63886bf57c91d3f4c24f6192"
+    }
+  },
+  "evidenceHashes": {
+    "/tmp/paper-digest-20260929/live-verification-before-timezone-fix.json": "e221a23102b0ac402938aa5e8887df398c030d82a73a723d5e59c80dc6708efa",
+    "/tmp/paper-digest-20260929/ideas-live.diff": "135f8eea0afdfe5c1f97729ed80c4b6ea140c187374bc53ef09f10e4b80f5ee3",
+    "/tmp/paper-digest-20260929/timezone-fix-verification.json": "c3b0f06e9c37d88225cc040086fd33808aca0207d11437f88ad721a749c813cd",
+    "/tmp/paper-digest-20260929/build-utc.txt": "b30bfad2a783af026cb5c079a7ea108b565c73af13f767872df2d2df1b5f08b9",
+    "/tmp/paper-digest-20260929/tests-after-timezone-fix.txt": "59f44028e90482ab6f6a283b61c32866e941f250741ce552fd3910223ea12d9d",
+    "/tmp/paper-digest-20260929/review-release-integration/round1.json": "a1b8a426e157a50cc89202f3cc833fdc88e5b5e0f4d6de74246cfa80f56b7eaf"
+  },
+  "findings": [],
+  "snapshotPolicy": "PASS applies only to src/pages/ideas/index.astro SHA-256 d4d299129cd2e55aed0932c62a3ac54853d39ab06e1c4efecc78ac517b4fab30 together with the listed content fingerprints. Any later code or content change requires a new bounded review."
+}
