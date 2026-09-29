@@ -84,7 +84,10 @@ test("OpenAlex review retrievals use the real search API parameter", async () =>
     "content/reviews/radar-occupancy-representation.json",
     "utf8"
   ).then(JSON.parse);
-  const openAlexRuns = review.searchAudit.queryRuns.filter((run) =>
+  const retainedRuns = review.searchAudit.queryRuns.flatMap((run) =>
+    run.historicalRun ? [run, run.historicalRun] : [run]
+  );
+  const openAlexRuns = retainedRuns.filter((run) =>
     run.retrieval.provider.includes("openalex")
   );
 
@@ -100,7 +103,10 @@ test("ranked OpenAlex snapshots bind aliases and citation expansion counts", asy
   const review = JSON.parse(
     await readFile("content/reviews/radar-occupancy-representation.json", "utf8")
   );
-  const snapshotRuns = review.searchAudit.queryRuns.filter(
+  const retainedRuns = review.searchAudit.queryRuns.flatMap((run) =>
+    run.historicalRun ? [run, run.historicalRun] : [run]
+  );
+  const snapshotRuns = retainedRuns.filter(
     (run) => Array.isArray(run.retrieval?.rankedOpenAlexIds)
   );
 
