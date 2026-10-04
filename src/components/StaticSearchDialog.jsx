@@ -11,6 +11,7 @@ import {
 } from "fumadocs-ui/components/dialog/search";
 import { prepareSearchRecords, SEARCH_KINDS, searchRecords } from "../lib/search.js";
 import { loadSearchIndex } from "../lib/search-index-client.js";
+import { preserveSearchButtonActivation } from "../lib/search-keyboard.js";
 
 const PAGE_SIZE = 18;
 
@@ -76,7 +77,7 @@ export default function StaticSearchDialog({ sourceUrl, open, onOpenChange }) {
     <SearchDialog open={open} onOpenChange={onOpenChange} search={search}
       onSearchChange={changeSearch} isLoading={isLoading}>
       <SearchDialogOverlay />
-      <SearchDialogContent>
+      <SearchDialogContent onKeyDown={preserveSearchButtonActivation}>
         <SearchDialogHeader>
           <SearchDialogIcon />
           <input className="notebook-search-input" value={search}
