@@ -28,7 +28,7 @@
     "McMaster University",
     "Princeton University"
   ],
-  "comment": "这篇论文用高吞吐像素级自博弈和 self-play DAgger 训练端到端驾驶策略，直接挑战“端到端必须依赖人类示范轨迹”的默认路线。"
+  "comment": "这篇论文用高吞吐像素级自博弈和 self-play DAgger 训练端到端驾驶策略，让像素学生从自己访问的交互状态学习教师行为，减少对人类示范轨迹的依赖。"
 }
 ---
 
@@ -62,7 +62,7 @@ $$
 L=\lambda\|E_{\mathrm{real}}-E_{\mathrm{sim}}\|_2^2+\frac1P\sum_{k=1}^{P}\|\hat\tau_k-\tau_k\|_1+L_{\mathrm{score}}.
 $$
 
-$E$ 是 register 特征；多模态 DrivoR 有 $P=64$ 候选，适配逐模式对齐，区别于最初面对单教师轨迹的 winner-takes-all 训练。DrivoR-Reg 取 $P=1$ 且无评分项。评分器需要 nuPlan 的 PDMS 标签，因此另在 navtrain 上训练，其他模块冻结，不能说整套模型都在 Gigapixel 中学完。
+$E$ 是 register 特征；多模态 DrivoR 有 $P=64$ 候选，适配逐模式对齐，区别于最初面对单教师轨迹的 winner-takes-all 训练。DrivoR-Reg 取 $P=1$ 且无评分项。评分器需要 nuPlan 的 PDMS 标签，因此在 Gigapixel 训练之后，还需冻结其他模块，在 navtrain 上单独训练评分器。
 
 ### 与两项原始方法对照
 
@@ -106,7 +106,7 @@ $E$ 是 register 特征；多模态 DrivoR 有 $P=64$ 候选，适配逐模式�
 
 ## 局限与阅读风险
 
-“无轨迹监督”不等于无真实数据或人工奖励设计；场景与真实配对适配、PDMS 评分目标仍来自既有资源。未报告真实车实验或跨种子显著性。当前[官方仓库](https://github.com/montrealrobotics/gigapixel)写代码即将发布，树中只有说明／演示资源；训练配置表可读，完整模拟器、教师／学生权重和配对数据尚未核验可下载。原 DrivoR 开源不能替代这些资产。
+方法省去人类轨迹监督，仍依赖真实数据和人工奖励设计：场景、真实配对适配及 PDMS 评分目标来自既有资源。未报告真实车实验或跨种子显著性。当前[官方仓库](https://github.com/montrealrobotics/gigapixel)写代码即将发布，树中只有说明／演示资源；训练配置表可读，完整模拟器、教师／学生权重和配对数据尚未核验可下载。原 DrivoR 开源不能替代这些资产。
 
 ## 后续跟进
 

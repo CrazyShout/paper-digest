@@ -21,13 +21,13 @@
     "Princeton University",
     "Independent Researcher"
   ],
-  "comment": "FlashDrive 不把 VLA 延迟归结为单一大模型，而是分别处理视频重编码、prefill、推理 token 串行生成和 flow-matching 过度迭代。它把 Alpamayo 1.5-10B 在 RTX PRO 6000 上从 717 ms 降到 151 ms，并公开代码与检查点。"
+  "comment": "FlashDrive 分别减少视频重编码、prefill、推理 token 串行生成和 flow-matching 迭代的开销。它把 Alpamayo 1.5-10B 在 RTX PRO 6000 上从 717 ms 降到 151 ms，并公开代码与检查点。"
 }
 ---
 
 ## 一句话定位
 
-FlashDrive 对现成 Alpamayo 1.5-10B 的视觉编码、上下文 prefill、语言解码和动作生成分别减冗余，再结合 CUDA Graph、融合算子和 W4A8 量化。在 RTX PRO 6000 的单轨迹持续推理中，平均延迟从 716.9 降至 151.4 ms；六候选最优 ADE 略退步，单候选 ADE 改善，不能统称为数值完全无损。[固定全文 2608.12932v1，2026-08-13，Table 1](https://arxiv.org/html/2608.12932v1#S4.T1)
+FlashDrive 对现成 Alpamayo 1.5-10B 的视觉编码、上下文 prefill、语言解码和动作生成分别减冗余，再结合 CUDA Graph、融合算子和 W4A8 量化。在 RTX PRO 6000 的单轨迹持续推理中，平均延迟从 716.9 降至 151.4 ms；六候选最优 ADE 略退步，单候选 ADE 改善，显示加速对两种质量指标的影响不同。[固定全文 2608.12932v1，2026-08-13，Table 1](https://arxiv.org/html/2608.12932v1#S4.T1)
 
 ## 论文要解决的问题
 
@@ -44,7 +44,7 @@ FlashDrive 对现成 Alpamayo 1.5-10B 的视觉编码、上下文 prefill、语�
 | Xiao 等，StreamingLLM，2023；[v1 §3.2](https://arxiv.org/html/2309.17453v1#S3.SS2) | 保留初始 attention sink 和近期 KV，按缓存内位置重编号；已经提出存 pre-RoPE keys、使用时重新旋转 | FlashDrive 扩展到按相机排列的视频 tokens，逐视角插入新帧并设置 streaming mask，另外微调动作专家以适应近似缓存；pre-RoPE 不是本文首创 |
 | Chen 等，DFlash，2026；[v1 §4.1–4.2](https://arxiv.org/html/2602.06036v1#S4) | 将目标模型的多层上下文特征注入每层 drafter KV，用一次 block diffusion 前向并行提出 token，再由目标模型验证 | FlashDrive 采用两层、block size 8 的驾驶专用 drafter，并将目标上下文限制为最近 8 tokens，减少短推理场景的条件与验证成本 |
 
-两篇原文均已读取。这些技术分别覆盖缓存与解码，本文贡献更适合评价为整个驾驶推理链的组合和量测，而非每项底层算法均重新提出。
+缓存复用和推测解码已有上述直接基础，FlashDrive 将它们适配到驾驶推理链，并测量各阶段组合后的效果。
 
 ## 方法和系统设计
 
@@ -60,7 +60,7 @@ $R$ 是 RoPE 旋转，$\Delta$ 是窗口移位。这只修正位置编码，不�
 
 ### 推测推理与量化边界
 
-两层 DFlash 在一个前向中提出 8-token block，目标 VLM 并行验证，作者报告平均接受 5.6 tokens。这个接受量是性能指标，不是正确率；正确验证可以维持目标语言模型的生成分布，但整套 FlashDrive 还改变了缓存、动作头和精度，因此不能把推测解码的无损性质扩展到全部轨迹。
+两层 DFlash 在一个前向中提出 8-token block，目标 VLM 并行验证，作者报告平均接受 5.6 tokens。接受量衡量并行提议能减少多少串行解码。正确验证可维持目标语言模型的生成分布；缓存、动作头和精度的变化则仍会影响轨迹，需要单独评价。
 
 W4A8 用 ParoQuant 将 VLM 权重量化到 4 bit，激活使用 8 bit，调用 Marlin 路径；动作专家保持 BF16。CUDA Graph 降低重复 kernel launch，QKV 与 MLP 投影融合降低调度和访存开销。论文未给完整量化校准样本与训练优化超参数；当前仓库侧重发布推理栈。[§3.2、3.4–3.5](https://arxiv.org/html/2608.12932v1#S3.SS2)
 
@@ -118,7 +118,7 @@ minADE6 是六条未来 6.4 s 轨迹中最接近真值者的平均位移误差�
 | 仅微调 VLM | 4.69 | 2.98 |
 | 仅微调动作专家 | 1.73 | 0.79 |
 
-该对照支持针对动作专家适配缓存误差；不能把 streaming 写成直接部署、无需训练的无损缓存。动作缓存把 system baseline 的 Action 段从 113.9 降到 47.6 ms，六候选误差 0.770→0.812 m，速度与质量需同时约束。
+该对照显示，流式缓存的误差需要通过动作专家微调来适配。动作缓存把 system baseline 的 Action 段从 113.9 降到 47.6 ms，六候选误差 0.770→0.812 m，速度与质量需同时约束。
 
 ### 多设备和闭环代价
 
@@ -130,7 +130,7 @@ AlpaSim 对 100 clips、单轨迹的 episode 事件比例中，Collision 0.19→
 
 ## 应用场景与启发
 
-作者希望让大规模 reasoning VLA 更接近在线使用。我的判断是，四段单独分析、最终端到端核对的方法可直接迁移；更值得复用的是明确哪一类近似由哪个模块适应，而非不加区分地缩短所有序列和迭代。
+FlashDrive 通过逐段优化推动大规模 reasoning VLA 在线运行。系统开发时，可沿用这种先拆开瓶颈、再测整条链路的方法，并明确每一类近似误差由哪个模块适配。
 
 待验证假设：在保持相同单轨迹误差界限时，缓存周期越长越需要动作专家适配；只改 RoPE 不能消除上下文陈旧误差。可以按连续窗口数、停车/运动状态和缓存重置频率分组，检验误差是否随累计长度变化。
 

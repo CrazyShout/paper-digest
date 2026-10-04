@@ -21,7 +21,7 @@
     "State Key Laboratory of Virtual Reality Technology and System, Beihang University",
     "AnnLab, Institute of Semiconductors, Chinese Academy of Sciences"
   ],
-  "comment": "用增删干预后的邻域梯度响应监督 Gaussian 密度策略，并显式检索跨时间点特征；有同数量随机对照，但最终重建成本与深度指标口径需要分开核对。"
+  "comment": "LGS 根据增删干预后的邻域梯度响应学习 Gaussian 密度策略，并检索跨时间点特征补充重建。论文用同数量随机策略作对照；最终重建成本和深度指标的命名差异仍需分别核对。"
 }
 ---
 
@@ -101,7 +101,7 @@ PandaSet 初始 LGSbase 为 0.37 s，最终 1.92 s；这是精修前后，不是
 
 ### 可迁移的假设
 
-本报告判断：学习“哪里值得增加容量”比固定按点数分配更值得验证，数量匹配对照支持这一点。待验证假设是同等 Gaussian 数下，学习策略不仅改善纹理，也改善留出 LiDAR 对应的表面与动态边界。梯度响应可能偏好丰富纹理，若几何不改善，就不能将画质收益直接迁移为仿真资产质量。
+数量匹配对照支持继续检验学习式容量分配。下一步可测试：在同等 Gaussian 数下，学习策略能否同时改善纹理、留出 LiDAR 对应的表面和动态边界。梯度响应可能偏向丰富纹理；若几何没有改善，画质收益对仿真资产质量的意义就仍然有限。
 
 ## 局限与阅读风险
 

@@ -7,13 +7,13 @@
   "source": "arXiv:2608.19425 / https://arxiv.org/abs/2608.19425 / HTML: https://arxiv.org/html/2608.19425",
   "authors": ["Dijie Zhu", "Seunghun Oh", "Ruopeng Huang", "Zhiyu Huang", "Jiaqi Ma", "Chen Tang"],
   "affiliations": ["University of California, Los Angeles", "Seoul National University", "University of Southern California", "North Carolina State University"],
-  "comment": "Scape 不用仿真去估一个掩盖长尾的总体均值，而用少量配对 target-surrogate 样本校正大量廉价仿真标签，为每个场景预测策略表现并输出 conformal 区间；nuPlan 和实体 Unitree Go2 实验共同验证了样本效率。"
+  "comment": "Scape 用少量配对 target-surrogate 样本校正廉价仿真标签，预测各场景中的策略表现并输出 conformal 区间。nuPlan 和实体 Unitree Go2 实验显示样本效率收益，覆盖保证仍受校准协议限制。"
 }
 ---
 
 ## 一句话定位
 
-Scape 用少量“同场景、同策略”的 target–surrogate 配对结果校正大量廉价仿真标签，再训练只读取场景信息的性能预测器。它解决的是某个场景里策略可能表现怎样，并附带经校准的结果预测集合；不是训练一个更好的驾驶策略，也不是为每个场景给出独立成立的安全保证。
+Scape 用少量“同场景、同策略”的 target–surrogate 配对结果校正大量廉价仿真标签，再训练只读取场景信息的性能预测器。它估计固定策略在某个场景中的表现，并附带经校准的结果预测集合。驾驶策略保持不变，集合的覆盖保证也不对每个场景单独成立。
 
 - **核心证据**：实体 Unitree Go2 的五个场景、95 个配对部署位置中，预测速度跟踪误差的 test MAE 从 R-Only 的 $13.29\times10^{-3}$ 降至 $11.79\times10^{-3}$ m/s，原文表 2。
 - **主要边界**：驾驶实验是 nuPlan 开环到反应式闭环的 Sim2Sim；连续指标使用统一半宽的 marginal conformal interval。四足附录还存在 validation/calibration 复用说明，需在复现前澄清。
@@ -33,7 +33,7 @@ Scape 用少量“同场景、同策略”的 target–surrogate 配对结果校
 | Luo 等，Sim2Val，CoRL 2025（[作者项目页](https://nvlabs.github.io/sim2val/)；[v1 §3](https://arxiv.org/html/2506.20553v1#S3)） | 用配对结果和大量代理结果做 control variates，减少总体均值估计方差；也可学习 metric correlator，利用上下文增强两个平台的相关性。 | Scape 最终输出随场景变化的性能预测，并将校正标签用于训练；不能说此前方法完全没有学习模块或场景信息。比较的是最终估计对象变化。 |
 | Badithela 等，SureSim，2025 arXiv v1（[§3–4](https://arxiv.org/html/2510.04354v1#S4)） | 对总体平均策略表现做 prediction-powered inference：仿真均值加配对差值修正，再用非渐近均值估计得到有限样本置信区间。 | Scape 将偏差校正和神经 evaluator 训练分开，最后对新场景结果做 conformal prediction。它没有继承 SureSim 对总体均值的整套理论，也没有证明神经校正器消除了全部条件偏差。 |
 
-上述机制已分别查阅原文。Scape 实验中的 MC/CV/PPI 是取其均值估计部分后适配的基线，再统一加相同 conformal procedure；不是直接比较各方法原生置信区间。
+以上比较依据各自原文。Scape 将 MC/CV/PPI 的均值估计部分适配为基线，再统一加入相同 conformal procedure，比较对象因而不同于各方法的原生置信区间。
 
 ## 方法和系统设计
 
@@ -112,7 +112,7 @@ Go2 Sim2Sim 有 700 paired 样本，按 300/200/200 分 train/val/test，另有 
 | UrbanDriver，表 1 | R-Only | $1.497\pm0.003$ | TTC 二元预测集的平均大小，范围 0–2 |
 | 同上 | Scape | $1.447\pm0.010$ | 更少返回不确定集合，但不是 1.447 m 或事故率 |
 
-[表 1](https://arxiv.org/html/2608.19425v1#S4.T1)与[表 2](https://arxiv.org/html/2608.19425v1#S4.T2)显示收益有方向一致性，但“比别人窄”不等于已足够支持部署阈值。例如 ADE 区间仍约 40 m 宽，具体决策是否有用必须结合指标范围和阈值检查。
+[表 1](https://arxiv.org/html/2608.19425v1#S4.T1)与[表 2](https://arxiv.org/html/2608.19425v1#S4.T2)显示收益有方向一致性，但区间是否足以支持部署决策，仍取决于阈值所需的精度。例如 ADE 区间仍约 40 m 宽，具体决策是否有用必须结合指标范围和阈值检查。
 
 作者在 §4.2 报告，对所有 planner、指标和配对预算聚合后，相对场景神经基线平均减少驾驶/四足预测误差 4.9%/14.5%；对最强基线的对应收益只有 2.0%/4.08%。前一组是跨比较对象平均，不能写成每项相对最强基线都改善那么多。
 
@@ -128,13 +128,13 @@ R-Only 检查不用代理标签的表现，RS-Mix 检查直接加入有偏标签
 
 ## 应用场景与启发
 
-- **作者主张**：用场景级性能预测支持逐步部署、测试分配和策略选择，降低昂贵 target 测试需求。
-- **我的判断**：最适合作为离线测试排序器，先寻找代理与 target 分歧大的场景；只有验证了 split、覆盖、区间宽度及所用决策规则，才讨论将其作为部署证据。
+- 作者希望用场景级性能预测支持逐步部署、测试分配和策略选择，减少昂贵的 target 测试。
+- 可先将它作为离线测试排序器，寻找代理与 target 分歧大的场景；只有验证了 split、覆盖、区间宽度及所用决策规则，才讨论将其作为部署证据。
 - **待验证假设**：当新城市的 surrogate–target 关系仍能由现有场景特征表示，先校正再增广会优于直接混合；若偏差取决于遗漏因素，增加 surrogate 可能使错误更稳定。应通过城市留出和特征消融检验，不能仅扩大仿真量。
 
 ## 局限与阅读风险
 
-作者承认连续区间没有场景相关半宽或条件覆盖，实体实验规模和任务种类有限，神经校正的理论仍待补强。本文读取中还发现 validation/calibration 复用与正文独立拆分叙述不一致，需要实现证据解释。对于极小 calibration 集和很小 $\alpha$，算法 1 将分位索引裁剪到最大残差的写法也需要额外边界处理；不能把它无条件推广到所有样本规模。
+作者承认连续区间没有场景相关半宽或条件覆盖，实体实验规模和任务种类有限，神经校正的理论仍待补强。validation/calibration 复用与正文独立拆分叙述仍不一致，需要结合实现澄清。对于极小 calibration 集和很小 $\alpha$，算法 1 将分位索引裁剪到最大残差的写法也需要额外边界处理；不能把它无条件推广到所有样本规模。
 
 实体实验包含场景 one-hot，且只有 15 个 test 位置/种子；方差来自同一小数据池重划。驾驶证据来自仿真协议之间的转换，没有真实道路 target。各项结果均不能证明未知城市、不同机器人、变化后的策略或在线选择流程自动保有同一覆盖率。
 

@@ -74,7 +74,7 @@ $q$ 是图像 token，$\phi,v$ 是朝向/位置 token。训练可用因果掩码
 
 ### 训练成本与实现边界
 
-70M tokenizer 用 32 张 4090、batch 128、100 万步训练；损失为 Charbonnier、感知和码本项。1B 世界模型用 64 张 A100、batch 64、45 万步、12 天训练，视频共 3,456 小时（nuPlan 120 小时，其余私有），再于 nuScenes 微调一天。主文未给完整 optimizer/学习率及阶段间冻结清单；不能用公开 demo 代替训练可复现性。[§4.1](https://arxiv.org/html/2412.19505v3#S4.SS1)
+70M tokenizer 用 32 张 4090、batch 128、100 万步训练；损失为 Charbonnier、感知和码本项。1B 世界模型用 64 张 A100、batch 64、45 万步、12 天训练，视频共 3,456 小时（nuPlan 120 小时，其余私有），再于 nuScenes 微调一天。主文未给完整 optimizer/学习率及阶段间冻结清单，原训练流程的复现仍缺这些配置；公开 demo 只能确认演示入口。[§4.1](https://arxiv.org/html/2412.19505v3#S4.SS1)
 
 ## 关键图与可视化结果
 

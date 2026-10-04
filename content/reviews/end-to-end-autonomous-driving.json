@@ -1,9 +1,9 @@
 {
   "version": 3,
   "id": "end-to-end-autonomous-driving",
-  "title": "端到端自动驾驶：从联合优化到可验证闭环",
-  "subtitle": "沿表征、规划分布、学习信号、交互建模与证据等级梳理端到端驾驶",
-  "abstract": "端到端自动驾驶的核心不是取消所有中间结构，而是让传感器、场景表征与规划或控制目标形成可联合优化、可审计的信息流。领域已从行为克隆与特权教师蒸馏推进到统一规划网络、概率/生成式轨迹、VLA、世界-动作模型和策略诱发状态训练。既有核心综合增加两条互补前沿：MOJITO 让图像、LiDAR 与动作 token 逐层双向交互，在 NAVSIM v1 日志评测与 v2 分阶段伪仿真中验证联合接口；Pictura 用四路低分辨率透视栅格图，在 CARLA 地图几何上的 PufferDrive 模拟器进行 50B 步自博弈，展示可见性约束下的训练规模，却没有真实纹理、传感器噪声或实车迁移。综合结论不变：反应性、视觉真实性、时域、覆盖、时延和可回滚性必须分别报告，任何单一榜单或“闭环”标签都不足以支持部署安全。",
+  "title": "端到端自动驾驶：联合表征、生成式规划与闭环训练",
+  "subtitle": "比较传感器到动作的信息流、学习信号和环境反馈，逐项解释规划分数、仿真与受控实车结果。",
+  "abstract": "端到端自动驾驶通过联合优化连接传感器、场景表征与规划或控制目标，仍可保留 BEV、对象、语言和世界模型等中间结构。研究已从行为克隆与特权教师蒸馏扩展到统一规划网络、概率与生成式轨迹、VLA、世界—动作模型，以及覆盖策略诱发状态的训练。MOJITO 让图像、LiDAR 与动作 token 逐层双向交互，在 NAVSIM v1 日志评测与 v2 分阶段伪仿真中验证接口设计；Pictura 从四路低分辨率透视栅格图出发，在采用 CARLA 地图几何的 PufferDrive 模拟器中进行 50B 步自博弈，真实纹理、传感器噪声和实车迁移尚未评测。本综述分别比较反应性、视觉真实性、时域、覆盖、时延和版本回滚，说明每类协议能支持的结论。",
   "reviewedAt": "2026-09-22",
   "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
   "researchQuestions": [
@@ -16,9 +16,9 @@
     {
       "id": "scope-and-boundary",
       "kind": "scope",
-      "title": "端到端是目标与信息流的联合优化，不是无结构黑盒或单一输入模态",
+      "title": "端到端系统如何组织传感器到动作的信息流",
       "thesis": "显式 BEV、传感器 token、动作 token、轨迹词表、世界模型和语言推理都可存在；边界由最终目标、梯度路径、部署可得输入和可审计安全接口共同决定。",
-      "body": "早期视觉驾驶常被概括为“图像直接到转向或油门”，但这一狭义定义无法覆盖当前规划导向系统。Learning by Cheating 先用特权鸟瞰状态训练教师，再蒸馏到只看车载视觉的学生，说明端到端部署策略可以借助训练期结构化监督；UniAD 则保留检测、跟踪、地图、运动预测和规划等任务，以统一查询和规划目标组织它们。二者共同表明，是否存在中间任务不是边界，训练目标、梯度路径与部署输入才是边界。[learning-by-cheating-2020, uniad-2023]\n\n本综述将方法分为三类：直接输出低层控制或航点的传感器—动作策略；输出轨迹、动作分布或生成式候选的规划导向策略；把语言、记忆或世界模型纳入决策链的 VLA/Agentic 策略。GenAD、VADv2 与 DiffusionDrive 分别以结构化潜变量、离散规划词表和截断扩散表达多模态未来；AutoVLA 则把语义推理和离散可行动作放入同一自回归模型。它们都可称为端到端，但输出接口、时延预算和安全验证要求并不相同。[genad-2024, vadv2, diffusiondrive-2025, autovla-2025]\n\n“联合优化”也不等于已经获得真实道路能力。TPAMI 综述系统总结了多模态、因果混淆、鲁棒性和世界模型等问题，却不能替代单项方法证据；同样，nuScenes 等日志上的规划误差只能说明对记录轨迹的拟合，不能说明策略扰动环境后仍稳定。因此后文把能力主张和证据等级绑定，而不以模型名称或网络规模代替验证。[e2e-survey-2024, hidden-biases-2023]\n\nMOJITO 与 Pictura 从两个方向进一步说明“端到端”不等于去结构。MOJITO 保留图像、LiDAR 和动作三类 token，并让规划损失通过逐层联合注意力影响感知表示；Pictura 则保留四路透视观察和 ego/动力学条件，以 PPO 直接训练视觉策略。前者仍有明确模态接口，后者也不是只从原始 RGB 到控制；二者都属于联合优化系统，但只有在部署输入、辅助状态与安全接口全部可得时，才可以讨论可迁移的端到端能力。[mojito-2026, pictura-2026]",
+      "body": "早期视觉驾驶常被概括为“图像直接到转向或油门”，但这一狭义定义无法覆盖当前规划导向系统。Learning by Cheating 先用特权鸟瞰状态训练教师，再蒸馏到只看车载视觉的学生，说明端到端部署策略可以借助训练期结构化监督；UniAD 则保留检测、跟踪、地图、运动预测和规划等任务，以统一查询和规划目标组织它们。二者都保留训练期或模型内的结构，比较时需要检查训练目标、梯度路径与部署输入。[learning-by-cheating-2020, uniad-2023]\n\n本综述将方法分为三类：直接输出低层控制或航点的传感器—动作策略；输出轨迹、动作分布或生成式候选的规划导向策略；把语言、记忆或世界模型纳入决策链的 VLA/Agentic 策略。GenAD、VADv2 与 DiffusionDrive 分别以结构化潜变量、离散规划词表和截断扩散表达多模态未来；AutoVLA 则把语义推理和离散可行动作放入同一自回归模型。它们都可称为端到端，但输出接口、时延预算和安全验证要求并不相同。[genad-2024, vadv2, diffusiondrive-2025, autovla-2025]\n\n联合优化的效果仍要结合实验环境判断。TPAMI 综述系统总结了多模态、因果混淆、鲁棒性和世界模型等问题，却不能替代单项方法证据；同样，nuScenes 等日志上的规划误差只能说明对记录轨迹的拟合，不能说明策略扰动环境后仍稳定。后文按实验条件解释能力主张。[e2e-survey-2024, hidden-biases-2023]\n\nMOJITO 与 Pictura 进一步展示了两种联合优化接口。MOJITO 保留图像、LiDAR 和动作三类 token，并让规划损失通过逐层联合注意力影响感知表示；Pictura 则保留四路透视观察和 ego/动力学条件，以 PPO 直接训练视觉策略。前者保留明确模态接口，后者还使用 ego/动力学条件；二者都属于联合优化系统，但只有在部署输入、辅助状态与安全接口全部可得时，才可以讨论可迁移的端到端能力。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "e2e-survey-2024",
         "learning-by-cheating-2020",
@@ -35,9 +35,9 @@
     {
       "id": "paradigm-evolution",
       "kind": "evolution",
-      "title": "演化主线：从复制专家轨迹到学习策略诱发状态与可见信息",
-      "thesis": "新一代方法同时修补离线模仿的状态分布偏移和特权信息错位，但联合注意力或视觉自博弈仍需跨反应性与真实传感器验证。",
-      "body": "第一阶段以行为克隆、航点回归和特权教师蒸馏为主。Learning by Cheating 在 CARLA/NoCrash 中证明特权教师能显著改善视觉策略训练，但闭环成功仍发生在模拟器内。随后 UniAD 把感知、预测和规划纳入统一的规划导向网络，在 nuScenes 开环任务上展示联合优化价值；Hidden Biases 则指出 CARLA 排名提升可能来自目标点跟随和多模态航点平均等隐含偏置，提醒研究者不能把单一闭环榜单增益直接归因于主干架构。[learning-by-cheating-2020, uniad-2023, hidden-biases-2023]\n\n第二阶段把任务条件与闭环训练显式纳入策略。LMDrive 用 64K 语言指令片段训练 CARLA/LangAuto 中的指令条件闭环策略；Think2Drive 则在 CARLA v2 的潜在世界模型内用模型式强化学习学习驾驶。二者分别证明语言任务条件和策略诱发状态可以参与训练，但证据都留在 CARLA。OpenDriveVLA 将 2D/3D 实例感知表示、车辆状态和高层命令对齐到自回归轨迹生成，在 nuScenes 开环与驾驶问答上发表了正式结果；这填补了本地 VLA 谱系，却不是实车闭环证明。[lmdrive-2024, think2drive-2024, opendrivevla-2026]\n\n第三阶段把重点移到多模态与生成式规划。GenAD 在结构潜空间联合生成他车运动和自车规划，VADv2 通过 planning vocabulary 学习动作概率分布，DiffusionDrive 用锚点截断扩散减少去噪步数，GuideFlow 则把运动学与安全约束引入 flow matching。其共同动机是避免单轨迹回归把多个合理行为压成平均解；但 GenAD 主要是 nuScenes 开环，DiffusionDrive 的主结果是 NAVSIM 非反应式评测，GuideFlow 同时覆盖 nuScenes、NAVSIM、ADV-NuScenes 与 Bench2Drive/CARLA，VADv2 又覆盖 CARLA、NAVSIM、3DGS 和有限受控实车演示，必须逐协议解读而不能按一个总分排序。[genad-2024, vadv2, diffusiondrive-2025, guideflow-2026]\n\n第四阶段试图学习策略自身分布与环境反馈。Raw2Drive、Think2Drive 和 RAD 分别在 CARLA 或 3DGS 重建环境中进行模型式强化学习；Scaling Self-Play 用简化像素仿真和 self-play DAgger 扩展策略诱发状态；DAWN 让世界假设与动作去噪递归互相条件化。FlowAD 则以日志重放中的自车—场景相对流缓解 ego-motion 分布偏移，ReCogDrive 结合 VLM、扩散规划和强化后训练。它们推进了闭环训练和长尾推理，但“在线”“自博弈”“世界模型”或“相对流”均不自动意味着其他交通参与者具有真实因果响应，更不等于完成真实道路验证。[raw2drive-2025, think2drive-2024, rad-2025, scaling-self-play, dawn-world-action, flowad-2026, recogdrive-2026]\n\n2026 年 7 月底的 MOJITO 与 Pictura 分别推进了“接口联合”和“观察可部署性”。MOJITO 不再让规划器只读取压缩后的感知上下文，而是在每层让动作、相机和 LiDAR token 双向更新；Pictura 则拒绝让自博弈策略直接读取被遮挡参与者的全知向量，改用每车四路透视图像学习策略诱发状态。前者的收益来自 NAVSIM 日志/分阶段伪仿真协议，后者的规模来自 PufferDrive 和低分辨率 CUDA 栅格渲染；两者共同缩小了训练接口与部署观察的差距，却都没有解决真实相机域、车辆控制栈和开放道路因果响应。[mojito-2026, pictura-2026]",
+      "title": "从模仿轨迹到生成式规划与策略诱发状态",
+      "thesis": "方法演进主要处理模仿学习的状态分布偏移、多模态动作和训练期特权信息；真实传感器迁移仍需单独验证。",
+      "body": "第一阶段以行为克隆、航点回归和特权教师蒸馏为主。Learning by Cheating 在 CARLA/NoCrash 中证明特权教师能显著改善视觉策略训练，但闭环成功仍发生在模拟器内。随后 UniAD 把感知、预测和规划纳入统一的规划导向网络，在 nuScenes 开环任务上展示联合优化价值；Hidden Biases 则指出 CARLA 排名提升可能来自目标点跟随和多模态航点平均等隐含偏置，提醒研究者不能把单一闭环榜单增益直接归因于主干架构。[learning-by-cheating-2020, uniad-2023, hidden-biases-2023]\n\n第二阶段把任务条件与闭环训练显式纳入策略。LMDrive 用 64K 语言指令片段训练 CARLA/LangAuto 中的指令条件闭环策略；Think2Drive 则在 CARLA v2 的潜在世界模型内用模型式强化学习学习驾驶。二者分别证明语言任务条件和策略诱发状态可以参与训练，但证据都留在 CARLA。OpenDriveVLA 将 2D/3D 实例感知表示、车辆状态和高层命令对齐到自回归轨迹生成，在 nuScenes 开环与驾驶问答上发表了正式结果；其证据范围仍是开环规划与问答。[lmdrive-2024, think2drive-2024, opendrivevla-2026]\n\n第三阶段把重点移到多模态与生成式规划。GenAD 在结构潜空间联合生成他车运动和自车规划，VADv2 通过 planning vocabulary 学习动作概率分布，DiffusionDrive 用锚点截断扩散减少去噪步数，GuideFlow 则把运动学与安全约束引入 flow matching。其共同动机是避免单轨迹回归把多个合理行为压成平均解；但 GenAD 主要是 nuScenes 开环，DiffusionDrive 的主结果是 NAVSIM 非反应式评测，GuideFlow 同时覆盖 nuScenes、NAVSIM、ADV-NuScenes 与 Bench2Drive/CARLA，VADv2 又覆盖 CARLA、NAVSIM、3DGS 和有限受控实车演示，这些结果需按协议分别比较。[genad-2024, vadv2, diffusiondrive-2025, guideflow-2026]\n\n第四阶段试图学习策略自身分布与环境反馈。Raw2Drive、Think2Drive 和 RAD 分别在 CARLA 或 3DGS 重建环境中进行模型式强化学习；Scaling Self-Play 用简化像素仿真和 self-play DAgger 扩展策略诱发状态；DAWN 让世界假设与动作去噪递归互相条件化。FlowAD 则以日志重放中的自车—场景相对流缓解 ego-motion 分布偏移，ReCogDrive 结合 VLM、扩散规划和强化后训练。它们推进了闭环训练和长尾推理，各环境中其他交通参与者如何响应、自车动作如何改变观测，以及真实道路表现，仍需逐项检查。[raw2drive-2025, think2drive-2024, rad-2025, scaling-self-play, dawn-world-action, flowad-2026, recogdrive-2026]\n\n2026 年 7 月底的 MOJITO 与 Pictura 分别推进了“接口联合”和“观察可部署性”。MOJITO 不再让规划器只读取压缩后的感知上下文，而是在每层让动作、相机和 LiDAR token 双向更新；Pictura 将自博弈策略的全知向量输入改为每车四路透视图像，使训练受到可见性约束。前者的收益来自 NAVSIM 日志/分阶段伪仿真协议，后者的规模来自 PufferDrive 和低分辨率 CUDA 栅格渲染；两者共同缩小了训练接口与部署观察的差距，却都没有解决真实相机域、车辆控制栈和开放道路因果响应。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "learning-by-cheating-2020",
         "uniad-2023",
@@ -62,9 +62,9 @@
     {
       "id": "design-taxonomy",
       "kind": "taxonomy",
-      "title": "用六个维度比较系统：表征、输出、学习、反馈、算力与证据",
-      "thesis": "输入表征、动作分布、学习信号、环境反馈、计算接口和证据闭环共同决定能力边界；“更联合”或“更大规模”都不是单调优势。",
-      "body": "第一维是输入与内部表征：原始多视角图像、BEV/占用、向量化实体、场景 token、语言 token 或世界模型潜状态。UniAD 的统一查询保留任务结构；OpenDriveVLA 对齐 2D/3D 实例感知与语言；DAWN 在紧凑语义潜空间中递归更新世界与动作。结构化表示通常提高几何约束和调试可见性，但也可能形成隐式接口，一旦感知器升级就产生表示漂移。[uniad-2023, opendrivevla-2026, dawn-world-action, policy-stitching]\n\n第二维是输出分布：低层控制、航点、连续轨迹、离散 planning vocabulary、扩散或流生成候选，以及先输出语义元动作再交给控制器。VADv2 的离散词表适合表达多种示范动作，却受词表覆盖与采样规则限制；DiffusionDrive 和 GuideFlow 在连续生成中追求多样性与效率；Cognitive Dual-Process 输出的是高层 meta-action，其规则一致性和 574 个 NAVSIM 样本上的规划准确率不能等同于完整连续轨迹驾驶。[vadv2, diffusiondrive-2025, guideflow-2026, cognitive-dual-process]\n\n第三维是学习信号：日志模仿、特权蒸馏、辅助感知任务、模型式强化学习、在线数据聚合、自博弈和强化后训练。第四维是环境反馈接口：没有反馈的日志、固定未来参与者、预生成姿态扰动、规则或学习交通代理，以及真实参与者。FlowAD 的相对流反馈仍来自日志重放；Pseudo-Simulation 预生成位置、航向和速度扰动，并非逐步响应策略；CARLA、HUGSIM 与 VADv2 的 3DGS 环境才让后续观测随自车动作变化，但参与者模型和场景覆盖仍受模拟器约束。[flowad-2026, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, vadv2]\n\n第五维是证据矩阵：反应性、视觉真实性、评测时域、场景/扰动覆盖、重复性和故障可追溯性必须分别报告。Raw2Drive、RAD 与 Scaling Self-Play 改变了训练分布，Policy Stitching 与 Bench2Drive-Robust 分别暴露版本升级和部署扰动风险；评价时应说明哪一维提高、哪一维仍为空白，不能把“更真实”或“更闭环”压成单一标签。[raw2drive-2025, rad-2025, scaling-self-play, policy-stitching, bench2drive-robust]\n\nMOJITO 使表征与输出两个维度直接耦合：三路前向相机、LiDAR 柱体和 8 个未来 waypoint 在 12 个 block 中联合注意，再由 2 步无锚点扩散解码；它同时带来约 187.65 ms/H200 的单样本延迟。Pictura 把学习信号、反馈和算力维度推到极端：约 20,480 个并发智能体、50B 步、32 张 H100，以 96x54 四相机扁平栅格输入训练 PPO。比较两者时必须把联合交互收益与额外计算分开，把自博弈状态覆盖与真实视觉保真分开。[mojito-2026, pictura-2026]",
+      "title": "比较表征、输出、学习、反馈与计算成本",
+      "thesis": "输入表征、动作分布、学习信号、环境反馈、计算接口和评测条件共同决定系统表现。",
+      "body": "第一维是输入与内部表征：原始多视角图像、BEV/占用、向量化实体、场景 token、语言 token 或世界模型潜状态。UniAD 的统一查询保留任务结构；OpenDriveVLA 对齐 2D/3D 实例感知与语言；DAWN 在紧凑语义潜空间中递归更新世界与动作。结构化表示通常提高几何约束和调试可见性，但也可能形成隐式接口，一旦感知器升级就产生表示漂移。[uniad-2023, opendrivevla-2026, dawn-world-action, policy-stitching]\n\n第二维是输出分布：低层控制、航点、连续轨迹、离散 planning vocabulary、扩散或流生成候选，以及先输出语义元动作再交给控制器。VADv2 的离散词表适合表达多种示范动作，却受词表覆盖与采样规则限制；DiffusionDrive 和 GuideFlow 在连续生成中追求多样性与效率；Cognitive Dual-Process 输出的是高层 meta-action，其规则一致性和 574 个 NAVSIM 样本上的规划准确率评价的是这一高层接口，完整连续轨迹驾驶尚需另测。[vadv2, diffusiondrive-2025, guideflow-2026, cognitive-dual-process]\n\n第三维是学习信号：日志模仿、特权蒸馏、辅助感知任务、模型式强化学习、在线数据聚合、自博弈和强化后训练。第四维是环境反馈接口：没有反馈的日志、固定未来参与者、预生成姿态扰动、规则或学习交通代理，以及真实参与者。FlowAD 的相对流反馈仍来自日志重放；Pseudo-Simulation 预生成位置、航向和速度扰动，并非逐步响应策略；CARLA、HUGSIM 与 VADv2 的 3DGS 环境才让后续观测随自车动作变化，但参与者模型和场景覆盖仍受模拟器约束。[flowad-2026, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, vadv2]\n\n第五维是证据矩阵：反应性、视觉真实性、评测时域、场景/扰动覆盖、重复性和故障可追溯性必须分别报告。Raw2Drive、RAD 与 Scaling Self-Play 改变了训练分布，Policy Stitching 与 Bench2Drive-Robust 分别暴露版本升级和部署扰动风险；评价时应逐项说明已测维度和未测部分。[raw2drive-2025, rad-2025, scaling-self-play, policy-stitching, bench2drive-robust]\n\nMOJITO 使表征与输出两个维度直接耦合：三路前向相机、LiDAR 柱体和 8 个未来 waypoint 在 12 个 block 中联合注意，再由 2 步无锚点扩散解码；它同时带来约 187.65 ms/H200 的单样本延迟。Pictura 则扩大自博弈的并行与训练规模：约 20,480 个并发智能体、50B 步、32 张 H100，以 96x54 四相机扁平栅格输入训练 PPO。比较两者时必须把联合交互收益与额外计算分开，把自博弈状态覆盖与真实视觉保真分开。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "uniad-2023",
         "opendrivevla-2026",
@@ -89,9 +89,9 @@
     {
       "id": "evidence-matrix",
       "kind": "evidence",
-      "title": "证据不是单调阶梯：反应性、真实感、时域、覆盖、时延与审计性分栏",
+      "title": "按反应性、视觉、时域和执行条件解读结果",
       "thesis": "同一协议可能真实视觉强而交通反应弱，也可能反应强而传感器极简；任何闭环主张都要说明观测生成、参与者响应、时域、算力和失败可追溯性。",
-      "body": "**日志开环**使用真实采集观测，UniAD、GenAD 与 OpenDriveVLA 均可在这一设置比较轨迹误差、感知辅助任务和推理成本；但策略输出不会改变后续观测，因而反应性为零。FlowAD 利用日志重放中的自车—场景相对流，在特征学习中编码 ego-motion 对观测表征的反馈；它不合成测试动作对应的新观测，也没有学习或规则交通参与者逐步响应。真实视觉与高可复现性不能补上策略诱发状态、长时反馈和真实执行时延。[uniad-2023, genad-2024, opendrivevla-2026, flowad-2026]\n\n**NAVSIM v1**不是交互闭环：它在约 4 秒短时域内，以固定环境计算进度、碰撞、舒适等规划指标，适合规模化比较 DiffusionDrive、VADv2、CaAD 等同协议结果，但应报告场景覆盖和各指标分项，不能报告不存在的姿态匹配失败率。**Pseudo-Simulation/NAVSIM v2**则预先生成自车位置、航向与速度扰动，再按接近程度匹配未来观测；Pseudo-Simulation 报告其跨方法闭环分数拟合 R²=0.8，最佳传统开环为 R²=0.7，这不是 Spearman 或 Kendall 排名相关。GuideFlow 的 Navhard EPDMS=43.0 属于 NAVSIM v2 两阶段 pseudo-simulation，不能与 NAVSIM v1 PDMS 混排；v2 还必须报告扰动覆盖和匹配失败。NAVSIM v1 的背景交通按日志回放；Pseudo-Simulation/NAVSIM v2 在各阶段的 BEV 评分中让背景车辆通过 IDM 响应自车，但自车每阶段执行固定 4 秒轨迹，Stage-2 传感观测仍是预生成和匹配。[navsim-2024, pseudo-simulation-2025, diffusiondrive-2025, vadv2, caad, guideflow-2026]\n\n**CARLA/Bench2Drive**提供规则或脚本交通参与者的反应式闭环和长于日志片段的路线执行。Learning by Cheating、LMDrive、Think2Drive、Raw2Drive、VADv2、CaAD、GuideFlow 与 ReCogDrive 可在这里暴露误差累积、路线完成和互动失败；Bench2Drive 的 44 类场景与 220 条路线以及 Bench2Drive-Robust 的帧流、自车状态和时延故障提高了可审计性。代价是视觉、动力学、代理行为与真实交通有域差，且路线随机性和驾驶分数方差必须用多次运行和置信区间控制。[learning-by-cheating-2020, lmdrive-2024, think2drive-2024, raw2drive-2025, vadv2, caad, guideflow-2026, recogdrive-2026, bench2drive-2024, bench2drive-robust]\n\n**3DGS 重建环境**提高真实场景的外观和几何保真，同时允许改变自车视点。VADv2 使用 337 个重建环境、每段 8 秒的稠密交通场景；HUGSIM 汇集超过 70 个真实采集序列并构造 400 余个场景。RAD 在照片级 3DGS 重建环境中用 PPO 进行闭环强化学习，并未通过渲染器反向传播；其其他交通参与者采用日志轨迹回放。这里的自车观测随动作变化，部分参与者由轨迹回放或 IDM 等模型驱动，但传感器噪声、重建伪影、参与者反应和 ODD 覆盖仍不同于真实道路；必须分别报告重建质量、参与者模型和失败可追溯性。[vadv2, hugsim-2026, rad-2025]\n\n**受控实车与公共道路**是另一组证据维度。VADv2 的公开材料只支持有限、定性的受控车辆演示，没有里程、接管、覆盖、对照、尾延迟或安全事件统计。Sim2Real-AD 把 CARLA 训练策略零样本部署到一辆 Ford E-Transit，在三个隔离低速场景中各做 20 次试验并报告 90%/80%/75% 成功率；证据仍限于单车、单场地和单日。ViLaD 展示实车交互停车，但部署的是停车位 waypoint 选择器，后续规划控制沿用既有栈。RAD-2 声称复杂城市交通中的实车感知安全性与平顺性改善，却未公开可复核的量化协议。AutoVLA、OpenDriveVLA 使用真实数据集，Scaling Self-Play 做真实感知适配，也不能据此升级为实车证据。现有材料证明受控部署并非空白，但仍不足以支持公共道路、车队规模或净安全收益结论。[vadv2, sim2real-ad-2026, vilad-2025, rad2-2026, autovla-2025, opendrivevla-2026, scaling-self-play]\n\n**新增协议边界。**MOJITO 在 NAVSIM v1 得到 88.9 PDMS、v2 Stage-1 得到 88.4 EPDMS，navhard 相机分支为 29.0；NAVSIM v1 为非反应式日志抽象；v2/navhard 使用预生成合成观测及分阶段 BEV 评分，其背景车辆反应性应按所用 v2 版本和 IDM 配置披露。两者都不能等同于持续传感器反馈或真实道路闭环。，因此不能等同于持续传感器反馈的反应式闭环。Pictura 在基于 PufferDrive 的高速模拟器中让多智能体相互作用，场景采用 CARLA 地图几何，视觉由自定义 CUDA 栅格器生成，并以 50B 步扩大策略诱发状态；但图像是 96x54 扁平几何渲染，WOMD 结果只重用 44,073 个道路/轨迹布局后重新合成观察。其满密度 0.006 碰撞率与 0.858 目标完成率证明布局迁移，不证明真实 Waymo 相机或道路部署；盲角接管中其他参与者沿日志轨迹运动，也应与完全反应式自博弈分开。[mojito-2026, pictura-2026]",
+      "body": "**日志开环**使用真实采集观测，UniAD、GenAD 与 OpenDriveVLA 均可在这一设置比较轨迹误差、感知辅助任务和推理成本；但策略输出不会改变后续观测，因而反应性为零。FlowAD 利用日志重放中的自车—场景相对流，在特征学习中编码 ego-motion 对观测表征的反馈；它不合成测试动作对应的新观测，也没有学习或规则交通参与者逐步响应。策略诱发状态、长时反馈和真实执行时延仍需在其他协议中检查。[uniad-2023, genad-2024, opendrivevla-2026, flowad-2026]\n\n**NAVSIM v1**不是交互闭环：它在约 4 秒短时域内，以固定环境计算进度、碰撞、舒适等规划指标，适合规模化比较 DiffusionDrive、VADv2、CaAD 等同协议结果，但应报告场景覆盖和各指标分项，不能报告不存在的姿态匹配失败率。**Pseudo-Simulation/NAVSIM v2**则预先生成自车位置、航向与速度扰动，再按接近程度匹配未来观测；Pseudo-Simulation 报告其跨方法闭环分数拟合 R²=0.8，最佳传统开环为 R²=0.7，这不是 Spearman 或 Kendall 排名相关。GuideFlow 的 Navhard EPDMS=43.0 属于 NAVSIM v2 两阶段 pseudo-simulation，不能与 NAVSIM v1 PDMS 混排；v2 还必须报告扰动覆盖和匹配失败。NAVSIM v1 的背景交通按日志回放；Pseudo-Simulation/NAVSIM v2 在各阶段的 BEV 评分中让背景车辆通过 IDM 响应自车，但自车每阶段执行固定 4 秒轨迹，Stage-2 传感观测仍是预生成和匹配。[navsim-2024, pseudo-simulation-2025, diffusiondrive-2025, vadv2, caad, guideflow-2026]\n\n**CARLA/Bench2Drive**提供规则或脚本交通参与者的反应式闭环和长于日志片段的路线执行。Learning by Cheating、LMDrive、Think2Drive、Raw2Drive、VADv2、CaAD、GuideFlow 与 ReCogDrive 可在这里暴露误差累积、路线完成和互动失败；Bench2Drive 的 44 类场景与 220 条路线以及 Bench2Drive-Robust 的帧流、自车状态和时延故障提高了可审计性。代价是视觉、动力学、代理行为与真实交通有域差，且路线随机性和驾驶分数方差必须用多次运行和置信区间控制。[learning-by-cheating-2020, lmdrive-2024, think2drive-2024, raw2drive-2025, vadv2, caad, guideflow-2026, recogdrive-2026, bench2drive-2024, bench2drive-robust]\n\n**3DGS 重建环境**提高真实场景的外观和几何保真，同时允许改变自车视点。VADv2 使用 337 个重建环境、每段 8 秒的稠密交通场景；HUGSIM 汇集超过 70 个真实采集序列并构造 400 余个场景。RAD 在照片级 3DGS 重建环境中用 PPO 进行闭环强化学习，并未通过渲染器反向传播；其其他交通参与者采用日志轨迹回放。这里的自车观测随动作变化，部分参与者由轨迹回放或 IDM 等模型驱动，但传感器噪声、重建伪影、参与者反应和 ODD 覆盖仍不同于真实道路；必须分别报告重建质量、参与者模型和失败可追溯性。[vadv2, hugsim-2026, rad-2025]\n\n**受控实车与公共道路**是另一组证据维度。VADv2 的公开材料只支持有限、定性的受控车辆演示，没有里程、接管、覆盖、对照、尾延迟或安全事件统计。Sim2Real-AD 把 CARLA 训练策略零样本部署到一辆 Ford E-Transit，在三个隔离低速场景中各做 20 次试验并报告 90%/80%/75% 成功率；证据仍限于单车、单场地和单日。ViLaD 展示实车交互停车，但部署的是停车位 waypoint 选择器，后续规划控制沿用既有栈。RAD-2 声称复杂城市交通中的实车感知安全性与平顺性改善，却未公开可复核的量化协议。AutoVLA、OpenDriveVLA 使用真实数据集，Scaling Self-Play 做真实感知适配，也不能据此升级为实车证据。现有材料已覆盖部分受控部署，公共道路、车队规模与净安全收益仍缺少相应统计。[vadv2, sim2real-ad-2026, vilad-2025, rad2-2026, autovla-2025, opendrivevla-2026, scaling-self-play]\n\n**MOJITO 与 Pictura 的具体协议。**MOJITO 在 NAVSIM v1 得到 88.9 PDMS、v2 Stage-1 得到 88.4 EPDMS，navhard 相机分支为 29.0；NAVSIM v1 为非反应式日志抽象；v2/navhard 使用预生成合成观测及分阶段 BEV 评分，其背景车辆反应性应按所用 v2 版本和 IDM 配置披露。两者都未提供持续传感器反馈或真实道路闭环。Pictura 在基于 PufferDrive 的高速模拟器中让多智能体相互作用，场景采用 CARLA 地图几何，视觉由自定义 CUDA 栅格器生成，并以 50B 步扩大策略诱发状态；但图像是 96x54 扁平几何渲染，WOMD 结果只重用 44,073 个道路/轨迹布局后重新合成观察。其满密度 0.006 碰撞率与 0.858 目标完成率来自布局迁移，未使用真实 Waymo 相机进行道路部署；盲角接管中其他参与者沿日志轨迹运动，也应与完全反应式自博弈分开。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "uniad-2023",
         "genad-2024",
@@ -124,9 +124,9 @@
     {
       "id": "challenges-and-failure-modes",
       "kind": "challenges",
-      "title": "瓶颈正从平均规划分转向信息瓶颈、可见性因果、尾部风险与生命周期维护",
-      "thesis": "榜单增益可能来自更大联合计算、合成状态覆盖或协议机制；必须通过等预算消融、动作干预、真实传感器转移和回归门禁分辨。",
-      "body": "第一类风险是因果混淆与分布偏移。离线日志主要覆盖专家状态，策略犯错后会进入稀疏区域；Hidden Biases 进一步说明目标点和输出平均等捷径会抬高 CARLA 表现。Scaling Self-Play 用 on-policy 自博弈扩展状态覆盖，但其 Gigapixel 是简化 bounding-box 像素世界。CaAD 的 ego-centric joint modeling 和基准增益支持“交互联合建模有效”，却没有足以建立严格因果识别的干预与混杂控制；DAWN 在低分辨率消融中由非交互基线 PDMS 85.2 提升到双向交互 87.9，并在 NAVSIM v1 perception-free 组报告 89.1；但同表 iPad 为 91.7、DriveSuprim 为 93.5，NAVSIM v2 EPDMS 83.2 也低于 DriveSuprim 87.1 和 Drive-JEPA 87.8，低分辨率 4 秒/4 轮配置延迟为 1067.975 ms。数值支持特定组件有效，却仍来自非反应式或伪闭环协议，不支持把统计互馈改写成已验证交通因果机制。[hidden-biases-2023, scaling-self-play, caad, dawn-world-action]\n\n第二类风险是多模态生成不等于风险控制。VADv2 的规划词表、DiffusionDrive 的锚点扩散和 GuideFlow 的约束流能产生多种候选，但候选覆盖、概率校准、低概率高损失事件和最终选择器仍决定安全上限。AutoVLA 与 ReCogDrive 的强化后训练、Cognitive Dual-Process 的规则验证提高特定规划指标；但自然语言理由、规则一致性或离散动作正确率都不能替代连续轨迹、车辆动力学、慢路径漏触发率和端到端尾时延验证。[vadv2, diffusiondrive-2025, guideflow-2026, autovla-2025, recogdrive-2026, cognitive-dual-process]\n\n第三类风险是“闭环”标签隐藏环境差异。Pseudo-Simulation 的预生成姿态扰动、FlowAD 的日志相对流、CARLA 的代理交通和 HUGSIM 的重建场景分别修复不同偏差，任何一个都不是其他协议的替代品。研究应在相同初始状态和动作干预下比较环境响应，报告动作盲基线、匹配失败、模拟器随机种子与排名转移；否则更高闭环分数可能来自渲染或指标机制，而不是策略真正学会互动。[pseudo-simulation-2025, flowad-2026, bench2drive-2024, hugsim-2026]\n\n第四类风险是部署和维护。Policy Stitching 表明更换感知器、传感器或训练域会破坏冻结策略依赖的潜表示，它给出的跨域适配收益仍是预印本结果，且保留旧策略分数不等于证明新系统安全。Bench2Drive-Robust 表明帧丢失、局部观测、自车状态误差和推理延迟会在 CARLA 闭环中累积，但该基准本身不是硬件在环或真实道路测试。未来系统必须把版本契约、尾延迟、故障注入、拒绝与回滚作为一等接口，而不是只在模型冻结后补做平均性能评测。[policy-stitching, bench2drive-robust, bench2drive-2024]\n\nMOJITO 的关键风险是把逐层联合注意力收益与模型规模、预训练骨干和更高计算混在一起；相机单模态 86.8、完整模型 88.9 的差异需要多种子等预算复核，而且 navhard 只能移除 LiDAR。Pictura 则揭示“可见信息训练”并不自动等于安全：CARLA 地图几何的 PufferDrive 环境中，Alberti 相对 Vectorized-dagger 的碰撞率为 0.060 对 0.037、闯红灯率为 0.058 对 0.009，每次违规里程也更低；32 张 H100 的训练规模和低分辨率交通灯进一步限制复现与迁移。二者都要求报告负结果和算力，而不能只呈现联合分数或吞吐。[mojito-2026, pictura-2026]",
+      "title": "信息瓶颈、尾部风险与模型升级",
+      "thesis": "等预算消融、动作干预、真实传感器迁移和版本回归，可用于分辨联合计算、合成状态覆盖与协议机制各自的贡献。",
+      "body": "第一类风险是因果混淆与分布偏移。离线日志主要覆盖专家状态，策略犯错后会进入稀疏区域；Hidden Biases 进一步说明目标点和输出平均等捷径会抬高 CARLA 表现。Scaling Self-Play 用 on-policy 自博弈扩展状态覆盖，但其 Gigapixel 是简化 bounding-box 像素世界。CaAD 的 ego-centric joint modeling 和基准增益支持“交互联合建模有效”，却没有足以建立严格因果识别的干预与混杂控制；DAWN 在低分辨率消融中由非交互基线 PDMS 85.2 提升到双向交互 87.9，并在 NAVSIM v1 perception-free 组报告 89.1；但同表 iPad 为 91.7、DriveSuprim 为 93.5，NAVSIM v2 EPDMS 83.2 也低于 DriveSuprim 87.1 和 Drive-JEPA 87.8，低分辨率 4 秒/4 轮配置延迟为 1067.975 ms。这些数值支持对应协议中的组件收益，交通因果机制仍需反应式干预检验。[hidden-biases-2023, scaling-self-play, caad, dawn-world-action]\n\n第二类风险来自候选轨迹的覆盖、校准与选择。VADv2 的规划词表、DiffusionDrive 的锚点扩散和 GuideFlow 的约束流能产生多种候选，但候选覆盖、概率校准、低概率高损失事件和最终选择器仍决定安全上限。AutoVLA 与 ReCogDrive 的强化后训练、Cognitive Dual-Process 的规则验证提高特定规划指标；但自然语言理由、规则一致性或离散动作正确率都不能替代连续轨迹、车辆动力学、慢路径漏触发率和端到端尾时延验证。[vadv2, diffusiondrive-2025, guideflow-2026, autovla-2025, recogdrive-2026, cognitive-dual-process]\n\n第三类风险是“闭环”标签隐藏环境差异。Pseudo-Simulation 的预生成姿态扰动、FlowAD 的日志相对流、CARLA 的代理交通和 HUGSIM 的重建场景分别修复不同偏差，任何一个都不是其他协议的替代品。研究应在相同初始状态和动作干预下比较环境响应，报告动作盲基线、匹配失败、模拟器随机种子与排名转移；否则更高闭环分数可能来自渲染或指标机制，而不是策略真正学会互动。[pseudo-simulation-2025, flowad-2026, bench2drive-2024, hugsim-2026]\n\n第四类风险是部署和维护。Policy Stitching 表明更换感知器、传感器或训练域会破坏冻结策略依赖的潜表示，它给出的跨域适配收益仍是预印本结果，且保留旧策略分数不等于证明新系统安全。Bench2Drive-Robust 表明帧丢失、局部观测、自车状态误差和推理延迟会在 CARLA 闭环中累积，但该基准本身不是硬件在环或真实道路测试。训练和维护流程还需记录版本兼容条件、尾延迟、故障注入、拒绝与回滚结果。[policy-stitching, bench2drive-robust, bench2drive-2024]\n\nMOJITO 的关键风险是把逐层联合注意力收益与模型规模、预训练骨干和更高计算混在一起；相机单模态 86.8、完整模型 88.9 的差异需要多种子等预算复核，而且 navhard 只能移除 LiDAR。Pictura 的可见信息训练也暴露了行为退化：CARLA 地图几何的 PufferDrive 环境中，Alberti 相对 Vectorized-dagger 的碰撞率为 0.060 对 0.037、闯红灯率为 0.058 对 0.009，每次违规里程也更低；32 张 H100 的训练规模和低分辨率交通灯进一步限制复现与迁移。比较时需要同时保留这些退化结果与算力成本。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "hidden-biases-2023",
         "scaling-self-play",
@@ -151,9 +151,9 @@
     {
       "id": "research-outlook",
       "kind": "outlook",
-      "title": "三个可证伪切口：接口因果、跨协议排序与可回滚训练部署",
-      "thesis": "下一步应把联合模态接口和视觉自博弈放进等预算、跨协议、可否决的实验，而不是继续用单一 NAVSIM 分数或仿真里程证明部署。",
-      "body": "**切口一：动作条件响应是否真的被学到。**以 DAWN、CaAD 作为响应模型候选，以 VADv2 作为动作干预或规划基线，在相同初始状态对自车动作做受控干预，并与动作盲、打乱动作、等参数和等算力模型比较。世界响应需在预注册的 1/2/4 秒原生时域同时满足参与者轨迹误差、碰撞风险校准和物理一致性；具备原生 8 秒协议的模型另列 8 秒结果，不用外推帧补齐。若动作盲基线非劣，或响应方向在跨城市/跨交通代理测试中反转，就拒绝“可交互世界模型”主张并回退为条件生成器。[dawn-world-action, caad, vadv2, hugsim-2026]\n\n**切口二：一种评测能否预测另一种评测。**在固定策略集合与相同场景语义上，联合执行日志开环、NAVSIM v1、Pseudo-Simulation、CARLA/Bench2Drive、HUGSIM/3DGS 和受控实车；预注册风险排序相关性的下置信界、碰撞/违规率差异的置信区间与场景覆盖。只有当新协议在控制视觉指标后仍显著提高对预先指定目标协议、尤其受控实车结果的增量预测力，才声称它更接近部署；若排序下界不达阈值或只由少数场景驱动，就拒绝代理有效性。这个切口先复核 Pseudo-Simulation 报告的跨方法分数拟合 R²，并独立复核论文已报告的 Spearman 排名相关，并预注册 Kendall、分场景与跨域相关性的补充检验，也可约束 RAD 与 Scaling Self-Play 的 sim-to-real 叙事。[pseudo-simulation-2025, bench2drive-2024, hugsim-2026, rad-2025, scaling-self-play]\n\n**切口三：VLA 慢路径和版本兼容必须可回滚。**让 OpenDriveVLA、AutoVLA 或 ReCogDrive 仅在可解释触发器判定高不确定/语义异常时进入慢路径，固定报告触发精确率、召回率、漏触发风险、99 分位端到端时延和安全收益置信区间；若慢路径安全收益区间跨零或尾时延超预算，则关闭慢路径。感知器或模型升级时，用固定锚点、策略探针和故障注入衡量行为漂移；若碰撞/违规上界、恢复时间或兼容性阈值失守，自动回滚旧版本，而不是以平均分抵消尾部退化。[opendrivevla-2026, autovla-2025, recogdrive-2026, policy-stitching, bench2drive-robust]\n\n三个切口共享一套报告契约：公开场景 ID、版本、种子、干预、失败轨迹和置信区间；把反应性、视觉真实性、时域、覆盖与可审计性分栏；分别标注日志开环、NAVSIM v1、Pseudo-Simulation/NAVSIM v2、反应式仿真、3DGS 重建环境和受控实车证据；硬件在环作为第七栏，未执行时明确留空。可信端到端系统未必结构最简单，但必须能表达不确定性、拒绝越界动作、复现失败并在升级后安全回滚。[navsim-2024, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, policy-stitching]\n\n**接口联合与可见性自博弈对照。**对 MOJITO 固定骨干、参数量、训练步数和扩散步，比较后融合、单向 cross-attention、逐层双向 attention，并在同一初态的 NAVSIM、Bench2Drive/CARLA 与受控场地上预注册碰撞/进度差值、99 分位延迟和模态失效回退；若反应式收益区间跨零或延迟超预算，就拒绝联合接口净收益。对 Pictura 固定 PPO 样本量和网络容量，依次提高渲染分辨率、真实纹理/噪声与交通灯可见性，并以特权向量、去辅助变量向量和视觉策略做三方对照；若该模拟器中的碰撞/闯灯劣势未收敛，或 WOMD 布局排名不能预测真实图像/受控车辆结果，就把它限定为高吞吐难例生成器而非可部署视觉策略。[mojito-2026, pictura-2026]",
+      "title": "动作响应、跨协议预测与版本回滚实验",
+      "thesis": "后续实验可在匹配预算下检查联合接口的收益、评测协议之间的预测能力，以及失败后的回滚。",
+      "body": "**切口一：动作条件响应是否真的被学到。**以 DAWN、CaAD 作为响应模型候选，以 VADv2 作为动作干预或规划基线，在相同初始状态对自车动作做受控干预，并与动作盲、打乱动作、等参数和等算力模型比较。世界响应需在预注册的 1/2/4 秒原生时域同时满足参与者轨迹误差、碰撞风险校准和物理一致性；具备原生 8 秒协议的模型另列 8 秒结果，不用外推帧补齐。若动作盲基线非劣，或响应方向在跨城市/跨交通代理测试中反转，就拒绝“可交互世界模型”主张并回退为条件生成器。[dawn-world-action, caad, vadv2, hugsim-2026]\n\n**切口二：一种评测能否预测另一种评测。**在固定策略集合与相同场景语义上，联合执行日志开环、NAVSIM v1、Pseudo-Simulation、CARLA/Bench2Drive、HUGSIM/3DGS 和受控实车；预注册风险排序相关性的下置信界、碰撞/违规率差异的置信区间与场景覆盖。只有当新协议在控制视觉指标后仍显著提高对预先指定目标协议、尤其受控实车结果的增量预测力，才声称它更接近部署；若排序下界不达阈值或只由少数场景驱动，就拒绝代理有效性。这个切口先复核 Pseudo-Simulation 报告的跨方法分数拟合 R²，并独立复核论文已报告的 Spearman 排名相关，并预注册 Kendall、分场景与跨域相关性的补充检验，也可约束 RAD 与 Scaling Self-Play 的 sim-to-real 叙事。[pseudo-simulation-2025, bench2drive-2024, hugsim-2026, rad-2025, scaling-self-play]\n\n**切口三：VLA 慢路径和版本兼容必须可回滚。**让 OpenDriveVLA、AutoVLA 或 ReCogDrive 仅在可解释触发器判定高不确定/语义异常时进入慢路径，固定报告触发精确率、召回率、漏触发风险、99 分位端到端时延和安全收益置信区间；若慢路径安全收益区间跨零或尾时延超预算，则关闭慢路径。感知器或模型升级时，用固定锚点、策略探针和故障注入衡量行为漂移；若碰撞/违规上界、恢复时间或兼容性阈值失守，自动回滚旧版本，而不是以平均分抵消尾部退化。[opendrivevla-2026, autovla-2025, recogdrive-2026, policy-stitching, bench2drive-robust]\n\n三个切口共享一套报告契约：公开场景 ID、版本、种子、干预、失败轨迹和置信区间；把反应性、视觉真实性、时域、覆盖与可审计性分栏；分别标注日志开环、NAVSIM v1、Pseudo-Simulation/NAVSIM v2、反应式仿真、3DGS 重建环境和受控实车证据；硬件在环作为第七栏，未执行时明确留空。可信端到端系统未必结构最简单，但必须能表达不确定性、拒绝越界动作、复现失败并在升级后安全回滚。[navsim-2024, pseudo-simulation-2025, bench2drive-2024, hugsim-2026, policy-stitching]\n\n**接口联合与可见性自博弈对照。**对 MOJITO 固定骨干、参数量、训练步数和扩散步，比较后融合、单向 cross-attention、逐层双向 attention，并在同一初态的 NAVSIM、Bench2Drive/CARLA 与受控场地上预注册碰撞/进度差值、99 分位延迟和模态失效回退；若反应式收益区间跨零或延迟超预算，就拒绝联合接口净收益。对 Pictura 固定 PPO 样本量和网络容量，依次提高渲染分辨率、真实纹理/噪声与交通灯可见性，并以特权向量、去辅助变量向量和视觉策略做三方对照；若该模拟器中的碰撞/闯灯劣势未收敛，或 WOMD 布局排名不能预测真实图像/受控车辆结果，就将用途限定为高吞吐难例生成，暂不支持视觉策略部署。[mojito-2026, pictura-2026]",
       "referenceIds": [
         "dawn-world-action",
         "vadv2",
@@ -177,9 +177,9 @@
   "takeaways": [
     "端到端描述的是信息流和最终目标的联合优化，不要求删除 BEV、模态 token、轨迹词表、世界模型或独立安全接口。",
     "MOJITO 说明逐层图像-LiDAR-动作联合值得研究，但 88.9 PDMS 对应 NAVSIM v1 日志评测，88.4 EPDMS 对应 v2 分阶段伪仿真，均非持续传感器闭环，约 187.65 ms/H200 也必须计入部署预算。",
-    "Pictura 把视觉自博弈扩展到 50B 步和 WOMD 派生布局，但 96x54 CARLA 合成图像、较高碰撞/闯灯率和未开放完整代码限制了现实外推。",
+    "Pictura 将视觉自博弈扩展到 50B 步和 WOMD 派生布局，但采用 CARLA 地图几何的 96x54 合成图像、较高碰撞/闯灯率和未开放完整代码限制了现实迁移。",
     "日志开环、NAVSIM、预生成 pseudo-simulation、CARLA 自博弈、3DGS 重建和受控实车应分栏报告反应性、视觉真实性、时域、覆盖、算力和审计性。",
-    "最值得做的是等预算检验模态联合的因果增益、评测协议间的风险排序，以及训练或模型升级失败时可触发的拒绝与回滚。"
+    "可优先用等预算实验检验模态联合的作用、评测协议间的风险排序，以及训练或模型升级失败后的拒绝与回滚。"
   ],
   "references": [
     {
@@ -733,7 +733,7 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-09-30",
+    "searchedAt": "2026-10-04",
     "cutoffDate": "2026-08-01",
     "evidenceBoundary": "原站外查询族及执行日期保留，不倒填为本轮检索。2026-09-22 对既有核心引用、正文关键数字与范围重新检查一手来源；出版版本差异以正式版为准，资源可访问与实验复现分开。当前本库查询单独重跑并闭合去向；近期新文献使用本期digest-audit独立记录。",
     "skills": [
@@ -767,27 +767,28 @@
       "excluded": 66
     },
     "independentReview": {
+      "completedAt": "2026-10-04",
       "status": "passed",
       "reviewers": 1,
       "rounds": 1,
-      "completedAt": "2026-09-30",
-      "finding": "Independent incremental-local-corpus PASS: actual rg hits, scope screening, aliases, candidate dispositions and counts reconcile. Core synthesis, references, substantive review date and external query/source records match baseline. This does not renew external source review or approve Ideas.",
-      "reviewIndependence": "same-family",
-      "acceptanceStatus": "provisional",
-      "snapshotFingerprint": "c329c31a14848ceb1b2da4c892e2fb38634ffc8d0ab14b648f1f8940d338b0bc",
-      "artifactPath": "docs/research-updates/2026-09-29/review-local-corpus.json",
-      "artifactSha256": "2daf20ab4d88be8bd5034cd81cf957f633e4cfc32d4834e0eb763571133f0088"
+      "scope": "Editorial semantic delta and current local-corpus audit; historical primary-source verification dates retained.",
+      "assurance": "fresh-context same-family provisional",
+      "reviewer": "review_reviews_oct04",
+      "snapshotFingerprint": "f105b2e61fc9d32f275d9f5d1791af3db47bab3b4c685b00ff4d84459c54d2b2",
+      "artifactPath": "docs/editorial-refresh/2026-10-04/review-reviews-round1.json",
+      "artifactSha256": "83c90125202dddadfeaae1fa4a99db26e9e8f19eff1f8db56f67ca44fc58d8aa",
+      "finding": "All ten edited syntheses and current local-corpus candidate audits independently reviewed. PRBI definition checked against primary section; landscape coherence corrected and reviewed. No claim of a new full external search."
     },
     "queryRuns": [
       {
         "family": "模仿学习与规划导向端到端驾驶",
         "sourceFamily": "local-corpus",
         "query": "端到端|end-to-end|imitation|planning-oriented|end-to-end-autonomous-driving",
-        "executedAt": "2026-09-30",
+        "executedAt": "2026-10-04",
         "resultCount": 66,
-        "rawHitCount": 102,
-        "screenedOutCount": 36,
-        "screeningNote": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；102 个文件命中，按方向标签与 revisionOf 归并为 66 篇规范候选，其余 36 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。",
+        "rawHitCount": 100,
+        "screenedOutCount": 34,
+        "screeningNote": "2026-10-04 对文案校订后的当前原始 Markdown 重新执行所记录的 rg -l -i。100 个文件命中，按方向标签与 revisionOf 归并为 66 篇规范候选，其余 34 个文件属于跨文引用、其他范围或修订重复。规范候选集合与既有审计完全相同，沿用逐篇处置；本项不代表重新检索站外文献。",
         "resultIdSample": [
           "arxiv:2608.06008",
           "arxiv:2606.21172",
@@ -1317,12 +1318,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-09-30",
+        "executedAt": "2026-10-04",
         "query": "端到端|end-to-end|imitation|planning-oriented|end-to-end-autonomous-driving",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 8,
-        "note": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；102 个文件命中，按方向标签与 revisionOf 归并为 66 篇规范候选，其余 36 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。"
+        "note": "2026-10-04 对文案校订后的当前原始 Markdown 重新执行所记录的 rg -l -i。100 个文件命中，按方向标签与 revisionOf 归并为 66 篇规范候选，其余 34 个文件属于跨文引用、其他范围或修订重复。规范候选集合与既有审计完全相同，沿用逐篇处置；本项不代表重新检索站外文献。"
       },
       {
         "sourceFamily": "arxiv",
@@ -2278,7 +2279,7 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-09-30",
-    "localRefreshNote": "2026-09-30 仅在本期入库后更新受影响的原始 Markdown 本库候选审计；核心综合复核日期与既有站外检索记录分别保留。"
+    "incrementalLocalAuditAt": "2026-10-04",
+    "localRefreshNote": "2026-10-04 文案校订后重新运行本库检索并核对候选；实质复核日期、站外查询和引用对象保持不变。历史本库记录见 docs/editorial-refresh/2026-10-04/local-corpus-evidence.json，原独立审批见基线提交。"
   }
 }

@@ -1,25 +1,25 @@
 {
   "version": 3,
   "id": "agentic-driving",
-  "title": "Agentic Driving：从语言推理走向受约束、可验证的驾驶智能体",
-  "subtitle": "驾驶 Agent 的关键不是生成更长的理由，而是按需调用工具与记忆，把认知结果绑定到动作，并让独立安全层能够否决和回退。",
-  "abstract": "Agentic Driving 正从单次语言解释演化为持续认知控制系统：智能体维护记忆、调用工具和检索证据，通过世界模型或结构化推理形成动作，并由安全层决定是否拒绝、回退或继续。既有核心综合把三类容易被误写成“完整 Agent”的新证据纳入同一边界：ObsDriveBench 诊断恶劣天气下多模态可观测性但仍是 MCQ；IEDD 以五个既有轨迹库派生交互片段与分层 VQA，存在来源重叠、viewer 可用性和域内微调损害反事实能力的问题；GNSS-VLM 用公共道路日志训练语义行为监视器，但攻击轨迹在接收机输出层离线合成，且单次 VLM 推理约 0.5 秒。综合证据仍支持“慢认知、快控制、独立否决”的架构，而不支持让语言模型直接接管全频控制。",
+  "title": "驾驶智能体：工具、记忆、推理与动作控制",
+  "subtitle": "梳理驾驶 Agent 如何调用工具和记忆、形成动作，以及快慢控制和独立安全层如何处理认知错误。",
+  "abstract": "驾驶智能体通过记忆、工具调用和证据检索持续更新状态，再借助世界模型或结构化推理形成动作。现有研究主要沿工具编排、端到端 VLA、快慢双过程和多车协商展开，安全层负责拒绝、回退或继续执行。组件研究也揭示了具体问题：ObsDriveBench 用多选题诊断恶劣天气下的多模态可观测性；IEDD 从五个既有轨迹库派生交互片段与分层 VQA，涉及来源重叠、viewer 可用性和域内微调后的反事实能力退化；GNSS-VLM 使用公共道路日志，但攻击轨迹在接收机输出层离线合成，单次 VLM 推理约 0.5 秒。这些结果为“慢认知、快控制、独立否决”的架构提供依据，全频语言模型控制仍缺少相应验证。",
   "reviewedAt": "2026-09-22",
   "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
   "researchQuestions": [
     "工具、记忆和 RAG 在什么条件下改善长尾驾驶决策，怎样阻止陈旧、冲突或无关证据进入动作链？",
-    "语言解释、视觉思维链和世界模型中间表征是否因果地改变正确动作，而不是对既有动作做事后合理化？",
+    "语言解释、视觉思维链和世界模型中间表征如何影响动作？怎样区分因果作用与事后解释？",
     "双过程路由如何决定何时启用慢推理，并在漏触发、超时或低置信度时保持可恢复控制？",
     "多智能体协商在相同通信、延迟和计算预算下是否优于单车策略，冲突或无共识时由谁掌握控制权？",
-    "受约束认知层如何把规则、物理边界和不确定性转化为可执行的安全包络，而不是仅输出自然语言建议？"
+    "受约束认知层如何把规则、物理边界和不确定性转化为可执行的安全包络？"
   ],
   "sections": [
     {
       "id": "scope",
       "kind": "scope",
-      "title": "定义与边界：从会回答到会行动，也要区分诊断器与控制器",
-      "thesis": "Agentic Driving 至少需要可观察的状态更新、认知或工具行动、可执行输出、环境反馈与后续修正；数据集、MCQ 基准和语义监视器可以验证组件，但不能单独证明智能体闭环。",
-      "body": "GPT-Driver 把运动规划重写为语言建模问题，LanguageMPC 把 LLM 高层决策经参数适配接入低层控制器，DriveGPT4 则把视频理解、解释与低层控制放进同一视觉语言接口，它们奠定了语言参与规划和动作生成的基础。DiLu 用推理、经验记忆和反思构成知识驱动 Agent；Agent-Driver 进一步引入工具库、认知记忆、自反思与任务规划；LMDrive 则在 CARLA 中证明语言指令能够进入连续驾驶控制。由此，本综述把“驾驶智能体”限定为能够依据当前状态选择推理路径、调用外部能力或更新记忆，并让结果实际影响后续动作的系统，而不是所有使用 LLM/VLM 的驾驶工作。\n\n范围内系统包括工具编排型 Agent、端到端 VLA、世界模型式视觉思考、快慢双过程、检索增强规划和多车协商。静态 QA、字幕、规则问答与离线轨迹预测可以提供组件证据，但不能单独证明交互闭环；NAVSIM 也主要是非反应式规划代理评测。DriveGPT4-V2、LMDrive 等提供 CARLA 闭环；DriveVLM-Dual 与 Talk2Drive 进一步提供有限受控实车证据。真正的部署主张还必须披露动作改变后的反馈、场景与里程、接管和安全驾驶员、尾时延及失败记录，现有工作仍没有公开可复核的长时道路或车队安全证明。\n\n2026-08-01 的增量证据进一步收紧了这条边界。ObsDriveBench 测量相机、LiDAR、雷达在恶劣天气中的可观测性与风险判断，IEDD 提供来源可追溯的交互轨迹和分层 VQA，GNSS-VLM 则把视觉与运动信息接成外部导航行为监视器；三者都能进入驾驶 Agent 的感知、证据或安全监督层，但都没有执行完整感知-规划-控制闭环。因而本综述将其作为“认知证据基础设施”而非完整 Agent 能力证明。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "驾驶智能体与感知、诊断组件的分工",
+      "thesis": "驾驶智能体需要更新状态、调用认知或工具能力、执行动作并接收环境反馈；数据集、MCQ 基准和语义监视器分别验证其中的组件。",
+      "body": "GPT-Driver 把运动规划重写为语言建模问题，LanguageMPC 把 LLM 高层决策经参数适配接入低层控制器，DriveGPT4 则把视频理解、解释与低层控制放进同一视觉语言接口，它们奠定了语言参与规划和动作生成的基础。DiLu 用推理、经验记忆和反思构成知识驱动 Agent；Agent-Driver 进一步引入工具库、认知记忆、自反思与任务规划；LMDrive 则在 CARLA 中证明语言指令能够进入连续驾驶控制。由此，本综述把“驾驶智能体”限定为能够依据当前状态选择推理路径、调用外部能力或更新记忆，并让结果实际影响后续动作的系统。\n\n范围内系统包括工具编排型 Agent、端到端 VLA、世界模型式视觉思考、快慢双过程、检索增强规划和多车协商。静态 QA、字幕、规则问答与离线轨迹预测可以提供组件证据，但不能单独证明交互闭环；NAVSIM 也主要是非反应式规划代理评测。DriveGPT4-V2、LMDrive 等提供 CARLA 闭环；DriveVLM-Dual 与 Talk2Drive 进一步提供有限受控实车证据。评估部署效果还需要动作改变后的反馈、场景与里程、接管和安全驾驶员、尾时延及失败记录，现有工作仍没有公开可复核的长时道路或车队安全证明。\n\n2026-08-01 增量纳入的工作分别补充了感知、数据和监视环节。ObsDriveBench 测量相机、LiDAR、雷达在恶劣天气中的可观测性与风险判断，IEDD 提供来源可追溯的交互轨迹和分层 VQA，GNSS-VLM 则把视觉与运动信息接成外部导航行为监视器；三者都能进入驾驶 Agent 的感知、证据或安全监督层，但都没有执行完整感知-规划-控制闭环。本综述将其归入认知组件与评测基础设施。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "gpt-driver-2023",
         "languagempc-2023",
@@ -39,9 +39,9 @@
     {
       "id": "evolution",
       "kind": "evolution",
-      "title": "技术演进：语言接口、认知模块、证据诊断与受约束行动",
-      "thesis": "领域主线已从语言化规划推进到工具、记忆、世界模型与动作联合，并开始把可观测性、数据 provenance 和外部行为监视纳入认知链的可验证接口。",
-      "body": "2023 年的 GPT-Driver 与 LanguageMPC 分别把轨迹语言化、把 LLM 决策接入 MPC，DriveGPT4 随后把场景语义、解释与控制纳入多模态接口；GPT-Driver 是 NeurIPS 2023 Workshop，DriveGPT4 后来正式发表于 RA-L 2024，而 LanguageMPC 截至审计日仍是预印本。DiLu 把推理、记忆与反思接入交互环境，Agent-Driver 再把工具调用、经验记忆和任务规划组织成认知代理。LMDrive 与 DriveGPT4-V2 把语言/多模态能力带入 CARLA 闭环；DriveVLM-Dual 和 Talk2Drive 则分别报告生产车辆和有安全驾驶员的受控场地原型，研究开始从“模型是否理解”转向“理解是否影响可执行行为”。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024, lmdrive-2024, drivegpt4-v2-2025, drivevlm-2025, talk2drive-2024]\n\n到 2025 年，SimLingo 显式训练语言与动作对齐，AgentThink 训练动态工具调用，CoLMDriver 用 critic/evaluator 反馈迭代改写协商方案，而不是 actor-critic 强化学习；LangCoop 则把多车共享压缩为自然语言消息，在 CARLA 闭环中比较通信开销与驾驶表现。2026 年的 DrivingAgent、VLADriver-RAG 与 KnowVal 分别推进持续调度、结构化场景检索与法规知识图谱；X-Mind 与 HyWorldVLA 将未来预测内化为视觉或潜空间思考。双过程规划用视觉 Arbiter 决定快慢路径，VLM-CASE 把语义判断约束在物理/RSS 包络内。ReasonBreak 的开环实验在 195 个样本上固定视觉并搜索文本扰动；闭环则把 50 个 NuRec clips 部署到 AlpaSim，每步只采样一次文本扰动，执行轨迹会改变后续视觉观测。两部分都显示语言通道会联动推理和行为，但仍不能建立“推理错误中介碰撞”的因果效应。[simlingo-2025, agentthink-2025, colmdriver-2025, langcoop-2025, drivingagent-2026, vladriver-rag-2026, knowval-2026, x-mind-2026, hyworldvla-2026, cognitive-dual-process-2026, vlm-case-2026, reasonbreak-2026]\n\n2026 年 7 月底出现的三项工作没有再堆一个“更会推理”的控制模型，而是补了证据链的不同层。ObsDriveBench 揭示模型 fallback 选择较强时仍可能缺少风险定位和轨迹判断；IEDD 的正式数据论文把交互检索、物理指标、BEV 与 L1-L4 问答绑定到来源记录，同时显示域内 LoRA 会严重损害未训练的反事实任务；GNSS-VLM 则用语义行为一致性补充传统定位完整性检查。这标志着 Agentic Driving 的评价对象开始从回答正确率扩展到证据来源、能力断层与监视时延，但尚未跨过闭环控制验证门槛。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "从语言规划到工具调用、记忆与监督",
+      "thesis": "语言规划逐步扩展到工具、记忆和世界模型；近期研究进一步检查证据来源、可观测性和外部行为监视。",
+      "body": "2023 年的 GPT-Driver 与 LanguageMPC 分别把轨迹语言化、把 LLM 决策接入 MPC，DriveGPT4 随后把场景语义、解释与控制纳入多模态接口；GPT-Driver 是 NeurIPS 2023 Workshop，DriveGPT4 后来正式发表于 RA-L 2024，而 LanguageMPC 截至审计日仍是预印本。DiLu 把推理、记忆与反思接入交互环境，Agent-Driver 再把工具调用、经验记忆和任务规划组织成认知代理。LMDrive 与 DriveGPT4-V2 把语言/多模态能力带入 CARLA 闭环；DriveVLM-Dual 和 Talk2Drive 则分别报告生产车辆和有安全驾驶员的受控场地原型，研究开始从“模型是否理解”转向“理解是否影响可执行行为”。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024, lmdrive-2024, drivegpt4-v2-2025, drivevlm-2025, talk2drive-2024]\n\n到 2025 年，SimLingo 显式训练语言与动作对齐，AgentThink 训练动态工具调用，CoLMDriver 用 critic/evaluator 反馈迭代改写协商方案，而不是 actor-critic 强化学习；LangCoop 则把多车共享压缩为自然语言消息，在 CARLA 闭环中比较通信开销与驾驶表现。2026 年的 DrivingAgent、VLADriver-RAG 与 KnowVal 分别推进持续调度、结构化场景检索与法规知识图谱；X-Mind 与 HyWorldVLA 将未来预测内化为视觉或潜空间思考。双过程规划用视觉 Arbiter 决定快慢路径，VLM-CASE 把语义判断约束在物理/RSS 包络内。ReasonBreak 的开环实验在 195 个样本上固定视觉并搜索文本扰动；闭环则把 50 个 NuRec clips 部署到 AlpaSim，每步只采样一次文本扰动，执行轨迹会改变后续视觉观测。两部分都显示语言通道会联动推理和行为，但仍不能建立“推理错误中介碰撞”的因果效应。[simlingo-2025, agentthink-2025, colmdriver-2025, langcoop-2025, drivingagent-2026, vladriver-rag-2026, knowval-2026, x-mind-2026, hyworldvla-2026, cognitive-dual-process-2026, vlm-case-2026, reasonbreak-2026]\n\n2026 年 7 月底的三项工作分别关注能力诊断、数据组织和导航监视。ObsDriveBench 揭示模型 fallback 选择较强时仍可能缺少风险定位和轨迹判断；IEDD 的正式数据论文把交互检索、物理指标、BEV 与 L1-L4 问答绑定到来源记录，同时显示域内 LoRA 会严重损害未训练的反事实任务；GNSS-VLM 则用语义行为一致性补充传统定位完整性检查。它们把评价范围扩展到证据来源、能力断层与监视时延，闭环控制表现仍待验证。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "gpt-driver-2023",
         "languagempc-2023",
@@ -72,9 +72,9 @@
     {
       "id": "taxonomy",
       "kind": "taxonomy",
-      "title": "能力分类：状态、证据、推理、协商、监督与执行",
+      "title": "工具、检索、世界模型与协商如何接入动作",
       "thesis": "有效分类应回答谁维护状态、证据从哪里来、候选动作如何形成、谁验证动作、监视结果是否及时，以及失败时控制权落到哪里。",
-      "body": "第一类是工具与记忆编排型 Agent。DiLu 用记忆与反思积累经验，Agent-Driver 通过函数调用连接感知、预测和规划工具，AgentThink 训练模型选择工具，DrivingAgent 再把长短期记忆用于持续系统调度。第二类是检索增强认知：VLADriver-RAG 把视觉场景压缩为时空语义图后检索历史先验，KnowVal 从交通法规、防御性驾驶和伦理知识图谱中检索规则并用价值模型评价轨迹。两类方法都必须区分“检索到证据”与“证据足以支持动作”，否则记忆和 RAG 只是新的错误入口。\n\n第三类是联合 VLA 与语言-动作对齐，SimLingo 联合驾驶、视觉语言理解和 Action Dreaming，DriveGPT4-V2 在多视角 CARLA 闭环中生成高层决策、航点和控制。第四类是世界模型认知，X-Mind 以紧凑 BEV 未来草图作为视觉思维链，HyWorldVLA 结合像素监督和潜空间未来建模。第五类是快慢双过程与受约束认知层，前者用轻量路由器只在复杂场景启动结构化推理，后者如 VLM-CASE 将语义判断转成摩擦、制动和转向边界；其保证依赖 VLM 语义判定、摩擦估计、车辆动力学边界、RSS 参数和异步结果不过期等假设，必须把假设失效纳入测试。\n\n第六类是多智能体协商与意图通信。CoLMDriver 让 critic/evaluator 对协商草案给出反馈，再迭代生成合作航点；它不是 actor-critic 强化学习。LangCoop 用结构化视觉语言推理和语言打包把共享信息压缩为自然语言消息，MDrive 则在闭环多车环境中比较共享与协作机制。三者分别回答协商生成、通信表征和统一评测，但多 Agent 不是自动增益项，它还增加通信、共识等待、错误传播和控制权仲裁问题。第七类是 VLM 辅助的双系统原型：DriveVLM-Dual 让传统栈补足 VLM 空间推理和实时性，Talk2Drive 把语言个性化模块接到受控实车。有限原型支持可行性，却没有隔离每个认知模块的净安全贡献。\n\n第八类可称为诊断与监督基础设施。ObsDriveBench 属于能力分解基准，IEDD 属于带 provenance 的派生交互数据，GNSS-VLM 属于异步语义监视器。它们分别回答“模型看见了什么”“训练和评测样本从哪里来”“定位输出是否与独立行为证据一致”，却不承担最终轨迹生成。工程上应让这类模块输出带时间戳、来源和适用包络的结构化证据，由独立安全层决定是否降级；把它们直接并入语言上下文而不做时效和冲突检查，只会新增不可观测接口。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "body": "第一类是工具与记忆编排型 Agent。DiLu 用记忆与反思积累经验，Agent-Driver 通过函数调用连接感知、预测和规划工具，AgentThink 训练模型选择工具，DrivingAgent 再把长短期记忆用于持续系统调度。第二类是检索增强认知：VLADriver-RAG 把视觉场景压缩为时空语义图后检索历史先验，KnowVal 从交通法规、防御性驾驶和伦理知识图谱中检索规则并用价值模型评价轨迹。两类方法都需要检查检索证据是否适用于当前动作，尤其是过期、冲突或场景不匹配的记录。\n\n第三类是联合 VLA 与语言-动作对齐，SimLingo 联合驾驶、视觉语言理解和 Action Dreaming，DriveGPT4-V2 在多视角 CARLA 闭环中生成高层决策、航点和控制。第四类是世界模型认知，X-Mind 以紧凑 BEV 未来草图作为视觉思维链，HyWorldVLA 结合像素监督和潜空间未来建模。第五类是快慢双过程与受约束认知层，前者用轻量路由器只在复杂场景启动结构化推理，后者如 VLM-CASE 将语义判断转成摩擦、制动和转向边界；其保证依赖 VLM 语义判定、摩擦估计、车辆动力学边界、RSS 参数和异步结果不过期等假设，必须把假设失效纳入测试。\n\n第六类是多智能体协商与意图通信。CoLMDriver 让 critic/evaluator 对协商草案给出反馈，再迭代生成合作航点；它不是 actor-critic 强化学习。LangCoop 用结构化视觉语言推理和语言打包把共享信息压缩为自然语言消息，MDrive 则在闭环多车环境中比较共享与协作机制。三者分别回答协商生成、通信表征和统一评测，多 Agent 的收益同时受到通信、共识等待、错误传播和控制权仲裁的影响。第七类是 VLM 辅助的双系统原型：DriveVLM-Dual 让传统栈补足 VLM 空间推理和实时性，Talk2Drive 把语言个性化模块接到受控实车。有限原型支持可行性，却没有隔离每个认知模块的净安全贡献。\n\n第八类可称为诊断与监督基础设施。ObsDriveBench 属于能力分解基准，IEDD 属于带 provenance 的派生交互数据，GNSS-VLM 属于异步语义监视器。它们分别回答“模型看见了什么”“训练和评测样本从哪里来”“定位输出是否与独立行为证据一致”，却不承担最终轨迹生成。工程上应让这类模块输出带时间戳、来源和适用包络的结构化证据，由独立安全层决定是否降级；接入语言上下文时也应记录时效和冲突检查结果，以便追踪错误传播。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "dilu-2024",
         "agent-driver-2024",
@@ -101,9 +101,9 @@
     {
       "id": "evidence",
       "kind": "evidence",
-      "title": "证据体系：从离线能力到行为因果性、时效与闭环安全",
+      "title": "评测认知作用、响应时延与闭环行为",
       "thesis": "高质量证据必须说明认知模块何时触发、依据什么、如何改变动作、延迟多少、错误是否被拦截，并把问答、派生数据、道路日志和闭环执行分开报告。",
-      "body": "证据应按层级解读。DriveGPT4、AgentThink 及大量 VQA 指标可验证语义理解、解释或工具选择，但不能证明连续控制安全；GPT-Driver 的 nuScenes 开环规划也不能替代交互反馈。NAVSIM 上的规划分数和未来建模结果，包括双过程规划与 HyWorldVLA，适合比较开环或非反应式代理性能。LMDrive、DriveGPT4-V2、SimLingo、CoLMDriver、LangCoop、VLM-CASE、ReasonBreak 和 MDrive 提供 CARLA、Longest6、Bench2Drive、AlpaSim 或 InterDrive 范围内的仿真闭环证据；DriveVLM-Dual 与 Talk2Drive 增加了受控实车证据，但没有公开足够的里程、随机对照、场景暴露、接管分母和失败轨迹，不能外推为大规模道路安全。LangCoop 报告相对图像通信减少 96% 带宽且单条消息低于 2 KB，同时保持有竞争力的闭环表现；这是特定 CARLA 协议下的通信—任务折中，不是现实 V2X 可靠性或安全证明。[langcoop-2025]\n\nReasonBreak 的边界尤其需要精确：开环部分在固定视觉输入的 195 个样本上用 Best-of-100 查询搜索测量黑盒操纵上界；闭环部分把 50 个 NuRec clips 部署到 AlpaSim，每步只随机采样一次文本腐蚀，执行轨迹会改变后续视觉观测。闭环条件不是目标化或自适应对手，安全指标也是后验影响表征。两部分证明语言通道可影响行为，却没有做跨 VLA、真实车辆或中介因果分析；良性文本变化本身也会触发输出不稳定，因此不能把相关变化写成“错误推理必然中介碰撞”或现实可实现攻击。[reasonbreak-2026]\n\n评测应在任务指标之外报告认知触发精确率与漏触发率、工具选择和参数正确率、检索命中与证据时效、推理-动作一致率、协商达成率、平均与尾部延迟、回退频次及安全层否决率。还需要反事实干预：删除或替换记忆，注入冲突检索结果，延迟工具返回，交换语言理由，屏蔽世界模型中间态，或加入不合作车辆，再比较动作和闭环后果。VLM-CASE 还应分别扰动语义分类、摩擦系数、车辆模型和结果时效，验证安全包络在假设破坏后能否保守回退。\n\n新证据的量级不能替代证据等级。ObsDriveBench 从约 1.4k/1.3k 帧生成 14k+/13k+ 训练/测试题并评测 14 个模型，但它仍是 MCQ，ObsDrive-RL 的 65.31/83.85/86.44 三类得分不能直接推出轨迹安全。IEDD 的 7,313,985 个片段来自五个既有轨迹库的再切片，必须按原始 scene/provenance 去重；在线 viewer 异常不等于归档损坏，却要求固定版本下载和 schema smoke test。GNSS-VLM 的验证日志来自公共道路，但攻击是离线坐标层注入；其 559/3999 次调用降低平均负担，单次 468-522 ms 的 A100 延迟仍可能错过控制时限。只有把这些输出接到可执行规划器并记录动作差值、闭环后果和回退时限，才能升级为系统安全证据。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "body": "证据应按层级解读。DriveGPT4、AgentThink 及大量 VQA 指标可验证语义理解、解释或工具选择，但不能证明连续控制安全；GPT-Driver 的 nuScenes 开环规划也不能替代交互反馈。NAVSIM 上的规划分数和未来建模结果，包括双过程规划与 HyWorldVLA，适合比较开环或非反应式代理性能。LMDrive、DriveGPT4-V2、SimLingo、CoLMDriver、LangCoop、VLM-CASE、ReasonBreak 和 MDrive 提供 CARLA、Longest6、Bench2Drive、AlpaSim 或 InterDrive 范围内的仿真闭环证据；DriveVLM-Dual 与 Talk2Drive 增加了受控实车证据，但没有公开足够的里程、随机对照、场景暴露、接管分母和失败轨迹，不能外推为大规模道路安全。LangCoop 报告相对图像通信减少 96% 带宽且单条消息低于 2 KB，同时保持有竞争力的闭环表现；该通信—任务折中来自特定 CARLA 协议，现实 V2X 的可靠性与安全表现尚待测量。[langcoop-2025]\n\nReasonBreak 分别采用两种评测协议：开环部分在固定视觉输入的 195 个样本上用 Best-of-100 查询搜索测量黑盒操纵上界；闭环部分把 50 个 NuRec clips 部署到 AlpaSim，每步只随机采样一次文本腐蚀，执行轨迹会改变后续视觉观测。闭环条件不是目标化或自适应对手，安全指标也是后验影响表征。两部分证明语言通道可影响行为，却没有做跨 VLA、真实车辆或中介因果分析；良性文本变化本身也会触发输出不稳定，因此，推理错误是否中介碰撞、扰动能否在现实中实现，仍是待验证问题。[reasonbreak-2026]\n\n评测应在任务指标之外报告认知触发精确率与漏触发率、工具选择和参数正确率、检索命中与证据时效、推理-动作一致率、协商达成率、平均与尾部延迟、回退频次及安全层否决率。还需要反事实干预：删除或替换记忆，注入冲突检索结果，延迟工具返回，交换语言理由，屏蔽世界模型中间态，或加入不合作车辆，再比较动作和闭环后果。VLM-CASE 还应分别扰动语义分类、摩擦系数、车辆模型和结果时效，验证安全包络在假设破坏后能否保守回退。\n\n三项组件研究还需要按样本构造和执行方式解读。ObsDriveBench 从约 1.4k/1.3k 帧生成 14k+/13k+ 训练/测试题并评测 14 个模型，这些是 MCQ 任务，ObsDrive-RL 的 65.31/83.85/86.44 三类得分描述答题表现，轨迹安全需通过执行评测。IEDD 的 7,313,985 个片段来自五个既有轨迹库的再切片，必须按原始 scene/provenance 去重；在线 viewer 异常不等于归档损坏，却要求固定版本下载和 schema smoke test。GNSS-VLM 的验证日志来自公共道路，但攻击是离线坐标层注入；其 559/3999 次调用降低平均负担，单次 468-522 ms 的 A100 延迟仍可能错过控制时限。下一步需把这些输出接到可执行规划器，记录动作差值、闭环后果和回退时限，检验其系统安全作用。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "gpt-driver-2023",
         "drivegpt4-2023",
@@ -128,9 +128,9 @@
     {
       "id": "challenges",
       "kind": "challenges",
-      "title": "挑战与证据空白：认知增益尚未等于及时、可追溯的系统安全",
-      "thesis": "工具、记忆、RAG、协商、世界模型和监视器都能扩展能力，但每个接口也会引入来源重叠、标签偏差、异步过期、攻击面和不可观测级联失败。",
-      "body": "工具增强系统面临选择错误、参数错误、异步返回和模块分布外输出；记忆与 RAG 面临时间漂移、错误归因、相似但不适用案例和知识冲突。DiLu、DrivingAgent、VLADriver-RAG 与 KnowVal 展示了记忆和检索潜力，但尚缺少跨城市、地图更新、天气变化和蓄意污染下的长期连续验证。世界模型与视觉思维链可能预测视觉上合理但控制上错误的未来；X-Mind 和 HyWorldVLA 的结果也不能仅凭 NAVSIM 或离线数据外推到真实交互环境。\n\n多智能体协商还需处理通信丢包、身份与意图欺骗、异步认知和无共识回退。CoLMDriver 的 InterDrive 结果、LangCoop 的语言消息压缩与 MDrive 的闭环基准说明协商收益和通信代价都具有场景依赖性，尚不足以证明开放交通中的净安全收益。LangCoop 没有覆盖真实 V2X 时延、丢包、带宽竞争、身份认证或恶意消息；低字节数也不等于信息及时、可信和可执行。语言通道本身同样不是可信控制接口：SimLingo 说明语言与动作需要专门对齐，ReasonBreak 只证明文本扰动可在有限模型和模拟场景中联动推理、轨迹与安全结果，尚未证明普遍的因果中介或现实攻击成功率。\n\n真实车辆原型同样不能越级解释。DriveVLM-Dual 报告生产车辆部署，Talk2Drive 在高速、路口和停车等受控场景用安全驾驶员和接管率评估个性化，但公开资料不足以重建暴露量、随机化、基线控制、事故/险情或 99 分位时延。它们推翻“完全没有实车”的说法，却不填补长时公共道路、独立安全论证和跨版本回归的证据空白。\n\n数据和监视接口的新风险已经具体化。ObsDriveBench 的题目由同类 VLM 生成、强模型精炼并人工核验，仍可能保留题型和措辞偏置；IEDD 的多源再切片会把相邻片段或同一交互重复加权，且域内微调使 L4 反事实分数从 4.66 降到 0.19，说明“更会读模板”可能以遗忘开放推理为代价；GNSS-VLM 对明显语义冲突有效，却可能漏掉保持转向/运动语义一致的慢漂移，也没有验证真实 RF、联合传感器攻击或报警后的最小风险控制。三项工作都要求把 provenance、版本、时效和失败回退写入接口契约。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "错误工具、过期记忆与异步监视",
+      "thesis": "工具、记忆、RAG、协商和监视器扩展了能力，也会引入来源重叠、标签偏差、异步过期和级联错误，需要逐接口追踪。",
+      "body": "工具增强系统面临选择错误、参数错误、异步返回和模块分布外输出；记忆与 RAG 面临时间漂移、错误归因、相似但不适用案例和知识冲突。DiLu、DrivingAgent、VLADriver-RAG 与 KnowVal 展示了记忆和检索潜力，但尚缺少跨城市、地图更新、天气变化和蓄意污染下的长期连续验证。世界模型与视觉思维链可能预测视觉上合理但控制上错误的未来；X-Mind 和 HyWorldVLA 的结果也不能仅凭 NAVSIM 或离线数据外推到真实交互环境。\n\n多智能体协商还需处理通信丢包、身份与意图欺骗、异步认知和无共识回退。CoLMDriver 的 InterDrive 结果、LangCoop 的语言消息压缩与 MDrive 的闭环基准说明协商收益和通信代价都具有场景依赖性，尚不足以证明开放交通中的净安全收益。LangCoop 没有覆盖真实 V2X 时延、丢包、带宽竞争、身份认证或恶意消息；低字节数也不等于信息及时、可信和可执行。语言通道本身同样不是可信控制接口：SimLingo 说明语言与动作需要专门对齐，ReasonBreak 只证明文本扰动可在有限模型和模拟场景中联动推理、轨迹与安全结果，尚未证明普遍的因果中介或现实攻击成功率。\n\n受控车辆原型的实验条件也限制了结论范围。DriveVLM-Dual 报告生产车辆部署，Talk2Drive 在高速、路口和停车等受控场景用安全驾驶员和接管率评估个性化，但公开资料不足以重建暴露量、随机化、基线控制、事故/险情或 99 分位时延。这些原型已提供实车可行性证据，长时公共道路表现、独立安全论证和跨版本回归仍缺少公开资料。\n\n数据和监视接口的新风险已经具体化。ObsDriveBench 的题目由同类 VLM 生成、强模型精炼并人工核验，仍可能保留题型和措辞偏置；IEDD 的多源再切片会把相邻片段或同一交互重复加权，且域内微调使 L4 反事实分数从 4.66 降到 0.19，提示域内适配可能损害未训练的开放推理任务；GNSS-VLM 对明显语义冲突有效，却可能漏掉保持转向/运动语义一致的慢漂移，也没有验证真实 RF、联合传感器攻击或报警后的最小风险控制。三项工作都要求把 provenance、版本、时效和失败回退写入接口契约。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "dilu-2024",
         "drivingagent-2026",
@@ -154,9 +154,9 @@
     {
       "id": "outlook",
       "kind": "outlook",
-      "title": "研究展望：用可拒绝实验把可观测性、证据和监视器绑定到动作",
-      "thesis": "下一步应让诊断分数、派生数据和语义监视器面对可执行动作与失败阈值，而不是把更高问答准确率或更大样本量当作安全代理。",
-      "body": "**慢路径路由实验。**快速基础策略持续给出动作，认知路由器只在感知冲突、预测多模态或安全余量不足时启动工具、记忆或 VLM。预注册触发精确率/召回率、危险漏触发率、99 分位时延和碰撞/违规差值置信区间；以同算力常开、随机触发和不启用慢路径为对照。若安全收益区间跨零、漏触发上界或尾时延超预算，就拒绝慢路径净收益并回退基础策略。[cognitive-dual-process-2026, agentthink-2025, drivingagent-2026]\n\n**证据与包络干预实验。**先预注册 evidence-sensitive 场景及期望动作或包络差值，再对 VLADriver-RAG/KnowVal 注入过期、冲突和近邻但不适用的证据；冗余或与当前动作无关的证据作为“应保持不变”的负对照。对 VLM-CASE 分别扰动语义判定、摩擦估计、车辆动力学参数、RSS 配置和消息时效，并以安全包络相对真实摩擦、可见度和动力学可行集的包含关系及违规率上界定义“保守”。只有在 evidence-sensitive 场景未达到预注册效应、错误证据未被拒绝，或包络违规上界失守时，才拒绝相应证据绑定或条件安全主张并进入最小风险状态。[vladriver-rag-2026, knowval-2026, vlm-case-2026]\n\n**推理因果与实车转移实验。**在相同视觉和车辆状态下交换、打乱或屏蔽理由，比较轨迹与闭环后果；用只看感知特征和只看文本的动作盲基线区分真实中介与共同输入相关。随后在 CARLA、受控场地和真实车辆上使用相同场景语义，预注册风险排序转移、接管率分母和安全驾驶员规则。若 ReasonBreak 式攻击不能跨 VLA/环境复现，或 DriveVLM/Talk2Drive 的实车收益在配对对照中消失，就缩减结论而不是追补叙事。[reasonbreak-2026, drivevlm-2025, talk2drive-2024]\n\n多智能体方向还应把自然语言协商压缩为可验证的意图、优先权、时限和安全约束，并以同通信、同算力单车基线比较；在与 LangCoop 相同任务上再注入时延、丢包、乱序、消息伪造和不合作车辆，按场景报告带宽—安全 Pareto 前沿，而不是只报告平均字节数。若语言协议相对二进制意图基线没有净闭环收益，或超时、冲突与不可信节点存在时不能自动回到保守单车策略，就拒绝其部署价值。最终准入标准不是“会解释、会规划”，而是知道何时思考、依据何时不足、假设何时失效，并能在认知失败时恢复控制。[colmdriver-2025, langcoop-2025, mdrive-2026]\n\n**观测—动作与监视时限实验。**先在 ObsDriveBench 三类任务上选择同一模型的高低置信样本，再把其可观测性结论接到固定规划器的模态降权和 fallback，预注册恶劣天气碰撞/不必要停车差值、危险漏触发率与 99 分位时延。训练数据以 IEDD 原始 scene/provenance 分组，加入 viewer/归档版本检查，并用 L4 反事实保持率作为域内微调的否决条件。最后在 GNSS 坐标层离线注入、硬件在环 RF 欺骗和受控车辆三层重复相同事件，比较事件+周期触发、轻量时序基线与 VLM 监视器；若闭环安全收益区间跨零、L4 保持率跌破阈值、真实 RF 召回不能复现或报警超过制动时限，就拒绝相应部署主张并回退多源完整性检查。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "用干预实验检验推理与动作的关系",
+      "thesis": "后续实验应把诊断、检索和监视结果接入可执行动作，以闭环结果、响应时限和失败阈值评估收益。",
+      "body": "**慢路径路由实验。**快速基础策略持续给出动作，认知路由器只在感知冲突、预测多模态或安全余量不足时启动工具、记忆或 VLM。预注册触发精确率/召回率、危险漏触发率、99 分位时延和碰撞/违规差值置信区间；以同算力常开、随机触发和不启用慢路径为对照。若安全收益区间跨零、漏触发上界或尾时延超预算，就拒绝慢路径净收益并回退基础策略。[cognitive-dual-process-2026, agentthink-2025, drivingagent-2026]\n\n**证据与包络干预实验。**先预注册 evidence-sensitive 场景及期望动作或包络差值，再对 VLADriver-RAG/KnowVal 注入过期、冲突和近邻但不适用的证据；冗余或与当前动作无关的证据作为“应保持不变”的负对照。对 VLM-CASE 分别扰动语义判定、摩擦估计、车辆动力学参数、RSS 配置和消息时效，并以安全包络相对真实摩擦、可见度和动力学可行集的包含关系及违规率上界定义“保守”。只有在 evidence-sensitive 场景未达到预注册效应、错误证据未被拒绝，或包络违规上界失守时，才拒绝相应证据绑定或条件安全主张并进入最小风险状态。[vladriver-rag-2026, knowval-2026, vlm-case-2026]\n\n**推理因果与实车转移实验。**在相同视觉和车辆状态下交换、打乱或屏蔽理由，比较轨迹与闭环后果；用只看感知特征和只看文本的动作盲基线区分真实中介与共同输入相关。随后在 CARLA、受控场地和真实车辆上使用相同场景语义，预注册风险排序转移、接管率分母和安全驾驶员规则。若 ReasonBreak 式攻击不能跨 VLA/环境复现，或 DriveVLM/Talk2Drive 的实车收益在配对对照中消失，就将结论限定于已复现的模型和条件。[reasonbreak-2026, drivevlm-2025, talk2drive-2024]\n\n多智能体方向还应把自然语言协商压缩为可验证的意图、优先权、时限和安全约束，并以同通信、同算力单车基线比较；在与 LangCoop 相同任务上再注入时延、丢包、乱序、消息伪造和不合作车辆，按场景同时报告带宽—安全 Pareto 前沿和平均字节数。若语言协议相对二进制意图基线没有净闭环收益，或超时、冲突与不可信节点存在时不能自动回到保守单车策略，就拒绝其部署价值。部署评估应检查系统能否识别需要推理、证据不足和假设失效的时刻，并在认知失败时恢复控制。[colmdriver-2025, langcoop-2025, mdrive-2026]\n\n**观测—动作与监视时限实验。**先在 ObsDriveBench 三类任务上选择同一模型的高低置信样本，再把其可观测性结论接到固定规划器的模态降权和 fallback，预注册恶劣天气碰撞/不必要停车差值、危险漏触发率与 99 分位时延。训练数据以 IEDD 原始 scene/provenance 分组，加入 viewer/归档版本检查，并用 L4 反事实保持率作为域内微调的否决条件。最后在 GNSS 坐标层离线注入、硬件在环 RF 欺骗和受控车辆三层重复相同事件，比较事件+周期触发、轻量时序基线与 VLM 监视器；若闭环安全收益区间跨零、L4 保持率跌破阈值、真实 RF 召回不能复现或报警超过制动时限，就拒绝相应部署主张并回退多源完整性检查。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
       "referenceIds": [
         "agentthink-2025",
         "drivingagent-2026",
@@ -178,9 +178,9 @@
   ],
   "takeaways": [
     "Agentic Driving 的最小证据链仍是状态更新、认知或工具行动、可执行输出、环境反馈和后续修正；MCQ、数据集和语义监视器只覆盖其中部分环节。",
-    "ObsDriveBench 证明恶劣天气下 fallback 选择、风险定位和轨迹判断会断层，但多选题得分必须通过动作干预才能升级为安全证据。",
+    "ObsDriveBench 显示 fallback 选择、风险定位和轨迹判断的表现可能不一致；这些多选题结果还需通过动作干预检验其安全意义。",
     "IEDD 的 7.31M 片段是五个既有轨迹库的派生样本；研究必须按 provenance 去重、固定数据版本，并把域内微调导致的反事实能力退化作为否决项。",
-    "GNSS-VLM 展示了语义行为一致性监视的价值，但公共道路日志加离线坐标攻击不等于真实 RF 或控制闭环，约 0.5 秒单次推理也必须纳入安全时限。",
+    "GNSS-VLM 使用公共道路日志和离线坐标攻击检验语义行为监视，真实 RF 与控制闭环尚待评测，约 0.5 秒单次推理也需纳入安全时限。",
     "可信架构应让慢认知和监视器按需工作，由快控制与独立安全层保留最终否决权，并在证据冲突、过期或超时时回退。"
   ],
   "references": [
@@ -624,7 +624,7 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-09-30",
+    "searchedAt": "2026-10-04",
     "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
@@ -659,27 +659,28 @@
       "尚无统一协议以反事实干预同时度量语言理由、工具证据、世界表征、监视输出和最终动作之间的因果一致性。"
     ],
     "independentReview": {
+      "completedAt": "2026-10-04",
       "status": "passed",
       "reviewers": 1,
       "rounds": 1,
-      "completedAt": "2026-09-30",
-      "finding": "Independent incremental-local-corpus PASS: actual rg hits, scope screening, aliases, candidate dispositions and counts reconcile. Core synthesis, references, substantive review date and external query/source records match baseline. This does not renew external source review or approve Ideas.",
-      "reviewIndependence": "same-family",
-      "acceptanceStatus": "provisional",
-      "snapshotFingerprint": "fdf512ab0fc117ebc20cdadb41d7b1c19c1fbc8a9ea7527801eea4e8785031a3",
-      "artifactPath": "docs/research-updates/2026-09-29/review-local-corpus.json",
-      "artifactSha256": "2daf20ab4d88be8bd5034cd81cf957f633e4cfc32d4834e0eb763571133f0088"
+      "scope": "Editorial semantic delta and current local-corpus audit; historical primary-source verification dates retained.",
+      "assurance": "fresh-context same-family provisional",
+      "reviewer": "review_reviews_oct04",
+      "snapshotFingerprint": "7357e4ed24a9a6f681977ecc4efafa3ea97d3449e50c1fc009d2927702406a30",
+      "artifactPath": "docs/editorial-refresh/2026-10-04/review-reviews-round1.json",
+      "artifactSha256": "83c90125202dddadfeaae1fa4a99db26e9e8f19eff1f8db56f67ca44fc58d8aa",
+      "finding": "All ten edited syntheses and current local-corpus candidate audits independently reviewed. PRBI definition checked against primary section; landscape coherence corrected and reviewed. No claim of a new full external search."
     },
     "queryRuns": [
       {
         "family": "语言和视觉语言驾驶智能体",
         "sourceFamily": "local-corpus",
         "query": "agent|VLA|语言|推理|记忆|agentic-driving",
-        "executedAt": "2026-09-30",
+        "executedAt": "2026-10-04",
         "resultCount": 23,
-        "rawHitCount": 135,
-        "screenedOutCount": 112,
-        "screeningNote": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；135 个文件命中，按方向标签与 revisionOf 归并为 23 篇规范候选，其余 112 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。",
+        "rawHitCount": 134,
+        "screenedOutCount": 111,
+        "screeningNote": "2026-10-04 对文案校订后的当前原始 Markdown 重新执行所记录的 rg -l -i。134 个文件命中，按方向标签与 revisionOf 归并为 23 篇规范候选，其余 111 个文件属于跨文引用、其他范围或修订重复。规范候选集合与既有审计完全相同，沿用逐篇处置；本项不代表重新检索站外文献。",
         "resultIdSample": [
           "arxiv:2608.12854",
           "arxiv:2608.19380",
@@ -1002,12 +1003,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-09-30",
+        "executedAt": "2026-10-04",
         "query": "agent|VLA|语言|推理|记忆|agentic-driving",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 4,
-        "note": "2026-09-30 对当前原始 Markdown 执行所记录的 rg -l -i；135 个文件命中，按方向标签与 revisionOf 归并为 23 篇规范候选，其余 112 个文件属于跨文引用、其他范围或修订重复。本轮此项仅更新本库候选闭合，不代表重新检索站外文献。"
+        "note": "2026-10-04 对文案校订后的当前原始 Markdown 重新执行所记录的 rg -l -i。134 个文件命中，按方向标签与 revisionOf 归并为 23 篇规范候选，其余 111 个文件属于跨文引用、其他范围或修订重复。规范候选集合与既有审计完全相同，沿用逐篇处置；本项不代表重新检索站外文献。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1495,7 +1496,7 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-09-30",
-    "localRefreshNote": "2026-09-30 仅在本期入库后更新受影响的原始 Markdown 本库候选审计；核心综合复核日期与既有站外检索记录分别保留。"
+    "incrementalLocalAuditAt": "2026-10-04",
+    "localRefreshNote": "2026-10-04 文案校订后重新运行本库检索并核对候选；实质复核日期、站外查询和引用对象保持不变。历史本库记录见 docs/editorial-refresh/2026-10-04/local-corpus-evidence.json，原独立审批见基线提交。"
   }
 }

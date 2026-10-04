@@ -7,7 +7,7 @@
   "source": "arXiv 预印本 / arXiv:2609.27677v1 / https://arxiv.org/abs/2609.27677v1 / 固定全文 https://arxiv.org/html/2609.27677v1",
   "authors": ["Xiaokai Bai", "Lei Yang", "Songkai Wang", "Lianqing Zheng", "Siyuan Cao", "Hui-liang Shen"],
   "affiliations": ["College of Information Science and Electronic Engineering, Zhejiang University", "School of Mechanical and Aerospace Engineering, Nanyang Technological University", "School of Automotive Studies, Tongji University"],
-  "comment": "把历史搬到正确位置之后，还要决定是否相信它。RoadOcc 用运动与同类支持监督 Persist／Transport／Refresh 路由，在固定预算下改善路侧动态占据；结果不涉及实测 V2X 通信或车辆闭环。"
+  "comment": "RoadOcc 用运动与同类支持监督 Persist／Transport／Refresh 路由，决定对齐后的历史特征是否参与融合，在固定预算下改善路侧动态占据。实验范围限于感知预测，未评估实测 V2X 通信或车辆闭环。"
 }
 ---
 
@@ -112,7 +112,7 @@ Dyn. 是六个动态类别的平均 IoU；Direct MAVE 是所有 GT 动态体素�
 | 表 6，同容量和预算，三种子 | 无 P/T/R／完整路由 | Dyn. $30.97\pm0.27$／$32.37\pm0.11$ | 单列来源路由的 1.40 点增益；误差条为种子间标准差 |
 | 第 4.1 节，Occ3D-nuScenes | STCOcc／完整模型 | 全部 mIoU 44.60／45.01；Dyn. 39.01／39.80 | 对照值由原文给出的增益相减计算；属于完整模型迁移，未隔离路由贡献 |
 
-主结论更适合表述为“这个固定路侧协议下的动态占据改善”。对 CRT-Fusion 加入 VDSF P/T/R 后，DSR 从 57.56 增至 59.45%，但 TP-MAVE 从 1.839 变为 1.958 m/s，说明覆盖变化与条件误差可能朝不同方向走，不能只选有利的一列。[表 3](https://arxiv.org/html/2609.27677v1#S3.T3)
+结果支持 RoadOcc 在这个固定路侧协议下改善动态占据。对 CRT-Fusion 加入 VDSF P/T/R 后，DSR 从 57.56 增至 59.45%，但 TP-MAVE 从 1.839 变为 1.958 m/s；覆盖扩大时，语义匹配体素上的条件速度误差也可能升高，两项指标需要一起看。[表 3](https://arxiv.org/html/2609.27677v1#S3.T3)
 
 ### 消融与证据边界
 

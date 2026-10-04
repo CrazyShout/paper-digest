@@ -16,13 +16,13 @@
     "School of Automation, Southeast University",
     "Key Laboratory of Measurement and Control of Complex Systems of Engineering, Ministry of Education"
   ],
-  "comment": "CoPAD 是近期协同轨迹预测里较直接的一篇 V2X 工作，用多源轨迹融合、历史交互注意力和 anchor-oriented decoder 处理单车感知轨迹不稳定的问题。"
+  "comment": "CoPAD 在 V2X 场景中先融合多源历史轨迹，再用历史交互注意力和 anchor-oriented decoder 预测未来，缓解单车感知轨迹不稳定的问题。"
 }
 ---
 
 ## 一句话定位
 
-CoPAD 先匹配并融合车路历史轨迹，再用过去时间注意力、模态交互和每模态两个锚点解码未来；价值是把补历史的确定性步骤与较轻量的预测网络分开，而非所有指标都超过既有协同模型。
+CoPAD 先匹配并融合车路历史轨迹，再用过去时间注意力、模态交互和每模态两个锚点解码未来；这将补历史的确定性步骤与较轻量的预测网络分开，形成可单独检查的两个环节；各项指标仍有取舍。
 
 - 核心证据：DAIR-V2X-Seq 表 I 中，CoPAD 为 3.2M 参数、minFDE 2.00 m；V2X-Graph 为 5.0M、2.03 m，但其 minADE 1.17 m 优于 CoPAD 的 1.24 m，MR 同为 0.29。
 - 主要边界：仅有离线预测与参数量，未测真实消息延迟、匹配故障或端到端 FPS；相对更少参数不等于已证实更快部署。[表 I、§V](https://arxiv.org/html/2509.15984v1#S4.T1)
@@ -77,7 +77,7 @@ $$
  \mathcal L=\mathcal L_{\rm cls}+\mathcal L_{\rm reg}+\alpha\mathcal L_{\rm anchor}.
 $$
 
-分类为模态交叉熵，回归按与真值最接近的候选计算 Laplace 分布负对数似然，anchor 项为中点/终点 Huber 损失。$\alpha$ 的实际数值未给出；式 8 的模态求和、agent 下标和正文“最佳模态”描述也需实现核对，不额外补写一个自以为正确的完整 likelihood。[§III-F](https://arxiv.org/html/2509.15984v1#S3.SS6)
+分类为模态交叉熵，回归按与真值最接近的候选计算 Laplace 分布负对数似然，anchor 项为中点/终点 Huber 损失。$\alpha$ 的实际数值未给出；式 8 的模态求和、agent 下标和正文“最佳模态”描述也需实现核对，完整 likelihood 的含义仍需作者实现澄清。[§III-F](https://arxiv.org/html/2509.15984v1#S3.SS6)
 
 ### 训练与推理边界
 
@@ -130,8 +130,8 @@ PTA 的消融影响最大；两个锚点比三个略好，但这不证明两个�
 
 ## 应用场景与启发
 
-- 作者主张：更完整的历史和轻量预测结构改善车路协同轨迹预测。
-- 我的判断：适合作为低维轨迹交换基线；核心实验应是身份/时间误差下早融合和保留多视角的学习融合谁更稳定，而非只比较网络参数。
+- 完整历史与轻量预测结构共同改善了论文中的车路协同预测结果。
+- 可将其作为低维轨迹交换基线，进一步比较身份/时间误差下的早融合与保留多视角的学习融合；稳定性与全流程耗时都应纳入评价。
 - 待验证假设：当匹配置信度低时保留双轨迹并显式标来源，会比强行 Kalman 合并更稳健；须在相同原始观察、候选数和训练预算下检验。
 
 ## 局限与阅读风险

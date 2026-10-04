@@ -44,7 +44,7 @@ Real2Sim 把 Street Gaussians 重建出的对象高斯快照交给 MPM 粒子求
 | Yan 等，Street Gaussians，ECCV 2024（[§3.1–3.3](https://arxiv.org/html/2401.01339v3#S3)；[正式论文](https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/09243.pdf)） | 背景与对象局部高斯分开表示，优化框轨迹，采用随时间变化的球谐外观，允许对象组合与编辑。 | Real2Sim 明确采用其重建路线，将分离的车辆高斯接到物理求解；实例编辑与时间球谐并非本工作重新发明。 |
 | Xie 等，PhysGaussian，CVPR 2024（[§3.3–3.7](https://arxiv.org/html/2311.12198v2#S3.SS3)；[正式论文](https://openaccess.thecvf.com/content/CVPR2024/papers/Xie_PhysGaussian_Physics-Integrated_3D_Gaussians_for_Generative_Dynamics_CVPR_2024_paper.pdf)） | 将高斯当作连续介质粒子，MPM 更新位置/形变梯度，协方差随局部仿射变换变化；还讨论球谐方向与内部填充。 | Real2Sim 把这类 Gaussian–MPM 接口用于驾驶资产及道路碰撞场景；全文未给出相对 PhysGaussian 的物理误差优势或额外的车辆结构建模。 |
 
-因此，本报告把它定位为驾驶场景系统组合与演示，不使用“首次物理高斯”或“已经克服仿真现实差距”的结论。
+这些继承关系支持将该工作定位为驾驶场景的系统组合与演示；现有证据尚未建立“首次物理高斯”或“已经克服仿真现实差距”的结论。
 
 ## 方法和系统设计
 
@@ -120,7 +120,7 @@ $p$ 表示粒子、$i$ 表示网格节点，$w_{ip}$ 是 B-spline 插值权重�
 
 ### 未报告的比较与消融
 
-全文没有同数据同预算的 Street Gaussians/PhysGaussian 对照，也没有 PSNR/SSIM、三维重建误差、碰撞后轨迹/形变误差、材料识别误差或检测、跟踪、策略指标。0.5 与 2.5 m/s 的展示改变了输入初速，是响应演示，**不是**证明新增模块有效的消融；两场景 FPS 也不能填入“相比基线提升”的表格。[§IV](https://arxiv.org/html/2605.13591v1#S4)
+全文没有同数据同预算的 Street Gaussians/PhysGaussian 对照，也没有 PSNR/SSIM、三维重建误差、碰撞后轨迹/形变误差、材料识别误差或检测、跟踪、策略指标。0.5 与 2.5 m/s 的展示检验了输入初速改变后的响应，没有隔离新增模块的作用；两场景 FPS 也只描述自身吞吐，未建立相对基线的提升。[§IV](https://arxiv.org/html/2605.13591v1#S4)
 
 作者因此提供的是资产编辑和求解器连接的证据。没有真实碰撞数据、重复试验分布和对照，就无法判断物理精度、数据增强收益或对仿真现实差距的改善幅度。
 

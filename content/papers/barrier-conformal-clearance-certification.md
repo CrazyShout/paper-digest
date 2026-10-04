@@ -7,13 +7,13 @@
   "source": "arXiv:2608.26533 / https://arxiv.org/abs/2608.26533 / PDF: https://arxiv.org/pdf/2608.26533",
   "authors": ["Pei Yu Chang", "Qadeer Ahmed"],
   "affiliations": ["The Ohio State University"],
-  "comment": "这篇工作不再用预测碰撞分数替代安全结论，而是把候选生成、风险评价和轨迹选择整体纳入 conformal calibration，为最终选中轨迹给出 realized OBB clearance 下界。nuPlan 证据强，但保证依赖 session exchangeability，且论文明确没有声称闭环 conformal guarantee。"
+  "comment": "将候选生成、风险评价和轨迹选择整体纳入 conformal calibration，为最终选中轨迹给出实际 OBB 间距下界。nuPlan 实验显示证书可用率提高；保证依赖 session exchangeability，未覆盖闭环干预。"
 }
 ---
 
 ## 一句话定位
 
-这篇论文为自动驾驶最终选中的候选轨迹提供一个以米为单位的间距下界：先把车辆旋转包围盒的几何间距变成可计算的保守 margin，再对“预测、评价、选择”整条固定流程做 conformal calibration。值得读的是几何下界和选择后校准怎样接起来，而不是把预测风险分数直接当成真实安全概率。
+这篇论文为自动驾驶最终选中的候选轨迹提供一个以米为单位的间距下界：先把车辆旋转包围盒的几何间距变成可计算的保守 margin，再对“预测、评价、选择”整条固定流程做 conformal calibration。核心是将几何下界与选择后校准接起来，区分预测风险分数和实际间距的统计保证。
 
 - **核心证据**：在 150 个 held-out nuPlan sessions 上，目标覆盖率 90% 时，CVaR 配置将非负证书比例从 68.7% 提到 87.3%，同时保持 96.0%–96.7% 的实际间距覆盖率；原文表 I。
 - **主要边界**：保证依赖校准和部署 sessions 的 exchangeability；主实验每个 session 只有一个 query，另做的闭环干预没有 conformal 保证。
@@ -26,7 +26,7 @@
 
 困难有两层。预测未来可能漏掉目标或低估危险运动；从很多候选中择优又会改变误差分布，所以单独校准预测器或单条预先指定轨迹，不能直接成为最终选择结果的证书。作者要求整个流程在校准前冻结，包括 proposal、目标筛选、预测、评分、排序和 fallback，并让未来真值只出现在校准与回看中。
 
-统计单位是 drive session。定理允许同一 session 内的窗口任意相关，但要求新 session 与校准 sessions 按相同窗口抽取规则来自可交换的部署总体。这个假设不是“模型预测准确”，也不是“换任何城市都成立”。
+统计单位是 drive session。定理允许同一 session 内的窗口任意相关，但要求新 session 与校准 sessions 按相同窗口抽取规则来自可交换的部署总体。这一假设约束的是数据抽取与部署总体，模型预测准确并不能代替它，换城市后也需重新检查。
 
 ### 相关工作与差异
 
@@ -77,7 +77,7 @@ $U_j$ 是第 $j$ 个 session，$w$ 是其中窗口，$\tau_{j,w}$ 是冻结流�
 
 定理 1 保证新 session 所有已定义评测窗口同时满足 $d^\star\geq\widehat c$ 的概率至少为 $1-\eta$。若请求 buffer $\rho$，仅在 $\widehat c\geq\rho$ 时认证，控制的是“被认证且实际间距小于 $\rho$”的联合事件概率。它不是已认证子集中的条件事故率，也不是连续时间、任意在线更新策略的保证。[原文 §IV-C，定理 1 与推论 1](https://arxiv.org/html/2608.26533v1#S4.SS3)
 
-本文没有训练新 planner 的损失函数。候选生成和预测器作为外部组件，需随校准版本冻结；改变 selector 或 fallback 后必须重新核对残差映射。v1 没有完整公开 predictor 样本构造、样本数、平滑参数和运行时开销，不能据此声称已经可实时部署。
+本文没有训练新 planner 的损失函数。候选生成和预测器作为外部组件，需随校准版本冻结；改变 selector 或 fallback 后必须重新核对残差映射。v1 尚未完整公开 predictor 样本构造、样本数、平滑参数和运行时开销，实时部署的实现条件仍不清楚。
 
 ## 关键图与可视化结果
 
@@ -122,15 +122,15 @@ $\widehat q$ 单位是米，越小通常越有利于证书可用性；Exact cove
 
 ## 应用场景与启发
 
-- **作者主张**：为已有 planner 的轨迹附加校准的 clearance 评价，支持 runtime assessment。
-- **我的判断**：最先适合固定候选库上的离线回放和 shadow evaluation；是否用于执行 gate，要先证明校准单元与部署流程一致，并一起报告证书可用率、进度和错误认证。
+- 作者将校准的 clearance 评价附在已有 planner 的轨迹上，用于 runtime assessment。
+- 较适合先在固定候选库上做离线回放和 shadow evaluation；是否用于执行 gate，要先证明校准单元与部署流程一致，并一起报告证书可用率、进度和错误认证。
 - **待验证假设**：把整个 rollout 作为校准单元后，CVaR 仍可能比 nominal 保留更多证书，但优势会因 session 内窗口最大残差而缩小。这可以被多窗口实验推翻，本文尚未验证。
 
 ## 局限与阅读风险
 
 作者明确限制了保证的总体与流程：exchangeability 不成立、新预测器上线、selector 改写或窗口抽取规则变化，都不能直接沿用旧 correction。有限时间网格上的 OBB 间距也不等于连续轨迹的全时安全，更不包含未在几何对象和任务定义中表示的其他风险。
 
-证据范围还包括一个冻结 split、每 session 一个 query 和 50 个非反应式闭环场景。没有独立多 split 稳定性研究、连续反馈闭环 conformal 校准、完整实现参数或端到端时延。它们限制可复现性和部署判断，不等于方法已在这些条件下失败。
+证据范围还包括一个冻结 split、每 session 一个 query 和 50 个非反应式闭环场景。没有独立多 split 稳定性研究、连续反馈闭环 conformal 校准、完整实现参数或端到端时延。这些缺口使可复现性和部署表现仍待验证。
 
 ## 后续跟进
 

@@ -45,7 +45,7 @@ SplatAD 在同一套可编辑静态/刚体高斯上分别构造相机与 LiDAR �
 | Tonderski 等，NeuRAD，CVPR 2024（[§3.1–3.3](https://arxiv.org/html/2311.15260v2#S3)；[正式版](https://openaccess.thecvf.com/content/CVPR2024/html/Tonderski_NeuRAD_Neural_Rendering_for_Autonomous_Driving_CVPR_2024_paper.html)） | 以 actor-aware hash 编码的神经特征场联合渲染相机/LiDAR，已有扫描运动、强度、掉点与传感器外观建模。 | 本文将核心表示与求值方式变为 Gaussian rasterization，并为 LiDAR 设计球坐标投影和非均匀分块。多模态或传感器建模本身并非新提出。 |
 | Yan 等，Street Gaussians，ECCV 2024（[§3](https://arxiv.org/html/2401.01339v3#S3)；[正式版](https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/09243.pdf)） | 静态背景与对象局部高斯组合，优化跟踪位姿，并用动态球谐表示时变外观。 | 本文用共享特征加相机 CNN / LiDAR MLP 解码，并直接渲染激光束；不再只把 LiDAR 当初始化和相机深度监督。 |
 
-报告不沿用“首次”的宣传性结论；这里核对了直接相关机制，未执行覆盖全领域的系统查新。
+上述对照仅核对直接相关机制；创新优先性尚未经过覆盖全领域的系统查新。
 
 ## 方法和系统设计
 
@@ -94,7 +94,7 @@ $t_l$ 是该激光束相对扫描中点的时间，$v_r^S$ 是径向相对速度
 
 全部参数按场景联合优化 30,000 步。RGB 用 L1/SSIM；LiDAR 期望距离与强度用 L2，掉点用二元交叉熵；line-of-sight 损失惩罚真值距离之前的不透明物，另有 MCMC 的尺度/透明度正则。高斯初始化来自至多 200 万静态 LiDAR 点、各对象额外随机点和远近随机点；MCMC 上限为 500 万高斯。[§3.4、附录 B](https://arxiv.org/html/2411.16816v3#S3.SS4)
 
-A100 上每场景约一小时；所有数据集共用超参数。推理仍需要演员轨迹、传感器位姿/速度和扫描时间模式，但不需要目标图像或真实深度。准确模拟某型号 LiDAR，需要其通道角度、时序、发散角等信息；论文主体测试旋转式 LiDAR，其他扫描形式只是可扩展方向，未全部实测。
+A100 上每场景约一小时；所有数据集共用超参数。推理仍需要动态对象轨迹、传感器位姿/速度和扫描时间模式，但不需要目标图像或真实深度。准确模拟某型号 LiDAR，需要其通道角度、时序、发散角等信息；论文主体测试旋转式 LiDAR，其他扫描形式只是可扩展方向，未全部实测。
 
 ## 关键图与可视化结果
 

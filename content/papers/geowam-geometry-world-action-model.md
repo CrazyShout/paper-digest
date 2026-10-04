@@ -7,7 +7,7 @@
   "source": "arXiv:2608.23486 / https://arxiv.org/abs/2608.23486 / HTML: https://arxiv.org/html/2608.23486v2 / Project: https://yiren-lu.com/project_pages/geowam/",
   "authors": ["Yiren Lu", "Xin Ye", "Jiaming Liu", "Philip Jacobson", "Jin Yao", "Yi-chung Chen", "Liam Merino", "Dhruva Dixith Kurra", "Min Cai", "Tom Lampo", "Yu Yin", "Danhua Guo", "Burhan Yaman"],
   "affiliations": ["Uber AV Labs", "Case Western Reserve University"],
-  "comment": "GeoWAM 不再预测未来 RGB，而把多视图图像解码成未来稠密点图，再让轨迹头读取预测几何；它在 NAVSIM v2 达到 90.2 EPDMS，但缺消融、真实闭环和公开实现。"
+  "comment": "GeoWAM 从多视图图像预测未来稠密点图与几何特征，再让轨迹头读取预测几何，在 NAVSIM v2 达到 90.2 EPDMS。未来几何的独立贡献仍缺消融检验，真实闭环与公开实现也有待补齐。"
 }
 ---
 
@@ -142,7 +142,7 @@ navtest 的综合提升伴随 EC 增加 9.8 分、EP 减少 0.9 分，不能概�
 
 尤其 DVGT-2 原文 NAVSIM 专用模型采用 4 帧、8 视角与扩散轨迹头，而 GeoWAM 为 3 帧、8 视角与直接回归。把二者称为“完全匹配、只多一个世界模型”的对照不准确。[DVGT-2 §4.2](https://arxiv.org/html/2604.00813v1#S4.SS2)
 
-没有种子方差、置信区间、动态对象独立误差、confidence 校准或失败分层结果。几何预训练含 nuScenes，评估用其 validation，但未列各数据集 split/token 清单；这不是已经发现泄漏，而是无法仅凭全文独立审计隔离边界。教师点图的模型版本与筛选细节也影响误差解释。
+论文未报告种子方差、置信区间、动态对象独立误差、confidence 校准或失败分层结果。几何预训练包含 nuScenes，评估使用其 validation，但各数据集的 split/token 清单尚未列出，独立审计数据隔离还缺这些材料；目前没有据此认定发生泄漏。教师点图的模型版本与筛选细节也会影响误差解释。
 
 ## 应用场景与启发
 

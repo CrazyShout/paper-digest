@@ -20,7 +20,7 @@
     "Key Laboratory of System Control and Information Processing, Ministry of Education of China",
     "Global College, Shanghai Jiao Tong University"
   ],
-  "comment": "VRS 用车端 LiDAR 数据合成带标注的路侧 LiDAR 数据，针对真实 roadside 数据稀缺和跨视角 domain gap 做补全、可见性约束和 novel view synthesis。"
+  "comment": "VRS 用车端 LiDAR 数据合成带标注的路侧 LiDAR 数据，通过补全、可见性约束和新视角合成，缓解路侧训练数据稀缺与跨视角差异。"
 }
 ---
 
@@ -96,7 +96,7 @@ Fig. 8 对车辆补全、动态目标去除、位姿对齐、丢线和占据约�
 
 ## 应用场景与启发
 
-适合把已有标注车载序列转成路侧检测预训练数据。报告判断：强制拒绝无观测支撑的背景，比让神经场任意补出几何更可控；但拒绝也会降低覆盖，需同时检查有效回波比例与检测召回。
+适合把已有标注车载序列转成路侧检测预训练数据。对无观测支撑的背景强制丢线，可以限制神经场的外推范围；但拒绝也会降低覆盖，需同时检查有效回波比例与检测召回。
 
 ## 局限与阅读风险
 

@@ -7,7 +7,7 @@
   "source": "arXiv:2605.28544 / https://arxiv.org/abs/2605.28544",
   "authors": ["Chen Shi", "Jinrui Xu", "Shaoshuai Shi", "Kehua Sheng", "Bo Zhang", "Li Jiang"],
   "affiliations": ["The Chinese University of Hong Kong, Shenzhen", "Voyager Research, Didi Chuxing"],
-  "comment": "DriveWAM 把预训练视频生成模型改造成 video-action policy，用视频动态先验、VLM guidance 和 selective KV memory 支撑长时域 world-action 建模。"
+  "comment": "DriveWAM 将预训练视频生成模型改造成驾驶策略，先预测未来视频表征，再生成动作，并用 VLM 语义指引和选择性 KV 记忆处理历史。长时资源剖析与轨迹精度采用不同片段长度，需分别解读。"
 }
 ---
 

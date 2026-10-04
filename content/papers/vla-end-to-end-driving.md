@@ -20,7 +20,7 @@
     "Technical University of Munich (TUM)",
     "Ludwig Maximilian University of Munich (LMU Munich)"
   ],
-  "comment": "OpenDriveVLA 基于开源大视觉语言模型构建 VLA 模型，通过层级对齐实现视觉、语言和驾驶动作的统一训练，在 AAAI 2026 发表。"
+  "comment": "OpenDriveVLA 将实例视觉 token 接到语言模型，通过层级对齐、驾驶问答和运动任务分阶段学习轨迹输出，在 AAAI 2026 发表。"
 }
 ---
 
@@ -38,7 +38,7 @@ OpenDriveVLA 将经 3D 感知预训练的场景、目标和地图 token 接入 Q
 
 ResNet-101/FPN 提取多视图特征，BEVFormer 得到 200×200 BEV；SceneSampler 从二维特征池化全局场景，TrackQFormer 与 MapQFormer 从 BEV 提取目标和地图 token。视觉模块先按 UniAD 做检测、跟踪和全景地图分割预训练。
 
-Stage 1 用 536k  caption 对齐：分别以双层 MLP 投影三类 token，目标 caption 还包含 BEV 坐标；只训练 projector，冻结视觉与 LLM。Stage 2 用 566k 驾驶 QA 训练 projector 与 LLM。Stage 2.5 用 459k 他车运动样本，条件于场景、地图、自车状态和被查询目标，学习未来轨迹，视觉继续冻结。Stage 3 用约 28k 自车样本联合调节 BEV/query 模块、projector 和 LLM，但二维骨干冻结。所谓交互建模主要是条件预测辅助任务，没有显式博弈求解器。
+Stage 1 用 536k  caption 对齐：分别以双层 MLP 投影三类 token，目标 caption 还包含 BEV 坐标；只训练 projector，冻结视觉与 LLM。Stage 2 用 566k 驾驶 QA 训练 projector 与 LLM。Stage 2.5 用 459k 他车运动样本，条件于场景、地图、自车状态和被查询目标，学习未来轨迹，视觉继续冻结。Stage 3 用约 28k 自车样本联合调节 BEV/query 模块、projector 和 LLM，但二维骨干冻结。交互建模通过条件预测辅助任务实现，尚未引入显式博弈求解器。
 
 ### 轨迹是文本序列
 
@@ -49,7 +49,7 @@ p(W\mid C)=\prod_{t=1}^{6}p(w_t\mid w_{<t},C),\qquad
 C=(V_{\mathrm{env}},S_{\mathrm{ego}},X_{\mathrm{command}}).
 $$
 
-$V$ 为视觉 token，$S$ 包含自车状态与过去 2 s 轨迹；他车预测阶段另指定目标 token。实际一个坐标需多个文本 token，这不是六个单步控制码。推理 temperature=0，默认不展开显式 CoT；QA 训练灌输推理模式，不能当成在线推导的安全保证。轨迹解析后没有本文验证过的控制器或硬动力学约束。
+$V$ 为视觉 token，$S$ 包含自车状态与过去 2 s 轨迹；他车预测阶段另指定目标 token。实际一个坐标需多个文本 token，这不是六个单步控制码。推理 temperature=0，默认不展开显式 CoT；QA 训练提供推理模式的监督，在线行为的安全性仍需另行评估。轨迹解析后没有本文验证过的控制器或硬动力学约束。
 
 ### 与两项原始方法对照
 
@@ -88,13 +88,13 @@ nuScenes 使用标准 train/val；推理效率测 6019 个验证样本。表 I �
 
 ## 应用场景与启发
 
-适合作为实例 token 与语言动作结合的基线。报告判断：最值得验证的是他车预测预训练是否改善真正交互，而不仅让解码器更熟悉坐标文本；这需要同预算训练与后续闭环，不能靠更改测试指令证明训练机制。
+可将它作为实例 token 与语言动作结合的基线。值得进一步区分的是，他车预测预训练改善了交互理解，还是主要让解码器熟悉坐标文本；这需要同预算训练对照和后续闭环评估，更改测试指令只能检查推理响应。
 
 ## 局限与阅读风险
 
 0.5B 训练报道为 4 H100、约两天，四阶段各一 epoch，视觉预训练开销未单独列。单 A100 bf16 的 0.5B/3B/7B 时延为 1.36/1.85/1.74 s，最大显存报告 1.56/7.35/17.15 GB；处理边界和缓存开销未充分分拆，不能作为部署显存保证，也不满足通常的高频控制需求。
 
-没有闭环验证或多 seeds 显著性，补充定性例子还承认相机方位描述错误、预测转向不合理。3D token 不能消除幻觉，文本解析成功也不等于物理可行。
+闭环表现和跨 seeds 的稳定性尚未验证，补充定性例子还出现相机方位描述错误、预测转向不合理。使用 3D token 后仍有这些错误，解析出的轨迹也需检查物理可行性。
 
 [官方仓库](https://github.com/DriveVLA/OpenDriveVLA)已公开模型／推理代码、nuScenes/CAN bus/地图及 GT 缓存准备说明；[0.5B 权重](https://huggingface.co/OpenDriveVLA/OpenDriveVLA-0.5B)公开列有约 1.47 GB safetensors 和 tokenizer/config，但模型访问需登录并接受作者的 gated-access 条件（含联系方式共享）；2026-09-12 仅检查公开文件目录，未代为接受条件或下载执行。当前未见完整四阶段训练脚本、全部对齐数据或 3B/7B 发布权重，原始公开组件不能替代这些缺口。
 

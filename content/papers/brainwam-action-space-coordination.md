@@ -7,7 +7,7 @@
   "source": "arXiv:2608.12854 / https://arxiv.org/abs/2608.12854 / HTML (v1 figures): https://arxiv.org/html/2608.12854v1",
   "authors": ["Bing Zhan", "Shuyao Shang", "Shuo Lu", "Yuan Xu", "Zhao Wang", "Yida Wang", "Xueyang Zhang", "Kun Zhan", "Jiahao Gu"],
   "affiliations": ["National Laboratory of Pattern Recognition, Institute of Automation, Chinese Academy of Sciences", "Li Auto Inc."],
-  "comment": "BrainWAM 发现把 VLM、视频生成和 action token 全部塞进同一注意力池会让语义捷径压制预测动力学，于是保留 VLA/WAM 两条专门通路，只在 action 表征上双向协调。其 NAVSIM v1/v2 得分为 89.5/89.6，但推理仍需 475-644 ms。"
+  "comment": "BrainWAM 保留 VLA/WAM 两条专门通路，在动作表征上双向协调；作者依据内部对照，将直接混合 VLM、视频和 action token 的退步解释为语义捷径压制预测动力学。其 NAVSIM v1/v2 得分为 89.5/89.6，推理仍需 475-644 ms。"
 }
 ---
 
@@ -41,7 +41,7 @@ Tri-MoT 是本文内部对照；其结果说明这一具体融合实现不理想
 
 ### 输入输出与流程
 
-WAM 分支由 Wan2.2-TI2V-5B 和动作专家组成：当前观测条件化视频 latent 去噪，视频 token 与动作 token 通过 Dual-MoT 的共享自注意力交互，各模态保留自己的前馈层。VLA 分支由 Qwen3-VL-4B 和另一动作专家组成，将多视角图像、驾驶指令、自车历史编码为语义与状态 token，条件化同一条噪声轨迹。正文未列出实际使用的相机数量、图像分辨率和历史帧长度，本报告不替它补齐。[原文 §3.1–3.2](https://arxiv.org/html/2608.12854v2#S3.SS1)
+WAM 分支由 Wan2.2-TI2V-5B 和动作专家组成：当前观测条件化视频 latent 去噪，视频 token 与动作 token 通过 Dual-MoT 的共享自注意力交互，各模态保留自己的前馈层。VLA 分支由 Qwen3-VL-4B 和另一动作专家组成，将多视角图像、驾驶指令、自车历史编码为语义与状态 token，条件化同一条噪声轨迹。实际相机数量、图像分辨率和历史帧长度未在正文列出，完整输入配置仍待核实。[原文 §3.1–3.2](https://arxiv.org/html/2608.12854v2#S3.SS1)
 
 两个分支各形成八个、每个 1024 维的动作 token。CAB（Callosal Action Bridge）放在动作专家的第 9 和 18 层，用两个方向的 cross-attention 交换动作信息；零初始化的残差门控使联合训练起点接近原本的两个专家。末端 CIF（Cerebellar Intent Fusion）将两组 token 分别投影、加入来源嵌入，串成 16 个 token，经两层 Transformer 后拆回两组并逐元素平均，最后解码动作速度场。[附录 B–C](https://arxiv.org/html/2608.12854v2#A2)
 
