@@ -32,9 +32,9 @@ const updatedLabel = new Intl.DateTimeFormat("zh-CN", {
   timeZone: "Asia/Shanghai"
 }).format(new Date(`${center.updatedAt}T00:00:00+08:00`));
 const toc = [
-  { depth: 2, title: "综述方法", url: "#reviewMethodTitle" },
   { depth: 2, title: "方向综述", url: "#reviewDirectionsTitle" },
-  { depth: 2, title: "观察题", url: "#reviewWatchTitle" }
+  { depth: 2, title: "继续关注", url: "#reviewWatchTitle" },
+  { depth: 2, title: "编写与检索说明", url: "#reviewMethodTitle" }
 ];
 ---
 
@@ -49,7 +49,7 @@ const toc = [
     params={Astro.params}
     title={center.title}
     description={center.summary}
-    eyebrow={`Survey Center · 更新于 ${updatedLabel}`}
+    eyebrow={`方向综述 · 更新于 ${updatedLabel}`}
     toc={toc}
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     homeUrl={notebook.base}
@@ -76,61 +76,10 @@ const toc = [
         </div>
       </dl>
 
-      <section class="review-index-intro" aria-labelledby="reviewMethodTitle">
-        <header class="idea-section-head">
-          <div>
-            <p class="eyebrow">Editorial Method</p>
-            <h2 id="reviewMethodTitle">从论文清单走向问题地图</h2>
-          </div>
-          <p>
-            每篇方向综述同时覆盖本库已经深读的论文与尚未进入简报的重要工作，围绕概念边界、技术演化、方法谱系、评测协议和开放问题组织叙事。
-          </p>
-        </header>
-
-        {sampleSurvey.title && (
-          <article class="review-sample-survey">
-            <p class="eyebrow">Writing Model</p>
-            <h3>
-              <a href={sampleSurvey.url} target="_blank" rel="noopener noreferrer">
-                {sampleSurvey.title} <span aria-hidden="true">↗</span>
-              </a>
-            </h3>
-            <p>{[sampleAuthors, sampleSurvey.venue, sampleSurvey.year].filter(Boolean).join(" · ")}</p>
-            {Number.isFinite(citationSnapshot.count) && (
-              <dl class="doc-meta-grid">
-                <div>
-                  <dt>引用快照</dt>
-                  <dd>{citationSnapshot.count.toLocaleString("zh-CN")} 次</dd>
-                </div>
-                <div>
-                  <dt>查询来源</dt>
-                  <dd>{citationSnapshot.provider}</dd>
-                </div>
-                <div>
-                  <dt>查询日期</dt>
-                  <dd>{citationSnapshot.checkedAt}</dd>
-                </div>
-              </dl>
-            )}
-            {citationSnapshot.note && <p>{citationSnapshot.note}</p>}
-          </article>
-        )}
-
-        {Array.isArray(writingModel.principles) && writingModel.principles.length > 0 && (
-          <section class="review-writing-principles">
-            <h3>借鉴的组织原则</h3>
-            <ol>
-              {writingModel.principles.map((principle) => <li>{principle}</li>)}
-            </ol>
-          </section>
-        )}
-      </section>
-
       <section class="review-index-directions" aria-labelledby="reviewDirectionsTitle">
         <header class="idea-section-head">
           <div>
-            <p class="eyebrow">Directions</p>
-            <h2 id="reviewDirectionsTitle">{directions.length} 条持续更新的研究主线</h2>
+            <h2 id="reviewDirectionsTitle">{directions.length} 个研究方向</h2>
           </div>
           <p>每份综述都有独立地址，可直接分享并跳转到具体章节和参考文献。</p>
         </header>
@@ -186,10 +135,9 @@ const toc = [
       <section class="review-index-watch" aria-labelledby="reviewWatchTitle">
         <header class="idea-section-head">
           <div>
-            <p class="eyebrow">Watch List</p>
-            <h2 id="reviewWatchTitle">尚未升格的观察题</h2>
+            <h2 id="reviewWatchTitle">继续关注的问题</h2>
           </div>
-          <p>只有形成独立方法谱系和稳定证据链后，观察题才会成为新的正式方向。</p>
+          <p>这些问题目前随相邻方向跟踪，文献积累充分后再单独整理。</p>
         </header>
         <div class="review-watch-list">
           {watchTopics.map((topic) => (
@@ -200,6 +148,48 @@ const toc = [
           ))}
         </div>
       </section>
+      <details class="reading-disclosure review-index-intro">
+        <summary id="reviewMethodTitle">编写与检索说明</summary>
+        <p>综述按研究问题、方法和实验组织，包含本站报告及相关原始论文。每个方向单独记录来源、检索范围与复核日期。</p>
+
+        {sampleSurvey.title && (
+          <article class="review-sample-survey">
+            <h3>
+              <a href={sampleSurvey.url} target="_blank" rel="noopener noreferrer">
+                {sampleSurvey.title} <span aria-hidden="true">↗</span>
+              </a>
+            </h3>
+            <p>{[sampleAuthors, sampleSurvey.venue, sampleSurvey.year].filter(Boolean).join(" · ")}</p>
+            {Number.isFinite(citationSnapshot.count) && (
+              <dl class="doc-meta-grid">
+                <div>
+                  <dt>引用快照</dt>
+                  <dd>{citationSnapshot.count.toLocaleString("zh-CN")} 次</dd>
+                </div>
+                <div>
+                  <dt>查询来源</dt>
+                  <dd>{citationSnapshot.provider}</dd>
+                </div>
+                <div>
+                  <dt>查询日期</dt>
+                  <dd>{citationSnapshot.checkedAt}</dd>
+                </div>
+              </dl>
+            )}
+            {citationSnapshot.note && <p>{citationSnapshot.note}</p>}
+          </article>
+        )}
+
+        {Array.isArray(writingModel.principles) && writingModel.principles.length > 0 && (
+          <section class="review-writing-principles">
+            <h3>借鉴的组织原则</h3>
+            <ol>
+              {writingModel.principles.map((principle) => <li>{principle}</li>)}
+            </ol>
+          </section>
+        )}
+      </details>
+
     </div>
   </NotebookDocs>
 </BaseLayout>

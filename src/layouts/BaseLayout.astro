@@ -34,5 +34,20 @@ const metaDescription = String(description).replace(/\s+/g, " ").trim().slice(0,
 </head>
 <body class="min-h-screen bg-fd-background text-fd-foreground">
   <slot />
+  <script>
+    import { readingPrintState, revealReadingFragment } from "../lib/reading-disclosures.js";
+
+    function revealFragment() {
+      const target = revealReadingFragment(document, location.hash);
+      if (target) requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+    }
+    window.addEventListener("hashchange", revealFragment);
+    window.addEventListener("load", revealFragment);
+    revealFragment();
+
+    const printing = readingPrintState(document);
+    window.addEventListener("beforeprint", printing.before);
+    window.addEventListener("afterprint", printing.after);
+  </script>
 </body>
 </html>

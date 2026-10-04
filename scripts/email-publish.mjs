@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { getDigests, getIdeaCenter, getReviewCenter } from "../src/lib/content.js";
 import { ideaArtifactSnapshotFingerprint } from "../src/lib/idea-fingerprint.js";
 import { reviewCenterFingerprint } from "../src/lib/review-fingerprint.js";
+import { digestPaperGroups } from "../src/lib/digest-reading.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
@@ -272,10 +273,7 @@ async function loadFeishuLink(digestId) {
 }
 
 function collectPapersByDirection(digest) {
-  return digest.tags.map((tag) => ({
-    tag,
-    papers: digest.papers.filter((paper) => paper.tags.includes(tag.id))
-  }));
+  return digestPaperGroups(digest).filter((group) => group.papers.length > 0);
 }
 
 function buildEmailSubject(digestId, digest, options = {}) {
@@ -287,18 +285,18 @@ function buildWelcomeText() {
   return [
     "欢迎加入 Paper Digest。",
     "",
-    "这是面向课题组论文跟踪、周报阅读和科研方向判断的静态知识库，重点是高质量筛选、证据化整理和跨期检索，不提供 AI 问答。",
+    "Paper Digest 整理自动驾驶与三维感知论文，提供定期简报、单篇报告和方向综述。",
     "",
     "主要功能：",
     "- 每期周报给出本期判断、筛选口径、应用场景与讨论线索。",
     "- 每篇论文都有独立详细报告，包含问题、方法、关键图、量化证据、局限和可借鉴方向。",
-    "- 首页汇总全库趋势、热点和各研究方向的可行切入点；Idea 中心用于查看候选课题、证据和可行性判断。",
+    "- 首页列出最新一期论文，研究态势页整理跨论文的发现，Idea 中心保留候选问题和评审意见。",
     "- 搜索支持论文标题、作者、单位和关键词；网页端与飞书知识库可以按个人方向自由阅读。",
     "",
     "建议用法：",
-    "1. 先看本期判断和方向标签，只选择与你当前研究相关的条目，不设统一阅读顺序。",
+    "1. 按研究方向选择感兴趣的论文。",
     "2. 对感兴趣的论文打开单篇报告，重点核对方法图、关键结果和局限，再决定是否阅读原文。",
-    "3. 需要回溯某个作者、机构或主题时使用首页搜索；需要找课题切口时再看研究态势和 Idea 中心。",
+    "3. 查找作者、机构或主题时使用搜索；了解相关工作和后续问题时查看方向综述与 Idea 中心。",
     "",
     "下面是最新一期周报。"
   ].join("\n");
@@ -308,19 +306,19 @@ function buildWelcomeHtml() {
   return `
     <section style="margin:0 0 28px;padding:0 0 24px;border-bottom:1px solid #dfe3e8;">
       <h2 style="margin:0 0 12px;">欢迎加入 Paper Digest</h2>
-      <p>这是面向课题组论文跟踪、周报阅读和科研方向判断的静态知识库，重点是高质量筛选、证据化整理和跨期检索，不提供 AI 问答。</p>
+      <p>Paper Digest 整理自动驾驶与三维感知论文，提供定期简报、单篇报告和方向综述。</p>
       <p><strong>主要功能</strong></p>
       <ul style="padding-left:20px;margin:8px 0 18px;">
         <li>每期周报给出本期判断、筛选口径、应用场景与讨论线索。</li>
         <li>每篇论文都有独立详细报告，包含问题、方法、关键图、量化证据、局限和可借鉴方向。</li>
-        <li>首页汇总全库趋势、热点和各研究方向的可行切入点；Idea 中心用于查看候选课题、证据和可行性判断。</li>
+        <li>首页列出最新一期论文，研究态势页整理跨论文的发现，Idea 中心保留候选问题和评审意见。</li>
         <li>搜索支持论文标题、作者、单位和关键词；网页端与飞书知识库可以按个人方向自由阅读。</li>
       </ul>
       <p><strong>建议用法</strong></p>
       <ol style="padding-left:20px;margin:8px 0 18px;">
-        <li>先看本期判断和方向标签，只选择与你当前研究相关的条目，不设统一阅读顺序。</li>
+        <li>按研究方向选择感兴趣的论文。</li>
         <li>对感兴趣的论文打开单篇报告，重点核对方法图、关键结果和局限，再决定是否阅读原文。</li>
-        <li>需要回溯某个作者、机构或主题时使用首页搜索；需要找课题切口时再看研究态势和 Idea 中心。</li>
+        <li>查找作者、机构或主题时使用搜索；了解相关工作和后续问题时查看方向综述与 Idea 中心。</li>
       </ol>
       <p style="margin-bottom:0;">下面是最新一期周报。</p>
     </section>
@@ -476,7 +474,7 @@ export async function verifyPublishedReviewCenter(center, currentSiteUrl, fetchI
 }
 
 export function buildReviewUpdateSubject(center) {
-  return `[Paper Digest] ${center.updatedAt} 动态综述中心完成新一轮更新`;
+  return `[Paper Digest] ${center.updatedAt} 综述中心更新`;
 }
 
 function reviewDirectionTitle(direction) {
@@ -491,12 +489,12 @@ export function buildReviewUpdateTextBody(center, currentSiteUrl) {
     "[Paper Digest] 动态综述中心更新",
     `更新日期：${center.updatedAt}`,
     "",
-    "综述中心刚完成一轮系统更新。这里不是一次性论文列表，而是一张持续更新的研究证据地图：新论文、正式版本、复现结果或反例出现后，各方向都会重新检索、核验并改写。",
+    "综述中心已更新。各方向整理了研究问题、主要方法和实验结果，并保留各自的来源与复核日期。",
     "",
-    "本轮更新重点：",
+    "阅读说明：",
     "- 每个方向同时覆盖奠基工作、正式发表论文、近期前沿和本库已报告论文。",
     "- 关键判断回到论文、标准、正式会议或项目页等一手来源核验。",
-    "- 每条参考文献明确写出它能支撑什么、不能证明什么，避免把预印本、离线指标和真实部署证据混为一谈。",
+    "- 参考文献注明支持的结论、实验条件和发表状态。",
     "- 每篇综述公开检索范围、来源覆盖、候选去重情况和仍待补足的证据。",
     "",
     `进入综述中心：${centerUrl}`,
@@ -511,7 +509,7 @@ export function buildReviewUpdateTextBody(center, currentSiteUrl) {
   }
 
   lines.push("");
-  lines.push("建议按自己的研究方向进入对应综述，不设统一阅读顺序。每个方向都保留问题边界、方法演进、证据冲突、可做切口和尚未解决的问题，后续会继续滚动更新。");
+  lines.push("可以按研究方向选读，遇到关心的方法或结果时沿引用查看原论文。");
   lines.push("");
   lines.push(`发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`);
   return lines.join("\n");
@@ -535,9 +533,9 @@ export function buildReviewUpdateHtmlBody(center, currentSiteUrl) {
   return `
     <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.65;color:#202b31;max-width:720px;margin:0 auto;">
       <p style="margin:0 0 8px;color:#667178;font-size:13px;">PAPER DIGEST · ${escapeText(center.updatedAt)}</p>
-      <h2 style="margin:0 0 14px;font-size:25px;">动态综述中心完成新一轮更新</h2>
-      <p>综述中心不是一次性论文列表，而是一张<strong>持续更新的研究证据地图</strong>：新论文、正式版本、复现结果或反例出现后，各方向都会重新检索、核验并改写。</p>
-      <p><strong>本轮更新重点</strong></p>
+      <h2 style="margin:0 0 14px;font-size:25px;">综述中心更新</h2>
+      <p>各方向整理了研究问题、主要方法和实验结果，并保留各自的来源与复核日期。</p>
+      <p><strong>阅读说明</strong></p>
       <ul style="padding-left:20px;margin:8px 0 22px;">
         <li>同时覆盖奠基工作、正式发表论文、近期前沿和本库已报告论文。</li>
         <li>关键判断回到论文、标准、正式会议或项目页等一手来源核验。</li>
@@ -549,7 +547,7 @@ export function buildReviewUpdateHtmlBody(center, currentSiteUrl) {
       </p>
       <h3 style="margin:0 0 12px;">当前 ${center.directions.length} 个研究方向</h3>
       <ul style="padding-left:20px;margin:0 0 24px;">${directionItems}</ul>
-      <p>建议按自己的研究方向进入对应综述，不设统一阅读顺序。每个方向都保留问题边界、方法演进、证据冲突、可做切口和尚未解决的问题，后续会继续滚动更新。</p>
+      <p>可以按研究方向选读，遇到关心的方法或结果时沿引用查看原论文。</p>
       <p style="font-size:12px;color:#78838a;">发送时间：${new Date().toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}</p>
     </div>
   `.trim();
@@ -746,7 +744,7 @@ export async function verifyPublishedIdeaCenter(center, currentSiteUrl, fetchImp
 }
 
 export function buildIdeaUpdateSubject(center) {
-  return `[Paper Digest] ${center.updatedAt} Idea 中心与阅读框架完成更新`;
+  return `[Paper Digest] ${center.updatedAt} Idea 中心更新`;
 }
 
 function ideaReviewResult(stats) {
@@ -755,29 +753,35 @@ function ideaReviewResult(stats) {
   return "全局终审状态待确认";
 }
 
+function ideaResultNote(stats) {
+  return stats.passedIdeas > 0
+    ? `当前有 ${stats.passedIdeas} 个候选通过全部评审，具体适用范围和后续验证见对应记录。`
+    : "当前尚无候选通过全部评审。页面保留了未通过的原因及继续验证所需的条件。";
+}
+
 export function buildIdeaUpdateTextBody(center, currentSiteUrl) {
   const stats = summarizeIdeaCenter(center);
   const centerUrl = getIdeaCenterUrl(currentSiteUrl);
   const scoreText = stats.globalScore === null ? "未记录" : `${stats.globalScore}/10`;
   const lines = [
-    "[Paper Digest] Idea 中心与网站阅读框架更新",
+    "[Paper Digest] Idea 中心更新",
     `更新日期：${center.updatedAt}`,
     "",
-    "本次更新把网站整理为更紧凑的 Notebook 文档结构，并重新审计了 Idea 中心的全部研究方向。目录、全站搜索、方向综述、简报和单篇论文报告现在使用统一的阅读框架。",
+    "Idea 中心已更新。页面按方向列出候选问题、现有证据、评审意见和下一步验证条件。各项结论以页面记录的评审状态与日期为准。",
     "",
-    "Idea 中心本轮变化：",
-    "- 不再只依据站内已总结论文：每个方向先判断问题意义，再检索站外顶级论文、正式版本、预印本、标准和公开资产。",
+    "阅读说明：",
+    "- 候选问题结合本站报告和原始论文、标准及公开资产分析。",
     "- 检索者、候选筛选者、档案作者和盲评者相互隔离；每个候选公开最近工作差分、证据、实现路径、决定性实验与淘汰理由。",
     "- 评分采用所有独立评审中的逐维最低分，不取平均；只有所有维度与总体分都达到 10/10 才算通过。",
     "- 未通过的候选也会保留，作为问题边界和下一轮实验依据，不包装成立项推荐。",
     "",
-    "本轮审计规模：",
+    "当前记录：",
     `- ${stats.directions} 个研究方向，${stats.queryRuns} 个查询运行`,
     `- ${stats.references} 条一手证据，${stats.assets} 个固定版本资产`,
     `- ${stats.candidates} 个去重候选，${stats.reviewedIdeas} 个进入独立盲评`,
     `- ${stats.passedIdeas} 个候选达到全维度满分；全局终审 ${scoreText}（${ideaReviewResult(stats)}）`,
     "",
-    "当前没有候选达到满分门槛。这不是空结果：页面明确给出了每个方向最有价值的剩余切口、最强反对意见，以及下一步必须先跑的零阶段实验。",
+    ideaResultNote(stats),
     "",
     `进入 Idea 中心：${centerUrl}`,
     "",
@@ -803,20 +807,20 @@ export function buildIdeaUpdateHtmlBody(center, currentSiteUrl) {
   return `
     <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;line-height:1.65;color:#202b31;max-width:720px;margin:0 auto;">
       <p style="margin:0 0 8px;color:#667178;font-size:13px;">PAPER DIGEST · ${escapeText(center.updatedAt)}</p>
-      <h2 style="margin:0 0 14px;font-size:25px;">Idea 中心与网站阅读框架完成更新</h2>
-      <p>本次更新把网站整理为更紧凑的 <strong>Notebook 文档结构</strong>，并重新审计了 Idea 中心的全部研究方向。目录、全站搜索、方向综述、简报和单篇论文报告现在使用统一的阅读框架。</p>
-      <h3 style="margin:22px 0 10px;">Idea 中心本轮变化</h3>
+      <h2 style="margin:0 0 14px;font-size:25px;">Idea 中心更新</h2>
+      <p>页面按方向列出候选问题、现有证据、评审意见和下一步验证条件。各项结论以记录的评审状态与日期为准。</p>
+      <h3 style="margin:22px 0 10px;">阅读说明</h3>
       <ul style="padding-left:20px;margin:8px 0 20px;">
-        <li>每个方向从问题意义出发，检索站外顶级论文、正式版本、预印本、标准和公开资产。</li>
+        <li>候选问题结合本站报告和原始论文、标准及公开资产分析。</li>
         <li>检索、筛选、档案写作和盲评相互隔离，公开最近工作差分、证据、实现路径、决定性实验与淘汰理由。</li>
         <li>采用所有独立评审中的逐维最低分；只有所有维度与总体分都达到 10/10 才算通过。</li>
         <li>未通过候选继续保留为问题边界和下一轮实验依据，不包装成立项推荐。</li>
       </ul>
-      <h3 style="margin:22px 0 10px;">本轮审计规模</h3>
+      <h3 style="margin:22px 0 10px;">当前记录</h3>
       <p>${stats.directions} 个方向 · ${stats.queryRuns} 个查询运行 · ${stats.references} 条一手证据 · ${stats.assets} 个固定版本资产</p>
       <p>${stats.candidates} 个去重候选 · ${stats.reviewedIdeas} 个进入独立盲评 · ${stats.passedIdeas} 个全维度满分通过</p>
       <p><strong>全局终审：</strong>${escapeText(scoreText)}（${escapeText(ideaReviewResult(stats))}）</p>
-      <p>当前没有候选达到满分门槛。页面明确给出了每个方向最有价值的剩余切口、最强反对意见，以及下一步必须先跑的零阶段实验。</p>
+      <p>${escapeText(ideaResultNote(stats))}</p>
       <p style="margin:22px 0 24px;">
         <a href="${escapeAttr(centerUrl)}" style="display:inline-block;padding:10px 16px;background:#175b69;color:#fff;text-decoration:none;border-radius:4px;">进入 Idea 中心</a>
       </p>

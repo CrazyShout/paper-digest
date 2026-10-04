@@ -1,95 +1,88 @@
 ---
 import { routeUrl } from "../lib/navigation.js";
+import { digestPaperGroups, digestReadingSections } from "../lib/digest-reading.js";
+import { sourceDisplayLabel } from "../lib/reading-ui.js";
 
 const {
   digest,
   basePath = "/",
-  bodyHtml = digest.bodyHtml,
+  reading = digestReadingSections(digest.body),
+  groups = digestPaperGroups(digest),
   headingLevel = 2,
   showHeader = true
 } = Astro.props;
-
 const Heading = `h${Math.min(6, Math.max(2, Number(headingLevel) || 2))}`;
 ---
 
 <section class="digest-content" id="digestArticle" aria-label={`${digest.title} 简报`}>
   {showHeader && (
     <header class="digest-intro">
-      <div class="paper-tag-list" aria-label="本期研究方向">
-        {digest.tags.map((tag) => (
-          <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
-        ))}
-      </div>
-      <dl class="doc-meta-grid" aria-label="本期简报统计">
-        <div>
-          <dt>收录论文</dt>
-          <dd>{digest.papers.length}</dd>
-        </div>
-        <div>
-          <dt>研究方向</dt>
-          <dd>{digest.tags.length}</dd>
-        </div>
-        <div>
-          <dt>发布日期</dt>
-          <dd>{digest.displayDate || digest.date}</dd>
-        </div>
+      <dl class="digest-meta-line" aria-label="本期简报统计">
+        <div><dt>日期</dt><dd>{digest.displayDate || digest.date}</dd></div>
+        <div><dt>论文</dt><dd>{digest.papers.length} 篇</dd></div>
+        <div><dt>方向</dt><dd>{digest.tags.length} 个</dd></div>
       </dl>
     </header>
   )}
 
-  {bodyHtml && <section class="digest-note" set:html={bodyHtml} />}
+  {reading.introHtml && <section class="digest-note digest-lead" set:html={reading.introHtml} />}
 
-  {digest.tags.map((tag) => {
-    const papers = digest.papers.filter((paper) => paper.tags.includes(tag.id));
-    return (
-      <section class="digest-section" id={`section-${tag.id}`} aria-labelledby={`title-${tag.id}`}>
-        <header>
-          <p class="eyebrow">{papers.length} 篇论文</p>
-          <Heading id={`title-${tag.id}`}>{tag.label}</Heading>
-          <p>{tag.description}</p>
-        </header>
+  <nav class="digest-direction-links" aria-label="按方向选读">
+    {groups.map(({ tag }) => <a href={`#section-${tag.id}`}>{tag.label}</a>)}
+  </nav>
+
+  {groups.map(({ tag, papers, related }) => (
+    <section class="digest-section" id={`section-${tag.id}`} aria-labelledby={`title-${tag.id}`}>
+      <header>
+        <Heading id={`title-${tag.id}`}>{tag.label}</Heading>
+        <p class="digest-section-count">
+          {papers.length > 0 ? `${papers.length} 篇` : "相关论文"}
+          {related.length > 0 && papers.length > 0 ? ` · 另有 ${related.length} 篇交叉阅读` : ""}
+          <a href={routeUrl(basePath, `reviews/${tag.id}`)}>方向综述 <span aria-hidden="true">↗</span></a>
+        </p>
+      </header>
+      {papers.length > 0 && (
         <div class="paper-list">
           {papers.map((paper) => (
-            <article class="paper-card" style={`--tag-color: ${tag.color}`}>
-              <div class="paper-tag-list">
-                {digest.tags
-                  .filter((tagItem) => paper.tags.includes(tagItem.id))
-                  .map((tagItem) => (
-                    <span class="paper-tag" style={`--tag-color: ${tagItem.color}`}>
-                      {tagItem.label}
-                    </span>
-                  ))}
-              </div>
-              <h3>
-                <a href={routeUrl(basePath, `papers/${paper.id}`)}>{paper.title}</a>
-              </h3>
+            <article class="paper-card" id={`paper-${paper.id}`}>
+              <h3><a href={routeUrl(basePath, `papers/${paper.id}`)}>{paper.title}</a></h3>
               <p class="paper-comment">{paper.comment}</p>
-              <div class="paper-meta">
-                <span>
-                  <strong>来源：</strong>
-                  {paper.sourceLinks?.length ? (
-                    <span class="paper-source-links">
-                      {paper.sourceLinks.map((link) => (
-                        <a href={link.url} target="_blank" rel="noopener noreferrer">
-                          {link.label} <span aria-hidden="true">↗</span>
-                        </a>
-                      ))}
-                    </span>
-                  ) : paper.source}
-                </span>
-                <span><strong>作者：</strong>{paper.authors.join(", ")}</span>
-                <span><strong>单位：</strong>{paper.affiliations.join("; ")}</span>
+              <div class="paper-card-links">
+                <a href={routeUrl(basePath, `papers/${paper.id}`)}>阅读全文 <span aria-hidden="true">→</span></a>
+                {paper.sourceLinks?.map((link) => (
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {sourceDisplayLabel(link)} <span aria-hidden="true">↗</span>
+                  </a>
+                ))}
               </div>
-              <div class="paper-card-footer">
-                <span></span>
-                <a href={routeUrl(basePath, `papers/${paper.id}`)}>
-                  阅读详细报告 <span aria-hidden="true">→</span>
-                </a>
-              </div>
+              <details class="paper-card-details">
+                <summary>作者与单位</summary>
+                <dl class="paper-meta">
+                  <div><dt>作者</dt><dd>{paper.authors.join(", ")}</dd></div>
+                  <div><dt>单位</dt><dd>{paper.affiliations.join("; ")}</dd></div>
+                </dl>
+              </details>
             </article>
           ))}
         </div>
-      </section>
-    );
-  })}
+      )}
+      {related.length > 0 && (
+        <ul class="digest-related-list" aria-label={`${tag.label}交叉阅读`}>
+          {related.map((paper) => <li><a href={`#paper-${paper.id}`}>{paper.title}</a><span>跳到本期条目 →</span></li>)}
+        </ul>
+      )}
+    </section>
+  ))}
+
+  {reading.discussion.length > 0 && (
+    <section class="digest-supplement" aria-label="延伸讨论">
+      {reading.discussion.map((section) => <div class="digest-note" set:html={section.html} />)}
+    </section>
+  )}
+  {reading.provenance.length > 0 && (
+    <details class="reading-disclosure digest-provenance" id="digest-provenance">
+      <summary>检索与来源说明</summary>
+      {reading.provenance.map((section) => <div class="digest-note" set:html={section.html} />)}
+    </details>
+  )}
 </section>

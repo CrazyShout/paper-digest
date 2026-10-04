@@ -66,9 +66,9 @@ const globalReviewScores = record(globalReview?.scores);
 const ideaCenterFingerprint = ideaArtifactSnapshotFingerprint(center);
 const updatedLabel = formatDate(center.updatedAt);
 const toc = [
-  { depth: 2, title: "探索工作流", url: "#workflowTitle" },
+  { depth: 2, title: "各方向候选", url: "#workspaceTitle" },
   ...(globalReview ? [{ depth: 2, title: "全局终审", url: "#globalReviewTitle" }] : []),
-  { depth: 2, title: "方向审计", url: "#workspaceTitle" }
+  { depth: 2, title: "检索与评审方法", url: "#workflowTitle" }
 ];
 const dimensionLabels = new Map(
   scoringDimensions.map((dimension) => [dimension.id, dimension.label])
@@ -99,7 +99,7 @@ function auditMetric(pool, key) {
     params={Astro.params}
     title={center.title || "Idea 中心"}
     description={center.summary || "研究方向、候选证据与独立评审记录。"}
-    eyebrow={`Idea Center · 更新于 ${updatedLabel}`}
+    eyebrow={`研究想法 · 更新于 ${updatedLabel}`}
     toc={toc}
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     homeUrl={notebook.base}
@@ -122,110 +122,15 @@ function auditMetric(pool, key) {
         <dd>{reviewedIdeas.length}</dd>
       </div>
       <div>
-        <dt>全维度 10 分</dt>
+        <dt>通过全部评审</dt>
         <dd>{passedIdeas.length}</dd>
       </div>
     </dl>
 
-    <section class="idea-workflow" id="workflow" aria-labelledby="workflowTitle">
-      <header class="idea-section-head">
-        <div>
-          <p class="eyebrow">Research Funnel</p>
-          <h2 id="workflowTitle">从问题证据到可证伪课题</h2>
-        </div>
-        <p>{workflow.principle}</p>
-      </header>
-
-      <ol class="workflow-steps">
-        {workflowSteps.map((step) => (
-          <li>
-            <span class="workflow-number">{step.number}</span>
-            <div>
-              <h3>{step.title}</h3>
-              <p>{step.question}</p>
-            </div>
-            <div class="workflow-output">
-              <strong>产出</strong>
-              <p>{step.deliverable}</p>
-            </div>
-            <div class="workflow-stop">
-              <strong>停止条件</strong>
-              <p>{step.failAction}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-
-      <div class="workflow-gates">
-        <div class="workflow-gates-copy">
-          <p class="eyebrow">Release Rule</p>
-          <h3>评审与生成严格分离</h3>
-          <p>{workflow.releaseRule || "检索者不评分；每位盲评者独立复核一手证据，任何实质性缺口都会阻止候选进入通过列表。"}</p>
-        </div>
-        <ul class="workflow-rule-list">
-          {releaseRules.map((item) => <li>{item}</li>)}
-        </ul>
-      </div>
-
-      <details class="workflow-policy">
-        <summary>查看检索政策与全局停止规则</summary>
-        <div>
-          <section>
-            <h3>检索边界</h3>
-            <p><strong>本站角色：</strong>{searchPolicy.localCorpusRole || "未记录"}</p>
-            <p><strong>时间窗口：</strong>{searchPolicy.dateWindow || "未记录"}</p>
-            <ul>{list(searchPolicy.sourcePriority).map((item) => <li>{item}</li>)}</ul>
-          </section>
-          <section>
-            <h3>查询扩展</h3>
-            <ul>{list(searchPolicy.queryExpansion).map((item) => <li>{item}</li>)}</ul>
-          </section>
-          <section>
-            <h3>全局停止规则</h3>
-            <ul>{stopRules.map((item) => <li>{item}</li>)}</ul>
-          </section>
-        </div>
-      </details>
-    </section>
-
-    {globalReview && (
-      <section class="idea-global-review" id="global-review" aria-labelledby="globalReviewTitle">
-        <header class="idea-section-head">
-          <div>
-            <p class="eyebrow">Independent Final Review</p>
-            <h2 id="globalReviewTitle">全局终审 · {resultLabel(globalReview.status)}</h2>
-          </div>
-          <strong class={`idea-global-score is-${globalReview.status}`}>
-            {globalReview.overall}<span>/10</span>
-          </strong>
-        </header>
-        <p>{globalReview.summary}</p>
-        <dl class="idea-global-dimensions">
-          {Object.entries(globalReviewScores).map(([id, score]) => (
-            <div>
-              <dt>{dimensionLabels.get(id) || id}</dt>
-              <dd>{score}/10</dd>
-            </div>
-          ))}
-        </dl>
-        <div class="idea-global-decision">
-          <section>
-            <h3>最强反对意见</h3>
-            <p>{globalReview.strongestObjection}</p>
-          </section>
-          <section>
-            <h3>下一轮必须补齐</h3>
-            <p>{globalReview.requiredAction}</p>
-          </section>
-        </div>
-      </section>
-    )}
-
     <section class="idea-workspace" id="workspace" aria-labelledby="workspaceTitle">
       <aside class="idea-direction-rail">
         <div>
-          <p class="eyebrow">Directions</p>
-          <h2 id="workspaceTitle">方向审计</h2>
+          <h2 id="workspaceTitle">各方向候选</h2>
         </div>
         <div class="idea-direction-tabs" role="tablist" aria-label="研究方向">
           {directionGroups.map((group) => (
@@ -243,13 +148,13 @@ function auditMetric(pool, key) {
                   style={`--direction-color: ${direction.color}`}
                 >
                   <span>{direction.label}</span>
-                  <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待深挖"}</small>
+                  <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待整理"}</small>
                 </button>
               ))}
             </div>
           ))}
         </div>
-        <p class="idea-direction-note">“进入盲评”不等于推荐立项。候选的真实最低分、反对意见和淘汰记录均保留在下方。</p>
+        <p class="idea-direction-note">各候选保留当前评审结果、主要问题和后续验证条件。</p>
       </aside>
 
       <div class="idea-direction-panels">
@@ -265,7 +170,7 @@ function auditMetric(pool, key) {
             {exploredStatuses.has(direction.status) ? (
               <>
                 <header class="idea-direction-head" style={`--direction-color: ${direction.color}`}>
-                  <p class="eyebrow">Direction Audit · {auditDate(direction.candidatePool?.searchedAt)}</p>
+                  <p class="eyebrow">检索于 {auditDate(direction.candidatePool?.searchedAt)}</p>
                   <h2>{direction.label}</h2>
                   <p class="idea-direction-subtitle">{direction.subtitle}</p>
                   <p>{direction.scope}</p>
@@ -273,7 +178,6 @@ function auditMetric(pool, key) {
 
                 <section class="exploration-verdict" aria-labelledby={`${direction.id}-verdict`}>
                   <div>
-                    <p class="eyebrow">Outcome</p>
                     <h3 id={`${direction.id}-verdict`}>本轮结论</h3>
                   </div>
                   <p>{direction.outcome?.summary || direction.explorationRun?.verdict}</p>
@@ -287,7 +191,7 @@ function auditMetric(pool, key) {
                     <div><dt>固定资产</dt><dd>{auditMetric(direction.candidatePool, "assets")}</dd></div>
                     <div><dt>生成候选</dt><dd>{auditMetric(direction.candidatePool, "candidates")}</dd></div>
                     <div><dt>进入盲评</dt><dd>{auditMetric(direction.candidatePool, "shortlisted")}</dd></div>
-                    <div><dt>全 10 通过</dt><dd>{direction.outcome?.passedCount || 0}</dd></div>
+                    <div><dt>通过全部评审</dt><dd>{direction.outcome?.passedCount || 0}</dd></div>
                   </dl>
                 )}
 
@@ -342,8 +246,7 @@ function auditMetric(pool, key) {
                 <section class="idea-ranked-list" aria-labelledby={`${direction.id}-ideas`}>
                   <header class="idea-subsection-head">
                     <div>
-                      <p class="eyebrow">Reviewed Candidates</p>
-                      <h3 id={`${direction.id}-ideas`}>进入独立盲评的研究档案</h3>
+                      <h3 id={`${direction.id}-ideas`}>候选问题与评审</h3>
                     </div>
                     <p>{scoring.disclaimer}</p>
                   </header>
@@ -427,17 +330,103 @@ function auditMetric(pool, key) {
               </>
             ) : (
               <section class="idea-direction-pending" style={`--direction-color: ${direction.color}`}>
-                <p class="eyebrow">Queued Direction</p>
                 <h2>{direction.label}</h2>
                 <p class="idea-direction-subtitle">{direction.subtitle}</p>
-                <p>该方向尚未完成独立的 Idea 候选审计与盲评，暂不展示未经验证的方案。</p>
-                <a href={`${import.meta.env.BASE_URL}reviews/${direction.id}/`}>阅读方向综述与待验证问题</a>
+                <p>该方向正在整理问题与文献，尚无完成独立评审的候选。</p>
+                <a href={`${import.meta.env.BASE_URL}reviews/${direction.id}/`}>阅读方向综述</a>
               </section>
             )}
           </section>
         ))}
       </div>
     </section>
+    {globalReview && (
+      <section class="idea-global-review" id="global-review" aria-labelledby="globalReviewTitle">
+        <header class="idea-section-head">
+          <div>
+            <h2 id="globalReviewTitle">全局终审 · {resultLabel(globalReview.status)}</h2>
+          </div>
+          <strong class={`idea-global-score is-${globalReview.status}`}>
+            {globalReview.overall}<span>/10</span>
+          </strong>
+        </header>
+        <p>{globalReview.summary}</p>
+        <dl class="idea-global-dimensions">
+          {Object.entries(globalReviewScores).map(([id, score]) => (
+            <div>
+              <dt>{dimensionLabels.get(id) || id}</dt>
+              <dd>{score}/10</dd>
+            </div>
+          ))}
+        </dl>
+        <div class="idea-global-decision">
+          <section>
+            <h3>最强反对意见</h3>
+            <p>{globalReview.strongestObjection}</p>
+          </section>
+          <section>
+            <h3>下一轮必须补齐</h3>
+            <p>{globalReview.requiredAction}</p>
+          </section>
+        </div>
+      </section>
+    )}
+
+    <details class="reading-disclosure idea-workflow" id="workflow">
+      <summary id="workflowTitle">候选如何检索与评审</summary>
+      <p>{workflow.principle}</p>
+
+      <ol class="workflow-steps">
+        {workflowSteps.map((step) => (
+          <li>
+            <span class="workflow-number">{step.number}</span>
+            <div>
+              <h3>{step.title}</h3>
+              <p>{step.question}</p>
+            </div>
+            <div class="workflow-output">
+              <strong>产出</strong>
+              <p>{step.deliverable}</p>
+            </div>
+            <div class="workflow-stop">
+              <strong>停止条件</strong>
+              <p>{step.failAction}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div class="workflow-gates">
+        <div class="workflow-gates-copy">
+          <h3>评审与生成严格分离</h3>
+          <p>{workflow.releaseRule || "检索者不评分；每位盲评者独立复核一手证据，任何实质性缺口都会阻止候选进入通过列表。"}</p>
+        </div>
+        <ul class="workflow-rule-list">
+          {releaseRules.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+
+      <details class="workflow-policy">
+        <summary>查看检索政策与全局停止规则</summary>
+        <div>
+          <section>
+            <h3>检索边界</h3>
+            <p><strong>本站角色：</strong>{searchPolicy.localCorpusRole || "未记录"}</p>
+            <p><strong>时间窗口：</strong>{searchPolicy.dateWindow || "未记录"}</p>
+            <ul>{list(searchPolicy.sourcePriority).map((item) => <li>{item}</li>)}</ul>
+          </section>
+          <section>
+            <h3>查询扩展</h3>
+            <ul>{list(searchPolicy.queryExpansion).map((item) => <li>{item}</li>)}</ul>
+          </section>
+          <section>
+            <h3>全局停止规则</h3>
+            <ul>{stopRules.map((item) => <li>{item}</li>)}</ul>
+          </section>
+        </div>
+      </details>
+    </details>
+
   </NotebookDocs>
 
   <script is:inline src="../assets/ideas.js"></script>

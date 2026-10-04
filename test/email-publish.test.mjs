@@ -120,7 +120,7 @@ test("welcome email introduces the system before the latest digest", () => {
   const html = buildHtmlBody(...args);
 
   assert.match(text, /欢迎加入 Paper Digest/);
-  assert.match(text, /不提供 AI 问答/);
+  assert.match(text, /提供定期简报、单篇报告和方向综述/);
   assert.ok(text.indexOf("欢迎加入 Paper Digest") < text.indexOf("[Paper Digest] 2026-07-25"));
   assert.match(html, /欢迎加入 Paper Digest/);
   assert.ok(html.indexOf("欢迎加入 Paper Digest") < html.indexOf("2026-07-25 Latest digest"));
@@ -152,11 +152,11 @@ test("review update email links every direction and explains continuous maintena
     getReviewCenterUrl(currentSiteUrl),
     "https://example.com/paper-digest/reviews/index.html"
   );
-  assert.match(buildReviewUpdateSubject(center), /2026-07-28.*动态综述中心/);
-  assert.match(text, /持续更新的研究证据地图/);
+  assert.match(buildReviewUpdateSubject(center), /2026-07-28.*综述中心/);
+  assert.match(text, /保留各自的来源与复核日期/);
   assert.match(text, /cooperative-autonomous-driving\/index\.html/);
   assert.match(text, /world-models\/index\.html/);
-  assert.match(html, /持续更新的研究证据地图/);
+  assert.match(html, /保留各自的来源与复核日期/);
   assert.match(html, /cooperative-autonomous-driving\/index\.html/);
   assert.match(html, /world-models\/index\.html/);
 });
@@ -352,8 +352,19 @@ test("idea update email reports audit scale and honest gate outcome", () => {
   assert.match(text, /逐维最低分/);
   assert.match(text, /0 个候选达到全维度满分/);
   assert.match(text, /未通过全局终审/);
-  assert.match(html, /Notebook 文档结构/);
+  assert.match(html, /候选问题、现有证据、评审意见/);
   assert.match(html, /0 个全维度满分通过/);
+});
+
+test("idea email summaries reflect accepted candidates instead of a hard-coded empty result", () => {
+  const center = sampleIdeaCenter();
+  center.directions[0].ideas[0].reviewStatus = "passed";
+  const text = buildIdeaUpdateTextBody(center, "https://example.com/paper-digest");
+  const html = buildIdeaUpdateHtmlBody(center, "https://example.com/paper-digest");
+  assert.match(text, /当前有 1 个候选通过全部评审/);
+  assert.match(html, /当前有 1 个候选通过全部评审/);
+  assert.doesNotMatch(text, /当前尚无候选/);
+  assert.doesNotMatch(html, /当前尚无候选/);
 });
 
 test("idea update publishing requires completed audits but permits rejection", () => {

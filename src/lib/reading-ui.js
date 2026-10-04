@@ -1,5 +1,17 @@
 export const HOME_DESCRIPTION = "记录近期论文与研究进展，按方向找到值得细读的内容。";
 
+export function sourceDisplayLabel(link) {
+  if (link.label === "代码") return "仓库";
+  if (link.label === "作者仓库（待发布）") return "仓库（待发布）";
+  if (link.label !== "正式版") return link.label;
+  const host = new URL(link.url).hostname.toLowerCase();
+  const matches = (domain) => host === domain || host.endsWith(`.${domain}`);
+  if (matches("doi.org")) return "DOI";
+  if (matches("openreview.net")) return "评审页";
+  if (["ecva.net", "iclr.cc", "icml.cc", "conf.researchr.org"].some(matches)) return "会议页";
+  return "论文页";
+}
+
 export function readingNavigationTree(tree, pathname) {
   const current = String(pathname).replace(/\/+$/, "") || "/";
   const matches = (url) => typeof url === "string" && (url.replace(/\/+$/, "") || "/") === current;

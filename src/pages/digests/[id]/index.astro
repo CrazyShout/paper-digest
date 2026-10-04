@@ -3,11 +3,10 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import NotebookDocs from "../../../components/NotebookDocs.jsx";
 import DigestContent from "../../../components/DigestContent.astro";
 import {
-  getDigests,
-  getMarkdownHeadings,
-  markdownToHtml
+  getDigests
 } from "../../../lib/content.js";
 import { getNotebookData } from "../../../lib/navigation.js";
+import { digestPaperGroups, digestReadingSections } from "../../../lib/digest-reading.js";
 
 export async function getStaticPaths() {
   const digests = await getDigests();
@@ -23,20 +22,14 @@ if (!digest) {
   return Astro.redirect(notebook.base);
 }
 
-const bodyHtml = markdownToHtml(digest.body, { headingIds: true });
+const reading = digestReadingSections(digest.body);
+const groups = digestPaperGroups(digest);
+const entry = (heading) => ({ depth: 2, title: heading.text, url: `#${heading.id}` });
 const toc = [
-  ...getMarkdownHeadings(digest.body)
-    .filter((heading) => heading.level === 2)
-    .map((heading) => ({
-      depth: 2,
-      title: heading.text,
-      url: `#${heading.id}`
-    })),
-  ...digest.tags.map((tag) => ({
-    depth: 2,
-    title: tag.label,
-    url: `#section-${tag.id}`
-  })),
+  ...(reading.intro ? [entry(reading.intro)] : []),
+  ...groups.map(({ tag }) => ({ depth: 2, title: tag.label, url: `#section-${tag.id}` })),
+  ...reading.discussion.map(entry),
+  ...reading.provenance.map(entry),
   { depth: 2, title: "阅读讨论", url: "#discussion" }
 ];
 ---
@@ -52,8 +45,7 @@ const toc = [
     pathname={Astro.url.pathname}
     params={Astro.params}
     title={digest.title}
-    description={digest.summary}
-    eyebrow={`论文简报 · ${digest.displayDate || digest.date}`}
+    eyebrow="论文简报"
     toc={toc}
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     notes={{
@@ -68,7 +60,8 @@ const toc = [
     <DigestContent
       digest={digest}
       basePath={notebook.base}
-      bodyHtml={bodyHtml}
+      reading={reading}
+      groups={groups}
     />
   </NotebookDocs>
 </BaseLayout>

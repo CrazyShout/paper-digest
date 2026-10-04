@@ -32,26 +32,15 @@ const reviewedLabel = new Intl.DateTimeFormat("zh-CN", {
 const localReferenceCount = direction.references
   .filter((reference) => reference.origin === "local").length;
 const externalReferenceCount = direction.references.length - localReferenceCount;
-const kindLabels = {
-  scope: "Scope & Definitions",
-  evolution: "Evolution",
-  history: "Evolution",
-  taxonomy: "Taxonomy",
-  methods: "Method Synthesis",
-  benchmarks: "Data & Evaluation",
-  evidence: "Evidence",
-  challenges: "Open Challenges",
-  outlook: "Research Agenda"
-};
 const toc = [
-  { depth: 2, title: "核心问题", url: "#research-questions" },
-  { depth: 2, title: "检索记录", url: "#search-audit" },
+  { depth: 2, title: "主要问题", url: "#research-questions" },
   ...direction.sections.map((section) => ({
     depth: 2,
     title: section.title,
     url: `#${section.id}`
   })),
   { depth: 2, title: "综合结论", url: "#takeaways" },
+  { depth: 2, title: "检索记录", url: "#search-audit" },
   { depth: 2, title: "参考文献", url: "#references" }
 ];
 ---
@@ -68,26 +57,16 @@ const toc = [
     params={Astro.params}
     title={direction.title}
     description={direction.abstract}
-    eyebrow={`${direction.label} · 方向综述 · 复核于 ${reviewedLabel}`}
+    eyebrow={`${direction.label} · 方向综述`}
     toc={toc}
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     homeUrl={notebook.base}
     client:load
   >
-    <div class="review-detail-kicker">
-      <span class="direction-dot" style={`--tag-color: ${direction.color}`}></span>
-      <span>{direction.label}</span>
-      <span>{direction.subtitle}</span>
-    </div>
-
     <dl class="review-detail-meta">
       <div>
         <dt>最近复核</dt>
         <dd>{reviewedLabel}</dd>
-      </div>
-      <div>
-        <dt>检索窗口</dt>
-        <dd>{direction.searchWindow}</dd>
       </div>
       <div>
         <dt>引用构成</dt>
@@ -97,22 +76,49 @@ const toc = [
 
     <article class="review-article">
       <section class="review-questions" id="research-questions" aria-labelledby="researchQuestionsTitle">
-        <p class="eyebrow">Guiding Questions</p>
-        <h2 id="researchQuestionsTitle">这份综述试图回答什么</h2>
+        <h2 id="researchQuestionsTitle">主要问题</h2>
         <ol>
           {direction.researchQuestions.map((question) => <li>{question}</li>)}
         </ol>
       </section>
 
-      <section class="review-search-audit" id="search-audit" aria-labelledby="searchAuditTitle">
-        <header>
-          <div>
-            <p class="eyebrow">Search & Evidence</p>
-            <h2 id="searchAuditTitle">检索记录与证据边界</h2>
-          </div>
-          <p>{direction.searchAudit.evidenceBoundary}</p>
-        </header>
+
+      {direction.sections.map((section) => (
+        <section class="review-section" id={section.id} aria-labelledby={`${section.id}-title`}>
+          <header>
+            <h2 id={`${section.id}-title`}>{section.title}</h2>
+            <p>{section.thesis}</p>
+          </header>
+          <div class="review-prose" set:html={section.bodyHtml} />
+          {section.references.length > 0 && (
+            <aside class="review-section-sources" aria-label={`${section.title}引用文献`}>
+              <strong>本节关键文献</strong>
+              <div>
+                {section.references.map((reference) => (
+                  <ReviewReference reference={reference} compact />
+                ))}
+              </div>
+            </aside>
+          )}
+        </section>
+      ))}
+
+      <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
+        <h2 id="takeawaysTitle">综合结论</h2>
+        <ol>
+          {direction.takeaways.map((takeaway) => <li>{takeaway}</li>)}
+        </ol>
+      </section>
+
+      <details class="reading-disclosure review-search-audit" id="search-audit">
+        <summary id="searchAuditTitle">检索记录与来源说明</summary>
+        <p>{direction.subtitle}</p>
+        <p>{direction.searchAudit.evidenceBoundary}</p>
         <dl class="review-search-stats">
+          <div>
+            <dt>检索窗口</dt>
+            <dd>{direction.searchWindow}</dd>
+          </div>
           <div>
             <dt>检索截止</dt>
             <dd>{direction.searchAudit.cutoffDate}</dd>
@@ -150,50 +156,20 @@ const toc = [
         </div>
         <p>
           {direction.searchAudit.independentReview.status === "passed"
-            ? `本轮已完成 ${direction.searchAudit.independentReview.reviewers} 路独立复核，并迭代 ${direction.searchAudit.independentReview.rounds} 轮。`
+            ? (direction.searchAudit.independentReview.scope?.startsWith("Editorial")
+              ? "文案及本库候选审计已独立复核；一手来源的实质复核日期见页首，历史站外检索记录保留。"
+              : `已由 ${direction.searchAudit.independentReview.reviewers} 位独立审阅者复核，共 ${direction.searchAudit.independentReview.rounds} 轮。`)
             : "本轮独立复核仍在进行，当前内容不会进入正式发布。"}
         </p>
-      </section>
+      </details>
 
-      {direction.sections.map((section, index) => (
-        <section class="review-section" id={section.id} aria-labelledby={`${section.id}-title`}>
-          <header>
-            <div>
-              <span class="trend-index">{String(index + 1).padStart(2, "0")}</span>
-              <p class="eyebrow">{kindLabels[section.kind] || section.kind}</p>
-            </div>
-            <h2 id={`${section.id}-title`}>{section.title}</h2>
-            <p>{section.thesis}</p>
-          </header>
-          <div class="review-prose" set:html={section.bodyHtml} />
-          {section.references.length > 0 && (
-            <aside class="review-section-sources" aria-label={`${section.title}引用文献`}>
-              <strong>本节关键文献</strong>
-              <div>
-                {section.references.map((reference) => (
-                  <ReviewReference reference={reference} compact />
-                ))}
-              </div>
-            </aside>
-          )}
-        </section>
-      ))}
-
-      <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
-        <p class="eyebrow">Synthesis</p>
-        <h2 id="takeawaysTitle">综合结论</h2>
-        <ol>
-          {direction.takeaways.map((takeaway) => <li>{takeaway}</li>)}
-        </ol>
-      </section>
 
       <section class="review-bibliography" id="references" aria-labelledby="referencesTitle">
         <header>
           <div>
-            <p class="eyebrow">Bibliography</p>
-            <h2 id="referencesTitle">参考文献与站内状态</h2>
+            <h2 id="referencesTitle">参考文献</h2>
           </div>
-          <p>本库论文进入详细报告；未收录论文直接前往可核验的一手来源。</p>
+          <p>已收录论文可阅读本站报告，其余链接前往原论文。</p>
         </header>
         <ol>
           {direction.references.map((reference, index) => (

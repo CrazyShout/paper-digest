@@ -3,14 +3,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import NotebookDocs from "../components/NotebookDocs.jsx";
 import ReviewCenterPreview from "../components/ReviewCenterPreview.astro";
 import { getNotebookData, routeUrl } from "../lib/navigation.js";
-import { HOME_DESCRIPTION } from "../lib/reading-ui.js";
+import { HOME_DESCRIPTION, sourceDisplayLabel } from "../lib/reading-ui.js";
 import { getMarkdownHeadings } from "../lib/content.js";
 
 const notebook = await getNotebookData(import.meta.env.BASE_URL);
 const latest = notebook.digests[0];
 const latestUrl = routeUrl(notebook.base, `digests/${latest.id}`);
 const landscapeUrl = routeUrl(notebook.base, "landscape");
-const visiblePapers = latest.papers.slice(0, 5);
+const visiblePapers = latest.papers;
 const legacyDigestAnchors = [
   "discussion",
   ...getMarkdownHeadings(latest.body).map((heading) => heading.id),
@@ -38,7 +38,7 @@ const legacyDigestAnchors = [
                 <span>{latest.tags.filter((tag) => paper.tags.includes(tag.id)).map((tag) => tag.label).join(" · ")}</span>
                 {paper.sourceLinks?.[0] && (
                   <a href={paper.sourceLinks[0].url} target="_blank" rel="noopener noreferrer">
-                    {paper.sourceLinks[0].label} <span aria-hidden="true">↗</span>
+                    {sourceDisplayLabel(paper.sourceLinks[0])} <span aria-hidden="true">↗</span>
                   </a>
                 )}
               </div>
