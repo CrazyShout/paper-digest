@@ -164,3 +164,11 @@
 | eco-endpoint-constrained-optimization | Guiding End-to-End Driving Models with Endpoint-Constrained Trajectory Optimization | 2609.31383 | 2026-09-29 |
 | metric-validity-driving-execution | When the Score Becomes the Target: Rethinking Metric Validity in Autonomous Driving | 2609.34440 | 2026-09-29 |
 | trackflood-nms-free-tracker-latency | TrackFlood: Relocating Latency Attacks from NMS-Free Detectors to Real-Time Trackers | 2609.33948 | 2026-09-29 |
+| v2x-wam-cooperative-world-action | V2X-WAM: A Cooperative World Action Model for End-to-End Autonomous Driving | 2609.37098 | 2026-10-05 |
+| ffbl-coop-association-decoupled-tracking | FFBL-Coop: Association-Decoupled Cooperative 3D Multi-Object Tracking | 2610.01750 | 2026-10-05 |
+| ad-memo-language-driving-memory | Vision-Language-Action Autonomous Driving Agent with Language-based Memory | 2609.38641 | 2026-10-05 |
+| world4scorer-outcome-grounded-planning | World4Scorer: Outcome-Grounded World Modeling for Autonomous Driving | 2609.36438 | 2026-10-05 |
+| physwam-geometry-coupled-world-action | PhysWAM: Physically Consistent World Action Model for Autonomous Driving | 2609.37970 | 2026-10-05 |
+| dyrad-dynamic-radar-view-synthesis | DyRAD: Radar Novel View Synthesis for Dynamic Driving Scenes | 2609.39841 | 2026-10-05 |
+| traffic-sign-bench-rule-compliance | TrafficSignBench: Rule-Centric Closed-Loop Evaluation of Traffic-Sign Compliance in Autonomous Driving | 2609.38463 | 2026-10-05 |
+| maplightning-compact-map-tokens | MapLightning: Online Vectorized HD Map Construction with 1D Map Tokens | 2610.01905 | 2026-10-05 |
