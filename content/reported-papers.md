@@ -172,3 +172,11 @@
 | dyrad-dynamic-radar-view-synthesis | DyRAD: Radar Novel View Synthesis for Dynamic Driving Scenes | 2609.39841 | 2026-10-05 |
 | traffic-sign-bench-rule-compliance | TrafficSignBench: Rule-Centric Closed-Loop Evaluation of Traffic-Sign Compliance in Autonomous Driving | 2609.38463 | 2026-10-05 |
 | maplightning-compact-map-tokens | MapLightning: Online Vectorized HD Map Construction with 1D Map Tokens | 2610.01905 | 2026-10-05 |
+| odyssey-long-horizon-driving | Odyssey: A Closed-Loop Benchmark for Long-Horizon Real-World Driving with Explicit Navigation Routes | 2610.06469 | 2026-10-12 |
+| radar2plan-open-loop-radar-planning | Radar2Plan: Benchmarking 4D Radar for End-to-End Open-Loop Ego-Trajectory Planning | 2610.06121 | 2026-10-12 |
+| fpd-drive-future-policy-distillation | FPD-Drive: Future Policy Distillation for End-to-End Autonomous Driving | 2610.13232 | 2026-10-12 |
+| vira-visual-representation-alignment | Do Better Visual Representations Always Lead to Better End-to-End Autonomous Driving? | 2610.09695 | 2026-10-12 |
+| selectoccflow-occupancy-scene-flow | SelectOccFlow: Selective Spatiotemporal Aggregation for 3D Occupancy and Scene Flow Prediction | 2610.04356 | 2026-10-12 |
+| sparse2comm-robust-cooperative-perception | Sparse2comm: Towards Robust Cooperative 3D Object Detection | 2610.08573 | 2026-10-12 |
+| lr-v2x-loss-resilient-perception | LR-V2X: Loss-Resilient Collaborative Perception under Low-Bandwidth Communication | 2610.11264 | 2026-10-12 |
+| scenefactory-3d-physical-counterfactuals | SceneFactory-3D: Lifting 2D Traffic Scenes into 3D Physical Counterfactuals for Scalable Physically Grounded Safety Evaluation | 2610.02874 | 2026-10-12 |
