@@ -5,6 +5,8 @@ export const CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM = "sha256-canonical-json-v1";
 export function isDigestQueryEndpoint(value) {
   // Tool-backed searches do not disclose a search-engine HTTP endpoint.
   if (value === "web.run.search_query") return true;
+  // Local searches name the actual corpus instead of inventing a transport URL.
+  if (value === "content/papers") return true;
   if (typeof value !== "string") return false;
   try {
     const url = new URL(value);

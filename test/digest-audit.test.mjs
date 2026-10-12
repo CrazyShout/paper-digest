@@ -8,11 +8,11 @@ import {
   isDigestQueryEndpoint
 } from "../src/lib/digest-audit.js";
 
-test("digest queries preserve native tool and official API endpoints without inventing transport URLs", () => {
-  for (const endpoint of ["web.run.search_query", "http://export.arxiv.org/api/query", "https://arxiv.org/list/cs.RO/2026-09"]) {
+test("digest queries preserve local, native tool and official API endpoints without inventing transport URLs", () => {
+  for (const endpoint of ["content/papers", "web.run.search_query", "http://export.arxiv.org/api/query", "https://arxiv.org/list/cs.RO/2026-09"]) {
     assert.equal(isDigestQueryEndpoint(endpoint), true);
   }
-  for (const endpoint of [undefined, "", "local snapshot", "web.run.unknown", "http://example.com/search", "http://export.arxiv.org.evil.test/api/query", "file:///tmp/results.json"]) {
+  for (const endpoint of [undefined, "", "local snapshot", "content/unknown", "content/papers/../../private", "web.run.unknown", "http://example.com/search", "http://export.arxiv.org.evil.test/api/query", "file:///tmp/results.json"]) {
     assert.equal(isDigestQueryEndpoint(endpoint), false);
   }
 });
