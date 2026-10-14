@@ -7,7 +7,7 @@
   "source": "NeurIPS 2026 accepted（官方目录已核实，论文集未核实） / https://neurips.cc/virtual/2026/poster/148873 / arXiv:2610.11264v1 / https://arxiv.org/abs/2610.11264v1 / Repository: https://github.com/sidiangongyuan/LR-V2X",
   "authors": ["Kang Yang", "Tianci Bu", "Peng Wang", "Deying Li", "Yongcai Wang"],
   "affiliations": ["Renmin University of China", "The Hong Kong University of Science and Technology", "Hebei Key Laboratory of Real-virtual Integrated Autonomous Systems (RIAS)"],
-  "comment": "LR-V2X 将缺包的紧凑潜变量解码为 BEV 先验，再结合自车特征做一次去噪重建；完整通信训练即可应对测试时丢包。它在等 128 KiB 预算下有较强证据，但空间相关丢包时仍落后于大带宽 F-Cooper，推理开销也需考虑。"
+  "comment": "LR-V2X 将缺包的紧凑潜变量解码为 BEV 先验，再结合自车特征做一次去噪重建；完整通信训练即可应对测试时丢包。在等 128 KiB 预算下改善检测，但空间相关丢包时仍落后于大带宽 F-Cooper，推理开销也需考虑。"
 }
 ---
 
@@ -83,7 +83,7 @@ $$
 
 ![原论文图 3：紧凑潜变量、先验解码、噪声条件重建与检测的流程](../../assets/papers/lr-v2x-loss-resilient-perception-figure-3.png)
 
-从左向右依次是压缩、空间接收掩码、LPD 和重建器；左上角明确区分训练时完整接收与测试时随机擦除。右上角自车分支直接进入重建条件，说明恢复不仅依靠通信消息。图下方恢复特征才进入融合和检测，重建先验与检测输出不能混为一谈。[原图 3](https://arxiv.org/html/2610.11264v1#S3.F3)
+从左向右依次是压缩、空间接收掩码、LPD 和重建器；左上角明确区分训练时完整接收与测试时随机擦除。右上角自车分支直接进入重建条件，说明恢复不仅依靠通信消息。图下方的恢复特征随后进入融合和检测，最终输出检测框。[原图 3](https://arxiv.org/html/2610.11264v1#S3.F3)
 
 ![原论文图 5：V2XREAL 与 DAIR-V2X 随丢包率变化的 mAP 曲线](../../assets/papers/lr-v2x-loss-resilient-perception-figure-5.png)
 
@@ -131,9 +131,9 @@ Burst 设置先在 $8\times16$ 粗网格上采 Bernoulli 掩码，再最近邻�
 
 ## 应用场景与启发
 
-- 作者希望让固定的小消息预算在不同丢包率下平稳退化，避免为每一种丢包条件重新训练。
-- 我的判断：最有借鉴价值的是“可用潜变量先给出结构，自车特征再纠正结构”的接口，以及把完整通信训练和测试丢包明确分开；它更适合先作为接收端恢复模块研究，现有速度还需要优化。
-- 待验证假设：只在收到潜变量的空间覆盖不足时启用 DiT，其余帧直接用 LPD，可能保留大部分严重丢包收益并降低平均推理时间。触发条件只能使用实际接收掩码和局部观测，不能访问完整协作者特征或真值检测。
+作者希望在固定的小消息预算下，使性能随丢包率上升平稳退化，避免为每种丢包条件重新训练。潜变量先提供结构、自车特征再纠正结构的接口值得借鉴；完整通信训练与测试丢包分开的设置，也便于检查对未见丢包条件的适应能力。考虑到当前速度，可先围绕接收端恢复模块做研究。
+
+一种待验证的省算力方案是：仅在收到潜变量的空间覆盖不足时启用 DiT，其余帧直接用 LPD，看能否保留大部分严重丢包收益并降低平均推理时间。触发条件只能使用实际接收掩码和局部观测，不能访问完整协作者特征或真值检测。
 
 ## 局限与阅读风险
 
@@ -147,8 +147,8 @@ Burst 设置先在 $8\times16$ 粗网格上采 Bernoulli 掩码，再最近邻�
 
 ### 最小验证与停止条件
 
-- 代码（2026-10-13，Asia/Shanghai）：[官方仓库](https://github.com/sidiangongyuan/LR-V2X)已含 `opencood`、LiDAR 数据加载器、LR-V2X 模型、训练和评测入口，不能再沿用论文摘要里的“计划发布”作为全部资源状态。
-- 数据：仓库不含数据；[DAIR-V2X 官方入口](https://github.com/AIR-THU/DAIR-V2X)和 [V2X-Real 官方项目](https://mobility-lab.seas.ucla.edu/v2x-real/)可访问，需按提供者要求取得数据并按 OpenCOOD/HEAL 布局处理。本次未下载样本或验证完整性。
+- 代码（2026-10-13，Asia/Shanghai）：[官方仓库](https://github.com/sidiangongyuan/LR-V2X)已含 `opencood`、LiDAR 数据加载器、LR-V2X 模型、训练和评测入口，实现的发布进度已超过论文摘要中的“计划发布”。
+- 数据：仓库不含数据；[DAIR-V2X 官方入口](https://github.com/AIR-THU/DAIR-V2X)和 [V2X-Real 官方项目](https://mobility-lab.seas.ucla.edu/v2x-real/)可访问，需按提供者要求取得数据并按 OpenCOOD/HEAL 布局处理。样本下载与完整性检查的执行情况见下方核验记录。
 - 配置：两数据集的三阶段 YAML 已提供；本次实际读取第三阶段文件，核对 split、128 KiB 潜变量尺寸、冻结骨干、重建损失权重 0.1 和单步 $t=700$。
 - 权重：README 明确预训练 checkpoint 将另行发布，目前未给可用下载入口；实验日志、profiling 工具和分析脚本也未捆绑。现阶段可审查实现，精确重现表格需取得原权重或重新训练。
 - 最小实验：先取得可用 checkpoint，在 DAIR-V2X val 固定 128 KiB、同一批样本和配对掩码，比较完整 LR-V2X、LPD-only、按掩码覆盖率触发的 DiT；分别测试独立丢包和原文粗网格 burst，并按自车/协作者视野重叠程度分组。记录三档 mAP、被遮挡目标召回、假阳性、P50/P95 推理时间和 DiT 启用率，至少使用三个配对 seed。
@@ -159,4 +159,4 @@ Burst 设置先在 $8\times16$ 粗网格上采 Bernoulli 掩码，再最近邻�
 
 依据 [arXiv:2610.11264v1](https://arxiv.org/abs/2610.11264v1)，提交日 2026-10-08，实际核验日 2026-10-13。PDF 第 1 页和作者仓库标注 NeurIPS 2026 接收；[会议官方目录](https://neurips.cc/Downloads/2026)也已列出本文并指向 [poster 148873](https://neurips.cc/virtual/2026/poster/148873)。据此记录为官方录用状态已核实；本次未核实正式论文集出版页面，机制与数值仍以固定 arXiv v1 为准。
 
-PDF 首页核实 Kang Yang、Peng Wang、Deying Li 属 Renmin University of China，Tianci Bu 属 HKUST，Yongcai Wang 同属 Renmin 和 RIAS。重点读取 §3–4、附录 A–E，核对式 2/7–10/13、表 1/2/4/5/7；图 3、5 保存固定 v1 官方 HTML 原字节并逐张打开；图 5 另与 PDF 第 9 页核对，确认内嵌图与 HTML 原图像素一致。相关比较独立读取 CodeFilling §4.2、GenComm v2 §4、Sparse2comm §III–IV。未安装或运行训练/评测代码；报告数值来自原表及明确的算术差值，不代表本次完成实验复现。
+PDF 首页核实 Kang Yang、Peng Wang、Deying Li 属 Renmin University of China，Tianci Bu 属 HKUST，Yongcai Wang 同属 Renmin 和 RIAS。重点读取 §3–4、附录 A–E，核对式 2/7–10/13、表 1/2/4/5/7；图 3、5 保存固定 v1 官方 HTML 原字节并逐张打开；图 5 另与 PDF 第 9 页核对，确认内嵌图与 HTML 原图像素一致。相关比较独立读取 CodeFilling §4.2、GenComm v2 §4、Sparse2comm §III–IV。本次未下载数据样本或验证其完整性，未安装或运行训练/评测代码；报告数值来自原表及明确的算术差值，未完成实验复现。

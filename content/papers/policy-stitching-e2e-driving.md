@@ -79,13 +79,13 @@ $M$ 是空间特征图，$q_1$ 为冻结的旧感知解码器，$y$ 为任务标
 
 ![原文 Figure 2：同场景的两组感知与目标策略](https://arxiv.org/html/2606.21509v1/imgs/diagram/model-stitching.png)
 
-已打开并核对 [原文 Figure 2](https://arxiv.org/html/2606.21509v1#S3.F2)：同一个环境状态产生两种传感器观察，经不同编码器得到 $z_1,z_2$，中间变换负责兼容目标策略。图中的 decoder 用于监督或表征检查，不能与驾驶策略混为同一个训练对象。
+[原文 Figure 2](https://arxiv.org/html/2606.21509v1#S3.F2) 展示连接位置：同一个环境状态产生两种传感器观察，经不同编码器得到 $z_1,z_2$，中间变换负责兼容目标策略。图中的 decoder 用于监督或表征检查，不能与驾驶策略混为同一个训练对象。
 
 ### 原文 Figure 5(e)：检测校准结果
 
 ![原文 Figure 5(e)：跨域卷积 stitching 的检测结果](https://arxiv.org/html/2606.21509v1/imgs/stitch_visualization/detection_model1_transform.png)
 
-已核对 [原图的第 e 子图](https://arxiv.org/html/2606.21509v1#S4.F5.sf5)。大部分叠加框的位置接近，左侧横向目标仍有明显偏移和额外框。该图属于 Case 7 的检测评估，并没有对应闭环驾驶分数。图注写成 VAE-to-VAE，而 Table III 把对应模型列为 CNN+MLP；这是原文内部不一致，本文按实验模型表描述，未自行补齐结构。
+观察 [原图的第 e 子图](https://arxiv.org/html/2606.21509v1#S4.F5.sf5)：大部分叠加框的位置接近，左侧横向目标仍有明显偏移和额外框。该图属于 Case 7 的检测评估，并没有对应闭环驾驶分数。图注写成 VAE-to-VAE，而 Table III 把对应模型列为 CNN+MLP；这是原文内部不一致，本文按实验模型表描述，未自行补齐结构。
 
 ## 实验结论与证据
 

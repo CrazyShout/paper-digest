@@ -127,11 +127,11 @@ CTE 的成功、失败运行取段不同：RQ3 排除失败前最后 5 m，RQ4 �
 
 ### 最小验证与停止条件
 
-- **资源（2026-09-12）：** [作者 Zenodo 归档](https://zenodo.org/records/21536524)列出约 20.3 GB 文件。已实际读取 README，并用 HTTP Range 读完 `pertOV-repo.zip` 的 1017 项目录，确认 ROS/评测脚本、RQ3/RQ4 处理后 CSV、`final.h5` 和额外 PointPillars 权重文件存在。README 说明 RQ1 提供匿名子集、RQ3/RQ4 原始公路记录未完整公开；`final.h5` 与原/增强模型的对应关系未核实。本次未下载整包、加载权重或执行脚本；旧 [PerturbationDrive 仓库](https://github.com/ast-fortiss-tum/perturbation-drive)不能替代这份车载归档。
+- **资源（2026-09-12）：** [作者 Zenodo 归档](https://zenodo.org/records/21536524)列出约 20.3 GB 文件。已实际读取 README，并用 HTTP Range 读完 `pertOV-repo.zip` 的 1017 项目录，确认 ROS/评测脚本、RQ3/RQ4 处理后 CSV、`final.h5` 和额外 PointPillars 权重文件存在。README 说明 RQ1 提供匿名子集、RQ3/RQ4 原始公路记录未完整公开；`final.h5` 与原/增强模型的对应关系未核实。旧 [PerturbationDrive 仓库](https://github.com/ast-fortiss-tum/perturbation-drive)不能替代这份车载归档。
 - **最小实验：** 先取得可分路线的训练与独立留出日志、明确的原模型检查点。从同一检查点比较不继续训练、只重复干净样本、干净加扰动三组；后两组使用相同 batch、学习率、固定额外 5,000 次更新及三种配对种子，禁止按测试天气挑选检查点。先比较留出日志上的转向误差与时间抖动，再在同一固定仿真场景集上评估三组闭环，各用相同十个环境种子。
 - **成功信号：** 增强组相对等预算干净组，在未见路线降低误差和失败、保持正常性能；明确模拟闭环结果仍不等于实车泛化。
 - **停止或转向：** 若收益在预算匹配后消失，或只出现在训练路线，收窄为继续优化或路线适配收益，不推广为普遍天气鲁棒性。
 
 ### 来源与核验记录
 
-已读固定 v1 §2–8、Table 1/2、相关公式和关联分析；分别打开原 Figure 2/4。相关机制来自 PerturbationDrive 与 MultiCorrupt 自身方法，发表状态来自正式会场。归档检查仅到 README 和文件目录，未重算实验或向车辆注入扰动。
+已读固定 v1 §2–8、Table 1/2、相关公式和关联分析；分别打开原 Figure 2/4。相关机制来自 PerturbationDrive 与 MultiCorrupt 自身方法，发表状态来自正式会场。归档检查仅到 README 和文件目录，未下载整包、加载权重、执行脚本、重算实验或向车辆注入扰动。

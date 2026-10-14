@@ -99,7 +99,7 @@ $c_i$ 是码本项，$q$ 是训练后验，$p$ 是先验，轨迹项是未来 to
 
 ![原论文 Fig. 2：Q-former、分层 FIFO、条件后验/先验和轨迹输出](../../assets/papers/compact-va-planning-token-compression-original-figure-2.png)
 
-右上角 future trajectory 标注 train only；右下进入 policy 的 skill 应来自 prior。图中回送压缩器的箭头需要与实际执行顺序核对。两张 v3 官方 PNG 均单独打开，本次使用干净原图，使用新的本地原图资源路径。[Fig. 2](https://arxiv.org/html/2606.07464v3#S2.F2)
+右上角 future trajectory 标注 train only；右下进入 policy 的 skill 应来自 prior。图中回送压缩器的箭头需要与实际执行顺序核对。两张 v3 官方 PNG 的核验记录见末章。[Fig. 2](https://arxiv.org/html/2606.07464v3#S2.F2)
 
 ## 实验结论与证据
 
@@ -165,4 +165,4 @@ COMPACT 用未来意图预测监督压缩器，使有限记忆保留与规划有
 
 ### 核验记录
 
-依据 [2606.07464v3](https://arxiv.org/html/2606.07464v3) 的式 1–3、Tables I–VII、Figs. 1–2 和 8 页正式格式全文，未发现独立附录；相关原文为 Compressive Transformer v1 §3 与 VQ-VAE v1 §3。v3 首页明确 NVIDIA、HKU、Stanford、Georgia Tech，原机构信息保留。全文、图片和来源可用性已检查，不代表训练或仿真复现。
+依据 [2606.07464v3](https://arxiv.org/html/2606.07464v3) 的式 1–3、Tables I–VII、Figs. 1–2 和 8 页正式格式全文，未发现独立附录；相关原文为 Compressive Transformer v1 §3 与 VQ-VAE v1 §3。v3 首页明确 NVIDIA、HKU、Stanford、Georgia Tech，原机构信息保留。全文、图片和来源可用性已检查；两张官方 PNG 均单独打开，采用原图并保存在本地资源路径。本次未执行训练或仿真复现。

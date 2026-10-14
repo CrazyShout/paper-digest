@@ -142,7 +142,7 @@ R-Only 检查不用代理标签的表现，RS-Mix 检查直接加入有偏标签
 
 ### 最小验证与停止条件
 
-- **当前资源**：2026-09-12 检查 v1 全文和精确题名代码检索，未找到可核验的官方 Scape 代码、配对样本、冻结 encoder/checkpoint 或配置下载入口。正文表 6–7 有 MLP 超参数；外部 nuPlan、GaussGym、Go2 策略权重的实际下载和权限本次未逐一测试。未运行复现。
+- **当前资源**：2026-09-12 检查 v1 全文和精确题名代码检索，未找到可核验的官方 Scape 代码、配对样本、冻结 encoder/checkpoint 或配置下载入口。正文表 6–7 有 MLP 超参数；外部 nuPlan、GaussGym、Go2 策略权重的实际下载和权限本次未逐一测试。
 - **最小实验**：取得一个 UrbanDriver 的固定特征与四类指标 split，固定 paired budget、surrogate budget 和 evaluator，比较 R-Only、RS-Mix、Scape。先只检查 ADE 与一个二元风险指标，额外保留独立 calibration，禁止用于模型选择。
 - **成功信号**：跨配对数据种子的预测 loss 改善方向一致；在同样 held-out calibration 下，区间/集合更小且实际覆盖与 nominal 相容。随后再检查路口等预先定义子群，避免总体覆盖掩盖某类不足。
 - **停止或转向**：若拆开 validation/calibration 后覆盖不足，先修复校准协议；若增加 surrogate 不再优于 R-Only，检查配对质量、特征遗漏和校正器外推，停止把更多仿真样本当成必然收益。拿不到作者 split 时只做替代实现验证，不声称复现原表。

@@ -7,7 +7,7 @@
   "source": "arXiv:2610.08573v1 / https://arxiv.org/abs/2610.08573v1 / 官方仓库：https://github.com/yanglei18/Sparse2comm",
   "authors": ["Lei Yang", "Boqi Li", "Chunmian Lin", "Li Wang", "Ziying Song", "Shaoqing Xu", "Heye Huang", "Haibao Yu", "Chen Lv"],
   "affiliations": ["Nanyang Technological University", "Beihang University", "Beijing Institute of Technology", "Yanshan University", "University of Macau", "Korea Advanced Institute of Science and Technology", "The University of Hong Kong"],
-  "comment": "Sparse2comm 先重建稀疏协同特征，再校正消息延迟和残余空间错位，在三个数据集的混合扰动测试中改善 3D 检测。主要价值是三类恢复模块的组合证据；通信时延仍采用模型计算，官方仓库尚未发布实现。"
+  "comment": "Sparse2comm 先重建稀疏协同特征，再校正消息延迟和残余空间错位，在三个数据集的混合扰动测试中改善 3D 检测。通信时延由推理与名义链路时间相加得到，真实空口尚未测量，官方仓库也未发布实现。"
 }
 ---
 
@@ -78,7 +78,7 @@ $\bar F$ 是已经变换到自车坐标系的协作者特征，$F_v$ 是自车�
 
 训练分协作者编码器/RPN 预训练、SFE 预训练、端到端协同微调三个阶段，总目标组合检测、特征重建、运动流和空间校准损失。正文列出 Adam、学习率 0.01、batch size 6、80 epochs；V2V4Real 单列 AdamW、60 epochs、每 GPU batch size 4、初始学习率 0.001。未逐阶段列明完整冻结方案、各阶段预算及全部损失权重。[§III-F2、§IV-B](https://arxiv.org/html/2610.08573v1#S4.SS2)
 
-推理需要协作者的近期历史、自车当前特征、时间差和相对位姿；不使用未来真值，也不添加训练用合成变换。SFE、LAA 和 SCF 均保留，不能把辅助训练目标误写成部署时没有额外计算。
+推理需要协作者的近期历史、自车当前特征、时间差和相对位姿；不使用未来真值，也不添加训练用合成变换。SFE、LAA 和 SCF 均保留，因此部署仍需执行重建、运动对齐与空间校准。
 
 ## 关键图与可视化结果
 
@@ -88,7 +88,7 @@ $\bar F$ 是已经变换到自车坐标系的协作者特征，$F_v$ 是自车�
 
 ![原论文图 8：DAIR-V2X 在干净与混合扰动条件下的检测示例](../../assets/papers/sparse2comm-robust-cooperative-perception-figure-8.png)
 
-绿框是真值，红框是预测；上下两排对照同类场景的干净与混合扰动结果，紫色虚线框突出易漏检或错位区域。它展示了选定车辆区域中的恢复效果，不能据此计算总体漏检率或说明所有目标都已正确恢复；统计结论依赖下节表格。[原图 8 与 §IV-E1](https://arxiv.org/html/2610.08573v1#S4.F8)
+绿框是真值，红框是预测；上下两排对照同类场景的干净与混合扰动结果，紫色虚线框突出易漏检或错位区域。这组样例帮助观察选定车辆区域中的恢复效果；总体检测表现见下节统计表格。[原图 8 与 §IV-E1](https://arxiv.org/html/2610.08573v1#S4.F8)
 
 ## 实验结论与证据
 
@@ -127,9 +127,9 @@ DAIR-V2X 是真实车路协同，只评 Car；OpenV2V 是仿真车车协同；V2
 
 ## 应用场景与启发
 
-- 作者希望在带宽受限且存在丢包、延迟、定位偏差的协同检测中，先恢复再融合。三个数据集支持其对不同协同场景的适用潜力。
-- 我的判断：最值得借鉴的是把缺失内容、运动位移和定位偏差分别监督，便于定位失败来源；接入驾驶系统前仍需检验虚假恢复目标会如何影响下游决策。
-- 待验证假设：当某个小目标的所有已发送 patch 都丢失时，按恢复可信度选择退回自车特征，可能比无条件融合重建结果产生更少假阳性。该假设需在相同字节预算、相同 checkpoint 下，以完整目标擦除和空间相关丢包单独验证。
+作者面向带宽受限且存在丢包、延迟、定位偏差的协同检测，采用先恢复再融合的流程；三个数据集的结果支持其对不同协同场景的适用潜力。分别监督缺失内容、运动位移和定位偏差，也便于定位失败来源。不过，接入驾驶系统前还需检验虚假恢复目标会如何影响下游决策。
+
+一个值得检验的方向是：小目标的所有已发送 patch 都丢失时，按恢复可信度选择退回自车特征，是否比无条件融合重建结果产生更少假阳性。验证时应固定字节预算和 checkpoint，单独测试完整目标擦除与空间相关丢包。
 
 ## 局限与阅读风险
 
@@ -144,7 +144,7 @@ DAIR-V2X 是真实车路协同，只评 Car；OpenV2V 是仿真车车协同；V2
 ### 最小验证与停止条件
 
 - 代码（2026-10-13，Asia/Shanghai）：[官方仓库](https://github.com/yanglei18/Sparse2comm)实际仅含 LICENSE 和简短 README，尚无可运行实现。
-- 数据：论文使用既有 [DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)、[OpenV2V](https://github.com/DerrickXuNu/OpenCOOD) 和 [V2V4Real](https://github.com/ucla-mobility/V2V4Real)；各官方入口可访问，Sparse2comm 仓库未提供处理后数据或所用 split 清单，本次未下载数据。
+- 数据：论文使用既有 [DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)、[OpenV2V](https://github.com/DerrickXuNu/OpenCOOD) 和 [V2V4Real](https://github.com/ucla-mobility/V2V4Real)；各官方入口可访问，Sparse2comm 仓库未提供处理后数据或所用 split 清单。
 - 配置与权重：仓库均未发布；正文超参数不足以恢复完整训练过程。因此当前可完成协议审查，原方法数值复现需等待实现、配置和权重。
 - 最小实验：资源齐备后先固定 DAIR-V2X 的同一划分、骨干及总消息字节，比较原方法、去 SFE、相同参数量的普通重建模块；再在固定 200 ms 延迟和同一位姿扰动下，逐步增加“整目标擦除”比例。记录 AP@0.5/0.7、被擦除目标召回、无真实目标区域的假阳性和实际序列化字节；每条件至少三个配对 seed。
 - 成功信号：重建在等预算控制下保留召回收益，且可信度退回策略能降低假阳性而不明显损害未擦除目标；再进入真实通信回放测量。
@@ -154,4 +154,4 @@ DAIR-V2X 是真实车路协同，只评 Car；OpenV2V 是仿真车车协同；V2
 
 依据 [arXiv:2610.08573v1](https://arxiv.org/abs/2610.08573v1)，提交日 2026-10-06，实际核验日 2026-10-13。本文按预印本记录；PDF 页眉的 LaTeX 模板期刊文字不是正式发表证据，本次未核实独立会议或期刊落地页。
 
-作者及单位逐项核对 PDF 第 1 页：Lei Yang / Chen Lv 属 NTU，Boqi Li / Chunmian Lin 属 Beihang，Li Wang 属 BIT，Ziying Song 属 Yanshan，Shaoqing Xu 属 University of Macau，Heye Huang 属 KAIST，Haibao Yu 属 HKU。方法核对 §III、式 5–22/27；实验核对 §IV、表 I–IX。两张原图来自固定 v1 官方 HTML，已打开实际文件并对照图注；相关工作分别读取 Where2comm §4、CoBEVFlow §4、CoAlign §IV。未安装或运行第三方实验代码，未完成训练复现。
+作者及单位逐项核对 PDF 第 1 页：Lei Yang / Chen Lv 属 NTU，Boqi Li / Chunmian Lin 属 Beihang，Li Wang 属 BIT，Ziying Song 属 Yanshan，Shaoqing Xu 属 University of Macau，Heye Huang 属 KAIST，Haibao Yu 属 HKU。方法核对 §III、式 5–22/27；实验核对 §IV、表 I–IX。两张原图来自固定 v1 官方 HTML，已打开实际文件并对照图注；相关工作分别读取 Where2comm §4、CoBEVFlow §4、CoAlign §IV。本次未下载数据，未安装或运行第三方实验代码，未完成训练复现。

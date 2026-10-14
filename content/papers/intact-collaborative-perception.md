@@ -64,11 +64,11 @@ $g$ 控制写入强度，附录设下限 $\rho=0.08$、残差裁剪 5.0；门控
 
 ![原文 Figure 1：异构协同接口比较](../../assets/papers/intact-collaborative-perception-figure-1.png)
 
-已核对 [Figure 1](https://arxiv.org/html/2606.04437v1#S1.F1)：由左侧整图翻译读到中间查询、局部响应与写回。它表达接口假设，不证明任意异构模型均兼容。
+阅读 [Figure 1](https://arxiv.org/html/2606.04437v1#S1.F1) 时，可由左侧整图翻译读到中间查询、局部响应与写回。它表达接口假设，不证明任意异构模型均兼容。
 
 ![原文 Figure 2：训练一次与直接插入](../../assets/papers/intact-collaborative-perception-figure-2.png)
 
-已核对 [Figure 2](https://arxiv.org/html/2606.04437v1#S3.F2)：上半训练接口，下半合并已有 checkpoint 推理。图中雷达属于概念示例，结果表没有单列雷达验证。
+[Figure 2](https://arxiv.org/html/2606.04437v1#S3.F2) 上半部分训练接口，下半部分合并已有 checkpoint 做推理。图中雷达属于概念示例，结果表没有单列雷达验证。
 
 ## 实验结论与证据
 

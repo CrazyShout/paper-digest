@@ -93,7 +93,7 @@ Bench2Drive 用 640×352 多视角图像、目标点与高层指令，训练为�
 
 ![原论文 Fig. 2：统一解码器、Agent-Mode Attention、边际/联合分支和策略对齐](https://arxiv.org/html/2605.13646v1/x2.png)
 
-先看上半部标出的 Training-Only 联合分支，再看下半部同编号场景模式和相关车辆选择。注意 attention 的 token 排列与联合监督范围，它们比图中“causal”标签更能说明实现。两张官方图片均已分别打开并核对图注。[Fig. 2](https://arxiv.org/html/2605.13646v1#S3.F2)
+先看上半部标出的 Training-Only 联合分支，再看下半部同编号场景模式和相关车辆选择。注意 attention 的 token 排列与联合监督范围，它们比图中“causal”标签更能说明实现。[Fig. 2](https://arxiv.org/html/2605.13646v1#S3.F2)
 
 ## 实验结论与证据
 
@@ -143,4 +143,4 @@ C→D 保留空间筛选而改变模式指定，最直接支持自车主导匹�
 
 ### 来源记录
 
-核验于 2026-09-12：固定 [CaAD v1](https://arxiv.org/html/2605.13646v1)，含附录 A–E；重点为式 1–9、Tables 1/3/4/A2/A3、Figs. 1–2。相关工作读取 HiP-AD v1 §3 与 ReCogDrive v2 §4；ReCogDrive 的错误版本 HTML 和会议 PDF 访问失败后，改读 arXiv 已确认的 v2 全文。机构按 CaAD 首页核实并保留。
+核验于 2026-09-12：固定 [CaAD v1](https://arxiv.org/html/2605.13646v1)，含附录 A–E；重点为式 1–9、Tables 1/3/4/A2/A3、Figs. 1–2。相关工作读取 HiP-AD v1 §3 与 ReCogDrive v2 §4；ReCogDrive 的错误版本 HTML 和会议 PDF 访问失败后，改读 arXiv 已确认的 v2 全文。机构按 CaAD 首页核实并保留；两张官方图片均已分别打开并核对图注。

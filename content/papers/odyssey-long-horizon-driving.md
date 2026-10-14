@@ -7,7 +7,7 @@
   "source": "arXiv:2610.06469v1 / https://arxiv.org/abs/2610.06469v1 / Project: https://snu-adr.github.io/Odyssey-Page/ / Repository: https://github.com/SNU-ADR/Odyssey",
   "authors": ["Jungho Kim", "Hongjae Shin", "Seunghoon Yu", "Heecheol Yoo", "Myeongjun Kim", "Jiyong Oh", "Donghyuk Kwak", "Seunghyeop Nam", "Haesung Oh", "Hyunju Kim", "Hyungchan Cho", "Jaehyun Park", "Soo Won Seo", "Jun Won Choi"],
   "affiliations": ["Seoul National University"],
-  "comment": "Odyssey 将 100 秒真实日志重建成可连续重规划的传感器闭环，并用明确道路路线检查提前选道。开放环安全评分和 GRPO 的收益在这里出现反转；看懂交通模式、时长与各项惩罚比只看总分更重要。"
+  "comment": "Odyssey 将 100 秒真实日志重建成可连续重规划的传感器闭环，并用明确道路路线检查提前选道。开放环安全评分和 GRPO 的收益在这里出现反转；比较结果时需区分交通模式、测试时长与惩罚项。"
 }
 ---
 
@@ -73,7 +73,7 @@ $$
 
 ![原论文图 1：长场景、明确道路路线与扩散修复观测组成 Odyssey 闭环](../../assets/papers/odyssey-long-horizon-driving-figure-1.png)
 
-[图 1](https://arxiv.org/html/2610.06469v1#S0.F1)先读上排的三个问题，再看下排如何组合源日志、路线和重渲染。100 秒标注指重建序列；箭头表示动作与观测形成反馈。图片中的观感改善本身不证明规划改善，后者须看固定 checkpoint 的表 3。
+[图 1](https://arxiv.org/html/2610.06469v1#S0.F1)先读上排的三个问题，再看下排如何组合源日志、路线和重渲染。100 秒标注指重建序列；箭头表示动作与观测形成反馈。观感与规划效果分别评估；固定 checkpoint 的规划对照见表 3。
 
 ![原论文图 8：评估时长造成名次交叉，路线合规与选道和碰撞并不同步](../../assets/papers/odyssey-long-horizon-driving-figure-8.png)
 
@@ -121,9 +121,9 @@ SafeDrive 用模仿学习评分，比安全评分高 9.5/6.4 RouteDS；再从通
 
 ## 应用场景与启发
 
-- 作者主张：把长时导航、明确路线和传感器反馈纳入端到端规划评测，检查单段评分遗漏的后果。
-- 我的判断：最适合借鉴的是并列报告道路合规、提前选道、任务进度与碰撞分量，并把交通是否反应、自车是否重新观测写入协议。仅写“闭环”仍不足以区分这些条件。
-- 待验证假设：显式路口准备状态能改善 PLCS，但其收益应集中在先换道后转弯、动作间隔超过 20 秒的场景。若提升只发生在短直道或只是更保守停车，便不支持长时机动记忆这一解释。
+作者把长时导航、明确路线和传感器反馈纳入端到端规划评测，以检查单段评分遗漏的后果。对评测设计最有用的是并列报告道路合规、提前选道、任务进度与碰撞分量，并明确交通是否反应、自车是否重新观测；这些条件决定了“闭环”究竟测到了什么。
+
+可进一步检验显式路口准备状态能否改善 PLCS。若作用来自长时机动记忆，收益应集中在先换道后转弯、动作间隔超过 20 秒的场景；只在短直道提升或靠保守停车得分，都不足以支持这一解释。
 
 ## 局限与阅读风险
 

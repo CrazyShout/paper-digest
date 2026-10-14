@@ -17,8 +17,8 @@
       "id": "scope",
       "kind": "scope",
       "title": "场景状态与重建、预测和动作的关系",
-      "thesis": "动态场景表征是可查询、可校准、带时间语义的中间状态；相邻任务只有在输出和用途都被验证时才进入本方向。",
-      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源和对规划的边际影响。",
+      "thesis": "动态场景表征提供可查询、可校准且带时间信息的中间状态；比较相邻任务时，应先确认其输出了哪些状态、验证了哪些用途。",
+      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源，以及每类信息分别怎样影响规划。",
       "referenceIds": [
         "monoscene-2022",
         "tpvformer-2023",
@@ -60,7 +60,7 @@
       "id": "taxonomy",
       "kind": "taxonomy",
       "title": "体素、对象、向量与 Gaussian 的状态定义",
-      "thesis": "表示形式只是压缩选择；真正决定科学差异的是状态变量、更新规则、监督来源与可验证用途。",
+      "thesis": "比较表示形式时，还要检查它保留了哪些状态变量、如何更新、使用什么监督，以及验证了哪些用途。",
       "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线用连续显式基元表达表面或占据。GaussianWorld证明稀疏 Gaussian 可做流式 occupancy，USR-Drive把表面与对象联合去噪，GUIDE进一步把 Gaussian 实例占据、检测与跟踪纳入同一框架；但渲染密度、语义 occupancy 概率、实例占据分数和物体存在概率不是同一个量。将 Gaussian 用作可校准场景状态时，还需要定义射线自由空间、unknown、对象身份和更新不确定性。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。",
       "referenceIds": [
         "tpvformer-2023",
@@ -90,7 +90,7 @@
       "kind": "evidence",
       "title": "状态精度、时间一致性、校准和规划四类指标",
       "thesis": "表示质量必须分成状态正确性、时间一致性、概率校准和任务价值四层报告，任何单层结果都不能替代其余层。",
-      "body": "第一层是当前状态正确性，至少报告 occupied/free/unknown、类别、距离和遮挡分层；只报告平均 mIoU 会掩盖危险的 false-free。第二层是时间一致性，需要对象身份、birth/death、静动态分解与 age；短窗口特征平滑不等于长期状态。第三层是概率质量，应报告 NLL、Brier、ECE、selective risk 以及未知区域覆盖，而不只是 argmax 体素。第四层才是固定规划器下的碰撞、进度、舒适和无谓制动，并通过 state intervention 报告规划收益来自目标状态。\n\n不同论文报告的收益分布在上述不同层次。Scene as Occupancy 报告多任务和规划收益，但无法单独给每种 occupancy 信息定价；OccWorld、CascadeOcc、I2-World 与 SparseWorld报告未来状态可预测，却受日志单未来、量化和多模态不足限制；VADv2、CAAD、GeoWAM 与 GeoWorldAD报告规划分数，但联合训练使表示、策略和监督难以分离。UniScene报告 occupancy 可作为跨模态生成中介，占据概率的校准还需单独测量。RbFT-Net改善 metric depth 锚点，三维 occupancy 或 future flow 尚未作为其终点验证。\n\n在 unknown 轴上，UnsDrive 已显式输出 occupied/free/unknown 并连接矿区闭环规划，MR-Occ 也设置 occluded 类；因此，三态表示本身已有直接先例。剩余问题是训练 teacher 的观测删失能否由不接触待测模型的射线级四态审计集独立检验，以及同 coverage 风险是否超过固定可见性规则。",
+      "body": "第一层是当前状态正确性，至少报告 occupied/free/unknown、类别、距离和遮挡分层；只报告平均 mIoU 会掩盖危险的 false-free。第二层是时间一致性，需要对象身份、birth/death、静动态分解与 age；短窗口特征平滑不等于长期状态。第三层是概率质量，应报告 NLL、Brier、ECE、selective risk 以及未知区域覆盖，而不只是 argmax 体素。第四层才是固定规划器下的碰撞、进度、舒适和无谓制动，并通过 state intervention 报告规划收益来自目标状态。\n\n不同论文报告的收益分布在上述不同层次。Scene as Occupancy 报告多任务和规划收益，但没有单独隔离每种 occupancy 信息对规划的贡献；OccWorld、CascadeOcc、I2-World 与 SparseWorld报告未来状态可预测，却受日志单未来、量化和多模态不足限制；VADv2、CAAD、GeoWAM 与 GeoWorldAD报告规划分数，但联合训练使表示、策略和监督难以分离。UniScene报告 occupancy 可作为跨模态生成中介，占据概率的校准还需单独测量。RbFT-Net改善 metric depth 锚点，三维 occupancy 或 future flow 尚未作为其终点验证。\n\n对于未知状态，UnsDrive 已显式输出 occupied/free/unknown 并连接矿区闭环规划，MR-Occ 也设置 occluded 类；因此，三态表示本身已有直接先例。剩余问题是训练 teacher 的观测删失能否由不接触待测模型的射线级四态审计集独立检验，以及同 coverage 风险是否超过固定可见性规则。",
       "referenceIds": [
         "scene-as-occupancy-2023",
         "occworld-2024",
@@ -119,7 +119,7 @@
       "kind": "challenges",
       "title": "遮挡监督、长期身份与跨模态冲突",
       "thesis": "当前瓶颈主要不是编码器容量，而是哪些状态可被观测、怎样跨时间保持，以及如何在动作变化后仍可验证。",
-      "body": "多相机和 LiDAR 监督都存在视场、遮挡、射线覆盖与标签插值边界；模型补全未观测体素时，应区分 observed free、observed occupied、unknown 和 prior-filled。雷达锚点又受多径、旁瓣、径向速度和时序错位影响。没有来源与可见性字段，融合后的高置信状态可能只是多个相关教师共同确认同一偏差。\n\n本轮样本尚未发现统一的现实长期身份协议。USR-Drive的联合状态、GaussianWorld的流式更新和 I2-World的时间 token 都能传播信息，但公开协议主要评价短期重建或预测，没有统一检验同一对象跨窗口、遮挡和传感器切换后的身份、状态年龄与删除规则。未来预测还受单日志未来限制：预测与事实不同不一定错误，动作改变后原日志更不再是反事实真值。\n\n部署约束应显式进入定义。表征必须给出延迟、内存、更新频率、最坏输入规模与过期策略；规划实验要固定下游，比较加入某类状态前后的边际效应。若一种表示只在共同训练的专用 planner 上有效，其结果应归于该联合系统，跨规划器的接口价值仍待检验。\n\nPanoOcc、BeyondSight、LMPOcc 与 CarlaOcc 已覆盖实例 occupancy、对象 permanence、长期全局地图和合成实例真值，但这些协议尚未共同覆盖真实传感器删失、状态年龄、来源冲突与规划边际效应。CarlaOcc 可提供合成 oracle，但不能替代现实遮挡真值。",
+      "body": "多相机和 LiDAR 监督都存在视场、遮挡、射线覆盖与标签插值边界；模型补全未观测体素时，应区分 observed free、observed occupied、unknown 和 prior-filled。雷达锚点又受多径、旁瓣、径向速度和时序错位影响。如果不记录来源与可见性，多个相关教师的同一种偏差可能在融合后表现为高置信状态。\n\n本轮样本尚未发现统一的现实长期身份协议。USR-Drive的联合状态、GaussianWorld的流式更新和 I2-World的时间 token 都能传播信息，但公开协议主要评价短期重建或预测，没有统一检验同一对象跨窗口、遮挡和传感器切换后的身份、状态年龄与删除规则。未来预测还受单日志未来限制：预测与事实不同不一定错误，动作改变后原日志更不再是反事实真值。\n\n部署约束应显式进入定义。表征必须给出延迟、内存、更新频率、最坏输入规模与过期策略；规划实验要固定下游，比较加入某类状态前后的边际效应。若一种表示只在共同训练的专用 planner 上有效，其结果应归于该联合系统，跨规划器的接口价值仍待检验。\n\nPanoOcc、BeyondSight、LMPOcc 与 CarlaOcc 已覆盖实例 occupancy、对象 permanence、长期全局地图和合成实例真值，但这些协议尚未共同覆盖真实传感器删失、状态年龄、来源冲突与规划边际效应。CarlaOcc 可提供合成 oracle，但不能替代现实遮挡真值。",
       "referenceIds": [
         "occupancy-survey-2025",
         "monoscene-2022",
@@ -143,7 +143,7 @@
       "kind": "outlook",
       "title": "验证带来源和长期身份的场景记忆",
       "thesis": "先在固定模型和规划器上检查新增状态是否有用，再决定是否扩展联合表示。",
-      "body": "一个可先验证的方案是“来源保真的 Surface-Instance-Occupancy Memory”。状态由三部分组成：局部 surface/Gaussian 描述可见几何，persistent instance slot 保持对象身份与运动假设，occupancy 层显式区分 free、occupied、unknown；每次更新同时携带传感器来源、可见性、时间年龄和不确定性。初步实验可先检查长期遮挡和跨模态冲突时，哪些证据应该更新几何、只延续存在性或被拒绝。\n\nGate 0 使用 nuScenes/Occ3D 加一个含 radar 或多遍历序列的公开数据集，冻结现有 occupancy backbone 与 planner，只增加状态账本。最小对比分为无记忆、固定窗口、对象记忆、Gaussian/表面记忆、完整三态状态；指标覆盖 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划碰撞/无谓制动与端到端延迟。若简单固定窗口在同计算量下达到等价结果，或状态质量变化不能影响固定 planner，则停止方法扩展。\n\n通过 Gate 0 后才探索动作条件未来：对少量安全边界动作获取模拟器配对 rollout，校准哪些当前状态足以支持候选排序。配对 rollout 用于连接场景状态与动作条件未来；单日志记录无法提供替代动作的反事实真值。\n\n上述路线仍是 Gate 0 实验建议。Idea 中心还需完成候选池、独立筛选、dossier 和盲评；当前两个进入 dossier 的候选尚未通过。",
+      "body": "一个可先验证的方案是“来源保真的 Surface-Instance-Occupancy Memory”。状态由三部分组成：局部 surface/Gaussian 描述可见几何，persistent instance slot 保持对象身份与运动假设，occupancy 层显式区分 free、occupied、unknown；每次更新同时携带传感器来源、可见性、时间年龄和不确定性。初步实验可先检查长期遮挡和跨模态冲突时，哪些证据应该更新几何、只延续存在性或被拒绝。\n\nGate 0 使用 nuScenes/Occ3D 加一个含 radar 或多遍历序列的公开数据集，冻结现有 occupancy backbone 与 planner，只增加状态及其更新记录。最小对比分为无记忆、固定窗口、对象记忆、Gaussian/表面记忆、完整三态状态；指标覆盖 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划碰撞/无谓制动与端到端延迟。若简单固定窗口在同计算量下达到等价结果，或状态质量变化不能影响固定 planner，则停止方法扩展。\n\n通过 Gate 0 后才探索动作条件未来：对少量安全边界动作获取模拟器配对 rollout，校准哪些当前状态足以支持候选排序。配对 rollout 用于连接场景状态与动作条件未来；单日志记录无法提供替代动作的反事实真值。\n\n上述路线仍是 Gate 0 实验建议。Idea 中心还需完成候选池、独立筛选、dossier 和盲评；当前两个进入 dossier 的候选尚未通过。",
       "referenceIds": [
         "usr-drive-2026",
         "gaussianworld-2025",
@@ -880,7 +880,7 @@
       "physical-evidence-boundary",
       "independent-review-current-snapshot"
     ],
-    "searchedAt": "2026-10-13",
+    "searchedAt": "2026-10-14",
     "cutoffDate": "2022-01-01",
     "queryFamilies": [
       "当前三维语义占据与场景补全",
@@ -901,11 +901,11 @@
         "family": "当前三维语义占据与场景补全",
         "sourceFamily": "local-corpus",
         "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
-        "executedAt": "2026-10-13",
+        "executedAt": "2026-10-14",
         "resultCount": 21,
         "rawHitCount": 21,
         "screenedOutCount": 0,
-        "screeningNote": "2026-10-13 对本期报告入库后的原始 Markdown 执行记录的 rg -l -i：21 个文件命中，经方向标签与 revisionOf 归并为 21 篇候选，0 个文件为其他范围、跨文引用或修订重复。新增 1 篇逐条暂缓综合；此处只更新本库检索记录。",
+        "screeningNote": "2026-10-14 文案校订后重跑原始 Markdown 的 rg -l -i：21 个文件命中，按方向标签及 revisionOf 归并为 21 篇候选，0 个文件属于其他方向、正文引用或修订重复。候选集合与上次审计相同，沿用逐篇纳入或暂缓理由；本轮仅更新本库检索。",
         "resultIdSample": [
           "arxiv:2605.13646",
           "arxiv:2609.07094",
@@ -1160,12 +1160,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-10-13",
+        "executedAt": "2026-10-14",
         "query": "rg -l -i dynamic scene and occupancy terms content/papers",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 9,
-        "note": "2026-10-13 对本期报告入库后的原始 Markdown 执行记录的 rg -l -i：21 个文件命中，经方向标签与 revisionOf 归并为 21 篇候选，0 个文件为其他范围、跨文引用或修订重复。新增 1 篇逐条暂缓综合；此处只更新本库检索记录。"
+        "note": "2026-10-14 文案校订后重跑原始 Markdown 的 rg -l -i：21 个文件命中，按方向标签及 revisionOf 归并为 21 篇候选，0 个文件属于其他方向、正文引用或修订重复。候选集合与上次审计相同，沿用逐篇纳入或暂缓理由；本轮仅更新本库检索。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1759,20 +1759,20 @@
       "excluded": 17
     },
     "independentReview": {
-      "completedAt": "2026-10-13",
+      "completedAt": "2026-10-14",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 1,
-      "reviewerAgentId": "/root/review_integration_oct12",
-      "scope": "Incremental current local-corpus closure only; existing references, core synthesis, historical external query dates and substantive reviewedAt preserved.",
-      "assurance": "fresh-context same-family provisional",
-      "finding": "Replayed raw Markdown rg, checked canonical candidates, deferred primary/cross-direction groups and ledger counts; all current snapshots passed independent integration review.",
-      "artifactPath": "docs/research-updates/2026-10-12/review-integration-round1.json",
-      "artifactSha256": "d192ee564ca7b043e690455dd2beef746895123c15f17e7b40c72bf3df56f665",
-      "snapshotFingerprint": "d473f34ed77bf3eab22d81d994f5f3be3d61d590cf8f425b49d0a49930ba2036"
+      "rounds": 2,
+      "reviewerAgentId": "/root/review_representation_oct14",
+      "scope": "Editorial semantic preservation, targeted primary-source clarifications where recorded, and current local-corpus replay. Historical external searches and substantive reviewedAt preserved.",
+      "assurance": "same-family provisional",
+      "finding": "All recorded editorial findings resolved; source verification is limited to the explicitly documented targeted checks, not a comprehensive new literature review.",
+      "artifactPath": "docs/editorial/2026-10-14/review-representation-round2.json",
+      "artifactSha256": "4c7a9f53bb830c72a9b67cde808750fab34d3b59a05ea34bb2dc7bd789683d89",
+      "snapshotFingerprint": "4a2abec1384fd14905812c03cd62bc98e24e343ad6616923ed9ede40abfe24cd"
     },
-    "incrementalLocalAuditAt": "2026-10-13",
+    "incrementalLocalAuditAt": "2026-10-14",
     "refreshMode": "incremental-local-corpus",
-    "localRefreshNote": "2026-10-12 简报入库后于 2026-10-13 重跑本库 rg 并维护新增候选。综述正文、引用、实质 reviewedAt 与站外查询日期不变；历史本库记录见 docs/research-updates/2026-10-12/local-corpus-evidence.json，旧审批见基线提交。"
+    "localRefreshNote": "2026-10-14 完成展示文案校订后重跑本库查询，候选集合与上期相同。站外查询、既有检索窗口和实质 reviewedAt 保留；局部事实纠正另见 docs/editorial/2026-10-14/author-reviews-assessment.json。旧本库记录与审批保存在 docs/editorial/2026-10-14/local-corpus-evidence.json。"
   }
 }

@@ -3,7 +3,7 @@
   "updatedAt": "2026-10-13",
   "analysisWindowIssues": 4,
   "title": "十月阅读线索：通信扰动、训练监督与测试条件",
-  "summary": "最近四期的已收录报告提供十个方向的阅读线索，数量只描述本站样本。本期八篇分别比较协同消息恢复、视觉与未来监督、占据和运动状态，以及开环雷达规划、长时导航与物理闭环测试。以下设想仍待独立查新与实验，简报更新不改变 Idea 中心的评审状态。",
+  "summary": "最近四期的论文围绕通信扰动、训练监督和测试条件展开。这里整理可对照的结果与待验证问题；收录数量仅描述本站样本，具体课题的评审状态见 Idea 中心。",
   "trends": [
     {
       "id": "testing-as-common-language",
@@ -51,9 +51,9 @@
     },
     {
       "id": "agentic-driving-grounded",
-      "title": "记忆保存什么，比单纯延长上下文更具体",
+      "title": "语言记忆与历史特征如何选择",
       "evidence": "AD-Memo 用语言记录先前观察中的关键事件，并分别训练记忆与动作；MomADv2 对 query 历史做命令、断序和匹配过滤。",
-      "judgement": "语言记忆与特征记忆需在同一预算下比较；AD-Memo 的记忆反馈并不等于持续车辆控制闭环。",
+      "judgement": "语言记忆与特征记忆需在同一预算下比较；AD-Memo 已评测记忆反馈，持续车辆控制闭环仍待验证。",
       "tags": [
         "agentic-driving",
         "end-to-end-autonomous-driving"
@@ -67,7 +67,7 @@
       "id": "v2x-systemization",
       "title": "通信恢复需要同时对齐载荷与扰动训练",
       "evidence": "Sparse2comm 顺序处理语义缺失、时延和空间偏差；LR-V2X 用完整通信训练，在接收端重建受损潜变量对应的特征。FFBL 另检查特征吸收与身份继承。",
-      "judgement": "相同发送字节数并不意味着相同训练信息或接收计算；独立丢失、区域连续丢失和真实无线分组丢失也应分开测试。",
+      "judgement": "对照恢复方法时，除发送字节数外，还需固定训练信息与接收计算；独立丢失、连续区域丢失和真实无线分组丢失分别测试。",
       "tags": [
         "cooperative-autonomous-driving",
         "dynamic-scene-representation"
@@ -139,7 +139,7 @@
     {
       "level": "近期阅读信号",
       "title": "跟踪状态的运行时成本",
-      "evidence": "TrackFlood 把 NMS-free 检测输出与跟踪关联、持久轨迹池的计算代价联系起来。 可与此前实时对抗评测报告对照任务级运行时终点。",
+      "evidence": "TrackFlood 测量检测输出造成的跟踪关联与持久轨迹池计算开销；此前实时对抗评测检查结构化状态扰动下的轨迹误差，尚未报告完整时延。",
       "whyItMatters": "数字白盒扰动与所测硬件流水线限定了结论，真实道路的物理攻击可实现性尚待验证。",
       "tags": [
         "autonomous-driving-security"
@@ -153,7 +153,7 @@
       "level": "近期阅读信号",
       "title": "未知语义与几何障碍",
       "evidence": "TriO 补充无需目标域微调的障碍／地面路线，并展示低矮条状物漏检。",
-      "whyItMatters": "比较未知物体方法时需要纳入这条几何基线，并先对齐 STU 任务协议；方向是否饱和仍待判断。",
+      "whyItMatters": "比较未知物体方法时，需要纳入这条几何基线并对齐 STU 协议，再检查强基线尚未覆盖的失效条件。",
       "tags": [
         "lidar-anomaly-segmentation"
       ],
@@ -292,7 +292,7 @@
       "priority": "B",
       "title": "连接表面、实例与占据的长期状态",
       "question": "Gaussian 的增删与跨时检索能否由几何—占据—规划一致性监督，而不只由渲染梯度决定？",
-      "whyNow": "RoadOcc 划分保留、搬运与刷新，FFBL 分离特征更新和身份继承，DyRAD 分开动态反射体与雷达响应；它们给出不同状态变量的可操作接口。与 USR-Drive 的表面/对象统一表示结合时，应先验证跨窗身份和几何边界，不能由联合输出直接推出统一长期状态。",
+      "whyNow": "RoadOcc 划分保留、搬运与刷新，FFBL 分离特征更新和身份继承，DyRAD 分开动态反射体与雷达响应；它们给出不同状态变量的可操作接口。与 USR-Drive 的表面/对象统一表示结合时，跨窗口身份和几何边界仍需验证，联合输出本身尚不足以说明长期状态一致。",
       "minimumStudy": "在同一日志上比较固定 LiDAR 锚点、渲染梯度增删和任务一致性增删，联合测量渲染、深度、occupancy 边界、动态轨迹、策略排序与失败集合重合率，并对被增删 primitive 做区域归因。",
       "risk": "冻结任务头可能把其偏差固化成结构监督；需要多任务头、独立几何指标和至少两类规划栈，防止只学习某一模型的脆弱点。",
       "tags": [
@@ -355,11 +355,11 @@
   "directions": [
     {
       "tag": "cooperative-autonomous-driving",
-      "signal": "强热点",
+      "signal": "消息恢复与身份更新",
       "focus": "Sparse2comm 依次恢复语义、时间和空间一致性，LR-V2X 检查完整通信训练后的丢包恢复；与 FFBL 的身份更新对照阅读。",
       "gap": "张量载荷、受扰训练分布、接收端计算和无线包语义不同；检测鲁棒性尚未证明真实通信条件下的闭环驾驶收益。",
       "ideaTitle": "分别更新位置精度与目标存在性的协同消息",
-      "idea": "待验证假设：每条远端证据应分别声明几何收紧价值和存在性延续价值，由下游任务选择吸收、仅保留或拒绝，并与统一融合更新比较。",
+      "idea": "每条远端证据应分别声明几何收紧价值和存在性延续价值，由下游任务选择吸收、仅保留或拒绝，并与统一融合更新比较。",
       "method": "构建带 observer、age、visibility、position covariance、existence support 与 conflict 的 evidence graph；用 innovation consistency 校准几何更新，用 track survival 和遮挡恢复监督存在性，再让固定 planner 在通信预算下选择证据。",
       "validation": "在真实路口与可控 V2X replay 中扫刷新率、遮挡、丢包和外参漂移，比较 LiDAR/radar only、EKF、feature fusion、KG 与双价值方法；报告 RMSE、match/drop、ECE、identity switch、通信量和闭环风险。",
       "novelty": "Multi-Observer 量化了精度与可用率分离，G-MARK 保留来源证据；待检验的差异是把两类信息接入同一规划接口，并分别验证两种更新的作用。",
@@ -371,11 +371,11 @@
     },
     {
       "tag": "agentic-driving",
-      "signal": "问题升温",
+      "signal": "语言记忆",
       "focus": "AD-Memo 用可读语言记忆保存先前观察中的驾驶事件，分别考虑记忆与动作的回报范围。",
       "gap": "记忆闭环而控制开环；同架构向量记忆对照、长时稳定性及真实控制反馈仍需补齐。",
       "ideaTitle": "按对象、时间和来源组织事故推理证据",
-      "idea": "待验证假设：把事故推理拆成可校验工具步骤并允许 undecidable，能比端到端 CoT 更准确地处理角色、规则和域迁移。",
+      "idea": "把事故推理拆成可校验工具步骤并允许 undecidable，能比端到端 CoT 更准确地处理角色、规则和域迁移。",
       "method": "调用对象跟踪、事件时间定位、地图/规则检索和证据冲突检查工具，输出带对象 ID、时间窗和来源的 structured causal graph，再由 constrained reasoner 生成责任候选与 abstention。",
       "validation": "在 CAViAR CCD-to-Nexar 与 CCD holdout 上比较直接 VLM、普通 CoT、tool chain 和完整方法；报告 macro-F1、judge、人审 evidence precision、无证据断言率、拒答覆盖和时延。",
       "novelty": "CAViAR 定义了责任任务，G-MARK 证明来源结构有效；待验证的差异是将工具化证据链和可拒答责任推理闭合到同一真实事故 benchmark。",
@@ -386,11 +386,11 @@
     },
     {
       "tag": "3d-reconstruction",
-      "signal": "资产准入",
+      "signal": "重建资产的适用范围",
       "focus": "DyRAD 将动态雷达回波渲染加入新视角重建，与相机和 LiDAR 资产的任务保真问题形成对照。",
       "gap": "真实离轨测量与动态对象标注仍是关键前提；循环一致性不等于独立离轨真值，渲染质量不等于可执行仿真可靠性。",
       "ideaTitle": "按视角、传感器和任务划定重建资产用途",
-      "idea": "待验证假设：重建资产应针对新视角、感知回放或闭环仿真分别给出可用域和拒绝域，并用各自终点验证这些范围。",
+      "idea": "重建资产应针对新视角、感知回放或闭环仿真分别给出可用域和拒绝域，并用各自终点验证这些范围。",
       "method": "为每个区域记录训练视锥覆盖、几何不确定性、动态对象来源和传感器残差；训练轻量准入头预测相机、LiDAR 与固定感知器的局部误差上界，越界时拒绝生成测试 verdict。",
       "validation": "在 Waymo/nuScenes 多轨迹片段比较逐场景 3DGS、前馈方法和带准入头版本；按视角偏移、动态密度和传感器分别报告渲染、几何、感知误差、策略排序保持率与拒绝覆盖。",
       "novelty": "现有工作分别优化重建速度、结构和物理一致性；拟验证的差异是把资产用途、局部误差上界和拒绝机制纳入同一可复算协议。",
@@ -401,11 +401,11 @@
     },
     {
       "tag": "dynamic-scene-representation",
-      "signal": "主线成形",
+      "signal": "时序状态与运动",
       "focus": "SelectOccFlow 联合占据与场景流，按语义、体素状态与结构支持选择信息；RoadOcc 和 FFBL 分别补充历史状态与身份更新对照。",
       "gap": "状态和流的离线指标仍需与控制反馈连接；历史选择是否引入延迟、对未知空间是否校准，需要单独验证。",
       "ideaTitle": "带来源、年龄与身份的表面—实例—占据记忆",
-      "idea": "待验证假设：persistent slot 管理对象身份、局部 Gaussian 管理可见表面、显式 occupancy 管理 free/unknown，并让每次更新携带来源、年龄与不确定性，可减少跨窗口动态涂抹和错误自我确认。",
+      "idea": "persistent slot 管理对象身份、局部 Gaussian 管理可见表面、显式 occupancy 管理 free/unknown，并让每次更新携带来源、年龄与不确定性，可减少跨窗口动态涂抹和错误自我确认。",
       "method": "以 identity-aware memory 连接对象、表面和体素状态；用可见性与创新一致性决定更新几何、只延续存在性或拒绝证据，再由 reconstruction、tracking、occupancy calibration 和固定 planner intervention 共同验收。",
       "validation": "在 nuScenes/Occ3D 与第二个含 radar 或多遍历序列的数据集比较无记忆、固定窗口、对象记忆、表面记忆和完整三态状态；报告 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划风险和延迟。",
       "novelty": "USR-Drive、GeoUP、GaussianWorld 与 Scene as Occupancy 已覆盖若干组件；待检验的是来源、年龄、长期身份和 free/unknown 能否在同一状态中被独立干预，并产生额外收益。",
@@ -417,11 +417,11 @@
     },
     {
       "tag": "autonomous-driving-security",
-      "signal": "闭环化",
+      "signal": "运行时风险",
       "focus": "TrackFlood 把运行时风险从检测输出延伸到跟踪关联和持久状态。",
       "gap": "8/255 与 32/255 扰动预算不能混写，数字白盒证据不等于物理道路可行；防御还缺完整精度及自适应对照。",
       "ideaTitle": "定位跨层故障并验证恢复动作",
-      "idea": "待验证假设：不同层级的故障会留下可区分的时序指纹；先定位故障来自传感器、感知表征、世界模型还是规划器，可能帮助选择对应的安全恢复动作。",
+      "idea": "不同层级的故障会留下可区分的时序指纹；先定位故障来自传感器、感知表征、世界模型还是规划器，可能帮助选择对应的安全恢复动作。",
       "method": "用结构化干预分别注入相机/LiDAR 扰动、特征漂移、预测偏差和控制执行误差，提取跨层残差、置信度变化与动作不一致性；以因果图或变点模型完成在线归因，并通过替换可疑模块输出构造反事实验证，驱动降速、切换备份感知或最小风险停车。",
       "validation": "在 Bench2Drive-Robust、实车扰动测试协议和世界模型 rollout 中比较统一异常检测、模块级检测与所提方法；报告归因准确率、检测延迟、碰撞率、误触发率、恢复时间和训练外扰动泛化。",
       "novelty": "现有鲁棒性工作多展示攻击成功或性能下降，真实扰动研究也指出离线指标无法预测实车失败；该设想拟检验故障定位能否帮助系统恢复，仍需与现有方法比较。",
@@ -434,11 +434,11 @@
     },
     {
       "tag": "autonomous-driving-testing",
-      "signal": "强热点",
+      "signal": "长时与物理测试",
       "focus": "Odyssey 将明确路线与长时传感器闭环结合；SceneFactory-3D 固定场景与控制器，检查摩擦和坡度变化后的物理执行。",
       "gap": "日志回放、反应式交通和物理执行采用不同假设；重置、事件删失、传感器输入及仿真资产均需纳入可比条件。",
       "ideaTitle": "按风险、代理误差与责任证据分配测试预算",
-      "idea": "待验证假设：只有同时高风险、proxy 可迁移且责任证据可判定的场景才应消耗高保真预算；其余样本应扩展信息或明确拒答。",
+      "idea": "只有同时高风险、proxy 可迁移且责任证据可判定的场景才应消耗高保真预算；其余样本应扩展信息或明确拒答。",
       "method": "用 Scape 类校正器预测 target performance 与区间，以 CAViAR 类事件/角色/规则槽描述失败，再用 coverage-aware acquisition 选择能缩小区间和扩展失败族的下一批高保真测试。",
       "validation": "跨日志、低保真、CARLA 与少量物理配对场景比较随机、worst-case、coverage-only 和完整方法；报告单位预算失败数、risk-coverage、责任一致率、事件保持和策略排序。",
       "novelty": "现有三类工作分别解决 proxy 校准、主动选择和事故责任；组合是否具有新意取决于同事件多层资产和责任标签能否真实闭合。",
@@ -450,11 +450,11 @@
     },
     {
       "tag": "end-to-end-autonomous-driving",
-      "signal": "持续高位",
+      "signal": "训练监督",
       "focus": "FPD-Drive 从未来观测教师蒸馏多轨迹与安全评分；ViRA 在固定推理结构下比较视觉对齐目标，补充随机目标负对照。",
       "gap": "未来教师与部署输入、基础版与扩展版数据规模、辅助感知监督与无监督目标选择需要分开；NAVSIM 分数与 HUGSIM 闭环不能合并为单一结论。",
       "ideaTitle": "以部署输入和恢复能力约束策略后训练",
-      "idea": "待验证假设：固定教师、数据与训练预算，显式约束学生部署可得的信息，并针对偏离状态做恢复训练，能比只扩大离线模仿数据更稳定地迁移。",
+      "idea": "固定教师、数据与训练预算，显式约束学生部署可得的信息，并针对偏离状态做恢复训练，能比只扩大离线模仿数据更稳定地迁移。",
       "method": "将特权教师监督、语义中间输入和学生实际传感器链分开控制；在同一初态下比较离线模仿、on-policy 蒸馏及其组合，记录每级处理延迟与拒绝/停止。",
       "validation": "先在固定仿真场景检验碰撞、完成度、每公里风险、停车和尾时延；再按路线/天气分组做受控迁移，避免把重复圈数当独立环境。",
       "novelty": "OPTED 和 MILER 已覆盖后训练与语义迁移的关键机制；这里只提出可检验的对照问题，未经独立查新，不能声称方法空白。",
@@ -466,11 +466,11 @@
     },
     {
       "tag": "world-models",
-      "signal": "决策对齐",
+      "signal": "候选动作的未来",
       "focus": "PhysWAM 耦合未来几何和动作，World4Scorer 预测候选后果；GeoWAM v3 新增未来几何与数据规模消融。",
       "gap": "GeoWAM 36.6 与最新 39.6 对应不同预训练；反事实候选的真实未来、完整推理成本和等预算对照仍是关键缺口。",
       "ideaTitle": "稀疏配对监督的候选未来校准器",
-      "idea": "待验证假设：只要为少量安全边界候选获得 paired simulator future，就能校准大部分 action-specific latent，并对其余候选输出集合或拒答。",
+      "idea": "只要为少量安全边界候选获得 paired simulator future，就能校准大部分 action-specific latent，并对其余候选输出集合或拒答。",
       "method": "主动选择 expert 邻域与高分歧候选做 reactive rollout，将 future 解码为 occupancy/agent state；用 paired latent loss、ranking consistency 和 conformal set 训练校准器，未覆盖动作不输出确定单解。",
       "validation": "固定 proposal/scorer，在 paired CARLA 与 NAVSIM 上比较 trajectory-only、shared future、DA-WAM 与校准模型；报告 future error、危险近邻排序、risk-coverage、闭环分数和 rollout 预算。",
       "novelty": "DA-WAM 建立候选专属未来，反事实工作建立配对 reference 原则；拟验证的差异是用稀疏主动配对校准非 expert latent，并检查拒答对规划的作用。",
@@ -482,11 +482,11 @@
     },
     {
       "tag": "radar-occupancy-representation",
-      "signal": "真实负证据推动",
+      "signal": "回波与规划的关系",
       "focus": "Radar2Plan 把真实 4D 雷达接入统一开环规划接口，检查不同传感器组合、规划器和环境；DyRAD 提供回波层的补充证据。",
       "gap": "Top-1 轨迹误差不是碰撞概率，单次训练也不足以确定小幅差异；闭环风险、成本与未知空间仍需独立评测。",
       "ideaTitle": "分别维护存在性、身份与几何的雷达记忆",
-      "idea": "待验证假设：雷达在遮挡下首先提供存在性和径向运动证据，只有通过创新与可见性校准时才应收紧三维位置；分开更新可避免弱回波污染稠密 occupancy。",
+      "idea": "雷达在遮挡下首先提供存在性和径向运动证据，只有通过创新与可见性校准时才应收紧三维位置；分开更新可避免弱回波污染稠密 occupancy。",
       "method": "以 occupied/free/unknown 加 persistent identity 为状态，分别学习 existence survival 与 geometric covariance update；融合 observer provenance、age、Doppler 多解和 RbFT 类锚点校正，冲突时保留集合。",
       "validation": "从 Multi-Observer 真实数据和公开 radar 数据构建刷新率/遮挡/标定/天气分层，对比未校正累计、EKF、单解 occupancy-flow 和完整方法；测 ECE、free-space、identity、future occupancy 与固定 planner 风险。",
       "novelty": "局部记忆、任务取点和类别无关运动均已有明确前作。原设想仅保留为待验证问题，不能由本期结果推定新颖性或长期占据可行性。",
@@ -498,11 +498,11 @@
     },
     {
       "tag": "lidar-anomaly-segmentation",
-      "signal": "协议分化",
+      "signal": "任务协议对照",
       "focus": "本期重新检索道路三维异常与开放集感知，未增加主报告；继续以 TriO、NDP、LIDO 核对 STU 的任务和评测区别。",
       "gap": "工业点云缺陷不直接填补道路未知物体证据。全流误报、少点数实例持续检出、固定阈值与跨传感器泛化仍需同协议验证。",
       "ideaTitle": "先做全流与实例诊断，再决定新方法",
-      "idea": "待验证假设：在相同误报预算与过去观测条件下，部分真实小异物存在可重复、未被简单平滑和距离聚类解释的检出缺口。",
+      "idea": "在相同误报预算与过去观测条件下，部分真实小异物存在可重复、未被简单平滑和距离聚类解释的检出缺口。",
       "method": "固定 NDP/LIDO 等训练暴露与 checkpoint，比较单帧、分数 EMA、历史点累积和简单距离自适应聚类，显式记录 void、时间戳与 ROI。",
       "validation": "用公开验证集和正常序列审计实例身份及负帧数量，预定阈值与连续检出规则，联合报告 AP/PQ、实例召回、误报次数/时长、首次稳定发现和实测时延。",
       "novelty": "尚未证明；REAL、APF、REL、LiON、DOODLE 和可见性近邻已压缩通用方法空间。简单控制解释收益、样本不足或 COVAL 覆盖同一问题时收窄或停止。",

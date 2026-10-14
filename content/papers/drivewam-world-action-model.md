@@ -104,7 +104,7 @@ $\rho_j^m$ 是当前 query 分给历史 token $j$ 的平均 softmax attention，
 
 ![原论文图 3：query chunk 4 和 5 后保留的视频 tokens](https://arxiv.org/html/2605.28544v1/x3.png)
 
-三行是历史 chunk，第二、三列分别表示新 query 4、5 到来后保留的区域，颜色表示高低分，黑色区域已删去。保留位置随当前 query 改变，不等同于只按时间删除；图中也能看到道路和背景被保留的片段，不能简单解释为所有静态背景都删除。原图号是 **3**，并非现有稿标的 2；它只展示视频缓存，不展示动作池的覆盖或遮挡行人重新出现后的决策表现。[原图 3 与图注](https://arxiv.org/html/2605.28544v1#S3.F3)
+三行是历史 chunk，第二、三列分别表示新 query 4、5 到来后保留的区域，颜色表示高低分，黑色区域已删去。保留位置随当前 query 改变，不等同于只按时间删除；图中也能看到道路和背景被保留的片段，不能简单解释为所有静态背景都删除。原论文图 **3** 只展示视频缓存，不展示动作池的覆盖或遮挡行人重新出现后的决策表现。[原图 3 与图注](https://arxiv.org/html/2605.28544v1#S3.F3)
 
 ## 实验结论与证据
 
@@ -145,9 +145,9 @@ ADE 是预测轨迹整个时域的平均位置误差，FDE 是末端位置误差
 
 ## 应用场景与启发
 
-- **作者主张**：用视频基础模型作为策略核心，VLM 提供随场景更新的意图，在有限历史缓存中扩展驾驶 world-action 建模。
-- **我的判断**：最有用的可复用模块是保护动作历史的模态分池，以及将 guidance 与目标 chunk 一一对应的文本 mask。它们适合做受控消融；当前全套策略更接近可研究的高成本模型，尚不是已验证的实时车端控制器。
-- **待验证假设**：选择性缓存的优势应来自保存会重新变得重要的旧证据。若在同容量下加入交通参与者持续性约束，能改善“曾可见、后遮挡、再出现”的片段，而非只改善背景稳定场景，才支持其安全相关的记忆价值。
+作者以视频基础模型作为策略核心，由 VLM 随场景更新驾驶意图，并用有限历史缓存支持 world-action 建模。保护动作历史的模态分池，以及将 guidance 与目标 chunk 对应的文本 mask，都适合迁移到受控消融中。全套模型目前仍有较高计算成本，车端实时控制尚待验证。
+
+选择性缓存是否保留了会重新变得重要的旧证据，是值得继续检查的问题。在同容量下加入交通参与者持续性约束后，若收益主要出现在“曾可见、后遮挡、再出现”的片段，而非背景稳定场景，才更支持它具有与安全相关的记忆价值。
 
 ## 局限与阅读风险
 
@@ -161,7 +161,7 @@ ADE 是预测轨迹整个时域的平均位置误差，FDE 是末端位置误差
 
 ### 最小验证与停止条件
 
-- **当前资源（2026-09-12）**：官方 [GitHub](https://github.com/chenshi3/DriveWAM) 已有模型、训练/评测脚本与配置，本次打开了 PhysicalAI 配置及测试 prompts 文件页面；[Hugging Face](https://huggingface.co/chenchenshi/DriveWAM/tree/main) 可见 NAVSIM 和 PhysicalAI 两套 config.json、各约 12.5 GB safetensors，以及 4k/20k/100k clip CSV、训练 prompts 和 navtest metric cache。文件可见不等于已加载验证。本次没有下载权重或运行模型。
+- **当前资源（2026-09-12）**：官方 [GitHub](https://github.com/chenshi3/DriveWAM) 已有模型、训练/评测脚本与配置，本次打开了 PhysicalAI 配置及测试 prompts 文件页面；[Hugging Face](https://huggingface.co/chenchenshi/DriveWAM/tree/main) 可见 NAVSIM 和 PhysicalAI 两套 config.json、各约 12.5 GB safetensors，以及 4k/20k/100k clip CSV、训练 prompts 和 navtest metric cache。文件可见不等于已加载验证。
 - **数据前置条件**：PhysicalAI 原始前视图像、ego-motion/calibration 需从官方数据页访问，页面要求账户接受数据条款；本次没有代为接受或下载。先锁定原始数据版本、发布权重和测试 clip IDs，再核对作者的未来 yaw 方向标签与实际可提供的导航指令。[官方数据页](https://huggingface.co/datasets/nvidia/PhysicalAI-Autonomous-Vehicles)
 - **最小实验**：先从已发布 1k test 列表固定抽取 100 段，使用同一权重、同 guidance、同 3/10 步求解器与随机种子，比较 Full、FIFO、Selective 的 448/160 token 预算。记录逐 chunk ADE/FDE、缓存淘汰时间、旧动态对象 token 覆盖和总时延；把“遮挡后再出现”样例单列，人工检查标签。只剖析资源的 300 秒运行另记，不能用它补精度结论。
 - **成功信号**：在匹配内存下复现 Selective 优于 FIFO，且动态重现子集收益大于背景稳定子集；同时确认与 Full 的误差差距和实际 p99 开销。初筛有信号后扩到全部 1k 并做场景配对 bootstrap，不重新筛测试样例。
@@ -171,4 +171,4 @@ ADE 是预测轨迹整个时域的平均位置误差，FDE 是末端位置误差
 
 本稿按 [DriveWAM arXiv:2605.28544v1，2026-05-27](https://arxiv.org/html/2605.28544v1) 读取全文 §3–4、附录 A–D，核验日为 2026-09-12。关键位置为式 1–8、表 1–6、图 1 和图 3；两张图均逐张下载、打开并对照原图注，保留原有官方 URL。作者单位与名单由全文首页和项目页确认，维持现有元数据。
 
-方法来源另核对 [LingBot-VA v1 §3.2–3.3](https://arxiv.org/html/2601.21998v1#S3.SS2)、[FlowCache v1 §3.3](https://arxiv.org/html/2602.10825v1#S3.SS3) 和 [Epona v1 §3.2–3.3](https://arxiv.org/html/2506.24113v1#S3.SS2)。资源检查单独读取项目页、GitHub News/配置/测试文件页及 Hugging Face 文件列表；没有对实现进行完整审计，没有复测榜单或时延。
+方法来源另核对 [LingBot-VA v1 §3.2–3.3](https://arxiv.org/html/2601.21998v1#S3.SS2)、[FlowCache v1 §3.3](https://arxiv.org/html/2602.10825v1#S3.SS3) 和 [Epona v1 §3.2–3.3](https://arxiv.org/html/2506.24113v1#S3.SS2)。资源检查单独读取项目页、GitHub News/配置/测试文件页及 Hugging Face 文件列表；未下载权重或运行模型，没有对实现进行完整审计，也没有复测榜单或时延。

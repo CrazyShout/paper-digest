@@ -78,13 +78,13 @@ $k$ 是噪声时间，$C$ 包含传感器 token 与高层指令。原文把网�
 
 ![原文 Figure 2：MOJITO 架构与 PillarGroup](../../assets/papers/mojito-modal-joint-driving-figure-1.png)
 
-[原图图注](https://arxiv.org/html/2607.23511v1#S3.F2) 中，三种输入分别 token 化，保留独立分支后进入 Modal Joint Attention，再进入独立 FFN。已逐图核对左上角点云裁剪、pillar 划分和排序采样，以及右侧指令注入的位置。图中几何查询是学习到的交互，没有显式安全可行域求解。
+[原图图注](https://arxiv.org/html/2607.23511v1#S3.F2) 中，三种输入分别 token 化，保留独立分支后进入 Modal Joint Attention，再进入独立 FFN。左上角依次展示点云裁剪、pillar 划分和排序采样，右侧标出指令注入的位置。图中几何查询是学习到的交互，没有显式安全可行域求解。
 
 ### 原文 Figure 3：挑选场景的轨迹
 
 ![原文 Figure 3：三种方法的定性比较](../../assets/papers/mojito-modal-joint-driving-figure-2.png)
 
-[原图图注](https://arxiv.org/html/2607.23511v1#S5.F3) 按行展示环岛、分岔与转弯，右侧依次是 DiffusionDrive、ReCogDrive、MOJITO；绿色为真值，红色为预测。最后一行 MOJITO 更接近道路走向。这支持展示案例的可行性，不能凭三例推断全部尾部风险，也不能从注意力热图认证因果贡献。
+[原图图注](https://arxiv.org/html/2607.23511v1#S5.F3) 按行展示环岛、分岔与转弯，右侧依次是 DiffusionDrive、ReCogDrive、MOJITO；绿色为真值，红色为预测。最后一行 MOJITO 更接近道路走向。这三个样例帮助观察不同方法如何贴合道路；尾部风险与联合注意力的贡献仍需结合统计和消融判断。
 
 ## 实验结论与证据
 

@@ -86,7 +86,7 @@ $$
 \end{aligned}
 $$
 
-$K$ 是历史帧数，$F=8$ 是未来步数，$\mathcal Z_t$ 汇总多视角、多层几何和 ego tokens，$Q^{\mathrm{geom}}$ 编码未来位置，$\widehat{\mathcal U}$ 是预测特征，$\widehat X^\ell$ 是为 几何 head 各层投影后的版本。输入式中没有候选轨迹 $a$；所以预测出来的是从历史推断的未来，不是 $P(\mathrm{future}\mid\mathrm{history},a)$ 的显式多动作查询。[原式 1–4](https://arxiv.org/html/2608.23486v3#S3.SS1)
+$K$ 是历史帧数，$F=8$ 是未来步数，$\mathcal Z_t$ 汇总多视角、多层几何和 ego tokens，$Q^{\mathrm{geom}}$ 编码未来位置，$\widehat{\mathcal U}$ 是预测特征，$\widehat X^\ell$ 是为几何 head 各层投影后的版本。输入式中没有候选轨迹 $a$；所以预测出来的是从历史推断的未来，不是 $P(\mathrm{future}\mid\mathrm{history},a)$ 的显式多动作查询。[原式 1–4](https://arxiv.org/html/2608.23486v3#S3.SS1)
 
 第二组对应式 5–7，将特征、未来点图与当前锚定放在一起：
 

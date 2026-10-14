@@ -111,7 +111,7 @@ $TP,FP,FN$ 来自点匹配；$TPA,FPA,FNA$ 来自整轨迹关联匹配。这里�
 
 ![原论文 Fig. 2：加速区、匀速测量区、减速区与正反向往返路线](../../assets/papers/roadside-evaluation-official-figure-2.png)
 
-中央黄色区的测量点与两条反向箭头对应式 6 的偏差抵消。两端加减速区应与估计段分开；这张图说明校准动作，而不是不同高度或角度下的性能结果。[Fig. 2](https://arxiv.org/html/2401.12392v1#S4.F2) 三张原始图片均已单独打开并与编号、图注核对。
+中央黄色区的测量点与两条反向箭头对应式 6 的偏差抵消。两端加减速区应与估计段分开；这张图说明校准动作，而不是不同高度或角度下的性能结果。[Fig. 2](https://arxiv.org/html/2401.12392v1#S4.F2)
 
 ## 实验结论与证据
 
@@ -189,4 +189,4 @@ Fig. 6 改变匹配距离阈值，作者报告阈值放宽后各系统 FP/FN 下
 
 ### 核验记录
 
-全文以 [2401.12392v1](https://arxiv.org/html/2401.12392v1) 为固定来源：IV-A 式 1–6、附录式 14–15、IV-B 匹配与指标、V 节 Tables I–VIII、Figs. 1–2 均已核对。相关工作读取 HOTA 作者版 §5 与 TUMTraf-V2X v1 §3.2–4；作者源码是 2026-09-12 读取的 main 快照，尚未证明与发表时实现完全一致。首页单位包括 University of Michigan、Huron High School 和 Ivie Communications，报告据此补齐机构信息。
+全文以 [2401.12392v1](https://arxiv.org/html/2401.12392v1) 为固定来源：IV-A 式 1–6、附录式 14–15、IV-B 匹配与指标、V 节 Tables I–VIII、Figs. 1–2 均已核对。相关工作读取 HOTA 作者版 §5 与 TUMTraf-V2X v1 §3.2–4；作者源码是 2026-09-12 读取的 main 快照，尚未证明与发表时实现完全一致。首页单位包括 University of Michigan、Huron High School 和 Ivie Communications，报告据此补齐机构信息。三张原始图片均已单独打开并与编号、图注核对。

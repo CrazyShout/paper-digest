@@ -3,7 +3,7 @@
   "id": "world-models",
   "title": "驾驶世界模型：未来生成、规划学习与交互仿真",
   "subtitle": "按用途比较视频、点云、占据和潜状态模型，检查动作响应、参与者行为及仿真结论的现实适用性。",
-  "abstract": "驾驶世界模型已从动作条件视频生成扩展到点云、占据、潜变量、结构引导渲染、策略学习和闭环仿真。本综述区分内容生成、未来预测、规划、交互仿真和测试裁判五种用途，分别比较输出质量、结构、动作响应、规划收益与环境反应。模型用于给出安全测试结论时，还需验证适用包络、失效归因和现实 verdict 迁移。核心综合覆盖 2021 至 2026-08-01 的文献；2026-08-10 仅同步本地候选审计，未重写核心综合。既有检索还记录了相邻动作集、显式 world-state 协议、表示秩正则化和通用动作表征等机制研究，用于讨论选择偏差、状态追踪、长期漂移和动作迁移；这些工作未形成完整驾驶证据，因此未纳入核心引用。现有结果支持数据生成、预测先验、受限规划训练和部分闭环原型，物理规律、因果反事实与通用安全裁决仍需相应验证。",
+  "abstract": "驾驶世界模型已从动作条件视频生成扩展到点云、占据、潜变量、结构引导渲染、策略学习和闭环仿真。本综述区分内容生成、未来预测、规划、交互仿真和测试裁判五种用途，分别比较输出质量、结构、动作响应、规划收益与环境反应。若用模型给出安全测试结论，还需明确适用范围、解释失败原因，并检查仿真结论能否在现实中成立。核心综合覆盖 2021 至 2026-08-01 的文献；2026-08-10 仅同步本地候选审计，未重写核心综合。既有检索还记录了相邻动作集、显式 world-state 协议、表示秩正则化和通用动作表征等机制研究，用于讨论选择偏差、状态追踪、长期漂移和动作迁移；这些工作未形成完整驾驶证据，因此未纳入核心引用。现有结果支持数据生成、预测先验、受限规划训练和部分闭环原型，物理规律、因果反事实与通用安全裁决仍需相应验证。",
   "reviewedAt": "2026-09-22",
   "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
   "researchQuestions": [
@@ -76,8 +76,8 @@
       "id": "taxonomy",
       "kind": "taxonomy",
       "title": "分别比较状态表示、动作接口和环境交互",
-      "thesis": "像素、点云、占用、潜变量和结构渲染是状态表示选择；它们与转移模型、动作接口和最终用途正交，不能用一个标签替代完整方法描述。",
-      "body": "表示轴包括像素、点云、占用、潜变量和显式场景结构。GAIA-1、DriveDreamer、Drive-WM、DrivingWorld 与 Vista 保留纹理和语义细节，但高视觉分数或约 40 秒生成时长可能掩盖深度、运动和遮挡错误；Copilot4D 的点云 token、OccWorld 与 CascadeOcc 的语义占用更容易直接测量几何，却受稀疏、量化、级联误差和体素分辨率限制。M4World 同时生成多视角视频与 LiDAR，并加入对象级控制，适合研究跨模态状态一致性，但私有车队数据和生成指标限制了可复核性。LAW 与 Think2Drive 学习面向规划或强化学习的潜状态，不要求逐像素还原，必须通过策略收益和失效分析证明状态保留了什么。GenieDrive 先预测 4D occupancy 再渲染视频；其“physics-aware”在此只表示结构约束，不表示守恒定律或碰撞动力学已经验证。\n\n转移和动作接口是另一轴。Vista 与 Drive-WM 把轨迹或控制作为未来生成条件；DrivingGPT 用多模态自回归序列统一世界与规划；DAWN 在推理中让世界假设与动作去噪递归反馈。DriveWAM 从预训练视频 DiT 迁移动态先验并联合产生动作，EponaV2 用未来图像、深度与语义作为规划中间监督。Epona 并非两个分支递归互相条件化：其 VisDiT 与 TrajDiT 是共享时序潜变量、分别生成视频与轨迹的扩散头，外部轨迹可作为视频条件。共享表示、联合训练和多任务未来监督用于减少接口损失；模型对干预动作是否敏感、他车响应是否正确，仍需分别测量。\n\n交互机制还需单列。UniSim 根据自车与脚本化参与者轨迹更新传感器，不学习他车反应；OmniDreams 和 DriveArena 在循环中持续消费规划输出，Scenario Dreamer 生成闭环参与者行为。World Engine 则把可编辑 3DGS 传感器环境、行为世界模型和强化后训练耦合起来，其终点是策略从合成长尾交互中获得的收益。ACT-Bench 检查自车动作兑现，ReactSim-Bench 把自车控制与环境智能体控制分离，专门检查偏离日志后的响应。只有同时报告传感器更新、参与者响应、时域和越界条件，系统才是可审计的交互仿真候选；现实 verdict 有效性还需现实对照。\n\n四个新通用候选可放在既有方法轴的边界上：Action from Adjacent Set 属于候选动作选择器，CG-World 属于状态与干预数据协议，Video Representation Regularization 属于长时表示稳定器，ShadowDancer 属于动作表征学习。这些组件尚未在驾驶传感器生成、交通参与者反应或安全裁决任务中验证。迁移到驾驶时必须另行定义可执行车辆动作、道路几何状态、交互参与者和用途级终点，驾驶能力需由这些终点衡量。",
+      "thesis": "像素、点云、占用、潜变量和结构渲染描述的是状态表示；转移模型、动作接口和最终用途还需分别交代，才能看清方法如何工作。",
+      "body": "表示轴包括像素、点云、占用、潜变量和显式场景结构。GAIA-1、DriveDreamer、Drive-WM、DrivingWorld 与 Vista 保留纹理和语义细节，但高视觉分数或约 40 秒生成时长可能掩盖深度、运动和遮挡错误；Copilot4D 的点云 token、OccWorld 与 CascadeOcc 的语义占用更容易直接测量几何，却受稀疏、量化、级联误差和体素分辨率限制。M4World 同时生成多视角视频与 LiDAR，并加入对象级控制，适合研究跨模态状态一致性，但私有车队数据和生成指标限制了可复核性。LAW 与 Think2Drive 学习面向规划或强化学习的潜状态，不要求逐像素还原，必须通过策略收益和失效分析证明状态保留了什么。GenieDrive 先预测 4D occupancy 再渲染视频；其“physics-aware”在此只表示结构约束，不表示守恒定律或碰撞动力学已经验证。\n\n转移和动作接口是另一轴。Vista 与 Drive-WM 把轨迹或控制作为未来生成条件；DrivingGPT 用多模态自回归序列统一世界与规划；DAWN 在推理中让世界假设与动作去噪递归反馈。DriveWAM 从预训练视频 DiT 迁移动态先验并联合产生动作，EponaV2 用未来图像、深度与语义作为规划中间监督。Epona 并非两个分支递归互相条件化：其 VisDiT 与 TrajDiT 是共享时序潜变量、分别生成视频与轨迹的扩散头，外部轨迹可作为视频条件。共享表示、联合训练和多任务未来监督用于减少接口损失；模型对干预动作是否敏感、他车响应是否正确，仍需分别测量。\n\n交互机制还需单列。UniSim 根据自车与脚本化参与者轨迹更新传感器，不学习他车反应；OmniDreams 和 DriveArena 在循环中持续消费规划输出，Scenario Dreamer 生成闭环参与者行为。World Engine 则把可编辑 3DGS 传感器环境、行为世界模型和强化后训练耦合起来，其终点是策略从合成长尾交互中获得的收益。ACT-Bench 检查自车动作兑现，ReactSim-Bench 把自车控制与环境智能体控制分离，专门检查偏离日志后的响应。只有同时报告传感器更新、参与者响应、时域和越界条件，系统才是可审计的交互仿真候选；现实 verdict 有效性还需现实对照。\n\n四个新通用候选可放在既有方法轴的边界上：Action from Adjacent Set 属于候选动作选择器，CG-World 属于状态与干预数据协议，Video Representation Regularization 属于长时表示稳定器，ShadowDancer 属于动作表征学习。这些组件尚未在驾驶传感器生成、交通参与者反应或安全裁决任务中验证。驾驶迁移实验需明确可执行车辆动作、道路几何状态、交互参与者和最终评价任务，再据此衡量效果。",
       "referenceIds": [
         "gaia1-2023",
         "drive-wm-2024",
@@ -110,7 +110,7 @@
       "id": "evidence",
       "kind": "evidence",
       "title": "输出质量、动作响应与安全裁决如何评测",
-      "thesis": "视觉质量、结构正确、动作跟随、规划收益、环境反应和安全 verdict 是相互正交的证据维度；只有测试裁判需要把这些维度组织成递进准入。",
+      "thesis": "视觉、结构、动作跟随、规划和环境反应需要分别测量；若进一步用模型判定安全，还需逐层检查这些结果能否支持最终结论。",
       "body": "每项结果至少要标注四个上下文：数据来自真实日志还是仿真，环境是开环、伪闭环还是真正反应式，rollout 时域多长，以及输入、指标和失败样本能否独立审计。视频内容生成可用 FID、FVD、LPIPS、时序一致性和人工偏好；结构预测要另测深度、占用、点云距离、对象轨迹、多视角一致性和碰撞空间。动作跟随要求固定或匹配初态，改变转向、速度、轨迹或指令，并测偏差、单调性、训练分布外动作和无动作差异负对照。ACT-Bench 表明视觉质量高并不保证动作指令兑现。\n\n规划用途必须单独报告开环轨迹误差、CARLA 等反应式闭环中的碰撞/离路/进度、策略排序和跨规划器复现。LAW、Think2Drive、Drive-WM 与 DrivingGPT 提供不同层面的规划证据；EponaV2 在 NAVSIM 报告未来表征辅助规划，DriveWAM 也在 NAVSIM/PhysicalAI 报告动作策略结果，但二者仍是非反应式或受限闭环基准。只有等数据、等算力的消融和反应式闭环复测，才能把收益归因于世界模型。CascadeOcc 的占用预测与规划、M4World 的长尾对象增强分别提供结构和数据用途证据，却没有建立现实闭环因果链。World Engine 在公开 nuPlan 长尾场景中报告强化后训练的闭环改善，并由作者报告在超过一万条工业仿真场景和约 200 km 上海道路测试中的收益；公开部分与工业/道路部分必须分开解读，后两者缺少可独立复现的数据、平台与同初态对照，200 km 也不足以估计开放道路稀有事故率。交互用途还要确认环境是否响应自车：UniSim 的脚本轨迹更新不同于 Scenario Dreamer 的数据驱动参与者 rollout，DriveArena 的交通管理器闭环也不同于 ReactSim-Bench 对偏离日志后反应能力的专门测量。\n\n当系统要给出安全 verdict 时，才进入 L0–L4 准入链：L0 输出质量，L1 动作响应稳健性，L2 声明动作包络、最大时域与分布外拒绝，L3 失效归因，L4 现实 verdict 迁移。现有准入论文只以 Vista、Epona 支撑 L0/L1，并讨论 L2 的时域边界；分布外拒绝、L3 和 L4 尚未完成，也不是行业强制标准。DrivingGen 与 WorldLens 用于诊断模型输出，SafeGen 用于生成测试假设；现实安全结论仍需独立对照。\n\n对上述通用机制，迁移验证可从驾驶任务上的配对干预开始。动作选择方法要在同初态候选轨迹上报告可执行率、碰撞/离路与规划收益；状态协议要证明道路拓扑、对象身份和交通规则在分支间可追踪；表示正则化要同时报告长时结构误差与下游规划误差；动作表征要覆盖转向、速度和他车交互，并给出 action-blind 负对照。当前四篇都缺少其中至少一条完整驾驶链，故只作为失败机制线索。",
       "referenceIds": [
         "copilot4d-2024",
@@ -173,8 +173,8 @@
       "id": "outlook",
       "kind": "outlook",
       "title": "结构收益、动作干预与现实迁移实验",
-      "thesis": "下一步应把可观测渲染、结构状态、动作干预和裁决资格组织成可审计系统，让模型在证据不足时缩小用途或拒绝给出安全结论。",
-      "body": "第一条路线检验“结构指标是否真的增加决策解释力”。在固定训练数据和参数预算下训练纯视频模型、CascadeOcc 式占用模型、EponaV2 式多任务未来模型与结构 + 渲染模型，在预注册的留出城市和新传感器 rig 上，用嵌套回归检验占用、深度、语义、对象持久性和几何误差在控制 FVD 后能否显著预测规划失败；若增量解释度的置信区间覆盖零，或只在同域成立，就拒绝“结构改进带来驾驶有效性”的主张。GenieDrive 提供渲染起点，M4World 的视频/LiDAR双通道、点云、地图和潜状态探针可作为并行结构通道。\n\n第二条路线检验“模型是否学习动作干预和环境反应”。对同一初态生成匹配可执行动作，比较等数据、等算力的动作条件模型、DriveWAM 式 world-action 模型与 action-blind 基线；分别测自车动作兑现、他车让行/冲突响应、长时稳定和规划结果。ACT-Bench 可测第一项，ReactSim-Bench 可测第二项，Scenario Dreamer 与 DriveArena 可承载闭环；World Engine 可作为“合成交互是否真正改善策略”的系统基线，但应公开 3DGS 越界率、行为模型覆盖与训练奖励，且把公开 nuPlan、私有工业仿真和道路测试分层报告。若 action-blind 基线非劣，反应方向错误，或效应在留出城市/行为模型上消失，就拒绝“交互世界”主张。\n\n第三条路线检验“仿真 verdict 能否迁移”。预先声明 ODD、传感器、动作包络、最大时域、参与者模型、拒绝规则和目标策略集合，用仿真对策略风险排序，再在独立 HIL 或封闭场地复测；以预注册的秩相关阈值、错误接受率和置信下界决定准入。SafeGen 只能提出高价值测试假设，OmniDreams 可执行实时传感器 rollout，DrivingGen 与 WorldLens 负责分项诊断。若现实排序低于阈值、失败无法归因，或越界样本未被拒绝，系统不得充当测试裁判，只能退回生成、预测、规划辅助或实验仿真用途。\n\n第四条路线专门检验“通用 world-model 机制能否跨过驾驶迁移门”。把 Action from Adjacent Set、CG-World、表示秩正则化和 ShadowDancer 分别接入同一公开驾驶世界模型，在固定数据、参数与规划器下逐项替换候选选择、状态记录、长时稳定器和动作编码；主要终点分别是可执行动作率、分支状态一致性、长时几何误差、反应式闭环碰撞/离路和仿真—现实策略排序。若只有通用视频质量提升、action-blind 基线非劣、他车响应方向错误，或 HIL/封闭场地排序低于预注册阈值，就判定迁移失败并保持组件级用途，不进入安全裁判链。",
+      "thesis": "下一步可把渲染、结构和动作干预分别接入验证流程，明确模型能支持哪些判断；证据不足时，应缩小用途或拒绝给出安全结论。",
+      "body": "第一条路线检验“结构指标是否真的增加决策解释力”。在固定训练数据和参数预算下训练纯视频模型、CascadeOcc 式占用模型、EponaV2 式多任务未来模型与结构 + 渲染模型，在预注册的留出城市和新传感器 rig 上，用嵌套回归检验占用、深度、语义、对象持久性和几何误差在控制 FVD 后能否显著预测规划失败；若增量解释度的置信区间覆盖零，或只在同域成立，就拒绝“结构改进带来驾驶有效性”的主张。GenieDrive 提供渲染起点，M4World 的视频/LiDAR双通道、点云、地图和潜状态探针可作为并行结构通道。\n\n第二条路线检验“模型是否学习动作干预和环境反应”。对同一初态生成匹配可执行动作，比较等数据、等算力的动作条件模型、DriveWAM 式 world-action 模型与 action-blind 基线；分别测自车动作兑现、他车让行/冲突响应、长时稳定和规划结果。ACT-Bench 可测第一项，ReactSim-Bench 可测第二项，Scenario Dreamer 与 DriveArena 可承载闭环；World Engine 可作为“合成交互是否真正改善策略”的系统基线，但应公开 3DGS 越界率、行为模型覆盖与训练奖励，且把公开 nuPlan、私有工业仿真和道路测试分层报告。若 action-blind 基线非劣，反应方向错误，或效应在留出城市/行为模型上消失，就拒绝“交互世界”主张。\n\n第三条路线检验“仿真 verdict 能否迁移”。预先声明 ODD、传感器、动作包络、最大时域、参与者模型、拒绝规则和目标策略集合，用仿真对策略风险排序，再在独立 HIL 或封闭场地复测；以预注册的秩相关阈值、错误接受率和置信下界决定准入。SafeGen 只能提出高价值测试假设，OmniDreams 可执行实时传感器 rollout，DrivingGen 与 WorldLens 负责分项诊断。若现实排序低于阈值、失败无法归因，或越界样本未被拒绝，系统不得充当测试裁判，只能退回生成、预测、规划辅助或实验仿真用途。\n\n第四条路线专门检验“通用 world-model 机制能否迁移到驾驶任务”。把 Action from Adjacent Set、CG-World、表示秩正则化和 ShadowDancer 分别接入同一公开驾驶世界模型，在固定数据、参数与规划器下逐项替换候选选择、状态记录、长时稳定器和动作编码；主要终点分别是可执行动作率、分支状态一致性、长时几何误差、反应式闭环碰撞/离路和仿真—现实策略排序。若只有通用视频质量提升、action-blind 基线非劣、他车响应方向错误，或 HIL/封闭场地排序低于预注册阈值，就判定迁移失败并保持组件级用途，不进入安全裁判链。",
       "referenceIds": [
         "geniedrive-2026",
         "copilot4d-2024",
@@ -203,7 +203,7 @@
   ],
   "takeaways": [
     "驾驶世界模型应先按用途定位：内容生成、未来预测、规划、交互仿真和测试裁判是五类并行用途，不是一条统一成熟度阶梯。",
-    "视觉、结构、动作、规划、环境反应和安全 verdict 是证据矩阵；只有测试裁判需要完整的 L0–L4 递进准入链。",
+    "视觉、结构、动作、规划和环境反应分别评价；用于安全测试裁决时，再按完整的 L0–L4 流程检查结论是否成立。",
     "像素、点云、占据、潜变量和结构渲染保留不同信息，应按生成、规划和安全测试用途分别验证。",
     "动作条件和联合动作输出需要配套干预测试，检查后续世界状态、他车响应与长时闭环漂移。",
     "正式 benchmark 可以诊断生成与控制能力，但只有现实锚定、用途包络和拒绝机制才能支持模拟器的安全准入。",
@@ -707,7 +707,7 @@
   ],
   "searchAudit": {
     "workflowVersion": 3,
-    "searchedAt": "2026-10-13",
+    "searchedAt": "2026-10-14",
     "cutoffDate": "2026-08-01",
     "skills": [
       "research-lit",
@@ -743,28 +743,28 @@
       "2026 年预印本和 workshop 工作的正式出版状态、版本与结论可能在截止日后变化，需要下一轮重新核验。"
     ],
     "independentReview": {
-      "completedAt": "2026-10-13",
+      "completedAt": "2026-10-14",
       "status": "passed",
       "reviewers": 1,
-      "rounds": 1,
-      "reviewerAgentId": "/root/review_integration_oct12",
-      "scope": "Incremental current local-corpus closure only; existing references, core synthesis, historical external query dates and substantive reviewedAt preserved.",
-      "assurance": "fresh-context same-family provisional",
-      "finding": "Replayed raw Markdown rg, checked canonical candidates, deferred primary/cross-direction groups and ledger counts; all current snapshots passed independent integration review.",
-      "artifactPath": "docs/research-updates/2026-10-12/review-integration-round1.json",
-      "artifactSha256": "d192ee564ca7b043e690455dd2beef746895123c15f17e7b40c72bf3df56f665",
-      "snapshotFingerprint": "79eedeecf59addae9727c17c6aa45d10bcec51199c00879847d6c2d1418a08ab"
+      "rounds": 2,
+      "reviewerAgentId": "/root/review_representation_oct14",
+      "scope": "Editorial semantic preservation, targeted primary-source clarifications where recorded, and current local-corpus replay. Historical external searches and substantive reviewedAt preserved.",
+      "assurance": "same-family provisional",
+      "finding": "All recorded editorial findings resolved; source verification is limited to the explicitly documented targeted checks, not a comprehensive new literature review.",
+      "artifactPath": "docs/editorial/2026-10-14/review-representation-round2.json",
+      "artifactSha256": "4c7a9f53bb830c72a9b67cde808750fab34d3b59a05ea34bb2dc7bd789683d89",
+      "snapshotFingerprint": "5cbff9f9cfc94d6db573a556fce14a9b3a07af288c560f96e7a7e71498bb6eb4"
     },
     "queryRuns": [
       {
         "family": "驾驶视频生成与可控未来预测",
         "sourceFamily": "local-corpus",
         "query": "驾驶视频|driving video|video diffusion|视频扩散|visual future|未来预测|可控驾驶.*(视频|场景)|controllable driving.*(video|scene)|世界模型.*(视频|未来|预测|生成|可控)|world model.*(video|future|prediction|generation|controll)|视频生成.*(驾驶|自动驾驶)|driving.*video generation|world-models",
-        "executedAt": "2026-10-13",
+        "executedAt": "2026-10-14",
         "resultCount": 38,
         "rawHitCount": 44,
         "screenedOutCount": 6,
-        "screeningNote": "2026-10-13 对本期报告入库后的原始 Markdown 执行记录的 rg -l -i：44 个文件命中，经方向标签与 revisionOf 归并为 38 篇候选，6 个文件为其他范围、跨文引用或修订重复。新增 0 篇逐条暂缓综合；此处只更新本库检索记录。",
+        "screeningNote": "2026-10-14 文案校订后重跑原始 Markdown 的 rg -l -i：44 个文件命中，按方向标签及 revisionOf 归并为 38 篇候选，6 个文件属于其他方向、正文引用或修订重复。候选集合与上次审计相同，沿用逐篇纳入或暂缓理由；本轮仅更新本库检索。",
         "resultIdSample": [
           "arxiv:2608.06008",
           "arxiv:2605.26113",
@@ -1872,12 +1872,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-10-13",
+        "executedAt": "2026-10-14",
         "query": "驾驶视频|driving video|video diffusion|视频扩散|visual future|未来预测|可控驾驶.*(视频|场景)|controllable driving.*(video|scene)|世界模型.*(视频|未来|预测|生成|可控)|world model.*(video|future|prediction|generation|controll)|视频生成.*(驾驶|自动驾驶)|driving.*video generation|world-models",
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 10,
-        "note": "2026-10-13 对本期报告入库后的原始 Markdown 执行记录的 rg -l -i：44 个文件命中，经方向标签与 revisionOf 归并为 38 篇候选，6 个文件为其他范围、跨文引用或修订重复。新增 0 篇逐条暂缓综合；此处只更新本库检索记录。"
+        "note": "2026-10-14 文案校订后重跑原始 Markdown 的 rg -l -i：44 个文件命中，按方向标签及 revisionOf 归并为 38 篇候选，6 个文件属于其他方向、正文引用或修订重复。候选集合与上次审计相同，沿用逐篇纳入或暂缓理由；本轮仅更新本库检索。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1974,7 +1974,7 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-10-13",
-    "localRefreshNote": "2026-10-12 简报入库后于 2026-10-13 重跑本库 rg 并维护新增候选。综述正文、引用、实质 reviewedAt 与站外查询日期不变；历史本库记录见 docs/research-updates/2026-10-12/local-corpus-evidence.json，旧审批见基线提交。"
+    "incrementalLocalAuditAt": "2026-10-14",
+    "localRefreshNote": "2026-10-14 完成展示文案校订后重跑本库查询，候选集合与上期相同。站外查询、既有检索窗口和实质 reviewedAt 保留；局部事实纠正另见 docs/editorial/2026-10-14/author-reviews-assessment.json。旧本库记录与审批保存在 docs/editorial/2026-10-14/local-corpus-evidence.json。"
   }
 }

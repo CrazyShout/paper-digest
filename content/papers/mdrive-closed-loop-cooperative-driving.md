@@ -67,11 +67,11 @@ CARLA 0.9.12、L40S、20 Hz 仿真；附录称基线读过去五帧，开放环�
 
 ![原文 Figure 1：三类场景与工具箱](../../assets/papers/mdrive-teaser.png)
 
-已核对 [Figure 1](https://arxiv.org/html/2605.10904v1#S0.F1)：左侧区分静态日志与闭环，右侧展示 Real2Sim、生成和人工接管。图中 Intersection 与正文 Interaction 命名不同，应按场景清单定位。
+[Figure 1](https://arxiv.org/html/2605.10904v1#S0.F1) 的读图顺序是：左侧区分静态日志与闭环，右侧展示 Real2Sim、生成和人工接管。图中 Intersection 与正文 Interaction 命名不同，应按场景清单定位。
 
 ![原文 Figure 4：按交互类别分解表现](../../assets/papers/mdrive-benchmark-across-categories.png)
 
-已核对 [Figure 4](https://arxiv.org/html/2605.10904v1#S4.F4)：半径是 DS/SR 调和平均，三种颜色对应单车、共享、协商。静态避障与动态场景差异明显，但雷达图不是协作机制的单因素因果检验。
+[Figure 4](https://arxiv.org/html/2605.10904v1#S4.F4) 中，半径是 DS/SR 调和平均，三种颜色对应单车、共享、协商。静态避障与动态场景差异明显，但雷达图不是协作机制的单因素因果检验。
 
 ## 实验结论与证据
 

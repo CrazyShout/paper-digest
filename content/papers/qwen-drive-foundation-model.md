@@ -7,7 +7,7 @@
   "source": "arXiv:2609.00111v1 / https://arxiv.org/abs/2609.00111；Qwen 官方技术报告与代码 https://github.com/QwenLM/Qwen-Drive-1.0",
   "authors": ["Xin Zhou", "Zongchuang Zhao", "Zhibo Yang", "Mingsheng Li", "Humen Zhong", "Shuai Bai", "Du Chu", "Ruizhe Chen", "Zhaohai Li", "Jun Tang", "Qiuyue Wang", "Mingkun Yang", "Jiazhao Zhang", "Dayiheng Liu", "Dingkang Liang", "Xiang Bai"],
   "affiliations": ["Qwen Team", "Huazhong University of Science and Technology"],
-  "comment": "保留 Qwen3.5 的主干结构，接入可检查的三维感知头和独立规划专家；数据配方与开放接口值得读；强化学习减少越界，同时降低行进率，闭环综合表现仍有差距。"
+  "comment": "Qwen-Drive 保留 Qwen3.5 主干，接入可检查的三维感知头和独立规划专家，数据配方与开放接口值得读。强化学习减少越界，同时降低行进率，闭环综合表现仍有差距。"
 }
 ---
 
@@ -82,11 +82,11 @@ Stage 2 在重复前含约 154 万例，包含自建驾驶 QA；Stage 3 的约 2
 
 ![原论文图 3：外部 BEV 感知头与读取 VLM KV cache 的规划专家](../../assets/papers/qwen-drive-foundation-model-figure-1.png)
 
-左侧从视觉 token 与体素特征进入 BEV transformer，最上方分成占据、检测和地图；右侧从 VLM 的八组注意力 cache 连到 32 层规划专家。注意右侧没有把左侧预测框画成唯一规划输入。图证明架构存在显式 3D 输出，并不证明 planner 的每次行动都依赖这些输出。[官方原图](https://arxiv.org/html/2609.00111v1/head.png)
+左侧从视觉 token 与体素特征进入 BEV transformer，最上方分成占据、检测和地图；右侧从 VLM 的八组注意力 cache 连到 32 层规划专家。注意右侧没有把左侧预测框画成唯一规划输入。图中明确列出显式 3D 输出；规划专家通过共享表示使用哪些几何信息，还需干预实验检查。[官方原图](https://arxiv.org/html/2609.00111v1/head.png)
 
 ![原论文图 4：四阶段训练、冻结与更新范围](../../assets/papers/qwen-drive-foundation-model-figure-2.png)
 
-按从左到右阅读火焰与雪花：先训练新头，再共同适配主干，最后两阶段只动规划专家。RL 阶段 VLM 和视觉编码器仍被冻结；把该图描述成“强化学习端到端修正语言与轨迹”会超出实际训练路径。它是训练流程图，不是闭环实验结果。[官方原图](https://arxiv.org/html/2609.00111v1/training_recipe.png)
+按从左到右阅读火焰与雪花：先训练新头，再共同适配主干，最后两阶段只动规划专家。RL 阶段 VLM 和视觉编码器仍被冻结，奖励只更新规划专家；据此可沿图追踪各阶段的梯度范围。[官方原图](https://arxiv.org/html/2609.00111v1/training_recipe.png)
 
 ## 实验结论与证据
 
@@ -130,11 +130,11 @@ AlpaSim 的全部近距事件率还从 SFT 38% 增到 RL 41%，自车责任近�
 
 ### 最小验证与停止条件
 
-- 当前资源：2026-09-14 检查 [GitHub](https://github.com/QwenLM/Qwen-Drive-1.0)实际有推理、感知、demo、场景格式和评估文档；[HF 文件树](https://huggingface.co/Qwen/Qwen-Drive-1.0-4B/tree/main)存在主干权重及 perception、planner-sft、planner-rl。公共数据需分别获取；完整四阶段训练/微调流水线与自建 QA 产物未在本轮核实为可完整复现。没有运行模型。
+- 当前资源：2026-09-14 检查 [GitHub](https://github.com/QwenLM/Qwen-Drive-1.0)实际有推理、感知、demo、场景格式和评估文档；[HF 文件树](https://huggingface.co/Qwen/Qwen-Drive-1.0-4B/tree/main)存在主干权重及 perception、planner-sft、planner-rl。公共数据需分别获取；完整四阶段训练/微调流水线与自建 QA 产物未在本轮核实为可完整复现。模型执行范围见下方来源记录。
 - 最小实验：先在固定 held-out 场景和单轨迹模式核对 SFT/RL 输出，再比较原时序采样与近期加密采样；固定 token 数、分辨率、历史状态、expert、理由开关和随机种子。分别报告 WOD-E2E test RFS/ADE，以及 AlpaSim 近距事件、越界、进度、时延，禁止用 best-of-6 代替部署选择。
 - 成功信号：近期加密在同计算预算下降低交互失误且进度不退化，并保留跨数据集规划与问答能力；用按场景配对的区间估计确认收益不是少数路线造成。
 - 停止/转向条件：若只是更慢或更保守导致总分变好、效果只在参与 RL 的 validation 出现，或采样改变破坏相机布局/时间一致性，则先修复数据协议或奖励设计，暂不增加模型规模。
 
 ### 来源与核验记录
 
-依据 2609.00111v1，首次提交 2026-08-31，PDF 标注 2026-09-02，2026-09-14 核验。主要依据 §2.1–2.3、式 6–14、表 1、4–8 与 §3.4。分别读取 Alpamayo-R1、AutoVLA、BEVFormer v2 原文，并打开 Alpamayo-1.5 官方实现核对版本。两张官方 PNG 为原图 3、4，作者已逐张打开，源文件和图像 SHA-256 已保存，独立复核另行进行。本次是内容与公开资源核验，不是训练、复现或道路部署验证。
+依据 2609.00111v1，首次提交 2026-08-31，PDF 标注 2026-09-02，2026-09-14 核验。主要依据 §2.1–2.3、式 6–14、表 1、4–8 与 §3.4。分别读取 Alpamayo-R1、AutoVLA、BEVFormer v2 原文，并打开 Alpamayo-1.5 官方实现核对版本。两张官方 PNG 为原图 3、4，作者已逐张打开，源文件和图像 SHA-256 已保存，独立复核另行进行。本次完成内容与公开资源核验，未运行模型，也未执行训练、复现或道路部署验证。
