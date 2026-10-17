@@ -34,7 +34,7 @@ content/reported-papers.md
 
 ## 一次更新的流程
 
-开始写正式简报前，先按模板和筛选规则统一口径：
+开始写正式简报前，先按 [写作与发布要求](templates/publication-checklist.md) 确认窗口、分工、复核和上线条件，再使用下列模板：
 
 ```text
 content/templates/idea-exploration-template.md
@@ -248,13 +248,16 @@ content/reviews/<direction-id>.json
 
 ## 本地检查
 
-更新完内容后运行：
+更新完内容后，按发布要求运行：
 
 ```bash
-npm run build
+npm run review:preflight
+npm run validate
+npm test
+TZ=UTC GITHUB_ACTIONS=true npm run build
 ```
 
-这个命令会：
+其中构建会：
 
 - 检查 Markdown frontmatter 是否是合法 JSON。
 - 检查简报引用的论文 id 是否存在。
@@ -283,13 +286,9 @@ dist/index.html
 
 ## 发布到 GitHub Pages
 
-确认本地构建通过后提交并推送。仓库已经使用 GitHub Actions 部署 GitHub Pages，push 到 `main` 后会自动构建并发布；不需要再提交 `dist/` 或旧的 `docs/` 构建产物。提交内容通常是：
+确认独立复核、本地验证和浏览器检查完成后，核对并提交本期修改的具体文件，再推送到 `main`。不要用整目录暂存顺带提交本地配置或无关改动。仓库使用 GitHub Actions 部署 GitHub Pages；`dist/` 及旧的页面构建产物不入库。
 
-```bash
-git add content config src public scripts package.json package-lock.json
-git commit -m "Add YYYY-MM-DD paper digest"
-git push origin main
-```
+推送后核对最终提交的完整 SHA 与成功的 Pages 工作流一致，再检查新增报告、修改综述、搜索 JSON/gzip、原图及 CSS。保存部署和线上核验回执；只有推送成功或本地构建成功时，不能写“已上线”。邮件按 [通知要求](templates/publication-checklist.md#邮件通知) 单独处理。
 
 Actions 页面：
 

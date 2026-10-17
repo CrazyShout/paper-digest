@@ -93,7 +93,7 @@ dist/index.html
 
 ## Content Model
 
-日常更新简报的具体步骤见：
+日常更新先读 [写作与发布要求](content/templates/publication-checklist.md)，再按内容说明操作：
 
 ```text
 content/README.md
@@ -189,6 +189,8 @@ Settings -> Pages -> Build and deployment -> Source -> GitHub Actions
 ```
 
 日常更新不需要提交构建产物，只提交 `content/`、`config/`、`src/`、`public/` 等源码文件。
+
+发布前按 [验收清单](content/templates/publication-checklist.md#验收与上线) 运行预检、内容校验、测试和正式 Pages 构建；发布完成以最终提交对应的成功工作流及线上资源核验为准。
 
 ## Anonymous Comments
 
@@ -391,6 +393,8 @@ npm run email:preview -- 2026-05-30
 ```
 
 正式发送邮件：
+
+先确认已获发信授权、线上页面为本期最终版本，并检查同一期发送回执。当前订阅者放在 BCC；保存消息 ID、服务端接受／拒收结果或未知状态，投递结果不明确时不重发。完整规则见 [邮件通知](content/templates/publication-checklist.md#邮件通知)。
 
 ```bash
 npm run email:publish -- 2026-05-30
