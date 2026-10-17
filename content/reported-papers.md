@@ -180,3 +180,11 @@
 | sparse2comm-robust-cooperative-perception | Sparse2comm: Towards Robust Cooperative 3D Object Detection | 2610.08573 | 2026-10-12 |
 | lr-v2x-loss-resilient-perception | LR-V2X: Loss-Resilient Collaborative Perception under Low-Bandwidth Communication | 2610.11264 | 2026-10-12 |
 | scenefactory-3d-physical-counterfactuals | SceneFactory-3D: Lifting 2D Traffic Scenes into 3D Physical Counterfactuals for Scalable Physically Grounded Safety Evaluation | 2610.02874 | 2026-10-12 |
+| infraworld-roadside-occupancy-forecasting | InfraWorld: Motion-Aware World Modeling for Roadside 4D Occupancy Forecasting | 2610.14544 | 2026-10-18 |
+| more-motion-oriented-registers | MORE: Learning Motion-Oriented Registers for Driving World Models and Planning | 2610.14871 | 2026-10-18 |
+| sign-mappo-imperfect-v2x | SIGN-MAPPO: State-Intent-Aware Graph Multi-Agent Reinforcement Learning for Cooperative Driving under Imperfect V2X | 2610.15577 | 2026-10-18 |
+| language2drive-paired-instruction-evaluation | Language2Drive: Do Vision-Language-Action Models Really Follow the Instructions in Autonomous Driving? | 2610.16634 | 2026-10-18 |
+| radargsocc-doppler-semantic-occupancy | RadarGSOcc: Doppler-Aware 3D Semantic Occupancy Prediction Using 4D Radar Tensor with Geometric-Semantic Feature Extraction | 2610.18686 | 2026-10-18 |
+| autoagent0-runtime-recovery | AutoAgent0: An Agentic Runtime for Safe Closed-Loop Driving | 2610.18866 | 2026-10-18 |
+| comfortably-stuck-bench2drive-protocol | Comfortably Stuck: Evaluation Pitfalls in Bench2Drive's Closed-Loop Protocol | 2610.21741 | 2026-10-18 |
+| tacitvla-reasoning-supervision | TacitVLA: Reasoning Vision-Language-Action Models Without Reasoning Latency | 2610.17540 | 2026-10-18 |
