@@ -147,10 +147,11 @@ Do not commit `dist/`; it is an ignored build artifact uploaded by GitHub Action
 - Keep paper IDs lowercase with numbers and hyphens, and make each `id` match its filename without `.md`.
 - Use only topic IDs that exist in `config/research-interests.json` for `tag` and `tags`.
 - Do not use affiliation placeholders such as `作者单位见论文 PDF`, `unknown`, or `not confirmed`. If arXiv API lacks affiliations, inspect the paper PDF, arXiv source, project page, or venue page and record verified institutions.
-- Every new paper report must include at least one official figure image, preferably two. Use arXiv HTML/project-page URLs when available; otherwise extract a figure from the official PDF/source into `public/assets/papers/` and reference it from paper detail Markdown as `../../assets/papers/<file>.png`.
+- Every new or substantially rewritten paper report must include at least two official figure images. Use arXiv HTML/project-page URLs when available; otherwise extract a figure from the official PDF/source into `public/assets/papers/` and reference it from paper detail Markdown as `../../assets/papers/<file>.png`. Both the author and independent reviewer must open the actual images and check labels, captions and claimed evidence; successful rendering alone is insufficient.
 - After adding a new remote arXiv figure URL, run `npm run images:measure-remote` and include the measured `config/remote-figure-dimensions.json` update. Failed measurements are reported; never guess dimensions.
 - Prefer existing helper functions in `src/lib/content.js` for content parsing and HTML escaping.
 - New or substantially rewritten paper reports follow `content/templates/paper-report-template.md`: keep the eight level-two headings and use level-three subsections for mechanisms, equations, related-work comparisons, experimental evidence, and a concrete follow-up plan. Verify comparisons against each related work's own primary source; distinguish author claims from report analysis.
+- Read `content/templates/publication-checklist.md` before a new issue. It consolidates the retrieval, writing, independent review, final fingerprint, deployment and notification requirements. Use natural Chinese paragraphs rather than mandatory author-claim/reader-judgment labels; keep consequential limitations next to the results and move repeated verification-process notes to the source record.
 - `markdownToHtml` supports headings (levels 1–3), paragraphs, bullet lists, images, links, bold text, inline code, pipe tables, and `$...$` / `$$...$$` math. Tables need outer pipes and consistent column counts; display-math delimiters may each occupy their own line. KaTeX renders during the build with untrusted commands disabled. Escape literal dollars as `\$`. Raw HTML, fenced code blocks, Obsidian syntax, and arbitrary extensions remain unsupported.
 
 ## Dynamic Literature Review Workflow
@@ -269,6 +270,8 @@ Update `docs/` when the documentation directly supports the requested change; th
 Be careful with `content/reported-papers.md`: it is not generated, but it is a deduplication ledger. When adding, removing, or renaming non-revision papers, update it consistently with `content/papers/` and `content/digests/`.
 
 ## How to Validate Changes
+
+For a full digest release, run `npm run review:preflight`, `npm run validate`, `npm test`, and `TZ=UTC GITHUB_ACTIONS=true npm run build`. Record skipped checks accurately. Inspect the completed production preview on desktop and at 390 px; after pushing, verify a successful Pages workflow for the final full commit SHA, live pages, decoded JSON/gzip equality, original figures and CSS against the build. Follow the publication checklist for any separately authorized email notification; never equate a push or an email `SENT` flag with completed deployment or recipient delivery.
 
 For content-only changes:
 

@@ -43,7 +43,7 @@ content/templates/paper-selection-rubric.md
 content/templates/digest-template.md
 ```
 
-论文详细报告必须保持相同的八段叙述骨架，避免每期、每篇的分析颗粒度漂移。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 2 张论文原图、官方项目图或 arXiv source/PDF 提取图，并在正文里解释图片支撑的结论。
+论文详细报告保留八章结构，章内按实际机制和证据组织，不要求相同句式。筛选时优先保留和 `config/research-interests.json` 明确匹配、来源可核验、实验有闭环或真实数据支撑、能形成后续讨论的问题导向论文。单篇详细报告必须放入至少 2 张论文原图、官方项目图或 arXiv source/PDF 提取图，并在正文里解释图片支撑的结论。
 
 自 `config/content-quality.json` 的 `digests.auditRequiredFrom` 起，每期检索还必须保存 `content/digest-audits/YYYY-MM-DD.json`。此前简报作为遗留内容保留，不补造当时并未执行的检索账本。简报里的检索数量不得只写在叙述中：查询端点、参数、每族结果 ID、规范化候选、排除理由和最终去向都要能从审计文件复算。扫描窗口与论文提交日期分开记录，出版状态和代码/数据仓库的实际可用性在入选后再次核验。
 
