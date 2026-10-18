@@ -1,0 +1,88 @@
+name: Notify digest subscribers
+
+on:
+  workflow_run:
+    workflows: [Deploy GitHub Pages]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_run_id:
+        description: Successful Pages workflow run to verify
+        required: true
+        type: string
+      digest_id:
+        description: Optional issue ID; otherwise check all outstanding issues
+        required: false
+        type: string
+
+# Serialize verification and delivery with Pages deployments. A later successful
+# run sweeps all missing versions if GitHub replaces an older pending run.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+jobs:
+  notify:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve successful deployment
+        id: deployment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/digest-notify.mjs prepare
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.deployment.outputs.sha }}
+          clean: false
+      - name: Download the exact deployed artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: .generated/pages-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.deployment.outputs.deployment_run_id }}
+      - name: Open published artifact
+        run: |
+          mkdir -p .generated/published-site
+          tar -xf .generated/pages-artifact/artifact.tar -C .generated/published-site
+      - name: Verify live site and notify once
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DIGEST_DEPLOYMENT_RUN_ID: ${{ steps.deployment.outputs.deployment_run_id }}
+          DIGEST_ID: ${{ steps.deployment.outputs.digest_id }}
+          DIGEST_SMTP_JSON: ${{ secrets.DIGEST_SMTP_JSON }}
+          DIGEST_RECIPIENTS_JSON: ${{ secrets.DIGEST_RECIPIENTS_JSON }}
+          DIGEST_RECEIPT_KEY: ${{ secrets.DIGEST_RECEIPT_KEY }}
+        run: node scripts/digest-notify.mjs run
+      - name: Retain verification and encrypted receipts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: digest-notification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .generated/notification-checks/
+            .generated/notification-receipts/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 90

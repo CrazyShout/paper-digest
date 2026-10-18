@@ -1233,6 +1233,12 @@ export async function main(argv = process.argv.slice(2)) {
     throw new Error("邮件命令参数不完整");
   }
 
+  if (command === "publish") {
+    const { dispatchNotification } = await import("./digest-notify.mjs");
+    await dispatchNotification(digestId);
+    return;
+  }
+
   await publishDigest(digestId, {
     dryRun: command === "preview" || command === "welcome-preview",
     welcome: command === "welcome" || command === "welcome-preview"

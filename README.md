@@ -320,6 +320,16 @@ npm run feishu:publish -- 2026-05-16 -- --parent-only
 
 邮件通知是每次简报更新的固定步骤：完成部署和线上核验后，向当前订阅者发送一次更新邮件。用户已授权这一持续发布流程，无需每次另行确认；只有当次明确要求不发邮件时才跳过。收件人必须保存在本地邮件列表中，项目不会在源码里保留默认地址。
 
+推送 `main` 后，`Deploy GitHub Pages` 完成才会触发 `Notify digest subscribers`。通知工作流核对完整提交 SHA、成功部署和该次实际构建包，再逐项比较线上简报、报告、综述入口、搜索 JSON/gzip、原图、响应式图片及 CSS/JS。检查通过后，按当前订阅名单密送；任何一步失败都会使通知工作流失败，不会标记为已通知。
+
+去重按“期号＋简报、所引报告及本地图像的内容指纹”执行，修改发布脚本或重跑同一工作流不会重发。发送前先写持久记录；发送后保存消息 ID、服务端接受／拒收信息和正文指纹。记录存放在 GitHub Deployments 的 `paper-digest-email` 环境，完整回执以 AES-256-GCM 加密；Actions 另外保留 90 天的加密回执副本和不含私人地址的核验摘要。去重不依赖 Actions 缓存或这份副本的保留期。
+
+GitHub Actions 使用三个仓库 Secrets：`DIGEST_SMTP_JSON`、`DIGEST_RECIPIENTS_JSON`、`DIGEST_RECEIPT_KEY`，分别对应 SMTP 配置、当前订阅名单、32 字节 base64 回执密钥。订阅名单更新时须同时更新本地配置及 `DIGEST_RECIPIENTS_JSON`。回执密钥保存在本地忽略文件 `config/notification-secrets.local.json`，须妥善备份，不能提交到仓库。配置缺失、认证失败、线上内容过期或回执不明确时均停止发信。
+
+首次配置、变更订阅名单或 SMTP 设置后，运行 `npm run email:sync-config`，通过 `gh` 将当前本地配置写入这三个仓库 Secrets；命令不会输出密钥或发送邮件。它只在本地密钥文件缺失时生成回执密钥，后续同步复用同一密钥。
+
+已有内容在 `config/digest-notification-baseline.json` 中保存一次性迁移基线；它不声称历史邮件已送达，也不能为了清空待发送项而重建。已确认发送的 2026-10-18 通知另迁入真实回执。同一期内容后续变化仍会发送一封标明更新内容的邮件。
+
 先准备本地收件人列表（文件不会提交）：
 
 ```bash
@@ -392,13 +402,23 @@ npm run email:check
 npm run email:preview -- 2026-05-30
 ```
 
-正式发送邮件：
+正常发布不再需要手工执行邮件命令。补跑某期通知时，以下命令会请求同一条受保护的 Actions 流程，不会在本机直接绕过去重发信；输出“已排队”不代表发送成功：
 
 先确认线上页面为本次更新的最终版本，并检查对应期号及发布版本的发送回执。简报更新已包含发信授权，不能因为当次没有再次提到邮件而省略通知。当前订阅者放在 BCC；保存消息 ID、服务端接受／拒收结果或未知状态，投递结果不明确时不重发。邮件未完成时须明确报告，不能将整期发布标为完成。完整规则见 [邮件通知](content/templates/publication-checklist.md#邮件通知)。
 
 ```bash
 npm run email:publish -- 2026-05-30
 ```
+
+工作流若显示 `unknown`、`partial` 或缺少最终回执，先查看对应运行和加密回执，不能直接再发一遍。解密只输出到指定的本地私有文件：
+
+```bash
+npm run email:receipt:decrypt -- /private/path/encrypted.json /private/path/receipt.json
+```
+
+若邮件服务商已明确确认发送，可保存核对后的证据，再运行 `node scripts/digest-notify.mjs reconcile /private/path/verified-receipt.json <attempt-id>`，补齐原尝试的回执；该命令不会发送邮件。部分拒收和无法确认的发送仍须人工核查，不自动整批重发。
+
+仅在用户明确要求本次不发邮件时，提交该内容版本的例外：`node scripts/digest-notify.mjs exclude <digest-id> '用户明确要求不发邮件的说明'`。这会写入 `config/digest-notification-exclusions.json`，不影响下一次内容更新。
 
 只向尚未完成介绍的新订阅者发送系统说明和最新一期简报：
 

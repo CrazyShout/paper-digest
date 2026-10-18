@@ -238,6 +238,9 @@ or `workshop-accepted` while the formal page is still unavailable.
 - There is no database.
 - `config/runtime.json` is public frontend runtime config. It currently contains `commentsEndpoint`. Never put secrets in this file.
 - Anonymous comments are optional. Without `commentsEndpoint`, comments stay in browser `localStorage`.
+- Digest notification automation runs in `.github/workflows/notify-digests.yml` after successful Pages deployment. Repository Secrets `DIGEST_SMTP_JSON`, `DIGEST_RECIPIENTS_JSON`, and `DIGEST_RECEIPT_KEY` contain the mail configuration, current subscriber list, and receipt encryption key. Keep the local subscriber list and its Secret synchronized. Never print their values or include plaintext mail receipts in public Actions artifacts.
+- `scripts/digest-notify.mjs` verifies the exact deployed artifact, then uses durable GitHub Deployment records in `paper-digest-email` to claim each issue/content version before sending. Full receipts are encrypted. The notification workflow shares the Pages concurrency group, and the legacy `email:publish` command dispatches this same guarded workflow. Do not bypass it with direct SMTP or connector sends without first reconciling its version ledger.
+- `config/digest-notification-baseline.json` is the frozen pre-automation content baseline, not proof of historical delivery. Do not regenerate it to suppress pending notifications. Explicit user requests not to email are version-specific entries in `config/digest-notification-exclusions.json`. Unresolved or partially accepted attempts require provider evidence and reconciliation, never blind retries.
 - Worker variables are shown in `worker/wrangler.toml.example`:
   - `GITHUB_OWNER`
   - `GITHUB_REPO`
