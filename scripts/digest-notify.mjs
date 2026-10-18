@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
 import { buildTransportOptions, isRetryableSmtpError, parseRecipientsConfig, withSmtpRetry } from "./email-publish.mjs";
 import {
-  assertDeploymentRun, createLedger, decryptReceipt, digestMessage, digestSnapshots,
+  assertDeploymentRun, createLedger, decryptReceipt, digestMessage, digestSnapshots, gitBlobSha256,
   executeNotification, githubApi, listNotificationRecords, notificationDecision,
   publicSnapshot, receiptKey, verifyLiveArtifact
 } from "./digest-notification.mjs";
@@ -138,9 +138,7 @@ async function importReceipt(evidenceFile, attemptId) {
   const snapshot = (await digestSnapshots(ROOT)).find((item) => item.id === evidence.issueId);
   if (!snapshot) throw new Error("Receipt issue does not exist");
   for (const [file, expected] of Object.entries(snapshot.sources)) {
-    const bytes = execFileSync("git", ["show", `${evidence.contentCommit}:${file}`], { cwd: ROOT });
-    const { sha256 } = await import("./digest-notification.mjs");
-    if (sha256(bytes) !== expected) throw new Error(`Receipt content changed since confirmed delivery: ${file}`);
+    if (await gitBlobSha256(evidence.contentCommit, file, ROOT) !== expected) throw new Error(`Receipt content changed since confirmed delivery: ${file}`);
   }
   const records = await listNotificationRecords(api);
   const decision = notificationDecision(snapshot, records);

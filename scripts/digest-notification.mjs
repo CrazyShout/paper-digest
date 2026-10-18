@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { spawn } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
@@ -9,6 +10,22 @@ import { buildHtmlBody, buildTextBody } from "./email-publish.mjs";
 export const NOTIFICATION_ENVIRONMENT = "paper-digest-email";
 export const NOTIFICATION_TASK = "notify:digest";
 export const sha256 = (value) => createHash("sha256").update(value).digest("hex");
+
+export function gitBlobSha256(commit, file, cwd = process.cwd()) {
+  if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error("Source verification requires a full commit SHA");
+  return new Promise((resolve, reject) => {
+    const digest = createHash("sha256");
+    const child = spawn("git", ["cat-file", "blob", `${commit}:${file}`], { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    child.stdout.on("data", (chunk) => digest.update(chunk));
+    child.stdout.on("error", reject);
+    child.stderr.resume();
+    child.once("error", reject);
+    child.once("close", (code) => {
+      if (code !== 0) reject(new Error(`Could not verify source blob: ${file}`));
+      else resolve(digest.digest("hex"));
+    });
+  });
+}
 
 export async function digestSnapshots(root = process.cwd()) {
   const [digests, papers] = await Promise.all([getDigests(), getPapers()]);

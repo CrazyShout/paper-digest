@@ -4,9 +4,10 @@ import { mkdtemp, mkdir, writeFile, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
+import { execFileSync } from "node:child_process";
 import {
   assertDeploymentRun, createLedger, decryptReceipt, deliveryOutcome, digestSnapshots,
-  encryptReceipt, executeNotification, notificationDecision, receiptKey, sha256, verifyLiveArtifact
+  encryptReceipt, executeNotification, gitBlobSha256, notificationDecision, receiptKey, sha256, verifyLiveArtifact
 } from "../scripts/digest-notification.mjs";
 
 const version = sha256("version 1");
@@ -14,6 +15,23 @@ const snapshot = { id: "2026-10-18", fingerprint: version, sources: {}, labels: 
 const message = { from: "sender@example.test", to: "sender@example.test", bcc: "one@example.test,two@example.test", subject: "Digest", text: "Reading notes", html: "<p>Reading notes</p>" };
 const attempt = (id = 1, fingerprint = version) => ({ id, payload: { schema: 1, kind: "attempt", issueId: snapshot.id, fingerprint } });
 const receipt = (outcome, id = 2, attemptId = 1, fingerprint = version) => ({ id, payload: { schema: 1, kind: "receipt", issueId: snapshot.id, fingerprint, attemptId, outcome } });
+
+test("receipt import verifies large original images without an exec output buffer limit", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "digest-source-"));
+  try {
+    const git = (...args) => execFileSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", ...args], {
+      cwd: directory, encoding: "utf8", env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" }
+    }).trim();
+    git("init", "--quiet");
+    const bytes = Buffer.alloc(2 * 1024 * 1024 + 17, 0x67);
+    await writeFile(path.join(directory, "official-image.png"), bytes);
+    git("add", "official-image.png");
+    git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "--quiet", "-m", "fixture");
+    const commit = git("rev-parse", "HEAD");
+    assert.equal(await gitBlobSha256(commit, "official-image.png", directory), sha256(bytes));
+    await assert.rejects(gitBlobSha256(commit, "missing.png", directory), /Could not verify/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 test("same content is deduplicated across reruns and recipient changes", () => {
   assert.deepEqual(notificationDecision(snapshot, [attempt(), receipt("sent")]), { action: "skip", reason: "already-sent" });
