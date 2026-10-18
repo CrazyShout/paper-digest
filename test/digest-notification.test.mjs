@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { execFileSync } from "node:child_process";
+import { isRetryableSmtpError, withSmtpRetry } from "../scripts/email-publish.mjs";
 import {
   assertDeploymentRun, createLedger, decryptReceipt, deliveryOutcome, digestSnapshots,
   encryptReceipt, executeNotification, gitBlobSha256, notificationDecision, receiptKey, sha256, verifyLiveArtifact
@@ -86,6 +87,21 @@ test("timeout after DATA stays unknown; proven pre-connect failure permits later
     assert.equal(saved.outcome, expected);
     assert.doesNotMatch(JSON.stringify(saved), /private response/);
   }
+});
+
+test("a post-DATA timeout tagged CONN is persisted as unknown and cannot be resent", async () => {
+  const rows = []; let sends = 0;
+  await assert.rejects(executeNotification({ snapshot, decision: { action: "send" }, message,
+    claim: async () => { rows.push(attempt()); return { id: 1 }; },
+    send: () => withSmtpRetry(async () => {
+      sends++;
+      throw Object.assign(new Error("Timeout"), { code: "ETIMEDOUT", command: "CONN" });
+    }, { retries: 2, wait: async () => {} }),
+    classifyError: isRetryableSmtpError,
+    persist: async (_, data) => { rows.push(receipt(data.outcome)); }
+  }), /unknown/);
+  assert.equal(sends, 1);
+  assert.equal(notificationDecision(snapshot, rows).action, "blocked");
 });
 
 test("partial refusal is retained rather than retransmitted to accepted recipients", () => {

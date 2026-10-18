@@ -881,15 +881,17 @@ function errorContext(error) {
 }
 
 export function isRetryableSmtpError(error) {
-  const { codes, command, text } = errorContext(error);
+  const { codes, command } = errorContext(error);
   const safeDnsOrConnectCodes = new Set(["EDNS", "ENOTFOUND", "EAI_AGAIN", "ECONNREFUSED"]);
   if (codes.some((code) => safeDnsOrConnectCodes.has(code))) return true;
 
-  const isEarlySmtpCommand = ["CONN", "EHLO", "HELO", "STARTTLS"].includes(command);
+  // Nodemailer also labels socket errors/timeouts after DATA as CONN. That
+  // label cannot establish that a message was never accepted by the server.
+  const isEarlySmtpCommand = ["EHLO", "HELO", "STARTTLS"].includes(command);
   const isEarlyTimeout = codes.some((code) => ["ETIMEDOUT", "ESOCKET", "ECONNRESET"].includes(code));
   if (isEarlySmtpCommand && isEarlyTimeout) return true;
 
-  return /getaddrinfo|dns lookup|connection timeout before greeting/i.test(text);
+  return false;
 }
 
 function smtpErrorCode(error) {

@@ -544,6 +544,21 @@ test("authentication failures are not retried", async () => {
   assert.equal(attempts, 1);
 });
 
+test("generic CONN socket failures cannot establish that DATA was not accepted", async () => {
+  for (const code of ["ETIMEDOUT", "ESOCKET", "ECONNRESET"]) {
+    let attempts = 0;
+    const error = Object.assign(new Error("Timeout"), { code, command: "CONN" });
+    assert.equal(isRetryableSmtpError(error), false);
+    await assert.rejects(withSmtpRetry(async () => { attempts++; throw error; }, {
+      retries: 2, wait: async () => {}
+    }), /Timeout/);
+    assert.equal(attempts, 1);
+  }
+  assert.equal(isRetryableSmtpError(Object.assign(new Error("DNS lookup failed"), {
+    code: "EMESSAGE", command: "DATA"
+  })), false, "response text must not override the actual delivery phase");
+});
+
 test("TLS certificate errors are reported separately from network failures", () => {
   const error = Object.assign(new Error("self-signed certificate"), { code: "ESOCKET" });
 
