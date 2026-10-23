@@ -188,3 +188,11 @@
 | autoagent0-runtime-recovery | AutoAgent0: An Agentic Runtime for Safe Closed-Loop Driving | 2610.18866 | 2026-10-18 |
 | comfortably-stuck-bench2drive-protocol | Comfortably Stuck: Evaluation Pitfalls in Bench2Drive's Closed-Loop Protocol | 2610.21741 | 2026-10-18 |
 | tacitvla-reasoning-supervision | TacitVLA: Reasoning Vision-Language-Action Models Without Reasoning Latency | 2610.17540 | 2026-10-18 |
+| last-v2x-communication-failure-testing | LAST-V2X: Language-Driven Adaptive Scenario Synthesis and Testing for Communication-Induced Failures in V2X Safety Applications | 2610.30979 | 2026-10-23 |
+| cartender-counterfactual-language-driving | Cartender: Verifiable Language-Conditioned Driving by Learning the Drives Not Taken | 2610.26390 | 2026-10-23 |
+| drivemlp-expert-guided-closed-loop | DriveMLP: When Training Strategy Outperforms Model Complexity in Autonomous Driving | 2610.29676 | 2026-10-23 |
+| panobench-panoptic-occupancy-benchmark | PanoBench: A Panoptic Occupancy Prediction Benchmark for Autonomous Driving | 2610.23537 | 2026-10-23 |
+| foundation4d-unified-perception-reconstruction | Foundation4D: Towards a unified perception and reconstruction model for autonomous vehicles | 2610.30340 | 2026-10-23 |
+| streamrps-streaming-radar-panoptic | Real-Time Radar Semantic and Panoptic Scene Understanding | 2610.26816 | 2026-10-23 |
+| pia-simulation-prior-racing-adaptation | Simulation Priors for Rapid Adaptation in Model-Based RL for Autonomous Racing | 2610.26757 | 2026-10-23 |
+| perception-action-binding-gap | Perceives but Doesn’t Brake: A Perception–Action Binding Gap in Reasoning Driving VLAs | 2610.28184 | 2026-10-23 |

@@ -1,0 +1,74 @@
+OK codex skill research-lit
+OK codex skill comm-lit-review
+OK codex skill citation-audit
+OK codex reference fan-out-pattern.md
+OK codex reference evidence-precheck.md
+OK codex reference acceptance-gate.md
+OK codex upstream 53562a7c64cc1d55946cba1fb8a8416137143d14
+OK codex upstream-clean working tree
+OK codex helper arxiv_fetch.py
+OK codex helper semantic_scholar_fetch.py
+OK codex helper openalex_fetch.py
+OK claude skill research-lit
+OK claude skill comm-lit-review
+OK claude skill citation-audit
+OK claude reference fan-out-pattern.md
+OK claude reference evidence-precheck.md
+OK claude reference acceptance-gate.md
+OK claude upstream 53562a7c64cc1d55946cba1fb8a8416137143d14
+OK claude upstream-clean working tree
+OK claude helper arxiv_fetch.py
+OK claude helper semantic_scholar_fetch.py
+OK claude helper openalex_fetch.py
+ARIS review workflow ready: 53562a7c64cc (2026-07-28)
+
+更新 Paper Digest 的“动态场景表征与占据”动态方向综述。
+
+开始前必须完整读取并遵循以下已安装 ARIS 技能：
+- ~/.codex/skills/research-lit/SKILL.md
+- ~/.codex/skills/citation-audit/SKILL.md
+- ~/.codex/skills/shared-references/fan-out-pattern.md
+- ~/.codex/skills/shared-references/evidence-precheck.md
+- ~/.codex/skills/shared-references/acceptance-gate.md
+- content/templates/review-quality-checklist.md
+
+目标文件：content/reviews/dynamic-scene-representation.json
+现有复核日期：2026-10-18
+检索截止日：2026-10-23
+
+必须覆盖的查询族：
+1. 当前三维语义占据与场景补全
+2. 时空记忆、动态占据与未来预测
+3. 对象、向量、Gaussian 与体素统一表示
+4. 多模态监督、可见性与未知状态
+5. 地图、定位与长期场景身份
+6. 规划效用、校准与部署验证
+
+强制流程：
+1. 先检索本库，随后并行检索 arXiv、正式出版社/会议、Semantic Scholar、OpenAlex 与官方项目页。
+2. 检索分片只抽取候选，不排序质量；父流程按 DOI、arXiv ID 或规范化标题机械去重。
+3. 每条纳入引用必须打开一手来源，核对标题、作者、年份、出版状态、venue、URL、支撑论断和限制。
+4. 综合时按 scope/evolution/taxonomy/evidence/challenges/outlook 组织，明确共识、冲突证据、失败边界和可验证研究议程。
+5. 完成后由未参与撰写的独立审阅者复核事实、覆盖、结构和可读性；通过后记录当前内容的 snapshotFingerprint，任何后续内容变化都必须重新复核。
+
+强制终审检查：
+- query-family-alignment: 逐条确认查询串、候选样本和查询族语义一致；不得只改 family 标签掩盖错位。
+- source-fanout-trace: 本库、arXiv、正式出版源、Semantic Scholar、OpenAlex 和官方项目页都要记录成功或受限的真实尝试；acceptedCount 必须与最终引用的 sourceFamily 逐源一致，聚合器只用于发现和交叉核对。
+- raw-hit-candidate-separation: 本库宽泛检索必须分开记录原始命中文件数和经过范围复核后进入去重池的候选数，并说明筛除口径；不得把 rg 命中数直接当成论文候选数。
+- local-candidate-closure: 本库命中且带当前方向标签的规范化论文必须完整列入 candidateLocalPaperIds，并逐篇落到最终引用或有理由的 deferredGroups；不得静默漏筛。
+- canonical-id-casefold: DOI、arXiv 和 venue ID 在去重与集合比较前统一做 Unicode 规范化、去空白和大小写折叠。
+- single-count-schema: 检索计数只允许 searchAudit.counts；不得保留 candidateCount 等冲突的旧字段。自 candidateLedgerRequiredFrom 起，每个去重后候选必须进入 canonical-ID 台账，先归并 DOI/arXiv/venue 别名，再用 queryFamilies 和 occurrences 重算逐族及总计数。
+- publication-status-primary-source: 以正式会议、期刊、OpenReview 或标准页面核对 peer-reviewed、workshop、preprint 与 standard，不按论文自述猜测；仅确认录用但正式页尚未发布时使用 accepted 或 workshop-accepted。
+- formal-arxiv-link-retention: 已录用论文若同时存在正式出版页和 arXiv，保留两个可点击入口；正式版作为主 URL，有 DOI 时以 DOI 去重并在 links 显式保留 arXiv。
+- physical-evidence-boundary: 涉及实物或实车时必须写明平台尺度、攻击或系统访问权限、环境、样本/重复次数、控制接口和能否外推到开放道路。
+- independent-review-current-snapshot: 独立审阅者必须读取修订后的当前快照；通过后记录排除 independentReview 元数据计算的 SHA-256 snapshotFingerprint，正文、引用或审计变化必须使旧通过记录失效；pending 本身不是内容问题。
+
+最低证据覆盖：
+- 查询族 5+，来源族 4+。
+- 引用 10+；其中 2024 年以来 5+，2024 年以前基础文献 2+。
+- 正式同行评审 3+，综述/教程 1+，本库 1+，站外 3+。
+- 每个配置查询族必须保存一条 queryRuns 记录和至少 3 个规范化候选 ID；完整记录至少 3 个排除候选及理由。
+- 不得把搜索摘要、二手博客、模型记忆或无法打开的 URL 当作论据。
+- 不得将预印本写成已同行评审；无法核实的内容必须标记为未确认或删除。
+
+同时更新 searchAudit：queryRuns 保存 family/sourceFamily/query/scopeRationale/executedAt/resultCount/resultIdSample，并在 retrieval 中保存 provider/endpoint/parameters/sort/limit；resultCount 只统计经过范围复核、实际进入跨源去重池的论文候选。本库宽泛检索还必须保存 rawHitCount、screenedOutCount 和 screeningNote，且 rawHitCount = resultCount + screenedOutCount，不能把 rg 命中文件数直接当候选数；命中且带当前方向标签的规范化论文必须完整写入 localCandidateDisposition.candidateLocalPaperIds，并逐篇落到最终引用或有理由的 deferredGroups，不得静默漏筛；sourceAttempts 对所有配置来源记录成功或受限的真实尝试，其中 acceptedCount 只统计最终纳入并以该来源族核验的引用，必须与 references[].sourceFamily 逐源一致；已录用且同时存在正式出版页与 arXiv 的论文，url 指向正式版，有正式 DOI 时以 DOI 作为 canonicalId 并在 links 显式保留 arXiv；retainedCanonicalIds 必须与 references 完全一致；excludedCandidates 保存 canonicalId/title/url/reasonCode/reason；deduplicationKeys 固定记录 DOI、arXiv、venue ID 和规范化标题；检索日期自 2026-07-29 起必须保存 candidateLedger，逐篇记录主 canonicalId、disposition、queryFamilies 与 occurrences，先归并 DOI/arXiv/venue 别名，再由台账重算每族 resultCount、候选总数与去重数；只允许使用 counts 这一套计数字段。
