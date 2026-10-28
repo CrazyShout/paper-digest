@@ -196,3 +196,11 @@
 | streamrps-streaming-radar-panoptic | Real-Time Radar Semantic and Panoptic Scene Understanding | 2610.26816 | 2026-10-23 |
 | pia-simulation-prior-racing-adaptation | Simulation Priors for Rapid Adaptation in Model-Based RL for Autonomous Racing | 2610.26757 | 2026-10-23 |
 | perception-action-binding-gap | Perceives but Doesn’t Brake: A Perception–Action Binding Gap in Reasoning Driving VLAs | 2610.28184 | 2026-10-23 |
+| driveoss-open-set-anomaly-benchmark | DriveOSS: Dataset and Benchmark for 3D Anomaly Segmentation and Open-set Semantic Segmentation in Autonomous Driving | 2610.32612 | 2026-10-28 |
+| awcr-weather-context-cooperative-repair | Understanding and Repairing Cooperative Perception under Adverse Weather | 2610.35110 | 2026-10-28 |
+| drivemind-multi-hypothesis-belief | DriveMind: Mind-Evolving Belief Tracking for Closed-Loop Autonomous Driving | 2610.32069 | 2026-10-28 |
+| driveunitok-unified-world-action-latent | DriveUniTok: A Unified Multimodal Tokenizer for Driving World-Action Models | 2610.35044 | 2026-10-28 |
+| aurasim-dynamic-fmcw-radar-simulation | AuRaSim: A Ray-Tracing Based Automotive FMCW Radar Simulator for Dynamic Scenarios | 2610.37403 | 2026-10-28 |
+| ride-splat-windshield-reflection-removal | RIDE-Splat: Reflection Removal for In-the-Wild Driving Environments | 2610.34632 | 2026-10-28 |
+| planner-surrogate-safety-critical-training | Model-Aware Generation of Safety-Critical Scenes for Robust End-to-End Driving via Distilled Planner Surrogates | 2610.35448 | 2026-10-28 |
+| srp-structured-risk-anticipation | Structured Representation Probing for Risk Anticipation in End-to-End Autonomous Driving | 2610.37299 | 2026-10-28 |
