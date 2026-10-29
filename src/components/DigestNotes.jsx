@@ -126,9 +126,9 @@ export default function DigestNotes({
   return (
     <section className="digest-comments" id="discussion" aria-labelledby="discussion-title">
       <header>
-        <p className="doc-eyebrow">阅读讨论 · {issueLabel}</p>
+        <p className="doc-eyebrow">{issueLabel}</p>
         <h2 id="discussion-title">阅读讨论</h2>
-        <p>{endpoint ? "评论会同步到共享仓库。" : "尚未配置评论服务，内容只保存在当前浏览器。"}</p>
+        <p>{endpoint ? "评论公开可见。" : "笔记仅保存在当前浏览器，其他读者不可见。"}</p>
       </header>
 
       <div className="digest-comment-list">

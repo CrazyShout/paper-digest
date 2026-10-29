@@ -42,6 +42,7 @@ export default function NotebookDocs({
   searchUrl,
   notes,
   homeUrl = "/",
+  showDescription = true,
   showFooter = true,
   children
 }) {
@@ -97,9 +98,9 @@ export default function NotebookDocs({
           footer={{ enabled: showFooter }}
           tableOfContent={{ enabled: toc.length > 0, style: "clerk" }}
         >
-          {eyebrow ? <p className="doc-eyebrow">{eyebrow}</p> : null}
+          {eyebrow && eyebrow !== title ? <p className="doc-eyebrow">{eyebrow}</p> : null}
           <DocsTitle className="doc-title">{title}</DocsTitle>
-          <ReadingDescription key={pathname} text={description} />
+          {showDescription && <ReadingDescription key={pathname} text={description} />}
           <DocsBody>
             {children}
             {notes ? <DigestNotes {...notes} /> : null}

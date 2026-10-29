@@ -1,6 +1,7 @@
 (() => {
   const tabs = [...document.querySelectorAll("[data-direction-target]")];
   const panels = [...document.querySelectorAll("[data-direction-panel]")];
+  const selectors = [...document.querySelectorAll("[data-direction-select]")];
 
   function selectDirection(directionId, options = {}) {
     const nextTab = tabs.find((tab) => tab.dataset.directionTarget === directionId);
@@ -16,6 +17,7 @@
     for (const panel of panels) {
       panel.hidden = panel !== nextPanel;
     }
+    for (const selector of selectors) selector.value = directionId;
 
     if (options.focus) nextTab.focus();
     if (options.updateHash) history.replaceState(null, "", `#${directionId}`);
@@ -23,12 +25,19 @@
   }
 
   function selectHashTarget() {
-    const hashTarget = decodeURIComponent(location.hash.slice(1));
+    let hashTarget;
+    try { hashTarget = decodeURIComponent(location.hash.slice(1)); } catch { return; }
     if (!hashTarget || selectDirection(hashTarget)) return;
 
     const idea = document.getElementById(hashTarget);
     const panel = idea?.closest("[data-direction-panel]");
     if (panel) selectDirection(panel.dataset.directionPanel);
+  }
+
+  for (const selector of selectors) {
+    selector.addEventListener("change", () => {
+      selectDirection(selector.value, { updateHash: true });
+    });
   }
 
   for (const [index, tab] of tabs.entries()) {
@@ -57,4 +66,7 @@
 
   window.addEventListener("hashchange", selectHashTarget);
   selectHashTarget();
+  for (const navigation of document.querySelectorAll("[data-direction-navigation]")) {
+    navigation.dataset.directionNavigation = "enhanced";
+  }
 })();

@@ -1,4 +1,4 @@
-export const HOME_DESCRIPTION = "记录近期论文与研究进展，按方向找到值得细读的内容。";
+export const HOME_DESCRIPTION = "近期论文的阅读笔记，记录方法、实验结果与待解决的问题。";
 
 export function sourceDisplayLabel(link) {
   if (link.label === "代码") return "仓库";

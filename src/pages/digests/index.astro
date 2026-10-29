@@ -4,7 +4,7 @@ import NotebookDocs from "../../components/NotebookDocs.jsx";
 import { getNotebookData, routeUrl } from "../../lib/navigation.js";
 
 const notebook = await getNotebookData(import.meta.env.BASE_URL);
-const summary = `按时间浏览 ${notebook.digests.length} 期论文简报；每一期都保留筛选判断、应用启发和完整论文元数据。`;
+const summary = `共 ${notebook.digests.length} 期，按发布时间排列。`;
 ---
 
 <BaseLayout
@@ -18,7 +18,6 @@ const summary = `按时间浏览 ${notebook.digests.length} 期论文简报；�
     params={Astro.params}
     title="简报归档"
     description={summary}
-    eyebrow="简报归档"
     searchUrl={`${notebook.base}assets/notebook-search.json`}
     homeUrl={notebook.base}
     client:load
@@ -26,23 +25,25 @@ const summary = `按时间浏览 ${notebook.digests.length} 期论文简报；�
     <div class="digest-archive">
       {notebook.digests.map((digest, index) => (
         <article>
-          <div>
-            <p class="eyebrow">{digest.displayDate || digest.date}</p>
+          <div class="archive-entry">
+            <p class="archive-meta">
+              <time datetime={digest.date}>{digest.displayDate || digest.date}</time>
+              <span>{digest.papers.length} 篇论文</span>
+              {index === 0 && <span>最新一期</span>}
+            </p>
             <h2>
               <a href={routeUrl(notebook.base, `digests/${digest.id}`)}>{digest.title}</a>
             </h2>
-            <p>{digest.summary}</p>
-            <div class="paper-tag-list">
-              {digest.tags.map((tag) => (
-                <span class="paper-tag" style={`--tag-color: ${tag.color}`}>{tag.label}</span>
-              ))}
-            </div>
+            <p class="archive-summary">{digest.summary}</p>
+            <details class="archive-directions">
+              <summary>涉及 {digest.tags.length} 个方向</summary>
+              <ul>
+                {digest.tags.map((tag) => (
+                  <li><a href={routeUrl(notebook.base, `digests/${digest.id}`) + `#section-${tag.id}`}>{tag.label}</a></li>
+                ))}
+              </ul>
+            </details>
           </div>
-          <div class="digest-archive-count">
-            <strong>{digest.papers.length}</strong>
-            <span>篇论文</span>
-          </div>
-          {index === 0 && <span class="digest-latest">最新一期</span>}
         </article>
       ))}
     </div>

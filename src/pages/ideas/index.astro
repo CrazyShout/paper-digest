@@ -128,9 +128,23 @@ function auditMetric(pool, key) {
     </dl>
 
     <section class="idea-workspace" id="workspace" aria-labelledby="workspaceTitle">
-      <aside class="idea-direction-rail">
+      <aside class="idea-direction-rail" data-direction-navigation>
         <div>
           <h2 id="workspaceTitle">各方向候选</h2>
+        </div>
+        <div class="idea-direction-select">
+          <label for="direction-select">研究方向</label>
+          <select id="direction-select" data-direction-select>
+            {directionGroups.map((group) => (
+              <optgroup label={group.label}>
+                {records(group.directions).map((direction) => (
+                  <option value={direction.id} selected={direction.id === activeDirectionId}>
+                    {direction.label} · {exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个候选` : "待探索"}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </div>
         <div class="idea-direction-tabs" role="tablist" aria-label="研究方向">
           {directionGroups.map((group) => (
@@ -154,7 +168,6 @@ function auditMetric(pool, key) {
             </div>
           ))}
         </div>
-        <p class="idea-direction-note">各候选保留当前评审结果、主要问题和后续验证条件。</p>
       </aside>
 
       <div class="idea-direction-panels">
@@ -184,65 +197,6 @@ function auditMetric(pool, key) {
                   {direction.outcome?.noPassedReason && <small>{direction.outcome.noPassedReason}</small>}
                 </section>
 
-                {direction.candidatePool && (
-                  <dl class="idea-audit-metrics" aria-label={`${direction.label} 检索统计`}>
-                    <div><dt>查询族</dt><dd>{auditMetric(direction.candidatePool, "queries")}</dd></div>
-                    <div><dt>一手证据</dt><dd>{auditMetric(direction.candidatePool, "references")}</dd></div>
-                    <div><dt>固定资产</dt><dd>{auditMetric(direction.candidatePool, "assets")}</dd></div>
-                    <div><dt>生成候选</dt><dd>{auditMetric(direction.candidatePool, "candidates")}</dd></div>
-                    <div><dt>进入盲评</dt><dd>{auditMetric(direction.candidatePool, "shortlisted")}</dd></div>
-                    <div><dt>通过全部评审</dt><dd>{direction.outcome?.passedCount || 0}</dd></div>
-                  </dl>
-                )}
-
-                {direction.selectionAudit && (
-                  <details class="idea-selection-audit idea-legacy-audit">
-                    <summary>
-                      查看独立筛选 · {direction.selectionAudit.rounds} 轮 / {direction.selectionAudit.decisionCount} 个候选逐项裁决
-                    </summary>
-                    <p>
-                      由 {direction.selectionAudit.reviewerCount} 名未参与检索与写作的筛选者完成，
-                      共保留 {direction.selectionAudit.selectedCount} 个进入 dossier 与盲评。
-                    </p>
-                    <ol>
-                      {records(direction.selectionAudit.reports).map((report) => (
-                        <li>
-                          <header>
-                            <strong>筛选于 {auditDate(report.selectedAt)}</strong>
-                            <span>{report.selectedCount}/{report.decisionCount} 保留</span>
-                          </header>
-                          <p>{report.crossDirectionFinding}</p>
-                        </li>
-                      ))}
-                    </ol>
-                  </details>
-                )}
-
-                {records(direction.legacyAudit?.ideas).length > 0 && (
-                  <details class="idea-legacy-audit">
-                    <summary>查看旧版 {records(direction.legacyAudit?.ideas).length} 个 Idea 的逐项重审</summary>
-                    <p>{direction.legacyAudit.summary}</p>
-                    <ol>
-                      {records(direction.legacyAudit?.ideas).map((idea) => (
-                        <li>
-                          <header>
-                            <strong>{idea.title}</strong>
-                            <span class={`is-${idea.decision}`}>{idea.decision === "reject" ? "淘汰" : idea.decision === "revise" ? "收窄后重探" : "保留"}</span>
-                          </header>
-                          <p>{idea.rationale}</p>
-                          <p><strong>残余边界：</strong>{idea.residualBoundary}</p>
-                          <p><strong>处理：</strong>{idea.requiredNextAction}</p>
-                          <div>
-                            {records(idea.nearestWorks).filter((work) => work.url).slice(0, 4).map((work) => (
-                              <a href={work.url} target="_blank" rel="noopener noreferrer">{work.title}</a>
-                            ))}
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </details>
-                )}
-
                 <section class="idea-ranked-list" aria-labelledby={`${direction.id}-ideas`}>
                   <header class="idea-subsection-head">
                     <div>
@@ -254,6 +208,68 @@ function auditMetric(pool, key) {
                     <IdeaCard idea={idea} scoring={scoring} />
                   ))}
                 </section>
+
+                <details class="reading-disclosure idea-search-record">
+                  <summary>检索与筛选记录</summary>
+                  {direction.candidatePool && (
+                    <dl class="idea-audit-metrics" aria-label={`${direction.label} 检索统计`}>
+                      <div><dt>检索主题</dt><dd>{auditMetric(direction.candidatePool, "queries")}</dd></div>
+                      <div><dt>一手证据</dt><dd>{auditMetric(direction.candidatePool, "references")}</dd></div>
+                      <div><dt>可复用资源</dt><dd>{auditMetric(direction.candidatePool, "assets")}</dd></div>
+                      <div><dt>候选总数</dt><dd>{auditMetric(direction.candidatePool, "candidates")}</dd></div>
+                      <div><dt>进入盲评</dt><dd>{auditMetric(direction.candidatePool, "shortlisted")}</dd></div>
+                      <div><dt>通过全部评审</dt><dd>{direction.outcome?.passedCount || 0}</dd></div>
+                    </dl>
+                  )}
+
+                  {direction.selectionAudit && (
+                    <details class="idea-selection-audit idea-legacy-audit">
+                      <summary>
+                        查看独立筛选 · {direction.selectionAudit.rounds} 轮 / {direction.selectionAudit.decisionCount} 个候选逐项裁决
+                      </summary>
+                      <p>
+                        由 {direction.selectionAudit.reviewerCount} 名未参与检索与写作的筛选者完成，
+                        保留 {direction.selectionAudit.selectedCount} 个编写研究档案并送审。
+                      </p>
+                      <ol>
+                        {records(direction.selectionAudit.reports).map((report) => (
+                          <li>
+                            <header>
+                              <strong>筛选于 {auditDate(report.selectedAt)}</strong>
+                              <span>{report.selectedCount}/{report.decisionCount} 保留</span>
+                            </header>
+                            <p>{report.crossDirectionFinding}</p>
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  )}
+
+                  {records(direction.legacyAudit?.ideas).length > 0 && (
+                    <details class="idea-legacy-audit">
+                      <summary>查看旧版 {records(direction.legacyAudit?.ideas).length} 个 Idea 的逐项重审</summary>
+                      <p>{direction.legacyAudit.summary}</p>
+                      <ol>
+                        {records(direction.legacyAudit?.ideas).map((idea) => (
+                          <li>
+                            <header>
+                              <strong>{idea.title}</strong>
+                              <span class={`is-${idea.decision}`}>{idea.decision === "reject" ? "淘汰" : idea.decision === "revise" ? "收窄后重探" : "保留"}</span>
+                            </header>
+                            <p>{idea.rationale}</p>
+                            <p><strong>仍需验证：</strong>{idea.residualBoundary}</p>
+                            <p><strong>处理：</strong>{idea.requiredNextAction}</p>
+                            <div>
+                              {records(idea.nearestWorks).filter((work) => work.url).slice(0, 4).map((work) => (
+                                <a href={work.url} target="_blank" rel="noopener noreferrer">{work.title}</a>
+                              ))}
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  )}
+                </details>
 
                 {records(direction.candidatePool?.rejected).length > 0 && (
                   <details class="idea-rejection-ledger">
@@ -277,7 +293,7 @@ function auditMetric(pool, key) {
 
                 {direction.candidatePool && (
                   <details class="frontier-evidence">
-                    <summary>查看查询记录、固定资产与全部一手证据</summary>
+                    <summary>查询记录、资源与原始文献</summary>
                     <div class="frontier-evidence-body idea-audit-evidence">
                       {(direction.candidatePool.latestDelta || direction.candidatePool.conclusion) && (
                         <section class="idea-audit-conclusion">
@@ -299,14 +315,14 @@ function auditMetric(pool, key) {
                         </ol>
                       </section>
                       <section>
-                        <h3>固定公开资产</h3>
+                        <h3>公开资源与版本</h3>
                         <ol>
                           {records(direction.candidatePool.assets).map((asset) => (
                             <li>
                               {asset.url ? (
                                 <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.name}</a>
                               ) : <strong>{asset.name}</strong>}
-                              <p>{asset.type} · {asset.version || "版本边界见审计记录"}</p>
+                              <p>{asset.type} · {asset.version || "版本详见检索记录"}</p>
                             </li>
                           ))}
                         </ol>
@@ -332,7 +348,7 @@ function auditMetric(pool, key) {
               <section class="idea-direction-pending" style={`--direction-color: ${direction.color}`}>
                 <h2>{direction.label}</h2>
                 <p class="idea-direction-subtitle">{direction.subtitle}</p>
-                <p>该方向正在整理问题与文献，尚无完成独立评审的候选。</p>
+                <p>该方向尚无完成独立评审的候选，可先从方向综述了解相关问题。</p>
                 <a href={routeUrl(import.meta.env.BASE_URL, `reviews/${direction.id}`)}>阅读方向综述</a>
               </section>
             )}
@@ -398,7 +414,7 @@ function auditMetric(pool, key) {
 
       <div class="workflow-gates">
         <div class="workflow-gates-copy">
-          <h3>评审与生成严格分离</h3>
+          <h3>独立评审</h3>
           <p>{workflow.releaseRule || "检索者不评分；每位盲评者独立复核一手证据，任何实质性缺口都会阻止候选进入通过列表。"}</p>
         </div>
         <ul class="workflow-rule-list">
