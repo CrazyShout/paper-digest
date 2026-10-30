@@ -420,12 +420,30 @@ npm run email:receipt:decrypt -- /private/path/encrypted.json /private/path/rece
 
 仅在用户明确要求本次不发邮件时，提交该内容版本的例外：`node scripts/digest-notify.mjs exclude <digest-id> '用户明确要求不发邮件的说明'`。这会写入 `config/digest-notification-exclusions.json`，不影响下一次内容更新。
 
-只向尚未完成介绍的新订阅者发送系统说明和最新一期简报：
+添加订阅者时，默认自动发送一封欢迎邮件，介绍项目并附上最新一期已部署简报。用户已授权这一流程，无需另行确认。统一使用：
 
 ```bash
-npm run email:welcome:preview -- 2026-05-30
-npm run email:welcome -- 2026-05-30
+npm run email:add -- reader@example.com
 ```
+
+命令会校验并去重邮箱、保存本地名单、同步 GitHub Actions Secrets，再触发受保护的欢迎任务并等待回执。发送由 GitHub Actions 执行，先确认对应 Pages 部署与线上资源一致；每封邮件只投递给一位新用户，不给发件人留副本，也不抄送老用户。多个新邮箱分别发送。
+
+欢迎邮件按邮箱去重，不按简报期号去重。重复添加、重复执行任务或发布下一期，都不会再次发送已确认的欢迎邮件。发送前先保存尝试记录，完整回执以 AES-256-GCM 加密存入独立的 `paper-digest-welcome` Deployment 记录，公开日志不包含地址。中断、拒收或结果不明确时停止，保留回执并核查；不能盲目重发。
+
+日常查询与补齐未完成任务：
+
+```bash
+npm run email:welcome:status
+npm run email:welcome
+```
+
+`email:welcome` 也只请求同一受保护流程，始终使用最新已部署简报，不广播普通简报邮件。正常 Pages 通知任务也会检查遗漏的欢迎邮件。若添加命令超时，先检查任务和回执，再用状态命令收口，不能把“已排队”当作“已发送”。
+
+仅欢迎任务可以使用较新的自动化代码读取最近一次成功部署的内容：工作流恢复该提交的内容文件，核对来源指纹，再比对线上构建产物。若短期保存的 Pages 包已过期，只接受同一内容提交下成功通知工作流保存的资源哈希清单，并逐个重新核对线上字节；两种证据均不可用时停止。普通简报发布仍要求当前提交的完整构建和复核通过。记录中分别保存代码提交与内容提交，不把自动化更新写成网站重新部署。
+
+迁移时仅执行一次 `node scripts/subscribers.mjs initialize`，把既有 `onboardedRecipients` 固定为私有的 `welcomeBaselineRecipients`。它只表示原有用户不需要重新欢迎，不证明历史投递。后续不得扩充该迁移名单；新增用户完成发送后由回执更新 `onboardedRecipients`。初始化后同步 Secrets。已有可验证的欢迎邮件回执可以用 `npm run email:welcome:receipt:import -- <encrypted-file> [attempt-id]` 导入，不会重新发送。导入期间不要并行启动欢迎任务；未决尝试必须提供对应 ID。
+
+回执密钥同时用于生成不公开邮箱的去重标识；密钥不一致时流程会停止，不能通过更换密钥重置已发送状态。本地名单写入使用互斥锁；若进程中断，先检查锁内 PID 已退出，再清理 `config/.env.subscriber-lock`。
 
 综述中心完成新一轮复核并部署后，可预览并向全部订阅者发送更新通知：
 

@@ -4,11 +4,12 @@ import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
+import { runWelcomes, verifyWelcomeManifest, welcomeRecipientState, welcomeVerificationInput } from "./welcome-notification.mjs";
 import { buildTransportOptions, isRetryableSmtpError, parseRecipientsConfig, withSmtpRetry } from "./email-publish.mjs";
 import {
   assertDeploymentRun, createLedger, decryptReceipt, digestMessage, digestSnapshots, gitBlobSha256,
   executeNotification, githubApi, listNotificationRecords, notificationDecision,
-  publicSnapshot, receiptKey, verifyLiveArtifact
+  publicSnapshot, receiptKey, sha256, verifyLiveArtifact
 } from "./digest-notification.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -45,11 +46,13 @@ async function prepare() {
   if (!/^\d+$/.test(String(id || ""))) throw new Error("A successful Pages run ID is required");
   const run = await api(`/actions/runs/${id}`);
   assertDeploymentRun(run, { sha: run.head_sha, repository });
+  const welcomeOnly = process.env.GITHUB_EVENT_NAME === "workflow_dispatch" && String(event.inputs?.welcome_only) === "true";
   const current = await api("/commits/main");
-  if (current.sha !== run.head_sha) throw new Error("This deployment has been superseded; notify from the current deployment");
+  if (!welcomeOnly && current.sha !== run.head_sha) throw new Error("This deployment has been superseded; notify from the current deployment");
   const digestId = process.env.GITHUB_EVENT_NAME === "workflow_dispatch" ? String(event.inputs?.digest_id || "") : "";
   if (digestId && !/^\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?$/.test(digestId)) throw new Error("Invalid digest ID");
-  await appendFile(process.env.GITHUB_OUTPUT, `sha=${run.head_sha}\ndeployment_run_id=${id}\ndigest_id=${digestId}\n`);
+  const verification = welcomeOnly ? await welcomeVerificationInput(api, run) : { mode: "artifact", runId: id, name: "github-pages" };
+  await appendFile(process.env.GITHUB_OUTPUT, `sha=${run.head_sha}\ncode_sha=${welcomeOnly ? current.sha : run.head_sha}\ndeployment_run_id=${id}\ndigest_id=${digestId}\nwelcome_only=${welcomeOnly}\nverification_mode=${verification.mode}\nartifact_run_id=${verification.runId}\nartifact_name=${verification.name}\n`);
 }
 
 async function run() {
@@ -59,32 +62,52 @@ async function run() {
   const deploymentRunId = process.env.DIGEST_DEPLOYMENT_RUN_ID;
   if (!/^\d+$/.test(deploymentRunId || "")) throw new Error("Missing Pages deployment run ID");
   const deployment = await api(`/actions/runs/${deploymentRunId}`);
-  assertDeploymentRun(deployment, { sha, repository });
+  const welcomeOnly = process.env.WELCOME_ONLY === "true";
+  const contentSha = welcomeOnly ? deployment.head_sha : sha;
+  assertDeploymentRun(deployment, { sha: contentSha, repository });
   const current = await api("/commits/main");
   if (current.sha !== sha) throw new Error("Checked-out release is no longer main; wait for its replacement deployment");
   const baseline = JSON.parse(await readFile(path.join(ROOT, "config/digest-notification-baseline.json"), "utf8"));
   const exclusions = JSON.parse(await readFile(path.join(ROOT, "config/digest-notification-exclusions.json"), "utf8"));
   const all = await digestSnapshots(ROOT);
+  if (welcomeOnly) {
+    // Welcome-only runs use restored published content, not unshipped reports
+    // from the newer automation commit. Check provenance before SMTP or claims.
+    for (const [file, expected] of Object.entries(all[0].sources)) {
+      if (await gitBlobSha256(contentSha, file, ROOT) !== expected) throw new Error(`Welcome content differs from its deployed commit: ${file}`);
+    }
+    const labelsFile = "config/research-interests.json";
+    if (await gitBlobSha256(contentSha, labelsFile, ROOT) !== sha256(await readFile(path.join(ROOT, labelsFile)))) {
+      throw new Error("Welcome direction labels differ from the deployed commit");
+    }
+  }
   const targets = process.env.DIGEST_ID ? all.filter((item) => item.id === process.env.DIGEST_ID) : all;
   if (!targets.length) throw new Error("No matching digest");
   const records = await listNotificationRecords(api);
-  const plans = targets.map((snapshot) => {
+  const plans = (welcomeOnly ? [] : targets).map((snapshot) => {
     const decision = notificationDecision(snapshot, records, baseline.digests);
     const exclusion = exclusions.versions?.[`${snapshot.id}:${snapshot.fingerprint}`];
     if (exclusion?.reason && decision.action === "send") return { snapshot, decision: { action: "skip", reason: "explicit-user-exclusion" } };
     return { snapshot, decision };
   });
   const verifyTargets = plans.filter((item) => item.decision.action === "send").map((item) => item.snapshot);
-  if (!verifyTargets.length) verifyTargets.push(all[0]);
+  if (!verifyTargets.some(snapshot => snapshot.id === all[0].id)) verifyTargets.push(all[0]);
   const directory = path.join(ROOT, ".generated/published-site");
-  const verification = await verifyLiveArtifact({ directory, siteUrl: SITE, snapshots: verifyTargets });
+  const manifestMode = welcomeOnly && process.env.VERIFICATION_MODE === "manifest";
+  const verification = manifestMode
+    ? await verifyWelcomeManifest({ manifest: JSON.parse(await readFile(path.join(ROOT, ".generated/verification-input/notification-checks/live.json"), "utf8")),
+      snapshot: all[0], sha: contentSha, deploymentRunId, siteUrl: SITE })
+    : await verifyLiveArtifact({ directory, siteUrl: SITE, snapshots: verifyTargets });
   await mkdir(path.join(ROOT, ".generated/notification-checks"), { recursive: true });
-  await writeFile(path.join(ROOT, ".generated/notification-checks/live.json"), `${JSON.stringify({ deploymentRunId, sha, ...verification }, null, 2)}\n`);
+  await writeFile(path.join(ROOT, ".generated/notification-checks/live.json"), `${JSON.stringify({ deploymentRunId, sha: contentSha, codeSha: sha,
+    verificationRunId: process.env.VERIFICATION_RUN_ID || deploymentRunId, ...verification }, null, 2)}\n`);
   if (!process.env.DIGEST_SMTP_JSON || !process.env.DIGEST_RECIPIENTS_JSON || !process.env.DIGEST_RECEIPT_KEY) {
     throw new Error("Live verification passed; notification Secrets are not configured. No email was attempted.");
   }
   const config = JSON.parse(process.env.DIGEST_SMTP_JSON);
-  const recipients = parseRecipientsConfig(JSON.parse(process.env.DIGEST_RECIPIENTS_JSON));
+  const recipientConfig = JSON.parse(process.env.DIGEST_RECIPIENTS_JSON);
+  welcomeRecipientState(recipientConfig);
+  const recipients = parseRecipientsConfig(recipientConfig);
   const key = process.env.DIGEST_RECEIPT_KEY;
   receiptKey(key);
   if (!config || config.rejectUnauthorized === false) throw new Error("SMTP configuration with TLS verification is required");
@@ -123,11 +146,20 @@ async function run() {
       results.push({ issue: snapshot.id, action: "failed", reason: error.message });
     }
   }
-  await writeFile(path.join(ROOT, ".generated/notification-checks/summary.json"), `${JSON.stringify({ sha, deploymentRunId, verification: { resourceCount: verification.resourceCount, searchGzipMatches: true }, results }, null, 2)}\n`);
+  await writeFile(path.join(ROOT, ".generated/notification-checks/summary.json"), `${JSON.stringify({ sha: contentSha, codeSha: sha, deploymentRunId, verification: { resourceCount: verification.resourceCount, searchGzipMatches: true }, results }, null, 2)}\n`);
+  const welcomes = await runWelcomes({ snapshot: all[0], config: recipientConfig, api, key, sha: contentSha, runUrl,
+    directory: path.join(ROOT, ".generated/welcome-notifications"), from, sender: config.user, siteUrl: SITE,
+    classifyError: error => isRetryableSmtpError(error) || error.code === "EAUTH",
+    send: async mail => {
+      const transport = nodemailer.createTransport(options);
+      try { return await transport.sendMail(mail); } finally { transport.close(); }
+    }
+  });
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY,
-    `Verified deployment: ${deploymentRunId}, commit \`${sha}\`.\n\n| Issue | Notification |\n| --- | --- |\n${results.map((item) => `| ${item.issue} | ${item.action}${item.reason ? `: ${item.reason}` : ""} |`).join("\n")}\n\nReceipts describe provider acceptance, not recipient inbox delivery.\n`);
+    `Verified deployment: ${deploymentRunId}, content commit \`${contentSha}\`, code commit \`${sha}\`.\n\n| Issue | Notification |\n| --- | --- |\n${results.map((item) => `| ${item.issue} | ${item.action}${item.reason ? `: ${item.reason}` : ""} |`).join("\n")}\n\nReceipts describe provider acceptance, not recipient inbox delivery.\n`);
   console.log(JSON.stringify(results));
-  if (results.some((item) => ["blocked", "failed"].includes(item.action))) throw new Error("Some notifications remain unresolved; inspect the retained encrypted receipts");
+  console.log(`Welcome notifications: ${welcomes.filter(item => item.action === "sent").length} sent, ${welcomes.filter(item => item.action === "skip").length} skipped.`);
+  if ([...results, ...welcomes].some((item) => ["blocked", "failed"].includes(item.action))) throw new Error("Some notifications remain unresolved; inspect the retained encrypted receipts");
 }
 
 async function importReceipt(evidenceFile, attemptId) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getDigests, getIdeaCenter, getReviewCenter } from "../src/lib/content.js";
@@ -34,7 +34,8 @@ function usage() {
   console.error("       npm run email:preview -- <digest-id>");
   console.error("       npm run email:publish -- <digest-id>");
   console.error("       npm run email:welcome:preview -- <digest-id>");
-  console.error("       npm run email:welcome -- <digest-id>");
+  console.error("       npm run email:add -- <new-email>");
+  console.error("       npm run email:welcome");
   console.error("       npm run email:review-update:preview");
   console.error("       npm run email:review-update");
   console.error("       npm run email:idea-update:preview");
@@ -247,20 +248,6 @@ async function loadRecipients() {
   return (await loadRecipientState()).recipients;
 }
 
-async function markRecipientsOnboarded(state, recipients) {
-  const onboardedRecipients = uniqueEmails([
-    ...state.onboardedRecipients,
-    ...recipients
-  ]);
-  const base = state.data && !Array.isArray(state.data) ? state.data : {};
-  const next = {
-    ...base,
-    recipients: state.recipients,
-    onboardedRecipients
-  };
-  await writeFile(EMAIL_LIST_PATH, `${JSON.stringify(next, null, 2)}\n`);
-}
-
 async function loadFeishuLink(digestId) {
   try {
     const text = await readFile(FEISHU_PUBLICATIONS_PATH, "utf8");
@@ -281,7 +268,7 @@ function buildEmailSubject(digestId, digest, options = {}) {
   return `${prefix} ${digestId} ${digest.title}`;
 }
 
-function buildWelcomeText() {
+function buildWelcomeText(currentSiteUrl) {
   return [
     "欢迎加入 Paper Digest。",
     "",
@@ -291,13 +278,14 @@ function buildWelcomeText() {
     "- 在首页按方向选读最新论文；单篇报告解释方法、原图、实验结果和局限，并链接原文。",
     "- 查找论文时，可搜索标题、作者、单位或关键词。",
     "- 了解相关工作可读方向综述；研究态势整理跨论文的发现，Idea 中心保留候选问题与评审结果。",
-    "- 网页端与飞书知识库均可按自己的研究兴趣阅读。",
+    `项目首页：${currentSiteUrl}/`,
+    `方向综述：${currentSiteUrl}/reviews/`,
     "",
     "以下是最新一期简报。"
   ].join("\n");
 }
 
-function buildWelcomeHtml() {
+function buildWelcomeHtml(currentSiteUrl) {
   return `
     <section style="margin:0 0 28px;padding:0 0 24px;border-bottom:1px solid #dfe3e8;">
       <h2 style="margin:0 0 12px;">欢迎加入 Paper Digest</h2>
@@ -307,8 +295,8 @@ function buildWelcomeHtml() {
         <li>在首页按方向选读最新论文；单篇报告解释方法、原图、实验结果和局限，并链接原文。</li>
         <li>查找论文时，可搜索标题、作者、单位或关键词。</li>
         <li>了解相关工作可读方向综述；研究态势整理跨论文的发现，Idea 中心保留候选问题与评审结果。</li>
-        <li>网页端与飞书知识库均可按自己的研究兴趣阅读。</li>
       </ul>
+      <p><a href="${escapeAttr(currentSiteUrl)}/">项目首页</a> · <a href="${escapeAttr(currentSiteUrl)}/reviews/">方向综述</a></p>
       <p style="margin-bottom:0;">以下是最新一期简报。</p>
     </section>
   `.trim();
@@ -317,7 +305,7 @@ function buildWelcomeHtml() {
 export function buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, options = {}) {
   const lines = [];
   if (options.welcome) {
-    lines.push(buildWelcomeText());
+    lines.push(buildWelcomeText(currentSiteUrl));
     lines.push("");
     lines.push("------------------------------------------------------------");
     lines.push("");
@@ -399,7 +387,7 @@ export function buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, 
 
   return `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.6;">
-      ${options.welcome ? buildWelcomeHtml() : ""}
+      ${options.welcome ? buildWelcomeHtml(currentSiteUrl) : ""}
       <h2>${escapeText(`${digestId} ${digest.title}`)}</h2>
       ${digestSummary}
       <div>${digestBodyHtml}</div>
@@ -1010,11 +998,11 @@ async function checkSmtpConnection() {
   console.error(`SMTP自检通过：${smtpConfig.host}:${smtpConfig.port}（${mode}），本地收件人 ${recipients.length} 位。`);
 }
 
-async function publishDigest(digestId, options = {}) {
-  const dryRun = Boolean(options.dryRun);
+async function previewDigest(digestId, options = {}) {
   const welcome = Boolean(options.welcome);
   const digests = await getDigests();
-  const digest = digests.find((item) => item.id === digestId);
+  const sourceDigest = digests.find((item) => item.id === digestId);
+  const digest = welcome && sourceDigest ? { ...sourceDigest, body: "", bodyHtml: "" } : sourceDigest;
   if (!digest) {
     throw new Error(`未找到简报：${digestId}`);
   }
@@ -1028,53 +1016,14 @@ async function publishDigest(digestId, options = {}) {
   const feishuUrl = await loadFeishuLink(digestId);
   const subject = buildEmailSubject(digestId, digest, { welcome });
   const text = buildTextBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, { welcome });
-  const html = buildHtmlBody(digest, digestId, digestUrl, feishuUrl, sections, currentSiteUrl, { welcome });
-  const from = smtpConfig.from || smtpConfig.user;
 
-  if (dryRun) {
-    console.error(`Preview ${welcome ? "welcome digest" : "digest"}: ${digestId}`);
-    console.error(`Recipients: ${recipients.length}`);
-    console.error(`From: ${from || "<未设置>"}`);
-    console.error("----- Subject -----");
-    console.error(subject);
-    console.error("----- Body -----");
-    console.error(text);
-    return;
-  }
-
-  if (!from) {
-    throw new Error("请设置 EMAIL_FROM 或 SMTP_USER（用于发件人地址）");
-  }
-
-  if (!recipients.length) {
-    throw new Error(welcome ? "没有尚未完成新人介绍的收件人" : "收件人列表为空");
-  }
-
-  let info;
-  try {
-    info = await withSmtpRetry(
-      () => withTransport(smtpConfig, (transporter) => transporter.sendMail({
-        ...buildBulkMailOptions({
-          from,
-          envelopeTo: smtpConfig.user || from,
-          recipients,
-          subject,
-          text,
-          html
-        })
-      })),
-      retryOptions(smtpConfig)
-    );
-  } catch (error) {
-    throw new Error(explainSmtpError(error, smtpConfig));
-  }
-
-  const acceptedCount = validateDelivery(info, recipients);
-  if (welcome) {
-    await markRecipientsOnboarded(recipientState, recipients);
-  }
-  const messageId = normalizeString(info?.messageId);
-  console.error(`SMTP服务端已接受 ${acceptedCount} 位${welcome ? "新人" : "收件人"}：${digestId}${messageId ? `（messageId: ${messageId}）` : ""}`);
+  console.error(`Preview ${welcome ? "welcome digest" : "digest"}: ${digestId}`);
+  console.error(`Local recipients: ${recipients.length}`);
+  if (welcome) console.error("Final welcome eligibility is checked against the durable GitHub receipt ledger.");
+  console.error("----- Subject -----");
+  console.error(subject);
+  console.error("----- Body -----");
+  console.error(text);
 }
 
 async function publishReviewUpdate(options = {}) {
@@ -1215,6 +1164,14 @@ async function publishIdeaUpdate(options = {}) {
 export async function main(argv = process.argv.slice(2)) {
   const [command, digestId] = argv;
 
+  if (command === "welcome") {
+    const { syncNotificationSecrets } = await import("./configure-notifications.mjs");
+    const { dispatchWelcomes } = await import("./subscribers.mjs");
+    await syncNotificationSecrets();
+    await dispatchWelcomes();
+    return;
+  }
+
   if (command === "check") {
     await checkSmtpConnection();
     return;
@@ -1241,10 +1198,7 @@ export async function main(argv = process.argv.slice(2)) {
     return;
   }
 
-  await publishDigest(digestId, {
-    dryRun: command === "preview" || command === "welcome-preview",
-    welcome: command === "welcome" || command === "welcome-preview"
-  });
+  await previewDigest(digestId, { welcome: command === "welcome-preview" });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_PATH) {

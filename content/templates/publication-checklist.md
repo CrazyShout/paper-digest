@@ -63,3 +63,4 @@ TZ=UTC GITHUB_ACTIONS=true npm run build
 - `main` 部署成功后由 `Notify digest subscribers` 自动执行线上比对、内容版本去重、BCC 发送和加密回执保存。交付前确认该工作流结果；只看到 Pages 成功仍不够。`npm run email:publish -- <期号>` 也只请求同一流程，不直接旁路发信。
 - 首次启用或本地订阅名单、SMTP 配置变更后，运行 `npm run email:sync-config` 同步 Actions Secrets，再发布。发送回执的解密密钥保存在忽略文件中，不随内容提交。
 - 保留 `config/digest-notification-baseline.json` 的迁移历史，不重建以清空待发送版本。发送中断、部分拒收或状态未知时先核查服务商与加密回执；确认已发送后可补回执，不盲目重发。用户明确要求不发时，只对本次内容指纹记录例外。
+- 新增订阅者使用 `npm run email:add -- <email>`，默认自动发送项目介绍与最新一期已部署简报，仅投递给新用户。欢迎邮件使用独立的邮箱去重与加密回执记录；重复添加或换期不重复欢迎。查询 `npm run email:welcome:status` 确认完成，不能只记录名单已保存或任务已排队。

@@ -15,6 +15,11 @@ on:
         description: Optional issue ID; otherwise check all outstanding issues
         required: false
         type: string
+      welcome_only:
+        description: Only welcome new subscribers using the latest published issue
+        required: false
+        default: false
+        type: boolean
 
 # Serialize verification and delivery with Pages deployments. A later successful
 # run sweeps all missing versions if GitHub replaces an older pending run.
@@ -53,24 +58,35 @@ jobs:
         run: node scripts/digest-notify.mjs prepare
       - uses: actions/checkout@v6
         with:
-          ref: ${{ steps.deployment.outputs.sha }}
+          ref: ${{ steps.deployment.outputs.code_sha }}
           clean: false
-      - name: Download the exact deployed artifact
+      - name: Check mail contracts
+        run: node --test test/welcome-notification.test.mjs test/email-publish.test.mjs test/digest-notification.test.mjs
+      - name: Restore the published content for welcome-only requests
+        if: steps.deployment.outputs.welcome_only == 'true'
+        env:
+          PUBLISHED_SHA: ${{ steps.deployment.outputs.sha }}
+        run: git restore --source="$PUBLISHED_SHA" -- content config public/assets/papers
+      - name: Download published verification evidence
         uses: actions/download-artifact@v8
         with:
-          name: github-pages
-          path: .generated/pages-artifact
+          name: ${{ steps.deployment.outputs.artifact_name }}
+          path: .generated/verification-input
           github-token: ${{ github.token }}
-          run-id: ${{ steps.deployment.outputs.deployment_run_id }}
+          run-id: ${{ steps.deployment.outputs.artifact_run_id }}
       - name: Open published artifact
+        if: steps.deployment.outputs.verification_mode == 'artifact'
         run: |
           mkdir -p .generated/published-site
-          tar -xf .generated/pages-artifact/artifact.tar -C .generated/published-site
+          tar -xf .generated/verification-input/artifact.tar -C .generated/published-site
       - name: Verify live site and notify once
         env:
           GITHUB_TOKEN: ${{ github.token }}
           DIGEST_DEPLOYMENT_RUN_ID: ${{ steps.deployment.outputs.deployment_run_id }}
           DIGEST_ID: ${{ steps.deployment.outputs.digest_id }}
+          WELCOME_ONLY: ${{ steps.deployment.outputs.welcome_only }}
+          VERIFICATION_MODE: ${{ steps.deployment.outputs.verification_mode }}
+          VERIFICATION_RUN_ID: ${{ steps.deployment.outputs.artifact_run_id }}
           DIGEST_SMTP_JSON: ${{ secrets.DIGEST_SMTP_JSON }}
           DIGEST_RECIPIENTS_JSON: ${{ secrets.DIGEST_RECIPIENTS_JSON }}
           DIGEST_RECEIPT_KEY: ${{ secrets.DIGEST_RECEIPT_KEY }}
@@ -83,6 +99,7 @@ jobs:
           path: |
             .generated/notification-checks/
             .generated/notification-receipts/
+            .generated/welcome-notifications/
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 90

@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { welcomeRecipientState } from "./welcome-notification.mjs";
 import { randomBytes } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
-import { buildTransportOptions, parseRecipientState } from "./email-publish.mjs";
+import { buildTransportOptions } from "./email-publish.mjs";
 import { receiptKey } from "./digest-notification.mjs";
 
 const repository = "CrazyShout/paper-digest";
-try {
+export async function syncNotificationSecrets() {
   const smtp = JSON.parse(await readFile("config/smtp.local.json", "utf8"));
-  const state = parseRecipientState(JSON.parse(await readFile("config/email-recipients.local.json", "utf8")));
+  const state = welcomeRecipientState(JSON.parse(await readFile("config/email-recipients.local.json", "utf8")));
   const options = buildTransportOptions(smtp);
   if (!options.auth?.user || !options.auth?.pass || !options.tls.rejectUnauthorized) throw new Error("Valid SMTP credentials and TLS verification are required");
   let local;
@@ -22,7 +25,7 @@ try {
   receiptKey(local.receiptKey);
   const secrets = {
     DIGEST_SMTP_JSON: JSON.stringify(smtp),
-    DIGEST_RECIPIENTS_JSON: JSON.stringify({ recipients: state.recipients }),
+    DIGEST_RECIPIENTS_JSON: JSON.stringify({ recipients: state.recipients, welcomeBaselineRecipients: state.baseline }),
     DIGEST_RECEIPT_KEY: local.receiptKey
   };
   for (const [name, value] of Object.entries(secrets)) {
@@ -31,7 +34,8 @@ try {
     } catch { throw new Error(`Could not update repository Secret ${name}; no values were logged`); }
   }
   console.log(`Notification Secrets synchronized for ${repository}; ${state.recipients.length} subscribers. No email sent.`);
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  syncNotificationSecrets().catch(error => { console.error(error.message); process.exitCode = 1; });
 }
