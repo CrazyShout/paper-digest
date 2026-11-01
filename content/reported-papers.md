@@ -204,3 +204,7 @@
 | ride-splat-windshield-reflection-removal | RIDE-Splat: Reflection Removal for In-the-Wild Driving Environments | 2610.34632 | 2026-10-28 |
 | planner-surrogate-safety-critical-training | Model-Aware Generation of Safety-Critical Scenes for Robust End-to-End Driving via Distilled Planner Surrogates | 2610.35448 | 2026-10-28 |
 | srp-structured-risk-anticipation | Structured Representation Probing for Risk Anticipation in End-to-End Autonomous Driving | 2610.37299 | 2026-10-28 |
+| 4dgs-hexplane-deformation | 4D Gaussian Splatting for Real-Time Dynamic Scene Rendering | 2310.08528 | 2026-11-01-4d-gaussian |
+| native-4d-gaussian-splatting | Real-time Photorealistic Dynamic Scene Representation and Rendering with 4D Gaussian Splatting | 2310.10642 | 2026-11-01-4d-gaussian |
+| drive2gauss-multimodal-4d-reconstruction | Drive2Gauss: FeedForward 4D Gaussian Reconstruction from Multimodal Generative Driving Videos | 2610.26585 | 2026-11-01-4d-gaussian |
+| splatflux-latent-4d-gaussians | SplatFlux: Feed-Forward 4D Gaussian Reconstruction and Generation from Video Latents | 2610.28257 | 2026-11-01-4d-gaussian |

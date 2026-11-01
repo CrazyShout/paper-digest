@@ -1,10 +1,26 @@
 {
   "version": 2,
-  "updatedAt": "2026-10-28",
-  "analysisWindowIssues": 5,
-  "title": "十月末阅读线索：未知物体、观测依赖与可执行修复",
-  "summary": "最近五期的证据涉及指令和观测如何影响动作、未知物体如何评价，以及失败场景如何用于训练。新数据集与修复方法都需要固定输入、阈值和计算条件比较。",
+  "updatedAt": "2026-11-01",
+  "analysisWindowIssues": 6,
+  "title": "阅读线索：4D 时间表示、观测依赖与可用场景",
+  "summary": "本次补齐4D高斯的两类基础表示，并对照近期前馈重建；之前几期的未知物体、协同修复与规划测试继续作为系统用途的检查线索。方法名称、图像质量与下游能力分别核查。",
   "trends": [
+    {
+      "id": "4d-gaussian-time-and-reconstruction",
+      "title": "时间表示与重建计算分开比较",
+      "evidence": "形变式4D-GS查询共享时空特征后移动三维基元；原生4DGS按时间条件化时空协方差。Drive2Gauss与SplatFlux则用可泛化模型预测动态基元。",
+      "judgement": "实时渲染、快速重建与连续在线更新是三个终点。输入生成、几何监督、分辨率和推理计时范围须先对齐。",
+      "tags": [
+        "3d-reconstruction",
+        "dynamic-scene-representation"
+      ],
+      "evidencePaperIds": [
+        "4dgs-hexplane-deformation",
+        "native-4d-gaussian-splatting",
+        "drive2gauss-multimodal-4d-reconstruction",
+        "splatflux-latent-4d-gaussians"
+      ]
+    },
     {
       "id": "testing-as-common-language",
       "title": "从失败诊断到训练与预警",
@@ -388,33 +404,36 @@
     },
     {
       "tag": "3d-reconstruction",
-      "signal": "挡风玻璃反射分离",
-      "focus": "RIDE-Splat 将相机附着的反射与世界坐标中的场景分别优化，提供真实与合成反射评价。",
-      "gap": "真实参考来自另一次采集，时空匹配近似；论文模型、公开默认配置和发布数据的处理差异需逐项对齐。",
+      "signal": "从逐场景形变到前馈动态高斯",
+      "focus": "补齐形变网络与原生时空协方差两类时间表示，再比较多模态驾驶重建与潜变量前馈预测。",
+      "gap": "Drive2Gauss的重建推理时间未包括输入RGB视频、深度和光流的生成；SplatFlux仍是离线方法。新视角质量、几何可信度和在线更新需分别验证。",
       "ideaTitle": "按视角、传感器和任务划定重建资产用途",
       "idea": "重建资产应针对新视角、感知回放或闭环仿真分别给出可用域和拒绝域，并用各自终点验证这些范围。",
       "method": "为每个区域记录训练视锥覆盖、几何不确定性、动态对象来源和传感器残差；训练轻量准入头预测相机、LiDAR 与固定感知器的局部误差上界，越界时拒绝生成测试 verdict。",
       "validation": "在 Waymo/nuScenes 多轨迹片段比较逐场景 3DGS、前馈方法和带准入头版本；按视角偏移、动态密度和传感器分别报告渲染、几何、感知误差、策略排序保持率与拒绝覆盖。",
       "novelty": "现有工作分别优化重建速度、结构和物理一致性；拟验证的差异是把资产用途、局部误差上界和拒绝机制纳入同一可复算协议。",
       "evidencePaperIds": [
-        "ride-splat-windshield-reflection-removal",
-        "foundation4d-unified-perception-reconstruction"
+        "4dgs-hexplane-deformation",
+        "native-4d-gaussian-splatting",
+        "drive2gauss-multimodal-4d-reconstruction",
+        "splatflux-latent-4d-gaussians"
       ]
     },
     {
       "tag": "dynamic-scene-representation",
       "signal": "实例与评价区域",
-      "focus": "PanoBench 用时间可见性和实例完整性重新定义评价区域，Foundation4D 给出任务组合对照。",
-      "gap": "真实物体网格是重建/生成标注，不能视为逐体素物理测量；体素、射线和实例指标需要同时报告。",
+      "focus": "4D高斯提供显式时间切片，但其透明度和时空权重不是经过校准的占据概率。PanoBench与Foundation4D继续提供实例和多任务评价对照。",
+      "gap": "基元连续移动不保证长期对象身份；离线拟合、未来占据预测和流式状态更新需要各自的协议。",
       "ideaTitle": "带来源、年龄与身份的表面—实例—占据记忆",
       "idea": "persistent slot 管理对象身份、局部 Gaussian 管理可见表面、显式 occupancy 管理 free/unknown，并让每次更新携带来源、年龄与不确定性，可减少跨窗口动态涂抹和错误自我确认。",
       "method": "以 identity-aware memory 连接对象、表面和体素状态；用可见性与创新一致性决定更新几何、只延续存在性或拒绝证据，再由 reconstruction、tracking、occupancy calibration 和固定 planner intervention 共同验收。",
       "validation": "在 nuScenes/Occ3D 与第二个含 radar 或多遍历序列的数据集比较无记忆、固定窗口、对象记忆、表面记忆和完整三态状态；报告 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划风险和延迟。",
       "novelty": "USR-Drive、GeoUP、GaussianWorld 与 Scene as Occupancy 已覆盖若干组件；待检验的是来源、年龄、长期身份和 free/unknown 能否在同一状态中被独立干预，并产生额外收益。",
       "evidencePaperIds": [
+        "native-4d-gaussian-splatting",
+        "splatflux-latent-4d-gaussians",
         "panobench-panoptic-occupancy-benchmark",
-        "foundation4d-unified-perception-reconstruction",
-        "infraworld-roadside-occupancy-forecasting"
+        "foundation4d-unified-perception-reconstruction"
       ]
     },
     {

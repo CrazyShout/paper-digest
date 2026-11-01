@@ -5,7 +5,7 @@
   "subtitle": "比较体素、对象、向量和 Gaussian 表示如何记录可见性、对象身份与未来运动，并检验这些信息的决策作用。",
   "abstract": "动态场景表征连接感知与决策，需要定义占据、空闲、未知、语义、对象身份和时间有效性，并逐项检验其用途。MonoScene、TPVFormer 与 Scene as Occupancy 建立当前三维状态主线；OccWorld 和 I2-World 扩展到未来预测；GaussianWorld、USR-Drive 等工作探索连续或混合表示。近期 RoadOcc 与 SelectOccFlow 进一步拆开历史地址、证据选择和当前运动状态。精度、时间一致性、校准、延迟和规划收益仍须分别报告：更好的占据特征未必改善规划，更少的 Gaussian 也未必更快。后续可先冻结既有模型与规划器，比较简单窗口、运动回溯和来源选择，再判断是否需要更复杂的场景记忆。",
   "reviewedAt": "2026-10-18",
-  "searchWindow": "2022-01-01 至 2026-10-18；重新核对 34 条既有引用及关键论断，补入 RoadOcc 与 SelectOccFlow；同时检索近期占据、时空记忆、未知状态与规划接口工作。",
+  "searchWindow": "2022-01-01 至 2026-10-18；重新核对 34 条既有引用及关键论断，补入 RoadOcc 与 SelectOccFlow；同时检索近期占据、时空记忆、未知状态与规划接口工作。 2026-11-01 仅补查 4D 高斯与 Gaussian occupancy 的机制边界，重开 GaussianWorld、GaussianFormer-2 相关正文；不刷新全方向实质复核日期。",
   "researchQuestions": [
     "三维重建、当前场景状态、动作条件世界模型和端到端策略各自输出什么，应使用哪些验证终点？",
     "occupied、free、unknown、语义、对象身份、速度/流和时间有效性中，哪些状态是规划真正需要的，哪些只是提高离线感知指标？",
@@ -18,12 +18,14 @@
       "kind": "scope",
       "title": "场景状态与重建、预测和动作的关系",
       "thesis": "动态场景表征提供可查询、可校准且带时间信息的中间状态；比较相邻任务时，应先确认其输出了哪些状态、验证了哪些用途。",
-      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源，以及每类信息分别怎样影响规划。",
+      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源，以及每类信息分别怎样影响规划。\n\n4D 高斯的时间坐标也需要按用途解释。Wu 4D-GS 由时间条件形变生成当前高斯，Yang 4DGS 则将 xyz-t 联合高斯条件化到指定时刻；二者首先是动态辐射场。它们能在已拟合的时间范围内渲染场景，但仅凭这一能力，无法得出 occupied/free/unknown 已知、对象身份可靠或新动作下未来可预测的结论。",
       "referenceIds": [
         "monoscene-2022",
         "tpvformer-2023",
         "scene-as-occupancy-2023",
-        "occupancy-survey-2025"
+        "occupancy-survey-2025",
+        "4dgs-wu-2024",
+        "native-4dgs-yang-2024"
       ]
     },
     {
@@ -31,7 +33,7 @@
       "kind": "evolution",
       "title": "从三维语义补全到时空状态与未来预测",
       "thesis": "领域正在沿三条轴演化：更完整的空间状态、更稳定的时间身份，以及能被规划动作询问的未来。",
-      "body": "2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 将稀疏 Gaussian 状态递归更新用于流式三维占据，I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。",
+      "body": "2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 在对齐历史状态后，结合当前图像更新稀疏 Gaussian 占据；这里的时间用途是观测驱动的状态更新。I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。",
       "referenceIds": [
         "proxy-4d-occupancy-2023",
         "occworld-2024",
@@ -63,7 +65,7 @@
       "kind": "taxonomy",
       "title": "体素、对象、向量与 Gaussian 的状态定义",
       "thesis": "比较表示形式时，还要检查它保留了哪些状态变量、如何更新、使用什么监督，以及验证了哪些用途。",
-      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线用连续显式基元表达表面或占据。GaussianWorld证明稀疏 Gaussian 可做流式 occupancy，USR-Drive把表面与对象联合去噪，GUIDE进一步把 Gaussian 实例占据、检测与跟踪纳入同一框架；但渲染密度、语义 occupancy 概率、实例占据分数和物体存在概率不是同一个量。将 Gaussian 用作可校准场景状态时，还需要定义射线自由空间、unknown、对象身份和更新不确定性。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。",
+      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线共享连续显式基元，但基元属性与聚合规则决定输出的含义。Wu/Yang 4DGS 的权重进入图像合成，GaussianFormer-2 将基元用于占据概率聚合，GaussianWorld 再通过历史与当前图像更新占据状态。USR-Drive 联合表面与对象去噪，GUIDE 则联合实例占据、检测和跟踪。渲染不透明度、occupied 概率、实例分数与对象存在概率应分别标注；只有额外定义射线自由空间、unknown、身份和更新不确定性，才能讨论这些量作为可校准场景状态的价值。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。",
       "referenceIds": [
         "tpvformer-2023",
         "scene-as-occupancy-2023",
@@ -84,7 +86,9 @@
         "adaocc-2024",
         "octreeocc-2023",
         "gaussianformer2-2025",
-        "guide-2026"
+        "guide-2026",
+        "4dgs-wu-2024",
+        "native-4dgs-yang-2024"
       ]
     },
     {
@@ -180,6 +184,7 @@
     "动态场景表征以当前或短期显式状态为中心；三维重建、动作条件世界模型和端到端策略是相邻但不同的验证终点。",
     "occupied、free、unknown、对象身份、状态年龄和来源，是值得逐项验证的状态信息。",
     "4D occupancy 包含时间轴；4D 传感器输入和历史特征堆叠需按实际输出判断是否形成时空状态。",
+    "4D 高斯时间插值、GaussianWorld 的观测驱动更新与动作条件未来预测，分别需要不同的时间协议。",
     "规划收益必须在固定下游和匹配预算下做状态干预，避免把联合训练、模型容量或额外监督误认为表示价值。",
     "优先小规模验证来源保真的 Surface-Instance-Occupancy Memory；若简单窗口记忆同样有效或 planner 不读取新增状态，应尽早停止。"
   ],
@@ -924,6 +929,52 @@
       "url": "https://arxiv.org/abs/2610.04356",
       "localPaperId": "selectoccflow-occupancy-scene-flow",
       "scopeRole": "core-current-state-and-flow"
+    },
+    {
+      "id": "4dgs-wu-2024",
+      "title": "4D Gaussian Splatting for Real-Time Dynamic Scene Rendering",
+      "authors": "Guanjun Wu, Taoran Yi, Jiemin Fang, Lingxi Xie, Xiaopeng Zhang, Wei Wei, Wenyu Liu, Qi Tian, Xinggang Wang",
+      "year": 2024,
+      "venue": "CVPR 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/CVPR52733.2024.01920",
+      "sourceFamily": "local-corpus",
+      "supports": "以规范空间 3D Gaussian、分解的时空平面特征和轻量形变 MLP 表示动态场景，提供变形式 4D-GS 的基础参照。",
+      "limitation": "主要评价动态视图合成；形变连续性不自动保证物理对应、遮挡后几何或未来动作响应。82 FPS 限定于 800×800、RTX 3090 和论文场景。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Wu_4D_Gaussian_Splatting_for_Real-Time_Dynamic_Scene_Rendering_CVPR_2024_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2310.08528"
+        },
+        {
+          "label": "代码",
+          "url": "https://github.com/hustvl/4DGaussians"
+        }
+      ],
+      "localPaperId": "4dgs-hexplane-deformation"
+    },
+    {
+      "id": "native-4dgs-yang-2024",
+      "title": "Real-time Photorealistic Dynamic Scene Representation and Rendering with 4D Gaussian Splatting",
+      "authors": "Zeyu Yang, Hongye Yang, Zijie Pan, Li Zhang",
+      "year": 2024,
+      "venue": "ICLR 2024",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2310.10642",
+      "sourceFamily": "local-corpus",
+      "supports": "直接优化 xyz-t 联合高斯，以时空协方差、时间条件化和随时间变化的外观表达动态场景，与规范空间形变场形成机制对照。",
+      "limitation": "本条对应四作者 ICLR 原版；时间权重是渲染贡献，不是语义占据或存在性概率。结果以视图合成为主，不提供动作条件物理预测。",
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2024/hash/26230ff5299de0929d03ed3576c3bbf9-Abstract-Conference.html",
+      "links": [
+        {
+          "label": "项目页",
+          "url": "https://logosintelligencelab.github.io/4d-gaussian-splatting/"
+        }
+      ],
+      "localPaperId": "native-4d-gaussian-splatting"
     }
   ],
   "searchAudit": {
@@ -944,7 +995,7 @@
       "physical-evidence-boundary",
       "independent-review-current-snapshot"
     ],
-    "searchedAt": "2026-10-28",
+    "searchedAt": "2026-11-01",
     "cutoffDate": "2022-01-01",
     "queryFamilies": [
       "当前三维语义占据与场景补全",
@@ -965,15 +1016,17 @@
         "family": "当前三维语义占据与场景补全",
         "sourceFamily": "local-corpus",
         "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
-        "executedAt": "2026-10-28",
-        "resultCount": 26,
-        "rawHitCount": 26,
+        "executedAt": "2026-11-01",
+        "resultCount": 30,
+        "rawHitCount": 30,
         "screenedOutCount": 0,
-        "screeningNote": "2026-10-28 对当前原始Markdown执行rg -l -i，共26个文件命中；按方向标签与revisionOf归并得26个候选，其余0个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "2026-11-01 原始 Markdown 的 rg -l -i 命中 30 文件；按当前方向标签与 revisionOf 归并得到 30 篇候选，另外 0 个是跨方向正文提及或修订重复。新增报告仅按综述实际使用范围纳入。",
         "resultIdSample": [
+          "arxiv:2310.08528",
           "arxiv:2605.13646",
           "arxiv:2609.07094",
           "arxiv:2606.27644",
+          "arxiv:2610.26585",
           "arxiv:2609.17766",
           "arxiv:2610.01750",
           "arxiv:2610.30340",
@@ -984,6 +1037,7 @@
           "arxiv:2609.24452",
           "arxiv:2610.01905",
           "arxiv:2609.20747",
+          "arxiv:2310.10642",
           "arxiv:2610.23537",
           "arxiv:2609.00111",
           "arxiv:2610.18686",
@@ -991,6 +1045,7 @@
           "arxiv:2609.27677",
           "arxiv:2610.04356",
           "arxiv:2605.24354",
+          "arxiv:2610.28257",
           "arxiv:2609.24151",
           "arxiv:2610.26816",
           "arxiv:2609.32013",
@@ -1015,9 +1070,11 @@
         },
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
+            "4dgs-hexplane-deformation",
             "caad-causality-aware-driving",
             "cascade-causal-driving-representation",
             "cascadeocc-occupancy-world-model",
+            "drive2gauss-multimodal-4d-reconstruction",
             "drtr-direct-radar-teach-repeat",
             "ffbl-coop-association-decoupled-tracking",
             "foundation4d-unified-perception-reconstruction",
@@ -1028,6 +1085,7 @@
             "lidar-hallu-spatiotemporal-benchmark",
             "maplightning-compact-map-tokens",
             "miler-semantic-sim-to-real",
+            "native-4d-gaussian-splatting",
             "panobench-panoptic-occupancy-benchmark",
             "qwen-drive-foundation-model",
             "radargsocc-doppler-semantic-occupancy",
@@ -1035,6 +1093,7 @@
             "roadocc-persist-transport-refresh",
             "selectoccflow-occupancy-scene-flow",
             "sparseworld-sparse-scene-world-model",
+            "splatflux-latent-4d-gaussians",
             "star-task-aware-radar-preprocessing",
             "streamrps-streaming-radar-panoptic",
             "trio-trimodal-anything-perception",
@@ -1080,6 +1139,14 @@
               "localPaperIds": [
                 "foundation4d-unified-perception-reconstruction",
                 "streamrps-streaming-radar-panoptic"
+              ]
+            },
+            {
+              "reasonCode": "cross-direction-support",
+              "reason": "本轮新增的前馈辐射场报告以动态重建为主；当前综述只用两条基础解释渲染与占据边界，暂不把近期生成/重建结果提升为占据状态、校准或规划证据。",
+              "localPaperIds": [
+                "drive2gauss-multimodal-4d-reconstruction",
+                "splatflux-latent-4d-gaussians"
               ]
             }
           ]
@@ -1574,12 +1641,12 @@
       {
         "sourceFamily": "local-corpus",
         "status": "success",
-        "executedAt": "2026-10-28",
-        "query": "rg -l -i dynamic scene and occupancy terms content/papers",
+        "executedAt": "2026-11-01",
+        "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
         "endpoint": "content/papers",
         "limit": 200,
-        "acceptedCount": 11,
-        "note": "2026-10-28 对当前原始Markdown执行rg -l -i，共26个文件命中；按方向标签与revisionOf归并得26个候选，其余0个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "acceptedCount": 13,
+        "note": "2026-11-01 原始 Markdown 的 rg -l -i 命中 30 文件；按当前方向标签与 revisionOf 归并得到 30 篇候选，另外 0 个是跨方向正文提及或修订重复。新增报告仅按综述实际使用范围纳入。 两条基础来源为本库新报告，另行重开其正式原文核对；所有历史站外查询日期保留。"
       },
       {
         "sourceFamily": "arxiv",
@@ -1674,7 +1741,9 @@
       "doi:10.1109/CVPR52734.2025.02559",
       "doi:10.1609/aaai.v40i6.42484",
       "arxiv:2609.27677",
-      "arxiv:2610.04356"
+      "arxiv:2610.04356",
+      "doi:10.1109/CVPR52733.2024.01920",
+      "arxiv:2310.10642"
     ],
     "exclusionCriteria": [
       "没有自动驾驶三维/四维状态终点，仅为通用控制、融合或综述的候选不纳入核心表。",
@@ -1857,7 +1926,7 @@
       "Semantic Scholar 与 OpenAlex 成功返回，本轮仅作补充发现/元数据交叉核对；其原始返回数不计入主候选池。",
       "若正式入口暂不可读，出版元数据通过出版社提交的 Crossref 记录和可访问正式页交叉核对；没有新确认正式出版页的录用稿仍标 accepted。"
     ],
-    "evidenceBoundary": "本综述确认当前三维 occupancy、panoptic identity、global map、object permanence、四维 forecasting、Gaussian/对象/向量混合状态和规划接口的论文证据；引用以 scopeRole 区分核心状态与跨方向接口。不把生成画质、联合系统总分、输入传感器中的 4D 名称、合成实例真值或未配对日志未来外推成统一现实长期身份、概率校准、真实反事实或开放道路安全。",
+    "evidenceBoundary": "本轮仅通过当前本库补入 Wu/Yang 两条动态高斯基础，并重查 GaussianWorld、GaussianFormer-2 的受影响机制论断；保留 2026-10-18 的全方向实质复核日期与历史站外查询。其余新本库候选显式延后，不自动作为占据、规划或未来预测证据。",
     "candidateLedger": [
       {
         "canonicalId": "arxiv:2402.13243",
@@ -2490,30 +2559,82 @@
           "当前三维语义占据与场景补全"
         ],
         "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01920",
+        "disposition": "included",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.26585",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全"
+        ],
+        "localPaperId": "drive2gauss-multimodal-4d-reconstruction",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2310.10642",
+        "disposition": "included",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全"
+        ],
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.28257",
+        "disposition": "deferred",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全"
+        ],
+        "localPaperId": "splatflux-latent-4d-gaussians",
+        "occurrences": 1
       }
     ],
     "counts": {
-      "candidates": 99,
-      "deduplicated": 74,
-      "included": 36,
-      "excluded": 38
+      "candidates": 103,
+      "deduplicated": 78,
+      "included": 38,
+      "excluded": 40
     },
     "independentReview": {
       "status": "passed",
-      "completedAt": "2026-10-28",
+      "completedAt": "2026-11-01",
       "reviewers": 1,
       "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "Independent current-corpus audit verified candidate/count closure and unchanged substantive references, narrative and external review dates. Same-family provisional; no new external full-review claim.",
-      "reviewerAgentId": "/root/integration_final_oct28",
-      "artifactPath": "docs/research-updates/2026-10-28/review-integration-round1.json",
-      "artifactSha256": "3be016b790ed7b2f2aa00fa798115a6e1f3f1bb0faf171e36dcb3db50a06350d",
-      "snapshotFingerprint": "7f1e52c502484acaa113990021ac3cb4b460010f16b66deefdc81fef16cf962c",
+      "finalFinding": "Read full current body; independently reviewed changed scope/evolution/taxonomy, Wu/Yang additions, GaussianWorld current-observation update and GaussianFormer-2 latency claim. Existing 36 reference objects and all external query runs are byte-equivalent at JSON serialization to the before snapshot; reviewedAt remains 2026-10-18. Does not recertify all 38 full papers. Same-family provisional; no experiment reproduction.",
+      "reviewerAgentId": "/root/review_recent_reviews_nov01",
+      "artifactPath": "docs/research-updates/2026-11-01-4d-gaussian/review-recent-reviews-round1.json",
+      "artifactSha256": "b57b5dfc23ba1b34a62186b1e4d1fc34af17da324cbb0bc27bd44aae9f96d11b",
+      "snapshotFingerprint": "f0751bf4bb419f379e82b9fae0c69fef38d7f2373da6873245de19fc0c6c8620",
       "assurance": "same-family provisional"
     },
     "refreshEvidencePath": "docs/research-updates/2026-10-18/dynamic-verification.json",
-    "incrementalLocalAuditAt": "2026-10-28",
-    "refreshMode": "incremental-local-corpus",
-    "localRefreshNote": "2026-10-28 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。"
+    "incrementalLocalAuditAt": "2026-11-01",
+    "refreshMode": "incremental-local-corpus-with-targeted-clarification",
+    "localRefreshNote": "2026-11-01 在四篇新报告落盘后执行原始 Markdown rg 检索，区分文件命中、带方向标签的规范论文与最终引用；历史审计快照不回填。",
+    "historicalAuditSnapshot": {
+      "path": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/dynamic-scene-representation-before.json",
+      "sha256": "43bacb397c84c91f85ee937c74aa45f5ba7ee2ae3ea8f24fde672cb997f64e6f",
+      "note": "Immutable prior query runs, candidate ledger, dates and approval; not rewritten as a current search."
+    },
+    "targetedSourceRevalidation": {
+      "checkedAt": "2026-11-01",
+      "scope": "Gaussian radiance versus occupancy and observation-conditioned time update only",
+      "referenceIds": [
+        "4dgs-wu-2024",
+        "native-4dgs-yang-2024",
+        "gaussianworld-2025",
+        "gaussianformer2-2025"
+      ],
+      "evidencePath": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/core-evidence.md",
+      "priorSubstantiveReviewedAt": "2026-10-18",
+      "boundary": "两条基础通过当前本库独立报告纳入，正式主链接保留；额外重开一手方法段落核对。36 条旧引用未全部重审，六族站外历史日期保留，不宣称完成新一轮全方向检索。"
+    }
   }
 }
