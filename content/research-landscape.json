@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-01",
-  "analysisWindowIssues": 6,
-  "title": "阅读线索：4D 时间表示、观测依赖与可用场景",
-  "summary": "本次补齐4D高斯的两类基础表示，并对照近期前馈重建；之前几期的未知物体、协同修复与规划测试继续作为系统用途的检查线索。方法名称、图像质量与下游能力分别核查。",
+  "updatedAt": "2026-11-06",
+  "analysisWindowIssues": 7,
+  "title": "十一月阅读线索：观测更新、协同干预与回归证据",
+  "summary": "近期论文分别处理预测通信、异步占据、多模态异常精化和候选轨迹评分。把信息来源、实际计算范围与改善/退步的行为集合一起比较，才能判断新增模块带来了什么。",
   "trends": [
     {
       "id": "4d-gaussian-time-and-reconstruction",
@@ -23,17 +23,16 @@
     },
     {
       "id": "testing-as-common-language",
-      "title": "从失败诊断到训练与预警",
-      "evidence": "规划器代理生成针对特定规划头的训练场景；SRP 从冻结策略内部表示提前读出风险。",
-      "judgement": "检测到障碍、预测到风险与成功避险是三个终点；比较训练后的碰撞率，也要测固定阈值下的事件覆盖和误报。",
+      "title": "通过率与停车决策需要同时保留",
+      "evidence": "行为边界评测展示微调提高可通行侧表现但损失堵塞侧停车；Bug2Scenario严格与边界保留也给出不同统计结论。",
+      "judgement": "按固定场景族和原始机制比较新旧版本，并保留未确认、不可评分和退步类别。",
       "tags": [
         "autonomous-driving-testing",
         "end-to-end-autonomous-driving"
       ],
       "evidencePaperIds": [
-        "planner-surrogate-safety-critical-training",
-        "srp-structured-risk-anticipation",
-        "perception-action-binding-gap"
+        "failure-boundary-profiles-driving",
+        "bug2scenario-root-cause-regression"
       ]
     },
     {
@@ -372,18 +371,18 @@
   "directions": [
     {
       "tag": "cooperative-autonomous-driving",
-      "signal": "上下文干扰与修复",
-      "focus": "AWCR 把天气相关外部观测变化与对象表示损坏连接起来，并比较当前测量支持的候选修复。",
-      "gap": "自然天气结果来自固定站点的开发数据；修复损失与集中点云访问尚需在独立站点和实际通信预算下验证。",
+      "signal": "从共享预测到联合干预",
+      "focus": "MirrorComm在通信两端保持共享重建历史；CoSafe由路侧联合选择安全参考轨迹。",
+      "gap": "OPV2V感知与InterDrive闭环是不同终点，状态同步、辅助感知和通信扰动范围需要单独核对。",
       "ideaTitle": "分别更新位置精度与目标存在性的协同消息",
       "idea": "每条远端证据应分别声明几何收紧价值和存在性延续价值，由下游任务选择吸收、仅保留或拒绝，并与统一融合更新比较。",
       "method": "构建带 observer、age、visibility、position covariance、existence support 与 conflict 的 evidence graph；用 innovation consistency 校准几何更新，用 track survival 和遮挡恢复监督存在性，再让固定 planner 在通信预算下选择证据。",
       "validation": "在真实路口与可控 V2X replay 中扫刷新率、遮挡、丢包和外参漂移，比较 LiDAR/radar only、EKF、feature fusion、KG 与双价值方法；报告 RMSE、match/drop、ECE、identity switch、通信量和闭环风险。",
       "novelty": "Multi-Observer 量化了精度与可用率分离，G-MARK 保留来源证据；待检验的差异是把两类信息接入同一规划接口，并分别验证两种更新的作用。",
       "evidencePaperIds": [
-        "awcr-weather-context-cooperative-repair",
-        "last-v2x-communication-failure-testing",
-        "cooperscene-cv2x-benchmark"
+        "cosafe-cooperative-runtime-assurance",
+        "mirrorcomm-predictive-cooperative-communication",
+        "awcr-weather-context-cooperative-repair"
       ]
     },
     {
@@ -421,19 +420,17 @@
     },
     {
       "tag": "dynamic-scene-representation",
-      "signal": "实例与评价区域",
-      "focus": "4D高斯提供显式时间切片，但其透明度和时空权重不是经过校准的占据概率。PanoBench与Foundation4D继续提供实例和多任务评价对照。",
-      "gap": "基元连续移动不保证长期对象身份；离线拟合、未来占据预测和流式状态更新需要各自的协议。",
+      "signal": "迟到预测如何服务当前状态",
+      "focus": "EvoOcc用快模型变化更新慢模型留下的占据状态，保留自车与场景变化的不同更新。",
+      "gap": "更高总体mIoU不保证动态类别与RayIoU更好；完整系统时延和显存也高于快模型。",
       "ideaTitle": "带来源、年龄与身份的表面—实例—占据记忆",
       "idea": "persistent slot 管理对象身份、局部 Gaussian 管理可见表面、显式 occupancy 管理 free/unknown，并让每次更新携带来源、年龄与不确定性，可减少跨窗口动态涂抹和错误自我确认。",
       "method": "以 identity-aware memory 连接对象、表面和体素状态；用可见性与创新一致性决定更新几何、只延续存在性或拒绝证据，再由 reconstruction、tracking、occupancy calibration 和固定 planner intervention 共同验收。",
       "validation": "在 nuScenes/Occ3D 与第二个含 radar 或多遍历序列的数据集比较无记忆、固定窗口、对象记忆、表面记忆和完整三态状态；报告 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划风险和延迟。",
       "novelty": "USR-Drive、GeoUP、GaussianWorld 与 Scene as Occupancy 已覆盖若干组件；待检验的是来源、年龄、长期身份和 free/unknown 能否在同一状态中被独立干预，并产生额外收益。",
       "evidencePaperIds": [
-        "native-4d-gaussian-splatting",
-        "splatflux-latent-4d-gaussians",
-        "panobench-panoptic-occupancy-benchmark",
-        "foundation4d-unified-perception-reconstruction"
+        "evoocc-fast-slow-occupancy-evolution",
+        "panobench-panoptic-occupancy-benchmark"
       ]
     },
     {
@@ -454,82 +451,80 @@
     },
     {
       "tag": "autonomous-driving-testing",
-      "signal": "定向训练与事件预警",
-      "focus": "规划器代理减少昂贵渲染搜索，SRP 从冻结策略内部表示读出即将发生的失败。",
-      "gap": "两者目前主要提供仿真证据；代理覆盖、告警阈值和实际接管后的后果仍需单独验证。",
+      "signal": "回归机制与行为边界",
+      "focus": "Bug2Scenario核对同源交互机制，Failure-Boundary Profiles分开尝试通过和无接触通过。",
+      "gap": "人工边界证据不等于严格机制保留；新的平均准确率也不能掩盖堵塞侧停车丢失。",
       "ideaTitle": "按风险、代理误差与责任证据分配测试预算",
       "idea": "只有同时高风险、proxy 可迁移且责任证据可判定的场景才应消耗高保真预算；其余样本应扩展信息或明确拒答。",
       "method": "用 Scape 类校正器预测 target performance 与区间，以 CAViAR 类事件/角色/规则槽描述失败，再用 coverage-aware acquisition 选择能缩小区间和扩展失败族的下一批高保真测试。",
       "validation": "跨日志、低保真、CARLA 与少量物理配对场景比较随机、worst-case、coverage-only 和完整方法；报告单位预算失败数、risk-coverage、责任一致率、事件保持和策略排序。",
       "novelty": "现有三类工作分别解决 proxy 校准、主动选择和事故责任；组合是否具有新意取决于同事件多层资产和责任标签能否真实闭合。",
       "evidencePaperIds": [
-        "planner-surrogate-safety-critical-training",
-        "srp-structured-risk-anticipation",
-        "awcr-weather-context-cooperative-repair"
+        "bug2scenario-root-cause-regression",
+        "failure-boundary-profiles-driving",
+        "cosafe-cooperative-runtime-assurance"
       ]
     },
     {
       "tag": "end-to-end-autonomous-driving",
-      "signal": "内部表示与规划头的用途",
-      "focus": "DriveMind 为轨迹生成提供持续更新的假设，规划器代理为训练构造失败，SRP 为现有策略增加监测读出。",
-      "gap": "三种方法分别改变控制条件、训练数据和告警接口，不能用一个综合分数比较其系统收益。",
+      "signal": "训练期未来监督与直接评分",
+      "focus": "RFWorld训练共享场景记忆，在推理时让候选轨迹直接读取相关信息。",
+      "gap": "复杂度变化不等于整网同比例加速，闭环基线覆盖和训练条件仍需检查。",
       "ideaTitle": "以部署输入和恢复能力约束策略后训练",
       "idea": "固定教师、数据与训练预算，显式约束学生部署可得的信息，并针对偏离状态做恢复训练，能比只扩大离线模仿数据更稳定地迁移。",
       "method": "将特权教师监督、语义中间输入和学生实际传感器链分开控制；在同一初态下比较离线模仿、on-policy 蒸馏及其组合，记录每级处理延迟与拒绝/停止。",
       "validation": "先在固定仿真场景检验碰撞、完成度、每公里风险、停车和尾时延；再按路线/天气分组做受控迁移，避免把重复圈数当独立环境。",
       "novelty": "OPTED 和 MILER 已覆盖后训练与语义迁移的关键机制；这里只提出可检验的对照问题，未经独立查新，不能声称方法空白。",
       "evidencePaperIds": [
-        "drivemind-multi-hypothesis-belief",
-        "planner-surrogate-safety-critical-training",
-        "srp-structured-risk-anticipation"
+        "rfworld-rollout-free-trajectory-evaluation",
+        "sv-wam-surround-view-world-action"
       ]
     },
     {
       "tag": "world-models",
-      "signal": "多模态统一token",
-      "focus": "DriveUniTok 共享编码RGB、投影深度和ego状态，以同预算对照连接重建、未来预测与轨迹评分。",
-      "gap": "冻结tokenizer仍有较大模型成本；传感器、奖励后训练及非反应评价条件需与比较对象对齐。",
+      "signal": "预测表示的实际用途",
+      "focus": "RFWorld把未来监督留在训练期，MirrorComm则在通信两端使用预测来减少重复传输。",
+      "gap": "两者分别优化规划评分与感知载荷；不能把预测特征质量等同于完整世界仿真能力。",
       "ideaTitle": "稀疏配对监督的候选未来校准器",
       "idea": "只要为少量安全边界候选获得 paired simulator future，就能校准大部分 action-specific latent，并对其余候选输出集合或拒答。",
       "method": "主动选择 expert 邻域与高分歧候选做 reactive rollout，将 future 解码为 occupancy/agent state；用 paired latent loss、ranking consistency 和 conformal set 训练校准器，未覆盖动作不输出确定单解。",
       "validation": "固定 proposal/scorer，在 paired CARLA 与 NAVSIM 上比较 trajectory-only、shared future、DA-WAM 与校准模型；报告 future error、危险近邻排序、risk-coverage、闭环分数和 rollout 预算。",
       "novelty": "DA-WAM 建立候选专属未来，反事实工作建立配对 reference 原则；拟验证的差异是用稀疏主动配对校准非 expert latent，并检查拒答对规划的作用。",
       "evidencePaperIds": [
-        "driveunitok-unified-world-action-latent",
-        "pia-simulation-prior-racing-adaptation",
-        "da-wam-decision-aligned-world-model"
+        "rfworld-rollout-free-trajectory-evaluation",
+        "mirrorcomm-predictive-cooperative-communication",
+        "driveunitok-unified-world-action-latent"
       ]
     },
     {
       "tag": "radar-occupancy-representation",
-      "signal": "动态ADC信号仿真",
-      "focus": "AuRaSim 使用路径复系数和命中点局部速度生成雷达信号，支持多普勒与阵列建模消融。",
-      "gap": "三段数字孪生验证与归一化RD相似度尚不足以说明广域场景或下游占据收益；逐帧射线追踪仍为离线成本。",
+      "signal": "雷达运动先验的预测成本",
+      "focus": "UFMF用Doppler与语义变化构造动态流，增强轻量BEV占据外推。",
+      "gap": "主表使用真值语义历史；模块122FPS不包含上游感知，和其他标注/模态的分数不能直接混排。",
       "ideaTitle": "分别维护存在性、身份与几何的雷达记忆",
       "idea": "雷达在遮挡下首先提供存在性和径向运动证据，只有通过创新与可见性校准时才应收紧三维位置；分开更新可避免弱回波污染稠密 occupancy。",
       "method": "以 occupied/free/unknown 加 persistent identity 为状态，分别学习 existence survival 与 geometric covariance update；融合 observer provenance、age、Doppler 多解和 RbFT 类锚点校正，冲突时保留集合。",
       "validation": "从 Multi-Observer 真实数据和公开 radar 数据构建刷新率/遮挡/标定/天气分层，对比未校正累计、EKF、单解 occupancy-flow 和完整方法；测 ECE、free-space、identity、future occupancy 与固定 planner 风险。",
       "novelty": "局部记忆、任务取点和类别无关运动均已有明确前作。原设想仅保留为待验证问题，不能由本期结果推定新颖性或长期占据可行性。",
       "evidencePaperIds": [
-        "aurasim-dynamic-fmcw-radar-simulation",
-        "streamrps-streaming-radar-panoptic",
-        "radargsocc-doppler-semantic-occupancy"
+        "ufmf-radar-kinematic-occupancy-forecasting",
+        "aurasim-dynamic-fmcw-radar-simulation"
       ]
     },
     {
       "tag": "lidar-anomaly-segmentation",
-      "signal": "开放集语义与误报",
-      "focus": "DriveOSS 新增带19类已知语义的道路异常基准，可以与STU、LIDO对齐未知物体定义、阈值来源和误拒代价。",
-      "gap": "数据与权重尚待完整公开；公开代码的距离和少异常点帧过滤需与完整序列评价区分，时序方法还需验证。",
+      "signal": "固定评分接口下的图像精化",
+      "focus": "ReinSeg在STU验证集上使用八相机上下文和有界残差精化LiDAR特征。",
+      "gap": "原始LIDO与适配后参考不同；投影接口FPR95更优，REL跨论文数字也需对齐固定版本。",
       "ideaTitle": "先做全流与实例诊断，再决定新方法",
       "idea": "在相同误报预算与过去观测条件下，部分真实小异物存在可重复、未被简单平滑和距离聚类解释的检出缺口。",
       "method": "固定 NDP/LIDO 等训练暴露与 checkpoint，比较单帧、分数 EMA、历史点累积和简单距离自适应聚类，显式记录 void、时间戳与 ROI。",
       "validation": "用公开验证集和正常序列审计实例身份及负帧数量，预定阈值与连续检出规则，联合报告 AP/PQ、实例召回、误报次数/时长、首次稳定发现和实测时延。",
       "novelty": "尚未证明；REAL、APF、REL、LiON、DOODLE 和可见性近邻已压缩通用方法空间。简单控制解释收益、样本不足或 COVAL 覆盖同一问题时收窄或停止。",
       "evidencePaperIds": [
-        "driveoss-open-set-anomaly-benchmark",
-        "stu-road-anomaly-dataset",
-        "lido-lidar-anomaly-segmentation"
+        "reinseg-bounded-multimodal-anomaly",
+        "lido-lidar-anomaly-segmentation",
+        "stu-road-anomaly-dataset"
       ]
     }
   ]

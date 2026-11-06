@@ -208,3 +208,11 @@
 | native-4d-gaussian-splatting | Real-time Photorealistic Dynamic Scene Representation and Rendering with 4D Gaussian Splatting | 2310.10642 | 2026-11-01-4d-gaussian |
 | drive2gauss-multimodal-4d-reconstruction | Drive2Gauss: FeedForward 4D Gaussian Reconstruction from Multimodal Generative Driving Videos | 2610.26585 | 2026-11-01-4d-gaussian |
 | splatflux-latent-4d-gaussians | SplatFlux: Feed-Forward 4D Gaussian Reconstruction and Generation from Video Latents | 2610.28257 | 2026-11-01-4d-gaussian |
+| cosafe-cooperative-runtime-assurance | CoSafe: Cooperative Runtime Safety Assurance for Mixed-Traffic Autonomous Driving | 2611.06204 | 2026-11-06 |
+| mirrorcomm-predictive-cooperative-communication | MirrorComm: A Communication-Efficient Cooperative Perception Framework via Mirrored World Models | 2611.02405 | 2026-11-06 |
+| rfworld-rollout-free-trajectory-evaluation | Trajectory Evaluation via Rollout-Free World Model for End-to-end Autonomous Driving | 2611.05072 | 2026-11-06 |
+| evoocc-fast-slow-occupancy-evolution | Fast-Slow Evolutionary Occupancy Prediction via Controlled Dynamics | 2611.02499 | 2026-11-06 |
+| ufmf-radar-kinematic-occupancy-forecasting | UFMF: Radar-Guided Kinematic Priors for Real-Time 4D Occupancy Forecasting | 2610.40947 | 2026-11-06 |
+| reinseg-bounded-multimodal-anomaly | ReinSeg: Retrieval-Guided Bounded Multimodal Refinement for 3-D Road Anomaly Segmentation | 2611.02648 | 2026-11-06 |
+| failure-boundary-profiles-driving | Beyond Infraction Scores: Failure-Boundary Profiles for Closed-Loop Evaluation of Driving and Robot Navigation Agents | 2611.06453 | 2026-11-06 |
+| bug2scenario-root-cause-regression | Bug2Scenario: Root-Cause-Preserving Test Scenario Amplification for Autonomous Driving Software | 2611.06229 | 2026-11-06 |
