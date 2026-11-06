@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MAX_COMMENT_LENGTH } from "../lib/comment-contract.js";
 import { saveComment } from "../lib/comments-client.js";
+import { readerFeedbackUrl } from "../lib/direction-reading.js";
 
 const LOCAL_NOTES_KEY = "paper-digest-local-notes";
 const IDENTITY_KEY = "paper-digest-anon-identity";
@@ -79,10 +80,11 @@ export default function DigestNotes({
       id: `${note.user}-${note.time}-${note.text}`,
       nickname: String(note.user || "编辑").replace(/^@/, ""),
       time: note.time,
-      text: note.text
+      text: note.text,
+      visibility: "已收录记录"
     })),
-    ...remoteNotes,
-    ...localNotes
+    ...remoteNotes.map((note) => ({ ...note, visibility: "公开评论" })),
+    ...localNotes.map((note) => ({ ...note, visibility: "本机笔记" }))
   ], [localNotes, remoteNotes, seedNotes]);
 
   function persistLocal(note) {
@@ -113,7 +115,7 @@ export default function DigestNotes({
         setRemoteNotes((current) => [...current, result.comment]);
         setStatus("评论已同步。");
       } else {
-        setStatus(endpoint ? "同步失败，已完整保存在本机。" : "评论已保存在本机。");
+        setStatus(endpoint ? "同步失败，已完整保存在本机。" : "笔记已保存在本机。");
       }
       setText("");
     } catch {
@@ -127,8 +129,9 @@ export default function DigestNotes({
     <section className="digest-comments" id="discussion" aria-labelledby="discussion-title">
       <header>
         <p className="doc-eyebrow">{issueLabel}</p>
-        <h2 id="discussion-title">阅读讨论</h2>
-        <p>{endpoint ? "评论公开可见。" : "笔记仅保存在当前浏览器，其他读者不可见。"}</p>
+        <h2 id="discussion-title">{endpoint ? "阅读讨论" : "本地阅读笔记"}</h2>
+        <p>{endpoint ? "评论公开可见。" : "新笔记仅保存在当前浏览器，不会发送给编辑或其他读者。"}</p>
+        <p><a href={readerFeedbackUrl({ issueId: digestId })} target="_blank" rel="noopener noreferrer">纠错、荐文或阅读建议 →</a><span> GitHub 公开反馈，需要账号。</span></p>
       </header>
 
       <div className="digest-comment-list">
@@ -137,14 +140,15 @@ export default function DigestNotes({
             <div>
               <strong>{note.nickname || "匿名同学"}</strong>
               <span>{displayTime(note)}</span>
+              <span>{note.visibility}</span>
             </div>
             <p>{note.text}</p>
           </article>
-        )) : <p className="digest-comments-empty">还没有讨论。</p>}
+        )) : <p className="digest-comments-empty">{endpoint ? "还没有讨论。" : "还没有本机笔记。"}</p>}
       </div>
 
       <form onSubmit={submit}>
-        <label htmlFor={`digest-note-${digestId}`}>添加评论</label>
+        <label htmlFor={`digest-note-${digestId}`}>{endpoint ? "添加评论" : "添加本机笔记"}</label>
         <textarea
           id={`digest-note-${digestId}`}
           value={text}
@@ -152,13 +156,13 @@ export default function DigestNotes({
           maxLength={MAX_COMMENT_LENGTH}
           readOnly={submitting}
           rows={4}
-          placeholder="记录疑问、复现线索或组会讨论点"
+          placeholder="记录自己的疑问、比较线索或后续阅读"
           required
         />
         <div>
           <span role="status" aria-live="polite">{status}</span>
           <button type="submit" disabled={submitting}>
-            {submitting ? "提交中" : "提交评论"}
+            {submitting ? "保存中" : endpoint ? "提交评论" : "保存到本机"}
           </button>
         </div>
       </form>

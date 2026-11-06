@@ -8,7 +8,7 @@ import {
   getPapers,
   markdownToHtml
 } from "../../../lib/content.js";
-import { getNotebookData } from "../../../lib/navigation.js";
+import { getNotebookData, routeUrl } from "../../../lib/navigation.js";
 import { getPaperImages } from "../../../lib/paper-images.js";
 
 export async function getStaticPaths() {
@@ -29,6 +29,7 @@ if (!result) {
 }
 
 const { paper, tags } = result;
+const issue = notebook.digests.find((digest) => digest.papers.some((item) => item.id === (paper.revisionOf || paper.id)));
 const images = await getPaperImages(paper.body, notebook.base);
 const reportHtml = markdownToHtml(paper.body, { headingIds: true, images });
 const toc = getMarkdownHeadings(paper.body)
@@ -61,7 +62,7 @@ const toc = getMarkdownHeadings(paper.body)
   >
     <div class="paper-tag-list">
       {tags.map((tagItem) => (
-        <span class="paper-tag" style={`--tag-color: ${tagItem.color}`}>{tagItem.label}</span>
+        <a class="paper-tag" style={`--tag-color: ${tagItem.color}`} href={routeUrl(notebook.base, `directions/${tagItem.id}`)}>{tagItem.label}</a>
       ))}
     </div>
 
@@ -95,6 +96,8 @@ const toc = getMarkdownHeadings(paper.body)
         </div>
       </dl>
     </section>
+
+    {issue && <p class="reading-context paper-issue-link">收录于 <a href={routeUrl(notebook.base, `digests/${issue.id}`)}>{issue.displayDate || issue.date} 简报</a> · 方向标签可进入历期论文与对照阅读。</p>}
 
     <article class="paper-report" set:html={reportHtml} />
   </NotebookDocs>

@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../components/NotebookDocs.jsx";
+import { getNotebookData, routeUrl } from "../../lib/navigation.js";
+import { readerFeedbackUrl } from "../../lib/direction-reading.js";
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const description = "按自己的方向读近期短评，沿历期论文做比较；需要系统背景时，再进入经典与前沿综述。";
+---
+<BaseLayout title="按方向阅读 · Paper Digest" description={description} canonicalPath="directions/">
+  <NotebookDocs tree={notebook.tree} pathname={Astro.url.pathname} params={Astro.params}
+    title="按方向阅读" description={description} searchUrl={`${notebook.base}assets/notebook-search.json`}
+    homeUrl={notebook.base} client:load>
+    <p class="reading-context">本期：<a href={routeUrl(notebook.base, `digests/${notebook.digests[0].id}`)}>{notebook.digests[0].displayDate || notebook.digests[0].date} · {notebook.digests[0].papers.length} 篇论文</a>。各方向独立更新，按需选读即可。</p>
+    {notebook.reviewCenter.directionGroups.map((group) => (
+      <section class="direction-index-group">
+        <h2>{group.label}</h2>
+        {group.directions.map((tag) => {
+          const direction = notebook.directionReading.find((item) => item.id === tag.id);
+          return <article>
+            <h3><a href={routeUrl(notebook.base, `directions/${tag.id}`)}>{tag.label}</a></h3>
+            <p class="reading-context">{direction.currentCount ? `本期 ${direction.currentPrimaryCount} 篇本方向、${direction.currentCount - direction.currentPrimaryCount} 篇关联阅读` : `本期无新条目 · 最近收录 ${direction.latest?.date || "暂无"}`} · 历期 {direction.paperCount} 篇</p>
+            <p>{direction.editorial?.changeSummary || tag.description}</p>
+            <div class="reading-level-links"><a href={routeUrl(notebook.base, `directions/${tag.id}`)}>近期与历期论文 →</a><a href={routeUrl(notebook.base, `reviews/${tag.id}`)}>系统综述 →</a></div>
+          </article>;
+        })}
+      </section>
+    ))}
+    <aside class="reader-feedback"><h2>补充与反馈</h2><p>发现漏掉的论文、引用问题，或希望改进某个方向的阅读内容，可以<a href={readerFeedbackUrl()} target="_blank" rel="noopener noreferrer">在 GitHub 提交反馈</a>。反馈公开可见，需要 GitHub 账号。</p></aside>
+  </NotebookDocs>
+</BaseLayout>

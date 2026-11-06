@@ -1,4 +1,4 @@
-export const HOME_DESCRIPTION = "近期论文的阅读笔记，记录方法、实验结果与待解决的问题。";
+export const HOME_DESCRIPTION = "按方向选读近期论文：先看短评，再读完整报告；需要系统背景时，从经典与前沿综述展开。";
 
 export function sourceDisplayLabel(link) {
   if (link.label === "代码") return "仓库";

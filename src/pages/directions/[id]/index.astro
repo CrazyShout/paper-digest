@@ -1,0 +1,79 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import NotebookDocs from "../../../components/NotebookDocs.jsx";
+import DirectionPaperList from "../../../components/DirectionPaperList.astro";
+import { getNotebookData, routeUrl } from "../../../lib/navigation.js";
+import { readerFeedbackUrl } from "../../../lib/direction-reading.js";
+export async function getStaticPaths() {
+  const notebook = await getNotebookData();
+  return notebook.tags.map((tag) => ({ params: { id: tag.id } }));
+}
+const notebook = await getNotebookData(import.meta.env.BASE_URL);
+const direction = notebook.directionReading.find((item) => item.id === Astro.params.id);
+if (!direction) return Astro.redirect(routeUrl(notebook.base, "directions"));
+const latest = direction.latest;
+const editorial = direction.editorial;
+const papers = new Map(notebook.papers.map((paper) => [paper.id, paper]));
+const tags = new Map(notebook.tags.map((tag) => [tag.id, tag]));
+const description = `${direction.label}的近期短评、跨期对照与完整报告。`;
+const toc = [
+  { depth: 2, title: "最近收录", url: "#latest" },
+  ...(editorial ? [{ depth: 2, title: "跨期对照", url: "#continuity" }] : []),
+  { depth: 2, title: "历期论文", url: "#history" },
+  { depth: 2, title: "继续阅读", url: "#further-reading" }
+];
+---
+<BaseLayout title={`${direction.label} · 按方向阅读 · Paper Digest`} description={description} canonicalPath={`directions/${direction.id}/`}>
+  <NotebookDocs tree={notebook.tree} pathname={Astro.url.pathname} params={Astro.params}
+    title={direction.label} description={description} eyebrow="按方向阅读" toc={toc}
+    searchUrl={`${notebook.base}assets/notebook-search.json`} homeUrl={notebook.base} client:load>
+    <nav class="reading-level-links" aria-label="阅读层次">
+      <a href="#latest">近期短评</a><a href="#history">历期报告</a>
+      <a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>经典与前沿综述 →</a>
+    </nav>
+    <section id="latest">
+      <h2>最近收录</h2>
+      {latest ? <>
+        {direction.currentCount === 0 && <p class="reading-context">最新一期（{notebook.digests[0].date}）没有收录本方向论文。下面是最近一次收录，仍可从中接着阅读。</p>}
+        <p class="reading-context"><a href={routeUrl(notebook.base, `digests/${latest.id}`) + `#section-${direction.id}`}>{latest.displayDate} · 当期简报</a> · {latest.papers.filter((paper) => paper.primary).length} 篇本方向，{latest.papers.filter((paper) => !paper.primary).length} 篇关联阅读</p>
+        <DirectionPaperList papers={latest.papers} tags={notebook.tags} base={notebook.base} />
+      </> : <p>尚无已收录报告，可先阅读方向综述。</p>}
+    </section>
+    {editorial && <section id="continuity" class="direction-continuity">
+      <h2>跨期对照</h2>
+      <p class="reading-context">对应 <a href={routeUrl(notebook.base, `digests/${editorial.issueId}`)}>{editorial.issueId}</a> 简报</p>
+      <p>{editorial.changeSummary}</p>
+      {editorial.comparisons.map((comparison) => <article>
+        <ul>{comparison.paperIds.map((id) => <li><a href={routeUrl(notebook.base, `papers/${id}`)}>{papers.get(id).title}</a></li>)}</ul>
+        <p>{comparison.reason}</p>
+      </article>)}
+      {editorial.connections.length > 0 && <details class="reading-disclosure">
+        <summary>可选的跨方向阅读</summary>
+        {editorial.connections.map((connection) => <div>
+          <h3><a href={routeUrl(notebook.base, `directions/${connection.targetDirectionId}`)}>{tags.get(connection.targetDirectionId).label}</a></h3>
+          <p>{connection.reason}</p><p>{connection.boundary}</p>
+          <ul>{connection.paperIds.map((id) => <li><a href={routeUrl(notebook.base, `papers/${id}`)}>{papers.get(id).title}</a></li>)}</ul>
+        </div>)}
+      </details>}
+      {editorial.followUps.length > 0 && <details class="reading-disclosure">
+        <summary>后续值得留意</summary>
+        <ul>{editorial.followUps.map((item) => <li><p>{item.text}</p>{item.paperIds.map((id, i) => <><span>{i ? " · " : ""}</span><a href={routeUrl(notebook.base, `papers/${id}`)}>{papers.get(id).title}</a></>)}</li>)}</ul>
+      </details>}
+    </section>}
+    <section id="history" class="direction-history">
+      <h2>历期论文</h2>
+      <p class="reading-context">共 {direction.primaryCount} 篇本方向报告、{direction.paperCount - direction.primaryCount} 篇关联报告，按收录期号排列。</p>
+      {direction.issues.slice(1).map((issue) => <details class="reading-disclosure" id={`issue-${issue.id}`}>
+        <summary>{issue.displayDate} · {issue.papers.length} 篇</summary>
+        <p><a href={routeUrl(notebook.base, `digests/${issue.id}`) + `#section-${direction.id}`}>{issue.title}</a></p>
+        <DirectionPaperList papers={issue.papers} tags={notebook.tags} base={notebook.base} />
+      </details>)}
+    </section>
+    <section id="further-reading">
+      <h2>继续阅读</h2>
+      <p><a href={routeUrl(notebook.base, `reviews/${direction.id}`)}>方向综述</a>提供研究脉络、经典方法与前沿综述的阅读顺序。</p>
+      <p>需要进一步构思课题时，可选读<a href={routeUrl(notebook.base, "ideas") + `#direction-panel-${direction.id}`}>本方向的 Idea 与评审记录</a>。</p>
+      <p class="reader-feedback"><a href={readerFeedbackUrl({ direction: direction.label, pageUrl: `https://crazyshout.github.io${routeUrl(notebook.base, `directions/${direction.id}`)}` })} target="_blank" rel="noopener noreferrer">补充论文或反馈问题 →</a><span>GitHub 公开反馈，需要账号。</span></p>
+    </section>
+  </NotebookDocs>
+</BaseLayout>

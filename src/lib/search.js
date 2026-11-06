@@ -1,5 +1,6 @@
 export const SEARCH_KINDS = [
   { id: "all", label: "全部" },
+  { id: "direction", label: "方向" },
   { id: "paper", label: "论文" },
   { id: "digest", label: "简报" },
   { id: "review", label: "综述" },

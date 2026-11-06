@@ -5,6 +5,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildPaperSourceLinks,
+  getDirectionReading,
+  getDigests,
+  getPapers,
+  getTags,
   formalPrimaryLinkIsCanonical,
   isAffiliationPlaceholder,
   isValidIsoDate,
@@ -24,6 +28,7 @@ import {
   unusedAuditedSourceFamilies
 } from "../src/lib/review-audit.js";
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
+import { validateDirectionReading } from "../src/lib/direction-reading.js";
 import { validateFoundationsAudit } from "../src/lib/review-foundations.js";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
 import {
@@ -3043,6 +3048,17 @@ for (const row of reportedRows) {
   } else if (paperById.get(row.paperId).revisionOf) {
     addError(`reported-papers.md should not list revision paper: ${row.paperId}`);
   }
+}
+
+try {
+  const [reading, tags, digests, readingPapers] = await Promise.all([
+    getDirectionReading(), getTags(), getDigests(), getPapers()
+  ]);
+  for (const error of validateDirectionReading(reading, { tags, digests, papers: readingPapers })) {
+    addError(`direction-reading.json: ${error}`);
+  }
+} catch (error) {
+  addError(`direction-reading.json: ${error.message}`);
 }
 
 if (errors.length) {

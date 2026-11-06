@@ -1,4 +1,5 @@
 import { HOME_DESCRIPTION } from "./reading-ui.js";
+import { projectReviewCitations } from "./review-citations.js";
 
 function text(value) {
   if (value == null) return "";
@@ -29,6 +30,18 @@ export function buildNotebookSearchIndex(notebook) {
       breadcrumbs: ["Paper Digest", "首页"], featured: true
     }),
     record({
+      id: "reading-directions", kind: "direction", url: url("directions"),
+      title: "按方向阅读", description: "各方向的近期短评、跨期对照、完整报告与系统综述。",
+      breadcrumbs: ["Paper Digest", "按方向阅读"], featured: true
+    }),
+    ...(notebook.directionReading || []).map((direction) => record({
+      id: `direction-${direction.id}`, kind: "direction", url: url(`directions/${direction.id}`),
+      title: direction.label, description: direction.editorial?.changeSummary || "近期与历期论文",
+      content: [fields(direction.editorial || {}, ["changeSummary", "comparisons", "connections", "followUps"]),
+        ...direction.issues.map((issue) => [issue.date, ...issue.papers.map((paper) => paper.title)].join(" "))].join(" "),
+      breadcrumbs: ["按方向阅读", "近期与历期"]
+    })),
+    record({
       id: "research-landscape", kind: "overview", url: url("landscape"),
       title: "全库研究态势", description: landscape.summary,
       content: [
@@ -51,10 +64,10 @@ export function buildNotebookSearchIndex(notebook) {
     }),
     ...reviewCenter.directions.map((direction) => record({
       id: `review-${direction.id}`, kind: "review", url: url(`reviews/${direction.id}`),
-      title: direction.title, description: direction.abstract,
+      title: direction.title, description: direction.abstractText,
       content: [
         text(direction.researchQuestions), text(direction.takeaways),
-        ...direction.sections.map((section) => fields(section, ["title", "thesis", "body"])),
+        ...direction.sections.map((section) => [section.title, section.thesis, projectReviewCitations(section.body, direction.references, { links: false })].join(" ")),
         ...direction.references.map((reference) => fields(reference, [
           "title", "authors", "venue", "year", "supports", "limitation"
         ]))

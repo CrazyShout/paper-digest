@@ -1,7 +1,9 @@
 import { memoizeContent, withContentSnapshot } from "./content-cache.js";
 import { buildNotebookSearchIndex } from "./notebook-search.js";
+import { buildDirectionReading } from "./direction-reading.js";
 import {
   getDigests,
+  getDirectionReading,
   getIdeaCenter,
   getPapers,
   getResearchLandscape,
@@ -41,7 +43,8 @@ async function loadNotebookData(base) {
     reviewCenter,
     ideaCenter,
     landscape,
-    runtime
+    runtime,
+    reading
   ] = await Promise.all([
     getDigests(),
     getPapers(),
@@ -49,7 +52,8 @@ async function loadNotebookData(base) {
     getReviewCenter(),
     getIdeaCenter(),
     getResearchLandscape(),
-    getRuntimeConfig()
+    getRuntimeConfig(),
+    getDirectionReading()
   ]);
 
   const publicPaperIds = new Set(
@@ -75,6 +79,7 @@ async function loadNotebookData(base) {
     });
   const publicPapers = canonicalPapers.filter((paper) => publicPaperIds.has(paper.id));
   const auditPapers = canonicalPapers.filter((paper) => !publicPaperIds.has(paper.id));
+  const directionReading = buildDirectionReading({ tags, digests, papers: canonicalPapers, reading });
   const papersByTag = new Map(tags.map((tag) => [tag.id, []]));
   for (const paper of publicPapers) {
     const primaryTag = paper.tags[0];
@@ -91,13 +96,22 @@ async function loadNotebookData(base) {
         url: routeUrl(base)
       },
       {
+        type: "folder",
+        name: "按方向阅读",
+        defaultOpen: false,
+        index: { type: "page", name: "全部方向", url: routeUrl(base, "directions") },
+        children: directionReading.map((direction) => ({
+          type: "page", name: direction.label, url: routeUrl(base, `directions/${direction.id}`)
+        }))
+      },
+      {
         type: "page",
         name: "研究态势",
         url: routeUrl(base, "landscape")
       },
       {
         type: "separator",
-        name: "研究工作台"
+        name: "系统学习与延伸"
       },
       {
         type: "folder",
@@ -210,6 +224,7 @@ async function loadNotebookData(base) {
     reviewCenter,
     ideaCenter,
     landscape,
-    runtime
+    runtime,
+    directionReading
   };
 }

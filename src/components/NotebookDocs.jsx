@@ -72,6 +72,11 @@ export default function NotebookDocs({
         }}
         links={[
           {
+            text: "方向",
+            url: `${homeUrl}directions/`,
+            active: "nested-url"
+          },
+          {
             text: "综述",
             url: `${homeUrl}reviews/`,
             active: "nested-url"

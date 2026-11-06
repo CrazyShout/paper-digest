@@ -3,6 +3,7 @@ import path from "node:path";
 import { renderToString } from "katex";
 import { memoizeContent } from "./content-cache.js";
 import { reviewSnapshotFingerprint } from "./review-fingerprint.js";
+import { projectReviewCitations } from "./review-citations.js";
 import {
   canonicalUrlHostname,
   urlMatchesHostname
@@ -68,7 +69,7 @@ function renderInlineMarkdown(value) {
       const href = safeContentUrl(match[4]);
       const label = renderInlineMarkdown(match[3]);
       html += href
-        ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        ? `<a href="${escapeHtml(href)}"${href.startsWith("#") ? "" : ' target="_blank" rel="noopener noreferrer"'}>${label}</a>`
         : label;
     } else if (match[5] !== undefined) {
       html += `<strong>${renderInlineMarkdown(match[5])}</strong>`;
@@ -1226,6 +1227,10 @@ export function getReviewCenter() {
   return memoizeContent("getReviewCenter", loadReviewCenter);
 }
 
+export function getDirectionReading() {
+  return readFile(path.join(CONTENT, "direction-reading.json"), "utf8").then(JSON.parse);
+}
+
 async function loadReviewCenter() {
   const [center, tags, papers, reviewDocs, interestConfig] = await Promise.all([
     readFile(path.join(CONTENT, "review-center.json"), "utf8").then(JSON.parse),
@@ -1273,10 +1278,11 @@ async function loadReviewCenter() {
     return {
       ...tag,
       ...review,
+      abstractText: projectReviewCitations(review.abstract, references, { links: false }),
       currentSnapshotFingerprint: reviewSnapshotFingerprint(review),
       sections: review.sections.map((section) => ({
         ...section,
-        bodyHtml: markdownToHtml(section.body),
+        bodyHtml: markdownToHtml(projectReviewCitations(section.body, references)),
         references: section.referenceIds
           .map((referenceId) => referenceMap.get(referenceId))
           .filter(Boolean)
