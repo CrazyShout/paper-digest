@@ -2,10 +2,10 @@
   "version": 3,
   "id": "autonomous-driving-testing",
   "title": "自动驾驶测试：失效搜索、风险估计与现实验证",
-  "subtitle": "比较搜索、采样、生成式场景和闭环测试，并用统一记录说明各类结果的适用范围。",
-  "abstract": "自动驾驶测试需要回答特定系统版本在给定 ODD 内会怎样失效，以及现有证据能支持哪些安全判断。主动搜索和模糊测试提高失效发现效率，重要性采样在分布假设成立时估计事件率，生成式场景、闭环仿真与道路实验则提供不同条件下的行为证据。比较结果时，还需检查场景自然性、判定规则和仿真器误差；技术责任模型的结论也须与法律责任区分。2026 年 7 月的研究补充了统一预算下的 RL fuzzer 横评、纯视觉大规模自博弈、交互驾驶数据、恶劣天气多模态诊断，以及边云结果错过截止时间的失效。它们扩展了测试工具和诊断变量，从模拟或日志结果到真实道路风险的迁移仍需逐项验证。",
-  "reviewedAt": "2026-09-22",
-  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
+  "subtitle": "把失效发现接到根因保持、能力边界、策略修复与跨版本回归。",
+  "abstract": "自动驾驶测试既要发现失败，也要判断失败由什么机制产生、修复是否有效，以及哪些证据能够在版本更新后复用。主动搜索、重要性采样和生成式场景分别服务于失败发现、特定分布的事件率估计和场景扩展。近期 Bug2Scenario 将单个缺陷扩增为根因保持的回归场景，failure-boundary profiles 区分尝试通过与实际通过能力，Reality Gap 综述重新整理仿真—现实证据，而 SCAPE 将有限目标/代理配对用于情景条件评估。本综述据此把测试组织为可积累的证据链：场景生成、机制确认、边界定位、修复比较与版本回归。",
+  "reviewedAt": "2026-11-06",
+  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
   "researchQuestions": [
     "如何完整记录系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界，让碰撞与总分能够被复核和比较？",
     "搜索式、重要性采样和生成式方法提高失败命中率后，怎样恢复自然性、现实暴露率和责任归因的解释？",
@@ -35,7 +35,7 @@
       "kind": "evolution",
       "title": "失效发现、事件率估计与安全论证的演进",
       "thesis": "主动搜索定位失效机制，重要性采样在给定假设下估计事件率，闭环和道路测试则用于检查执行后果与迁移。",
-      "body": "CARLA 使天气、交通、地图和传感器条件可以重复控制。失效发现支线中，Adaptive Stress Testing 把环境扰动写成序贯决策问题，用强化学习或树搜索寻找高可能失败路径；DriveFuzz 把搜索扩展到完整自动驾驶栈，以交通规则 oracle 和驾驶质量引导场景变异；AdvSim 又在传感器级场景中生成具有物理约束的安全关键交互。这些方法优化的是有限预算内发现失败的效率，不自动恢复自然交通中的事件概率。\n\n另一条支线把测试明确写成稀有事件估计。Zhao 等人的加速评估对切入场景的自然分布做重要性偏置，再以似然比恢复冲突、碰撞和伤害频率；NADE 只在关键时刻扭曲少量背景车辆行为，并以权重保持对自然环境事件率的无偏估计。它们与 AST、模糊测试的目标不同：前者在自然分布模型、似然可计算和代理模型误差可控时估计特定事件率，后者主要定位失效机制。Safe-Sim 等生成式方法则发展出第三类能力，用扩散引导生成可控且交互的长尾场景，但其危险样本频率仍不是现实暴露率。\n\n近年的第四条支线转向证据是否可采信。Bench2Drive 用多能力、路线级闭环协议减少开环规划指标的盲区；CARS 尝试区分可归因于自车的失败与不可避免冲突；Bench2Drive-Robust 把相机流、ego-state 和执行延迟纳入系统接口；商用卡车测试、RiskFlow、实车扰动和世界模型准入研究则分别追问失效搜索能否进入商业系统、生成场景是否仍然自然、离线结果能否迁移到实车，以及仿真器本身给出的测试判定是否可靠。标准和安全案例把这些支线重新绑定到具体系统版本、ODD 与可审计主张。\n\n本轮增量把四条支线继续细化。RL fuzzing 横评在统一 12 小时预算和 5 次重复下显示 MDPFuzz 在 CARLA 找到 291 个唯一 crash、随机测试为 157，同时不同 fuzzer 的失败高度互补；不同工具的失败并集因此值得单独比较。Pictura 把大规模自博弈推进到透视图像输入，Learning from Risk 用 LLM 把先验知识转成场景损失；两者仍是模拟器证据。IEDD 与公共道路 78 次换道分别提供大规模交互任务和有限现实行为锚点，Denial of Deadline 则把网络时限加入系统级测试对象。",
+      "body": "CARLA 使天气、交通、地图和传感器条件可以重复控制。失效发现支线中，Adaptive Stress Testing 把环境扰动写成序贯决策问题，用强化学习或树搜索寻找高可能失败路径；DriveFuzz 把搜索扩展到完整自动驾驶栈，以交通规则 oracle 和驾驶质量引导场景变异；AdvSim 又在传感器级场景中生成具有物理约束的安全关键交互。这些方法优化的是有限预算内发现失败的效率，不自动恢复自然交通中的事件概率。\n\n另一条支线把测试明确写成稀有事件估计。Zhao 等人的加速评估对切入场景的自然分布做重要性偏置，再以似然比恢复冲突、碰撞和伤害频率；NADE 只在关键时刻扭曲少量背景车辆行为，并以权重保持对自然环境事件率的无偏估计。它们与 AST、模糊测试的目标不同：前者在自然分布模型、似然可计算和代理模型误差可控时估计特定事件率，后者主要定位失效机制。Safe-Sim 等生成式方法则发展出第三类能力，用扩散引导生成可控且交互的长尾场景，但其危险样本频率仍不是现实暴露率。\n\n近年的第四条支线转向证据是否可采信。Bench2Drive 用多能力、路线级闭环协议减少开环规划指标的盲区；CARS 尝试区分可归因于自车的失败与不可避免冲突；Bench2Drive-Robust 把相机流、ego-state 和执行延迟纳入系统接口；商用卡车测试、RiskFlow、实车扰动和世界模型准入研究则分别追问失效搜索能否进入商业系统、生成场景是否仍然自然、离线结果能否迁移到实车，以及仿真器本身给出的测试判定是否可靠。标准和安全案例把这些支线重新绑定到具体系统版本、ODD 与可审计主张。\n\n本轮增量把四条支线继续细化。RL fuzzing 横评在统一 12 小时预算和 5 次重复下显示 MDPFuzz 在 CARLA 找到 291 个唯一 crash、随机测试为 157，同时不同 fuzzer 的失败高度互补；不同工具的失败并集因此值得单独比较。Pictura 把大规模自博弈推进到透视图像输入，Learning from Risk 用 LLM 把先验知识转成场景损失；两者仍是模拟器证据。IEDD 与公共道路 78 次换道分别提供大规模交互任务和有限现实行为锚点，Denial of Deadline 则把网络时限加入系统级测试对象。\n\n2026 年秋季，测试开始更直接地连接缺陷发现和后续修复。Bug2Scenario 用种子的根因模式约束变异，并按执行证据区分严格保持、边界保持与新故障；failure-boundary profiles 沿同一个场景因素测量承诺和能力曲线，解释总分相近的策略为何作出不同决策。SCAPE 则学习情景条件的目标性能，校正便宜代理评价的偏差。三者分别提供可复用案例、可解释能力边界和低成本评估机制。",
       "referenceIds": [
         "carla-2017",
         "accelerated-evaluation-2017",
@@ -56,15 +56,18 @@
         "iedd-2026",
         "lane-changing-public-road-2026",
         "learning-from-risk-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026",
+        "scape-2026"
       ]
     },
     {
       "id": "seven-field-test-record",
       "kind": "taxonomy",
-      "title": "按七个字段对齐测试结果",
+      "title": "从单次结果到可比较的场景族",
       "thesis": "比较失败率、覆盖率和闭环分数前，应核对七个字段中的设置差异。",
-      "body": "第一字段是**系统版本**，包括模型权重、软件提交、传感器和计算平台；第二是 **ODD**，明确道路、天气、交通和系统边界；第三是**场景**，记录来自自然日志、规则组合、搜索、重要性采样还是生成模型；第四是**执行层级**，区分开环日志、纯仿真闭环、SIL/HIL、封闭场地和道路车辆；第五是 **oracle**，区分碰撞、规则、任务、舒适度、风险、责任和反事实判定。\n\n第六字段是**不确定度**，至少包含随机种子、重复次数、置信区间、采样分布及失败去重；第七是**证据边界**，说明结果只适用于哪些版本、场景和层级。这七字段是本综述用于落实可追溯性的综合模板，不是对任一标准原文的转录。关键性指标综述表明不存在适合所有任务的单一风险指标，场景库覆盖研究也明确指出：在给定分类体系下达到覆盖，并不等于连续场景空间已经完备。闭环协议能够观察动作对后续状态的影响，但若场景分布、oracle 或仿真器不可信，闭环分数仍不能被解释为安全证明。\n\n新工作还要求在系统版本字段中记录**网络路由、截止时间和资源隔离**，在场景字段中记录**数据来源与场景级 provenance**。IEDD 需先做源数据场景去重，才能判断独立覆盖；ObsDriveBench 需记录天气下各模态可见性，区分保守动作选择与空间理解；RL fuzzing 需共同报告唯一失败、随机种子和测试预算，才能判断不同 fuzzer 的互补性。",
+      "body": "第一字段是**系统版本**，包括模型权重、软件提交、传感器和计算平台；第二是 **ODD**，明确道路、天气、交通和系统边界；第三是**场景**，记录来自自然日志、规则组合、搜索、重要性采样还是生成模型；第四是**执行层级**，区分开环日志、纯仿真闭环、SIL/HIL、封闭场地和道路车辆；第五是 **oracle**，区分碰撞、规则、任务、舒适度、风险、责任和反事实判定。\n\n第六字段是**不确定度**，至少包含随机种子、重复次数、置信区间、采样分布及失败去重；第七是**证据边界**，说明结果只适用于哪些版本、场景和层级。这七字段是本综述用于落实可追溯性的综合模板，不是对任一标准原文的转录。关键性指标综述表明不存在适合所有任务的单一风险指标，场景库覆盖研究也明确指出：在给定分类体系下达到覆盖，并不等于连续场景空间已经完备。闭环协议能够观察动作对后续状态的影响，但若场景分布、oracle 或仿真器不可信，闭环分数仍不能被解释为安全证明。\n\n新工作还要求在系统版本字段中记录**网络路由、截止时间和资源隔离**，在场景字段中记录**数据来源与场景级 provenance**。IEDD 需先做源数据场景去重，才能判断独立覆盖；ObsDriveBench 需记录天气下各模态可见性，区分保守动作选择与空间理解；RL fuzzing 需共同报告唯一失败、随机种子和测试预算，才能判断不同 fuzzer 的互补性。\n\n对于回归测试，还需给场景族保存根因模式、被改变的参数和保持证据。Bug2Scenario 的“出现同类碰撞”和“原机制仍然存在”采用不同判定；failure-boundary profiles 也把尝试通过概率与无接触通过概率分开。把这些变量保存到上述记录中，可避免将更激进的行为当作能力提升。这里的记录结构是综述提出的工作方法，不把每个字段都归于某项标准。",
       "referenceIds": [
         "testing-survey-2023",
         "bench2drive-2024",
@@ -75,7 +78,9 @@
         "iedd-2026",
         "obsdrivebench-2026",
         "rl-fuzzing-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026"
       ]
     },
     {
@@ -83,7 +88,7 @@
       "kind": "evidence",
       "title": "怎样解释搜索命中率与现实行为结果",
       "thesis": "主动搜索、概率估计和现实迁移各有对应终点，需要按采样分布与执行条件分别解释。",
-      "body": "Adaptive Stress Testing 将高可能失败路径搜索表述为序贯决策问题；商用卡车研究则具体报告 AST 和 DiFS 在传统 Monte Carlo 未发现碰撞的预算内找到碰撞。RiskFlow、Safe-Sim 等生成方法也能主动提高危险交互的出现频率。这些结果证明的是**失效发现效率和诊断能力**。搜索策略改变了采样分布，论文中的高碰撞命中率既不是自然交通中的场景发生概率，也不是被测系统的现实事故率。\n\n概率估计必须另立证据链。加速评估和 NADE 从自然驾驶数据建立参考分布，只对明确定义的切入或高速交互事件改变采样，再用可计算似然比加权；在分布模型、支持集覆盖、代理系统和权重方差等假设成立时，它们可以估计特定事件率并给出置信区间。该能力不能由 AST 或模糊测试的命中率替代，也不能不经校准推广到新的 ODD、行为模型或系统版本。\n\n闭环证据同样需要分层解释。Bench2Drive-Robust 证明帧流、定位和延迟误差会沿反馈环累积，实车扰动研究又表明离线模型指标只能有限预测整车失效；Digital Siblings 用跨仿真器一致性预测缩比车数字孪生的失败，主要终点仍是仿真代理；事故重建则以真实事故记录约束反事实，两者提供不同层级的外部锚定。这些工作提供互补的闭环和现实证据，结论仍限于各自系统版本与场景集合，完整 ODD 的覆盖尚未建立。\n\nRL fuzzing 的 291 对 157 唯一 crash 表明某些搜索器在固定 CARLA 预算下更有效，指标描述的是搜索效率；Pictura 展示了合成闭环训练和测试的扩展能力，96×54 栅格图到真实传感器的迁移尚待检验；Learning from Risk 的长尾覆盖改善也受 CARLA/SMARTS 和近饱和碰撞覆盖约束。相对地，78 次公共道路换道提供现实行为时间线，却因单一路线、协议和样本量不能替代广泛 ODD 验证。\n\nObsDriveBench 与 Denial of Deadline 补足两个容易遗漏的 oracle：前者要求测试“当前模态是否真的可观察”，后者要求测试“高精度结果是否在决策前到达”。两者提供了可加入测试协议的诊断变量，车辆碰撞与恢复效果尚未评测。",
+      "body": "Adaptive Stress Testing 将高可能失败路径搜索表述为序贯决策问题；商用卡车研究则具体报告 AST 和 DiFS 在传统 Monte Carlo 未发现碰撞的预算内找到碰撞。RiskFlow、Safe-Sim 等生成方法也能主动提高危险交互的出现频率。这些结果证明的是**失效发现效率和诊断能力**。搜索策略改变了采样分布，论文中的高碰撞命中率既不是自然交通中的场景发生概率，也不是被测系统的现实事故率。\n\n概率估计必须另立证据链。加速评估和 NADE 从自然驾驶数据建立参考分布，只对明确定义的切入或高速交互事件改变采样，再用可计算似然比加权；在分布模型、支持集覆盖、代理系统和权重方差等假设成立时，它们可以估计特定事件率并给出置信区间。该能力不能由 AST 或模糊测试的命中率替代，也不能不经校准推广到新的 ODD、行为模型或系统版本。\n\n闭环证据同样需要分层解释。Bench2Drive-Robust 证明帧流、定位和延迟误差会沿反馈环累积，实车扰动研究又表明离线模型指标只能有限预测整车失效；Digital Siblings 用跨仿真器一致性预测缩比车数字孪生的失败，主要终点仍是仿真代理；事故重建则以真实事故记录约束反事实，两者提供不同层级的外部锚定。这些工作提供互补的闭环和现实证据，结论仍限于各自系统版本与场景集合，完整 ODD 的覆盖尚未建立。\n\nRL fuzzing 的 291 对 157 唯一 crash 表明某些搜索器在固定 CARLA 预算下更有效，指标描述的是搜索效率；Pictura 展示了合成闭环训练和测试的扩展能力，96×54 栅格图到真实传感器的迁移尚待检验；Learning from Risk 的长尾覆盖改善也受 CARLA/SMARTS 和近饱和碰撞覆盖约束。相对地，78 次公共道路换道提供现实行为时间线，却因单一路线、协议和样本量不能替代广泛 ODD 验证。\n\nObsDriveBench 与 Denial of Deadline 补足两个容易遗漏的 oracle：前者要求测试“当前模态是否真的可观察”，后者要求测试“高精度结果是否在决策前到达”。两者提供了可加入测试协议的诊断变量，车辆碰撞与恢复效果尚未评测。\n\nBug2Scenario 的匹配比较中，严格保持为 65/180 对 53/180，p=0.104；包含边界情况后为 99/180 对 80/180，p=0.011。结果支持执行反馈帮助部分种子，但严格指标尚未给出显著优势。Failure-boundary profiles 在七类 CARLA 场景画出曲线，而 decision accuracy 仅计算有通行认证标签的三个场景族；它把“应停时停下”计入表现，避免碰撞与进度的乘积掩盖承诺过高。\n\nSCAPE 的方法可组合少量目标/代理配对与大量便宜代理样本，先校正偏差再做情景条件预测及 conformal 校准。驾驶实验的配对是 nuPlan 同一场景的开环代理与闭环目标，属于 Sim2Sim；真实 sim-real 配对来自四足机器人。它为驾驶评估提供可借鉴的估计器，尚未完成道路车辆的现实校准。Reality Gap 综述进一步强调：构建仿真器用到真实数据，与评价结论获得现实参照，是不同证据。",
       "referenceIds": [
         "adaptive-stress-testing-2018",
         "commercial-av-failure",
@@ -100,7 +105,11 @@
         "learning-from-risk-2026",
         "lane-changing-public-road-2026",
         "obsdrivebench-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026",
+        "scape-2026",
+        "reality-gap-survey-2026"
       ]
     },
     {
@@ -108,7 +117,7 @@
       "kind": "challenges",
       "title": "场景自然性、判定误差与仿真迁移",
       "thesis": "主动测试需要同时估计场景自然性、责任模型、oracle 缺陷和迁移误差。",
-      "body": "搜索式和生成式测试天然存在危险性与自然性的张力：生成器可能通过不自然急转、越界或不可避免冲突提高碰撞率。责任模型可以剔除部分无诊断价值的事故，但 FSM、CC-JP、RSS 等模型的适用范围和规范假设不同，责任归因是参考模型相对结论，不等于法律责任。类似地，TTC、DRAC、碰撞、路线完成和舒适度分别观察不同失效面，不能由一个综合分数替代。\n\n仿真真实性也不是单轴外观指标。车辆动力学、交通行为、传感器、计算时序、碰撞检测和策略动作响应都可能改变测试判定；同一测试在不同仿真器中还可能产生冲突结果。生成式世界模型进一步把环境和裁判都变成未经验证的学习系统，视觉质量高并不保证动作后果正确。用于测试前，世界模型至少需要检查动作跟随、可信范围、失效归因，以及测试判定能否迁移到现实；达不到准入条件时应输出“无法裁决”。\n\nSimBEV2X 展示了纯合成 V2X 数据的规模上限，但缺少真实空口、时延、丢包和定位误差；本综述将其用于讨论 sim-to-real 限制。Pictura 同样只能支持模拟器内布局迁移。IEDD 与 NC-tALC 公共道路换道可作为现实锚点，但前者是多源数据重组，后者只有 78 次受控试验；它们仍不足以建立从合成场景命中率到现实暴露率的统一映射。",
+      "body": "搜索式和生成式测试天然存在危险性与自然性的张力：生成器可能通过不自然急转、越界或不可避免冲突提高碰撞率。责任模型可以剔除部分无诊断价值的事故，但 FSM、CC-JP、RSS 等模型的适用范围和规范假设不同，责任归因是参考模型相对结论，不等于法律责任。类似地，TTC、DRAC、碰撞、路线完成和舒适度分别观察不同失效面，不能由一个综合分数替代。\n\n仿真真实性也不是单轴外观指标。车辆动力学、交通行为、传感器、计算时序、碰撞检测和策略动作响应都可能改变测试判定；同一测试在不同仿真器中还可能产生冲突结果。生成式世界模型进一步把环境和裁判都变成未经验证的学习系统，视觉质量高并不保证动作后果正确。用于测试前，世界模型至少需要检查动作跟随、可信范围、失效归因，以及测试判定能否迁移到现实；达不到准入条件时应输出“无法裁决”。\n\nSimBEV2X 展示了纯合成 V2X 数据的规模上限，但缺少真实空口、时延、丢包和定位误差；本综述将其用于讨论 sim-to-real 限制。Pictura 同样只能支持模拟器内布局迁移。IEDD 与 NC-tALC 公共道路换道可作为现实锚点，但前者是多源数据重组，后者只有 78 次受控试验；它们仍不足以建立从合成场景命中率到现实暴露率的统一映射。\n\n新的可操作问题是如何把这些误差分配到具体测试结论。场景族中的边界移动可能来自策略修复，也可能来自生成器改变了根因或模拟器执行不稳定。根因保持检查、重复执行与目标/代理配对分别控制这三种来源。Reality Gap 的分类可用于记录参照层级，SCAPE 提供校准方法；二者都需要针对实际使用的策略、场景和更新版本重新检查。",
       "referenceIds": [
         "cars-responsibility",
         "digital-siblings-2024",
@@ -118,43 +127,38 @@
         "world-model-admissibility",
         "pictura-2026",
         "iedd-2026",
-        "lane-changing-public-road-2026"
+        "lane-changing-public-road-2026",
+        "reality-gap-survey-2026",
+        "scape-2026",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026"
       ]
     },
     {
       "id": "auditable-evidence-stack",
       "kind": "outlook",
-      "title": "从日志检查到场地验证的实验流程",
-      "thesis": "成熟测试流程应保存失效来源、采样概率、责任解释、复现条件、跨层结果和明确的拒绝边界。",
-      "body": "测试流程应按成本逐步推进：先用自然日志和开环检查过滤明显问题，再用经典仿真闭环复现机制，用搜索或生成方法扩大失效邻域，以 SIL/HIL 暴露接口和时序问题，最后对高价值机制使用封闭场地、实车或真实事故数据校准。每层都应保存系统版本、ODD、场景 canonical ID、随机种子、oracle 版本、生成概率、置信区间和失败簇，且只继承已经验证能够跨层迁移的结论。\n\n稀有事件估计应设置可证伪终点：在同一自然分布和目标事件定义下，对比自然 Monte Carlo 与似然加权估计器，后者必须在预注册置信水平保持名义覆盖率，同时显著缩窄区间；若支持集缺失、权重退化或代理模型变化使覆盖率不达标，就只能报告失效发现，不能报告现实事件率。仿真、世界模型或 HIL 的判定能否迁移到现实，也应在预注册的现实样本上通过预测区间检验；只有现实结果达到约定覆盖率，上一层证据才可继承，否则必须返回无法裁决。\n\n对经典仿真器和世界模型还需要独立准入与拒绝机制：验证接口和实现，校准动力学与传感器，检查动作响应和最大可信 rollout，识别分布外场景，并用多仿真器或现实参照复核关键判定。这样的结构符合 UL 4600 所强调的组合证据，其中生成式测试负责提出高价值假设、扩展失效空间，现实风险仍由配套验证与安全案例支撑。\n\n具体实验还可检查三个问题。第一，fuzzer 比较固定测试预算、环境版本和 crash 去重规则，并把五种工具的并集与单工具比较；若组合后独立失效覆盖不提高，就拒绝“互补”主张。第二，生成式或视觉自博弈测试必须用现实配对样本估计事件级判定的迁移；若置信区间覆盖不足，就只报告模拟器发现。第三，边云和多模态系统必须在同一闭环中联合扰动天气、可观测性、网络时延和资源竞争，并预注册结果过期时的回退；除 HOTA 或选择题准确率外，闭环终点还应包括最小 TTC、任务成功和最小风险状态。",
+      "title": "主动边界测试、修复比较与版本继承",
+      "thesis": "把有限执行预算用于最能区分机制、能力和修复效果的场景。",
+      "body": "第一条路线是**机制保持的主动边界测试**。从可重复失败种子提取根因关系，在保持关系的条件下改变距离、时隙或参与者位置，选择最能缩小能力边界不确定度的下一次执行。比较随机变异、Bug2Scenario 原有反馈、无根因约束的边界搜索和联合方法，固定候选数与执行预算。终点包括严格根因保持率、边界区间宽度和每个有效回归案例的执行次数；若同名故障的实际机制已改变，就把它保留为新失败而不混入原场景族。\n\n第二条路线是**带配对证据的版本回归**。固定一组可复现的场景族，在更新前后测量承诺、能力与正确停止率，记录修复区域和新增退化区域。与只复跑旧失败样本相比，沿边界选取的成功/失败邻域有机会发现修复后的激进化或保守化。先在公开 agent 的可控训练或配置更新上验证，再扩展到自然软件版本；旧证据能否复用由同场景配对差异决定，不能只靠提交距离或模型名字。\n\n第三条路线是**按不确定度分配昂贵测试**。采用 SCAPE 类情景条件估计器，用少量高可信目标执行纠正大量便宜代理评价，并把新增目标预算集中到预测区间宽、策略排名不稳定的场景。驾驶启动实验可明确限定为开环—闭环或双模拟器配对，再逐步加入现实记录。比较随机抽样、纯风险抽样和不确定度驱动抽样，检查目标性能误差、区间覆盖与每次执行的边际信息收益；真实配对不足时也能产出明确的 Sim2Sim 方法结果。\n\n这些路线与概率安全评估互补。若目标是自然事件率，仍需固定参考分布与可计算权重，并比较估计器的方差和覆盖率；若目标是修复已知机制，则优先保存高质量反例、机制关系和版本差分。任务明确后，测试工具才有可比较的收益。",
       "referenceIds": [
-        "iso-sotif-2022",
-        "iso-scenario-testing-2022",
-        "ul-4600-ed3",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026",
+        "scape-2026",
+        "reality-gap-survey-2026",
+        "drivefuzz-2022",
         "bench2drive-2024",
         "bench2drive-robust",
-        "riskflow",
-        "digital-siblings-2024",
-        "real-world-perturbation",
-        "world-model-admissibility",
-        "waymo-fatal-crash-reconstruction",
         "accelerated-evaluation-2017",
-        "nade-2021",
-        "rl-fuzzing-2026",
-        "pictura-2026",
-        "obsdrivebench-2026",
-        "denial-deadline-2026",
-        "lane-changing-public-road-2026"
+        "nade-2021"
       ]
     }
   ],
   "takeaways": [
-    "任何测试结论都必须绑定系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界；网络截止时间与数据 provenance 也属于版本化测试条件。",
-    "统一预算下不同 RL fuzzer 发现的失败具有互补性；评价时应报告唯一失败并集、重复次数和下游修复结果。",
-    "Pictura 与 Learning from Risk 扩大了生成式闭环测试能力，但低分辨率合成视觉、模拟器内迁移和近饱和碰撞覆盖限制现实安全解释。",
-    "IEDD 需要按原始场景去重；78 次公共道路换道提供单一协议下的现实行为记录，适用范围仍受样本和道路条件限制。",
-    "恶劣天气可观测性和边云截止时间可纳入测试 oracle；车辆轨迹、控制和最小风险回退效果另行评测。",
-    "世界模型和合成 V2X 数据用于安全判定前，须检查动作跟随、真实通信/传感器的适用范围、失效归因和现实迁移。"
+    "搜索命中率、自然事件率和回归保持率回答不同问题，需要独立的采样与判定协议。",
+    "根因保持的场景族可把一次失败转成长期回归资产；严格保持与边界保持应分开统计。",
+    "承诺曲线与能力曲线揭示策略是更会通过，还是只是更愿意冒险。",
+    "SCAPE 的驾驶证据来自 nuPlan 开环—闭环配对，现实四足实验不能直接替代道路验证。",
+    "新的研究可以从机制保持的主动采样、版本配对和昂贵测试预算分配开始，逐步增加现实参照。"
   ],
   "references": [
     {
@@ -182,7 +186,7 @@
       "publicationStatus": "standard",
       "canonicalId": "iso:34502:2022",
       "sourceFamily": "official-project",
-      "supports": "提供自动驾驶场景式安全评价框架，要求把测试对象、ODD、场景、执行和评价过程组织成可追溯证据。",
+      "supports": "为产品开发阶段提供基于场景的自动驾驶安全评价框架，适用于规定的 ADS 和车辆类别以及限制出入的高速公路。",
       "limitation": "其适用道路和功能范围有明确边界，不覆盖所有误用、人机交互、网络安全或任意 ODD，也不保证场景数据库完备。"
     },
     {
@@ -196,8 +200,8 @@
       "publicationStatus": "standard",
       "canonicalId": "ul:4600:edition-3",
       "sourceFamily": "official-project",
-      "supports": "以目标和技术中立的安全案例组织分析、仿真、封闭场地、道路测试、软件更新和部署后指标，支持多层证据而非单一里程门槛。",
-      "limitation": "不规定统一最低道路里程、固定可接受风险值或适用于所有产品的通过条件，具体论证仍由系统与 ODD 决定。"
+      "supports": "UL 官方第三版公告说明其采用目标导向、技术中立的安全案例，并扩展自动驾驶卡车等适用情形。",
+      "limitation": "本轮核验的是公开版本公告和方法概述，未取得标准全文；不据此声称具体条款或统一通过阈值。"
     },
     {
       "id": "testing-survey-2023",
@@ -539,10 +543,10 @@
       "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
       "authors": "Christian Oefinger; Finn Rasmus Schäfer; Korbinian Moller; Mattia Piccinini; Johannes Betz",
       "year": 2026,
-      "venue": "arXiv; accepted at RSS 2026 Workshop on Robot World Models",
+      "venue": "RSS 2026 Workshop on Robot World Models（已录用）",
       "url": "https://arxiv.org/abs/2607.07196",
       "publicationType": "position",
-      "publicationStatus": "preprint",
+      "publicationStatus": "workshop-accepted",
       "canonicalId": "arxiv:2607.07196",
       "sourceFamily": "local-corpus",
       "supports": "提出 L0–L4 世界模型准入阶梯，并在两种驾驶世界模型上显示视觉质量排序可能与动作跟随和可信 rollout 排序反转。",
@@ -595,7 +599,7 @@
       "canonicalId": "arxiv:2607.26005",
       "sourceFamily": "local-corpus",
       "supports": "在基于 PufferDrive 的 GPU 原生多智能体模拟器中直接从四路透视图像做 PPO 自博弈，单 H100 报告最高 50 万 agent steps/s 与 200 万 images/s，并在 44,073 个重渲染 Waymo 布局上给出碰撞、越界和到达率闭环结果。",
-      "limitation": "执行核心基于 PufferDrive，场景采用 CARLA 地图几何，由自定义 CUDA 栅格器生成 96×54 透视图元观察；所谓零样本仍是模拟器内布局迁移，没有真实传感器配对。官方仓库本轮仍显示 Code coming soon，尚未核实完整复现入口。",
+      "limitation": "执行核心基于 PufferDrive，场景采用 CARLA 地图几何，由自定义 CUDA 栅格器生成 96×54 透视图元观察；所谓零样本仍是模拟器内布局迁移，没有真实传感器配对。代码发布状态未在本次正文复核中重新确认，启动实验时按具体版本核对入口。",
       "url": "https://arxiv.org/abs/2607.26005",
       "links": [
         {
@@ -616,7 +620,7 @@
       "canonicalId": "doi:10.1038/s41597-026-07929-2",
       "sourceFamily": "local-corpus",
       "supports": "把五个既有自然驾驶轨迹库整理为 731 万 ego 片段和 666 万多主体交互案例，并生成 BEV 视频、物理量与分层 VQA；正式 Scientific Data 记录、代码和数据入口使交互理解与测试任务可追溯。",
-      "limitation": "数据是多源重组而非新传感器采集，必须做场景级 provenance 去重；聚合数据入口仍需逐档案 smoke test，论文也没有证明该数据能提高真实闭环规划或安全 verdict。",
+      "limitation": "数据来自五个既有轨迹库的重组；跨库实验应在原始场景层去重。BEV 与 VQA 评价、轨迹规划及反应式闭环分别衡量不同能力。",
       "url": "https://doi.org/10.1038/s41597-026-07929-2",
       "links": [
         {
@@ -692,7 +696,7 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1016/j.tre.2026.105110",
       "sourceFamily": "publisher-and-venue",
-      "supports": "以轨迹/地图 CVAE 学习基础交通分布，再让 LLM 把场景知识转为不同风险级别的优化损失；CARLA 与 SMARTS 结果补充长尾覆盖和可控风险场景生成，正式 DOI 记录于 2026-07-27 建立。",
+      "supports": "以轨迹/地图 CVAE 学习基础交通分布，再让 LLM 把场景知识转为不同风险级别的优化损失；CARLA 与 SMARTS 结果补充长尾覆盖和可控风险场景生成，已有正式出版 DOI。",
       "limitation": "证据仍限于模拟器；报告比较中碰撞覆盖已接近饱和，长尾覆盖增益不能直接解释为更高现实安全价值。新事件是正式出版元数据，不是方法在 2026 年重新提出。",
       "url": "https://doi.org/10.1016/j.tre.2026.105110",
       "links": [
@@ -701,12 +705,77 @@
           "url": "https://arxiv.org/abs/2511.20726"
         }
       ]
+    },
+    {
+      "id": "bug2scenario-2026",
+      "title": "Bug2Scenario: Root-Cause-Preserving Test Scenario Amplification for Autonomous Driving Software",
+      "authors": "Yuchen Cao; Zhenyu Mao; Jacky Wai Keung; Yifei Wang; Yihan Liao; Jingyu Zhang",
+      "year": 2026,
+      "venue": "APSEC 2026 Technical Track",
+      "publicationType": "method",
+      "publicationStatus": "accepted",
+      "canonicalId": "arxiv:2611.06229",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以根因模式约束 LLM 场景变异，再经确定性转换、执行和人工证据评定保持性；匹配比较中严格保持为 65/180 对 53/180，含边界情况为 99/180 对 80/180。",
+      "limitation": "严格保持差异 p=0.104，未达显著；含边界比较 p=0.011。发布资产不含全部原始视频和 rosbag，人工标签也未声称独立双重复标注。",
+      "url": "https://conf.researchr.org/track/apsec-2026/apsec-2026-technical-track",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2611.06229"
+        }
+      ],
+      "localPaperId": "bug2scenario-root-cause-regression"
+    },
+    {
+      "id": "failure-boundary-profiles-2026",
+      "title": "Beyond Infraction Scores: Failure-Boundary Profiles for Closed-Loop Evaluation of Driving and Robot Navigation Agents",
+      "authors": "Milan Bulat; Gino Ardelean; Ellington Kirby",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2611.06453",
+      "sourceFamily": "arxiv",
+      "supports": "沿场景参数分别估计尝试通过和无接触通过的概率，比较能力与承诺边界；在可判定通行标签的子集上用 decision accuracy 同时奖励正确通过与停止。",
+      "limitation": "七类 CARLA 场景的曲线与其中三个可认证场景族的 decision accuracy 不能混算；仓库机器人实验采用另一套模拟环境与训练条件。",
+      "url": "https://arxiv.org/abs/2611.06453",
+      "localPaperId": "failure-boundary-profiles-driving"
+    },
+    {
+      "id": "reality-gap-survey-2026",
+      "title": "The Reality Gap in Automated Driving Systems Testing: Landscape, Challenges, and Research Directions",
+      "authors": "Stefano Carlo Lambertenghi; Oliver Weissl; Johannes Betz; Andrea Stocco",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "survey",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2610.38628",
+      "sourceFamily": "arxiv",
+      "supports": "区分仿真方法构建时使用的现实信息与评价时采用的现实参照，按传感器、行为、动力学和安全终点组织 ADS reality-gap 证据。",
+      "limitation": "文献映射中的多指标覆盖不自动建立误差到测试结论的因果关系；各论文的系统、执行层级和现实参照不同。",
+      "url": "https://arxiv.org/abs/2610.38628"
+    },
+    {
+      "id": "scape-2026",
+      "title": "Scape: Scenario-Conditioned Simulation-Augmented Policy Evaluation",
+      "authors": "Dijie Zhu; Seunghun Oh; Ruopeng Huang; Zhiyu Huang; Jiaqi Ma; Chen Tang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2608.19425",
+      "sourceFamily": "arxiv",
+      "supports": "用有限配对目标/代理样本校正仿真偏差，再学习情景条件性能预测并进行 conformal 不确定度校准。",
+      "limitation": "驾驶部分是 nuPlan 开环代理与闭环目标配对的 Sim2Sim；现实配对来自四足机器人，不能写成驾驶道路 sim-real 校准。",
+      "url": "https://arxiv.org/abs/2608.19425",
+      "localPaperId": "scape-policy-evaluation"
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
     "searchedAt": "2026-11-06",
-    "cutoffDate": "2026-08-01",
+    "cutoffDate": "2026-11-06",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -721,17 +790,18 @@
     ],
     "sourceFamilies": [
       "local-corpus",
-      "arxiv",
+      "openalex",
+      "official-project",
       "publisher-and-venue",
-      "official-project"
+      "arxiv"
     ],
     "counts": {
-      "candidates": 111,
-      "deduplicated": 111,
-      "included": 30,
-      "excluded": 81
+      "candidates": 174,
+      "deduplicated": 163,
+      "included": 34,
+      "excluded": 129
     },
-    "evidenceBoundary": "原站外查询族及执行日期保留，不倒填为本轮检索。2026-09-22 对既有核心引用、正文关键数字与范围重新检查一手来源；出版版本差异以正式版为准，资源可访问与实验复现分开。当前本库查询单独重跑并闭合去向；近期新文献使用本期digest-audit独立记录。",
+    "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "openSearchGaps": [
       "缺少跨经典仿真器、生成式世界模型、HIL、封闭场地和道路测试的同初态事件级 verdict 转移函数及置信区间。",
       "RL fuzzer 横评仍缺真实或商业驾驶栈上的统一预算、唯一失效去重和修复后回归证据。",
@@ -744,13 +814,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "finalFinding": "Independent raw-corpus rerun and canonical candidate closure passed; narrative, references and substantive/external dates preserved. Same-family provisional.",
-      "reviewerAgentId": "/root/review_integration_nov06",
-      "artifactPath": "docs/research-updates/2026-11-06/review-integration-round1.json",
-      "artifactSha256": "679fe0a88e5290f6c16b7a9e7bcb6977630e8108fca913fcf3e0f4f40a8ba2ac",
-      "snapshotFingerprint": "586f828b56f6359072cbc2f29a41c8f4a7b9e885b8ea6100801ded45c4d9493e",
+      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
+      "reviewerAgentId": "/root/review_centers_embodied",
+      "artifactPath": "docs/center-updates/2026-11-06/independent-review/embodied-round2.json",
+      "artifactSha256": "570dbfa5c02aeb19b7f987c0a41769ad0201e8b67f46748fbb007e05d2f0c674",
+      "snapshotFingerprint": "84c31a9d6af7407d035b020adae6784f80a9cc2f0813381c13a363b05652b6bc",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -868,7 +938,7 @@
         },
         "rawHitCount": 210,
         "screenedOutCount": 122,
-        "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共210个文件命中；按方向标签与revisionOf归并得88个候选，其余122个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "当前原始 Markdown rg 命中 210 个文件，按方向标签和原始论文身份归并为 88 个候选；文件命中与候选数分别记录。",
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
             "anyscene-controllable-driving-scene-generation",
@@ -962,21 +1032,63 @@
           ],
           "deferredGroups": [
             {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "本轮重新检查当前方向的全部本库候选，核心综合选取能说明方法演进及实验差异的文献；其余报告保留为后续深入阅读入口。",
+              "localPaperIds": [
+                "barrier-conformal-clearance-certification",
+                "care-adaptive-lidar-first-sightings",
+                "caviar-accident-reasoning",
+                "cl4ad-curriculum-driving",
+                "comfortably-stuck-bench2drive-protocol",
+                "commonroad-game-hitl-simulation",
+                "coverage-aware-active-evaluation",
+                "decouplegs-interactive-driving-testing",
+                "driving-videos-to-simulatable-scenarios",
+                "gating-before-commitment-intent-divergence",
+                "language2drive-paired-instruction-evaluation",
+                "lidar-hallu-spatiotemporal-benchmark",
+                "metric-validity-driving-execution",
+                "odyssey-long-horizon-driving",
+                "perception-action-binding-gap",
+                "perception-informed-sil-simulation",
+                "planner-surrogate-safety-critical-training",
+                "plannerforge-scenario-testing",
+                "public-road-assisted-lane-change-testing",
+                "safegen-critical-video-diffusion",
+                "safer-safety-scenario",
+                "scenefactory-3d-physical-counterfactuals",
+                "shift-drift-planning-benchmark",
+                "sind2-sotif-validation",
+                "siren-emergency-interaction-benchmark",
+                "srp-structured-risk-anticipation",
+                "ssp-syn2sim2phy-vla-evaluation",
+                "traffic-sign-bench-rule-compliance",
+                "trafficalign-traffic-scenario-generation",
+                "vladrivebench-cot-action-vla"
+              ]
+            },
+            {
               "reasonCode": "cross-direction-support",
-              "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+              "reason": "与当前方向有交叉，核心方法综合由其主方向承担，本轮未重复展开。",
               "localPaperIds": [
                 "anyscene-controllable-driving-scene-generation",
+                "aurasim-dynamic-fmcw-radar-simulation",
+                "awcr-weather-context-cooperative-repair",
+                "cartender-counterfactual-language-driving",
                 "cascade-causal-driving-representation",
                 "cav-platoon-joining-rl",
                 "clap-v2x-prompt-optimization",
                 "cognitive-dual-process-driving",
                 "cooperscene-cv2x-benchmark",
+                "cosafe-cooperative-runtime-assurance",
                 "counterfactual-driving-world-models",
                 "cvaa-driving-interpretability",
                 "deployed-vil-cooperative-perception",
+                "driveoss-open-set-anomaly-benchmark",
                 "illusion-of-depth-stereo-attack",
                 "instant-nurec-feedforward-3dgs",
                 "intention-sharing-delay-resilience",
+                "last-v2x-communication-failure-testing",
                 "lidar-robustness-3d-detection",
                 "m4world-multimodal-driving-world",
                 "maat-e2e-adversarial-training",
@@ -984,15 +1096,19 @@
                 "morph-u-resilient-v2x-planning",
                 "omnidreams-closed-loop-world-model",
                 "opted-render-free-teacher",
+                "panobench-panoptic-occupancy-benchmark",
                 "physically-consistent-4d-driving-reconstruction",
                 "policy-stitching-e2e-driving",
+                "radar2plan-open-loop-radar-planning",
                 "real2sim-physics-4dgs",
                 "realtime-adversarial-autonomous-systems",
                 "reasonbreak-vla-vulnerability-driving",
+                "reinseg-bounded-multimodal-anomaly",
                 "scaling-self-play-e2e-driving",
                 "seeing-is-deceiving-mirror-lidar-attack",
                 "skydrive-aerial-city-adaptation",
                 "stu-road-anomaly-dataset",
+                "teach-to-crash-student-teacher",
                 "terrazero-self-play-driving",
                 "twinir-online-map-attack",
                 "view-induced-trajectory-manipulation",
@@ -1000,247 +1116,828 @@
                 "vista-driving-world-model",
                 "world-engine-post-training-driving"
               ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
-              "localPaperIds": [
-                "barrier-conformal-clearance-certification",
-                "care-adaptive-lidar-first-sightings",
-                "caviar-accident-reasoning",
-                "cl4ad-curriculum-driving",
-                "commonroad-game-hitl-simulation",
-                "coverage-aware-active-evaluation",
-                "decouplegs-interactive-driving-testing",
-                "driving-videos-to-simulatable-scenarios",
-                "gating-before-commitment-intent-divergence",
-                "lidar-hallu-spatiotemporal-benchmark",
-                "perception-informed-sil-simulation",
-                "plannerforge-scenario-testing",
-                "public-road-assisted-lane-change-testing",
-                "safegen-critical-video-diffusion",
-                "safer-safety-scenario",
-                "scape-policy-evaluation",
-                "shift-drift-planning-benchmark",
-                "sind2-sotif-validation",
-                "siren-emergency-interaction-benchmark",
-                "ssp-syn2sim2phy-vla-evaluation",
-                "trafficalign-traffic-scenario-generation",
-                "vladrivebench-cot-action-vla"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
-              "localPaperIds": [
-                "metric-validity-driving-execution"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
-              "localPaperIds": [
-                "teach-to-crash-student-teacher"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
-              "localPaperIds": [
-                "traffic-sign-bench-rule-compliance"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
-              "localPaperIds": [
-                "odyssey-long-horizon-driving",
-                "scenefactory-3d-physical-counterfactuals"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
-              "localPaperIds": [
-                "radar2plan-open-loop-radar-planning"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "comfortably-stuck-bench2drive-protocol",
-                "language2drive-paired-instruction-evaluation"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "perception-action-binding-gap"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "cartender-counterfactual-language-driving",
-                "last-v2x-communication-failure-testing",
-                "panobench-panoptic-occupancy-benchmark"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "planner-surrogate-safety-critical-training",
-                "srp-structured-risk-anticipation"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "aurasim-dynamic-fmcw-radar-simulation",
-                "awcr-weather-context-cooperative-repair",
-                "driveoss-open-set-anomaly-benchmark"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "bug2scenario-root-cause-regression",
-                "failure-boundary-profiles-driving"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "cosafe-cooperative-runtime-assurance",
-                "reinseg-bounded-multimodal-anomaly"
-              ]
             }
           ]
+        },
+        "historicalRun": {
+          "family": "场景式测试与 SOTIF 安全论证",
+          "sourceFamily": "local-corpus",
+          "query": "测试|场景|testing|scenario|coverage|autonomous-driving-testing",
+          "executedAt": "2026-11-06",
+          "resultCount": 88,
+          "resultIdSample": [
+            "arxiv:2605.26113",
+            "arxiv:2610.37403",
+            "arxiv:2610.35110",
+            "arxiv:2608.26533",
+            "arxiv:2605.18059",
+            "arxiv:2611.06229",
+            "arxiv:2608.24282",
+            "arxiv:2605.13751",
+            "arxiv:2610.26390",
+            "arxiv:2609.07094",
+            "arxiv:2608.26860",
+            "arxiv:2608.19380",
+            "arxiv:2608.22549",
+            "arxiv:2605.17284",
+            "arxiv:2607.19194",
+            "arxiv:2610.21741",
+            "arxiv:2607.18106",
+            "arxiv:2607.01382",
+            "arxiv:2606.31219",
+            "arxiv:2611.06204",
+            "arxiv:2608.11601",
+            "arxiv:2608.13719",
+            "arxiv:2607.16938",
+            "arxiv:2608.01761",
+            "arxiv:2607.24692",
+            "arxiv:2607.13806",
+            "arxiv:2610.32612",
+            "arxiv:2606.21993",
+            "arxiv:2611.06453",
+            "arxiv:2608.26074",
+            "arxiv:2602.20575",
+            "arxiv:2609.16336",
+            "arxiv:2607.14203",
+            "arxiv:2609.10232",
+            "arxiv:2610.16634",
+            "arxiv:2610.30979",
+            "arxiv:2609.24452",
+            "arxiv:2607.02074",
+            "arxiv:2607.14005",
+            "arxiv:2409.07321",
+            "arxiv:2605.10904",
+            "arxiv:2609.34440",
+            "arxiv:2605.07370",
+            "arxiv:2607.23537",
+            "arxiv:2610.06469",
+            "arxiv:2606.03159",
+            "arxiv:2609.20756",
+            "arxiv:2610.23537",
+            "arxiv:2610.28184",
+            "arxiv:2606.07186",
+            "arxiv:2605.21032",
+            "arxiv:2607.26005",
+            "arxiv:2610.35448",
+            "arxiv:2609.08965",
+            "arxiv:2606.21509",
+            "arxiv:2608.26669",
+            "arxiv:2610.06121",
+            "arxiv:2607.04953",
+            "arxiv:2605.13591",
+            "arxiv:2605.03491",
+            "arxiv:2605.29114",
+            "arxiv:2611.02648",
+            "arxiv:2606.06423",
+            "arxiv:2607.24577",
+            "arxiv:2607.19701",
+            "arxiv:2603.04071",
+            "arxiv:2606.19641",
+            "arxiv:2608.19425",
+            "arxiv:2610.02874",
+            "arxiv:2509.17253",
+            "arxiv:2607.07844",
+            "arxiv:2607.16943",
+            "arxiv:2608.24094",
+            "arxiv:2608.25142",
+            "arxiv:2610.37299",
+            "arxiv:2608.14024",
+            "arxiv:2505.02148",
+            "arxiv:2609.27296",
+            "arxiv:2607.13028",
+            "arxiv:2609.38463",
+            "arxiv:2606.29097",
+            "arxiv:2608.04453",
+            "arxiv:2605.12743",
+            "arxiv:2609.02462",
+            "arxiv:2405.17398",
+            "arxiv:2606.12706",
+            "arxiv:2606.19836",
+            "arxiv:2607.07196"
+          ],
+          "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
+          "retrieval": {
+            "provider": "ripgrep-local-corpus",
+            "endpoint": "content/papers",
+            "parameters": {
+              "query": "测试|场景|testing|scenario|coverage|autonomous-driving-testing",
+              "path": "content/papers",
+              "flags": [
+                "-l",
+                "-i"
+              ]
+            },
+            "sort": "path-ascending",
+            "limit": 210,
+            "limitNote": "The rg file query is not truncated; this declared ceiling covers the complete current corpus matches."
+          },
+          "rawHitCount": 210,
+          "screenedOutCount": 122,
+          "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共210个文件命中；按方向标签与revisionOf归并得88个候选，其余122个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+          "localCandidateDisposition": {
+            "candidateLocalPaperIds": [
+              "anyscene-controllable-driving-scene-generation",
+              "aurasim-dynamic-fmcw-radar-simulation",
+              "awcr-weather-context-cooperative-repair",
+              "barrier-conformal-clearance-certification",
+              "bench2drive-robust-deployment-perturbations",
+              "bug2scenario-root-cause-regression",
+              "care-adaptive-lidar-first-sightings",
+              "cars-responsibility-testing",
+              "cartender-counterfactual-language-driving",
+              "cascade-causal-driving-representation",
+              "cav-platoon-joining-rl",
+              "caviar-accident-reasoning",
+              "cl4ad-curriculum-driving",
+              "clap-v2x-prompt-optimization",
+              "cognitive-dual-process-driving",
+              "comfortably-stuck-bench2drive-protocol",
+              "commercial-av-failure-sampling",
+              "commonroad-game-hitl-simulation",
+              "cooperscene-cv2x-benchmark",
+              "cosafe-cooperative-runtime-assurance",
+              "counterfactual-driving-world-models",
+              "coverage-aware-active-evaluation",
+              "cvaa-driving-interpretability",
+              "decouplegs-interactive-driving-testing",
+              "denial-of-deadline-inference",
+              "deployed-vil-cooperative-perception",
+              "driveoss-open-set-anomaly-benchmark",
+              "driving-videos-to-simulatable-scenarios",
+              "failure-boundary-profiles-driving",
+              "gating-before-commitment-intent-divergence",
+              "iedd-interactive-driving-dataset",
+              "illusion-of-depth-stereo-attack",
+              "instant-nurec-feedforward-3dgs",
+              "intention-sharing-delay-resilience",
+              "language2drive-paired-instruction-evaluation",
+              "last-v2x-communication-failure-testing",
+              "lidar-hallu-spatiotemporal-benchmark",
+              "lidar-robustness-3d-detection",
+              "m4world-multimodal-driving-world",
+              "maat-e2e-adversarial-training",
+              "mdrive-closed-loop-cooperative-driving",
+              "metric-validity-driving-execution",
+              "morph-u-resilient-v2x-planning",
+              "obsdrivebench-adverse-weather",
+              "odyssey-long-horizon-driving",
+              "omnidreams-closed-loop-world-model",
+              "opted-render-free-teacher",
+              "panobench-panoptic-occupancy-benchmark",
+              "perception-action-binding-gap",
+              "perception-informed-sil-simulation",
+              "physically-consistent-4d-driving-reconstruction",
+              "pictura-perspective-self-play",
+              "planner-surrogate-safety-critical-training",
+              "plannerforge-scenario-testing",
+              "policy-stitching-e2e-driving",
+              "public-road-assisted-lane-change-testing",
+              "radar2plan-open-loop-radar-planning",
+              "real-world-perturbation-testing",
+              "real2sim-physics-4dgs",
+              "realtime-adversarial-autonomous-systems",
+              "reasonbreak-vla-vulnerability-driving",
+              "reinseg-bounded-multimodal-anomaly",
+              "riskflow-safety-critical-scenario-generation",
+              "rl-fuzz-testing-agents",
+              "safegen-critical-video-diffusion",
+              "safer-safety-scenario",
+              "scaling-self-play-e2e-driving",
+              "scape-policy-evaluation",
+              "scenefactory-3d-physical-counterfactuals",
+              "seeing-is-deceiving-mirror-lidar-attack",
+              "shift-drift-planning-benchmark",
+              "sind2-sotif-validation",
+              "siren-emergency-interaction-benchmark",
+              "skydrive-aerial-city-adaptation",
+              "srp-structured-risk-anticipation",
+              "ssp-syn2sim2phy-vla-evaluation",
+              "stu-road-anomaly-dataset",
+              "teach-to-crash-student-teacher",
+              "terrazero-self-play-driving",
+              "traffic-sign-bench-rule-compliance",
+              "trafficalign-traffic-scenario-generation",
+              "twinir-online-map-attack",
+              "view-induced-trajectory-manipulation",
+              "vips-cooperative-planning-benchmark",
+              "vista-driving-world-model",
+              "vladrivebench-cot-action-vla",
+              "world-engine-post-training-driving",
+              "world-model-simulator-admissibility"
+            ],
+            "deferredGroups": [
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+                "localPaperIds": [
+                  "anyscene-controllable-driving-scene-generation",
+                  "cascade-causal-driving-representation",
+                  "cav-platoon-joining-rl",
+                  "clap-v2x-prompt-optimization",
+                  "cognitive-dual-process-driving",
+                  "cooperscene-cv2x-benchmark",
+                  "counterfactual-driving-world-models",
+                  "cvaa-driving-interpretability",
+                  "deployed-vil-cooperative-perception",
+                  "illusion-of-depth-stereo-attack",
+                  "instant-nurec-feedforward-3dgs",
+                  "intention-sharing-delay-resilience",
+                  "lidar-robustness-3d-detection",
+                  "m4world-multimodal-driving-world",
+                  "maat-e2e-adversarial-training",
+                  "mdrive-closed-loop-cooperative-driving",
+                  "morph-u-resilient-v2x-planning",
+                  "omnidreams-closed-loop-world-model",
+                  "opted-render-free-teacher",
+                  "physically-consistent-4d-driving-reconstruction",
+                  "policy-stitching-e2e-driving",
+                  "real2sim-physics-4dgs",
+                  "realtime-adversarial-autonomous-systems",
+                  "reasonbreak-vla-vulnerability-driving",
+                  "scaling-self-play-e2e-driving",
+                  "seeing-is-deceiving-mirror-lidar-attack",
+                  "skydrive-aerial-city-adaptation",
+                  "stu-road-anomaly-dataset",
+                  "terrazero-self-play-driving",
+                  "twinir-online-map-attack",
+                  "view-induced-trajectory-manipulation",
+                  "vips-cooperative-planning-benchmark",
+                  "vista-driving-world-model",
+                  "world-engine-post-training-driving"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
+                "localPaperIds": [
+                  "barrier-conformal-clearance-certification",
+                  "care-adaptive-lidar-first-sightings",
+                  "caviar-accident-reasoning",
+                  "cl4ad-curriculum-driving",
+                  "commonroad-game-hitl-simulation",
+                  "coverage-aware-active-evaluation",
+                  "decouplegs-interactive-driving-testing",
+                  "driving-videos-to-simulatable-scenarios",
+                  "gating-before-commitment-intent-divergence",
+                  "lidar-hallu-spatiotemporal-benchmark",
+                  "perception-informed-sil-simulation",
+                  "plannerforge-scenario-testing",
+                  "public-road-assisted-lane-change-testing",
+                  "safegen-critical-video-diffusion",
+                  "safer-safety-scenario",
+                  "scape-policy-evaluation",
+                  "shift-drift-planning-benchmark",
+                  "sind2-sotif-validation",
+                  "siren-emergency-interaction-benchmark",
+                  "ssp-syn2sim2phy-vla-evaluation",
+                  "trafficalign-traffic-scenario-generation",
+                  "vladrivebench-cot-action-vla"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
+                "localPaperIds": [
+                  "metric-validity-driving-execution"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
+                "localPaperIds": [
+                  "teach-to-crash-student-teacher"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
+                "localPaperIds": [
+                  "traffic-sign-bench-rule-compliance"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
+                "localPaperIds": [
+                  "odyssey-long-horizon-driving",
+                  "scenefactory-3d-physical-counterfactuals"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
+                "localPaperIds": [
+                  "radar2plan-open-loop-radar-planning"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "comfortably-stuck-bench2drive-protocol",
+                  "language2drive-paired-instruction-evaluation"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "perception-action-binding-gap"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "cartender-counterfactual-language-driving",
+                  "last-v2x-communication-failure-testing",
+                  "panobench-panoptic-occupancy-benchmark"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "planner-surrogate-safety-critical-training",
+                  "srp-structured-risk-anticipation"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "aurasim-dynamic-fmcw-radar-simulation",
+                  "awcr-weather-context-cooperative-repair",
+                  "driveoss-open-set-anomaly-benchmark"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "bug2scenario-root-cause-regression",
+                  "failure-boundary-profiles-driving"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "cosafe-cooperative-runtime-assurance",
+                  "reinseg-bounded-multimodal-anomaly"
+                ]
+              }
+            ]
+          }
         }
       },
       {
         "family": "搜索式与重要性采样失效发现",
-        "sourceFamily": "arxiv",
-        "query": "autonomous vehicle adaptive stress testing importance sampling reinforcement learning fuzzing failure discovery",
-        "executedAt": "2026-08-01",
-        "resultCount": 5,
+        "sourceFamily": "openalex",
+        "query": "autonomous driving importance sampling testing",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 17,
         "resultIdSample": [
+          "arxiv:2611.06229",
+          "doi:10.1007/978-3-031-72980-5_15",
+          "doi:10.1016/j.aap.2026.108454",
+          "doi:10.1038/s41467-021-21007-8",
+          "doi:10.1109/cvci66304.2025.11348571",
+          "doi:10.1109/cvpr52733.2024.01411",
+          "doi:10.1109/ichora65333.2025.11017061",
+          "doi:10.1109/icus61736.2024.10840092",
+          "doi:10.1109/ivs.2018.8500400",
+          "doi:10.1109/jproc.2025.3600903",
+          "doi:10.1109/tits.2016.2582208",
+          "doi:10.1109/tiv.2024.3402136",
+          "doi:10.1109/tpami.2024.3435937",
+          "doi:10.1145/3548606.3560558",
+          "doi:10.1145/3702989",
+          "doi:10.1609/aaai.v39i8.32902",
+          "doi:10.3390/s25196033"
+        ],
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.1109/cvci66304.2025.11348571",
+          "doi:10.1016/j.aap.2026.108454",
+          "doi:10.1609/aaai.v39i8.32902",
+          "doi:10.1109/ichora65333.2025.11017061",
+          "doi:10.1109/icus61736.2024.10840092",
+          "doi:10.1109/cvpr52733.2024.01411",
+          "doi:10.1109/jproc.2025.3600903",
+          "doi:10.3390/s25196033",
+          "doi:10.1145/3702989",
+          "doi:10.1109/tiv.2024.3402136",
+          "doi:10.1007/978-3-031-72980-5_15",
+          "doi:10.1109/tpami.2024.3435937"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1038/s41467-021-21007-8",
           "doi:10.1109/ivs.2018.8500400",
           "doi:10.1109/tits.2016.2582208",
-          "doi:10.1038/s41467-021-21007-8",
-          "doi:10.1145/3548606.3560558",
-          "arxiv:1708.08559"
+          "doi:10.1145/3548606.3560558"
         ],
-        "scopeRationale": "比较搜索式、重要性采样和 RL fuzzing 的 estimand，严格区分失效发现效率、唯一失败多样性与自然暴露率。",
+        "supplementalCanonicalIds": [
+          "arxiv:2611.06229"
+        ],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous vehicle adaptive stress testing importance sampling reinforcement learning fuzzing failure discovery"
+            "search": "autonomous driving importance sampling testing",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 17,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "搜索式与重要性采样失效发现",
+          "sourceFamily": "arxiv",
+          "query": "autonomous vehicle adaptive stress testing importance sampling reinforcement learning fuzzing failure discovery",
+          "executedAt": "2026-08-01",
+          "resultCount": 5,
+          "resultIdSample": [
+            "doi:10.1109/ivs.2018.8500400",
+            "doi:10.1109/tits.2016.2582208",
+            "doi:10.1038/s41467-021-21007-8",
+            "doi:10.1145/3548606.3560558",
+            "arxiv:1708.08559"
+          ],
+          "scopeRationale": "比较搜索式、重要性采样和 RL fuzzing 的 estimand，严格区分失效发现效率、唯一失败多样性与自然暴露率。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "autonomous vehicle adaptive stress testing importance sampling reinforcement learning fuzzing failure discovery"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "生成式场景和世界模型测试",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving generative safety-critical scenario world model diffusion self-play risk-guided testing",
-        "executedAt": "2026-08-01",
-        "resultCount": 4,
+        "sourceFamily": "openalex",
+        "query": "world model driving scenario generation testing",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 15,
         "resultIdSample": [
-          "ecva:eccv2024:chang-safe-sim",
+          "arxiv:2606.31131",
+          "cvf:cvpr2021:wang-advsim",
+          "doi:10.1007/978-3-031-73195-2_4",
+          "doi:10.1016/j.jtte.2026.03.002",
+          "doi:10.1016/j.trc.2024.104620",
+          "doi:10.1016/j.tre.2026.105110",
+          "doi:10.1109/ojits.2026.3660686",
+          "doi:10.1109/tits.2025.3578383",
+          "doi:10.1109/tits.2025.3586608",
+          "doi:10.26599/jicv.2026.9210080",
+          "doi:10.3390/app15084505",
+          "doi:10.3390/futuretransp5040159",
+          "doi:10.3390/vehicles8070155",
+          "doi:10.5302/j.icros.2025.24.0248",
+          "ecva:eccv2024:chang-safe-sim"
+        ],
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.1109/ojits.2026.3660686",
+          "arxiv:2606.31131",
+          "doi:10.1016/j.jtte.2026.03.002",
+          "doi:10.5302/j.icros.2025.24.0248",
+          "doi:10.3390/futuretransp5040159",
+          "doi:10.1109/tits.2025.3586608",
+          "doi:10.3390/vehicles8070155",
+          "doi:10.1109/tits.2025.3578383",
+          "doi:10.1007/978-3-031-73195-2_4",
+          "doi:10.26599/jicv.2026.9210080",
+          "doi:10.3390/app15084505",
+          "doi:10.1016/j.trc.2024.104620"
+        ],
+        "reopenedSeedCanonicalIds": [
           "cvf:cvpr2021:wang-advsim",
           "doi:10.1016/j.tre.2026.105110",
-          "arxiv:1802.02295"
+          "ecva:eccv2024:chang-safe-sim"
         ],
-        "scopeRationale": "覆盖生成式场景、世界模型、风险引导和透视视觉自博弈，并核对正式出版与模拟器证据边界。",
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving generative safety-critical scenario world model diffusion self-play risk-guided testing"
+            "search": "world model driving scenario generation testing",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 15,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "生成式场景和世界模型测试",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving generative safety-critical scenario world model diffusion self-play risk-guided testing",
+          "executedAt": "2026-08-01",
+          "resultCount": 4,
+          "resultIdSample": [
+            "ecva:eccv2024:chang-safe-sim",
+            "cvf:cvpr2021:wang-advsim",
+            "doi:10.1016/j.tre.2026.105110",
+            "arxiv:1802.02295"
+          ],
+          "scopeRationale": "覆盖生成式场景、世界模型、风险引导和透视视觉自博弈，并核对正式出版与模拟器证据边界。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving generative safety-critical scenario world model diffusion self-play risk-guided testing"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "覆盖率、风险度量与责任归因",
-        "sourceFamily": "arxiv",
-        "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution test oracle",
-        "executedAt": "2026-08-01",
-        "resultCount": 4,
+        "sourceFamily": "openalex",
+        "query": "driving testing coverage risk responsibility",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 17,
         "resultIdSample": [
-          "doi:10.1145/3579642",
+          "arxiv:2405.16914",
+          "arxiv:2608.19425",
+          "arxiv:2611.06453",
+          "doi:10.1002/csr.2792",
+          "doi:10.1007/978-3-658-45276-6_46",
+          "doi:10.1007/s11156-024-01383-0",
           "doi:10.1007/s11831-022-09788-7",
           "doi:10.1109/iavvc63304.2024.10786405",
-          "arxiv:1705.06640"
+          "doi:10.1109/itsc60802.2025.11423515",
+          "doi:10.1145/3579642",
+          "doi:10.1287/orsc.2022.17237",
+          "doi:10.20998/2227-6890.2023.2.10",
+          "doi:10.3390/app15084505",
+          "doi:10.3390/f16050798",
+          "doi:10.3390/s24175539",
+          "doi:10.3390/s25185764",
+          "doi:10.54254/2755-2721/2025.kl22728"
         ],
-        "scopeRationale": "覆盖场景覆盖、关键性、责任归因与 oracle，避免把技术模型归因、选择题或单一综合分数写成完整安全 verdict。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.3390/s25185764",
+          "doi:10.20998/2227-6890.2023.2.10",
+          "doi:10.3390/s24175539",
+          "doi:10.1287/orsc.2022.17237",
+          "doi:10.3390/app15084505",
+          "doi:10.3390/f16050798",
+          "doi:10.1002/csr.2792",
+          "doi:10.54254/2755-2721/2025.kl22728",
+          "doi:10.1007/978-3-658-45276-6_46",
+          "doi:10.1109/itsc60802.2025.11423515",
+          "arxiv:2405.16914",
+          "doi:10.1007/s11156-024-01383-0"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1007/s11831-022-09788-7",
+          "doi:10.1109/iavvc63304.2024.10786405",
+          "doi:10.1145/3579642"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2608.19425",
+          "arxiv:2611.06453"
+        ],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution test oracle"
+            "search": "driving testing coverage risk responsibility",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 17,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "覆盖率、风险度量与责任归因",
+          "sourceFamily": "arxiv",
+          "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution test oracle",
+          "executedAt": "2026-08-01",
+          "resultCount": 4,
+          "resultIdSample": [
+            "doi:10.1145/3579642",
+            "doi:10.1007/s11831-022-09788-7",
+            "doi:10.1109/iavvc63304.2024.10786405",
+            "arxiv:1705.06640"
+          ],
+          "scopeRationale": "覆盖场景覆盖、关键性、责任归因与 oracle，避免把技术模型归因、选择题或单一综合分数写成完整安全 verdict。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "autonomous driving scenario coverage criticality risk metric responsibility attribution test oracle"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "仿真真实性与 sim-to-real",
-        "sourceFamily": "official-project",
-        "query": "CARLA synthetic V2X paired simulator public-road lane-change sim-to-real world-model admissibility",
-        "executedAt": "2026-08-01",
-        "resultCount": 5,
+        "sourceFamily": "openalex",
+        "query": "driving simulation realism sim to real",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 18,
         "resultIdSample": [
-          "pmlr:v78:dosovitskiy17a",
+          "arxiv:2403.19918",
+          "arxiv:2602.06159",
+          "arxiv:2605.15116",
+          "arxiv:2606.16278",
+          "arxiv:2607.13028",
+          "arxiv:2607.27085",
+          "arxiv:2608.19425",
+          "arxiv:2610.38628",
           "doi:10.1007/s10664-024-10458-4",
           "doi:10.1016/j.aap.2021.106454",
-          "arxiv:2607.27085",
-          "arxiv:2607.23910"
+          "doi:10.1109/cvprw63382.2024.00449",
+          "doi:10.1109/icsrs63046.2024.10927458",
+          "doi:10.2139/ssrn.5854363",
+          "doi:10.31219/osf.io/csf7b",
+          "doi:10.52202/079017-1771",
+          "doi:10.54660/.ijfmr.2024.5.1.33-39",
+          "ecva:eccv2024:chang-safe-sim",
+          "pmlr:v78:dosovitskiy17a"
         ],
-        "scopeRationale": "比较纯合成数据、经典仿真器、世界模型、跨仿真器和公共道路锚点；明确场景规模与现实迁移证据不是同一指标。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2605.15116",
+          "ecva:eccv2024:chang-safe-sim",
+          "arxiv:2403.19918",
+          "arxiv:2602.06159",
+          "arxiv:2607.13028",
+          "doi:10.52202/079017-1771",
+          "doi:10.31219/osf.io/csf7b",
+          "doi:10.54660/.ijfmr.2024.5.1.33-39",
+          "doi:10.2139/ssrn.5854363",
+          "arxiv:2606.16278",
+          "doi:10.1109/icsrs63046.2024.10927458",
+          "doi:10.1109/cvprw63382.2024.00449"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2607.27085",
+          "doi:10.1007/s10664-024-10458-4",
+          "doi:10.1016/j.aap.2021.106454",
+          "pmlr:v78:dosovitskiy17a"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2608.19425",
+          "arxiv:2610.38628"
+        ],
         "retrieval": {
-          "provider": "web-search-official-projects",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "CARLA synthetic V2X paired simulator public-road lane-change sim-to-real world-model admissibility"
+            "search": "driving simulation realism sim to real",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 18,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "仿真真实性与 sim-to-real",
+          "sourceFamily": "official-project",
+          "query": "CARLA synthetic V2X paired simulator public-road lane-change sim-to-real world-model admissibility",
+          "executedAt": "2026-08-01",
+          "resultCount": 5,
+          "resultIdSample": [
+            "pmlr:v78:dosovitskiy17a",
+            "doi:10.1007/s10664-024-10458-4",
+            "doi:10.1016/j.aap.2021.106454",
+            "arxiv:2607.27085",
+            "arxiv:2607.23910"
+          ],
+          "scopeRationale": "比较纯合成数据、经典仿真器、世界模型、跨仿真器和公共道路锚点；明确场景规模与现实迁移证据不是同一指标。",
+          "retrieval": {
+            "provider": "web-search-official-projects",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "CARLA synthetic V2X paired simulator public-road lane-change sim-to-real world-model admissibility"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "真实系统、闭环与回归测试",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving real system closed-loop deployment deadline regression testing SOTIF safety case",
-        "executedAt": "2026-08-01",
-        "resultCount": 5,
+        "sourceFamily": "openalex",
+        "query": "autonomous driving regression failure testing",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 19,
         "resultIdSample": [
+          "arxiv:2503.11650",
+          "arxiv:2602.12563",
+          "arxiv:2606.07170",
+          "arxiv:2611.06229",
+          "arxiv:2611.06453",
+          "doi:10.1007/978-3-031-72980-5_15",
+          "doi:10.1016/j.aap.2025.108139",
+          "doi:10.1109/ase63991.2025.00143",
+          "doi:10.1109/icra57147.2024.10611018",
+          "doi:10.1109/iv47402.2020.9304823",
+          "doi:10.1109/tits.2024.3439557",
+          "doi:10.1109/tits.2024.3474469",
+          "doi:10.20944/preprints202508.2130.v1",
+          "doi:10.3390/s24103088",
+          "doi:10.3390/s25196033",
+          "doi:10.52202/079017-0025",
           "iso:21448:2022",
           "iso:34502:2022",
-          "ul:4600:edition-3",
-          "doi:10.1109/iv47402.2020.9304823",
-          "doi:10.52202/079017-0025"
+          "ul:4600:edition-3"
         ],
-        "scopeRationale": "覆盖标准、安全案例、闭环、真实系统、网络截止时间和回归测试，要求每项结果绑定系统版本、时序和回退条件。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.1109/icra57147.2024.10611018",
+          "doi:10.3390/s25196033",
+          "doi:10.1007/978-3-031-72980-5_15",
+          "arxiv:2606.07170",
+          "doi:10.1109/tits.2024.3474469",
+          "arxiv:2602.12563",
+          "doi:10.1016/j.aap.2025.108139",
+          "doi:10.3390/s24103088",
+          "doi:10.1109/tits.2024.3439557",
+          "doi:10.1109/ase63991.2025.00143",
+          "doi:10.20944/preprints202508.2130.v1",
+          "arxiv:2503.11650"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1109/iv47402.2020.9304823",
+          "doi:10.52202/079017-0025",
+          "iso:21448:2022",
+          "iso:34502:2022",
+          "ul:4600:edition-3"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2611.06229",
+          "arxiv:2611.06453"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving real system closed-loop deployment deadline regression testing SOTIF safety case"
+            "search": "autonomous driving regression failure testing",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 19,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "真实系统、闭环与回归测试",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving real system closed-loop deployment deadline regression testing SOTIF safety case",
+          "executedAt": "2026-08-01",
+          "resultCount": 5,
+          "resultIdSample": [
+            "iso:21448:2022",
+            "iso:34502:2022",
+            "ul:4600:edition-3",
+            "doi:10.1109/iv47402.2020.9304823",
+            "doi:10.52202/079017-0025"
+          ],
+          "scopeRationale": "覆盖标准、安全案例、闭环、真实系统、网络截止时间和回归测试，要求每项结果绑定系统版本、时序和回退条件。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving real system closed-loop deployment deadline regression testing SOTIF safety case"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       }
     ],
@@ -1280,7 +1977,11 @@
       "arxiv:2607.23537",
       "arxiv:2607.24692",
       "arxiv:2607.27085",
-      "doi:10.1016/j.tre.2026.105110"
+      "doi:10.1016/j.tre.2026.105110",
+      "arxiv:2611.06229",
+      "arxiv:2611.06453",
+      "arxiv:2610.38628",
+      "arxiv:2608.19425"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -1289,32 +1990,389 @@
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:1708.08559",
-        "title": "DeepTest: Automated Testing of Deep-Neural-Network-driven Autonomous Cars",
-        "url": "https://arxiv.org/abs/1708.08559",
-        "reasonCode": "component-level-precursor",
-        "reason": "是自动驾驶 DNN 测试的重要前驱，但主要使用图像变换、神经元覆盖和 Udacity 模型，不能直接支撑当前全栈场景级 verdict；其历史位置由已纳入综述覆盖。"
+        "canonicalId": "doi:10.1109/cvci66304.2025.11348571",
+        "title": "Autonomous Driving Test Case Generation via Adaptive Importance Sampling with Failure Index Guiding",
+        "url": "https://doi.org/10.1109/cvci66304.2025.11348571",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:1802.02295",
-        "title": "DeepRoad: GAN-based Metamorphic Autonomous Driving System Testing",
-        "url": "https://arxiv.org/abs/1802.02295",
-        "reasonCode": "component-level-precursor",
-        "reason": "改进了天气变换的真实性，但仍以模型一致性为主，缺少交通交互、暴露率校准和全栈闭环后果，因此没有进入核心证据表。"
+        "canonicalId": "doi:10.1016/j.aap.2026.108454",
+        "title": "Autonomous driving accelerated evaluation method for independent/dependent variables based on importance sampling",
+        "url": "https://doi.org/10.1016/j.aap.2026.108454",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:1705.06640",
-        "title": "DeepXplore: Automated Whitebox Testing of Deep Learning Systems",
-        "url": "https://arxiv.org/abs/1705.06640",
-        "reasonCode": "general-testing-foundation",
-        "reason": "提供差分测试和神经元覆盖基础，但跨多个通用 DNN 任务，不能替代自动驾驶场景覆盖、风险度量和系统安全论证证据。"
+        "canonicalId": "doi:10.1609/aaai.v39i8.32902",
+        "title": "Language Prompt for Autonomous Driving",
+        "url": "https://doi.org/10.1609/aaai.v39i8.32902",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2607.23910",
-        "title": "SimBEV2X: A Large-Scale Dataset and Data Generation Tool for Multi-Task Vehicle-to-Everything Cooperative Perception",
-        "url": "https://arxiv.org/abs/2607.23910",
-        "reasonCode": "synthetic-v2x-boundary",
-        "reason": "258 个 CARLA 场景、超过 300 万图像和公开生成工具适合合成 V2X 数据压力测试，但没有真实无线链路、丢包、时延、定位误差、sim-to-real 或下游规划验证；作为仿真规模边界，不进入核心安全证据。"
+        "canonicalId": "doi:10.1109/ichora65333.2025.11017061",
+        "title": "Imitation Learning for Autonomous Driving: Insights from Real-World Testing",
+        "url": "https://doi.org/10.1109/ichora65333.2025.11017061",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icus61736.2024.10840092",
+        "title": "Target Importance-Based Obstacle Avoidance Path Planning for Autonomous Driving",
+        "url": "https://doi.org/10.1109/icus61736.2024.10840092",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01411",
+        "title": "NeuRAD: Neural Rendering for Autonomous Driving",
+        "url": "https://doi.org/10.1109/cvpr52733.2024.01411",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/jproc.2025.3600903",
+        "title": "Vehicle-to-Everything Cooperative Perception for Autonomous Driving",
+        "url": "https://doi.org/10.1109/jproc.2025.3600903",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/s25196033",
+        "title": "A Review of Multi-Sensor Fusion in Autonomous Driving",
+        "url": "https://doi.org/10.3390/s25196033",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3702989",
+        "title": "Bias behind the Wheel: Fairness Testing of Autonomous Driving Systems",
+        "url": "https://doi.org/10.1145/3702989",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "title": "Vision Language Models in Autonomous Driving: A Survey and Outlook",
+        "url": "https://doi.org/10.1109/tiv.2024.3402136",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-72980-5_15",
+        "title": "LingoQA: Visual Question Answering for Autonomous Driving",
+        "url": "https://doi.org/10.1007/978-3-031-72980-5_15",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2024.3435937",
+        "title": "End-to-End Autonomous Driving: Challenges and Frontiers",
+        "url": "https://doi.org/10.1109/tpami.2024.3435937",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/ojits.2026.3660686",
+        "title": "Foundation Models in Autonomous Driving: A Survey on Scenario Generation and Scenario Analysis",
+        "url": "https://doi.org/10.1109/ojits.2026.3660686",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2606.31131",
+        "title": "Scenario Generation for Testing of Autonomous Driving Systems Using Real-World Failure Records",
+        "url": "https://doi.org/10.48550/arxiv.2606.31131",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.jtte.2026.03.002",
+        "title": "A survey on driving scenario video generation for autonomous vehicle testing: Methodology, datasets, and future prospects",
+        "url": "https://doi.org/10.1016/j.jtte.2026.03.002",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.5302/j.icros.2025.24.0248",
+        "title": "Driving Scenario Generation Based on Latent Diffusion Model for Autonomous Driving Vehicles",
+        "url": "https://doi.org/10.5302/j.icros.2025.24.0248",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/futuretransp5040159",
+        "title": "Generation of Multiple Types of Driving Scenarios with Variational Autoencoders for Autonomous Driving",
+        "url": "https://doi.org/10.3390/futuretransp5040159",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3586608",
+        "title": "AuthSim: Toward Authentic and Effective Safety-Critical Scenario Generation for Autonomous Driving Tests",
+        "url": "https://doi.org/10.1109/tits.2025.3586608",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/vehicles8070155",
+        "title": "Open-World Critical Scenario Recognition and Maneuver-Level Generation for Autonomous Driving Simulation Testing",
+        "url": "https://doi.org/10.3390/vehicles8070155",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3578383",
+        "title": "LLM-Attacker: Enhancing Closed-Loop Adversarial Scenario Generation for Autonomous Driving With Large Language Models",
+        "url": "https://doi.org/10.1109/tits.2025.3578383",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-73195-2_4",
+        "title": "DriveDreamer: Towards Real-World-Drive World Models for Autonomous Driving",
+        "url": "https://doi.org/10.1007/978-3-031-73195-2_4",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.26599/jicv.2026.9210080",
+        "title": "World model-based long-tail and scenario-specific generation for autonomous driving",
+        "url": "https://doi.org/10.26599/jicv.2026.9210080",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/app15084505",
+        "title": "High-Risk Test Scenario Generation for Autonomous Vehicles at Roundabouts Using Naturalistic Driving Data",
+        "url": "https://doi.org/10.3390/app15084505",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.trc.2024.104620",
+        "title": "Evolving testing scenario generation and intelligence evaluation for automated vehicles",
+        "url": "https://doi.org/10.1016/j.trc.2024.104620",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/s25185764",
+        "title": "Full Coverage Testing Method for Automated Driving System in Logical Scenario Parameters Space",
+        "url": "https://doi.org/10.3390/s25185764",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.20998/2227-6890.2023.2.10",
+        "title": "THE RESPONSIBILITY ASSESSMENT IN THE SCENARIO OF DRIVING AI-BASED VEHICLES",
+        "url": "https://doi.org/10.20998/2227-6890.2023.2.10",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/s24175539",
+        "title": "Risk Assessment of Roundabout Scenarios in Virtual Testing Based on an Improved Driving Safety Field",
+        "url": "https://doi.org/10.3390/s24175539",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1287/orsc.2022.17237",
+        "title": "The Ideological Imperative: Corporate Social Responsibility and News Media Coverage of Firms",
+        "url": "https://doi.org/10.1287/orsc.2022.17237",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/f16050798",
+        "title": "Spatiotemporal Variations of Fractional Vegetation Coverage and Its Driving Mechanisms in Southwestern China",
+        "url": "https://doi.org/10.3390/f16050798",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1002/csr.2792",
+        "title": "Driving corporate social responsibility to be innovative: Insights from a systematic literature review",
+        "url": "https://doi.org/10.1002/csr.2792",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.54254/2755-2721/2025.kl22728",
+        "title": "Risk Prediction and Safety Driving in Automated Driving: A Review from the Perspective of Embedded Systems",
+        "url": "https://doi.org/10.54254/2755-2721/2025.kl22728",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-658-45276-6_46",
+        "title": "Test Concepts for the Safeguarding of Automated Driving",
+        "url": "https://doi.org/10.1007/978-3-658-45276-6_46",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc60802.2025.11423515",
+        "title": "Context-Aware Risk Assessment and its Application in Autonomous Driving",
+        "url": "https://doi.org/10.1109/itsc60802.2025.11423515",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2405.16914",
+        "title": "Rigorous Simulation-based Testing for Autonomous Driving Systems -- Targeting the Achilles' Heel of Four Open Autopilots",
+        "url": "https://doi.org/10.48550/arxiv.2405.16914",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/s11156-024-01383-0",
+        "title": "Media coverage of corporate social irresponsibility and firm equity risk",
+        "url": "https://doi.org/10.1007/s11156-024-01383-0",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.15116",
+        "title": "DriveCtrl: Conditioned Sim-to-Real Driving Video Generation",
+        "url": "https://doi.org/10.48550/arxiv.2605.15116",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2403.19918",
+        "title": "CtRL-Sim: Reactive and Controllable Driving Agents with Offline Reinforcement Learning",
+        "url": "https://doi.org/10.48550/arxiv.2403.19918",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2602.06159",
+        "title": "Driving with DINO: Vision Foundation Features as a Unified Bridge for Sim-to-Real Generation in Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2602.06159",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-1771",
+        "title": "SceneDiffuser: Efficient and Controllable Driving Simulation Initialization and Rollout",
+        "url": "https://doi.org/10.52202/079017-1771",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.31219/osf.io/csf7b",
+        "title": "Achieving Realism in Traffic Simulations: Performance of a Cognitive Behavior Model on the Waymo Open Sim Agent Challenge",
+        "url": "https://doi.org/10.31219/osf.io/csf7b",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.54660/.ijfmr.2024.5.1.33-39",
+        "title": "Sim-to-Real Transfer in Robotics: Addressing the Gap between Simulation and Real-World Performance",
+        "url": "https://doi.org/10.54660/.ijfmr.2024.5.1.33-39",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.2139/ssrn.5854363",
+        "title": "Representative Driving Cycle Generation for EMS Simulation-to-Reality Consistency: A Structured SAC Approach",
+        "url": "https://doi.org/10.2139/ssrn.5854363",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2606.16278",
+        "title": "RealityBridge: Bridging Editable 3D Gaussian Splatting Driving Simulations and Real-World Videos",
+        "url": "https://doi.org/10.48550/arxiv.2606.16278",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icsrs63046.2024.10927458",
+        "title": "Contextualizing the Sim-to-Real Gap for Hardware-in-the-Loop Testing of Highly Automated Driving Functions",
+        "url": "https://doi.org/10.1109/icsrs63046.2024.10927458",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/cvprw63382.2024.00449",
+        "title": "Are NeRFs ready for autonomous driving? Towards closing the real-to-simulation gap",
+        "url": "https://doi.org/10.1109/cvprw63382.2024.00449",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icra57147.2024.10611018",
+        "title": "Driving with LLMs: Fusing Object-Level Vector Modality for Explainable Autonomous Driving",
+        "url": "https://doi.org/10.1109/icra57147.2024.10611018",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2606.07170",
+        "title": "Test-Time Trajectory Optimization for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2606.07170",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3474469",
+        "title": "Explainable AI for Safe and Trustworthy Autonomous Driving: A Systematic Review",
+        "url": "https://doi.org/10.1109/tits.2024.3474469",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2602.12563",
+        "title": "The Constant Eye: Benchmarking and Bridging Appearance Robustness in Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2602.12563",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.aap.2025.108139",
+        "title": "Learnable Operational Design Condition monitor for failure prediction in autonomous driving",
+        "url": "https://doi.org/10.1016/j.aap.2025.108139",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/s24103088",
+        "title": "Vehicle Detection Algorithms for Autonomous Driving: A Review",
+        "url": "https://doi.org/10.3390/s24103088",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3439557",
+        "title": "Robustness-Aware 3D Object Detection in Autonomous Driving: A Review and Outlook",
+        "url": "https://doi.org/10.1109/tits.2024.3439557",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/ase63991.2025.00143",
+        "title": "ADPerf: Investigating and Testing Performance in Autonomous Driving Systems",
+        "url": "https://doi.org/10.1109/ase63991.2025.00143",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.20944/preprints202508.2130.v1",
+        "title": "Generating Test Scenarios for Autonomous Driving: A Taxonomy and Survey",
+        "url": "https://doi.org/10.20944/preprints202508.2130.v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2503.11650",
+        "title": "Centaur: Robust End-to-End Autonomous Driving with Test-Time Training",
+        "url": "https://doi.org/10.48550/arxiv.2503.11650",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       }
     ],
     "sourceLimitations": [
@@ -1342,39 +2400,48 @@
         "endpoint": "content/papers",
         "limit": 210,
         "acceptedCount": 10,
-        "note": "2026-11-06 对当前原始Markdown执行rg -l -i，共210个文件命中；按方向标签与revisionOf归并得88个候选，其余122个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving testing fuzzing self-play interactive dataset adverse weather deadline regression",
+        "executedAt": "2026-11-06",
+        "query": "scenario testing automated driving SOTIF",
         "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 50,
-        "acceptedCount": 1,
-        "note": "ARIS arxiv_fetch.py 与 arXiv 一手摘要页用于候选发现、版本日期和预印本状态核验；正式出版状态不由 arXiv 自述升级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "limit": 12,
+        "acceptedCount": 4,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving testing fuzzing self-play interactive dataset adverse weather deadline regression official proceedings journal DOI",
-        "endpoint": "https://www.google.com/search",
-        "limit": 50,
-        "acceptedCount": 16,
-        "note": "逐项回到 DOI、出版社、正式会议或期刊页面核对标题、作者、年份、venue 与出版状态；正式页为主 URL，并保留可用 arXiv 入口。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "executedAt": "2026-11-06",
+        "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "endpoint": "https://doi.org/10.1145/3579642",
+        "limit": 17,
+        "acceptedCount": 17,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "success",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1145/3579642",
-        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/",
-        "limit": 1,
+        "status": "limited",
+        "executedAt": "2026-11-06",
+        "query": "scenario testing automated driving SOTIF",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "semantic-scholar",
           "status": "success",
@@ -1384,17 +2451,26 @@
           "limit": 20,
           "acceptedCount": 0,
           "note": "用于候选发现和书目交叉核对；本轮没有以聚合器记录作为最终论据或出版状态依据。"
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1145/3579642",
-        "endpoint": "https://api.openalex.org/works/",
-        "limit": 1,
+        "executedAt": "2026-11-06",
+        "query": "scenario testing automated driving SOTIF",
+        "endpoint": "https://api.openalex.org/works",
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "openalex",
           "status": "success",
@@ -1404,996 +2480,1464 @@
           "limit": 20,
           "acceptedCount": 0,
           "note": "用于 DOI、年份和来源交叉核对；宽泛返回经范围筛选，最终支持与限制均回到一手论文或正式页面。"
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving testing fuzzing self-play interactive dataset adverse weather deadline regression official project code dataset standard",
-        "endpoint": "https://www.google.com/search",
-        "limit": 50,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "endpoint": "https://www.iso.org/standard/77490.html",
+        "limit": 3,
         "acceptedCount": 3,
-        "note": "核对标准机构、作者项目页、代码和数据入口；资产存在只证明可访问性，不用于升级同行评审状态或现实安全证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
       }
     ],
     "candidateLedger": [
       {
-        "canonicalId": "iso:21448:2022",
-        "disposition": "included",
+        "canonicalId": "arxiv:2403.19918",
         "queryFamilies": [
-          "真实系统、闭环与回归测试"
+          "仿真真实性与 sim-to-real"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "iso:34502:2022",
-        "disposition": "included",
-        "queryFamilies": [
-          "真实系统、闭环与回归测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "ul:4600:edition-3",
-        "disposition": "included",
-        "queryFamilies": [
-          "真实系统、闭环与回归测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1145/3579642",
-        "disposition": "included",
+        "canonicalId": "arxiv:2405.16914",
         "queryFamilies": [
           "覆盖率、风险度量与责任归因"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/iv47402.2020.9304823",
-        "disposition": "included",
-        "queryFamilies": [
-          "真实系统、闭环与回归测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "pmlr:v78:dosovitskiy17a",
-        "disposition": "included",
-        "queryFamilies": [
-          "仿真真实性与 sim-to-real"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/ivs.2018.8500400",
-        "disposition": "included",
-        "queryFamilies": [
-          "搜索式与重要性采样失效发现"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/tits.2016.2582208",
-        "disposition": "included",
-        "queryFamilies": [
-          "搜索式与重要性采样失效发现"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1038/s41467-021-21007-8",
-        "disposition": "included",
-        "queryFamilies": [
-          "搜索式与重要性采样失效发现"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "ecva:eccv2024:chang-safe-sim",
-        "disposition": "included",
-        "queryFamilies": [
-          "生成式场景和世界模型测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1145/3548606.3560558",
-        "disposition": "included",
-        "queryFamilies": [
-          "搜索式与重要性采样失效发现"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "cvf:cvpr2021:wang-advsim",
-        "disposition": "included",
-        "queryFamilies": [
-          "生成式场景和世界模型测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.52202/079017-0025",
-        "disposition": "included",
-        "queryFamilies": [
-          "真实系统、闭环与回归测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.13751",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.18059",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.18106",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.06423",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/s10664-024-10458-4",
-        "disposition": "included",
-        "queryFamilies": [
-          "仿真真实性与 sim-to-real"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/s11831-022-09788-7",
-        "disposition": "included",
-        "queryFamilies": [
-          "覆盖率、风险度量与责任归因"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/iavvc63304.2024.10786405",
-        "disposition": "included",
-        "queryFamilies": [
-          "覆盖率、风险度量与责任归因"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.04953",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.07196",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1016/j.aap.2021.106454",
-        "disposition": "included",
-        "queryFamilies": [
-          "仿真真实性与 sim-to-real"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.24577",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.26005",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1038/s41597-026-07929-2",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.23537",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.24692",
-        "disposition": "included",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.27085",
-        "disposition": "included",
-        "queryFamilies": [
-          "仿真真实性与 sim-to-real"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1016/j.tre.2026.105110",
-        "disposition": "included",
-        "queryFamilies": [
-          "生成式场景和世界模型测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1708.08559",
         "disposition": "excluded",
-        "queryFamilies": [
-          "搜索式与重要性采样失效发现"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1802.02295",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "生成式场景和世界模型测试"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1705.06640",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "覆盖率、风险度量与责任归因"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.23910",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "仿真真实性与 sim-to-real"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.26113",
-        "disposition": "deferred",
-        "localPaperId": "anyscene-controllable-driving-scene-generation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26533",
-        "disposition": "deferred",
-        "localPaperId": "barrier-conformal-clearance-certification",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.24282",
-        "disposition": "deferred",
-        "localPaperId": "care-adaptive-lidar-first-sightings",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.07094",
-        "disposition": "deferred",
-        "localPaperId": "cascade-causal-driving-representation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26860",
-        "disposition": "deferred",
-        "localPaperId": "cav-platoon-joining-rl",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.19380",
-        "disposition": "deferred",
-        "localPaperId": "caviar-accident-reasoning",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.22549",
-        "disposition": "deferred",
-        "localPaperId": "cl4ad-curriculum-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.17284",
-        "disposition": "deferred",
-        "localPaperId": "clap-v2x-prompt-optimization",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.19194",
-        "disposition": "deferred",
-        "localPaperId": "cognitive-dual-process-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.01382",
-        "disposition": "deferred",
-        "localPaperId": "commonroad-game-hitl-simulation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.31219",
-        "disposition": "deferred",
-        "localPaperId": "cooperscene-cv2x-benchmark",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.11601",
-        "disposition": "deferred",
-        "localPaperId": "counterfactual-driving-world-models",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.13719",
-        "disposition": "deferred",
-        "localPaperId": "coverage-aware-active-evaluation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.16938",
-        "disposition": "deferred",
-        "localPaperId": "cvaa-driving-interpretability",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.01761",
-        "disposition": "deferred",
-        "localPaperId": "decouplegs-interactive-driving-testing",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.13806",
-        "disposition": "deferred",
-        "localPaperId": "deployed-vil-cooperative-perception",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.21993",
-        "disposition": "deferred",
-        "localPaperId": "driving-videos-to-simulatable-scenarios",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26074",
-        "disposition": "deferred",
-        "localPaperId": "gating-before-commitment-intent-divergence",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.16336",
-        "disposition": "deferred",
-        "localPaperId": "illusion-of-depth-stereo-attack",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.14203",
-        "disposition": "deferred",
-        "localPaperId": "instant-nurec-feedforward-3dgs",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.10232",
-        "disposition": "deferred",
-        "localPaperId": "intention-sharing-delay-resilience",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.24452",
-        "disposition": "deferred",
-        "localPaperId": "lidar-hallu-spatiotemporal-benchmark",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.02074",
-        "disposition": "deferred",
-        "localPaperId": "lidar-robustness-3d-detection",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.14005",
-        "disposition": "deferred",
-        "localPaperId": "m4world-multimodal-driving-world",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2409.07321",
-        "disposition": "deferred",
-        "localPaperId": "maat-e2e-adversarial-training",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.10904",
-        "disposition": "deferred",
-        "localPaperId": "mdrive-closed-loop-cooperative-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.07370",
-        "disposition": "deferred",
-        "localPaperId": "morph-u-resilient-v2x-planning",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.03159",
-        "disposition": "deferred",
-        "localPaperId": "omnidreams-closed-loop-world-model",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.20756",
-        "disposition": "deferred",
-        "localPaperId": "opted-render-free-teacher",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.07186",
-        "disposition": "deferred",
-        "localPaperId": "perception-informed-sil-simulation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.21032",
-        "disposition": "deferred",
-        "localPaperId": "physically-consistent-4d-driving-reconstruction",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.08965",
-        "disposition": "deferred",
-        "localPaperId": "plannerforge-scenario-testing",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.21509",
-        "disposition": "deferred",
-        "localPaperId": "policy-stitching-e2e-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26669",
-        "disposition": "deferred",
-        "localPaperId": "public-road-assisted-lane-change-testing",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.13591",
-        "disposition": "deferred",
-        "localPaperId": "real2sim-physics-4dgs",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.03491",
-        "disposition": "deferred",
-        "localPaperId": "realtime-adversarial-autonomous-systems",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.29114",
-        "disposition": "deferred",
-        "localPaperId": "reasonbreak-vla-vulnerability-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.19701",
-        "disposition": "deferred",
-        "localPaperId": "safegen-critical-video-diffusion",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2603.04071",
-        "disposition": "deferred",
-        "localPaperId": "safer-safety-scenario",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.19641",
-        "disposition": "deferred",
-        "localPaperId": "scaling-self-play-e2e-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.19425",
-        "disposition": "deferred",
-        "localPaperId": "scape-policy-evaluation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2509.17253",
-        "disposition": "deferred",
-        "localPaperId": "seeing-is-deceiving-mirror-lidar-attack",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.07844",
-        "disposition": "deferred",
-        "localPaperId": "shift-drift-planning-benchmark",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.16943",
-        "disposition": "deferred",
-        "localPaperId": "sind2-sotif-validation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.24094",
-        "disposition": "deferred",
-        "localPaperId": "siren-emergency-interaction-benchmark",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.25142",
-        "disposition": "deferred",
-        "localPaperId": "skydrive-aerial-city-adaptation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.14024",
-        "disposition": "deferred",
-        "localPaperId": "ssp-syn2sim2phy-vla-evaluation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2505.02148",
-        "disposition": "deferred",
-        "localPaperId": "stu-road-anomaly-dataset",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.13028",
-        "disposition": "deferred",
-        "localPaperId": "terrazero-self-play-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.29097",
-        "disposition": "deferred",
-        "localPaperId": "trafficalign-traffic-scenario-generation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.04453",
-        "disposition": "deferred",
-        "localPaperId": "twinir-online-map-attack",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.12743",
-        "disposition": "deferred",
-        "localPaperId": "view-induced-trajectory-manipulation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.02462",
-        "disposition": "deferred",
-        "localPaperId": "vips-cooperative-planning-benchmark",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2405.17398",
-        "disposition": "deferred",
-        "localPaperId": "vista-driving-world-model",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "vista-driving-world-model",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2409.07321",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "maat-e2e-adversarial-training",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.11650",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2505.02148",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "stu-road-anomaly-dataset",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2509.17253",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "seeing-is-deceiving-mirror-lidar-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2602.06159",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2602.12563",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2603.04071",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "safer-safety-scenario",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.03491",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "realtime-adversarial-autonomous-systems",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07370",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "morph-u-resilient-v2x-planning",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10904",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "mdrive-closed-loop-cooperative-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.12743",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "view-induced-trajectory-manipulation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.13591",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "real2sim-physics-4dgs",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.13751",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.15116",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.17284",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "clap-v2x-prompt-optimization",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.18059",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.21032",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "physically-consistent-4d-driving-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.26113",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "anyscene-controllable-driving-scene-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.29114",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "reasonbreak-vla-vulnerability-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.03159",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "omnidreams-closed-loop-world-model",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.06423",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.07170",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.07186",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "perception-informed-sil-simulation",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2606.12706",
-        "disposition": "deferred",
-        "localPaperId": "vladrivebench-cot-action-vla",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "vladrivebench-cot-action-vla",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.16278",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.19641",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "scaling-self-play-e2e-driving",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2606.19836",
-        "disposition": "deferred",
-        "localPaperId": "world-engine-post-training-driving",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "world-engine-post-training-driving",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2609.34440",
-        "disposition": "deferred",
-        "localPaperId": "metric-validity-driving-execution",
+        "canonicalId": "arxiv:2606.21509",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "policy-stitching-e2e-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.21993",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "driving-videos-to-simulatable-scenarios",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.29097",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "trafficalign-traffic-scenario-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.31131",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.31219",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cooperscene-cv2x-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.01382",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "commonroad-game-hitl-simulation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.02074",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "lidar-robustness-3d-detection",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.04953",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07196",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07844",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "shift-drift-planning-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.13028",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证",
+          "仿真真实性与 sim-to-real"
+        ],
+        "localPaperId": "terrazero-self-play-driving",
+        "disposition": "deferred",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.13806",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "deployed-vil-cooperative-perception",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.14005",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "m4world-multimodal-driving-world",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.14203",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "instant-nurec-feedforward-3dgs",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.16938",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cvaa-driving-interpretability",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.16943",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "sind2-sotif-validation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.18106",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.19194",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cognitive-dual-process-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.19701",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "safegen-critical-video-diffusion",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.23537",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.24577",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.24692",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.26005",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.27085",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01761",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "decouplegs-interactive-driving-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.04453",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "twinir-online-map-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.11601",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "counterfactual-driving-world-models",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.13719",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "coverage-aware-active-evaluation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.14024",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "ssp-syn2sim2phy-vla-evaluation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.19380",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "caviar-accident-reasoning",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.19425",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证",
+          "仿真真实性与 sim-to-real",
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2608.22549",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cl4ad-curriculum-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.24094",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "siren-emergency-interaction-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.24282",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "care-adaptive-lidar-first-sightings",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.25142",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "skydrive-aerial-city-adaptation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26074",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "gating-before-commitment-intent-divergence",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26533",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "barrier-conformal-clearance-certification",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26669",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "public-road-assisted-lane-change-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26860",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cav-platoon-joining-rl",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.02462",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "vips-cooperative-planning-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.07094",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cascade-causal-driving-representation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.08965",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "plannerforge-scenario-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.10232",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "intention-sharing-delay-resilience",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.16336",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "illusion-of-depth-stereo-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.20756",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "opted-render-free-teacher",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.24452",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "lidar-hallu-spatiotemporal-benchmark",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.27296",
-        "disposition": "deferred",
-        "localPaperId": "teach-to-crash-student-teacher",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "teach-to-crash-student-teacher",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.34440",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "metric-validity-driving-execution",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.38463",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
         "localPaperId": "traffic-sign-bench-rule-compliance",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.06469",
         "disposition": "deferred",
-        "localPaperId": "odyssey-long-horizon-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.06121",
-        "disposition": "deferred",
-        "localPaperId": "radar2plan-open-loop-radar-planning",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.02874",
-        "disposition": "deferred",
-        "localPaperId": "scenefactory-3d-physical-counterfactuals",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "scenefactory-3d-physical-counterfactuals",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.21741",
-        "disposition": "deferred",
-        "localPaperId": "comfortably-stuck-bench2drive-protocol",
+        "canonicalId": "arxiv:2610.06121",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "radar2plan-open-loop-radar-planning",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.06469",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "odyssey-long-horizon-driving",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.16634",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
         "localPaperId": "language2drive-paired-instruction-evaluation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.26390",
-        "disposition": "deferred",
-        "localPaperId": "cartender-counterfactual-language-driving",
+        "canonicalId": "arxiv:2610.21741",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.30979",
+        "localPaperId": "comfortably-stuck-bench2drive-protocol",
         "disposition": "deferred",
-        "localPaperId": "last-v2x-communication-failure-testing",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.23537",
-        "disposition": "deferred",
-        "localPaperId": "panobench-panoptic-occupancy-benchmark",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "panobench-panoptic-occupancy-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.26390",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cartender-counterfactual-language-driving",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.28184",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
         "localPaperId": "perception-action-binding-gap",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.37403",
-        "disposition": "deferred",
-        "localPaperId": "aurasim-dynamic-fmcw-radar-simulation",
+        "canonicalId": "arxiv:2610.30979",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.35110",
+        "localPaperId": "last-v2x-communication-failure-testing",
         "disposition": "deferred",
-        "localPaperId": "awcr-weather-context-cooperative-repair",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.32612",
-        "disposition": "deferred",
-        "localPaperId": "driveoss-open-set-anomaly-benchmark",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "driveoss-open-set-anomaly-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.35110",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "awcr-weather-context-cooperative-repair",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.35448",
-        "disposition": "deferred",
-        "localPaperId": "planner-surrogate-safety-critical-training",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "planner-surrogate-safety-critical-training",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.37299",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
         "localPaperId": "srp-structured-risk-anticipation",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2611.06229",
-        "disposition": "deferred",
-        "localPaperId": "bug2scenario-root-cause-regression",
+        "canonicalId": "arxiv:2610.37403",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "aurasim-dynamic-fmcw-radar-simulation",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2611.06204",
-        "disposition": "deferred",
-        "localPaperId": "cosafe-cooperative-runtime-assurance",
+        "canonicalId": "arxiv:2610.38628",
         "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
+          "仿真真实性与 sim-to-real"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2611.06453",
-        "disposition": "deferred",
-        "localPaperId": "failure-boundary-profiles-driving",
-        "queryFamilies": [
-          "场景式测试与 SOTIF 安全论证"
-        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2611.02648",
-        "disposition": "deferred",
-        "localPaperId": "reinseg-bounded-multimodal-anomaly",
         "queryFamilies": [
           "场景式测试与 SOTIF 安全论证"
         ],
+        "localPaperId": "reinseg-bounded-multimodal-anomaly",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2611.06204",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "localPaperId": "cosafe-cooperative-runtime-assurance",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2611.06229",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证",
+          "真实系统、闭环与回归测试",
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2611.06453",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证",
+          "真实系统、闭环与回归测试",
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "cvf:cvpr2021:wang-advsim",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1002/csr.2792",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-72980-5_15",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现",
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-73195-2_4",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-658-45276-6_46",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10664-024-10458-4",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s11156-024-01383-0",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s11831-022-09788-7",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.aap.2021.106454",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.aap.2025.108139",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.aap.2026.108454",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.jtte.2026.03.002",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.trc.2024.104620",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.tre.2026.105110",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1038/s41467-021-21007-8",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1038/s41597-026-07929-2",
+        "queryFamilies": [
+          "场景式测试与 SOTIF 安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/ase63991.2025.00143",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvci66304.2025.11348571",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01411",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvprw63382.2024.00449",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iavvc63304.2024.10786405",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/ichora65333.2025.11017061",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icra57147.2024.10611018",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icsrs63046.2024.10927458",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icus61736.2024.10840092",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc60802.2025.11423515",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iv47402.2020.9304823",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/ivs.2018.8500400",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/jproc.2025.3600903",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/ojits.2026.3660686",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2016.2582208",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3439557",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3474469",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3578383",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3586608",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2024.3435937",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3548606.3560558",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3579642",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3702989",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1287/orsc.2022.17237",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v39i8.32902",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.20944/preprints202508.2130.v1",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.20998/2227-6890.2023.2.10",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.2139/ssrn.5854363",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.26599/jicv.2026.9210080",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.31219/osf.io/csf7b",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/app15084505",
+        "queryFamilies": [
+          "生成式场景和世界模型测试",
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.3390/f16050798",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/futuretransp5040159",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s24103088",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s24175539",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s25185764",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s25196033",
+        "queryFamilies": [
+          "搜索式与重要性采样失效发现",
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.3390/vehicles8070155",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-0025",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-1771",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.5302/j.icros.2025.24.0248",
+        "queryFamilies": [
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.54254/2755-2721/2025.kl22728",
+        "queryFamilies": [
+          "覆盖率、风险度量与责任归因"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.54660/.ijfmr.2024.5.1.33-39",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "ecva:eccv2024:chang-safe-sim",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real",
+          "生成式场景和世界模型测试"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "iso:21448:2022",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "iso:34502:2022",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "pmlr:v78:dosovitskiy17a",
+        "queryFamilies": [
+          "仿真真实性与 sim-to-real"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "ul:4600:edition-3",
+        "queryFamilies": [
+          "真实系统、闭环与回归测试"
+        ],
+        "disposition": "included",
         "occurrences": 1
       }
     ],
-    "refreshMode": "incremental-local-corpus",
+    "refreshMode": "primary-source-and-literature-refresh",
     "sourceRevalidation": {
-      "checkedAt": "2026-09-22",
-      "referenceCount": 30,
-      "priorCoreReviewedAt": "2026-08-01",
-      "manifestPath": "docs/research-updates/2026-09-22/review-source-manifest.json",
-      "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
-      "claimRecordsPath": "docs/research-updates/2026-09-22/review-source-claims.json",
-      "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+      "checkedAt": "2026-11-06",
+      "scope": "逐项核对当前保留的书目与论断；阅读深度按引用记录，公开范围足以支撑的论断不要求付费标准全文。并非声明所有论文逐字全文阅读。",
+      "referenceIds": [
+        "iso-sotif-2022",
+        "iso-scenario-testing-2022",
+        "ul-4600-ed3",
+        "testing-survey-2023",
+        "scenario-testing-considerations-2020",
+        "carla-2017",
+        "adaptive-stress-testing-2018",
+        "accelerated-evaluation-2017",
+        "nade-2021",
+        "safe-sim-2024",
+        "drivefuzz-2022",
+        "advsim-2021",
+        "bench2drive-2024",
+        "cars-responsibility",
+        "bench2drive-robust",
+        "commercial-av-failure",
+        "riskflow",
+        "digital-siblings-2024",
+        "criticality-metrics-2022",
+        "scenario-coverage-2024",
+        "real-world-perturbation",
+        "world-model-admissibility",
+        "waymo-fatal-crash-reconstruction",
+        "rl-fuzzing-2026",
+        "pictura-2026",
+        "iedd-2026",
+        "obsdrivebench-2026",
+        "denial-deadline-2026",
+        "lane-changing-public-road-2026",
+        "learning-from-risk-2026",
+        "bug2scenario-2026",
+        "failure-boundary-profiles-2026",
+        "reality-gap-survey-2026",
+        "scape-2026"
+      ],
+      "authorEvidence": "docs/center-updates/2026-11-06/authoring/embodied/existing-reference-semantic-revalidation.json",
+      "newReferenceEvidence": "docs/center-updates/2026-11-06/authoring/embodied/new-references.json",
+      "publicScopeClosure": "docs/center-updates/2026-11-06/authoring/embodied/parent-public-scope-closure.json",
+      "independentApproval": "pending"
     },
     "metadataCorroboration": {
       "checkedAt": "2026-09-22",
@@ -2401,8 +3945,20 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-11-06",
-    "localRefreshNote": "2026-11-06 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。"
+    "currentRefreshArtifacts": {
+      "retrieval": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+      "authoring": "docs/center-updates/2026-11-06/authoring/embodied/",
+      "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "discoveryAliasMerges": [
+      {
+        "observedId": "doi:10.1007/978-3-031-72664-4_14",
+        "canonicalId": "ecva:eccv2024:chang-safe-sim",
+        "title": "SAFE-SIM: Safety-Critical Closed-Loop Traffic Simulation with Diffusion-Controllable Adversaries",
+        "url": "https://doi.org/10.1007/978-3-031-72664-4_14",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      }
+    ]
   },
   "lastUpdated": "2026-08-01"
 }

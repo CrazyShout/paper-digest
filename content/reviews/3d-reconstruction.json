@@ -2,10 +2,10 @@
   "version": 3,
   "id": "3d-reconstruction",
   "title": "自动驾驶三维重建：4D 高斯、传感器渲染与闭环评测",
-  "subtitle": "区分四类高斯时间机制，比较前馈资产构建与逐场景优化，并按实际用途检查证据。",
-  "abstract": "动态高斯并不只有一种时间表示：持久基元追踪、规范空间形变、原生时空高斯和参数化运动分别约束对应关系、形变、时间支持与外观。驾驶方法在这些表示上加入对象场景图、传感器模型或前馈网络。近期 Drive2Gauss 从生成的 RGB、深度和流构建场景，SplatFlux 直接解码视频潜变量；两者都缩短资产构建链路，但评测条件和用途不同。本综述把表示机制、输入条件与优化方式分开，再检查视图、几何、传感器、感知和闭环证据。时间插值、可编辑资产和可运行碰撞仿真各有价值，也各自需要额外证据才能支撑现实驾驶测试。",
-  "reviewedAt": "2026-11-01",
-  "searchWindow": "保留既有历史检索记录；2026-11-01 重开 24 条既有引用的一手元数据、摘要及相关正文，专题补查 4D Gaussian 基础与近期前馈方法。SafeComp 全文及部分正式 PDF 受限，具体阅读深度见来源记录；本轮不是对全部神经渲染文献的穷尽重检。",
+  "subtitle": "从时间表示和传感器渲染，推进到持续更新、遮挡恢复与可执行场景。",
+  "abstract": "动态高斯的时间机制、对象组织和优化流程分别决定场景能表达什么、怎样编辑以及多久能更新。本综述比较持久基元、规范空间形变、原生时空高斯与参数化运动，再连接驾驶场景图、多传感器渲染和前馈资产构建。近期 Multi4D 用竞争分配协调持久几何与瞬态外观，PersistGS 用刚体仿真补足遮挡期轨迹，在线 GS-SLAM 则研究有限更新预算。Cam2Sim 提供了从现实日志到可运行 CARLA/GS 场景的工具链。研究重点正在从单次渲染质量扩展到可更新状态：如何在固定预算下保留对应、吸收新观测，并让几何和传感器误差对下游任务可解释。",
+  "reviewedAt": "2026-11-06",
+  "searchWindow": "保留既有历史检索记录；2026-11-01 重开 24 条既有引用的一手元数据、摘要及相关正文，专题补查 4D Gaussian 基础与近期前馈方法。SafeComp 全文及部分正式 PDF 受限，具体阅读深度见来源记录；本轮不是对全部神经渲染文献的穷尽重检。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
   "researchQuestions": [
     "动态高斯的时间变量究竟控制形变、持久对应、可见区间还是原生时空协方差，这些差别怎样影响重建和编辑？",
     "怎样分别评价视觉、几何、传感器、感知和闭环 verdict，说明一份重建资产适合哪些用途？",
@@ -35,7 +35,7 @@
       "kind": "evolution",
       "title": "从持久动态基元到前馈资产构建",
       "thesis": "时间表示、驾驶场景组织和构建速度沿着不同轴发展。",
-      "body": "Dynamic 3D Gaussians 先固定基元颜色、尺寸和不透明度，再逐帧优化位置与旋转，用局部刚性等约束维持对应。随后两篇同名近似的 4DGS 采用了不同设计：Wu 等人的 CVPR 2024 工作由规范空间高斯和形变网络生成各时刻状态；Yang 等人的 ICLR 2024 工作直接拟合四维联合高斯。Spacetime Gaussians 则显式参数化时间不透明度、运动和旋转，并用神经特征表示外观。它们分别提供追踪、形变、联合时空表示与时间支持的参照，不能合并为一个方法。\n\n驾驶场景还有对象组织这一层。Neural Scene Graphs 用背景、对象和跟踪变换实现可重排场景；DrivingGaussian 与 Street Gaussians 将对象结构接入显式高斯；OmniRe 扩展到车辆、行人和骑行者。DeSiRe-GS 通过运动先验和几何约束减少对外部三维框的依赖。对象场景图可与不同时间表示组合，主要解决“哪些基元属于谁、怎样一起编辑”，而不是替代时间建模。\n\n前馈化在 2025 年的 DrivingForward 与 STORM 中已经出现：前者联合预测位姿、深度和高斯，后者利用速度和跨帧聚合恢复动态场景。DGGT 进一步把相机参数作为输出，Instant NuRec 构建分层驾驶资产并检查有限策略集合的闭环排序。2026 年 10 月的 Drive2Gauss 用联合生成的 RGB、深度和流构建稀疏高斯查询；SplatFlux 从视频潜变量直接解码，聚合静态基元并插值动态运动。前者的关键是多模态生成与几何对应，后者的关键是统一潜变量解码与动静分解；二者共享前馈目标，输入和证据并不相同。",
+      "body": "Dynamic 3D Gaussians 先固定基元颜色、尺寸和不透明度，再逐帧优化位置与旋转，用局部刚性等约束维持对应。随后两篇同名近似的 4DGS 采用了不同设计：Wu 等人的 CVPR 2024 工作由规范空间高斯和形变网络生成各时刻状态；Yang 等人的 ICLR 2024 工作直接拟合四维联合高斯。Spacetime Gaussians 则显式参数化时间不透明度、运动和旋转，并用神经特征表示外观。它们分别提供追踪、形变、联合时空表示与时间支持的参照，不能合并为一个方法。\n\n驾驶场景还有对象组织这一层。Neural Scene Graphs 用背景、对象和跟踪变换实现可重排场景；DrivingGaussian 与 Street Gaussians 将对象结构接入显式高斯；OmniRe 扩展到车辆、行人和骑行者。DeSiRe-GS 通过运动先验和几何约束减少对外部三维框的依赖。对象场景图可与不同时间表示组合，主要解决“哪些基元属于谁、怎样一起编辑”，而不是替代时间建模。\n\n前馈化在 2025 年的 DrivingForward 与 STORM 中已经出现：前者联合预测位姿、深度和高斯，后者利用速度和跨帧聚合恢复动态场景。DGGT 进一步把相机参数作为输出，Instant NuRec 构建分层驾驶资产并检查有限策略集合的闭环排序。2026 年 10 月的 Drive2Gauss 用联合生成的 RGB、深度和流构建稀疏高斯查询；SplatFlux 从视频潜变量直接解码，聚合静态基元并插值动态运动。前者的关键是多模态生成与几何对应，后者的关键是统一潜变量解码与动静分解；二者共享前馈目标，输入和证据并不相同。\n\n另一条进展是把时间一致性和系统更新作为直接对象。Multi4D 让静态结构、持久动态几何与瞬态外观竞争解释残差，避免用一种基元承担所有变化；PersistGS 则通过对象碰撞网格和可微刚体仿真，在完全遮挡期间继续推进位姿。Geometry-Aware Online Mapping 将初始化和增密改到在线有限预算的建图线程，DGOMapping 进一步处理异步多主体的评分交换与记忆调整。这些工作说明，继续研究高斯生命周期有明确基础，新的方案需要在观测关联、更新决策或跨主体一致性上给出机制差分。",
       "referenceIds": [
         "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
@@ -51,7 +51,12 @@
         "dggt-2026",
         "instant-nurec-2026",
         "drive2gauss-2026",
-        "splatflux-2026"
+        "splatflux-2026",
+        "multi4d-2026",
+        "persistgs-2026",
+        "geometry-aware-online-gs-2026",
+        "dgomapping-2026",
+        "representation-centric-4d-survey-2026"
       ]
     },
     {
@@ -59,7 +64,7 @@
       "kind": "taxonomy",
       "title": "高斯的时间变量到底控制什么",
       "thesis": "把时间机制与优化方式、传感器模型和资产组织分开比较。",
-      "body": "| 时间机制 | 代表工作 | 变化量与约束 | 需要单独检查的能力 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 位置与旋转逐帧变化，颜色、尺寸和不透明度固定；局部运动约束保持对应 | 新出现内容、长期遮挡与身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型 MLP 预测位置、旋转和尺度变化 | 形变的几何合理性、快速运动和轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | 联合建模 xyz-t 均值与协方差，在目标时刻条件化后渲染 | 时间支持、空间与时间耦合及不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、显式运动和旋转、随视角及时间变化的特征 | 短暂内容与复杂运动的拟合范围 |\n\n原生四维高斯可以直观写成 $G(x,t)=G(t)G(x\\mid t)$：$G(t)$ 控制该时刻的贡献，$G(x\\mid t)$ 给出用于投影的三维分布。它与“用网络预测一个 3D 高斯的位移”不是同一种参数化。这里的高斯权重服务于渲染；若要输出 occupied、free、unknown 或对象存在概率，还需要相应的状态定义、监督与校准。\n\n优化方式是另一条轴。逐场景优化可反复利用同一日志；前馈网络把统计先验放入训练阶段。Drive2Gauss 的前馈部分是高斯重建，前面的未来视频生成仍需单独计时。SplatFlux 虽一次生成可查询的场景，当前仍为离线方法。对象场景图则规定背景与参与者如何组合，并不由上述四类时间机制唯一决定。\n\n传感器模型同样不能省略。NeuRAD 建模滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接入高斯表示；RadarSplat 进一步处理雷达噪声和多径。Real2Sim 另接 MPM 求解器，使高斯资产能够执行碰撞模拟；这项物理能力来自新增的动力学和材料参数，不来自“4DGS”这个表示名称。",
+      "body": "| 时间机制 | 代表工作 | 变化量与约束 | 需要单独检查的能力 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 位置与旋转逐帧变化，颜色、尺寸和不透明度固定；局部运动约束保持对应 | 新出现内容、长期遮挡与身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型 MLP 预测位置、旋转和尺度变化 | 形变的几何合理性、快速运动和轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | 联合建模 xyz-t 均值与协方差，在目标时刻条件化后渲染 | 时间支持、空间与时间耦合及不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、显式运动和旋转、随视角及时间变化的特征 | 短暂内容与复杂运动的拟合范围 |\n\n原生四维高斯可以直观写成 $G(x,t)=G(t)G(x\\mid t)$：$G(t)$ 控制该时刻的贡献，$G(x\\mid t)$ 给出用于投影的三维分布。它与“用网络预测一个 3D 高斯的位移”不是同一种参数化。这里的高斯权重服务于渲染；若要输出 occupied、free、unknown 或对象存在概率，还需要相应的状态定义、监督与校准。\n\n优化方式是另一条轴。逐场景优化可反复利用同一日志；前馈网络把统计先验放入训练阶段。Drive2Gauss 的前馈部分是高斯重建，前面的未来视频生成仍需单独计时。SplatFlux 虽一次生成可查询的场景，当前仍为离线方法。对象场景图则规定背景与参与者如何组合，并不由上述四类时间机制唯一决定。\n\n传感器模型同样不能省略。NeuRAD 建模滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接入高斯表示；RadarSplat 进一步处理雷达噪声和多径。Real2Sim 另接 MPM 求解器，使高斯资产能够执行碰撞模拟；这项物理能力来自新增的动力学和材料参数，不来自“4DGS”这个表示名称。\n\n时间机制之外，还应增加“更新接口”这一分类轴：离线整段优化、固定窗口前馈、在线关键帧更新和异步多主体合并。Multi4D 的三个集合各有优化及增密策略；其持久集合服务于对应，瞬态集合吸收外观残差。Geometry-Aware Online Mapping 用透明度保持与几何尺度初始化管理有限迭代；DGOMapping 用不确定性与评分管理外部更新。它们解决的对象不同，适合按每次更新的输入、状态改变和成本比较。Uni-Gaussians 的栅格化/ray-tracing 双渲染路径又表明，共享几何与共享成像模型是两件事。",
       "referenceIds": [
         "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
@@ -70,7 +75,12 @@
         "neurad-2024",
         "splatad-2025",
         "radarsplat-2025",
-        "real2sim-2026"
+        "real2sim-2026",
+        "multi4d-2026",
+        "geometry-aware-online-gs-2026",
+        "dgomapping-2026",
+        "uni-gaussians-2025",
+        "gs-systems-survey-2026"
       ]
     },
     {
@@ -78,7 +88,7 @@
       "kind": "evidence",
       "title": "按任务和协议阅读实验",
       "thesis": "视觉、几何、传感器、感知与闭环结果分别约束资产的不同用途。",
-      "body": "动态视图合成先比较 PSNR、SSIM、LPIPS、动态区域和未见时刻；追踪方法还要测三维对应，驾驶资产则增加深度、点云与轨迹外视角。四篇基础工作的相机数量、分辨率、场景和硬件不同，不能把各自的 FPS 或平均 PSNR 拼成统一排名。FlexDrive 通过模拟器获得 out-of-path 真值，SafeComp 的工业评测检查车辆和行人在横向、纵向视点上的退化；两类协议都提供局部证据，覆盖范围应随结果一起说明。\n\n近期前馈工作的“重建成功”也有不同含义。Drive2Gauss 的 29.91 dB 是对生成观测的重建质量，不能据此判断这些观测在现实中会不会发生；偏移视点后的直接渲染与 SPVC 修复结果也应分开。SplatFlux 用动态概率拆分基元，并通过静态聚合与速度插值降低重复构建；其论文明确不支持流式输入。比较系统效率时，应分别列出生成、特征提取、资产构建、渲染和可选修复开销。\n\n传感器统计与感知结果需要两套检查。CVPRW 2024 的 Are NeRFs Ready for Autonomous Driving? 比较真实与渲染输入上的检测和在线建图；感知对齐 3DGS 则针对对象区域和感知输出优化。这些结果说明全图相似度可能漏掉影响感知的局部误差。UniSim 和 NeuroNCAP 更进一步执行动作驱动的闭环测试；Instant NuRec 在 140 个场景、五种策略配置中保持相对内部优化版 NuRec 的排序。这个结果仍受策略集合、场景和仿真器约束，不能替代同条件现实结局的核对。\n\nRoadVGGT 是另一类专用资产：只重建静态道路表面的外观、语义和高程。Waymo 上报告 25.71 PSNR、0.4692 mIoU、0.2312 m Z-RMSE 和 112.81 MB，零样本 nuScenes 对应前三项为 23.80、0.4722 和 0.2241 m。它使用给定 pose/depth 和微调 Mask2Former，质量指标只在各方法共同有效区域计算，高程还做中位数偏移对齐。该协议支持静态路面重建比较；车辆交互与规划仍需另外验证。",
+      "body": "动态视图合成先比较 PSNR、SSIM、LPIPS、动态区域和未见时刻；追踪方法还要测三维对应，驾驶资产则增加深度、点云与轨迹外视角。四篇基础工作的相机数量、分辨率、场景和硬件不同，不能把各自的 FPS 或平均 PSNR 拼成统一排名。FlexDrive 通过模拟器获得 out-of-path 真值，SafeComp 的工业评测检查车辆和行人在横向、纵向视点上的退化；两类协议都提供局部证据，覆盖范围应随结果一起说明。\n\n近期前馈工作的“重建成功”也有不同含义。Drive2Gauss 的 29.91 dB 是对生成观测的重建质量，不能据此判断这些观测在现实中会不会发生；偏移视点后的直接渲染与 SPVC 修复结果也应分开。SplatFlux 用动态概率拆分基元，并通过静态聚合与速度插值降低重复构建；其论文明确不支持流式输入。比较系统效率时，应分别列出生成、特征提取、资产构建、渲染和可选修复开销。\n\n传感器统计与感知结果需要两套检查。CVPRW 2024 的 Are NeRFs Ready for Autonomous Driving? 比较真实与渲染输入上的检测和在线建图；感知对齐 3DGS 则针对对象区域和感知输出优化。这些结果说明全图相似度可能漏掉影响感知的局部误差。UniSim 和 NeuroNCAP 更进一步执行动作驱动的闭环测试；Instant NuRec 在 140 个场景、五种策略配置中保持相对内部优化版 NuRec 的排序。这个结果仍受策略集合、场景和仿真器约束，不能替代同条件现实结局的核对。\n\nRoadVGGT 是另一类专用资产：只重建静态道路表面的外观、语义和高程。Waymo 上报告 25.71 PSNR、0.4692 mIoU、0.2312 m Z-RMSE 和 112.81 MB，零样本 nuScenes 对应前三项为 23.80、0.4722 和 0.2241 m。它使用给定 pose/depth 和微调 Mask2Former，质量指标只在各方法共同有效区域计算，高程还做中位数偏移对齐。该协议支持静态路面重建比较；车辆交互与规划仍需另外验证。\n\n新工作提供了更具体的比较条件。PersistGS 用三个合成球体接触场景和留出相机检查遮挡期轨迹，因果对照是恒速外推，使用重现位置的插值则属于事后对照。Multi4D 的分割在重建后固定几何、只对持久基元学习语义特征；其动态视图收益不能直接当作在线建图性能。Cam2Sim 把真实城市记录转换为 CARLA 场景，再比较常规模拟器渲染、GS 渲染和真实记录下的 DAVE-2 行为；它给出了可执行的局部现实参照，范围仍为单场景。\n\n资源状态会影响实验入口。InstantNuRec 论文展示分层动态资产，但本轮官方仓库默认推理 CLI 导出静态高斯和 sky，公开训练也有范围限制。使用它启动动态研究时，应明确哪些模块复用、哪些另行实现。系统效率沿 GS 系统综述的口径，分别报告构建、更新、跟踪、渲染与优化成本，避免只比较 FPS。\n\nInstant NuRec 当前公开实现还在 pa-front / pa-multiview 的 dense PA 配置下提供 --include-dynamic，可导出 .dynamic.npz，并选择 tracks 或 learned 运动来源。默认入口仍输出静态高斯与天空；实际启动动态实验时，应使用支持该选项的配置，区分现成动态导出、自行实现的任务模块及论文完整训练流程。",
       "referenceIds": [
         "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
@@ -93,7 +103,11 @@
         "unisim-2023",
         "neuroncap-2024",
         "instant-nurec-2026",
-        "roadvggt-2026"
+        "roadvggt-2026",
+        "persistgs-2026",
+        "multi4d-2026",
+        "cam2sim-2026",
+        "gs-systems-survey-2026"
       ]
     },
     {
@@ -120,23 +134,21 @@
     {
       "id": "outlook",
       "kind": "outlook",
-      "title": "先拆开误差来源，再测试资产用途",
-      "thesis": "从可控的小实验开始，分别验证时间机制、构建效率与下游影响。",
-      "body": "第一项实验可以固定图像、标定、训练预算和基元数量，对比规范空间形变、原生四维高斯与参数化运动。留出时间、相机和整段遮挡，分别测动态区域渲染、三维对应、几何与出现/消失误差。若只改善图像分数而三维对应恶化，就不能把结果解释成更可靠的运动恢复。对持久基元方法另设新物体进入场景的序列，检查固定结构的代价。\n\n第二项实验比较资产构建链路。对同一批日志分别采用逐场景优化、前馈构建和前馈后局部细化，完整计入输入准备、生成、推断、存储与渲染。对于 Drive2Gauss 式生成资产，再用真实 RGB/depth/flow 替换生成输入，逐模态控制噪声，以区分生成误差和重建误差；对于 SplatFlux 式潜变量解码，先测离线长度与内存扩展，不能直接按流式系统验收。跨城市和相机 rig 的样本应在训练与调参前留出。\n\n第三项实验将资产误差接到固定感知器和规划器。静态路面看地图定位与可行驶边界，传感器仿真看真实/渲染输入之间的感知变化，闭环资产看逐场景碰撞、离路和策略排序是否改变。Real2Sim 式物理编辑则需要可重复的受控干预，核对初态、材料参数、碰撞时刻和碰后轨迹。OPG/TV 类重建约束可以改善其几何或外观输入，但不能替代这组动力学验证。允许误差、覆盖率和拒绝条件应在比较前确定；新的表示只有在固定预算和用途下带来可重复收益，才值得继续扩大。",
+      "title": "可更新高斯、任务预算与多传感器一致性",
+      "thesis": "让新的表示机制进入固定预算、明确对照的实验，而不止增加一种质量指标。",
+      "body": "一条路线是**证据驱动的增量状态更新**。以已重建场景为起点，联合可见性、运动与重投影残差决定哪些基元继续保留、更新或重建。Multi4D 已提供持久/瞬态容量分配，PersistGS 已提供遮挡期物理外推，DGOMapping 已管理多主体更新；新问题可落在这些证据冲突时如何选择更新，以及错误更新怎样恢复。最小实验固定日志和基元预算，对比整窗重建、时间衰减、几何匹配合并及新更新规则，测遮挡后对应、表面漂移、动态误并和更新延迟。若收益只来自更多优化步骤，应回到同预算比较。\n\n第二条路线是**按任务敏感性分配重建预算**。固定感知器或规划器，估计局部几何与外观误差对输出的影响，再把有限细化次数分配到关键区域。感知对齐 GS 已使用任务损失，因此新的贡献应体现在预算分配及其泛化，而不是再次加入一个感知损失。对同一场景比较均匀细化、图像残差细化与任务引导细化，联合报告动态区域质量、任务输出变化、时延和显存；跨城市、相机 rig 与策略的留出集可检验是否过拟合单一评价器。\n\n第三条路线是**联合传感器约束的可编辑资产**。以 Uni-Gaussians、SplatAD 或 NeuRAD 的传感器模型为基础，在编辑车辆后同时检查图像遮挡、LiDAR 返回与几何边界是否一致，再在 Cam2Sim 或 NeuroNCAP 类可运行环境中观察策略行为。先从停放车辆位置与受控自车轨迹变化做起，采用真实重放、原渲染器和编辑后渲染三组对照。碰撞材料和反应式参与者另设实验；已有视觉/几何收益可保留为阶段结果，不必等到所有物理现象都解决才开始研究。",
       "referenceIds": [
-        "4dgs-wu-2024",
-        "native-4dgs-yang-2024",
-        "dynamic-3d-gaussians-2024",
-        "spacetime-gaussians-2024",
-        "dggt-2026",
-        "instant-nurec-2026",
-        "drive2gauss-2026",
-        "splatflux-2026",
-        "roadvggt-2026",
-        "real2sim-2026",
-        "physical-4d-2026",
+        "multi4d-2026",
+        "persistgs-2026",
+        "dgomapping-2026",
+        "geometry-aware-online-gs-2026",
+        "perception-aware-3dgs-2026",
+        "uni-gaussians-2025",
+        "splatad-2025",
+        "neurad-2024",
+        "cam2sim-2026",
         "neuroncap-2024",
-        "perception-aware-3dgs-2026"
+        "real2sim-2026"
       ]
     }
   ],
@@ -146,7 +158,9 @@
     "Drive2Gauss 从生成的 RGB、深度和流构建资产；SplatFlux 解码视频潜变量，当前仅支持离线输入。",
     "图像、几何、传感器、感知和闭环指标分别反映不同能力，原论文的 FPS 与 PSNR 要连同实验条件阅读。",
     "OPG/TV 处理重建中的时空混淆；Real2Sim 的 MPM 才提供碰撞求解，且材料参数仍需现实标定。",
-    "研究优先级应由固定预算下的几何、对应和任务收益决定，再逐步扩展到跨地域与反事实用途。"
+    "研究优先级应由固定预算下的几何、对应和任务收益决定，再逐步扩展到跨地域与反事实用途。",
+    "Multi4D、PersistGS 与在线 GS 建图分别给出容量分配、遮挡物理外推和有限预算更新的具体近邻。",
+    "Cam2Sim 提供现实日志到可运行场景的起点；研究可以从可控局部干预逐步扩大。"
   ],
   "references": [
     {
@@ -450,7 +464,13 @@
       "sourceFamily": "publisher-and-venue",
       "supports": "直接证明高整体视觉相似度仍可能对应不一致的对象感知输出，并提出感知对齐与对象区域质量损失。",
       "limitation": "证据聚焦所选感知模块和对象区域；感知一致性不是规划一致性，也不是闭环安全 verdict 的充分条件。",
-      "url": "https://iclr.cc/virtual/2026/poster/10009644"
+      "url": "https://proceedings.iclr.cc/paper_files/paper/2026/hash/5635925cf9d2274f338eb0dd5971e845-Abstract-Conference.html",
+      "links": [
+        {
+          "label": "正式版",
+          "url": "https://iclr.cc/virtual/2026/poster/10009644"
+        }
+      ]
     },
     {
       "id": "safecomp-capability-2026",
@@ -557,7 +577,7 @@
       "canonicalId": "arxiv:2607.23758",
       "sourceFamily": "arxiv",
       "supports": "在给定多视图图像、相机 pose 与 depth 的条件下，用几何基础模型预测像素对齐高斯并在道路 XY 平面做置信加权融合；Waymo 报告 25.71 PSNR、0.4692 mIoU、0.2312 m Z-RMSE 和 112.81 MB，nuScenes 零样本报告 23.80 PSNR、0.4722 mIoU 与 0.2241 m Z-RMSE。",
-      "limitation": "对象是静态道路表面，不包含动态交通参与者；依赖提供的 pose/depth 和外部语义分割，质量指标只在各方法共同有效区域统计。没有代码、规划任务或反应式闭环验证，AAAI 2027 模板也不构成正式录用证据。",
+      "limitation": "对象是静态道路表面，不包含动态交通参与者；依赖提供的 pose/depth 和外部语义分割，质量指标只在各方法共同有效区域统计。本文实验没有规划任务或反应式闭环验证，AAAI 2027 模板也不构成正式录用证据。",
       "url": "https://arxiv.org/abs/2607.23758"
     },
     {
@@ -685,12 +705,158 @@
       "limitation": "作者明确当前为离线系统，不支持流式重建或生成；动态概率用于动静分解，未作为占据概率或驾驶风险置信度校准。",
       "url": "https://arxiv.org/abs/2610.28257",
       "localPaperId": "splatflux-latent-4d-gaussians"
+    },
+    {
+      "id": "representation-centric-4d-survey-2026",
+      "title": "Reconstructing the Dynamic World: A Representation-Centric View of 4D Scene Reconstruction",
+      "authors": "Ziren Gong; Guo Chen; Yongjia Li; Yihua Shao; Fabio Tosi; Stefano Mattoccia; Matteo Poggi; Hao Tang; Fei Ma; Shuyan Li; Ziyang Yan; Nicu Sebe; Ling Shao; Jianfei Cai; Qi Tian; Ming-Hsuan Yang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "survey",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2609.39960",
+      "sourceFamily": "arxiv",
+      "supports": "按表示、时间建模、重建流程和优化目标组织 4D 场景重建，并比较几何、运动、外观和计算效率。",
+      "limitation": "这是跨方法综述，所讨论数据集和协议异构；归纳的研究问题尚需针对具体驾驶任务实验验证。",
+      "url": "https://arxiv.org/abs/2609.39960"
+    },
+    {
+      "id": "gs-systems-survey-2026",
+      "title": "Gaussian Splatting for Real-Time Scene Reconstruction: Methods, Systems, and Trade-offs",
+      "authors": "Ashim Dahal; Rabab Abdelfattah; Nick Rahimi",
+      "year": 2026,
+      "venue": "Pattern Recognition",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1016/j.patcog.2026.115120",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把 GS 分成单次生成、动态表示、效率与压缩、流式系统及 SLAM 等流程，区分渲染吞吐与构建、更新、跟踪和优化成本。",
+      "limitation": "受控稀疏视角比较与各方法原生评测采用不同协议，不能合并成跨任务的统一速度或质量排名。",
+      "url": "https://doi.org/10.1016/j.patcog.2026.115120",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2610.17513"
+        }
+      ]
+    },
+    {
+      "id": "uni-gaussians-2025",
+      "title": "Uni-Gaussians: Unifying Camera and Lidar Simulation with Gaussians for Dynamic Driving Scenarios",
+      "authors": "Zikang Yuan; Yuechuan Pu; Hongcheng Luo; Fengtian Lang; Cheng Chi; Teng Li; Yingying Shen; Haiyang Sun; Bing Wang; Xin Yang",
+      "year": 2025,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2503.08317",
+      "sourceFamily": "arxiv",
+      "supports": "在动态驾驶场景中共享高斯表示，相机使用栅格化，LiDAR 使用高斯 ray tracing，联合处理不同传感器的成像过程。",
+      "limitation": "实证集中于公开数据上的图像与 LiDAR 合成；传感器重建改善与驾驶策略效果仍是不同评价对象。",
+      "url": "https://arxiv.org/abs/2503.08317"
+    },
+    {
+      "id": "cam2sim-2026",
+      "title": "Cam2Sim: Neural Scenario Reconstruction for Closed-Loop Autonomous Driving Simulation",
+      "authors": "Davide Jannussi; Stefano Carlo Lambertenghi; Constantin Carste; Andrea Stocco",
+      "year": 2026,
+      "venue": "ASE 2026 Tools and Datasets",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1145/3832783.3834639",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "将真实相机与位姿日志转换为道路布局、停放车辆、CARLA 场景和 GS 渲染，支持轨迹重放及 DAVE-2 闭环比较。",
+      "limitation": "验证范围是单个城市驾驶场景；对照包括模拟器图像、GS 图像与真实记录，尚不是多道路、多策略的现实结果校准。",
+      "url": "https://doi.org/10.1145/3832783.3834639",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2607.04770"
+        },
+        {
+          "label": "正式版",
+          "url": "https://conf.researchr.org/details/ase-2026/ase-2026-tools-and-data-sets/47/Cam2Sim-Neural-Scenario-Reconstruction-for-Closed-Loop-Autonomous-Driving-Simulation"
+        }
+      ]
+    },
+    {
+      "id": "persistgs-2026",
+      "title": "PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting",
+      "authors": "Adrian Ramlal; John S. Zelek",
+      "year": 2026,
+      "venue": "CVPR 2026 Workshops, GenRecon3d",
+      "publicationType": "method",
+      "publicationStatus": "workshop",
+      "canonicalId": "arxiv:2606.03479",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把对象高斯与碰撞网格分开，从可见轨迹估计摩擦和初速度，再以可微刚体仿真在完全遮挡期维持对象位姿。",
+      "limitation": "三个合成场景及球形对象实验支持平移与接触建模；依赖已知对象分解，非对称物体旋转、多物体接触与真实驾驶仍需进一步评价。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026W/GenRecon3d/html/Ramlal_PersistGS_Differentiable_Physics_for_Object_Permanence_in_4D_Gaussian_Splatting_CVPRW_2026_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2606.03479"
+        }
+      ]
+    },
+    {
+      "id": "multi4d-2026",
+      "title": "Multi4D: High-Fidelity Dynamic Gaussian Splatting via Multi-Level Competitive Allocation",
+      "authors": "Rui Wang; Quentin Lohmeyer; Siyu Tang; Mirko Meboldt",
+      "year": 2026,
+      "venue": "ECCV 2026",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/978-3-032-37531-5_28",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以静态结构、持久动态几何与瞬态外观三个基元集合共享渲染、竞争解释残差；几何优化后在持久集合上学习语义特征并跟踪分割。",
+      "limitation": "证据主要为动态视图合成和 Neu3D-Mask 等分割协议；紧凑基元不是显式属性压缩，也没有因此建立在线驾驶地图的更新接口。",
+      "url": "https://doi.org/10.1007/978-3-032-37531-5_28",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2606.22197"
+        }
+      ]
+    },
+    {
+      "id": "geometry-aware-online-gs-2026",
+      "title": "Geometry-Aware Online Mapping for 3D Gaussian Splatting SLAM",
+      "authors": "Thai Luu; Quan Tran; Hieu Phan; Tuan Dang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2608.14902",
+      "sourceFamily": "arxiv",
+      "supports": "在 Photo-SLAM 建图线程加入透明度保持增密、相机几何感知尺度初始化和残差引导增密，以适应每关键帧有限优化预算。",
+      "limitation": "主要采用完整估计轨迹渲染而非严格独立留出视角；跨论文协议不同，结果应首先与同设置 Photo-SLAM 消融比较。",
+      "url": "https://arxiv.org/abs/2608.14902"
+    },
+    {
+      "id": "dgomapping-2026",
+      "title": "DGOMapping: Real-Time Multi-Agent Mapping Based on 4D Gaussian Splatting",
+      "authors": "Yonghao Li; Fan Wu; Ping Ye; Qingxuan Jia",
+      "year": 2026,
+      "venue": "Sensors 26(12), 3871",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.3390/s26123871",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "在异步多主体建图中以不确定性门控、感知评分交换和记忆调整结合 4DGS，比较重建、定位、地图规模与通信开销。",
+      "limitation": "主要在 BONN、TUM 等机器人序列评价；多主体地图一致性不等于道路协同感知与闭环驾驶已经验证。",
+      "url": "https://doi.org/10.3390/s26123871",
+      "links": [
+        {
+          "label": "项目页",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13306729/"
+        }
+      ]
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
     "searchedAt": "2026-11-06",
-    "cutoffDate": "2026-08-01",
+    "cutoffDate": "2026-11-06",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -704,18 +870,19 @@
       "闭环仿真资产的物理与任务验证"
     ],
     "sourceFamilies": [
-      "publisher-and-venue",
+      "openalex",
       "local-corpus",
-      "arxiv",
-      "official-project"
+      "publisher-and-venue",
+      "official-project",
+      "arxiv"
     ],
     "counts": {
-      "candidates": 70,
-      "deduplicated": 57,
-      "included": 30,
-      "excluded": 27
+      "candidates": 119,
+      "deduplicated": 104,
+      "included": 38,
+      "excluded": 66
     },
-    "evidenceBoundary": "2026-11-01 实际复核 24 条既有引用，并围绕 4D 高斯补充基础与前馈方法。只有基础查询族和本库族在本轮更新；其他主题保留原始查询日期。基础族为历史候选池加本轮专题增补的累计审计，不能将其 resultCount 当作当天 Web 返回数。逐条阅读与更正依据见 sourceRevalidation。",
+    "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "openSearchGaps": [
       "缺少现实道路上可成对观测的反事实真值，闭环 verdict 仍需多源现实锚定而非单一模拟器证明。",
       "跨相机 rig、跨城市、恶劣天气和训练视锥外表面的几何不确定性与拒绝机制仍缺统一基准。",
@@ -727,73 +894,145 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "finalFinding": "Independent raw-corpus rerun and canonical candidate closure passed; narrative, references and substantive/external dates preserved. Same-family provisional.",
-      "reviewerAgentId": "/root/review_integration_nov06",
-      "artifactPath": "docs/research-updates/2026-11-06/review-integration-round1.json",
-      "artifactSha256": "679fe0a88e5290f6c16b7a9e7bcb6977630e8108fca913fcf3e0f4f40a8ba2ac",
-      "snapshotFingerprint": "8e46cec78aa60d4cabf7d4cec8ba9bc74054f707a5ca852c15181c6979174cda",
+      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
+      "reviewerAgentId": "/root/review_centers_embodied",
+      "artifactPath": "docs/center-updates/2026-11-06/independent-review/embodied-round2.json",
+      "artifactSha256": "570dbfa5c02aeb19b7f987c0a41769ad0201e8b67f46748fbb007e05d2f0c674",
+      "snapshotFingerprint": "b6e01d1a16015fc19823f7886bcd1a37044b4db6665560cc5f60f4aab246f7e5",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
       {
         "family": "NeRF 与 3D Gaussian Splatting 基础",
-        "sourceFamily": "publisher-and-venue",
-        "query": "4D Gaussian dynamic scene canonical deformation native spacetime persistent tracking 2024",
-        "executedAt": "2026-11-01",
-        "resultCount": 9,
+        "sourceFamily": "openalex",
+        "query": "Gaussian splatting reconstruction survey",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 20,
         "resultIdSample": [
           "arxiv:2003.08934",
-          "doi:10.1145/3592433",
-          "doi:10.1007/s10462-024-10955-4",
-          "arxiv:2202.05263",
-          "arxiv:2111.14643",
-          "doi:10.1109/cvpr52733.2024.01920",
           "arxiv:2310.10642",
+          "arxiv:2312.16812",
+          "arxiv:2609.39960",
+          "doi:10.1007/s10462-024-10955-4",
+          "doi:10.1007/s41095-024-0436-y",
+          "doi:10.1016/j.cag.2026.104782",
+          "doi:10.1016/j.patcog.2026.115120",
+          "doi:10.1016/j.plaphe.2025.100137",
           "doi:10.1109/3dv62453.2024.00044",
-          "arxiv:2312.16812"
+          "doi:10.1109/cvpr52733.2024.01920",
+          "doi:10.1109/icvr70658.2026.11672427",
+          "doi:10.1109/tvcg.2024.3397828",
+          "doi:10.1145/3592433",
+          "doi:10.1145/3807511",
+          "doi:10.20944/preprints202611.0150.v1",
+          "doi:10.3389/frai.2025.1709229",
+          "doi:10.3390/s25123626",
+          "doi:10.3724/sp.j.1089.2025-00267",
+          "doi:10.7717/peerj-cs.3034"
         ],
-        "scopeRationale": "更新既有基础候选池：保留历史 6 个候选的身份，重新核对既有基础；本轮专题检索及原文追溯补入原生 4D、高斯持久追踪和 Spacetime 三条。Wu 从历史排除转为机制基础纳入。9 是累计入池数，不是 Web 原始返回数。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.1016/j.cag.2026.104782",
+          "doi:10.7717/peerj-cs.3034",
+          "doi:10.3390/s25123626",
+          "doi:10.3389/frai.2025.1709229",
+          "doi:10.20944/preprints202611.0150.v1",
+          "doi:10.1109/icvr70658.2026.11672427",
+          "doi:10.3724/sp.j.1089.2025-00267",
+          "doi:10.1145/3807511",
+          "doi:10.1016/j.plaphe.2025.100137",
+          "doi:10.1007/s41095-024-0436-y",
+          "doi:10.1109/tvcg.2024.3397828"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2003.08934",
+          "arxiv:2310.10642",
+          "arxiv:2312.16812",
+          "doi:10.1007/s10462-024-10955-4",
+          "doi:10.1109/3dv62453.2024.00044",
+          "doi:10.1109/cvpr52733.2024.01920",
+          "doi:10.1145/3592433"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2609.39960",
+          "doi:10.1016/j.patcog.2026.115120"
+        ],
         "retrieval": {
-          "provider": "primary-web-search-with-versioned-candidate-pool",
-          "endpoint": "official arXiv/CVF/ICLR/IEEE sources",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "4D Gaussian dynamic scene canonical deformation native spacetime persistent tracking 2024",
-            "domains": [
-              "arxiv.org",
-              "openaccess.thecvf.com",
-              "proceedings.iclr.cc"
-            ]
+            "search": "Gaussian splatting reconstruction survey",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance with citation tracing",
-          "limit": 200,
-          "historicalPoolCount": 6,
-          "newCanonicalCount": 3,
-          "rawSearchArtifact": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/scoped-web-search.json",
-          "citationTraceArtifact": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/core-evidence.md",
-          "countingPolicy": "Cumulative screened candidate pool, with immutable historicalRun. Current raw discoveries outside the independently selected foundation scope remain discovery-only and are not counted as read/excluded papers."
+          "sort": "relevance_score:desc",
+          "limit": 20,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
         },
         "historicalRun": {
           "family": "NeRF 与 3D Gaussian Splatting 基础",
-          "sourceFamily": "arxiv",
-          "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation",
-          "executedAt": "2026-08-01",
-          "resultCount": 6,
+          "sourceFamily": "publisher-and-venue",
+          "query": "4D Gaussian dynamic scene canonical deformation native spacetime persistent tracking 2024",
+          "executedAt": "2026-11-01",
+          "resultCount": 9,
           "resultIdSample": [
             "arxiv:2003.08934",
             "doi:10.1145/3592433",
-            "arxiv:2310.08528"
+            "doi:10.1007/s10462-024-10955-4",
+            "arxiv:2202.05263",
+            "arxiv:2111.14643",
+            "doi:10.1109/cvpr52733.2024.01920",
+            "arxiv:2310.10642",
+            "doi:10.1109/3dv62453.2024.00044",
+            "arxiv:2312.16812"
           ],
-          "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+          "scopeRationale": "更新既有基础候选池：保留历史 6 个候选的身份，重新核对既有基础；本轮专题检索及原文追溯补入原生 4D、高斯持久追踪和 Spacetime 三条。Wu 从历史排除转为机制基础纳入。9 是累计入池数，不是 Web 原始返回数。",
           "retrieval": {
-            "provider": "web-search-primary-arxiv",
-            "endpoint": "https://www.google.com/search",
+            "provider": "primary-web-search-with-versioned-candidate-pool",
+            "endpoint": "official arXiv/CVF/ICLR/IEEE sources",
             "parameters": {
-              "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation"
+              "query": "4D Gaussian dynamic scene canonical deformation native spacetime persistent tracking 2024",
+              "domains": [
+                "arxiv.org",
+                "openaccess.thecvf.com",
+                "proceedings.iclr.cc"
+              ]
             },
-            "sort": "relevance",
-            "limit": 20
+            "sort": "relevance with citation tracing",
+            "limit": 200,
+            "historicalPoolCount": 6,
+            "newCanonicalCount": 3,
+            "rawSearchArtifact": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/scoped-web-search.json",
+            "citationTraceArtifact": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/core-evidence.md",
+            "countingPolicy": "Cumulative screened candidate pool, with immutable historicalRun. Current raw discoveries outside the independently selected foundation scope remain discovery-only and are not counted as read/excluded papers."
+          },
+          "historicalRun": {
+            "family": "NeRF 与 3D Gaussian Splatting 基础",
+            "sourceFamily": "arxiv",
+            "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation",
+            "executedAt": "2026-08-01",
+            "resultCount": 6,
+            "resultIdSample": [
+              "arxiv:2003.08934",
+              "doi:10.1145/3592433",
+              "arxiv:2310.08528"
+            ],
+            "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+            "retrieval": {
+              "provider": "web-search-primary-arxiv",
+              "endpoint": "https://www.google.com/search",
+              "parameters": {
+                "query": "site:arxiv.org/abs neural radiance fields 3D Gaussian Splatting view synthesis reconstruction foundation"
+              },
+              "sort": "relevance",
+              "limit": 20
+            }
           }
         }
       },
@@ -805,7 +1044,7 @@
         "resultCount": 26,
         "rawHitCount": 40,
         "screenedOutCount": 14,
-        "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共40个文件命中；按方向标签与revisionOf归并得26个候选，其余14个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "当前原始 Markdown rg 命中 40 个文件，按方向标签和原始论文身份归并为 26 个候选；文件命中与候选数分别记录。",
         "resultIdSample": [
           "arxiv:2310.08528",
           "arxiv:2605.26113",
@@ -880,170 +1119,558 @@
           ],
           "deferredGroups": [
             {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "本轮重新检查当前方向的全部本库候选，核心综合选取能说明方法演进及实验差异的文献；其余报告保留为后续深入阅读入口。",
+              "localPaperIds": [
+                "dpa-i2p-depth-guided-registration",
+                "dust-cooperative-4d-reconstruction",
+                "envision4d-feedforward-4dgs",
+                "foundation4d-unified-perception-reconstruction",
+                "lgs-gaussian-structure-driving-reconstruction",
+                "pointforward-driving-reconstruction",
+                "radar-3d-point-splatting",
+                "ride-splat-windshield-reflection-removal"
+              ]
+            },
+            {
               "reasonCode": "cross-direction-support",
-              "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+              "reason": "与当前方向有交叉，核心方法综合由其主方向承担，本轮未重复展开。",
               "localPaperIds": [
                 "anyscene-controllable-driving-scene-generation",
                 "decouplegs-interactive-driving-testing",
                 "driving-videos-to-simulatable-scenarios",
+                "dyrad-dynamic-radar-view-synthesis",
+                "odyssey-long-horizon-driving",
                 "rs2ad-lidar-roadside-to-vehicle-generation",
                 "usr-drive-unified-scene-representation",
                 "vlga-geometry-action-driving",
                 "vrs-roadside-lidar-synthesis"
               ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
-              "localPaperIds": [
-                "dpa-i2p-depth-guided-registration",
-                "dust-cooperative-4d-reconstruction",
-                "envision4d-feedforward-4dgs",
-                "lgs-gaussian-structure-driving-reconstruction",
-                "pointforward-driving-reconstruction",
-                "radar-3d-point-splatting"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
-              "localPaperIds": [
-                "dyrad-dynamic-radar-view-synthesis"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
-              "localPaperIds": [
-                "odyssey-long-horizon-driving"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "foundation4d-unified-perception-reconstruction"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "ride-splat-windshield-reflection-removal"
-              ]
             }
           ]
+        },
+        "historicalRun": {
+          "family": "静态动态分解和驾驶 4D 重建",
+          "sourceFamily": "local-corpus",
+          "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图|3d-reconstruction",
+          "executedAt": "2026-11-06",
+          "resultCount": 26,
+          "rawHitCount": 40,
+          "screenedOutCount": 14,
+          "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共40个文件命中；按方向标签与revisionOf归并得26个候选，其余14个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+          "resultIdSample": [
+            "arxiv:2310.08528",
+            "arxiv:2605.26113",
+            "arxiv:2608.01761",
+            "arxiv:2411.11921",
+            "arxiv:2608.26589",
+            "arxiv:2610.26585",
+            "arxiv:2606.21993",
+            "arxiv:2605.07910",
+            "arxiv:2609.39841",
+            "arxiv:2606.10656",
+            "arxiv:2610.30340",
+            "arxiv:2607.14203",
+            "arxiv:2608.11077",
+            "arxiv:2310.10642",
+            "arxiv:2610.06469",
+            "arxiv:2605.21032",
+            "arxiv:2605.11594",
+            "arxiv:2609.11894",
+            "arxiv:2605.13591",
+            "arxiv:2610.34632",
+            "arxiv:2605.23406",
+            "arxiv:2411.16816",
+            "arxiv:2610.28257",
+            "arxiv:2608.19036",
+            "arxiv:2606.12396",
+            "arxiv:2605.05897"
+          ],
+          "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
+          "retrieval": {
+            "provider": "ripgrep-local-corpus",
+            "endpoint": "content/papers",
+            "parameters": {
+              "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图|3d-reconstruction",
+              "path": "content/papers",
+              "flags": [
+                "-l",
+                "-i"
+              ]
+            },
+            "sort": "path-ascending",
+            "limit": 200
+          },
+          "localCandidateDisposition": {
+            "candidateLocalPaperIds": [
+              "4dgs-hexplane-deformation",
+              "anyscene-controllable-driving-scene-generation",
+              "decouplegs-interactive-driving-testing",
+              "desire-gs-4d-street-gaussians",
+              "dpa-i2p-depth-guided-registration",
+              "drive2gauss-multimodal-4d-reconstruction",
+              "driving-videos-to-simulatable-scenarios",
+              "dust-cooperative-4d-reconstruction",
+              "dyrad-dynamic-radar-view-synthesis",
+              "envision4d-feedforward-4dgs",
+              "foundation4d-unified-perception-reconstruction",
+              "instant-nurec-feedforward-3dgs",
+              "lgs-gaussian-structure-driving-reconstruction",
+              "native-4d-gaussian-splatting",
+              "odyssey-long-horizon-driving",
+              "physically-consistent-4d-driving-reconstruction",
+              "pointforward-driving-reconstruction",
+              "radar-3d-point-splatting",
+              "real2sim-physics-4dgs",
+              "ride-splat-windshield-reflection-removal",
+              "rs2ad-lidar-roadside-to-vehicle-generation",
+              "splatad-realtime-3dgs",
+              "splatflux-latent-4d-gaussians",
+              "usr-drive-unified-scene-representation",
+              "vlga-geometry-action-driving",
+              "vrs-roadside-lidar-synthesis"
+            ],
+            "deferredGroups": [
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+                "localPaperIds": [
+                  "anyscene-controllable-driving-scene-generation",
+                  "decouplegs-interactive-driving-testing",
+                  "driving-videos-to-simulatable-scenarios",
+                  "rs2ad-lidar-roadside-to-vehicle-generation",
+                  "usr-drive-unified-scene-representation",
+                  "vlga-geometry-action-driving",
+                  "vrs-roadside-lidar-synthesis"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
+                "localPaperIds": [
+                  "dpa-i2p-depth-guided-registration",
+                  "dust-cooperative-4d-reconstruction",
+                  "envision4d-feedforward-4dgs",
+                  "lgs-gaussian-structure-driving-reconstruction",
+                  "pointforward-driving-reconstruction",
+                  "radar-3d-point-splatting"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
+                "localPaperIds": [
+                  "dyrad-dynamic-radar-view-synthesis"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-12 简报的新候选；单篇报告已核对机制、评测和资源，本轮仅维护本库检索闭合，尚未将其纳入既有综述的核心综合。",
+                "localPaperIds": [
+                  "odyssey-long-horizon-driving"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "foundation4d-unified-perception-reconstruction"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "ride-splat-windshield-reflection-removal"
+                ]
+              }
+            ]
+          }
         }
       },
       {
         "family": "相机、LiDAR 与多传感器渲染",
-        "sourceFamily": "arxiv",
-        "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation",
-        "executedAt": "2026-08-01",
-        "resultCount": 10,
+        "sourceFamily": "openalex",
+        "query": "LiDAR camera rendering Gaussian",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 20,
         "resultIdSample": [
-          "arxiv:2411.16816",
-          "cvf:cvpr2024:zhou-drivinggaussian",
-          "ecva:eccv2024:yan-street-gaussians",
-          "arxiv:2408.16760",
-          "cvf:cvprw2024:lindstrom-nerfs-driving",
           "arxiv:2308.01898",
           "arxiv:2311.15260",
-          "cvf:iccv2025:kung-radarsplat",
+          "arxiv:2404.02410",
+          "arxiv:2408.16760",
+          "arxiv:2410.05111",
+          "arxiv:2411.16816",
           "arxiv:2503.08317",
-          "arxiv:2410.05111"
+          "arxiv:2510.12901",
+          "cvf:cvpr2024:zhou-drivinggaussian",
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
+          "cvf:iccv2025:kung-radarsplat",
+          "doi:10.1007/978-3-031-73036-8_6",
+          "doi:10.1007/978-3-032-36987-1_22",
+          "doi:10.1109/icra55743.2025.11128712",
+          "doi:10.1109/lra.2025.3552955",
+          "doi:10.1109/lra.2026.3665066",
+          "doi:10.1109/lra.2026.3707359",
+          "doi:10.1145/3687762",
+          "doi:10.1177/02783649261479363",
+          "ecva:eccv2024:yan-street-gaussians"
         ],
-        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2411.16816",
+          "doi:10.1177/02783649261479363",
+          "doi:10.1145/3687762",
+          "doi:10.1109/icra55743.2025.11128712",
+          "doi:10.1007/978-3-032-36987-1_22",
+          "arxiv:2404.02410",
+          "arxiv:2410.05111",
+          "doi:10.1007/978-3-031-73036-8_6",
+          "doi:10.1109/lra.2025.3552955",
+          "doi:10.1109/lra.2026.3665066",
+          "doi:10.1109/lra.2026.3707359",
+          "arxiv:2510.12901"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2308.01898",
+          "arxiv:2311.15260",
+          "arxiv:2408.16760",
+          "cvf:cvpr2024:zhou-drivinggaussian",
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
+          "cvf:iccv2025:kung-radarsplat",
+          "ecva:eccv2024:yan-street-gaussians"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2503.08317"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-arxiv",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation"
+            "search": "LiDAR camera rendering Gaussian",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 20
+          "sort": "relevance_score:desc",
+          "limit": 20,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "相机、LiDAR 与多传感器渲染",
+          "sourceFamily": "arxiv",
+          "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation",
+          "executedAt": "2026-08-01",
+          "resultCount": 10,
+          "resultIdSample": [
+            "arxiv:2411.16816",
+            "cvf:cvpr2024:zhou-drivinggaussian",
+            "ecva:eccv2024:yan-street-gaussians",
+            "arxiv:2408.16760",
+            "cvf:cvprw2024:lindstrom-nerfs-driving",
+            "arxiv:2308.01898",
+            "arxiv:2311.15260",
+            "cvf:iccv2025:kung-radarsplat",
+            "arxiv:2503.08317",
+            "arxiv:2410.05111"
+          ],
+          "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+          "retrieval": {
+            "provider": "web-search-primary-arxiv",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "site:arxiv.org/abs autonomous driving camera LiDAR radar neural rendering Gaussian splatting sensor simulation"
+            },
+            "sort": "relevance",
+            "limit": 20
+          }
         }
       },
       {
         "family": "前馈重建、压缩与实时渲染",
-        "sourceFamily": "arxiv",
-        "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene",
-        "executedAt": "2026-08-01",
-        "resultCount": 7,
+        "sourceFamily": "openalex",
+        "query": "feed forward Gaussian driving reconstruction",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 18,
         "resultIdSample": [
-          "arxiv:2607.14203",
-          "arxiv:2512.03004",
           "arxiv:2501.00602",
-          "doi:10.1609/aaai.v39i7.32793",
+          "arxiv:2509.23402",
+          "arxiv:2510.19578",
+          "arxiv:2512.03004",
+          "arxiv:2603.07552",
+          "arxiv:2604.03462",
+          "arxiv:2607.14203",
           "arxiv:2607.23758",
-          "arxiv:2510.24734",
-          "arxiv:2603.07552"
+          "arxiv:2608.10682",
+          "arxiv:2608.11077",
+          "arxiv:2608.14902",
+          "arxiv:2610.25345",
+          "arxiv:2610.27604",
+          "doi:10.1007/978-3-032-37531-5_28",
+          "doi:10.1016/j.patcog.2026.115120",
+          "doi:10.1109/icassp55912.2026.11463217",
+          "doi:10.1609/aaai.v39i7.32793",
+          "doi:10.3390/s26123871"
         ],
-        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2607.14203",
+          "arxiv:2510.19578",
+          "arxiv:2603.07552",
+          "arxiv:2608.11077",
+          "doi:10.1609/aaai.v39i7.32793",
+          "arxiv:2604.03462",
+          "arxiv:2509.23402",
+          "arxiv:2610.25345",
+          "doi:10.1109/icassp55912.2026.11463217",
+          "arxiv:2607.23758",
+          "arxiv:2610.27604",
+          "arxiv:2608.10682"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2501.00602",
+          "arxiv:2512.03004"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2608.14902",
+          "doi:10.1007/978-3-032-37531-5_28",
+          "doi:10.1016/j.patcog.2026.115120",
+          "doi:10.3390/s26123871"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-arxiv",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene"
+            "search": "feed forward Gaussian driving reconstruction",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 20
+          "sort": "relevance_score:desc",
+          "limit": 18,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "前馈重建、压缩与实时渲染",
+          "sourceFamily": "arxiv",
+          "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene",
+          "executedAt": "2026-08-01",
+          "resultCount": 7,
+          "resultIdSample": [
+            "arxiv:2607.14203",
+            "arxiv:2512.03004",
+            "arxiv:2501.00602",
+            "doi:10.1609/aaai.v39i7.32793",
+            "arxiv:2607.23758",
+            "arxiv:2510.24734",
+            "arxiv:2603.07552"
+          ],
+          "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+          "retrieval": {
+            "provider": "web-search-primary-arxiv",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "site:arxiv.org/abs feed-forward driving reconstruction real-time Gaussian splatting autonomous driving scene"
+            },
+            "sort": "relevance",
+            "limit": 20
+          }
         }
       },
       {
         "family": "可编辑 Real2Sim 和场景生成",
-        "sourceFamily": "arxiv",
-        "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction",
-        "executedAt": "2026-08-01",
-        "resultCount": 7,
+        "sourceFamily": "openalex",
+        "query": "editable driving Gaussian simulation",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 17,
         "resultIdSample": [
-          "cvf:cvpr2021:ost-neural-scene-graphs",
           "arxiv:2408.16760",
+          "arxiv:2602.21333",
           "arxiv:2605.13591",
+          "arxiv:2605.25373",
+          "arxiv:2606.16278",
+          "cvf:cvpr2021:ost-neural-scene-graphs",
           "cvf:cvpr2025:zhou-flexdrive",
           "doi:10.1007/978-3-032-34867-8_11",
-          "arxiv:2407.02598",
-          "arxiv:2606.16278"
+          "doi:10.1007/978-3-032-37383-0_37",
+          "doi:10.1109/cac63892.2024.10864536",
+          "doi:10.1109/cvpr52733.2024.01428",
+          "doi:10.1109/iros60139.2025.11246201",
+          "doi:10.1109/iros60139.2025.11246621",
+          "doi:10.1109/tits.2026.3738052",
+          "doi:10.1109/tpami.2026.3667072",
+          "doi:10.1145/3832783.3834639",
+          "doi:10.1609/aaai.v40i10.37802"
         ],
-        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2606.16278",
+          "arxiv:2605.25373",
+          "doi:10.1109/cac63892.2024.10864536",
+          "arxiv:2605.13591",
+          "doi:10.1109/tpami.2026.3667072",
+          "doi:10.1109/cvpr52733.2024.01428",
+          "doi:10.1609/aaai.v40i10.37802",
+          "doi:10.1007/978-3-032-37383-0_37",
+          "doi:10.1109/iros60139.2025.11246621",
+          "arxiv:2602.21333",
+          "doi:10.1109/iros60139.2025.11246201",
+          "doi:10.1109/tits.2026.3738052"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2408.16760",
+          "cvf:cvpr2021:ost-neural-scene-graphs",
+          "cvf:cvpr2025:zhou-flexdrive",
+          "doi:10.1007/978-3-032-34867-8_11"
+        ],
+        "supplementalCanonicalIds": [
+          "doi:10.1145/3832783.3834639"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-arxiv",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction"
+            "search": "editable driving Gaussian simulation",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 20
+          "sort": "relevance_score:desc",
+          "limit": 17,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "可编辑 Real2Sim 和场景生成",
+          "sourceFamily": "arxiv",
+          "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction",
+          "executedAt": "2026-08-01",
+          "resultCount": 7,
+          "resultIdSample": [
+            "cvf:cvpr2021:ost-neural-scene-graphs",
+            "arxiv:2408.16760",
+            "arxiv:2605.13591",
+            "cvf:cvpr2025:zhou-flexdrive",
+            "doi:10.1007/978-3-032-34867-8_11",
+            "arxiv:2407.02598",
+            "arxiv:2606.16278"
+          ],
+          "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+          "retrieval": {
+            "provider": "web-search-primary-arxiv",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "site:arxiv.org/abs editable Real2Sim autonomous driving Gaussian splatting scene generation reconstruction"
+            },
+            "sort": "relevance",
+            "limit": 20
+          }
         }
       },
       {
         "family": "闭环仿真资产的物理与任务验证",
-        "sourceFamily": "arxiv",
-        "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator",
-        "executedAt": "2026-08-01",
-        "resultCount": 11,
+        "sourceFamily": "openalex",
+        "query": "closed loop neural reconstruction driving simulation",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 18,
         "resultIdSample": [
-          "cvf:cvprw2024:lindstrom-nerfs-driving",
-          "arxiv:2605.21032",
-          "arxiv:2607.14203",
-          "arxiv:2605.13591",
           "arxiv:2308.01898",
           "arxiv:2404.07762",
-          "openreview:pmqlmtbmpa",
+          "arxiv:2512.01993",
+          "arxiv:2605.13591",
+          "arxiv:2605.21032",
+          "arxiv:2606.03159",
+          "arxiv:2606.03479",
+          "arxiv:2607.14203",
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
           "doi:10.1007/978-3-032-34867-8_11",
-          "arxiv:2603.07552",
-          "arxiv:2607.04770",
-          "arxiv:2412.01718"
+          "doi:10.1109/iccv51701.2025.02500",
+          "doi:10.1109/tits.2025.3639471",
+          "doi:10.1109/tiv.2024.3390795",
+          "doi:10.1109/tpami.2025.3543072",
+          "doi:10.1145/3641234.3671082",
+          "doi:10.1145/3832783.3834639",
+          "doi:10.5281/zenodo.21554879",
+          "openreview:pmqlmtbmpa"
         ],
-        "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.5281/zenodo.21554879",
+          "doi:10.1145/3832783.3834639",
+          "doi:10.1145/3641234.3671082",
+          "arxiv:2605.21032",
+          "doi:10.1109/iccv51701.2025.02500",
+          "doi:10.1109/tpami.2025.3543072",
+          "arxiv:2512.01993",
+          "arxiv:2607.14203",
+          "doi:10.1109/tiv.2024.3390795",
+          "arxiv:2606.03159",
+          "doi:10.1109/tits.2025.3639471"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2308.01898",
+          "arxiv:2404.07762",
+          "arxiv:2605.13591",
+          "cvf:cvprw2024:lindstrom-nerfs-driving",
+          "doi:10.1007/978-3-032-34867-8_11",
+          "openreview:pmqlmtbmpa"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2606.03479"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-arxiv",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator"
+            "search": "closed loop neural reconstruction driving simulation",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 20
+          "sort": "relevance_score:desc",
+          "limit": 18,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "闭环仿真资产的物理与任务验证",
+          "sourceFamily": "arxiv",
+          "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator",
+          "executedAt": "2026-08-01",
+          "resultCount": 11,
+          "resultIdSample": [
+            "cvf:cvprw2024:lindstrom-nerfs-driving",
+            "arxiv:2605.21032",
+            "arxiv:2607.14203",
+            "arxiv:2605.13591",
+            "arxiv:2308.01898",
+            "arxiv:2404.07762",
+            "openreview:pmqlmtbmpa",
+            "doi:10.1007/978-3-032-34867-8_11",
+            "arxiv:2603.07552",
+            "arxiv:2607.04770",
+            "arxiv:2412.01718"
+          ],
+          "scopeRationale": "以方向语义检索而非精确 ID 清单发现候选；只把逐篇打开一手论文或正式页面、确认范围匹配并进入保留或明确排除闭环的记录计入。查询族允许真实交叉归属。",
+          "retrieval": {
+            "provider": "web-search-primary-arxiv",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "site:arxiv.org/abs closed-loop autonomous driving neural reconstruction Gaussian splatting perception task validation simulator"
+            },
+            "sort": "relevance",
+            "limit": 20
+          }
         }
       }
     ],
@@ -1083,7 +1710,15 @@
       "doi:10.1109/3DV62453.2024.00044",
       "arxiv:2312.16812",
       "arxiv:2610.26585",
-      "arxiv:2610.28257"
+      "arxiv:2610.28257",
+      "arxiv:2609.39960",
+      "doi:10.1016/j.patcog.2026.115120",
+      "arxiv:2503.08317",
+      "doi:10.1145/3832783.3834639",
+      "arxiv:2606.03479",
+      "doi:10.1007/978-3-032-37531-5_28",
+      "arxiv:2608.14902",
+      "doi:10.3390/s26123871"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -1092,561 +1727,1212 @@
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:2202.05263",
-        "title": "Block-NeRF: Scalable Large Scene Neural View Synthesis",
-        "url": "https://arxiv.org/abs/2202.05263",
-        "reasonCode": "redundant-static-evidence",
-        "reason": "提供大规模静态街景新视角合成，但不建模动态交通参与者，也没有闭环驾驶任务验证。"
+        "canonicalId": "doi:10.1016/j.cag.2026.104782",
+        "title": "Gaussian splatting for surface reconstruction: A survey",
+        "url": "https://doi.org/10.1016/j.cag.2026.104782",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2111.14643",
-        "title": "Urban Radiance Fields",
-        "url": "https://arxiv.org/abs/2111.14643",
-        "reasonCode": "out-of-scope-static-mapping",
-        "reason": "聚焦城市级辐射场与地图重建，不能补足动态分解、传感器物理或策略闭环证据。"
+        "canonicalId": "doi:10.7717/peerj-cs.3034",
+        "title": "A survey on surface reconstruction based on 3D Gaussian splatting",
+        "url": "https://doi.org/10.7717/peerj-cs.3034",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2503.08317",
-        "title": "Uni-Gaussians: Unifying Camera and LiDAR Simulation with Gaussian Splatting",
-        "url": "https://arxiv.org/abs/2503.08317",
-        "reasonCode": "redundant-sensor-simulation",
-        "reason": "覆盖相机与 LiDAR 合成，但仍是预印本且没有规划任务、闭环策略或现实反事实验证；核心多传感器证据已有 SplatAD 等代表。"
+        "canonicalId": "doi:10.3390/s25123626",
+        "title": "Trends and Techniques in 3D Reconstruction and Rendering: A Survey with Emphasis on Gaussian Splatting",
+        "url": "https://doi.org/10.3390/s25123626",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3389/frai.2025.1709229",
+        "title": "Human reconstruction using 3D Gaussian Splatting: a brief survey",
+        "url": "https://doi.org/10.3389/frai.2025.1709229",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.20944/preprints202611.0150.v1",
+        "title": "A Comprehensive Survey of 4D Gaussian Splatting for Dynamic Scene Reconstruction",
+        "url": "https://doi.org/10.20944/preprints202611.0150.v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icvr70658.2026.11672427",
+        "title": "Underwater 3D Scene Reconstruction Using Neural Rendering: A Survey with Emphasis on 3D Gaussian Splatting Framework",
+        "url": "https://doi.org/10.1109/icvr70658.2026.11672427",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3724/sp.j.1089.2025-00267",
+        "title": "A Survey on 3D Virtual Human Reconstruction and Animation Based on Neural Radiance Fields and Gaussian Splatting",
+        "url": "https://doi.org/10.3724/sp.j.1089.2025-00267",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3807511",
+        "title": "A Survey on 3D Gaussian Splatting",
+        "url": "https://doi.org/10.1145/3807511",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.plaphe.2025.100137",
+        "title": "A survey on 3D reconstruction techniques in plant phenotyping: From classical methods to Neural Radiance Fields (NeRF), 3D Gaussian Splatting (3DGS), and beyond",
+        "url": "https://doi.org/10.1016/j.plaphe.2025.100137",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/s41095-024-0436-y",
+        "title": "Recent advances in 3D Gaussian splatting",
+        "url": "https://doi.org/10.1007/s41095-024-0436-y",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tvcg.2024.3397828",
+        "title": "3D Gaussian Splatting as a New Era: A Survey",
+        "url": "https://doi.org/10.1109/tvcg.2024.3397828",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1177/02783649261479363",
+        "title": "Gaussian-LIC2: LiDAR-Inertial-Camera Gaussian Splatting SLAM",
+        "url": "https://doi.org/10.1177/02783649261479363",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3687762",
+        "title": "LetsGo: Large-Scale Garage Modeling and Rendering via LiDAR-Assisted Gaussian Primitives",
+        "url": "https://doi.org/10.1145/3687762",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icra55743.2025.11128712",
+        "title": "Gaussian-LIC: Real-Time Photo-Realistic SLAM with Gaussian Splatting and LiDAR-Inertial-Camera Fusion",
+        "url": "https://doi.org/10.1109/icra55743.2025.11128712",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-36987-1_22",
+        "title": "Geometry-Preserving in 3D Gaussian Splatting for LiDAR-Camera Extrinsic Calibration",
+        "url": "https://doi.org/10.1007/978-3-032-36987-1_22",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2404.02410",
+        "title": "TCLC-GS: Tightly Coupled LiDAR-Camera Gaussian Splatting for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2404.02410",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
         "canonicalId": "arxiv:2410.05111",
-        "title": "LiDAR-GS: Real-time LiDAR Re-Simulation using Gaussian Splatting",
-        "url": "https://arxiv.org/abs/2410.05111",
-        "reasonCode": "single-sensor-evidence",
-        "reason": "聚焦 LiDAR 再仿真，没有下游任务、闭环策略或现实反事实有效性证据。"
+        "title": "LiDAR-GS:Real-time LiDAR Re-Simulation using Gaussian Splatting",
+        "url": "https://doi.org/10.48550/arxiv.2410.05111",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2510.24734",
-        "title": "DrivingScene: Feed-Forward Reconstruction of Dynamic Driving Scenes",
-        "url": "https://arxiv.org/abs/2510.24734",
-        "reasonCode": "reconstruction-only-evidence",
-        "reason": "提供前馈动态重建，但证据集中在重建与新视角合成，没有闭环或任务级验证。"
+        "canonicalId": "doi:10.1007/978-3-031-73036-8_6",
+        "title": "TCLC-GS: Tightly Coupled LiDAR-Camera Gaussian Splatting for Autonomous Driving: Supplementary Materials",
+        "url": "https://doi.org/10.1007/978-3-031-73036-8_6",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2025.3552955",
+        "title": "Robust LiDAR-Camera Calibration With 2D Gaussian Splatting",
+        "url": "https://doi.org/10.1109/lra.2025.3552955",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2026.3665066",
+        "title": "Targetless LiDAR-Camera Calibration With Neural Gaussian Splatting",
+        "url": "https://doi.org/10.1109/lra.2026.3665066",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2026.3707359",
+        "title": "LVGS-SLAM: LiDAR-Visual-Supervised Gaussian Splatting SLAM With Dense Depth Rendering for Unstructured Environments",
+        "url": "https://doi.org/10.1109/lra.2026.3707359",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2510.12901",
+        "title": "SimULi: Real-Time LiDAR and Camera Simulation with Unscented Transforms",
+        "url": "https://doi.org/10.48550/arxiv.2510.12901",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2510.19578",
+        "title": "VGD: Visual Geometry Gaussian Splatting for Feed-Forward Surround-view Driving Reconstruction",
+        "url": "https://doi.org/10.48550/arxiv.2510.19578",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
         "canonicalId": "arxiv:2603.07552",
-        "title": "ReconDrive: Feed-Forward 4D Gaussian Reconstruction for Autonomous Driving",
-        "url": "https://arxiv.org/abs/2603.07552",
-        "reasonCode": "insufficient-closed-loop-evidence",
-        "reason": "快速前馈 4D 重建有实现价值，但当前证据仍以重建、新视角和有限感知指标为主，缺少公开实现、现实反事实与闭环 verdict。"
+        "title": "ReconDrive: Fast Feed-Forward 4D Gaussian Splatting for Autonomous Driving Scene Reconstruction",
+        "url": "https://doi.org/10.48550/arxiv.2603.07552",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2407.02598",
-        "title": "AutoSplat: Constrained Gaussian Splatting for Autonomous Driving Scene Reconstruction",
-        "url": "https://arxiv.org/abs/2407.02598",
-        "reasonCode": "visual-editing-only",
-        "reason": "贡献集中在视觉重建与编辑，未证明物理、任务或闭环有效性。"
+        "canonicalId": "arxiv:2604.03462",
+        "title": "SpectralSplat: Appearance-Disentangled Feed-Forward Gaussian Splatting for Driving Scenes",
+        "url": "https://doi.org/10.48550/arxiv.2604.03462",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2509.23402",
+        "title": "WorldSplat: Gaussian-Centric Feed-Forward 4D Scene Generation for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2509.23402",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.25345",
+        "title": "MCSplat: Multi-View Photometric and Geometric Consistent Feed-Forward Gaussian Splatting for Driving Scenes",
+        "url": "https://doi.org/10.48550/arxiv.2610.25345",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icassp55912.2026.11463217",
+        "title": "DrivingScene: A Multi-Task Online Feed-Forward 3D Gaussian Splatting Method for Dynamic Driving Scenes",
+        "url": "https://doi.org/10.1109/icassp55912.2026.11463217",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.27604",
+        "title": "HiQGS: Hierarchical Spatiotemporal Querying for Feed-Forward Gaussian Reconstruction",
+        "url": "https://doi.org/10.48550/arxiv.2610.27604",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2608.10682",
+        "title": "Visual Geometry Foundation-Aware Gaussians for Single-Frame Surround-View Driving Reconstruction",
+        "url": "https://doi.org/10.48550/arxiv.2608.10682",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
         "canonicalId": "arxiv:2606.16278",
-        "title": "RealityBridge: Restoring Realism in Edited 3D Gaussian Driving Scenes",
-        "url": "https://arxiv.org/abs/2606.16278",
-        "reasonCode": "postprocessing-only",
-        "reason": "主要修复编辑后视频的视觉真实感，不能建立几何、物理或闭环结论保持证据。"
+        "title": "RealityBridge: Bridging Editable 3D Gaussian Splatting Driving Simulations and Real-World Videos",
+        "url": "https://doi.org/10.48550/arxiv.2606.16278",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2607.04770",
-        "title": "Cam2Sim: A Camera-Only Real-to-Sim Pipeline for Autonomous Driving",
-        "url": "https://arxiv.org/abs/2607.04770",
-        "reasonCode": "limited-validation-scope",
-        "reason": "方向与闭环准入高度相关，但当前验证范围有限，尚不足以支撑跨场景、跨系统的稳定 verdict。"
+        "canonicalId": "arxiv:2605.25373",
+        "title": "Physics-Aware 3D Gaussian Editing for Driving Scene Generation",
+        "url": "https://doi.org/10.48550/arxiv.2605.25373",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2412.01718",
-        "title": "HUGSIM: A Real-Time, Photo-Realistic and Closed-Loop Simulator for Autonomous Driving",
-        "url": "https://arxiv.org/abs/2412.01718",
-        "reasonCode": "redundant-closed-loop-simulator",
-        "reason": "提供闭环神经仿真，但与 UniSim、NeuroNCAP 的核心证据重叠，且未补足现实锚定反事实的独立验证。"
+        "canonicalId": "doi:10.1109/cac63892.2024.10864536",
+        "title": "A Controllable Editing Closed-Loop 3D Gaussian Autonomous Driving Sensor Simulator",
+        "url": "https://doi.org/10.1109/cac63892.2024.10864536",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2026.3667072",
+        "title": "DrivingGaussian++: Toward Realistic Reconstruction and Editable Simulation for Surrounding Dynamic Driving Scenes",
+        "url": "https://doi.org/10.1109/tpami.2026.3667072",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01428",
+        "title": "Editable Scene Simulation for Autonomous Driving via Collaborative LLM-Agents",
+        "url": "https://doi.org/10.1109/cvpr52733.2024.01428",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v40i10.37802",
+        "title": "WeatherEdit: Controllable Weather Editing with 4D Gaussian Field",
+        "url": "https://doi.org/10.1609/aaai.v40i10.37802",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-37383-0_37",
+        "title": "SIMSplat: Language-Aligned 4D Gaussian Splatting for Driving Scenario Generation",
+        "url": "https://doi.org/10.1007/978-3-032-37383-0_37",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/iros60139.2025.11246621",
+        "title": "Industrial-Grade Sensor Simulation via Gaussian Splatting: A Modular Framework for Scalable Editing and Full-Stack Validation",
+        "url": "https://doi.org/10.1109/iros60139.2025.11246621",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2602.21333",
+        "title": "HorizonForge: Driving Scene Editing with Any Trajectories and Any Vehicles",
+        "url": "https://doi.org/10.48550/arxiv.2602.21333",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/iros60139.2025.11246201",
+        "title": "CRUISE: Cooperative Reconstruction and Editing in V2X Scenarios using Gaussian Splatting",
+        "url": "https://doi.org/10.1109/iros60139.2025.11246201",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2026.3738052",
+        "title": "3-D Gaussian Splatting in Autonomous Driving: A Survey of Applications and Directions",
+        "url": "https://doi.org/10.1109/tits.2026.3738052",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.5281/zenodo.21554879",
+        "title": "Replication package of: \"Cam2Sim: Neural Scenario Reconstruction for Closed-Loop Autonomous Driving Simulation\"",
+        "url": "https://doi.org/10.5281/zenodo.21554879",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3641234.3671082",
+        "title": "Controllable Neural Reconstruction for Autonomous Driving",
+        "url": "https://doi.org/10.1145/3641234.3671082",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv51701.2025.02500",
+        "title": "DriveArena: A Closed-Loop Generative Simulation Platform for Autonomous Driving",
+        "url": "https://doi.org/10.1109/iccv51701.2025.02500",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2025.3543072",
+        "title": "S-NeRF++: Autonomous Driving Simulation via Neural Reconstruction and Generation",
+        "url": "https://doi.org/10.1109/tpami.2025.3543072",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2512.01993",
+        "title": "RoaD: Rollouts as Demonstrations for Closed-Loop Supervised Fine-Tuning of Autonomous Driving Policies",
+        "url": "https://doi.org/10.48550/arxiv.2512.01993",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3390795",
+        "title": "Large-Scale Neural Scene Disentanglement Approach for Self-Driving Simulation",
+        "url": "https://doi.org/10.1109/tiv.2024.3390795",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2606.03159",
+        "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
+        "url": "https://doi.org/10.48550/arxiv.2606.03159",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3639471",
+        "title": "Learning-Based 3D Reconstruction in Autonomous Driving: A Comprehensive Survey",
+        "url": "https://doi.org/10.1109/tits.2025.3639471",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       }
     ],
     "candidateLedger": [
       {
-        "canonicalId": "arxiv:2411.16816",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "cvf:cvpr2021:ost-neural-scene-graphs",
-        "disposition": "included",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "cvf:cvpr2024:zhou-drivinggaussian",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "ecva:eccv2024:yan-street-gaussians",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2408.16760",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染",
-          "可编辑 Real2Sim 和场景生成"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "cvf:cvprw2024:lindstrom-nerfs-driving",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染",
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2411.11921",
-        "disposition": "included",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.21032",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环仿真资产的物理与任务验证",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2607.14203",
-        "disposition": "included",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染",
-          "闭环仿真资产的物理与任务验证",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 3
-      },
-      {
-        "canonicalId": "arxiv:2605.13591",
-        "disposition": "included",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成",
-          "闭环仿真资产的物理与任务验证",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 3
-      },
-      {
         "canonicalId": "arxiv:2003.08934",
-        "disposition": "included",
         "queryFamilies": [
           "NeRF 与 3D Gaussian Splatting 基础"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1145/3592433",
         "disposition": "included",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/s10462-024-10955-4",
-        "disposition": "included",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2308.01898",
-        "disposition": "included",
         "queryFamilies": [
           "相机、LiDAR 与多传感器渲染",
           "闭环仿真资产的物理与任务验证"
         ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2310.10642",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2311.15260",
-        "disposition": "included",
         "queryFamilies": [
           "相机、LiDAR 与多传感器渲染"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "cvf:cvpr2025:zhou-flexdrive",
         "disposition": "included",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2404.07762",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "openreview:pmqlmtbmpa",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/978-3-032-34867-8_11",
-        "disposition": "included",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成",
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2512.03004",
-        "disposition": "included",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "cvf:iccv2025:kung-radarsplat",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2501.00602",
-        "disposition": "included",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1609/aaai.v39i7.32793",
-        "disposition": "included",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.23758",
-        "disposition": "included",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2202.05263",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2111.14643",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52733.2024.01920",
-        "disposition": "included",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2503.08317",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2410.05111",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "相机、LiDAR 与多传感器渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2510.24734",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2603.07552",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "前馈重建、压缩与实时渲染",
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2407.02598",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.16278",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "可编辑 Real2Sim 和场景生成"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.04770",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2412.01718",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "闭环仿真资产的物理与任务验证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.26113",
-        "disposition": "deferred",
-        "localPaperId": "anyscene-controllable-driving-scene-generation",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.01761",
-        "disposition": "deferred",
-        "localPaperId": "decouplegs-interactive-driving-testing",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26589",
-        "disposition": "deferred",
-        "localPaperId": "dpa-i2p-depth-guided-registration",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.21993",
-        "disposition": "deferred",
-        "localPaperId": "driving-videos-to-simulatable-scenarios",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.07910",
-        "disposition": "deferred",
-        "localPaperId": "dust-cooperative-4d-reconstruction",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.10656",
-        "disposition": "deferred",
-        "localPaperId": "envision4d-feedforward-4dgs",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.11077",
-        "disposition": "deferred",
-        "localPaperId": "lgs-gaussian-structure-driving-reconstruction",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.11594",
-        "disposition": "deferred",
-        "localPaperId": "pointforward-driving-reconstruction",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.11894",
-        "disposition": "deferred",
-        "localPaperId": "radar-3d-point-splatting",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.23406",
-        "disposition": "deferred",
-        "localPaperId": "rs2ad-lidar-roadside-to-vehicle-generation",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.19036",
-        "disposition": "deferred",
-        "localPaperId": "usr-drive-unified-scene-representation",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.12396",
-        "disposition": "deferred",
-        "localPaperId": "vlga-geometry-action-driving",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.05897",
-        "disposition": "deferred",
-        "localPaperId": "vrs-roadside-lidar-synthesis",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.39841",
-        "disposition": "deferred",
-        "localPaperId": "dyrad-dynamic-radar-view-synthesis",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.06469",
-        "disposition": "deferred",
-        "localPaperId": "odyssey-long-horizon-driving",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.30340",
-        "disposition": "deferred",
-        "localPaperId": "foundation4d-unified-perception-reconstruction",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.34632",
-        "disposition": "deferred",
-        "localPaperId": "ride-splat-windshield-reflection-removal",
-        "queryFamilies": [
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2310.10642",
-        "disposition": "included",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础",
-          "静态动态分解和驾驶 4D 重建"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "doi:10.1109/3dv62453.2024.00044",
-        "disposition": "included",
-        "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2312.16812",
-        "disposition": "included",
         "queryFamilies": [
           "NeRF 与 3D Gaussian Splatting 基础"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2404.02410",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2404.07762",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2408.16760",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染",
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2410.05111",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2411.11921",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2411.16816",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2501.00602",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.08317",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2509.23402",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2510.12901",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2510.19578",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.01993",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.03004",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2602.21333",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2603.07552",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2604.03462",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.05897",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "vrs-roadside-lidar-synthesis",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07910",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "dust-cooperative-4d-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.11594",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "pointforward-driving-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.13591",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "可编辑 Real2Sim 和场景生成",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2605.21032",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2605.23406",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "rs2ad-lidar-roadside-to-vehicle-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.25373",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.26113",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "anyscene-controllable-driving-scene-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.03159",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.03479",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.10656",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "envision4d-feedforward-4dgs",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.12396",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "vlga-geometry-action-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.16278",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.21993",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "driving-videos-to-simulatable-scenarios",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.14203",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "前馈重建、压缩与实时渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.23758",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.01761",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "decouplegs-interactive-driving-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.10682",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.11077",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "前馈重建、压缩与实时渲染"
+        ],
+        "localPaperId": "lgs-gaussian-structure-driving-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2608.14902",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.19036",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "usr-drive-unified-scene-representation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26589",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "dpa-i2p-depth-guided-registration",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.11894",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "radar-3d-point-splatting",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.39841",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "dyrad-dynamic-radar-view-synthesis",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.39960",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.06469",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "odyssey-long-horizon-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.25345",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.26585",
-        "disposition": "included",
         "queryFamilies": [
           "静态动态分解和驾驶 4D 重建"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.27604",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.28257",
-        "disposition": "included",
         "queryFamilies": [
           "静态动态分解和驾驶 4D 重建"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.30340",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "foundation4d-unified-perception-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.34632",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建"
+        ],
+        "localPaperId": "ride-splat-windshield-reflection-removal",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2021:ost-neural-scene-graphs",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2024:zhou-drivinggaussian",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2025:zhou-flexdrive",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvprw2024:lindstrom-nerfs-driving",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "cvf:iccv2025:kung-radarsplat",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-73036-8_6",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-34867-8_11",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成",
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-36987-1_22",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-37383-0_37",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-032-37531-5_28",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-024-10955-4",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s41095-024-0436-y",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.cag.2026.104782",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.patcog.2026.115120",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础",
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1016/j.plaphe.2025.100137",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/3dv62453.2024.00044",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cac63892.2024.10864536",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01428",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01920",
+        "queryFamilies": [
+          "静态动态分解和驾驶 4D 重建",
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/icassp55912.2026.11463217",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv51701.2025.02500",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icra55743.2025.11128712",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icvr70658.2026.11672427",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iros60139.2025.11246201",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iros60139.2025.11246621",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2025.3552955",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2026.3665066",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2026.3707359",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2025.3639471",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2026.3738052",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3390795",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2025.3543072",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tpami.2026.3667072",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tvcg.2024.3397828",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3592433",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3641234.3671082",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3687762",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3807511",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3832783.3834639",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证",
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1177/02783649261479363",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v39i7.32793",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v40i10.37802",
+        "queryFamilies": [
+          "可编辑 Real2Sim 和场景生成"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.20944/preprints202611.0150.v1",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3389/frai.2025.1709229",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s25123626",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/s26123871",
+        "queryFamilies": [
+          "前馈重建、压缩与实时渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3724/sp.j.1089.2025-00267",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.5281/zenodo.21554879",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.7717/peerj-cs.3034",
+        "queryFamilies": [
+          "NeRF 与 3D Gaussian Splatting 基础"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "ecva:eccv2024:yan-street-gaussians",
+        "queryFamilies": [
+          "相机、LiDAR 与多传感器渲染"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:pmqlmtbmpa",
+        "queryFamilies": [
+          "闭环仿真资产的物理与任务验证"
+        ],
+        "disposition": "included",
         "occurrences": 1
       }
     ],
@@ -1678,18 +2964,18 @@
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 5,
-        "note": "2026-11-06 对当前原始Markdown执行rg -l -i，共40个文件命中；按方向标签与revisionOf归并得26个候选，其余14个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-11-01",
-        "query": "Reopen retained primary references and independently selected 4D Gaussian foundations/recent papers",
-        "endpoint": "https://arxiv.org/",
-        "limit": 80,
-        "acceptedCount": 3,
-        "note": "逐条核对来源、阅读位置和访问限制见 review-scope/existing-reference-revalidation.json 与 core-evidence.md。此处 acceptedCount 只按当前 references.sourceFamily 计数，不等于检索命中数。",
-        "primarySourceRevalidatedAt": "2026-11-01",
+        "executedAt": "2026-11-06",
+        "query": "Gaussian splatting reconstruction survey",
+        "endpoint": "https://export.arxiv.org/api/query",
+        "limit": 12,
+        "acceptedCount": 6,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "arxiv",
           "status": "success",
@@ -1700,18 +2986,26 @@
           "acceptedCount": 1,
           "note": "语义查询用于发现，逐篇打开 arXiv 主页面核对标题、版本与方法边界；2 条最终引用以 arXiv 为直接核验源。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
           "primarySourceRevalidatedAt": "2026-09-22"
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-11-01",
-        "query": "Reopen retained primary references and independently selected 4D Gaussian foundations/recent papers",
-        "endpoint": "https://doi.org/ and official proceedings pages",
-        "limit": 50,
-        "acceptedCount": 21,
-        "note": "逐条核对来源、阅读位置和访问限制见 review-scope/existing-reference-revalidation.json 与 core-evidence.md。此处 acceptedCount 只按当前 references.sourceFamily 计数，不等于检索命中数。",
-        "primarySourceRevalidatedAt": "2026-11-01",
+        "executedAt": "2026-11-06",
+        "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "endpoint": "https://openaccess.thecvf.com/content/CVPR2021/html/Ost_Neural_Scene_Graphs_for_Dynamic_Scenes_CVPR_2021_paper.html",
+        "limit": 26,
+        "acceptedCount": 26,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "publisher-and-venue",
           "status": "success",
@@ -1722,17 +3016,18 @@
           "acceptedCount": 17,
           "note": "逐篇复核正式出版入口；确认 Are NeRFs Ready for Autonomous Driving 位于 CVPR 2024 Workshops。16 条最终引用以出版方或会议页面为直接核验源。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
           "primarySourceRevalidatedAt": "2026-09-22"
-        }
+        },
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       },
       {
         "sourceFamily": "semantic-scholar",
         "status": "limited",
-        "executedAt": "2026-11-01",
-        "query": "4D Gaussian Splatting dynamic scene; Gaussian occupancy driving; feed-forward 4D reconstruction",
+        "executedAt": "2026-11-06",
+        "query": "Gaussian splatting reconstruction survey",
         "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
-        "limit": 20,
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "本轮专题发现和元数据交叉核对，实际请求与原始响应见 retrieval/query-runs.json；Semantic Scholar 三次均 429，OpenAlex 三次各返回 50 条。聚合器不作为最终论断来源，采纳数为 0。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "semantic-scholar",
           "status": "limited",
@@ -1752,17 +3047,26 @@
             "acceptedCount": 0,
             "note": "Graph API 限流；未把聚合器结果直接纳入引用或虚构命中。"
           }
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-11-01",
-        "query": "4D Gaussian Splatting dynamic scene; Gaussian occupancy driving; feed-forward 4D reconstruction",
+        "executedAt": "2026-11-06",
+        "query": "Gaussian splatting reconstruction survey",
         "endpoint": "https://api.openalex.org/works",
-        "limit": 50,
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "本轮专题发现和元数据交叉核对，实际请求与原始响应见 retrieval/query-runs.json；Semantic Scholar 三次均 429，OpenAlex 三次各返回 50 条。聚合器不作为最终论断来源，采纳数为 0。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "openalex",
           "status": "success",
@@ -1782,18 +3086,26 @@
             "acceptedCount": 0,
             "note": "API 仅用于书目交叉核对；最终结论回到一手页面。"
           }
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-11-01",
-        "query": "Reopen retained primary references and independently selected 4D Gaussian foundations/recent papers",
-        "endpoint": "https://github.com/ and official project pages",
-        "limit": 20,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "endpoint": "https://doi.org/10.1145/3592433",
+        "limit": 1,
         "acceptedCount": 1,
-        "note": "逐条核对来源、阅读位置和访问限制见 review-scope/existing-reference-revalidation.json 与 core-evidence.md。此处 acceptedCount 只按当前 references.sourceFamily 计数，不等于检索命中数。",
-        "primarySourceRevalidatedAt": "2026-11-01",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "official-project",
           "status": "success",
@@ -1804,18 +3116,58 @@
           "acceptedCount": 1,
           "note": "官方 3DGS 项目页作为一条基础表示引用的直接核验源；其他项目页只用于核对资产，不升级出版或闭环证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
           "primarySourceRevalidatedAt": "2026-09-22"
-        }
+        },
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
       }
     ],
-    "refreshMode": "incremental-local-corpus",
+    "refreshMode": "primary-source-and-literature-refresh",
     "sourceRevalidation": {
-      "checkedAt": "2026-11-01",
-      "referenceCount": 24,
-      "priorCoreReviewedAt": "2026-09-22",
-      "manifestPath": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/existing-reference-revalidation.json",
-      "manifestSha256": "ecfd48387df760af71a46b2a081a7f5dd6988f79b110f66693387c69ceb5fbef",
-      "claimRecordsPath": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/core-evidence.md",
-      "boundary": "24 既有引用逐条重开元数据、摘要及相关论断正文；阅读深度按条记录。SafeComp 全文受订阅限制，AAAI 直接页面被挑战页阻断；不把下载成功当作全文阅读。"
+      "checkedAt": "2026-11-06",
+      "scope": "逐项核对当前保留的书目与论断；阅读深度按引用记录，公开范围足以支撑的论断不要求付费标准全文。并非声明所有论文逐字全文阅读。",
+      "referenceIds": [
+        "splatad-2025",
+        "neural-scene-graphs-2021",
+        "drivinggaussian-2024",
+        "street-gaussians-2024",
+        "omnire-2025",
+        "nerfs-ready-driving-2024",
+        "desire-gs-2025",
+        "physical-4d-2026",
+        "instant-nurec-2026",
+        "real2sim-2026",
+        "nerf-2020",
+        "gaussian-splatting-2023",
+        "driving-3dgs-review-2025",
+        "unisim-2023",
+        "neurad-2024",
+        "flexdrive-2025",
+        "neuroncap-2024",
+        "perception-aware-3dgs-2026",
+        "safecomp-capability-2026",
+        "dggt-2026",
+        "radarsplat-2025",
+        "storm-2025",
+        "drivingforward-2025",
+        "roadvggt-2026",
+        "4dgs-wu-2024",
+        "native-4dgs-yang-2024",
+        "dynamic-3d-gaussians-2024",
+        "spacetime-gaussians-2024",
+        "drive2gauss-2026",
+        "splatflux-2026",
+        "representation-centric-4d-survey-2026",
+        "gs-systems-survey-2026",
+        "uni-gaussians-2025",
+        "cam2sim-2026",
+        "persistgs-2026",
+        "multi4d-2026",
+        "geometry-aware-online-gs-2026",
+        "dgomapping-2026"
+      ],
+      "authorEvidence": "docs/center-updates/2026-11-06/authoring/embodied/existing-reference-semantic-revalidation.json",
+      "newReferenceEvidence": "docs/center-updates/2026-11-06/authoring/embodied/new-references.json",
+      "publicScopeClosure": "docs/center-updates/2026-11-06/authoring/embodied/parent-public-scope-closure.json",
+      "independentApproval": "pending"
     },
     "metadataCorroboration": {
       "checkedAt": "2026-09-22",
@@ -1823,12 +3175,38 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "localRefreshNote": "2026-11-06 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。",
     "historicalAuditSnapshot": {
       "path": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/3d-reconstruction-before.json",
       "sha256": "b874de3b2560dad5cbf3a74b692ba6a0604f37d596905810b4aee920ce454f3a",
       "note": "Immutable prior query runs, candidate ledger, dates and approval; not rewritten as a current search."
     },
-    "incrementalLocalAuditAt": "2026-11-06"
+    "currentRefreshArtifacts": {
+      "retrieval": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+      "authoring": "docs/center-updates/2026-11-06/authoring/embodied/",
+      "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "discoveryAliasMerges": [
+      {
+        "observedId": "doi:10.1117/12.3054384",
+        "canonicalId": "doi:10.1016/j.plaphe.2025.100137",
+        "title": "A survey on 3D reconstruction techniques in plant phenotyping: from classical methods to neural radiance fields (NeRF), 3D Gaussian splatting (3DGS), and beyond",
+        "url": "https://doi.org/10.1117/12.3054384",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "doi:10.1109/cvpr52734.2025.01119",
+        "canonicalId": "arxiv:2411.16816",
+        "title": "SplatAD: Real-Time Lidar and Camera Rendering with 3D Gaussian Splatting for Autonomous Driving",
+        "url": "https://doi.org/10.1109/cvpr52734.2025.01119",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "doi:10.1109/cvprf71909.2026.00101",
+        "canonicalId": "arxiv:2512.01993",
+        "title": "RoaD: Rollouts as Demonstrations for Closed-Loop Supervised Fine-Tuning of Autonomous Driving Policies",
+        "url": "https://doi.org/10.1109/cvprf71909.2026.00101",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      }
+    ]
   }
 }

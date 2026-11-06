@@ -1,0 +1,1553 @@
+{
+  "shard_id": "generation-astra",
+  "generator_model": "gpt-6-astra (parent-assigned generation model; exact runtime backend label not independently exposed)",
+  "modelIdentity": {
+    "requested": "gpt-6-astra",
+    "knownRuntimeIdentity": "OpenAI Codex, GPT-6 family",
+    "independentBackendVerification": false,
+    "role": "same-family divergent generator, not reviewer or acceptance authority"
+  },
+  "assigned_unit_ids": [
+    "direct-method",
+    "representation-transfer",
+    "sequential-decision",
+    "systems-resources",
+    "learning-objective"
+  ],
+  "covered_unit_ids": [
+    "direct-method",
+    "representation-transfer",
+    "sequential-decision",
+    "systems-resources",
+    "learning-objective"
+  ],
+  "status": "completed",
+  "candidates": [
+    {
+      "id": "anchor-block-v2x",
+      "directionId": "cooperative-autonomous-driving",
+      "crossDirectionIds": [
+        "world-models"
+      ],
+      "title": "把预测通信改成可独立恢复的短块编码",
+      "lenses": [
+        "direct-method",
+        "systems-resources"
+      ],
+      "method": [
+        "把每块 BEV 特征的短时间序列编码为一个锚点及各帧相对该锚点的预测残差；一帧解码不依赖上一帧是否收到。",
+        "联合学习锚点间隔和残差量化，在真实计算的字节预算下最小化融合特征失真；通过丢包训练让未来可恢复性进入码率分配。",
+        "接收端按块更新状态，缺帧仍从同一锚点预测；到期的锚点由新块替换。"
+      ],
+      "hypothesis": "限制预测依赖的长度，可用少量锚点开销显著缩短突发丢包后的状态失配时间，使低带宽协同在连续运行中更有效。",
+      "whyNow": "MirrorComm 已把镜像预测变成明确的通信机制，现阶段可以直接研究预测依赖结构与恢复成本，而非再比较静态特征压缩。",
+      "upside": "把协同感知中的低平均码率推进到连续运行可用的预测码；得到感知误差、恢复时间和字节量之间的实测设计规律。",
+      "risk": "短块锚点可能吃掉全部压缩收益；传统视频预测编码已有相近思想，研究贡献必须来自协同状态和任务失真的联合建模。",
+      "priorWork": [
+        {
+          "title": "MirrorComm",
+          "url": "https://arxiv.org/html/2611.02405v1",
+          "overlap": "双方镜像预测并发送新信息。",
+          "difference": "从重建历史递推改为块内共同锚点依赖，研究丢包后的可恢复编码；不把预测通信本身当新意。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "MORE",
+          "url": "https://arxiv.org/html/2610.14871",
+          "overlap": "学习适合未来预测的紧凑状态。",
+          "difference": "状态专用于可独立解码的协同通信，目标含链路恢复与精确字节量，不是仅做潜状态预训练。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "OPV2V 序列、固定协同检测骨干、MirrorComm 可复现部分；代码可用性需启动时核对。"
+        ],
+        "build": [
+          "短块码流、可复现丢包回放器、可训练锚点间隔和量化头。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "低带宽收益是否会在突发丢包后被长期状态失配抵消，短块是否解决这一点？",
+        "setup": "同一特征序列和量化器，固定无丢包、独立丢包、相同总丢包数的突发三组；完整计入锚点、索引和重传字节。",
+        "baselines": [
+          "逐帧独立编码",
+          "镜像递推编码",
+          "固定间隔关键帧",
+          "所提可学习短块"
+        ],
+        "measurement": [
+          "AP70 与动态目标召回",
+          "逐帧重建误差",
+          "恢复到正常误差区间的帧数",
+          "实际总字节和端到端时延"
+        ],
+        "positive": "同字节预算下，突发结束后误差更快恢复且持续序列感知更好；表明依赖拓扑是核心变量。",
+        "negative": "短块恢复快但全序列感知不改善或字节超支；说明该环境下长期依赖不是主要瓶颈。",
+        "unclear": "增益只来自增加锚点字节；改用精确码率匹配后才能判断。",
+        "budget": "计划 1 张 GPU、1–2 天提取和回放；训练上限约 24 GPU 小时。"
+      },
+      "evidence": [
+        {
+          "sourceId": "mirror",
+          "title": "MirrorComm",
+          "url": "https://arxiv.org/html/2611.02405v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/mirrorcomm-predictive-cooperative-communication.md",
+          "readingDepth": "local-report-method-and-primary-links",
+          "actualRole": "给出镜像预测机制及同步恢复尚未验证的边界。"
+        },
+        {
+          "sourceId": "more",
+          "title": "MORE",
+          "url": "https://arxiv.org/html/2610.14871",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-world-models.json",
+          "readingDepth": "primary-abstract-and-section-3",
+          "actualRole": "提供紧凑可预测状态的外部表示机制。"
+        },
+        {
+          "sourceId": "ufmf",
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/ufmf-radar-kinematic-occupancy-forecasting.md",
+          "readingDepth": "local-report-method-and-primary-excerpt",
+          "actualRole": "支持把时间预测做成轻量核心的系统设计参考；其模块 FPS 不当成本任务总速度。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "temporal-dependence-cooperative-error-planner-effect"
+        ],
+        "relation": "相邻问题的新方法",
+        "whatDiffers": "旧候选固定错误边际审计时序效应；本候选直接设计有恢复能力的码流，比较通信与感知，不复用旧审计结论。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "action-value-geometry-query",
+      "directionId": "agentic-driving",
+      "crossDirectionIds": [
+        "end-to-end-autonomous-driving",
+        "dynamic-scene-representation"
+      ],
+      "title": "让驾驶智能体只查询能改变动作选择的几何证据",
+      "lenses": [
+        "sequential-decision",
+        "systems-resources"
+      ],
+      "method": [
+        "先用低成本分支提出两到四条动作候选，并为每个分歧区域列出一个可调用的局部几何查询。",
+        "训练一个查询价值函数，监督信号是实际取得该区域深度或运动证据后，候选排序与真实执行收益的改善。",
+        "每次只执行收益最高的查询并更新动作；固定总查询预算，语言说明由本轮实际使用的证据生成。"
+      ],
+      "hypothesis": "推理的收益更多来自取得决策相关的新信息，而非增加理由长度；按动作差异选择测量能提高有限预算下的驾驶决策质量。",
+      "whyNow": "GeoCoTDrive 已有局部三维取证，STEER 已有路由收益训练；可以把优化对象从是否思考转成具体问什么。",
+      "upside": "形成简单、可解释的主动取证驾驶策略，让高成本几何模型和慢推理真正服务于动作选择。",
+      "risk": "候选动作若全部缺失正确模式，查询无用；从仿真回报学到的查询价值可能迁移差。",
+      "priorWork": [
+        {
+          "title": "GeoCoTDrive",
+          "url": "https://arxiv.org/html/2610.10390",
+          "overlap": "局部区域定位后取三维特征支持规划。",
+          "difference": "选择区域由动作候选间的反事实收益监督，而不是仅依赖规划相关区域标签。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "STEER",
+          "url": "https://arxiv.org/html/2611.00718",
+          "overlap": "用环境收益学习是否调用较贵推理。",
+          "difference": "动作是具体的一次几何测量；同总成本下比较取得新证据与延长推理。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "固定 VLA 或小型规划器、已有深度/运动估计器、RFWorld 式候选读取接口。"
+        ],
+        "build": [
+          "局部查询 API、查询前后配对数据、轻量查询价值头。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "同计算预算下，动作分歧驱动的几何查询是否优于语义显著性和直接延长推理？",
+        "setup": "选遮挡转弯、窄道、行人横穿三类可重复仿真场景；训练/评估按道路与场景种子划分。查询只读取当前可获得观测，不读未来真值。",
+        "baselines": [
+          "随机 ROI",
+          "语义显著 ROI",
+          "GeoCoT 式固定 ROI",
+          "相同耗时的额外 CoT",
+          "全量几何上界"
+        ],
+        "measurement": [
+          "动作排序正确率",
+          "闭环通过/碰撞/不必要停车",
+          "每次决策时间与查询数"
+        ],
+        "positive": "有限查询接近全量几何，并优于等耗时 CoT；说明获得的信息而非文字长度产生价值。",
+        "negative": "排序改变但执行不改善；说明查询收益目标未覆盖真正动作后果。",
+        "unclear": "价值只在 GT 深度下成立；需区分查询策略与实际几何误差。",
+        "budget": "计划冻结主模型，1–2 张 GPU、2–3 天；先约 100 个场景的成对查询。"
+      },
+      "evidence": [
+        {
+          "sourceId": "geo",
+          "title": "GeoCoTDrive",
+          "url": "https://arxiv.org/html/2610.10390",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-agentic-driving.json",
+          "readingDepth": "primary-abstract-and-related-method-context",
+          "actualRole": "提供区域到三维证据的具体工具机制。"
+        },
+        {
+          "sourceId": "steer",
+          "title": "STEER",
+          "url": "https://arxiv.org/html/2611.00718",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-agentic-driving.json",
+          "readingDepth": "primary-abstract",
+          "actualRole": "提供以环境收益训练计算路由的外部依据。"
+        },
+        {
+          "sourceId": "rf",
+          "title": "RFWorld",
+          "url": "https://arxiv.org/html/2611.05072v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/rfworld-rollout-free-trajectory-evaluation.md",
+          "readingDepth": "local-report-method-equations-and-scope",
+          "actualRole": "本库共享记忆与多候选查询可作为低成本动作比较接口。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "selective-router-counterfactual-missingness",
+          "failure-diagnosis-intervention-consistency"
+        ],
+        "relation": "方法重构，非原假设重提",
+        "whatDiffers": "旧候选审计路由处理差和失败标签；新候选学习主动测量策略，首项实验直接操纵查询信息。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "contact-graph-4d-gaussians",
+      "directionId": "3d-reconstruction",
+      "crossDirectionIds": [
+        "dynamic-scene-representation",
+        "world-models"
+      ],
+      "title": "从接触事件反推可编辑的 4D 高斯交互图",
+      "lenses": [
+        "direct-method",
+        "representation-transfer"
+      ],
+      "method": [
+        "将连续帧中的运动高斯聚成少量物体体元，分别拟合可渲染外观和粗碰撞网格。",
+        "以碰撞前后轨迹变化为约束，交替优化物体间接触图与刚体运动参数，使 RGB、LiDAR 几何和动量变化共享同一解释。",
+        "编辑单个物体或接触面，保持估计出的其他机制不变，渲染交互后的多传感器轨迹。"
+      ],
+      "hypothesis": "将接触对象和接触时刻作为待估计结构，而非预先提供的碰撞条件，能够从局部可见的交互片段恢复具有反事实编辑价值的动态场景。",
+      "whyNow": "Real2Sim 已接通高斯与物理求解，PersistGS 已估计摩擦并维持遮挡轨迹；下一步可研究多物体接触结构本身能否从观测识别。",
+      "upside": "高收益高风险：重建资产不仅会移动，还能从真实观察解释谁与谁发生了作用，为道路掉落物和低速接触提供可编辑场景。",
+      "risk": "质量、摩擦、碰撞几何可能不可辨识；首轮限制为刚体与少量接触参数，不声称能恢复车辆碰撞材料或任意软体。",
+      "priorWork": [
+        {
+          "title": "PersistGS",
+          "url": "https://arxiv.org/html/2606.03479",
+          "overlap": "高斯对象、独立碰撞网格、可微刚体和遮挡运动。",
+          "difference": "不重提通用物理保持对象；核心改为联合推断多对象接触图，并用未参与拟合的接触干预检验结构。补充源目前仅方法摘要，细节待查新。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "Real2Sim",
+          "url": "https://arxiv.org/html/2605.13591v1",
+          "overlap": "高斯对象接入物理求解与编辑。",
+          "difference": "从用户指定初值/边界的演示改为通过观测拟合接触结构；选可验证的刚体接触，不宣称真实车辆材料校准。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "Uni-Gaussians",
+          "url": "https://arxiv.org/html/2503.08317",
+          "overlap": "同一高斯表示支持相机与 LiDAR。",
+          "difference": "把双方观测用于接触事件估计，贡献不在双传感器渲染器。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "现有高斯渲染器、可微或可求导近似的刚体引擎、公开刚体资产。"
+        ],
+        "build": [
+          "离散接触图候选与连续轨迹交替优化、小型多视角接触数据生成接口。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "部分遮挡时，联合识别接触图能否比纯轨迹平滑更准确预测接触干预后的运动？",
+        "setup": "先用约 20 个公开资产构造滚动、滑动、相撞的受控合成短片；遮挡和相机位置分开留出。只在训练视图拟合，在留出接触位置及速度编辑上评估。",
+        "baselines": [
+          "纯自由形变 4DGS",
+          "已知接触图上界",
+          "固定场景碰撞网格的 PersistGS 式模型",
+          "无接触图的轨迹外推"
+        ],
+        "measurement": [
+          "接触边与时刻准确率",
+          "留出 3D 轨迹误差",
+          "非穿透/能量异常",
+          "RGB 与 LiDAR 重建质量"
+        ],
+        "positive": "观测拟合相近但编辑后的轨迹明显更准；支持接触结构包含可迁移机制。",
+        "negative": "图与轨迹只在观测窗口拟合好、干预即失效；说明参数不可辨识或渲染监督不足。",
+        "unclear": "已知接触图也失败；先定位物理近似或梯度问题，不能据此否定图推断。",
+        "budget": "计划 1–2 张 GPU、2–3 天做合成最小实验；完整真实数据研究约 8–12 周。"
+      },
+      "evidence": [
+        {
+          "sourceId": "real",
+          "title": "Real2Sim",
+          "url": "https://arxiv.org/html/2605.13591v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/real2sim-physics-4dgs.md",
+          "readingDepth": "local-report-method-and-scope",
+          "actualRole": "本库物理编辑接口与材料校准边界。"
+        },
+        {
+          "sourceId": "nurec",
+          "title": "Instant NuRec",
+          "url": "https://arxiv.org/html/2607.14203v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/instant-nurec-feedforward-3dgs.md",
+          "readingDepth": "local-report-method-and-scope",
+          "actualRole": "本库快速生成场景资产的可能初始化，不假设可重训其内部规模模型。"
+        },
+        {
+          "sourceId": "persist",
+          "title": "PersistGS",
+          "url": "https://arxiv.org/html/2606.03479",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-supplement.md",
+          "readingDepth": "parent-opened-primary-method-summary-only",
+          "actualRole": "明确已有遮挡物理延续机制，防止把同机制改名。"
+        },
+        {
+          "sourceId": "uni",
+          "title": "Uni-Gaussians",
+          "url": "https://arxiv.org/html/2503.08317",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-3d-reconstruction-evidence-packet.json",
+          "readingDepth": "primary-abstract-and-method-overview",
+          "actualRole": "提供统一相机/LiDAR几何监督的渲染路径。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "unposed-pose-geometry-task-equivalence-break",
+          "trajectory-support-task-admission-certificate"
+        ],
+        "relation": "新的逆问题",
+        "whatDiffers": "旧候选是解歧义审计或准入证书；本候选增加可检验的接触结构学习，不依赖旧判定。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "track-balanced-calibration",
+      "directionId": "autonomous-driving-security",
+      "crossDirectionIds": [
+        "3d-reconstruction"
+      ],
+      "title": "以世界表面轨迹为单位学习抗局部污染的在线标定",
+      "lenses": [
+        "direct-method",
+        "learning-objective"
+      ],
+      "method": [
+        "将跨帧相机与 LiDAR 对应归并为世界表面轨迹，每条轨迹只贡献一个标定残差单元。",
+        "用轨迹级稳健目标估计外参，并在训练中约束移除单条轨迹时的更新敏感性，使重复出现的大面积图案不会靠像素数量支配更新。",
+        "直接输出外参更新，继续完成传感融合；同时测量正常机械偏移恢复和局部污染下的残余误差。"
+      ],
+      "hypothesis": "标定攻击能放大一个局部物理源的重复像素证据；改为轨迹级影响控制可保留正常自校准能力，并减少持续性外参漂移。",
+      "whyNow": "ACA 将在线标定明确为持续性攻击面，可以围绕标定估计器本身设计方法，而非再叠一个攻击分类器。",
+      "upside": "使可自校准传感融合具有内生的局部污染鲁棒性；同机制也可能处理自然广告牌、反光和局部遮挡。",
+      "risk": "多轨迹串谋或关联错误仍会破坏估计；稳健化可能降低快速真实重标定的速度。",
+      "priorWork": [
+        {
+          "title": "Adversarial Calibration Attack",
+          "url": "https://arxiv.org/html/2608.28778",
+          "overlap": "研究局部视觉内容污染在线 camera–LiDAR 外参估计。",
+          "difference": "提出轨迹级估计与影响训练的修复机制，需在自适应测试下检验，不以已知攻击检测率代替。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "Cross-Modal Phantom",
+          "url": "https://arxiv.org/html/2604.21841",
+          "overlap": "多模态表面一致性也可能由污染制造。",
+          "difference": "不把跨模态一致性直接当可信证明；目标是限制局部来源对全局外参的作用，且不宣称已覆盖协调双传感器攻击。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "公开 camera–LiDAR 标定网络、KITTI/nuScenes 标定数据和离线可控扰动。"
+        ],
+        "build": [
+          "世界表面轨迹分组、可微稳健聚合、移除轨迹的影响约束。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "在相同真实偏移恢复速度下，轨迹级估计能否降低局部视觉污染造成的持续外参漂移？",
+        "setup": "只在离线回放和封闭仿真中复现局部污染；训练/测试分离场景、图案与偏移。每种方法接受同样传感输入和运行预算。",
+        "baselines": [
+          "原标定器",
+          "像素级 Huber/RANSAC",
+          "轨迹级稳健估计无影响训练",
+          "所提完整估计器"
+        ],
+        "measurement": [
+          "旋转/平移误差",
+          "自然偏移恢复时间",
+          "污染撤除后的残余漂移",
+          "融合检测与小型闭环变化"
+        ],
+        "positive": "在正常恢复非劣下减少污染后的持久漂移，并优于像素级稳健估计；支持重复来源相关性解释。",
+        "negative": "只能靠压小所有更新获益；说明方法只是降低适应速度。",
+        "unclear": "轨迹匹配真值有效而实际匹配无效；指出表面跟踪是下一实质问题。",
+        "budget": "计划 1 张 GPU、1–3 天；首轮离线 200 段以内，不涉及公共道路或真实系统攻击。"
+      },
+      "evidence": [
+        {
+          "sourceId": "aca",
+          "title": "Adversarial Calibration Attack",
+          "url": "https://arxiv.org/html/2608.28778",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-autonomous-driving-security-evidence-packet.json",
+          "readingDepth": "primary-abstract-and-method-overview",
+          "actualRole": "提供在线标定攻击的具体污染链及持续后果。"
+        },
+        {
+          "sourceId": "phantom",
+          "title": "Cross-Modal Phantom",
+          "url": "https://arxiv.org/html/2604.21841",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-autonomous-driving-security-evidence-packet.json",
+          "readingDepth": "primary-abstract-and-data-level-threat-scope",
+          "actualRole": "约束对多模态一致性的解释，避免把一致性当真实。"
+        },
+        {
+          "sourceId": "cosafe",
+          "title": "CoSafe",
+          "url": "https://arxiv.org/html/2611.06204v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/cosafe-cooperative-runtime-assurance.md",
+          "readingDepth": "local-report-selected-excerpts",
+          "actualRole": "本库的感知到危险和轨迹缓解链用于定义下游效用；不是标定鲁棒性的证据。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "adaptive-detector-fallback-hazard-budget",
+          "signed-semantic-update-differential-admission"
+        ],
+        "relation": "不同方法入口",
+        "whatDiffers": "旧候选研究检测/回退或模型更新准入；本候选改变几何估计目标，不复活准入审计。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "paired-boundary-scenario-growth",
+      "directionId": "autonomous-driving-testing",
+      "crossDirectionIds": [
+        "end-to-end-autonomous-driving"
+      ],
+      "title": "沿失败边界生长成对场景，而非只扩大失败集合",
+      "lenses": [
+        "sequential-decision",
+        "direct-method"
+      ],
+      "method": [
+        "从一个失败交互提取少量可连续控制的量，如相对到达时间、可通行宽度与制动余量。",
+        "通过成对局部执行估计失败边界的法向；沿切向改变环境保留机制，沿法向生成一对刚好可行/不可行的场景。",
+        "把查询预算分配给边界位置最不确定或不同策略边界分歧最大的区域，输出可复用的成对回归集。"
+      ],
+      "hypothesis": "在相同执行预算下，成对的边界局部生长比单纯最大化违规数更容易区分策略能力、过度保守和不安全进取，并发现新的行为转变。",
+      "whyNow": "Bug2Scenario 已有机制保留提案，Failure-Boundary Profiles 已分开尝试与成功；现在可以把固定单轴分析提升为自动多因素边界探索。",
+      "upside": "产生既能定位错误又能训练决策边界的场景集，避免优化一个总体分数后把停车能力丢失藏起来。",
+      "risk": "高维边界可能不光滑或多连通；仿真随机性会让法向估计昂贵，首轮只用两三个明确可控量。",
+      "priorWork": [
+        {
+          "title": "Bug2Scenario",
+          "url": "https://arxiv.org/html/2611.06229v1",
+          "overlap": "围绕原始交互机制生成变体。",
+          "difference": "变体按局部边界几何产生且成对覆盖两侧；不把 LLM 根因描述直接当因果真值。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "Failure-Boundary Profiles",
+          "url": "https://arxiv.org/html/2611.06453v1",
+          "overlap": "分别测尝试和无接触通过随难度变化。",
+          "difference": "学习多因素局部边界并主动选下一次执行，而非只扫描手工单轴。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "ADV-0",
+          "url": "https://arxiv.org/html/2603.15221",
+          "overlap": "通过策略相关目标寻找困难场景。",
+          "difference": "优化成对边界信息与决策区分，不只追求对手使策略失利。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "CARLA、公开场景族、Bug2Scenario 场景格式及固定小型策略。"
+        ],
+        "build": [
+          "局部可行性参数化、带噪声边界拟合、成对采样器。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "同样 300 次执行预算能否更准确预测留出组合的尝试与安全通过边界？",
+        "setup": "三个场景族各选两个连续控制量；独立稠密扫描只作封存评估，不给主动采样器使用。",
+        "baselines": [
+          "均匀网格",
+          "随机局部变异",
+          "最大失败率贝叶斯搜索",
+          "单轴二分",
+          "所提成对生长"
+        ],
+        "measurement": [
+          "留出边界误差",
+          "可行与不可行侧决策准确率",
+          "新边界分支发现数",
+          "执行成本"
+        ],
+        "positive": "更少执行恢复多因素边界，并发现总体违规搜索遗漏的保守/激进转变。",
+        "negative": "只增加相似近边界样本而覆盖变差；说明局部法向不足以探索多连通机制。",
+        "unclear": "评分差异由几何可行标签错误产生；先修正场景测量，不算方法成功。",
+        "budget": "计划 CPU 仿真加 1 张 GPU推理、1–2 天；训练模型仅轻量代理。"
+      },
+      "evidence": [
+        {
+          "sourceId": "bug",
+          "title": "Bug2Scenario",
+          "url": "https://arxiv.org/html/2611.06229v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/bug2scenario-root-cause-regression.md",
+          "readingDepth": "local-report-method-and-comparisons",
+          "actualRole": "本库根因保留流程与严格保留边界。"
+        },
+        {
+          "sourceId": "boundary",
+          "title": "Failure-Boundary Profiles",
+          "url": "https://arxiv.org/html/2611.06453v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/failure-boundary-profiles-driving.md",
+          "readingDepth": "local-report-method-and-primary-abstract",
+          "actualRole": "本库尝试/成功双曲线作为研究输出。"
+        },
+        {
+          "sourceId": "adv",
+          "title": "ADV-0",
+          "url": "https://arxiv.org/html/2603.15221",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-autonomous-driving-testing-evidence-packet.json",
+          "readingDepth": "primary-abstract-and-objective-overview",
+          "actualRole": "外部对手优化提供明确的竞争采样目标。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "versioned-regression-evidence-inheritance",
+          "paired-execution-layer-verdict-set"
+        ],
+        "relation": "新生成机制",
+        "whatDiffers": "不继承未执行的新版本 verdict，也不做跨执行层准入；研究下一条场景如何生成及其信息量。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "recovery-set-imitation",
+      "directionId": "end-to-end-autonomous-driving",
+      "crossDirectionIds": [
+        "world-models"
+      ],
+      "title": "用可恢复动作集合训练端到端策略",
+      "lenses": [
+        "learning-objective",
+        "sequential-decision"
+      ],
+      "method": [
+        "从当前策略的小幅偏离状态出发，用固定可解释规划教师生成多条能够恢复任务的轨迹。",
+        "保留满足同一场景动力学和交互响应的轨迹集合，以集合似然训练轻量生成式策略，而不是只拉回唯一日志轨迹。",
+        "在新策略访问的状态上重复采样恢复集合，控制教师调用与仿真预算。"
+      ],
+      "hypothesis": "闭环泛化受限的一部分原因是把多种可行恢复动作压成唯一专家答案；集合监督能保留恢复多样性而避免在不同动作间取平均。",
+      "whyNow": "DriveMLP 强调训练过程的重要性，DiffusionDrive 展示快速多模态轨迹生成；可以在固定模型容量下直接研究恢复监督的结构。",
+      "upside": "无需扩大骨干即可提升偏离后的恢复能力，得到可复用的闭环模仿学习训练范式。",
+      "risk": "规划教师的可行集合可能覆盖不足或行为不自然；方法收益可能仅来自额外 on-policy 数据，必须设置相同数据对照。",
+      "priorWork": [
+        {
+          "title": "DriveMLP",
+          "url": "https://arxiv.org/html/2610.29676",
+          "overlap": "使用闭环访问状态和专家引导的学习。",
+          "difference": "把单日志距离目标改为同状态的可行恢复集合似然，保留动作多样性。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "DiffusionDrive",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Liao_DiffusionDrive_Truncated_Diffusion_Model_for_End-to-End_Autonomous_Driving_CVPR_2025_paper.html",
+          "overlap": "快速生成多模态动作。",
+          "difference": "改变训练目标和数据分布，不以新的扩散解码器作为贡献。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "小型现有生成规划器、可恢复初始状态的 CARLA/nuPlan 场景、固定 MPC 或搜索教师。"
+        ],
+        "build": [
+          "恢复集合生成器、场景条件集合似然、等数据训练对照。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "在训练数据和教师调用数相同的情况下，多恢复轨迹监督是否比单轨迹监督更好？",
+        "setup": "按场景留出；对同一偏离状态保存完整教师候选池，对照组从池内固定选一条。初步只做停车、横向偏移和交互让行。",
+        "baselines": [
+          "原始离线模仿",
+          "单轨迹 on-policy 模仿",
+          "DriveMLP 式专家距离目标",
+          "同数据集合模仿"
+        ],
+        "measurement": [
+          "恢复成功率",
+          "碰撞及路外率",
+          "不必要制动",
+          "可行模式覆盖和时延"
+        ],
+        "positive": "同样访问状态和算力下恢复成功提升且模式覆盖保留，支持监督结构假设。",
+        "negative": "单轨迹 on-policy 已解释全部提升；表明新增访问分布而非集合是关键。",
+        "unclear": "集合更好但教师调用超预算；需按教师成本重新匹配。",
+        "budget": "计划 1–2 张 GPU、2–3 天，首轮约 1000 个偏离状态；不重训大视觉模型。"
+      },
+      "evidence": [
+        {
+          "sourceId": "mlp",
+          "title": "DriveMLP",
+          "url": "https://arxiv.org/html/2610.29676",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-end-to-end-autonomous-driving.json",
+          "readingDepth": "primary-abstract-and-training-objective",
+          "actualRole": "外部闭环训练策略与模型容量的拆分动机。"
+        },
+        {
+          "sourceId": "diff",
+          "title": "DiffusionDrive",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Liao_DiffusionDrive_Truncated_Diffusion_Model_for_End-to-End_Autonomous_Driving_CVPR_2025_paper.html",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-end-to-end-autonomous-driving.json",
+          "readingDepth": "formal-primary-and-arxiv-abstract",
+          "actualRole": "外部快速多模态策略可复用路线。"
+        },
+        {
+          "sourceId": "rf",
+          "title": "RFWorld",
+          "url": "https://arxiv.org/html/2611.05072v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/rfworld-rollout-free-trajectory-evaluation.md",
+          "readingDepth": "local-report-method-equations-and-scope",
+          "actualRole": "本库候选评价与训练/推理分离接口，供恢复集合和部署成本设计。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "verifier-selection-winners-curse",
+          "covla-caption-side-channel-future-motion"
+        ],
+        "relation": "新的训练目标",
+        "whatDiffers": "不重复测试时搜索审计；教师只用于训练，评估用独立执行且不输入未来语言标签。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "flux-preserving-occupancy",
+      "directionId": "dynamic-scene-representation",
+      "crossDirectionIds": [
+        "radar-occupancy-representation",
+        "world-models"
+      ],
+      "title": "用守恒流更新动态占据，单独学习物体出现和消失",
+      "lenses": [
+        "representation-transfer",
+        "direct-method"
+      ],
+      "method": [
+        "把动态占据看成可搬运的空间质量，用速度场和有限体积流量把上一时刻的质量推进到现在。",
+        "将新增/消失的占据限制为显式源项，由新观测射线与特征学习；搬运本身不随意让物体变淡。",
+        "快流每帧推进状态，慢模型到达时校正几何和源项，以同一时间戳状态输出占据。"
+      ],
+      "hypothesis": "动态目标在远期预测和异步更新中缩小，部分来自无约束特征更新把运动和消失混在一起；守恒搬运加可观测源项能保住形状并及时清除离开目标。",
+      "whyNow": "UFMF 明确描述动态 blank-collapse，EvoOcc 将异步状态更新拆出；可以直接检验表示的守恒结构。",
+      "upside": "用一个简单可解释的时序更新律连接实时占据和未来占据，改善小物体、急转弯和重新显露的自由空间。",
+      "risk": "占据概率不是严格物质质量；遮挡、栅格化和形变可能使守恒先验过强，不能把它硬当物理定律。",
+      "priorWork": [
+        {
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "overlap": "通过运动先验搬运动态信息。",
+          "difference": "搬运具有显式质量守恒结构，出现/消失分开建模；不只约束特征差或输出高度。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "EvoOcc",
+          "url": "https://arxiv.org/html/2611.02499v1",
+          "overlap": "持续推进迟到的高质量状态。",
+          "difference": "更新对象由 logit 残差换成可解释占据流与源项，检查形状持续和清空两端。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "现有 BEV 占据头、位姿对齐、UFMF/EvoOcc 可复现配置。"
+        ],
+        "build": [
+          "可微有限体积搬运层、射线条件源项、异步时间回放。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "守恒结构是否减少移动目标消失，同时不把已离开对象留成鬼影？",
+        "setup": "先用 CARLA 几何真值构造匀速/转弯/离开视野和重新显露的成对片段，再用真实预测历史重做；总参数和时延匹配。",
+        "baselines": [
+          "普通递归网络",
+          "直接特征 warp",
+          "UFMF 式运动先验",
+          "守恒流无源项",
+          "完整流与源项"
+        ],
+        "measurement": [
+          "动态 IoU",
+          "体积随时间偏差",
+          "轨迹与边界误差",
+          "离开后的残留占据",
+          "全流水线时延"
+        ],
+        "positive": "动态完整性和清空速度同时改善，表明运动与出生/消失分解有价值。",
+        "negative": "只保形却增加残留；说明守恒对概率占据不合适或源项学习不足。",
+        "unclear": "GT 历史有效而预测历史无效；需要先解决误差输入下的稳定性。",
+        "budget": "计划 1 张 GPU、2 天小规模头部训练，不从零训练视觉骨干。"
+      },
+      "evidence": [
+        {
+          "sourceId": "ufmf",
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/ufmf-radar-kinematic-occupancy-forecasting.md",
+          "readingDepth": "local-report-method-and-primary-excerpt",
+          "actualRole": "本库动态形状消失问题和径向运动先验。"
+        },
+        {
+          "sourceId": "evo",
+          "title": "EvoOcc",
+          "url": "https://arxiv.org/html/2611.02499v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/evoocc-fast-slow-occupancy-evolution.md",
+          "readingDepth": "local-report-method",
+          "actualRole": "本库异步状态与慢快更新接口。"
+        },
+        {
+          "sourceId": "conssc",
+          "title": "ConSSC",
+          "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_Learning_Spatial-Temporal_Consistency_for_3D_Semantic_Scene_Completion_CVPR_2026_paper.html",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-dynamic-scene-representation.json",
+          "readingDepth": "formal-primary-abstract-extraction",
+          "actualRole": "外部以可见性与相似性聚合历史的对比路线；目前只依据正式摘要。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "censor-aware-multimodal-state-supervision",
+          "counterfactual-state-value-audit"
+        ],
+        "relation": "从相邻问题转到直接表示学习",
+        "whatDiffers": "旧候选聚焦教师删失或规划条件价值；本候选以状态演化结构为方法，不声称旧价值假设已被确认。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "episode-latent-reactive-counterfactual",
+      "directionId": "world-models",
+      "crossDirectionIds": [
+        "autonomous-driving-testing",
+        "cooperative-autonomous-driving"
+      ],
+      "title": "先恢复这一回合的驾驶意图，再生成可反应的反事实",
+      "lenses": [
+        "sequential-decision",
+        "representation-transfer"
+      ],
+      "method": [
+        "在离线日志重建时，用完整事实片段推断每个周车的低维行为隐变量，如期望速度和让行倾向。",
+        "用共享隐变量和替换后的自车动作生成周车反应；事实与反事实共享同一个回合身份，周车运动不强制保持事实轨迹。",
+        "在同随机环境、不同自车动作的成对仿真数据上训练反应函数，并用留出干预检验。"
+      ],
+      "hypothesis": "事实后续能帮助识别回合特有的行为倾向；保持倾向而允许动作响应，比直接条件生成或机械复制周车轨迹更适合长于无反应窗口的回合级反事实。",
+      "whyNow": "近期反事实论文明确区分预测与利用事实后续的溯因，但其设定短时且周车不反应；多智能体共享状态模型已提供延伸接口。",
+      "upside": "高收益高风险：形成真正面向既有日志的交互式重演资产，能问同一批交通参与者遇到另一种自车行为会怎样。",
+      "risk": "行为隐变量未必可辨识，事实轨迹也可能不足以分离意图与噪声；真实反事实不可直接观测，初步结论仅限受控仿真。",
+      "priorWork": [
+        {
+          "title": "How Can Driving World Models Do Counterfactual Prediction?",
+          "url": "https://arxiv.org/html/2608.11601",
+          "overlap": "以事实后续溯因，再施加替代动作。",
+          "difference": "从周车不反应的短时设定扩展到保持行为隐变量的可反应动力学；不把既有溯因思想当新贡献。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "Artemis",
+          "url": "https://arxiv.org/html/2610.07031",
+          "overlap": "多智能体共享三维状态与记忆更新。",
+          "difference": "重点是回合特有行为因素的保留和反应，而不是仅保持跨视角一致性。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "可冻结随机种子的行为仿真器、轻量对象轨迹模型、共享场景状态。"
+        ],
+        "build": [
+          "事实后续编码器、行为隐变量、成对干预训练数据接口。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "事实后续提供的信息能否提高会反应周车的回合级反事实预测？",
+        "setup": "固定环境随机源及周车政策参数，采集一次事实和多种自车制动/让行反事实；按路口、交互类型和行为参数留出。此任务是离线重演，不允许用于在线规划时偷看未来。",
+        "baselines": [
+          "仅历史+替代动作",
+          "复制事实周车轨迹",
+          "完整事实后续但不共享隐变量",
+          "已知周车参数上界"
+        ],
+        "measurement": [
+          "周车轨迹与让行选择误差",
+          "不同自车动作下响应方向",
+          "回合身份保持",
+          "碰撞/通行结果差异"
+        ],
+        "positive": "在反应出现后仍接近同回合真值，且跨行为参数泛化，支持隐变量溯因。",
+        "negative": "只在短时无反应区域好；说明没有学到可迁移反应或意图不可辨识。",
+        "unclear": "训练政策同族有效、换行为政策失效；需限制到相应行为模型族而非宣称通用世界。",
+        "budget": "计划 1–2 张 GPU、2–3 天，先对象轨迹级，不训练视频扩散大模型。"
+      },
+      "evidence": [
+        {
+          "sourceId": "counter",
+          "title": "How Can Driving World Models Do Counterfactual Prediction?",
+          "url": "https://arxiv.org/html/2608.11601",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-world-models.json",
+          "readingDepth": "primary-abstract-and-counterfactual-formulation",
+          "actualRole": "外部明确的溯因思想与无反应假设。"
+        },
+        {
+          "sourceId": "artemis",
+          "title": "Artemis",
+          "url": "https://arxiv.org/html/2610.07031",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-world-models.json",
+          "readingDepth": "primary-abstract",
+          "actualRole": "外部共享多智能体状态与逐步记忆更新路线。"
+        },
+        {
+          "sourceId": "rf",
+          "title": "RFWorld",
+          "url": "https://arxiv.org/html/2611.05072v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/rfworld-rollout-free-trajectory-evaluation.md",
+          "readingDepth": "local-report-method-equations-and-scope",
+          "actualRole": "本库非候选条件化共享记忆提供轻量对照，亦解释为何本研究需要反应分支。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "statewise-counterfactual-verdict-admission",
+          "verdict-causal-error-repair-decomposition"
+        ],
+        "relation": "新生成模型，非准入器复活",
+        "whatDiffers": "旧候选校准 verdict 或分解错误；本候选改变生成机制，首测对象反应而非增加证书。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "doppler-nullspace-occupancy",
+      "directionId": "radar-occupancy-representation",
+      "crossDirectionIds": [
+        "dynamic-scene-representation"
+      ],
+      "title": "把 Doppler 看不见的速度方向保留在占据预测里",
+      "lenses": [
+        "representation-transfer",
+        "direct-method"
+      ],
+      "method": [
+        "为每个动态体元保持二维/三维速度分布；每个雷达回波只约束其视线方向上的速度分量。",
+        "跨时间和跨雷达视角累计线性测量，显式收缩可观测方向的协方差，未观测的切向方向由历史运动弱先验保留。",
+        "把速度分布推进成未来占据分布，再用轻量网络学习非匀速残差。"
+      ],
+      "hypothesis": "先保留径向测量的空域，再逐步由视角变化补足运动，比早期把 Doppler 压成确定速度特征更能处理横穿、转弯和低视差目标。",
+      "whyNow": "UFMF 已证明径向速度先验可接入高速预测，RadarGSOcc 保留 Doppler 分支；现在可研究测量几何是否比加大网络更重要。",
+      "upside": "让未来占据的不确定性具有具体传感几何含义，在雷达稀疏、恶劣天气和运动遮挡时可能保住动态目标。",
+      "risk": "多径和散射中心变化会违反同一体元假设；过宽分布可能只提高覆盖而降低可用精度。",
+      "priorWork": [
+        {
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "overlap": "用径向 Doppler 补充占据运动。",
+          "difference": "显式维护速度协方差和视线约束，不将零回波或切向无信息压成确定速度。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "RICH-SLAM",
+          "url": "https://arxiv.org/abs/2606.17534",
+          "overlap": "连续占据与不确定性、联合地图/位姿估计。",
+          "difference": "由二维静态地图后验转向动态体元的速度可观测方向，不把其室内结果外推成道路三维已验证。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "nuScenes 雷达时序与占据目标、UFMF 类轻量预测骨干。"
+        ],
+        "build": [
+          "雷达视线测量更新、动态体元关联、概率占据推进。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "显式径向测量结构是否特别改善低径向速度但高速横穿的目标？",
+        "setup": "按切向/径向速度比例及视线变化分组；相同感知历史与参数量，同时用 GT 和预测关联。",
+        "baselines": [
+          "原 Doppler 池化",
+          "学习确定速度",
+          "恒速概率外推",
+          "所提视线约束更新"
+        ],
+        "measurement": [
+          "动态 IoU",
+          "横穿目标召回",
+          "概率占据 NLL/Brier",
+          "固定覆盖下的体积与精度",
+          "总时延"
+        ],
+        "positive": "收益集中在几何欠观测组并随视角补充合理收缩，说明模型利用了可观测性。",
+        "negative": "分布更宽但等覆盖精度无增益；说明只是保守扩散。",
+        "unclear": "GT 关联有效、预测关联失败；下一步应研究散射点到物体运动的关联。",
+        "budget": "计划 1 张 GPU、1–2 天训练小头；先限制预测 1–3 秒。"
+      },
+      "evidence": [
+        {
+          "sourceId": "ufmf",
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/ufmf-radar-kinematic-occupancy-forecasting.md",
+          "readingDepth": "local-report-method-and-primary-excerpt",
+          "actualRole": "本库径向测量并非完整运动向量的具体接口。"
+        },
+        {
+          "sourceId": "gsradar",
+          "title": "RadarGSOcc",
+          "url": "https://arxiv.org/html/2610.18686v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-radar-occupancy-representation.json",
+          "readingDepth": "frozen-primary-method-and-experiment-extraction",
+          "actualRole": "本库 Doppler/几何双分支的占据证据。"
+        },
+        {
+          "sourceId": "rich",
+          "title": "RICH-SLAM",
+          "url": "https://arxiv.org/abs/2606.17534",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-radar-occupancy-representation.json",
+          "readingDepth": "primary-method-and-scope-extraction",
+          "actualRole": "外部连续概率状态与不确定性建模启发，不引用其结果作为本任务成功。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [],
+        "relation": "本方向首次候选",
+        "whatDiffers": "历史上下文中该方向没有候选；无旧假设复活。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "sampling-invariant-object-knownness",
+      "directionId": "lidar-anomaly-segmentation",
+      "crossDirectionIds": [
+        "dynamic-scene-representation"
+      ],
+      "title": "先消除观测稀疏度，再判断物体是否陌生",
+      "lenses": [
+        "learning-objective",
+        "direct-method"
+      ],
+      "method": [
+        "对同一已知物体生成不同距离、束线和遮挡采样视图，把这些视图作为同一对象的正对。",
+        "学习对象级几何/特征嵌入，使采样变化保持嵌入，而真实形状和局部语义改变拉开距离；用已知物体分布估计陌生度。",
+        "将对象陌生度回投到原始点，并与冻结逐点异常评分在同输出协议下比较。"
+      ],
+      "hypothesis": "三维异常分数混合了未知形状和已知物体的低观测质量；以物体身份为不变量的训练可以减少稀疏已知物误报，同时保留稀疏未知物。",
+      "whyNow": "ReinSeg 提供固定评分器与多模态证据接口，观测约束 TTA 明确了束线支持；可把可观测性作为学习不变量而非简单抑制低支持点。",
+      "upside": "直接提升三维未知物体分割的跨距离、跨雷达线数泛化，减少依赖海量人工合成异常类别。",
+      "risk": "对象提案错误会把未知物并入道路；过强采样不变性可能抹去小障碍物仅存的形状差异。",
+      "priorWork": [
+        {
+          "title": "ReinSeg",
+          "url": "https://arxiv.org/html/2611.02648v1",
+          "overlap": "保留 LiDAR 点输出并补充图像特征。",
+          "difference": "主要变化是对象级已知性目标与采样不变量，不只是增加一个图像残差分支。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "No Adaptation Without Observation",
+          "url": "https://arxiv.org/html/2606.30937v1",
+          "overlap": "利用束线和邻域支持刻画观测条件。",
+          "difference": "不据低支持直接减小异常证据，而是训练同一对象在不同采样下保持身份；闭集 TTA 结果不当开放集证据。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "冻结 LIDO/ReinSeg 前端、已知类别实例数据、STU 公开验证序列和正常序列。"
+        ],
+        "build": [
+          "束线/距离采样增强、类别无关对象提案、小型对象嵌入和密度头。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "保持对象已知性跨采样不变，能否同时减少稀疏已知物误报和提高稀疏未知物召回？",
+        "setup": "在已知类数据训练，目标异常只用于留出评估；按物体实例划分、按距离和点数分层，避免同一对象多帧跨集合。",
+        "baselines": [
+          "冻结逐点评分",
+          "逐点采样增强",
+          "对象池化无不变性目标",
+          "对象不变性完整模型"
+        ],
+        "measurement": [
+          "点 AP/FPR95",
+          "实例召回",
+          "首次检测距离",
+          "正常序列每距离/每时间误报；里程仅在可测时报告"
+        ],
+        "positive": "同等正常误报下实例召回提高，且跨束线测试保持；支持未知性与可观测性可分离。",
+        "negative": "误报下降但稀疏异常同样被抑制；说明不变性抹去了关键几何。",
+        "unclear": "真值对象框下有效、自动提案无效；表明实例形成是主要瓶颈。",
+        "budget": "计划 1 张 GPU、1–2 天冻结骨干训练；隐藏 STU 测试未提交，不宣称官方测试成绩。"
+      },
+      "evidence": [
+        {
+          "sourceId": "rein",
+          "title": "ReinSeg",
+          "url": "https://arxiv.org/html/2611.02648v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/reinseg-bounded-multimodal-anomaly.md",
+          "readingDepth": "local-report-and-primary-method-excerpt",
+          "actualRole": "本库冻结逐点评分和多模态细化的可复用接口。"
+        },
+        {
+          "sourceId": "observe",
+          "title": "No Adaptation Without Observation",
+          "url": "https://arxiv.org/html/2606.30937v1",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-lidar-anomaly-segmentation.json",
+          "readingDepth": "frozen-primary-method-extraction",
+          "actualRole": "外部明确束线可观测性和空间支持机制。"
+        },
+        {
+          "sourceId": "stu",
+          "title": "Spotting the Unexpected",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Nekrasov_Spotting_the_Unexpected_STU_A_3D_LiDAR_Dataset_for_Anomaly_CVPR_2025_paper.pdf",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-lidar-anomaly-segmentation.json",
+          "readingDepth": "primary-abstract-and-local-report-dataset-scope",
+          "actualRole": "顺序、多模态与异常实例数据范围；正常长序列误报仍要另测。"
+        },
+        {
+          "sourceId": "ugains",
+          "title": "UGainS",
+          "url": "https://arxiv.org/abs/2308.02046",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-lidar-anomaly-segmentation.json",
+          "readingDepth": "primary-abstract-excerpt",
+          "actualRole": "外部由异常区域到实例的图像机制启发，不把二维 AP 当三维依据。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [],
+        "relation": "本方向首次候选",
+        "whatDiffers": "历史上下文中该方向没有候选；无旧假设复活。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "persistent-unknown-gaussian-objects",
+      "directionId": "lidar-anomaly-segmentation",
+      "crossDirectionIds": [
+        "3d-reconstruction",
+        "dynamic-scene-representation"
+      ],
+      "title": "让未知物体在 4D 高斯中获得可积累的实例身份",
+      "lenses": [
+        "representation-transfer",
+        "sequential-decision"
+      ],
+      "method": [
+        "用冻结点异常分数和图像分组提议初始化候选物体，将其观测点关联到持续高斯；分数只提议，不直接成为真值标签。",
+        "通过跨帧重投影、三维邻接和运动一致性，更新对象身份及其累计特征，使稀疏单帧证据落到同一物体上。",
+        "在对象身份上累计已知/未知证据并回投逐点输出；每帧都可报警，不强制等到长轨迹结束。"
+      ],
+      "hypothesis": "低回波未知障碍物的困难不仅是每个点的分数，还在于证据无法跨视角归属于同一个实例；持续三维身份能让弱证据积累，并减少逐帧闪烁。",
+      "whyNow": "Multi4D 已有持续高斯上的 4D 分割，UGainS 已从不确定区域生成实例，ReinSeg 提供三维异常证据；三者之间可建立直接的开放集实例问题。",
+      "upside": "高收益高风险：从单帧未知点排名走向持续三维未知物体，兼顾早期发现、形状和后续规划接口。",
+      "risk": "重建可能把小异物吸收到背景，或在遮挡期间持续错误身份；收益也可能完全来自普通跟踪，必须使用强跟踪对照。",
+      "priorWork": [
+        {
+          "title": "Multi4D",
+          "url": "https://arxiv.org/html/2606.22197",
+          "overlap": "持续高斯和 4D 分割、静态/动态/瞬态解释。",
+          "difference": "不把持续身份或分层基元称为新意；问题是开放集证据在实例上的累计与早期发现，须进一步全文核对其开放集接口。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "UGainS",
+          "url": "https://arxiv.org/abs/2308.02046",
+          "overlap": "异常区域形成实例。",
+          "difference": "由二维单次分组转到有测量三维支撑的持续对象身份；不假设二维 mask 就等于物体真值。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "ReinSeg",
+          "url": "https://arxiv.org/html/2611.02648v1",
+          "overlap": "逐点 LiDAR 异常评分与图像证据。",
+          "difference": "冻结评分器，研究跨时间身份组织是否有独立收益。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "冻结 LIDO/ReinSeg 分数、图像实例提议、持续高斯实现和 STU 序列。"
+        ],
+        "build": [
+          "点到高斯的身份关联、对象证据累积、逐帧点输出接口。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "固定逐点评分后，持续三维对象身份是否比普通轨迹平滑提供独立收益？",
+        "setup": "STU 按异常实例和完整序列留出；同一时间窗口、传感输入和分数，比较长期身份组织。先做离线回放，再报告延迟。",
+        "baselines": [
+          "逐帧聚类",
+          "分数时域平均",
+          "3D tracker 累积分数",
+          "持续高斯对象",
+          "真值关联上界"
+        ],
+        "measurement": [
+          "固定正常误报下实例召回",
+          "首次报警距离/时间",
+          "身份切换",
+          "几何边界",
+          "撤离后的错误持续"
+        ],
+        "positive": "相对强 tracker 仍提高早期实例召回和身份稳定性，支持几何身份的独立作用。",
+        "negative": "仅与逐帧方法相比有效、与 tracker 持平；说明普通时间关联已足够。",
+        "unclear": "收益依赖重建使用未来帧；须改成因果更新后重测，不能作在线证据。",
+        "budget": "计划 1–2 张 GPU、2–3 天评估数十完整序列；完整在线系统约 6–10 周。"
+      },
+      "evidence": [
+        {
+          "sourceId": "rein",
+          "title": "ReinSeg",
+          "url": "https://arxiv.org/html/2611.02648v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/reinseg-bounded-multimodal-anomaly.md",
+          "readingDepth": "local-report-and-primary-method-excerpt",
+          "actualRole": "本库逐点异常及图像接口。"
+        },
+        {
+          "sourceId": "multi",
+          "title": "Multi4D",
+          "url": "https://arxiv.org/html/2606.22197",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-supplement.md",
+          "readingDepth": "parent-opened-primary-method-summary-only",
+          "actualRole": "外部已有持续高斯分割，限定差分位置。"
+        },
+        {
+          "sourceId": "ugains",
+          "title": "UGainS",
+          "url": "https://arxiv.org/abs/2308.02046",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-lidar-anomaly-segmentation.json",
+          "readingDepth": "primary-abstract-excerpt",
+          "actualRole": "外部异常实例分组机制。"
+        },
+        {
+          "sourceId": "nurec",
+          "title": "Instant NuRec",
+          "url": "https://arxiv.org/html/2607.14203v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/instant-nurec-feedforward-3dgs.md",
+          "readingDepth": "local-report-method-and-scope",
+          "actualRole": "本库前馈动态资产生成的实现参考；不使用未来重建冒充在线。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "multitraversal-current-state-provenance"
+        ],
+        "relation": "相邻主题的新联合表示",
+        "whatDiffers": "旧候选为多遍历 current/stale/unknown 来源契约；这里是单次序列内的开放集物体身份和证据积累，不复制来源标签审计。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    },
+    {
+      "id": "action-contrast-state-registers",
+      "directionId": "world-models",
+      "crossDirectionIds": [
+        "end-to-end-autonomous-driving",
+        "dynamic-scene-representation"
+      ],
+      "title": "用动作之间的差异训练紧凑场景记忆",
+      "lenses": [
+        "learning-objective",
+        "systems-resources"
+      ],
+      "method": [
+        "将场景压成少量寄存 token，同时保留一个冻结的高分辨率教师状态。",
+        "为同一场景采样成对可行动作，用独立仿真或几何评价得到两动作的代价差，训练 token 保留这些差异而非只重建平均视觉特征。",
+        "用同一紧凑状态生成或评分动作，部署时移除教师及辅助解码器。"
+      ],
+      "hypothesis": "有限容量状态应优先保留改变动作优劣的信息；成对动作代价差监督可能比视觉重建或平均未来语义更有效地保存小而关键的障碍物。",
+      "whyNow": "MORE 已把预训练接口压到运动寄存状态，RFWorld 已让多轨迹读取共享记忆；现在可直接改变状态压缩的学习目标。",
+      "upside": "在相同 token/时延预算下保留更好的决策分辨率，并给出感知、世界建模与规划共用的小型状态。",
+      "risk": "代价监督可能把特定规划器偏好写死，或让状态忽略暂时不影响动作的信息；须在新动作生成器和新任务上测试。",
+      "priorWork": [
+        {
+          "title": "MORE",
+          "url": "https://arxiv.org/html/2610.14871",
+          "overlap": "在预训练中直接学习紧凑可预测寄存状态。",
+          "difference": "核心监督从 patch/寄存预测增加为同场景动作代价差，目标是保留决策分辨率而不是仅提高压缩预测。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        },
+        {
+          "title": "RFWorld",
+          "url": "https://arxiv.org/html/2611.05072v1",
+          "overlap": "共享场景记忆服务多候选轨迹评分。",
+          "difference": "改变记忆瓶颈与训练目标，而非只省去逐候选展开；检验换候选集后是否保留作用。",
+          "comparisonStatus": "生成期机制比较；不代表完成新颖性审查"
+        }
+      ],
+      "implementation": {
+        "reuse": [
+          "冻结视觉骨干、RFWorld 式查询头、MORE 式少量寄存 token接口。"
+        ],
+        "build": [
+          "成对动作样本、独立代价差监督、小容量记忆训练与跨候选集评估。"
+        ]
+      },
+      "firstExperiment": {
+        "question": "同一 token 预算下，动作差异监督是否比语义/视觉重建更能保留稀少关键对象？",
+        "setup": "以 32/64/128 token 扫描固定预算；训练动作来自一套候选器，评估换另一套，并加入小障碍/窄通道场景。",
+        "baselines": [
+          "视觉重建瓶颈",
+          "未来语义瓶颈",
+          "MORE 式预测寄存",
+          "单动作代价回归",
+          "成对差值监督"
+        ],
+        "measurement": [
+          "独立评价下动作排序",
+          "小障碍决策准确率",
+          "闭环简化场景结果",
+          "信息检索保留",
+          "端到端时延/显存"
+        ],
+        "positive": "同容量下排序与执行改善，且更换动作生成器后存在；说明状态学到任务相关信息而非候选索引。",
+        "negative": "只对训练候选器有效；说明瓶颈过拟合动作支持。",
+        "unclear": "排名提升但通用几何严重退化；应限定为规划专用状态，不能宣称统一场景表征。",
+        "budget": "计划 1–2 张 GPU、2–3 天冻结骨干训练；先离线成对标签，再少量闭环核验。"
+      },
+      "evidence": [
+        {
+          "sourceId": "more",
+          "title": "MORE",
+          "url": "https://arxiv.org/html/2610.14871",
+          "origin": "external",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-world-models.json",
+          "readingDepth": "primary-abstract-and-section-3",
+          "actualRole": "外部紧凑状态接口与预训练目标的直接近邻。"
+        },
+        {
+          "sourceId": "rf",
+          "title": "RFWorld",
+          "url": "https://arxiv.org/html/2611.05072v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/rfworld-rollout-free-trajectory-evaluation.md",
+          "readingDepth": "local-report-method-equations-and-scope",
+          "actualRole": "本库未来语义监督、共享记忆和动作查询的完整机制。"
+        },
+        {
+          "sourceId": "ufmf",
+          "title": "UFMF",
+          "url": "https://arxiv.org/html/2610.40947v1",
+          "origin": "local-corpus",
+          "evidencePath": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/ufmf-radar-kinematic-occupancy-forecasting.md",
+          "readingDepth": "local-report-method-and-primary-excerpt",
+          "actualRole": "本库轻量时序表示的成本边界，提醒测全链路而非单头 FPS。"
+        }
+      ],
+      "historicalRelationship": {
+        "candidateIds": [
+          "counterfactual-state-value-audit",
+          "judge-optimization-rank-survival-audit"
+        ],
+        "relation": "建设性后续假设，非原候选复活",
+        "whatDiffers": "保留状态应服务动作的研究问题，改为明确可训练的压缩目标；独立评价只作常规实验，不再把审计器作为方法贡献。",
+        "oldDecisionUsedAsVerdict": false
+      },
+      "status": "generated-unranked",
+      "resultsStatus": "未运行实验；所有效果和判读均为研究计划"
+    }
+  ],
+  "errors": [],
+  "readCoverage": {
+    "directionPackets": [
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-lidar-anomaly-segmentation.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-dynamic-scene-representation.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-radar-occupancy-representation.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-3d-reconstruction-evidence-packet.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-autonomous-driving-testing-evidence-packet.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/embodied-autonomous-driving-security-evidence-packet.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-cooperative-autonomous-driving.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-end-to-end-autonomous-driving.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-world-models.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      },
+      {
+        "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/policy-agentic-driving.json",
+        "depth": "selected source excerpts, mechanisms, scope, and reference metadata; not every full paper"
+      }
+    ],
+    "localReportPaths": [
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/bug2scenario-root-cause-regression.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/cosafe-cooperative-runtime-assurance.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/evoocc-fast-slow-occupancy-evolution.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/failure-boundary-profiles-driving.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/instant-nurec-feedforward-3dgs.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/mirrorcomm-predictive-cooperative-communication.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/real2sim-physics-4dgs.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/reinseg-bounded-multimodal-anomaly.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/rfworld-rollout-free-trajectory-evaluation.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/local-reports/ufmf-radar-kinematic-occupancy-forecasting.md",
+      "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/sensing-radar-occupancy-representation.json"
+    ],
+    "primaryTextReads": [
+      {
+        "path": "/tmp/paper-digest-centers-nov06/sensing/0d84c7742277c90471dd.txt",
+        "depth": "III Method excerpt"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/sensing/5b09b12741df14e3a63a.txt",
+        "depth": "abstract / related-method excerpt"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/138b419e1ed19ab48459.txt",
+        "depth": "abstract / geometric related-method excerpt"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/84e0a5ce0ff5ac34e52d.txt",
+        "depth": "abstract / section 3"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/fb285a727e16492d7c81.txt",
+        "depth": "abstract / counterfactual formulation"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/05dc2fb4f94360085b2d.txt",
+        "depth": "abstract / objective"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/b76c37e15b41b245fe5e.txt",
+        "depth": "abstract"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/e69aca19c2265c23b309.txt",
+        "depth": "abstract"
+      },
+      {
+        "path": "/tmp/paper-digest-centers-nov06/policy/cbcbcba577139c9a3b72.txt",
+        "depth": "abstract"
+      }
+    ],
+    "history": {
+      "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-evidence/historical-candidate-context.json",
+      "candidateCount": 29,
+      "depth": "all candidate IDs, titles, and hypothesis excerpts; old decisions not used as vetoes"
+    },
+    "supplement": {
+      "path": "/Users/atlas/work/repo/paper-digest/docs/center-updates/2026-11-06/generation-supplement.md",
+      "used": [
+        "PersistGS",
+        "Multi4D"
+      ],
+      "readButNotUsedAsScientificBasis": [
+        "Geometry-Aware Online Mapping",
+        "DGOMapping"
+      ],
+      "depth": "parent-provided summaries from opened primary pages; child did not independently reopen full text"
+    },
+    "sourceLimits": [
+      "Some large tool outputs were truncated; only visibly received excerpts are used for specific scientific claims.",
+      "Abstract-only evidence supports mechanism-level generation, not numerical revalidation or absence claims.",
+      "Source URLs provide attribution; evidence roles above identify actual excerpt/report content used.",
+      "No other generator output was read.",
+      "Memory registry search was attempted but no memory fact was used for generation."
+    ],
+    "fingerprintChecks": [
+      {
+        "file": "sensing-lidar-anomaly-segmentation.json",
+        "sha256": "7e66d254bf56ff80e8b603fb484bed798e7079844dc80a4a9ab8c2f9133f94dc",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "sensing-dynamic-scene-representation.json",
+        "sha256": "46a9dfd594c9fcca8012dfcd9fb9370f8fd4a3608861d8c29be3b0b2bb1aae13",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "sensing-radar-occupancy-representation.json",
+        "sha256": "4a4e515bbb3cdc3b493cf1592b6a525cec2bb9d47444c1409c0c69f5b2e2a94b",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "embodied-3d-reconstruction-evidence-packet.json",
+        "sha256": "f071b5a8096eaa02ec5ad44569d54cf90f74fc0143d9c7630454cb84aa38937a",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "embodied-autonomous-driving-testing-evidence-packet.json",
+        "sha256": "02d1d081437bcb27db8e2d38052f5ea40320726336de3e35d41ab1b193ce9600",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "embodied-autonomous-driving-security-evidence-packet.json",
+        "sha256": "d89745b3aaf653aea6b16a557b726082c7b2ad8e9cc917129f18b7d7737c21cd",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "policy-cooperative-autonomous-driving.json",
+        "sha256": "f7dece673f68c33def02c10ba9f02459364692182060943f5606701de26dc0ab",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "policy-end-to-end-autonomous-driving.json",
+        "sha256": "4a21fc65148499c3c9ef9288021167d516bf67b68e54cdd9522472f5a302f451",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "policy-world-models.json",
+        "sha256": "7412a35f8664f6671b61f1138575a0d0a61a0a33e68881d1135cb36719ed7141",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "policy-agentic-driving.json",
+        "sha256": "846208cf24bf0a0f78c5edb4932e4dcfb3a947460be5c90bde8a8d8f4c842811",
+        "matchesFrozenManifest": true
+      },
+      {
+        "file": "historical-candidate-context.json",
+        "sha256": "44537c743a62faf8c569aaa06d7ea03d08f3b4e1c288fed70a3dedc4627ce30c",
+        "matchesFrozenManifest": true
+      }
+    ]
+  },
+  "coverageReceipt": {
+    "plannedLenses": [
+      "direct-method",
+      "representation-transfer",
+      "sequential-decision",
+      "systems-resources",
+      "learning-objective"
+    ],
+    "completedLenses": [
+      "direct-method",
+      "representation-transfer",
+      "sequential-decision",
+      "systems-resources",
+      "learning-objective"
+    ],
+    "failedLenses": [],
+    "uncoveredLenses": [],
+    "coverage_complete": true,
+    "directions": [
+      "3d-reconstruction",
+      "agentic-driving",
+      "autonomous-driving-security",
+      "autonomous-driving-testing",
+      "cooperative-autonomous-driving",
+      "dynamic-scene-representation",
+      "end-to-end-autonomous-driving",
+      "lidar-anomaly-segmentation",
+      "radar-occupancy-representation",
+      "world-models"
+    ],
+    "candidateCount": 12,
+    "ranked": false,
+    "accepted": false
+  },
+  "budgetStatus": "All experimental budgets are estimates conditional on available hardware; no experiments launched."
+}

@@ -3,9 +3,9 @@
   "id": "dynamic-scene-representation",
   "title": "动态场景表征与占据：空间状态、时间更新和规划用途",
   "subtitle": "比较体素、对象、向量和 Gaussian 表示如何记录可见性、对象身份与未来运动，并检验这些信息的决策作用。",
-  "abstract": "动态场景表征连接感知与决策，需要定义占据、空闲、未知、语义、对象身份和时间有效性，并逐项检验其用途。MonoScene、TPVFormer 与 Scene as Occupancy 建立当前三维状态主线；OccWorld 和 I2-World 扩展到未来预测；GaussianWorld、USR-Drive 等工作探索连续或混合表示。近期 RoadOcc 与 SelectOccFlow 进一步拆开历史地址、证据选择和当前运动状态。精度、时间一致性、校准、延迟和规划收益仍须分别报告：更好的占据特征未必改善规划，更少的 Gaussian 也未必更快。后续可先冻结既有模型与规划器，比较简单窗口、运动回溯和来源选择，再判断是否需要更复杂的场景记忆。",
-  "reviewedAt": "2026-10-18",
-  "searchWindow": "2022-01-01 至 2026-10-18；重新核对 34 条既有引用及关键论断，补入 RoadOcc 与 SelectOccFlow；同时检索近期占据、时空记忆、未知状态与规划接口工作。 2026-11-01 仅补查 4D 高斯与 Gaussian occupancy 的机制边界，重开 GaussianWorld、GaussianFormer-2 相关正文；不刷新全方向实质复核日期。",
+  "abstract": "场景表征正在从每帧重建扩展为持续更新的状态。GaussianWorld、RoadOcc 和 SelectOccFlow 分别组织几何传播、历史来源与当前运动；EvoOcc 把异步快慢预测接成连续校正，UFMF 用雷达先验传播未来动态占据。ConSSC、HD²-SSC 和可观测性约束适配又从时间可见性、标签密度与更新区域解释监督如何进入状态。本文比较空间编码、时间更新、预测和决策查询，讨论如何用有限算力维护真正有用的几何、身份和运动信息。",
+  "reviewedAt": "2026-11-06",
+  "searchWindow": "2022-01-01 至 2026-10-18；重新核对 34 条既有引用及关键论断，补入 RoadOcc 与 SelectOccFlow；同时检索近期占据、时空记忆、未知状态与规划接口工作。 2026-11-01 仅补查 4D 高斯与 Gaussian occupancy 的机制边界，重开 GaussianWorld、GaussianFormer-2 相关正文；不刷新全方向实质复核日期。 2026-11-06 补查站内外进展并逐项复核当前保留论断；旧查询日期保留，本轮检索与修订来源单独记录。",
   "researchQuestions": [
     "三维重建、当前场景状态、动作条件世界模型和端到端策略各自输出什么，应使用哪些验证终点？",
     "occupied、free、unknown、语义、对象身份、速度/流和时间有效性中，哪些状态是规划真正需要的，哪些只是提高离线感知指标？",
@@ -33,7 +33,7 @@
       "kind": "evolution",
       "title": "从三维语义补全到时空状态与未来预测",
       "thesis": "领域正在沿三条轴演化：更完整的空间状态、更稳定的时间身份，以及能被规划动作询问的未来。",
-      "body": "2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 在对齐历史状态后，结合当前图像更新稀疏 Gaussian 占据；这里的时间用途是观测驱动的状态更新。I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。",
+      "body": "2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 在对齐历史状态后，结合当前图像更新稀疏 Gaussian 占据；这里的时间用途是观测驱动的状态更新。I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。\n\nEvoOcc 进一步把状态更新时间与传感器帧率分开：慢模型到达时建立高质量差分锚点，快模型到达时传播和校正当前状态。UFMF 则以雷达运动先验维持未来物体支撑，属于预测路线。与之并行，ConSSC 利用可见性和相似性聚合历史，HD²-SSC 分开处理图像升维与标签密度。这些工作把问题从“选哪种基元”推进到“状态如何从不完整、不同步的证据中演化”。",
       "referenceIds": [
         "proxy-4d-occupancy-2023",
         "occworld-2024",
@@ -57,7 +57,11 @@
         "carlaocc-2026",
         "beyondsight-2026",
         "roadocc-2026",
-        "selectoccflow-2026"
+        "selectoccflow-2026",
+        "evoocc-2026",
+        "ufmf-2026",
+        "conssc-2026",
+        "hd2ssc-2026"
       ]
     },
     {
@@ -65,7 +69,7 @@
       "kind": "taxonomy",
       "title": "体素、对象、向量与 Gaussian 的状态定义",
       "thesis": "比较表示形式时，还要检查它保留了哪些状态变量、如何更新、使用什么监督，以及验证了哪些用途。",
-      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线共享连续显式基元，但基元属性与聚合规则决定输出的含义。Wu/Yang 4DGS 的权重进入图像合成，GaussianFormer-2 将基元用于占据概率聚合，GaussianWorld 再通过历史与当前图像更新占据状态。USR-Drive 联合表面与对象去噪，GUIDE 则联合实例占据、检测和跟踪。渲染不透明度、occupied 概率、实例分数与对象存在概率应分别标注；只有额外定义射线自由空间、unknown、身份和更新不确定性，才能讨论这些量作为可校准场景状态的价值。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。",
+      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线共享连续显式基元，但基元属性与聚合规则决定输出的含义。Wu/Yang 4DGS 的权重进入图像合成，GaussianFormer-2 将基元用于占据概率聚合，GaussianWorld 再通过历史与当前图像更新占据状态。USR-Drive 联合表面与对象去噪，GUIDE 则联合实例占据、检测和跟踪。渲染不透明度、occupied 概率、实例分数与对象存在概率应分别标注；只有额外定义射线自由空间、unknown、身份和更新不确定性，才能讨论这些量作为可校准场景状态的价值。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。\n\n按时间操作可以把方法分为预测、校正、持续存在和学习更新。UFMF 预测未来占据；EvoOcc 利用已经发生但晚到的预测校正当前状态；BeyondSight 延续暂时看不到的对象假设；可观测性约束的 LiDAR TTA 则决定哪些区域可以更新模型参数。后者使用射线终止与邻域支持调节 prompt，并更新时序类别原型，是监督更新的邻近机制，输出仍是闭集语义。将这些操作区分后，可以分别设计状态传播和参数适配，不必把所有时间信息塞进一个记忆模块。",
       "referenceIds": [
         "tpvformer-2023",
         "scene-as-occupancy-2023",
@@ -88,7 +92,10 @@
         "gaussianformer2-2025",
         "guide-2026",
         "4dgs-wu-2024",
-        "native-4dgs-yang-2024"
+        "native-4dgs-yang-2024",
+        "ufmf-2026",
+        "evoocc-2026",
+        "observability-tta-2026"
       ]
     },
     {
@@ -96,7 +103,7 @@
       "kind": "evidence",
       "title": "状态精度、时间一致性、校准和规划四类指标",
       "thesis": "表示质量必须分成状态正确性、时间一致性、概率校准和任务价值四层报告，任何单层结果都不能替代其余层。",
-      "body": "评估可以分为四层。当前状态先看 occupied/free/unknown、类别、距离和遮挡分层，平均 mIoU 容易掩盖危险的 false-free；时间一致性再看身份切换、对象出现/消失和状态年龄；概率质量需另测 NLL、Brier、ECE 或相同 coverage 下的 selective risk；规划价值则在固定下游中比较碰撞、进度、舒适和无谓制动。现有论文通常只报告其中一部分，缺失的层次应作为待测项。\n\n已有负结果说明这些层次不能互换。Scene as Occupancy 的占据结果作为规划输入有收益，但补充表 13 中直接迁移 occupancy 预训练特征没有改善规划。FSF-Net 提高占据预测质量，作者仍报告 ego 轨迹预测较弱。Point Cloud Forecasting as a Proxy for 4D Occupancy 指出背景占据主导总体指标，短时域中的静态或射线追踪基线很强。OccWorld 还需分清 GT occupancy 输入与预测输入，其长期规划和部分碰撞指标并不领先。\n\n表示的计算收益同样需要实测。GaussianFormer-2 减少 Gaussian 数量，却因初始化中的最远点采样增加延迟；USR-Drive 的联合去噪仍定位为离线场景估计。GeoUP 保持规划 decoder 架构和训练配置来比较 backbone，并非冻结全部下游权重。CaAD 的 Bench2Drive 反应式闭环与 NAVSIM 非反应评测须分别阅读，其补充 nuScenes 实验还出现 L2 改善而碰撞率略升的情况。\n\nRoadOcc 给出更细的状态更新对照：同预算下，纠正读取地址后再加来源路由，动态 mIoU 从 30.97 升至 32.37，三种子标准差分别为 0.27 和 0.11；该结果支持路侧感知里的来源选择，尚未验证实例对应或规划收益。SelectOccFlow 则同时报告占据和流指标，避免只以一个总分评价动态状态。\n\n未知状态已有直接先例：UnsDrive 在 MineLoop 模拟矿区显式输出 occupied/free/unknown 并连接规划，MR-Occ 设置 occluded 类；两者尚未提供独立于待测模型、同时标注传感器删失与来源冲突的现实射线级四态审计。UnsDrive 的全部实验均在模拟中完成，不能当作实体矿卡运行证据。",
+      "body": "评估可以分为四层。当前状态先看 occupied/free/unknown、类别、距离和遮挡分层，平均 mIoU 容易掩盖危险的 false-free；时间一致性再看身份切换、对象出现/消失和状态年龄；概率质量需另测 NLL、Brier、ECE 或相同 coverage 下的 selective risk；规划价值则在固定下游中比较碰撞、进度、舒适和无谓制动。现有论文通常只报告其中一部分，缺失的层次应作为待测项。\n\n已有负结果说明这些层次不能互换。Scene as Occupancy 的占据结果作为规划输入有收益，但补充表 13 中直接迁移 occupancy 预训练特征没有改善规划。FSF-Net 提高占据预测质量，作者仍报告 ego 轨迹预测较弱。Point Cloud Forecasting as a Proxy for 4D Occupancy 指出背景占据主导总体指标，短时域中的静态或射线追踪基线很强。OccWorld 还需分清 GT occupancy 输入与预测输入，其长期规划和部分碰撞指标并不领先。\n\n表示的计算收益同样需要实测。GaussianFormer-2 减少 Gaussian 数量，却因初始化中的最远点采样增加延迟；USR-Drive 的联合去噪仍定位为离线场景估计。GeoUP 保持规划 decoder 架构和训练配置来比较 backbone，并非冻结全部下游权重。CaAD 的 Bench2Drive 反应式闭环与 NAVSIM 非反应评测须分别阅读，其补充 nuScenes 实验还出现 L2 改善而碰撞率略升的情况。\n\nRoadOcc 给出更细的状态更新对照：同预算下，纠正读取地址后再加来源路由，动态 mIoU 从 30.97 升至 32.37，三种子标准差分别为 0.27 和 0.11；该结果支持路侧感知里的来源选择，尚未验证实例对应或规划收益。SelectOccFlow 则同时报告占据和流指标，避免只以一个总分评价动态状态。\n\n未知状态已有直接先例：UnsDrive 在 MineLoop 模拟矿区显式输出 occupied/free/unknown 并连接规划，MR-Occ 设置 occluded 类；两者尚未提供独立于待测模型、同时标注传感器删失与来源冲突的现实射线级四态审计。UnsDrive 的全部实验均在模拟中完成，不能当作实体矿卡运行证据。\n\nEvoOcc 在0.5秒慢分支延迟下仍改善快速模型，但其主表一组配置的总延迟为101.8ms，23.2ms只是附加模块。整体 mIoU 的优势也不意味着动态或射线指标全面超过慢模型。UFMF 使用不同的未来预测目标和历史输入协议，不能与 EvoOcc 的当前状态校正直接按 FPS 排名。ConSSC 和 HD²-SSC 的本轮来源核对覆盖正式摘要中的聚合与细化机制，不据此加入未逐表核实的定量优劣。",
       "referenceIds": [
         "scene-as-occupancy-2023",
         "occworld-2024",
@@ -122,7 +129,11 @@
         "geoup-2026",
         "usr-drive-2026",
         "roadocc-2026",
-        "selectoccflow-2026"
+        "selectoccflow-2026",
+        "evoocc-2026",
+        "ufmf-2026",
+        "conssc-2026",
+        "hd2ssc-2026"
       ]
     },
     {
@@ -153,40 +164,31 @@
     {
       "id": "outlook",
       "kind": "outlook",
-      "title": "验证带来源和长期身份的场景记忆",
-      "thesis": "先在固定模型和规划器上检查新增状态是否有用，再决定是否扩展联合表示。",
-      "body": "一个可先验证的方案是“来源保真的 Surface-Instance-Occupancy Memory”。状态由三部分组成：局部 surface/Gaussian 描述可见几何，persistent instance slot 保持对象身份与运动假设，occupancy 层显式区分 free、occupied、unknown；每次更新同时携带传感器来源、可见性、时间年龄和不确定性。初步实验可先检查长期遮挡和跨模态冲突时，哪些证据应该更新几何、只延续存在性或被拒绝。\n\nGate 0 使用 nuScenes/Occ3D 加一个含 radar 或多遍历序列的公开数据集，冻结现有 occupancy backbone 与 planner，只增加状态及其更新记录。最小对比分为无记忆、固定窗口、运动回溯、带来源选择的记忆和完整三态状态；对象身份单独作为一项干预；指标覆盖 false-free、unknown ECE、身份切换、遮挡恢复、future occupancy、规划碰撞/无谓制动与端到端延迟。若简单固定窗口在同计算量下达到等价结果，或状态质量变化不能影响固定 planner，则停止方法扩展。\n\n通过 Gate 0 后才探索动作条件未来：对少量安全边界动作获取模拟器配对 rollout，校准哪些当前状态足以支持候选排序。配对 rollout 用于连接场景状态与动作条件未来；单日志记录无法提供替代动作的反事实真值。\n\n上述路线仍是 Gate 0 实验建议。Idea 中心还需完成候选池、独立筛选、dossier 和盲评；当前两个进入 dossier 的候选尚未通过。",
+      "title": "异步状态演化、对象记忆与按需空间计算",
+      "thesis": "围绕一种状态操作形成简单方法，用第一个实验选择值得扩展的机制。",
+      "body": "第一条路线是可持续的异步状态演化。复用一个强慢模型和一个快模型，学习随时间传播的几何/语义差分，并让运动边界采用不同更新尺度。EvoOcc 是直接基线；首个实验固定快慢模型和总算力，改变真实到达节奏、遮挡和转弯，比较固定窗口、运动搬运与连续状态演化。除整体 mIoU 外，记录动态 RayIoU、过期状态持续时间和端到端延迟，判断哪些状态必须重新观测。 在相同端到端延迟下，只有动态 RayIoU 或过期状态持续时间稳定优于最强对照，才扩大连续演化模型；若差异可由窗口长度解释，则采用较简单的搬运基线。\n\n第二条路线是对象存在与空闲观测共同更新的记忆。对象暂时不可见时保留运动假设，重新观测后让新射线证据纠正位置和存在性。以 GaussianWorld 或实例槽为状态载体，先在 CarlaOcc 的可控遮挡和 nuScenes-Permanence 上比较无记忆、匀速延续、BeyondSight 式持续假设及新的联合更新。把遮挡期间的正确保持与对象离开后的及时清除同时计分，避免把“记得更久”本身当作进步。 先固定对象离开后的误保持预算，再比较遮挡期间的正确保持率。若持续记忆只是延长 ghost，或普通跟踪达到相同效果，则保留简单状态并调整存在性更新，而不增加表示复杂度。\n\n第三条路线是按未来查询分配空间计算。使用低成本全局状态，在物体即将出现、运动边界改变或候选轨迹即将查询的区域细化。OctreeOcc、AdaOcc 和同预算固定高分辨率是直接基线；首轮固定规划器，比较同延迟下的小障碍几何、动态边界和轨迹代价误差。若分配策略改变了状态精度却没有改变查询质量，可回到表示接口寻找原因，而无需继续叠加模块。\n\nConSSC 的可见性历史、HD²-SSC 的标签密度修复和可观测性约束适配可为以上路线提供组件与对照。每条路线先检验一个核心机制，保留高收益但尚需实现的方案；未运行实验的状态在 Idea 中心明确记录。",
       "referenceIds": [
-        "usr-drive-2026",
+        "evoocc-2026",
         "gaussianworld-2025",
-        "geoup-2026",
-        "rbft-net-2026",
-        "proxy-4d-occupancy-2023",
-        "scene-as-occupancy-2023",
-        "vadv2-2026",
-        "occworld-2024",
-        "lmpocc-2026",
-        "panoocc-2024",
-        "carlaocc-2026",
-        "beyondsight-2026",
-        "unsdrive-2026",
-        "mr-occ-2024",
-        "adaocc-2024",
-        "octreeocc-2023",
-        "radar-occupancy-prediction-2022",
-        "deep-radar-ism-2023",
         "roadocc-2026",
-        "selectoccflow-2026"
+        "ufmf-2026",
+        "beyondsight-2026",
+        "carlaocc-2026",
+        "lmpocc-2026",
+        "octreeocc-2023",
+        "adaocc-2024",
+        "conssc-2026",
+        "hd2ssc-2026",
+        "observability-tta-2026"
       ]
     }
   ],
   "takeaways": [
-    "动态场景表征以当前或短期显式状态为中心；三维重建、动作条件世界模型和端到端策略是相邻但不同的验证终点。",
-    "occupied、free、unknown、对象身份、状态年龄和来源，是值得逐项验证的状态信息。",
-    "4D occupancy 包含时间轴；4D 传感器输入和历史特征堆叠需按实际输出判断是否形成时空状态。",
-    "4D 高斯时间插值、GaussianWorld 的观测驱动更新与动作条件未来预测，分别需要不同的时间协议。",
-    "规划收益必须在固定下游和匹配预算下做状态干预，避免把联合训练、模型容量或额外监督误认为表示价值。",
-    "优先小规模验证来源保真的 Surface-Instance-Occupancy Memory；若简单窗口记忆同样有效或 planner 不读取新增状态，应尽早停止。"
+    "空间编码、预测、晚到校正、对象持续存在和模型适配是不同操作，适合分别定义状态与对照。",
+    "EvoOcc 表明延迟的高质量结果仍可帮助当前预测；UFMF 表明物理运动先验可改善轻量未来预测。",
+    "几何、语义和标签密度的改善需要与时间身份、更新延迟及下游查询质量分别比较。",
+    "可优先试验异步状态演化、对象与空闲证据共同更新，以及按未来查询分配空间计算。",
+    "现有公开模型可以作为载体；新状态接口和更新规则可自行实现，实验负责判断其价值。"
   ],
   "references": [
     {
@@ -298,7 +300,7 @@
       "canonicalId": "arxiv:2402.13243",
       "sourceFamily": "local-corpus",
       "supports": "以向量化场景和概率 planning vocabulary 连接结构化状态与多模态动作分布。",
-      "limitation": "可访问正文只说明真实车辆结果位于补充材料，未报告车辆平台、路线/里程、重复次数、低层控制接口或是否开放道路；本综述不把该演示外推成公共道路安全证据。",
+      "limitation": "本条使用 CARLA、NAVSIM 与3DGS基准中的定量规划证据；正文另提实车演示位于补充材料，不能将该提及直接等同于可复核的开放道路安全评价。",
       "url": "https://openreview.net/forum?id=0a4dA6eUHN",
       "links": [
         {
@@ -975,6 +977,84 @@
         }
       ],
       "localPaperId": "native-4d-gaussian-splatting"
+    },
+    {
+      "id": "evoocc-2026",
+      "title": "Fast-Slow Evolutionary Occupancy Prediction via Controlled Dynamics",
+      "authors": "Runhe Yang, Zhiyuan Zhou, Yuxiang Yan, Xuetong Yang, Yikai Pan, Jiacheng Tang, Zhuolin He, Jianhua Han, Hang Xu, Jian Pu",
+      "year": 2026,
+      "venue": "NeurIPS 2026（已录用）",
+      "publicationType": "method",
+      "publicationStatus": "accepted",
+      "canonicalId": "arxiv:2611.02499",
+      "sourceFamily": "local-corpus",
+      "supports": "以快慢预测差形成状态锚点，分开传播自车坐标变化与场景变化，将延迟的高质量 logits 转为当前快速占据的残差校正。",
+      "limitation": "0.5秒慢分支延迟的流式实验与主表分开；一组配置总延迟101.8ms、附加模块23.2ms。整体 mIoU 优势不代表动态 RayIoU 全面领先慢分支，传输时延不确定性尚未建模。作者注明 NeurIPS2026 录用，正式论文集页待核验。",
+      "url": "https://arxiv.org/abs/2611.02499",
+      "localPaperId": "evoocc-fast-slow-occupancy-evolution"
+    },
+    {
+      "id": "ufmf-2026",
+      "title": "UFMF: Radar-Guided Kinematic Priors for Real-Time 4D Occupancy Forecasting",
+      "authors": "Zeping Zhang, Zhuoya Zhao, Robert Laganière",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2610.40947",
+      "sourceFamily": "local-corpus",
+      "supports": "以雷达引导速度先验搬运动态 latent，在轻量状态空间预测器中联合世界坐标运动与类别高度监督，保留快速移动物体的未来支撑。",
+      "limitation": "主协议为6帧 GT 语义 BEV 历史预测未来3秒，目标来自 LiDAR 实测体素。122 FPS 仅指预测模块；预测历史另报0.521整体、0.427快速位移 mIoU，不能与GT历史或密集补全标签混排。",
+      "url": "https://arxiv.org/abs/2610.40947",
+      "localPaperId": "ufmf-radar-kinematic-occupancy-forecasting"
+    },
+    {
+      "id": "conssc-2026",
+      "title": "Learning Spatial-Temporal Consistency for 3D Semantic Scene Completion",
+      "authors": "Yujie Xue, Meng Wang, Ruihui Li, Fan Wu, Zhizhong Liu, Zhuo Tang, Kenli Li",
+      "year": 2026,
+      "venue": "CVPR 2026",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "cvf:cvpr2026:xue-conssc",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "ConSSC 将历史图像提升至三维场景，利用二维可见性与相似性线索从时序缓冲聚合二维和三维特征，学习空间—时间一致性。",
+      "limitation": "本轮正式摘要支持可见性引导的历史聚合机制；逐表性能和长期实例协议未作为本条证据，不能将时序补全等同于遮挡对象的持续身份。",
+      "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_Learning_Spatial-Temporal_Consistency_for_3D_Semantic_Scene_Completion_CVPR_2026_paper.html"
+    },
+    {
+      "id": "hd2ssc-2026",
+      "title": "HD²-SSC: High-Dimension High-Density Semantic Scene Completion for Autonomous Driving",
+      "authors": "Zhiwen Yang, Yuxin Peng",
+      "year": 2026,
+      "venue": "AAAI 2026",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1609/aaai.v40i14.38169",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "将二维图像语义沿伪第三维展开，并以 detect-and-refine 模块补充缺失体素、修正错误体素，分别处理输入维度与标签密度差。",
+      "limitation": "实验范围为 SemanticKITTI 和 SSCBench-KITTI-360 的场景补全；本条用于空间语义和监督密度的机制比较，不承担时间记忆或概率校准结论。",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/38169",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2511.07925"
+        }
+      ]
+    },
+    {
+      "id": "observability-tta-2026",
+      "title": "No Adaptation Without Observation: Observability-Constrained Test-Time Prompt Tuning for LiDAR Semantic Segmentation",
+      "authors": "Linlian Jiang, Wentao Ju, Sadman Rakib Pinon, Jianwei Xian, Zhixiang Chi, Xinxin Zuo, Yang Wang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2606.30937",
+      "sourceFamily": "arxiv",
+      "supports": "由射线终止和邻域支持计算局部可观测性，调节冻结 FRNet 骨干的 prompt 残差，并用可靠区域更新时序类别原型。",
+      "limitation": "方法任务是闭集 LiDAR 语义测试时适配；几何支持权重不是异常标签，稀疏未知物体会不会被抑制需在开放集协议下另测。",
+      "url": "https://arxiv.org/abs/2606.30937"
     }
   ],
   "searchAudit": {
@@ -996,7 +1076,7 @@
       "independent-review-current-snapshot"
     ],
     "searchedAt": "2026-11-06",
-    "cutoffDate": "2022-01-01",
+    "cutoffDate": "2026-11-06",
     "queryFamilies": [
       "当前三维语义占据与场景补全",
       "时空记忆、动态占据与未来预测",
@@ -1020,7 +1100,7 @@
         "resultCount": 32,
         "rawHitCount": 32,
         "screenedOutCount": 0,
-        "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共32个文件命中；按方向标签与revisionOf归并得32个候选，其余0个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "当前原始 Markdown rg 命中 32 个文件，按方向标签和原始论文身份归并为 32 个候选；文件命中与候选数分别记录。",
         "resultIdSample": [
           "arxiv:2310.08528",
           "arxiv:2605.13646",
@@ -1055,7 +1135,7 @@
           "arxiv:2609.37098",
           "arxiv:2402.13243"
         ],
-        "scopeRationale": "用方向 ID 与状态术语做本库宽检索，先记录原始文件命中，再按人工复核后的正式标签形成候选集。",
+        "scopeRationale": "对当前原始 Markdown 执行宽检索，再按本方向标签及 revisionOf 归并规范论文；覆盖当前完整方向候选，正文提及和其它方向命中单独筛除。",
         "retrieval": {
           "provider": "ripgrep-local-corpus",
           "endpoint": "content/papers",
@@ -1108,92 +1188,298 @@
           "deferredGroups": [
             {
               "reasonCode": "direct-scope-deferred",
-              "reason": "本次核心综合未使用该文论断；保留本库入口，完成方法与协议比较后再决定是否纳入。",
+              "reason": "本轮重新检查当前方向的全部本库候选，核心综合选取能说明方法演进及实验差异的文献；其余报告保留为后续深入阅读入口。",
               "localPaperIds": [
                 "cascade-causal-driving-representation",
                 "infraworld-roadside-occupancy-forecasting",
-                "maplightning-compact-map-tokens"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "本次核心综合未使用该文论断；保留本库入口，完成方法与协议比较后再决定是否纳入。",
-              "localPaperIds": [
-                "drtr-direct-radar-teach-repeat",
-                "ffbl-coop-association-decoupled-tracking",
-                "lidar-hallu-spatiotemporal-benchmark",
-                "miler-semantic-sim-to-real",
-                "qwen-drive-foundation-model",
-                "radargsocc-doppler-semantic-occupancy",
-                "star-task-aware-radar-preprocessing",
-                "trio-trimodal-anything-perception",
-                "v2x-wam-cooperative-world-action"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
+                "maplightning-compact-map-tokens",
                 "panobench-panoptic-occupancy-benchmark"
               ]
             },
             {
               "reasonCode": "cross-direction-support",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "foundation4d-unified-perception-reconstruction",
-                "streamrps-streaming-radar-panoptic"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "本轮新增的前馈辐射场报告以动态重建为主；当前综述只用两条基础解释渲染与占据边界，暂不把近期生成/重建结果提升为占据状态、校准或规划证据。",
+              "reason": "与当前方向有交叉，核心方法综合由其主方向承担，本轮未重复展开。",
               "localPaperIds": [
                 "drive2gauss-multimodal-4d-reconstruction",
-                "splatflux-latent-4d-gaussians"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "evoocc-fast-slow-occupancy-evolution"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "ufmf-radar-kinematic-occupancy-forecasting"
+                "drtr-direct-radar-teach-repeat",
+                "ffbl-coop-association-decoupled-tracking",
+                "foundation4d-unified-perception-reconstruction",
+                "lidar-hallu-spatiotemporal-benchmark",
+                "miler-semantic-sim-to-real",
+                "qwen-drive-foundation-model",
+                "radargsocc-doppler-semantic-occupancy",
+                "splatflux-latent-4d-gaussians",
+                "star-task-aware-radar-preprocessing",
+                "streamrps-streaming-radar-panoptic",
+                "trio-trimodal-anything-perception",
+                "v2x-wam-cooperative-world-action"
               ]
             }
           ]
+        },
+        "historicalRun": {
+          "family": "当前三维语义占据与场景补全",
+          "sourceFamily": "local-corpus",
+          "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
+          "executedAt": "2026-11-06",
+          "resultCount": 32,
+          "rawHitCount": 32,
+          "screenedOutCount": 0,
+          "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共32个文件命中；按方向标签与revisionOf归并得32个候选，其余0个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+          "resultIdSample": [
+            "arxiv:2310.08528",
+            "arxiv:2605.13646",
+            "arxiv:2609.07094",
+            "arxiv:2606.27644",
+            "arxiv:2610.26585",
+            "arxiv:2609.17766",
+            "arxiv:2611.02499",
+            "arxiv:2610.01750",
+            "arxiv:2610.30340",
+            "arxiv:2608.13147",
+            "arxiv:2608.23486",
+            "arxiv:2607.17521",
+            "arxiv:2610.14544",
+            "arxiv:2609.24452",
+            "arxiv:2610.01905",
+            "arxiv:2609.20747",
+            "arxiv:2310.10642",
+            "arxiv:2610.23537",
+            "arxiv:2609.00111",
+            "arxiv:2610.18686",
+            "arxiv:2608.13102",
+            "arxiv:2609.27677",
+            "arxiv:2610.04356",
+            "arxiv:2605.24354",
+            "arxiv:2610.28257",
+            "arxiv:2609.24151",
+            "arxiv:2610.26816",
+            "arxiv:2609.32013",
+            "arxiv:2610.40947",
+            "arxiv:2608.19036",
+            "arxiv:2609.37098",
+            "arxiv:2402.13243"
+          ],
+          "scopeRationale": "用方向 ID 与状态术语做本库宽检索，先记录原始文件命中，再按人工复核后的正式标签形成候选集。",
+          "retrieval": {
+            "provider": "ripgrep-local-corpus",
+            "endpoint": "content/papers",
+            "parameters": {
+              "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
+              "path": "content/papers",
+              "flags": [
+                "-l",
+                "-i"
+              ]
+            },
+            "sort": "path-ascending",
+            "limit": 200
+          },
+          "localCandidateDisposition": {
+            "candidateLocalPaperIds": [
+              "4dgs-hexplane-deformation",
+              "caad-causality-aware-driving",
+              "cascade-causal-driving-representation",
+              "cascadeocc-occupancy-world-model",
+              "drive2gauss-multimodal-4d-reconstruction",
+              "drtr-direct-radar-teach-repeat",
+              "evoocc-fast-slow-occupancy-evolution",
+              "ffbl-coop-association-decoupled-tracking",
+              "foundation4d-unified-perception-reconstruction",
+              "geoup-unified-3d-perception",
+              "geowam-geometry-world-action-model",
+              "geoworldad-geometry-world-action",
+              "infraworld-roadside-occupancy-forecasting",
+              "lidar-hallu-spatiotemporal-benchmark",
+              "maplightning-compact-map-tokens",
+              "miler-semantic-sim-to-real",
+              "native-4d-gaussian-splatting",
+              "panobench-panoptic-occupancy-benchmark",
+              "qwen-drive-foundation-model",
+              "radargsocc-doppler-semantic-occupancy",
+              "rbft-net-radar-depth-completion",
+              "roadocc-persist-transport-refresh",
+              "selectoccflow-occupancy-scene-flow",
+              "sparseworld-sparse-scene-world-model",
+              "splatflux-latent-4d-gaussians",
+              "star-task-aware-radar-preprocessing",
+              "streamrps-streaming-radar-panoptic",
+              "trio-trimodal-anything-perception",
+              "ufmf-radar-kinematic-occupancy-forecasting",
+              "usr-drive-unified-scene-representation",
+              "v2x-wam-cooperative-world-action",
+              "vadv2-probabilistic-planning"
+            ],
+            "deferredGroups": [
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "本次核心综合未使用该文论断；保留本库入口，完成方法与协议比较后再决定是否纳入。",
+                "localPaperIds": [
+                  "cascade-causal-driving-representation",
+                  "infraworld-roadside-occupancy-forecasting",
+                  "maplightning-compact-map-tokens"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "本次核心综合未使用该文论断；保留本库入口，完成方法与协议比较后再决定是否纳入。",
+                "localPaperIds": [
+                  "drtr-direct-radar-teach-repeat",
+                  "ffbl-coop-association-decoupled-tracking",
+                  "lidar-hallu-spatiotemporal-benchmark",
+                  "miler-semantic-sim-to-real",
+                  "qwen-drive-foundation-model",
+                  "radargsocc-doppler-semantic-occupancy",
+                  "star-task-aware-radar-preprocessing",
+                  "trio-trimodal-anything-perception",
+                  "v2x-wam-cooperative-world-action"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "panobench-panoptic-occupancy-benchmark"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "foundation4d-unified-perception-reconstruction",
+                  "streamrps-streaming-radar-panoptic"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "本轮新增的前馈辐射场报告以动态重建为主；当前综述只用两条基础解释渲染与占据边界，暂不把近期生成/重建结果提升为占据状态、校准或规划证据。",
+                "localPaperIds": [
+                  "drive2gauss-multimodal-4d-reconstruction",
+                  "splatflux-latent-4d-gaussians"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "evoocc-fast-slow-occupancy-evolution"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "ufmf-radar-kinematic-occupancy-forecasting"
+                ]
+              }
+            ]
+          }
         }
       },
       {
         "family": "时空记忆、动态占据与未来预测",
         "sourceFamily": "arxiv",
-        "query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
-        "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
-        "executedAt": "2026-10-18",
-        "resultCount": 23,
+        "query": "temporal occupancy memory future forecasting EvoOcc 2026",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 18,
         "resultIdSample": [
-          "arxiv:2503.24381",
-          "arxiv:2510.16729",
-          "arxiv:2601.06474",
-          "arxiv:2602.08006",
-          "arxiv:2603.28887",
-          "arxiv:2604.00969",
-          "arxiv:2605.17682",
-          "arxiv:2606.30421",
-          "arxiv:2607.24431",
-          "arxiv:2608.15279",
-          "arxiv:2609.18442",
-          "arxiv:2609.26325",
+          "arxiv:2512.15621",
           "arxiv:2609.27677",
+          "arxiv:2609.39305",
           "arxiv:2610.04356",
-          "arxiv:2610.09444",
-          "arxiv:2610.14871",
+          "arxiv:2610.40947",
+          "arxiv:2611.02499",
+          "cvf:cvpr2026:xue-conssc",
+          "doi:10.1016/j.patcog.2025.112372",
+          "doi:10.1109/cvpr52729.2023.00114",
+          "doi:10.1109/cvpr52733.2024.02030",
+          "doi:10.1109/iccv51701.2025.02394",
+          "doi:10.1109/lsp.2026.3680426",
+          "doi:10.1109/tip.2026.3687468",
+          "doi:10.1609/aaai.v39i9.33010",
+          "title:3291d286a8a8427ce851",
+          "title:488dbe69fc718e046a6b",
+          "title:660b3573a522887f099c",
+          "venue:67c15b3e7bfb5416628a"
+        ],
+        "rawDiscoveryCount": 21,
+        "discoveredCanonicalIds": [
+          "arxiv:2611.02499",
+          "title:660b3573a522887f099c",
+          "arxiv:2609.27677",
+          "title:488dbe69fc718e046a6b",
+          "title:3291d286a8a8427ce851",
+          "venue:67c15b3e7bfb5416628a",
+          "arxiv:2512.15621",
+          "arxiv:2609.39305"
+        ],
+        "screenedDiscoveryRecords": [
+          {
+            "url": "https://www.catalyzex.com/author/Xuetong%20Yang",
+            "title": "Xuetong Yang",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://arxiv-troller.com/paper/3368983/",
+            "title": "Fast-Slow Evolutionary Occupancy Prediction via C… - arXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://thelatestinai.com/papers/2611.02499",
+            "title": "Fast-Slow Evolutionary Occupancy Prediction via Controlled Dynamics | The Latest in AI",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://mlsanity.com/paper/2611.02499/",
+            "title": "Fast-Slow Evolutionary Occupancy Prediction via Controlled Dynamics · mlsanity",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://scirate.com/search?q=au%3ABai_X+in%3Acs",
+            "title": "au:Bai_X in:cs - SciRate Search",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://jp.ibbac.eu.org/papers/2609.27677v1",
+            "title": "RoadOcc Learns When to Persist, Transport, or Refresh Memory for Roadside Occupancy Prediction | Arxiv - DeepPaper",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://mlsanity.com/paper/2609.27677/",
+            "title": "RoadOcc Learns When to Persist, Transport, or Refresh Memory for Roadside Occupancy Prediction · mlsanity",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://scirate.com/?date=2026-09-25&page=70&range=31",
+            "title": "Top arXiv papers",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://rt.http3.lol/index.php?q=aHR0cHM6Ly9hcnhpdi5vcmcvc2VhcmNoL2NzP3NlYXJjaHR5cGU9YXV0aG9yJnF1ZXJ5PVB1LCtK",
+            "title": "Search | arXiv e-print repository",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://arxiv-troller.com/?q=paper%3A+2611.03737",
+            "title": "arXiv Troller",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          }
+        ],
+        "secondaryDiscoveryPrimaryMappings": [
+          {
+            "canonicalId": "arxiv:2611.02499",
+            "discoveryUrl": "https://www.catalyzex.com/paper/fast-slow-evolutionary-occupancy-prediction",
+            "primaryUrl": "https://arxiv.org/abs/2611.02499"
+          },
+          {
+            "canonicalId": "arxiv:2609.27677",
+            "discoveryUrl": "https://sex8x8.com/__proxy/arxiv.org/pdf/2609.27677",
+            "primaryUrl": "https://arxiv.org/abs/2609.27677"
+          }
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2610.04356",
           "doi:10.1016/j.patcog.2025.112372",
           "doi:10.1109/cvpr52729.2023.00114",
           "doi:10.1109/cvpr52733.2024.02030",
@@ -1202,77 +1488,127 @@
           "doi:10.1109/tip.2026.3687468",
           "doi:10.1609/aaai.v39i9.33010"
         ],
+        "supplementalCanonicalIds": [
+          "arxiv:2610.40947",
+          "cvf:cvpr2026:xue-conssc"
+        ],
         "retrieval": {
-          "provider": "arxiv-api-with-primary-reference-rechecks",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "primary-web-discovery-with-reopened-seeds",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
-            "search_query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
-            "sortBy": "submittedDate",
-            "sortOrder": "descending",
-            "start": 0,
-            "max_results": 20,
-            "seedRechecks": [
-              {
-                "canonicalId": "arxiv:2609.27677",
-                "url": "https://arxiv.org/abs/2609.27677",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2610.04356",
-                "url": "https://arxiv.org/abs/2610.04356",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "doi:10.1016/j.patcog.2025.112372",
-                "url": "https://doi.org/10.1016/j.patcog.2025.112372",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2409.15841"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
-                "url": "https://doi.org/10.1109/CVPR52729.2023.00114",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2302.13130"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52733.2024.02030",
-                "url": "https://doi.org/10.1109/CVPR52733.2024.02030",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2311.17663"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/tip.2026.3687468",
-                "url": "https://doi.org/10.1109/TIP.2026.3687468",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2405.20337"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1609/aaai.v39i9.33010",
-                "url": "https://doi.org/10.1609/aaai.v39i9.33010",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2408.14197"
-                ]
-              }
-            ]
+            "q": "temporal occupancy memory future forecasting EvoOcc 2026",
+            "query": "temporal occupancy memory future forecasting EvoOcc 2026"
           },
-          "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
-          "limit": 27,
-          "rawApiResultCount": 20,
-          "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          "sort": "relevance",
+          "limit": 21,
+          "directQueryLimit": 21,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        },
+        "historicalRun": {
+          "family": "时空记忆、动态占据与未来预测",
+          "sourceFamily": "arxiv",
+          "query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
+          "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
+          "executedAt": "2026-10-18",
+          "resultCount": 23,
+          "resultIdSample": [
+            "arxiv:2503.24381",
+            "arxiv:2510.16729",
+            "arxiv:2601.06474",
+            "arxiv:2602.08006",
+            "arxiv:2603.28887",
+            "arxiv:2604.00969",
+            "arxiv:2605.17682",
+            "arxiv:2606.30421",
+            "arxiv:2607.24431",
+            "arxiv:2608.15279",
+            "arxiv:2609.18442",
+            "arxiv:2609.26325",
+            "arxiv:2609.27677",
+            "arxiv:2610.04356",
+            "arxiv:2610.09444",
+            "arxiv:2610.14871",
+            "doi:10.1016/j.patcog.2025.112372",
+            "doi:10.1109/cvpr52729.2023.00114",
+            "doi:10.1109/cvpr52733.2024.02030",
+            "doi:10.1109/iccv51701.2025.02394",
+            "doi:10.1109/lsp.2026.3680426",
+            "doi:10.1109/tip.2026.3687468",
+            "doi:10.1609/aaai.v39i9.33010"
+          ],
+          "retrieval": {
+            "provider": "arxiv-api-with-primary-reference-rechecks",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
+              "search_query": "(all:\"occupancy forecasting\" OR all:\"scene memory\") AND all:\"driving\"",
+              "sortBy": "submittedDate",
+              "sortOrder": "descending",
+              "start": 0,
+              "max_results": 20,
+              "seedRechecks": [
+                {
+                  "canonicalId": "arxiv:2609.27677",
+                  "url": "https://arxiv.org/abs/2609.27677",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2610.04356",
+                  "url": "https://arxiv.org/abs/2610.04356",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "doi:10.1016/j.patcog.2025.112372",
+                  "url": "https://doi.org/10.1016/j.patcog.2025.112372",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2409.15841"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
+                  "url": "https://doi.org/10.1109/CVPR52729.2023.00114",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2302.13130"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52733.2024.02030",
+                  "url": "https://doi.org/10.1109/CVPR52733.2024.02030",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2311.17663"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/tip.2026.3687468",
+                  "url": "https://doi.org/10.1109/TIP.2026.3687468",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2405.20337"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1609/aaai.v39i9.33010",
+                  "url": "https://doi.org/10.1609/aaai.v39i9.33010",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2408.14197"
+                  ]
+                }
+              ]
+            },
+            "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
+            "limit": 27,
+            "rawApiResultCount": 20,
+            "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          }
         }
       },
       {
         "family": "对象、向量、Gaussian 与体素统一表示",
         "sourceFamily": "arxiv",
-        "query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
-        "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
-        "executedAt": "2026-10-18",
-        "resultCount": 17,
+        "query": "unified Gaussian voxel object occupancy representation 2026 instance",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 25,
         "resultIdSample": [
           "arxiv:2402.13243",
           "arxiv:2408.13454",
@@ -1281,137 +1617,394 @@
           "arxiv:2608.13147",
           "arxiv:2608.19036",
           "arxiv:2608.23486",
-          "arxiv:2610.09444",
-          "arxiv:2610.15522",
-          "arxiv:2610.20917",
+          "arxiv:2610.34093",
+          "arxiv:2610.37149",
+          "cvf:cvpr2026:feng-carlaocc",
           "doi:10.1109/cvpr52734.2025.00635",
           "doi:10.1109/cvpr52734.2025.01118",
           "doi:10.1109/cvpr52734.2025.02559",
           "doi:10.1109/iccv51070.2023.00772",
           "doi:10.1109/iccv51701.2025.02394",
           "doi:10.1609/aaai.v40i6.42484",
+          "doi:10.3233/faia250849",
+          "doi:10.52202/079017-2528",
+          "title:010ee3aaaca61c4943b5",
+          "title:612b7c4c14750a3391d2",
+          "title:92069d2ea4858af2f371",
+          "title:d99ffa6104ff0ebc2d27",
+          "title:e4713fe8ff7f139e68a6",
+          "venue:87b84f47ed457abe1a59",
+          "venue:d27c01b81d902cc6e700"
+        ],
+        "rawDiscoveryCount": 36,
+        "discoveredCanonicalIds": [
+          "title:d99ffa6104ff0ebc2d27",
+          "title:e4713fe8ff7f139e68a6",
+          "doi:10.1609/aaai.v40i6.42484",
+          "title:010ee3aaaca61c4943b5",
+          "title:92069d2ea4858af2f371",
+          "arxiv:2610.37149",
+          "venue:87b84f47ed457abe1a59",
+          "arxiv:2610.34093",
+          "cvf:cvpr2026:feng-carlaocc",
+          "doi:10.3233/faia250849",
+          "venue:d27c01b81d902cc6e700",
+          "title:612b7c4c14750a3391d2"
+        ],
+        "screenedDiscoveryRecords": [
+          {
+            "url": "https://conftrace.com/papers/92157232-guide-gaussian-unified-instance-detection-for-enhanced-obstacle-perception-in-autonomous-driving",
+            "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving - Conftrace",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://borowiecki.dev/pdf/2610.34093",
+            "title": "LegoOcc++: Towards Consistent Open-Vocabulary 3D Occupancy Prediction",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.alphaxiv.org/abs/2511.12941",
+            "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving | alphaXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://lacuna.tiptreesystems.com/work/guide-gaussian-unified-instance-detection-for-enhanced",
+            "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving — Lacuna",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://paperlayer.ai/abs/2610.34093v1",
+            "title": "LegoOcc++: Towards Consistent Open-Vocabulary 3D Occupancy Prediction | Paperlayer",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.alphaxiv.org/uk/abs/2607.13481",
+            "title": "GPOcc++: Unified Sparse Gaussian Occupancy Prediction with Visual Geometry Priors | alphaXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/unity/comments/1x7k9zq/unity_7_alpha_voxel_direct_gaussian_gabor_and/",
+            "title": "Unity 7 Alpha; Voxel, direct Gaussian, Gabor and Gaussian cache testing",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/GaussianSplatting/comments/1wluhnv/carveout_is_out/",
+            "title": "Carveout is out.",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/GaussianSplatting/comments/1qj5idc/ctrlf_for_the_real_world/",
+            "title": "Ctrl+F for the real world!",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/GaussianSplatting/comments/1ux6j8i/walkable_gaussian_splat_of_an_antiques_shop_in/",
+            "title": "Walkable Gaussian splat of an antiques shop in Cape Town",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://en.wikipedia.org/wiki/Solid_modeling",
+            "title": "Solid modeling",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.techradar.com/computing/printers-scanners/the-modern-version-of-a-fly-trapped-in-amber-3d-printing-your-gaussian-splat-is-one-of-the-most-amazing-things-ive-seen-in-a-long-time",
+            "title": "The modern version of a fly trapped in amber: 3D printing your Gaussian Splat is one of the most amazing things I've seen in a long time",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://en.wikipedia.org/wiki/Function_representation",
+            "title": "Function representation",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/GraphicsProgramming/comments/1vlxyyz/editing_millions_of_voxels_in_a_single_cpu_thread/",
+            "title": "Editing millions of voxels in a single CPU thread (C++/Vulkan)",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/VoxelGameDev/comments/1toyio3/placing_gigantic_voxel_ellipses_in_real_time/",
+            "title": "Placing gigantic voxel ellipses in real time",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/computervision/comments/1wcs2sy/a_hitchhikers_guide_to_the_3d_ecosystem/",
+            "title": "A Hitchhiker's Guide to the 3D Ecosystem",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://en.wikipedia.org/wiki/Voxel",
+            "title": "Voxel",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/GhostMesh48/comments/1x7zzav/voxel_environment_simulator_for_agi_vesa_v10_a/",
+            "title": "Voxel Environment Simulator for AGI (VESA) v1.0 - A Science-Grade Python Voxel World with a Cognition-Native API and Unified Criticality Dynamics",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.reddit.com/r/robotics/comments/1x306ej/lidar_13_seconds_of_phone_video_an_interactive/",
+            "title": "LiDAR + 13 seconds of phone video → an interactive room twin for robot simulation",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.pcgamer.com/hardware/a-little-known-rendering-technique-that-can-create-low-cost-photo-real-graphics-may-be-about-to-have-its-big-moment-in-game-development/",
+            "title": "A little known rendering technique that can create low-cost, photo-real graphics may be about to have its big moment in game development",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.pcgamer.com/hardware/gaussian-splatting-is-my-new-favourite-thing-so-i-hassled-an-ex-epic-artist-to-tell-me-everything-he-knows-about-the-low-cost-photo-real-rendering-technique/",
+            "title": "Gaussian Splatting is my new favourite thing, so I hassled an ex-Epic artist to tell me everything he knows about the low-cost 'photo-real' rendering technique",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          }
+        ],
+        "secondaryDiscoveryPrimaryMappings": [
+          {
+            "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+            "discoveryUrl": "https://www.catalyzex.com/paper/guide-gaussian-unified-instance-detection-for",
+            "primaryUrl": "https://doi.org/10.1609/aaai.v40i6.42484"
+          }
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2402.13243",
+          "arxiv:2408.13454",
+          "arxiv:2412.20480",
+          "arxiv:2607.17521",
+          "arxiv:2608.13147",
+          "arxiv:2608.19036",
+          "arxiv:2608.23486",
+          "doi:10.1109/cvpr52734.2025.00635",
+          "doi:10.1109/cvpr52734.2025.01118",
+          "doi:10.1109/cvpr52734.2025.02559",
+          "doi:10.1109/iccv51070.2023.00772",
+          "doi:10.1109/iccv51701.2025.02394",
           "doi:10.52202/079017-2528"
         ],
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "arxiv-api-with-primary-reference-rechecks",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "primary-web-discovery-with-reopened-seeds",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
-            "search_query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
-            "sortBy": "submittedDate",
-            "sortOrder": "descending",
-            "start": 0,
-            "max_results": 20,
-            "seedRechecks": [
-              {
-                "canonicalId": "arxiv:2402.13243",
-                "url": "https://openreview.net/forum?id=0a4dA6eUHN",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2402.13243"
-                ]
-              },
-              {
-                "canonicalId": "arxiv:2408.13454",
-                "url": "https://arxiv.org/abs/2408.13454",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2412.20480",
-                "url": "https://arxiv.org/abs/2412.20480",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2607.17521",
-                "url": "https://arxiv.org/abs/2607.17521",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2608.13147",
-                "url": "https://arxiv.org/abs/2608.13147",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2608.19036",
-                "url": "https://arxiv.org/abs/2608.19036",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2608.23486",
-                "url": "https://arxiv.org/abs/2608.23486",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52734.2025.00635",
-                "url": "https://doi.org/10.1109/CVPR52734.2025.00635",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2412.10373"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
-                "url": "https://doi.org/10.1109/CVPR52734.2025.01118",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2412.05435"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52734.2025.02559",
-                "url": "https://doi.org/10.1109/CVPR52734.2025.02559",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2412.04384"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/iccv51070.2023.00772",
-                "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2306.02851"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/iccv51701.2025.02394",
-                "url": "https://doi.org/10.1109/ICCV51701.2025.02394",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2507.09144"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1609/aaai.v40i6.42484",
-                "url": "https://doi.org/10.1609/aaai.v40i6.42484",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2511.12941"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.52202/079017-2528",
-                "url": "https://papers.nips.cc/paper_files/paper/2024/hash/9149fc44c95ce58e3ca529a1e34c2691-Abstract-Conference.html",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2312.03774"
-                ]
-              }
-            ]
+            "q": "unified Gaussian voxel object occupancy representation 2026 instance",
+            "query": "unified Gaussian voxel object occupancy representation 2026 instance"
           },
-          "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
-          "limit": 34,
-          "rawApiResultCount": 20,
-          "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          "sort": "relevance",
+          "limit": 36,
+          "directQueryLimit": 36,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        },
+        "historicalRun": {
+          "family": "对象、向量、Gaussian 与体素统一表示",
+          "sourceFamily": "arxiv",
+          "query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
+          "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
+          "executedAt": "2026-10-18",
+          "resultCount": 17,
+          "resultIdSample": [
+            "arxiv:2402.13243",
+            "arxiv:2408.13454",
+            "arxiv:2412.20480",
+            "arxiv:2607.17521",
+            "arxiv:2608.13147",
+            "arxiv:2608.19036",
+            "arxiv:2608.23486",
+            "arxiv:2610.09444",
+            "arxiv:2610.15522",
+            "arxiv:2610.20917",
+            "doi:10.1109/cvpr52734.2025.00635",
+            "doi:10.1109/cvpr52734.2025.01118",
+            "doi:10.1109/cvpr52734.2025.02559",
+            "doi:10.1109/iccv51070.2023.00772",
+            "doi:10.1109/iccv51701.2025.02394",
+            "doi:10.1609/aaai.v40i6.42484",
+            "doi:10.52202/079017-2528"
+          ],
+          "retrieval": {
+            "provider": "arxiv-api-with-primary-reference-rechecks",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
+              "search_query": "all:\"occupancy\" AND (all:\"Gaussian\" OR all:\"vectorized\" OR all:\"unified\")",
+              "sortBy": "submittedDate",
+              "sortOrder": "descending",
+              "start": 0,
+              "max_results": 20,
+              "seedRechecks": [
+                {
+                  "canonicalId": "arxiv:2402.13243",
+                  "url": "https://openreview.net/forum?id=0a4dA6eUHN",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2402.13243"
+                  ]
+                },
+                {
+                  "canonicalId": "arxiv:2408.13454",
+                  "url": "https://arxiv.org/abs/2408.13454",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2412.20480",
+                  "url": "https://arxiv.org/abs/2412.20480",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2607.17521",
+                  "url": "https://arxiv.org/abs/2607.17521",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2608.13147",
+                  "url": "https://arxiv.org/abs/2608.13147",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2608.19036",
+                  "url": "https://arxiv.org/abs/2608.19036",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2608.23486",
+                  "url": "https://arxiv.org/abs/2608.23486",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52734.2025.00635",
+                  "url": "https://doi.org/10.1109/CVPR52734.2025.00635",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2412.10373"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
+                  "url": "https://doi.org/10.1109/CVPR52734.2025.01118",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2412.05435"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52734.2025.02559",
+                  "url": "https://doi.org/10.1109/CVPR52734.2025.02559",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2412.04384"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/iccv51070.2023.00772",
+                  "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2306.02851"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/iccv51701.2025.02394",
+                  "url": "https://doi.org/10.1109/ICCV51701.2025.02394",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2507.09144"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+                  "url": "https://doi.org/10.1609/aaai.v40i6.42484",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2511.12941"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.52202/079017-2528",
+                  "url": "https://papers.nips.cc/paper_files/paper/2024/hash/9149fc44c95ce58e3ca529a1e34c2691-Abstract-Conference.html",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2312.03774"
+                  ]
+                }
+              ]
+            },
+            "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
+            "limit": 34,
+            "rawApiResultCount": 20,
+            "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          }
         }
       },
       {
         "family": "多模态监督、可见性与未知状态",
         "sourceFamily": "arxiv",
-        "query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
-        "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
-        "executedAt": "2026-10-18",
-        "resultCount": 14,
+        "query": "occupancy prediction visibility unknown multimodal supervision 2026",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 31,
         "resultIdSample": [
+          "arxiv:2412.20480",
+          "arxiv:2604.28115",
+          "arxiv:2605.16127",
+          "arxiv:2606.30937",
+          "arxiv:2608.09098",
+          "arxiv:2608.13102",
+          "arxiv:2610.15745",
+          "arxiv:2610.35312",
+          "doi:10.1016/j.inffus.2024.102671",
+          "doi:10.1016/j.knosys.2026.116032",
+          "doi:10.1109/cvpr52688.2022.00396",
+          "doi:10.1109/cvpr52729.2023.00890",
+          "doi:10.1109/cvpr52734.2025.01118",
+          "doi:10.1109/iccv51070.2023.00772",
+          "doi:10.1109/itsc57777.2023.10422593",
+          "doi:10.1109/lra.2022.3144528",
+          "doi:10.1609/aaai.v40i14.38169",
+          "title:114fe8a0af61e4be0bd1",
+          "title:380be68d3f313703bccc",
+          "title:3a3ff15f494f4c598a51",
+          "title:4013b8f795e41972e971",
+          "title:42aab0d15606139e47a5",
+          "title:6131db7dbf44ae7df01b",
+          "title:850e8a2d0f15eff4b21c",
+          "title:8d63baad3fafd93f6ffd",
+          "title:93126eecff52c3f33afd",
+          "title:e0e9df47cc392b10ae1f",
+          "venue:3f241655bda7c66e3e63",
+          "venue:8b6837e9e27fecda7fcc",
+          "venue:9c3c8f169b831d117eb3",
+          "venue:9d8297efd1b496004461"
+        ],
+        "rawDiscoveryCount": 22,
+        "discoveredCanonicalIds": [
+          "doi:10.1016/j.knosys.2026.116032",
+          "title:6131db7dbf44ae7df01b",
+          "venue:8b6837e9e27fecda7fcc",
+          "title:e0e9df47cc392b10ae1f",
+          "venue:9d8297efd1b496004461",
+          "title:3a3ff15f494f4c598a51",
+          "title:93126eecff52c3f33afd",
+          "venue:9c3c8f169b831d117eb3",
+          "title:380be68d3f313703bccc",
+          "venue:3f241655bda7c66e3e63",
+          "title:850e8a2d0f15eff4b21c",
+          "title:8d63baad3fafd93f6ffd",
+          "title:42aab0d15606139e47a5",
+          "title:4013b8f795e41972e971",
+          "title:114fe8a0af61e4be0bd1",
+          "arxiv:2610.15745",
+          "arxiv:2605.16127",
+          "arxiv:2610.35312",
+          "arxiv:2604.28115"
+        ],
+        "screenedDiscoveryRecords": [
+          {
+            "url": "https://www1.eurekamag.com/research/111/117/111117022.php",
+            "title": "A multimodal fusion framework leveraging vision-language models for streamlining occupancy estimation",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.alphaxiv.org/abs/2603.06166",
+            "title": "FreeOcc: Training-free Panoptic Occupancy Prediction via Foundation Models | alphaXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          }
+        ],
+        "secondaryDiscoveryPrimaryMappings": [],
+        "reopenedSeedCanonicalIds": [
           "arxiv:2412.20480",
           "arxiv:2608.09098",
           "arxiv:2608.13102",
-          "arxiv:2609.36543",
-          "arxiv:2609.39166",
-          "arxiv:2610.17279",
-          "arxiv:2610.18670",
           "doi:10.1016/j.inffus.2024.102671",
           "doi:10.1109/cvpr52688.2022.00396",
           "doi:10.1109/cvpr52729.2023.00890",
@@ -1420,238 +2013,495 @@
           "doi:10.1109/itsc57777.2023.10422593",
           "doi:10.1109/lra.2022.3144528"
         ],
+        "supplementalCanonicalIds": [
+          "arxiv:2606.30937",
+          "doi:10.1609/aaai.v40i14.38169"
+        ],
         "retrieval": {
-          "provider": "arxiv-api-with-primary-reference-rechecks",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "primary-web-discovery-with-reopened-seeds",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
-            "search_query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
-            "sortBy": "submittedDate",
-            "sortOrder": "descending",
-            "start": 0,
-            "max_results": 20,
-            "seedRechecks": [
-              {
-                "canonicalId": "arxiv:2412.20480",
-                "url": "https://arxiv.org/abs/2412.20480",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2608.09098",
-                "url": "https://arxiv.org/abs/2608.09098",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2608.13102",
-                "url": "https://arxiv.org/abs/2608.13102",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "doi:10.1016/j.inffus.2024.102671",
-                "url": "https://doi.org/10.1016/j.inffus.2024.102671",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2405.05173"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52688.2022.00396",
-                "url": "https://doi.org/10.1109/CVPR52688.2022.00396",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2112.00726"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52729.2023.00890",
-                "url": "https://doi.org/10.1109/CVPR52729.2023.00890",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2302.07817"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
-                "url": "https://doi.org/10.1109/CVPR52734.2025.01118",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2412.05435"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/iccv51070.2023.00772",
-                "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2306.02851"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/itsc57777.2023.10422593",
-                "url": "https://doi.org/10.1109/ITSC57777.2023.10422593",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2305.12409"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/lra.2022.3144528",
-                "url": "https://doi.org/10.1109/LRA.2022.3144528",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2112.04282"
-                ]
-              }
-            ]
+            "q": "occupancy prediction visibility unknown multimodal supervision 2026",
+            "query": "occupancy prediction visibility unknown multimodal supervision 2026"
           },
-          "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
-          "limit": 30,
-          "rawApiResultCount": 20,
-          "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          "sort": "relevance",
+          "limit": 31,
+          "directQueryLimit": 22,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        },
+        "historicalRun": {
+          "family": "多模态监督、可见性与未知状态",
+          "sourceFamily": "arxiv",
+          "query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
+          "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
+          "executedAt": "2026-10-18",
+          "resultCount": 14,
+          "resultIdSample": [
+            "arxiv:2412.20480",
+            "arxiv:2608.09098",
+            "arxiv:2608.13102",
+            "arxiv:2609.36543",
+            "arxiv:2609.39166",
+            "arxiv:2610.17279",
+            "arxiv:2610.18670",
+            "doi:10.1016/j.inffus.2024.102671",
+            "doi:10.1109/cvpr52688.2022.00396",
+            "doi:10.1109/cvpr52729.2023.00890",
+            "doi:10.1109/cvpr52734.2025.01118",
+            "doi:10.1109/iccv51070.2023.00772",
+            "doi:10.1109/itsc57777.2023.10422593",
+            "doi:10.1109/lra.2022.3144528"
+          ],
+          "retrieval": {
+            "provider": "arxiv-api-with-primary-reference-rechecks",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
+              "search_query": "all:\"occupancy\" AND (all:\"unknown\" OR all:\"visibility\" OR all:\"occlusion\")",
+              "sortBy": "submittedDate",
+              "sortOrder": "descending",
+              "start": 0,
+              "max_results": 20,
+              "seedRechecks": [
+                {
+                  "canonicalId": "arxiv:2412.20480",
+                  "url": "https://arxiv.org/abs/2412.20480",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2608.09098",
+                  "url": "https://arxiv.org/abs/2608.09098",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2608.13102",
+                  "url": "https://arxiv.org/abs/2608.13102",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "doi:10.1016/j.inffus.2024.102671",
+                  "url": "https://doi.org/10.1016/j.inffus.2024.102671",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2405.05173"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52688.2022.00396",
+                  "url": "https://doi.org/10.1109/CVPR52688.2022.00396",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2112.00726"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52729.2023.00890",
+                  "url": "https://doi.org/10.1109/CVPR52729.2023.00890",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2302.07817"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
+                  "url": "https://doi.org/10.1109/CVPR52734.2025.01118",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2412.05435"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/iccv51070.2023.00772",
+                  "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2306.02851"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/itsc57777.2023.10422593",
+                  "url": "https://doi.org/10.1109/ITSC57777.2023.10422593",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2305.12409"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/lra.2022.3144528",
+                  "url": "https://doi.org/10.1109/LRA.2022.3144528",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2112.04282"
+                  ]
+                }
+              ]
+            },
+            "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
+            "limit": 30,
+            "rawApiResultCount": 20,
+            "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          }
         }
       },
       {
         "family": "地图、定位与长期场景身份",
         "sourceFamily": "arxiv",
-        "query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
-        "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
-        "executedAt": "2026-10-18",
-        "resultCount": 7,
+        "query": "autonomous driving occupancy mapping object permanence long term memory 2026 LMPOcc",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 13,
         "resultIdSample": [
           "arxiv:2504.13596",
+          "arxiv:2606.30937",
           "arxiv:2607.09138",
-          "arxiv:2610.10382",
-          "arxiv:2610.15522",
-          "arxiv:2610.17279",
+          "arxiv:2609.27677",
+          "arxiv:2609.31716",
           "cvf:cvpr2026:feng-carlaocc",
+          "doi:10.1109/cvpr52733.2024.01624",
+          "doi:10.1109/cvpr52733.2024.02030",
+          "title:488dbe69fc718e046a6b",
+          "title:507e29aa50bb5afa2524",
+          "venue:33958061a60560a2ade2",
+          "venue:4bcd48cebcdbc603ccd2",
+          "venue:558ccdf69bdc938a5f00"
+        ],
+        "rawDiscoveryCount": 22,
+        "discoveredCanonicalIds": [
+          "arxiv:2504.13596",
+          "title:507e29aa50bb5afa2524",
+          "title:488dbe69fc718e046a6b",
+          "arxiv:2607.09138",
+          "doi:10.1109/cvpr52733.2024.02030",
+          "venue:558ccdf69bdc938a5f00",
+          "venue:33958061a60560a2ade2",
+          "arxiv:2609.27677",
+          "venue:4bcd48cebcdbc603ccd2",
+          "cvf:cvpr2026:feng-carlaocc",
+          "arxiv:2609.31716"
+        ],
+        "screenedDiscoveryRecords": [
+          {
+            "url": "https://lacuna.tiptreesystems.com/work/lmpocc-3d-semantic-occupancy-prediction-utilizing-long-term",
+            "title": "LMPOcc: 3D Semantic Occupancy Prediction Utilizing Long-Term Memory…",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://lacuna.tiptreesystems.com/work/roadocc-learns-when-to-persist-transport-or-refresh",
+            "title": "RoadOcc Learns When to Persist, Transport, or Refresh Memory…",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://mlsanity.com/paper/2609.27677/",
+            "title": "RoadOcc Learns When to Persist, Transport, or Refresh Memory for Roadside Occupancy Prediction · mlsanity",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.alphaxiv.org/audio/2504.13596v2",
+            "title": "LMPOcc: 3D Semantic Occupancy Prediction Utilizing Long-Term Memory Prior from Historical Traversals | alphaXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://lacuna.tiptreesystems.com/work/collaborative-learning-of-local-3d-occupancy-prediction",
+            "title": "Collaborative Learning of Local 3D Occupancy Prediction and Versatile…",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://sex8x8.com/__proxy/arxiv.org/abs/2609.27677",
+            "title": "[2609.27677] RoadOcc Learns When to Persist, Transport, or Refresh Memory for Roadside Occupancy Prediction",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://accelresearching.com/accel-zinc-picolinate-50mg/?_=%2Fabs%2F2607.09138%23nLw79nwZb1b3uPkZUsgpm5M%3D",
+            "title": "[2607.09138] BeyondSight: Object Permanence for End-to-End Autonomous Driving",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.alphaxiv.org/ru/abs/2504.13596",
+            "title": "Collaborative Learning of Local 3D Occupancy Prediction and Versatile Global Occupancy Mapping | alphaXiv",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          }
+        ],
+        "secondaryDiscoveryPrimaryMappings": [
+          {
+            "canonicalId": "arxiv:2609.27677",
+            "discoveryUrl": "https://sex8x8.com/__proxy/arxiv.org/pdf/2609.27677",
+            "primaryUrl": "https://arxiv.org/abs/2609.27677"
+          }
+        ],
+        "reopenedSeedCanonicalIds": [
           "doi:10.1109/cvpr52733.2024.01624"
         ],
+        "supplementalCanonicalIds": [
+          "arxiv:2606.30937"
+        ],
         "retrieval": {
-          "provider": "arxiv-api-with-primary-reference-rechecks",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "primary-web-discovery-with-reopened-seeds",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
-            "search_query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
-            "sortBy": "submittedDate",
-            "sortOrder": "descending",
-            "start": 0,
-            "max_results": 20,
-            "seedRechecks": [
-              {
-                "canonicalId": "arxiv:2504.13596",
-                "url": "https://arxiv.org/abs/2504.13596",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2607.09138",
-                "url": "https://arxiv.org/abs/2607.09138",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "cvf:cvpr2026:feng-carlaocc",
-                "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Feng_An_Instance-Centric_Panoptic_Occupancy_Prediction_Benchmark_for_Autonomous_Driving_CVPR_2026_paper.html",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2603.27238"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52733.2024.01624",
-                "url": "https://doi.org/10.1109/CVPR52733.2024.01624",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2306.10013"
-                ]
-              }
-            ]
+            "q": "autonomous driving occupancy mapping object permanence long term memory 2026 LMPOcc",
+            "query": "autonomous driving occupancy mapping object permanence long term memory 2026 LMPOcc"
           },
-          "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
-          "limit": 24,
-          "rawApiResultCount": 20,
-          "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          "sort": "relevance",
+          "limit": 22,
+          "directQueryLimit": 22,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        },
+        "historicalRun": {
+          "family": "地图、定位与长期场景身份",
+          "sourceFamily": "arxiv",
+          "query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
+          "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
+          "executedAt": "2026-10-18",
+          "resultCount": 7,
+          "resultIdSample": [
+            "arxiv:2504.13596",
+            "arxiv:2607.09138",
+            "arxiv:2610.10382",
+            "arxiv:2610.15522",
+            "arxiv:2610.17279",
+            "cvf:cvpr2026:feng-carlaocc",
+            "doi:10.1109/cvpr52733.2024.01624"
+          ],
+          "retrieval": {
+            "provider": "arxiv-api-with-primary-reference-rechecks",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
+              "search_query": "all:\"occupancy\" AND (all:\"mapping\" OR all:\"panoptic\" OR all:\"permanence\")",
+              "sortBy": "submittedDate",
+              "sortOrder": "descending",
+              "start": 0,
+              "max_results": 20,
+              "seedRechecks": [
+                {
+                  "canonicalId": "arxiv:2504.13596",
+                  "url": "https://arxiv.org/abs/2504.13596",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2607.09138",
+                  "url": "https://arxiv.org/abs/2607.09138",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "cvf:cvpr2026:feng-carlaocc",
+                  "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Feng_An_Instance-Centric_Panoptic_Occupancy_Prediction_Benchmark_for_Autonomous_Driving_CVPR_2026_paper.html",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2603.27238"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52733.2024.01624",
+                  "url": "https://doi.org/10.1109/CVPR52733.2024.01624",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2306.10013"
+                  ]
+                }
+              ]
+            },
+            "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
+            "limit": 24,
+            "rawApiResultCount": 20,
+            "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          }
         }
       },
       {
         "family": "规划效用、校准与部署验证",
         "sourceFamily": "arxiv",
-        "query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
-        "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
-        "executedAt": "2026-10-18",
-        "resultCount": 12,
+        "query": "autonomous driving occupancy prediction planning utility calibration real time 2026",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 24,
         "resultIdSample": [
+          "arxiv:2402.13243",
+          "arxiv:2505.07855",
+          "arxiv:2605.13646",
+          "arxiv:2605.24354",
+          "arxiv:2607.04689",
+          "arxiv:2610.22450",
+          "arxiv:2611.02499",
+          "doi:10.1007/978-3-031-72624-8_4",
+          "doi:10.1016/j.trc.2026.105800",
+          "doi:10.1109/cvpr52729.2023.00114",
+          "doi:10.1109/iccv51070.2023.00772",
+          "doi:10.1109/lsp.2026.3680426",
+          "doi:10.1609/aaai.v39i9.33010",
+          "title:0354edd490b3386b08e2",
+          "title:114fe8a0af61e4be0bd1",
+          "title:14d8867bcfdf28c28125",
+          "title:507e29aa50bb5afa2524",
+          "title:527aea0e26d6b3c87b42",
+          "title:6a650a472ced7cc7c4d6",
+          "title:84c7f09f97fd791b27cb",
+          "title:aef6f68f74598256cdf5",
+          "title:f26d4379e388ff52da9b",
+          "venue:4bcd48cebcdbc603ccd2",
+          "venue:8bbf6db50107461e2924"
+        ],
+        "rawDiscoveryCount": 24,
+        "discoveredCanonicalIds": [
+          "title:507e29aa50bb5afa2524",
+          "title:f26d4379e388ff52da9b",
+          "venue:4bcd48cebcdbc603ccd2",
+          "title:aef6f68f74598256cdf5",
+          "doi:10.1016/j.trc.2026.105800",
+          "title:527aea0e26d6b3c87b42",
+          "title:6a650a472ced7cc7c4d6",
+          "title:114fe8a0af61e4be0bd1",
+          "title:0354edd490b3386b08e2",
+          "venue:8bbf6db50107461e2924",
+          "title:14d8867bcfdf28c28125",
+          "title:84c7f09f97fd791b27cb",
+          "arxiv:2607.04689",
+          "arxiv:2610.22450",
+          "arxiv:2505.07855"
+        ],
+        "screenedDiscoveryRecords": [
+          {
+            "url": "https://pubmed.ncbi.nlm.nih.gov/42412663/",
+            "title": "Robust 3D Semantic Occupancy Prediction With Calibration-Free Spatial Transformation.",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://lacuna.tiptreesystems.com/work/predicted-occupancy-map-based-online-safety-verification",
+            "title": "Predicted occupancy map-based online safety verification…",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.axios.com/newsletters/axios-future-of-mobility-7a502c42-df0e-4f1d-9bf1-08deaf388aa1",
+            "title": "🌊 Wayve means business",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.techradar.com/pro/self-driving-cars-arent-the-challenge-proving-how-they-think-is",
+            "title": "Self-driving cars aren't the challenge - proving how they think is",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://en.wikipedia.org/wiki/Sydney_Coordinated_Adaptive_Traffic_System",
+            "title": "Sydney Coordinated Adaptive Traffic System",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          },
+          {
+            "url": "https://www.livescience.com/technology/electric-vehicles/worlds-first-native-color-lidar-will-let-robots-and-self-driving-cars-map-the-world-in-full-color-3d",
+            "title": "World's first 'native' color lidar will let robots and self-driving cars map the world in full color 3D",
+            "reason": "未建立可核验的一手论文身份；二级索引、社区或百科页面保留为原始发现，不计入规范论文候选。"
+          }
+        ],
+        "secondaryDiscoveryPrimaryMappings": [],
+        "reopenedSeedCanonicalIds": [
           "arxiv:2402.13243",
           "arxiv:2605.13646",
           "arxiv:2605.24354",
-          "arxiv:2610.12431",
-          "arxiv:2610.17688",
-          "arxiv:2610.18670",
-          "arxiv:2610.20917",
           "doi:10.1007/978-3-031-72624-8_4",
           "doi:10.1109/cvpr52729.2023.00114",
           "doi:10.1109/iccv51070.2023.00772",
           "doi:10.1109/lsp.2026.3680426",
           "doi:10.1609/aaai.v39i9.33010"
         ],
+        "supplementalCanonicalIds": [
+          "arxiv:2611.02499"
+        ],
         "retrieval": {
-          "provider": "arxiv-api-with-primary-reference-rechecks",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "primary-web-discovery-with-reopened-seeds",
+          "endpoint": "https://www.google.com/search",
           "parameters": {
-            "query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
-            "search_query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
-            "sortBy": "submittedDate",
-            "sortOrder": "descending",
-            "start": 0,
-            "max_results": 20,
-            "seedRechecks": [
-              {
-                "canonicalId": "arxiv:2402.13243",
-                "url": "https://openreview.net/forum?id=0a4dA6eUHN",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2402.13243"
-                ]
-              },
-              {
-                "canonicalId": "arxiv:2605.13646",
-                "url": "https://arxiv.org/abs/2605.13646",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "arxiv:2605.24354",
-                "url": "https://arxiv.org/abs/2605.24354",
-                "arxivUrls": []
-              },
-              {
-                "canonicalId": "doi:10.1007/978-3-031-72624-8_4",
-                "url": "https://doi.org/10.1007/978-3-031-72624-8_4",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2311.16038"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
-                "url": "https://doi.org/10.1109/CVPR52729.2023.00114",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2302.13130"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/iccv51070.2023.00772",
-                "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2306.02851"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1109/lsp.2026.3680426",
-                "url": "https://doi.org/10.1109/LSP.2026.3680426",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2606.27644"
-                ]
-              },
-              {
-                "canonicalId": "doi:10.1609/aaai.v39i9.33010",
-                "url": "https://doi.org/10.1609/aaai.v39i9.33010",
-                "arxivUrls": [
-                  "https://arxiv.org/abs/2408.14197"
-                ]
-              }
-            ]
+            "q": "autonomous driving occupancy prediction planning utility calibration real time 2026",
+            "query": "autonomous driving occupancy prediction planning utility calibration real time 2026"
           },
-          "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
-          "limit": 28,
-          "rawApiResultCount": 20,
-          "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          "sort": "relevance",
+          "limit": 24,
+          "directQueryLimit": 24,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        },
+        "historicalRun": {
+          "family": "规划效用、校准与部署验证",
+          "sourceFamily": "arxiv",
+          "query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
+          "scopeRationale": "按该查询族执行近期 arXiv 检索并人工筛查范围；另逐条重新打开前次保留文献及本库已完成报告的原始来源。结果数为新检索范围内候选与明确列出的既有参考扩展的并集，不是 API 原始返回数。",
+          "executedAt": "2026-10-18",
+          "resultCount": 12,
+          "resultIdSample": [
+            "arxiv:2402.13243",
+            "arxiv:2605.13646",
+            "arxiv:2605.24354",
+            "arxiv:2610.12431",
+            "arxiv:2610.17688",
+            "arxiv:2610.18670",
+            "arxiv:2610.20917",
+            "doi:10.1007/978-3-031-72624-8_4",
+            "doi:10.1109/cvpr52729.2023.00114",
+            "doi:10.1109/iccv51070.2023.00772",
+            "doi:10.1109/lsp.2026.3680426",
+            "doi:10.1609/aaai.v39i9.33010"
+          ],
+          "retrieval": {
+            "provider": "arxiv-api-with-primary-reference-rechecks",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
+              "search_query": "all:\"occupancy\" AND (all:\"planning\" OR all:\"calibration\" OR all:\"uncertainty\")",
+              "sortBy": "submittedDate",
+              "sortOrder": "descending",
+              "start": 0,
+              "max_results": 20,
+              "seedRechecks": [
+                {
+                  "canonicalId": "arxiv:2402.13243",
+                  "url": "https://openreview.net/forum?id=0a4dA6eUHN",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2402.13243"
+                  ]
+                },
+                {
+                  "canonicalId": "arxiv:2605.13646",
+                  "url": "https://arxiv.org/abs/2605.13646",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "arxiv:2605.24354",
+                  "url": "https://arxiv.org/abs/2605.24354",
+                  "arxivUrls": []
+                },
+                {
+                  "canonicalId": "doi:10.1007/978-3-031-72624-8_4",
+                  "url": "https://doi.org/10.1007/978-3-031-72624-8_4",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2311.16038"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
+                  "url": "https://doi.org/10.1109/CVPR52729.2023.00114",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2302.13130"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/iccv51070.2023.00772",
+                  "url": "https://doi.org/10.1109/ICCV51070.2023.00772",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2306.02851"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1109/lsp.2026.3680426",
+                  "url": "https://doi.org/10.1109/LSP.2026.3680426",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2606.27644"
+                  ]
+                },
+                {
+                  "canonicalId": "doi:10.1609/aaai.v39i9.33010",
+                  "url": "https://doi.org/10.1609/aaai.v39i9.33010",
+                  "arxivUrls": [
+                    "https://arxiv.org/abs/2408.14197"
+                  ]
+                }
+              ]
+            },
+            "sort": "submittedDate-descending; reference rechecks in canonical-ID order",
+            "limit": 28,
+            "rawApiResultCount": 20,
+            "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
+          }
         }
       }
     ],
@@ -1663,58 +2513,78 @@
         "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
         "endpoint": "content/papers",
         "limit": 200,
-        "acceptedCount": 13,
-        "note": "2026-11-06 对当前原始Markdown执行rg -l -i，共32个文件命中；按方向标签与revisionOf归并得32个候选，其余0个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "acceptedCount": 15,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-10-18",
-        "query": "Six occupancy/state query families; see dynamic-query-results.json",
-        "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 120,
-        "acceptedCount": 10,
-        "note": "34 条既有引用和 RoadOcc、SelectOccFlow 的摘要及正文均重新获取；正文实际阅读方法、实验或限制相关段落。6 个初始 API 查询各返回 20 条；4 个收窄查询返回 429，保留失败记录，未伪造结果。"
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving semantic occupancy completion",
+        "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22autonomous+driving+semantic+occupancy+completion%22&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
+        "limit": 8,
+        "acceptedCount": 11,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "queryLimits": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-10-18",
-        "query": "CVF ECCV and DOI primary pages for occupancy representation",
-        "endpoint": "https://openaccess.thecvf.com/",
-        "limit": 30,
-        "acceptedCount": 13,
-        "note": "重开 DOI、CVF、Springer、AAAI、NeurIPS 与 OpenReview；部分 IEEE DOI 返回空 202，改用出版方提交的 Crossref 元数据核对书目，方法论断回到 arXiv 原文。OctreeOcc 正式 NeurIPS 页面与 DOI 已核对。"
+        "executedAt": "2026-11-06",
+        "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "endpoint": "https://doi.org/10.1109/CVPR52688.2022.00396",
+        "limit": 15,
+        "acceptedCount": 15,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       },
       {
         "sourceFamily": "semantic-scholar",
-        "status": "success",
-        "executedAt": "2026-10-18",
-        "query": "occupancy forecasting autonomous driving",
-        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
-        "limit": 20,
+        "status": "limited",
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving semantic occupancy completion",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search?query=autonomous+driving+semantic+occupancy+completion&limit=10&fields=title%2Cyear%2CexternalIds%2Curl%2Cabstract",
+        "limit": 10,
         "acceptedCount": 0,
-        "note": "HTTP 200，检索返回 20 条；只用于发现与 DOI/标题交叉核对，未将聚合器作为论断来源，未进入主查询族候选计数。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "queryLimits": [
+          10
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-10-18",
-        "query": "occupancy forecasting autonomous driving",
-        "endpoint": "https://api.openalex.org/works",
-        "limit": 20,
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving semantic occupancy completion",
+        "endpoint": "https://api.openalex.org/works?search=autonomous+driving+semantic+occupancy+completion&per-page=10&sort=relevance_score%3Adesc&filter=from_publication_date%3A2024-01-01%2Cto_publication_date%3A2026-11-06",
+        "limit": 10,
         "acceptedCount": 0,
-        "note": "HTTP 200，返回 20 条，全文匹配排序包含较多非本方向结果与未来卷期元数据；只用于发现和交叉核对，未进入主查询族候选计数。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "queryLimits": [
+          10
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-10-18",
-        "query": "UniScene GaussianWorld TPVFormer OccNet official project and code",
-        "endpoint": "https://github.com/",
-        "limit": 20,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "endpoint": "https://doi.org/10.1109/CVPR52734.2025.01118",
+        "limit": 2,
         "acceptedCount": 2,
-        "note": "重开 GeoUP、SparseWorld、BeyondSight、LMPOcc、VADv2、GeoWAM、UniScene 等作者项目；SparseWorld 的录用会议按项目纠正为 IROS 2026。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
       }
     ],
     "deduplicationKeys": [
@@ -1761,7 +2631,12 @@
       "arxiv:2609.27677",
       "arxiv:2610.04356",
       "doi:10.1109/CVPR52733.2024.01920",
-      "arxiv:2310.10642"
+      "arxiv:2310.10642",
+      "arxiv:2611.02499",
+      "arxiv:2610.40947",
+      "cvf:cvpr2026:xue-conssc",
+      "doi:10.1609/aaai.v40i14.38169",
+      "arxiv:2606.30937"
     ],
     "exclusionCriteria": [
       "没有自动驾驶三维/四维状态终点，仅为通用控制、融合或综述的候选不纳入核心表。",
@@ -1771,165 +2646,368 @@
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:2610.14871",
-        "title": "MORE: Learning Motion-Oriented Registers for Driving World Models and Planning",
-        "url": "https://arxiv.org/abs/2610.14871",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2610.09444",
-        "title": "LighTROcc: Lightweight 4D Occupancy Forecasting via Instance-Centric 3D Gaussians",
-        "url": "https://arxiv.org/abs/2610.09444",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2609.26325",
-        "title": "Leveraging Vision-Based Point Cloud Map Priors for Camera-Based 3D Object Detection and Online Vectorized HD Mapping",
-        "url": "https://arxiv.org/abs/2609.26325",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2609.18442",
-        "title": "Risk-Aware World Modeling with Flow-Guided Occupancy Evolution for Selective Trajectory Planning in Automated Driving",
-        "url": "https://arxiv.org/abs/2609.18442",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2608.15279",
-        "title": "Geometry-Aware Spatio-Temporal Context Modeling for 4D Occupancy Forecasting",
-        "url": "https://arxiv.org/abs/2608.15279",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2607.24431",
-        "title": "InterOCF: Spatio-Temporal 2D-3D Interaction for Camera-Only 4D Occupancy Forecasting",
-        "url": "https://arxiv.org/abs/2607.24431",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2606.30421",
-        "title": "OWMDrive: Causality-Aware End-to-End Autonomous Driving via 4D Occupancy World Model",
-        "url": "https://arxiv.org/abs/2606.30421",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2605.17682",
-        "title": "GEM: Gaussian Evolution Model for Occupancy Forecasting and Motion Planning",
-        "url": "https://arxiv.org/abs/2605.17682",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2604.00969",
-        "title": "DLWM: Dual Latent World Models enable Holistic Gaussian-centric Pre-training in Autonomous Driving",
-        "url": "https://arxiv.org/abs/2604.00969",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2603.28887",
-        "title": "OccSim: Multi-kilometer Simulation with Long-horizon Occupancy World Models",
-        "url": "https://arxiv.org/abs/2603.28887",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
-      },
-      {
-        "canonicalId": "arxiv:2602.08006",
+        "canonicalId": "title:660b3573a522887f099c",
         "title": "ForecastOcc: Vision-based Semantic Occupancy Forecasting",
-        "url": "https://arxiv.org/abs/2602.08006",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "url": "https://forecastocc.cs.uni-freiburg.de/",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2601.06474",
-        "title": "SparseOccVLA: Bridging Occupancy and Vision-Language Models via Sparse Queries for Unified 4D Scene Understanding and Planning",
-        "url": "https://arxiv.org/abs/2601.06474",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "canonicalId": "title:488dbe69fc718e046a6b",
+        "title": "Occupancy Learning with Spatiotemporal Memory",
+        "url": "https://www.openaccess.thecvf.com/content/ICCV2025/papers/Leng_Occupancy_Learning_with_Spatiotemporal_Memory_ICCV_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2510.16729",
-        "title": "Vision-Centric 4D Occupancy Forecasting and Planning via Implicit Residual World Models",
-        "url": "https://arxiv.org/abs/2510.16729",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "canonicalId": "title:3291d286a8a8427ce851",
+        "title": "structural prior for producing spatially and temporally consistent outputs with high structural fidelity.",
+        "url": "https://openreview.net/pdf/748edfa47887b75131a36607050ad3280c003825.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2503.24381",
+        "canonicalId": "venue:67c15b3e7bfb5416628a",
+        "title": "Rethinking Temporal Fusion with a Unified Gradient Descent View for 3D Semantic Occupancy Prediction",
+        "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Chen_Rethinking_Temporal_Fusion_with_a_Unified_Gradient_Descent_View_for_CVPR_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2512.15621",
+        "title": "OccSTeP: Benchmarking 4D Occupancy Spatio-Temporal Persistence",
+        "url": "https://arxiv.org/abs/2512.15621",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2609.39305",
+        "title": "FORTE: Forecasting Occupancy for Spatiotemporal Risk-Aware Planning in Dynamic Environments",
+        "url": "https://arxiv.org/abs/2609.39305",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:d99ffa6104ff0ebc2d27",
+        "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving | Proceedings of the AAAI Conference on Artificial Intelligence",
+        "url": "https://ojs.aaai.org/index.php/AAAI/article/view/42484",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:e4713fe8ff7f139e68a6",
+        "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving | Sheng Yang",
+        "url": "https://shengyang93.github.io/publication/2026-guide/",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:010ee3aaaca61c4943b5",
+        "title": "GitHub - CN-ADLab/GUIDE · GitHub",
+        "url": "https://github.com/CN-ADLab/GUIDE",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:92069d2ea4858af2f371",
+        "title": "Gaussian-based World Model: Gaussian Priors for Voxel-Based Occupancy Prediction and Future Motion Prediction",
+        "url": "https://www.openaccess.thecvf.com/content/ICCV2025/papers/Feng_Gaussian-based_World_Model_Gaussian_Priors_for_Voxel-Based_Occupancy_Prediction_and_ICCV_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.37149",
+        "title": "GCSR-OCC: Geometry Calibration and Semantic Routing for Open-Vocabulary Occupancy Prediction",
+        "url": "https://arxiv.org/abs/2610.37149",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:87b84f47ed457abe1a59",
+        "title": "UniPR: Unified Object-level Real-to-Sim Perception and Reconstruction from a Single Stereo Pair",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Zhang_UniPR_Unified_Object-level_Real-to-Sim_Perception_and_Reconstruction_from_a_Single_CVPR_2026_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.34093",
+        "title": "LegoOcc++: Towards Consistent Open-Vocabulary 3D Occupancy Prediction",
+        "url": "https://arxiv.org/abs/2610.34093",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3233/faia250849",
+        "title": "Guided Gaussians: Enhancing 3D Occupancy Estimation with Sparse Sensor Priors, 2026",
+        "url": "https://journals.sagepub.com/doi/10.3233/FAIA250849",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:d27c01b81d902cc6e700",
+        "title": "Generalizing Visual Geometry Priors to Sparse Gaussian Occupancy Prediction",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Zhou_Generalizing_Visual_Geometry_Priors_to_Sparse_Gaussian_Occupancy_Prediction_CVPR_2026_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:612b7c4c14750a3391d2",
+        "title": "LiGaussOcc: Fully Self-Supervised 3D Semantic Occupancy Prediction from LiDAR via Gaussian Splatting - PMC",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12473668/",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.knosys.2026.116032",
+        "title": "MAAFOcc: Multimodal adaptive asymmetric fusion based occupancy prediction - ScienceDirect",
+        "url": "https://doi.org/10.1016/j.knosys.2026.116032",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:6131db7dbf44ae7df01b",
+        "title": "A multimodal fusion framework leveraging vision-language models for streamlining occupancy estimation - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/abs/pii/S0360132326010759",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:8b6837e9e27fecda7fcc",
+        "title": "CVF 论文记录：Boeder_ShelfOcc_Native_3D_Supervision_beyond_LiDAR_for_Vision-Based_Occupancy_Estimation_CVPR_2026_paper",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Boeder_ShelfOcc_Native_3D_Supervision_beyond_LiDAR_for_Vision-Based_Occupancy_Estimation_CVPR_2026_paper.html",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:e0e9df47cc392b10ae1f",
+        "title": "This ICCV paper is the Open Access version, provided by the Computer Vision Foundation.",
+        "url": "https://www.openaccess.thecvf.com/content/ICCV2025/papers/Li_AGO_Adaptive_Grounding_for_Open_World_3D_Occupancy_Prediction_ICCV_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:9d8297efd1b496004461",
+        "title": "CVF 论文记录：Zhou_Monocular_Open_Vocabulary_Occupancy_Prediction_for_Indoor_Scenes_CVPR_2026_paper",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Zhou_Monocular_Open_Vocabulary_Occupancy_Prediction_for_Indoor_Scenes_CVPR_2026_paper.html",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:3a3ff15f494f4c598a51",
+        "title": "A dual residual transformer architecture for indoor semantic occupancy prediction - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0031320326006321",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:93126eecff52c3f33afd",
+        "title": "HGS-OCC: Real-time 3D occupancy prediction via hybrid depth optimization with multi-representation geometry-semantic integration - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0031320326014172",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:9c3c8f169b831d117eb3",
+        "title": "AGO: Adaptive Grounding for Open World 3D Occupancy Prediction",
+        "url": "https://openaccess.thecvf.com/content/ICCV2025/papers/Li_AGO_Adaptive_Grounding_for_Open_World_3D_Occupancy_Prediction_ICCV_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:380be68d3f313703bccc",
+        "title": "Under review as a conference paper at ICLR 2026",
+        "url": "https://openreview.net/pdf/c3d9020f6f5bcd6e1c45ef2642ef13c99b170ae8.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:3f241655bda7c66e3e63",
+        "title": "Test-Time 3D Occupancy Prediction",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Zhang_Test-Time_3D_Occupancy_Prediction_CVPR_2026_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:850e8a2d0f15eff4b21c",
+        "title": "Multimodal individual counting: Robust crowd estimation under low-visibility conditions - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0925231226006867",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:8d63baad3fafd93f6ffd",
+        "title": "Vision-Based Panoptic Occupancy Prediction",
+        "url": "https://www.ipb.uni-bonn.de/wp-content/papercite-data/pdf/marcuzzi2026icra.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:42aab0d15606139e47a5",
+        "title": "DepthOcc: Real-time and accurate 3D occupancy prediction via multi-depth fusion and temporal enhancement - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S1077314226000378",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:4013b8f795e41972e971",
+        "title": "MSTHH: A unified framework for asynchronous and heterogeneous multimodal traffic prediction - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0020025526005839",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:114fe8a0af61e4be0bd1",
+        "title": "Bird’s-Eye-View Road Occupancy Prediction for Autonomous Driving: A Survey of Representations, Methods, and Benchmarks | MDPI",
+        "url": "https://www.mdpi.com/2227-7390/14/15/2720",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.15745",
+        "title": "SpikeOcc: Towards Resilient Multimodal 3D Occupancy Perception via Spiking Experts",
+        "url": "https://arxiv.org/abs/2610.15745",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.16127",
+        "title": "WeatherOcc3D: VLM-Assisted Adverse Weather Aware 3D Semantic Occupancy Prediction",
+        "url": "https://arxiv.org/abs/2605.16127",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.35312",
+        "title": "OVM-Occ: Open-Vocabulary Monocular Occupancy Prediction via Geometry-Aware Vision-Language Distillation",
+        "url": "https://arxiv.org/abs/2610.35312",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2604.28115",
+        "title": "FreeOcc: Training-Free Embodied Open-Vocabulary Occupancy Prediction",
+        "url": "https://arxiv.org/abs/2604.28115",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:507e29aa50bb5afa2524",
+        "title": "Predicted occupancy map-based online safety verification and resilient motion planning for autonomous driving - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S0968090X26000653",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:558ccdf69bdc938a5f00",
+        "title": "Camera-Only 3D Panoptic Scene Completion for Autonomous Driving through Differentiable Object Shapes",
+        "url": "https://openaccess.thecvf.com/content/CVPR2025W/WAD/papers/Marinello_Camera-Only_3D_Panoptic_Scene_Completion_for_Autonomous_Driving_through_Differentiable_CVPRW_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:33958061a60560a2ade2",
+        "title": "EvOcc: Accurate Semantic Occupancy for Automated Driving Using Evidence Theory",
+        "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Kalble_EvOcc_Accurate_Semantic_Occupancy_for_Automated_Driving_Using_Evidence_Theory_CVPR_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "venue:4bcd48cebcdbc603ccd2",
         "title": "UniOcc: A Unified Benchmark for Occupancy Forecasting and Prediction in Autonomous Driving",
-        "url": "https://arxiv.org/abs/2503.24381",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "url": "https://openaccess.thecvf.com/content/ICCV2025/papers/Wang_UniOcc_A_Unified_Benchmark_for_Occupancy_Forecasting_and_Prediction_in_ICCV_2025_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.20917",
-        "title": "Decision-FLIP: Budget-Free Structured Pruning for Gaussian Occupancy Models",
-        "url": "https://arxiv.org/abs/2610.20917",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "canonicalId": "arxiv:2609.31716",
+        "title": "PanOVOcc: Panoramic Embodied Open-Vocabulary Occupancy Mapping with Long-term Spatial Voxel Memory",
+        "url": "https://arxiv.org/abs/2609.31716",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.15522",
-        "title": "GNFormer: Gaussian Neural Field Transformer for Efficient Camera-based Occupancy Prediction",
-        "url": "https://arxiv.org/abs/2610.15522",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "canonicalId": "title:f26d4379e388ff52da9b",
+        "title": "OccDriver: Future Occupancy Guided Dual-branch Trajectory Planner in Autonomous Driving",
+        "url": "https://proceedings.iclr.cc/paper_files/paper/2026/hash/e59bf9a9077c361ed57180fc79c5b8d8-Abstract-Conference.html",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.18670",
-        "title": "Perception Beyond the Visible: Incompleteness-Aware Scene Understanding for Robot Autonomy",
-        "url": "https://arxiv.org/abs/2610.18670",
-        "reasonCode": "research-vision-only",
-        "reason": "研究愿景而非独立方法实验；用于发现不完整观测问题，暂不作为方法效果证据。"
+        "canonicalId": "title:aef6f68f74598256cdf5",
+        "title": "TrajFlow: A Generative Framework forOccupancy Density Estimation UsingNormalizing Flows - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/pii/S3050860626000311",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.17279",
-        "title": "ReForesight: Occlusion-Robust Re-Identification and Future Occupancy Forecasting for Dynamic Semantic Mapping",
-        "url": "https://arxiv.org/abs/2610.17279",
-        "reasonCode": "adjacent-robotics-protocol",
-        "reason": "涉及清扫机器人、室内导航、操作或一般机器人规划等相邻协议；本轮未完成向道路驾驶状态的协议对照，不纳入核心综合。"
+        "canonicalId": "doi:10.1016/j.trc.2026.105800",
+        "title": "SURE-plan: A spatio-temporal uncertainty-aware reachable set embedding framework for safe and efficient motion planning of autonomous vehicles - ScienceDirect",
+        "url": "https://doi.org/10.1016/j.trc.2026.105800",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2609.39166",
-        "title": "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds",
-        "url": "https://arxiv.org/abs/2609.39166",
-        "reasonCode": "adjacent-robotics-protocol",
-        "reason": "涉及清扫机器人、室内导航、操作或一般机器人规划等相邻协议；本轮未完成向道路驾驶状态的协议对照，不纳入核心综合。"
+        "canonicalId": "title:527aea0e26d6b3c87b42",
+        "title": "GitHub - tasl-lab/UniOcc: This is the official implementation of UniOcc: A Unified Benchmark for Occupancy Forecasting and Prediction in Autonomous Driving · GitHub",
+        "url": "https://github.com/tasl-lab/uniocc",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2609.36543",
-        "title": "Planning Oriented 3D Scene Completion via Coupled TUDF Occupancy Representation Learning from Partial Observations",
-        "url": "https://arxiv.org/abs/2609.36543",
-        "reasonCode": "adjacent-robotics-protocol",
-        "reason": "涉及清扫机器人、室内导航、操作或一般机器人规划等相邻协议；本轮未完成向道路驾驶状态的协议对照，不纳入核心综合。"
+        "canonicalId": "title:6a650a472ced7cc7c4d6",
+        "title": "Hybrid Neural Network Approach with Physical Constraints for Predicting the Potential Occupancy Set of Surrounding Vehicles",
+        "url": "https://www.mdpi.com/2297-8747/30/3/56",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.10382",
-        "title": "Semantic-Aware Predictive Mapping for Exploration and Navigation",
-        "url": "https://arxiv.org/abs/2610.10382",
-        "reasonCode": "adjacent-robotics-protocol",
-        "reason": "涉及清扫机器人、室内导航、操作或一般机器人规划等相邻协议；本轮未完成向道路驾驶状态的协议对照，不纳入核心综合。"
+        "canonicalId": "title:0354edd490b3386b08e2",
+        "title": "HMambaOcc: Hierarchical Mamba for occupancy flow field prediction in autonomous driving under mixed traffic environments - ScienceDirect",
+        "url": "https://www.sciencedirect.com/science/article/abs/pii/S0957417425036723",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.17688",
-        "title": "OccWAM: Occupancy World-Action Models with Joint Scene-to-Ego Flow Matching",
-        "url": "https://arxiv.org/abs/2610.17688",
-        "reasonCode": "fulltext-comparison-pending",
-        "reason": "题录与摘要已核对，属于相关候选；本轮 34 条既有参考的实质复核及两篇已完成全文报告的综合之外，尚未完成该文机制、实验条件与资源的全文比较，留待后续阅读。"
+        "canonicalId": "venue:8bbf6db50107461e2924",
+        "title": "StreamingFlow: Streaming Occupancy Forecasting with Asynchronous Multi-modal Data Streams via Neural Ordinary Differential Equation",
+        "url": "https://openaccess.thecvf.com/content/CVPR2024/papers/Shi_StreamingFlow_Streaming_Occupancy_Forecasting_with_Asynchronous_Multi-modal_Data_Streams_via_CVPR_2024_paper.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2610.12431",
-        "title": "Control-Ready Uncertainty for Trajectory Diffusion",
-        "url": "https://arxiv.org/abs/2610.12431",
-        "reasonCode": "adjacent-robotics-protocol",
-        "reason": "涉及清扫机器人、室内导航、操作或一般机器人规划等相邻协议；本轮未完成向道路驾驶状态的协议对照，不纳入核心综合。"
+        "canonicalId": "title:14d8867bcfdf28c28125",
+        "title": "TruckDrive: Long-Range Autonomous Highway Driving Dataset",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/supplemental/Ghilotti_TruckDrive_Long-Range_Autonomous_CVPR_2026_supplemental.pdf",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "title:84c7f09f97fd791b27cb",
+        "title": "Perception, Planning, and Control in Autonomous Parking: A Systematic Review from Bird’s-Eye View Reconstruction to Manoeuvre Execution",
+        "url": "https://www.mdpi.com/2076-3417/16/16/8051",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2607.04689",
+        "title": "A Reliable Context-Aware and Temporal Planning Framework for Autonomous Driving",
+        "url": "https://arxiv.org/abs/2607.04689",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.22450",
+        "title": "DriveWorld3D Evidence Constrained 3D World Modeling and Generative Simulation for Real-World Autonomous Driving",
+        "url": "https://arxiv.org/abs/2610.22450",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2505.07855",
+        "title": "A Physics-informed End-to-End Occupancy Framework for Motion Planning of Autonomous Vehicles",
+        "url": "https://arxiv.org/abs/2505.07855",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       }
     ],
     "openSearchGaps": [
@@ -1944,716 +3022,974 @@
       "Semantic Scholar 与 OpenAlex 成功返回，本轮仅作补充发现/元数据交叉核对；其原始返回数不计入主候选池。",
       "若正式入口暂不可读，出版元数据通过出版社提交的 Crossref 记录和可访问正式页交叉核对；没有新确认正式出版页的录用稿仍标 accepted。"
     ],
-    "evidenceBoundary": "本轮仅通过当前本库补入 Wu/Yang 两条动态高斯基础，并重查 GaussianWorld、GaussianFormer-2 的受影响机制论断；保留 2026-10-18 的全方向实质复核日期与历史站外查询。其余新本库候选显式延后，不自动作为占据、规划或未来预测证据。",
+    "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "candidateLedger": [
       {
-        "canonicalId": "arxiv:2402.13243",
-        "disposition": "included",
+        "canonicalId": "arxiv:2310.10642",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "规划效用、校准与部署验证",
           "当前三维语义占据与场景补全"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2402.13243",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全",
+          "对象、向量、Gaussian 与体素统一表示",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
         "occurrences": 3
       },
       {
         "canonicalId": "arxiv:2408.13454",
-        "disposition": "included",
         "queryFamilies": [
           "对象、向量、Gaussian 与体素统一表示"
         ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2412.20480",
-        "disposition": "included",
         "queryFamilies": [
           "对象、向量、Gaussian 与体素统一表示",
           "多模态监督、可见性与未知状态"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2503.24381",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
         "canonicalId": "arxiv:2504.13596",
-        "disposition": "included",
         "queryFamilies": [
           "地图、定位与长期场景身份"
         ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2510.16729",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2505.07855",
         "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
+          "规划效用、校准与部署验证"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2601.06474",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2512.15621",
         "queryFamilies": [
           "时空记忆、动态占据与未来预测"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2602.08006",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2604.28115",
         "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
+          "多模态监督、可见性与未知状态"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2603.28887",
         "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2604.00969",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2605.13646",
-        "disposition": "included",
         "queryFamilies": [
-          "规划效用、校准与部署验证",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "规划效用、校准与部署验证"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2605.17682",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2605.16127",
         "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
+          "多模态监督、可见性与未知状态"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2605.24354",
-        "disposition": "included",
         "queryFamilies": [
-          "规划效用、校准与部署验证",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "规划效用、校准与部署验证"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2606.30421",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2606.30937",
         "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
+          "多模态监督、可见性与未知状态",
+          "地图、定位与长期场景身份"
         ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.04689",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2607.09138",
-        "disposition": "included",
         "queryFamilies": [
           "地图、定位与长期场景身份"
         ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2607.17521",
-        "disposition": "included",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "对象、向量、Gaussian 与体素统一表示"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2607.24431",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
         "canonicalId": "arxiv:2608.09098",
-        "disposition": "included",
         "queryFamilies": [
           "多模态监督、可见性与未知状态"
         ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2608.13102",
-        "disposition": "included",
         "queryFamilies": [
-          "多模态监督、可见性与未知状态",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "多模态监督、可见性与未知状态"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2608.13147",
-        "disposition": "included",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "对象、向量、Gaussian 与体素统一表示"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2608.15279",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
         "canonicalId": "arxiv:2608.19036",
-        "disposition": "included",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "对象、向量、Gaussian 与体素统一表示"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2608.23486",
-        "disposition": "included",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "当前三维语义占据与场景补全"
+          "当前三维语义占据与场景补全",
+          "对象、向量、Gaussian 与体素统一表示"
         ],
+        "disposition": "included",
         "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2609.00111",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "qwen-drive-foundation-model"
+        "localPaperId": "qwen-drive-foundation-model",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.07094",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "cascade-causal-driving-representation"
+        "localPaperId": "cascade-causal-driving-representation",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.17766",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "drtr-direct-radar-teach-repeat"
-      },
-      {
-        "canonicalId": "arxiv:2609.18442",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
+        "localPaperId": "drtr-direct-radar-teach-repeat",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.20747",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "miler-semantic-sim-to-real"
+        "localPaperId": "miler-semantic-sim-to-real",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.24151",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "star-task-aware-radar-preprocessing"
+        "localPaperId": "star-task-aware-radar-preprocessing",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.24452",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "lidar-hallu-spatiotemporal-benchmark"
-      },
-      {
-        "canonicalId": "arxiv:2609.26325",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
+        "localPaperId": "lidar-hallu-spatiotemporal-benchmark",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.27677",
-        "disposition": "included",
         "queryFamilies": [
+          "当前三维语义占据与场景补全",
           "时空记忆、动态占据与未来预测",
-          "当前三维语义占据与场景补全"
+          "地图、定位与长期场景身份"
         ],
-        "occurrences": 2
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2609.31716",
+        "queryFamilies": [
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.32013",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "trio-trimodal-anything-perception"
-      },
-      {
-        "canonicalId": "arxiv:2609.36543",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
+        "localPaperId": "trio-trimodal-anything-perception",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.37098",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "v2x-wam-cooperative-world-action"
+        "localPaperId": "v2x-wam-cooperative-world-action",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2609.39166",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2609.39305",
         "queryFamilies": [
-          "多模态监督、可见性与未知状态"
+          "时空记忆、动态占据与未来预测"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.01750",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "ffbl-coop-association-decoupled-tracking"
+        "localPaperId": "ffbl-coop-association-decoupled-tracking",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.01905",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "maplightning-compact-map-tokens"
+        "localPaperId": "maplightning-compact-map-tokens",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.04356",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全",
+          "时空记忆、动态占据与未来预测"
+        ],
         "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "当前三维语义占据与场景补全"
-        ],
         "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2610.09444",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2610.10382",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "地图、定位与长期场景身份"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.12431",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.14544",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "infraworld-roadside-occupancy-forecasting"
-      },
-      {
-        "canonicalId": "arxiv:2610.14871",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
+        "localPaperId": "infraworld-roadside-occupancy-forecasting",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.15522",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2610.15745",
         "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "地图、定位与长期场景身份"
+          "多模态监督、可见性与未知状态"
         ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2610.17279",
         "disposition": "excluded",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态",
-          "地图、定位与长期场景身份"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2610.17688",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "规划效用、校准与部署验证"
-        ],
         "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.18670",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态",
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2610.18686",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
-        "occurrences": 1,
-        "localPaperId": "radargsocc-doppler-semantic-occupancy"
+        "localPaperId": "radargsocc-doppler-semantic-occupancy",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.20917",
+        "canonicalId": "arxiv:2610.22450",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
         "disposition": "excluded",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "cvf:cvpr2026:feng-carlaocc",
-        "disposition": "included",
-        "queryFamilies": [
-          "地图、定位与长期场景身份"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/978-3-031-72624-8_4",
-        "disposition": "included",
-        "queryFamilies": [
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1016/j.inffus.2024.102671",
-        "disposition": "included",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1016/j.patcog.2025.112372",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52688.2022.00396",
-        "disposition": "included",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52729.2023.00890",
-        "disposition": "included",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52733.2024.01624",
-        "disposition": "included",
-        "queryFamilies": [
-          "地图、定位与长期场景身份"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52733.2024.02030",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52734.2025.00635",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52734.2025.02559",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/iccv51070.2023.00772",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示",
-          "多模态监督、可见性与未知状态",
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 3
-      },
-      {
-        "canonicalId": "doi:10.1109/iccv51701.2025.02394",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "doi:10.1109/itsc57777.2023.10422593",
-        "disposition": "included",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/lra.2022.3144528",
-        "disposition": "included",
-        "queryFamilies": [
-          "多模态监督、可见性与未知状态"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/lsp.2026.3680426",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "规划效用、校准与部署验证",
-          "当前三维语义占据与场景补全"
-        ],
-        "occurrences": 3
-      },
-      {
-        "canonicalId": "doi:10.1109/tip.2026.3687468",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1609/aaai.v39i9.33010",
-        "disposition": "included",
-        "queryFamilies": [
-          "时空记忆、动态占据与未来预测",
-          "规划效用、校准与部署验证"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "doi:10.1609/aaai.v40i6.42484",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.52202/079017-2528",
-        "disposition": "included",
-        "queryFamilies": [
-          "对象、向量、Gaussian 与体素统一表示"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.30340",
-        "disposition": "deferred",
-        "localPaperId": "foundation4d-unified-perception-reconstruction",
-        "queryFamilies": [
-          "当前三维语义占据与场景补全"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.23537",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全"
+        ],
         "localPaperId": "panobench-panoptic-occupancy-benchmark",
-        "queryFamilies": [
-          "当前三维语义占据与场景补全"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2610.26816",
         "disposition": "deferred",
-        "localPaperId": "streamrps-streaming-radar-panoptic",
-        "queryFamilies": [
-          "当前三维语义占据与场景补全"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr52733.2024.01920",
-        "disposition": "included",
-        "queryFamilies": [
-          "当前三维语义占据与场景补全"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.26585",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
         "localPaperId": "drive2gauss-multimodal-4d-reconstruction",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2310.10642",
-        "disposition": "included",
+        "canonicalId": "arxiv:2610.26816",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
+        "localPaperId": "streamrps-streaming-radar-panoptic",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.28257",
-        "disposition": "deferred",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
         "localPaperId": "splatflux-latent-4d-gaussians",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2611.02499",
-        "disposition": "deferred",
-        "localPaperId": "evoocc-fast-slow-occupancy-evolution",
+        "canonicalId": "arxiv:2610.30340",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
+        "localPaperId": "foundation4d-unified-perception-reconstruction",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.34093",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.35312",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.37149",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.40947",
-        "disposition": "deferred",
-        "localPaperId": "ufmf-radar-kinematic-occupancy-forecasting",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全",
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2611.02499",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全",
+          "时空记忆、动态占据与未来预测",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "cvf:cvpr2026:feng-carlaocc",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示",
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "cvf:cvpr2026:xue-conssc",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-72624-8_4",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.inffus.2024.102671",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.knosys.2026.116032",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.patcog.2025.112372",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.trc.2026.105800",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52688.2022.00396",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52729.2023.00114",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52729.2023.00890",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01624",
+        "queryFamilies": [
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01920",
         "queryFamilies": [
           "当前三维语义占据与场景补全"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.02030",
+        "queryFamilies": [
+          "地图、定位与长期场景身份",
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52734.2025.00635",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52734.2025.01118",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示",
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52734.2025.02559",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv51070.2023.00772",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示",
+          "多模态监督、可见性与未知状态",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv51701.2025.02394",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测",
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc57777.2023.10422593",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2022.3144528",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lsp.2026.3680426",
+        "queryFamilies": [
+          "当前三维语义占据与场景补全",
+          "时空记忆、动态占据与未来预测",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "doi:10.1109/tip.2026.3687468",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v39i9.33010",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v40i14.38169",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3233/faia250849",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-2528",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:010ee3aaaca61c4943b5",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:0354edd490b3386b08e2",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:114fe8a0af61e4be0bd1",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "title:14d8867bcfdf28c28125",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:3291d286a8a8427ce851",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:380be68d3f313703bccc",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:3a3ff15f494f4c598a51",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:4013b8f795e41972e971",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:42aab0d15606139e47a5",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:488dbe69fc718e046a6b",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测",
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "title:507e29aa50bb5afa2524",
+        "queryFamilies": [
+          "地图、定位与长期场景身份",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "title:527aea0e26d6b3c87b42",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:612b7c4c14750a3391d2",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:6131db7dbf44ae7df01b",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:660b3573a522887f099c",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:6a650a472ced7cc7c4d6",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:84c7f09f97fd791b27cb",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:850e8a2d0f15eff4b21c",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:8d63baad3fafd93f6ffd",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:92069d2ea4858af2f371",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:93126eecff52c3f33afd",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:aef6f68f74598256cdf5",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:d99ffa6104ff0ebc2d27",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:e0e9df47cc392b10ae1f",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:e4713fe8ff7f139e68a6",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "title:f26d4379e388ff52da9b",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:33958061a60560a2ade2",
+        "queryFamilies": [
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:3f241655bda7c66e3e63",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:4bcd48cebcdbc603ccd2",
+        "queryFamilies": [
+          "地图、定位与长期场景身份",
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "venue:558ccdf69bdc938a5f00",
+        "queryFamilies": [
+          "地图、定位与长期场景身份"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:67c15b3e7bfb5416628a",
+        "queryFamilies": [
+          "时空记忆、动态占据与未来预测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:87b84f47ed457abe1a59",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:8b6837e9e27fecda7fcc",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:8bbf6db50107461e2924",
+        "queryFamilies": [
+          "规划效用、校准与部署验证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:9c3c8f169b831d117eb3",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:9d8297efd1b496004461",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "venue:d27c01b81d902cc6e700",
+        "queryFamilies": [
+          "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       }
     ],
     "counts": {
-      "candidates": 105,
-      "deduplicated": 80,
-      "included": 38,
-      "excluded": 42
+      "candidates": 143,
+      "deduplicated": 112,
+      "included": 43,
+      "excluded": 69
     },
     "independentReview": {
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 6,
       "finalOutcome": "passed",
-      "finalFinding": "Independent raw-corpus rerun and canonical candidate closure passed; narrative, references and substantive/external dates preserved. Same-family provisional.",
-      "reviewerAgentId": "/root/review_integration_nov06",
-      "artifactPath": "docs/research-updates/2026-11-06/review-integration-round1.json",
-      "artifactSha256": "679fe0a88e5290f6c16b7a9e7bcb6977630e8108fca913fcf3e0f4f40a8ba2ac",
-      "snapshotFingerprint": "54d81b3519686d9b00519afbef146e08098f1c8cee1013b62bedf94c804e76cf",
+      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；来源筛选修订已复核并绑定最终内容。未执行模型实验。",
+      "reviewerAgentId": "/root/review_centers_sensing",
+      "artifactPath": "docs/center-updates/2026-11-06/independent-review/sensing-round6.json",
+      "artifactSha256": "2a31dd320ac06e2f379c13aef991e79eb4e1043b3695fbe5df96bbfd562b8146",
+      "snapshotFingerprint": "6410d41b0243df8b67c91d41a3d12beee267c6575099be9f0b34697352b2dc5a",
       "assurance": "same-family provisional"
     },
     "refreshEvidencePath": "docs/research-updates/2026-10-18/dynamic-verification.json",
-    "incrementalLocalAuditAt": "2026-11-06",
-    "refreshMode": "incremental-local-corpus",
-    "localRefreshNote": "2026-11-06 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。",
+    "refreshMode": "primary-source-and-literature-refresh",
     "historicalAuditSnapshot": {
       "path": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/dynamic-scene-representation-before.json",
       "sha256": "43bacb397c84c91f85ee937c74aa45f5ba7ee2ae3ea8f24fde672cb997f64e6f",
@@ -2671,6 +4007,101 @@
       "evidencePath": "docs/research-updates/2026-11-01-4d-gaussian/review-scope/core-evidence.md",
       "priorSubstantiveReviewedAt": "2026-10-18",
       "boundary": "两条基础通过当前本库独立报告纳入，正式主链接保留；额外重开一手方法段落核对。36 条旧引用未全部重审，六族站外历史日期保留，不宣称完成新一轮全方向检索。"
+    },
+    "sourceRevalidation": {
+      "checkedAt": "2026-11-06",
+      "referenceCount": 43,
+      "priorCoreReviewedAt": "2026-10-18",
+      "claimRecordsPath": "docs/center-updates/2026-11-06/authoring/sensing/semantic-checks.json",
+      "claimRecordsSha256": "cd82eaf6ec2cbce5ceb68522865e620ea422a66c48ac504ca89935e7dd83f10e",
+      "correctionsPath": "docs/center-updates/2026-11-06/authoring/sensing/current-scope-corrections.json",
+      "correctionsSha256": "3bd4a9db5f296d41eb17d1556c7e67d4d86d6ec0ccddf3034ee98df55d8c3463",
+      "boundary": "逐条核对当前支持项、限制及正文数字/范围；摘要可支持明确写出的任务和方法，细节使用方法/实验/附录。10条雷达历史记录仅保留出版元数据支持的主题定位。没有把来源访问成功当作全文阅读，也没有运行模型。",
+      "currentPrimaryAccessLimited": 0
+    },
+    "discoveryAliasMerges": [
+      {
+        "observedId": "title:5711c0cc78e82d1e5d84",
+        "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+        "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving",
+        "url": "https://ojs.aaai.org/index.php/AAAI/article/download/42484/46445",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "arxiv:2603.27238",
+        "canonicalId": "cvf:cvpr2026:feng-carlaocc",
+        "title": "An Instance-Centric Panoptic Occupancy Prediction Benchmark for Autonomous Driving",
+        "url": "https://arxiv.org/abs/2603.27238",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "arxiv:2511.12941",
+        "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+        "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving",
+        "url": "https://arxiv.org/abs/2511.12941",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "title:5711c0cc78e82d1e5d84",
+        "canonicalId": "doi:10.1609/aaai.v40i6.42484",
+        "title": "GUIDE: Gaussian Unified Instance Detection for Enhanced Obstacle Perception in Autonomous Driving",
+        "url": "https://newx.sg/paper/detail/2dfcfc28-966f-11f1-b84c-00163e10baa7",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "title:550ad51a82c5f39d99e0",
+        "canonicalId": "arxiv:2504.13596",
+        "title": "Collaborative Learning of Local 3D Occupancy Prediction and Versatile Global Occupancy Mapping",
+        "url": "https://ss-yuan.github.io/LMPOcc/",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "venue:d7908e200449b507c268",
+        "canonicalId": "title:488dbe69fc718e046a6b",
+        "title": "Occupancy Learning with Spatiotemporal Memory",
+        "url": "https://openaccess.thecvf.com/content/ICCV2025/papers/Leng_Occupancy_Learning_with_Spatiotemporal_Memory_ICCV_2025_paper.pdf",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "venue:f265e1b546b0e0486de9",
+        "canonicalId": "doi:10.1109/cvpr52733.2024.02030",
+        "title": "Cam4DOcc: Benchmark for Camera-Only 4D Occupancy Forecasting in Autonomous Driving Applications",
+        "url": "https://openaccess.thecvf.com/content/CVPR2024/papers/Ma_Cam4DOcc_Benchmark_for_Camera-Only_4D_Occupancy_Forecasting_in_Autonomous_Driving_CVPR_2024_paper.pdf",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "venue:6460ab9baae96bb75feb",
+        "canonicalId": "cvf:cvpr2026:feng-carlaocc",
+        "title": "CVPR 2026 Open Access Repository",
+        "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Feng_An_Instance-Centric_Panoptic_Occupancy_Prediction_Benchmark_for_Autonomous_Driving_CVPR_2026_paper.html",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "arxiv:2508.04705",
+        "canonicalId": "title:488dbe69fc718e046a6b",
+        "title": "Occupancy Learning with Spatiotemporal Memory",
+        "url": "https://arxiv.org/abs/2508.04705",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "title:a29c9ec893d1d4621118",
+        "canonicalId": "venue:4bcd48cebcdbc603ccd2",
+        "title": "UniOcc: A Unified Benchmark for Occupancy Forecasting and Prediction in Autonomous Driving",
+        "url": "https://www.openaccess.thecvf.com/content/ICCV2025/papers/Wang_UniOcc_A_Unified_Benchmark_for_Occupancy_Forecasting_and_Prediction_in_ICCV_2025_paper.pdf",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      },
+      {
+        "observedId": "arxiv:2503.24381",
+        "canonicalId": "venue:4bcd48cebcdbc603ccd2",
+        "title": "UniOcc: A Unified Benchmark for Occupancy Forecasting and Prediction in Autonomous Driving",
+        "url": "https://arxiv.org/abs/2503.24381",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      }
+    ],
+    "currentRefreshArtifacts": {
+      "retrieval": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+      "authoring": "docs/center-updates/2026-11-06/authoring/sensing/",
+      "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
     }
   }
 }

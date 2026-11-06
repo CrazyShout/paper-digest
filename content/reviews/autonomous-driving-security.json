@@ -2,11 +2,11 @@
   "version": 3,
   "id": "autonomous-driving-security",
   "title": "自动驾驶模型攻防：攻击路径、防御与闭环后果",
-  "subtitle": "追踪恶意输入如何影响感知、规划和控制，比较攻击约束、防御基线与失效回退。",
-  "abstract": "自动驾驶模型攻防已从交通标志贴纸扩展到 LiDAR 与 GNSS 欺骗、多传感器融合、V2X 消息、训练后门、端到端驾驶、VLM/VLA 推理接口和边云计算时限。评估这些攻击需要同时说明对手权限、可实现路径和安全后果：离线任务指标描述局部影响，车辆级危害则需要沿规划和控制继续追踪；无主动对手的故障与分布偏移应单独分析。2026 年 7 月的研究用跨模态语义一致性检测合成 GNSS 欺骗，但慢漂移和半秒级推理仍限制部署；网络竞争也能使高精度慢路径错过合并时限，其车辆闭环影响尚未评测。本综述按攻击路径组织证据，并比较强攻击、正常输入、非恶意扰动及独立安全回退。",
-  "reviewedAt": "2026-09-22",
+  "subtitle": "从输入扰动追踪到在线状态写入、时序传播与闭环对抗训练。",
+  "abstract": "自动驾驶攻防已经从单帧感知扩展到融合标定、时序视频、推理接口和模型训练。不同攻击需要的权限、持续时间与后果不同：伪造的模态一致性可能误导融合，错误外参又会把一次输入操纵留在后续状态中。本综述将输入、训练、推理、可写状态与计算时限分开，比较现有物理、日志和仿真证据。近期 ACA 暴露在线标定这一持久状态攻击面，Cross-Modal Phantom 测试协调的双模态注入，STCA 研究视频语言的时序迁移攻击，ADV-0 则提供策略与对手共同演化的训练机制。后续方法可围绕更新验证、恢复决策和同预算闭环训练展开。",
+  "reviewedAt": "2026-11-06",
   "lastUpdated": "2026-08-01",
-  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
+  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
   "researchQuestions": [
     "一次模型或传感器级操纵需要满足哪些物理、知识、时间和访问约束，才可能跨越感知、规划与控制屏障并造成车辆级后果？",
     "相机、LiDAR、GNSS、V2X、训练数据、世界模型和语言推理接口分别引入了哪些新的信任边界与共同失效点？",
@@ -19,8 +19,8 @@
       "id": "threat-model-and-safety-boundary",
       "kind": "scope",
       "title": "威胁模型：对手权限、操纵路径与安全后果",
-      "thesis": "只有主动对手、可实现操纵路径和目标化安全后果同时成立，模型退化才构成自动驾驶攻击证据。",
-      "body": "本方向覆盖相机、LiDAR、GNSS、融合、V2X、训练数据、端到端策略、VLM/VLA 和世界模型，但不把所有性能下降都归入攻击。每项结论至少应记录攻击者知识、训练或部署访问、物理预算、持续时间、目标对象、系统版本和 ODD。Robust Physical-World Attacks 证明交通标志分类器可被可打印贴纸误导；LiDAR 黑盒欺骗与 Drift with Devil 分别把攻击推进到三维感知和 GNSS—惯性融合定位。它们验证了对应攻击面，整车风险还取决于具体模型、传感器、路线和后续控制。\n\n安全后果必须沿 **输入—感知/定位—预测—规划—控制—车辆状态** 分层报告。任务输出变化只有在改变可驾驶空间、风险估计、轨迹或控制，并突破后续独立屏障时，才支持更高层级的危害主张。Bench2Drive-Robust 注入帧丢失、状态误差和执行延迟，适合作为无主动对手的闭环对照：该基准测量部署扰动造成的系统退化，未设置恶意攻击者。反过来，攻击论文若没有等强度故障与自然扰动基线，也难以说明观测到的失效是否具有攻击特异性。\n\n2026 年 7 月的两类新增证据把“攻击路径”扩展到定位语义和计算时限。GNSS-VLM 工作用公共道路仪器日志建立视觉、运动与导航行为的一致性检测，但欺骗坐标是离线合成，未发射 RF 信号；Denial of Deadline 通过网络竞争让云端慢路径错过 250 ms 合并时限，却只在视频重放中观察跟踪精度下降。前者支持检测思路，后者支持时限是信任边界；两者都没有完成攻击—规划—控制—车辆状态的闭环因果链。ObsDriveBench 未设置主动对手，测量的是恶劣天气下不同模态的可观测性冲突，可作为自然退化对照。",
+      "thesis": "先明确主动对手、访问权限与操纵目标，再按模型、系统和车辆层级解释结果。",
+      "body": "本方向覆盖相机、LiDAR、GNSS、融合、V2X、训练数据、端到端策略、VLM/VLA 和世界模型，但不把所有性能下降都归入攻击。每项结论至少应记录攻击者知识、训练或部署访问、物理预算、持续时间、目标对象、系统版本和 ODD。Robust Physical-World Attacks 证明交通标志分类器可被可打印贴纸误导；LiDAR 黑盒欺骗与 Drift with Devil 分别把攻击推进到三维感知和 GNSS—惯性融合定位。它们验证了对应攻击面，整车风险还取决于具体模型、传感器、路线和后续控制。\n\n安全后果必须沿 **输入—感知/定位—预测—规划—控制—车辆状态** 分层报告。任务输出变化只有在改变可驾驶空间、风险估计、轨迹或控制，并突破后续独立屏障时，才支持更高层级的危害主张。Bench2Drive-Robust 注入帧丢失、状态误差和执行延迟，适合作为无主动对手的闭环对照：该基准测量部署扰动造成的系统退化，未设置恶意攻击者。反过来，攻击论文若没有等强度故障与自然扰动基线，也难以说明观测到的失效是否具有攻击特异性。\n\n2026 年 7 月的两类新增证据把“攻击路径”扩展到定位语义和计算时限。GNSS-VLM 工作用公共道路仪器日志建立视觉、运动与导航行为的一致性检测，但欺骗坐标是离线合成，未发射 RF 信号；Denial of Deadline 通过网络竞争让云端慢路径错过 250 ms 合并时限，却只在视频重放中观察跟踪精度下降。前者支持检测思路，后者支持时限是信任边界；两者都没有完成攻击—规划—控制—车辆状态的闭环因果链。ObsDriveBench 未设置主动对手，测量的是恶劣天气下不同模态的可观测性冲突，可作为自然退化对照。\n\n在线可写状态是新增的一类接口。ACA 的攻击对象不是每帧融合输出，而是会被后续帧持续使用的外参：同一海报既诱发标定，又干扰更新。由此形成的研究问题是，哪些新观测足以支持状态写入、何时应暂存更新、以及更新错误后如何恢复。模型输出攻击本身也是有效的安全研究对象；只有进一步声称车辆风险时，才需要补齐对应控制与车辆证据。",
       "referenceIds": [
         "cybersecurity-survey-2023",
         "robust-physical-attacks-2018",
@@ -29,7 +29,8 @@
         "bench2drive-robust-2026",
         "gnss-vlm-spoofing-2026",
         "denial-deadline-2026",
-        "obsdrivebench-2026"
+        "obsdrivebench-2026",
+        "adversarial-calibration-2026"
       ]
     },
     {
@@ -37,7 +38,7 @@
       "kind": "evolution",
       "title": "从单帧感知攻击到时序传播与供应链",
       "thesis": "研究主线已经从制造单帧错误，转向控制攻击在多传感器、时间反馈和学习供应链中的传播。",
-      "body": "早期物理攻击主要证明摄像头分类或检测边界可被操纵。Dirty Road 的证据必须拆成三层：1:12 实体补丁验证车道感知/转向输出，Camry 试验在车道检测模型输出层注入攻击轨迹，10 次攻击试验均撞到纸箱、10 次无攻击试验均未碰撞；另有仿真闭环评测；这些实验分别检验时序放大机制，尚未贯通实体补丁到全尺寸碰撞的全过程。Invisible for both Camera and LiDAR 也分为全尺寸 LiDAR 规避、1:6.67 室内相机—LiDAR 联合测试和 100 次仿真碰撞；frustum 攻击则分为静态硬件可行性、离线数据改写与 LGSVL 回放。融合冗余只有在模态证据独立且冲突可被拒绝时才构成屏障，但这些分层结果不能互相替代。\n\nLiDAR removal 与轨迹预测攻击把操纵推进到时序模块。前者在 0.1 m/s 机器人和约 5 km/h 汽车上证明点云移除可跟踪移动传感器，碰撞仍来自 Apollo/LGSVL；后者以 32 线 LiDAR 测试车、路边 Tesla、两块 A3 纸板、5/10 km/h 和每条件 5 次验证预测操纵，最高 63% 是预测轨迹相交代理而非真实碰撞率。二者验证了特定条件下的跨模块传播，开放道路危害频率尚无对应统计。\n\n训练、软件发布与协同通信也会引入攻击入口。车道检测后门、BadVLMDriver 和 BadDreamer 分别要求污染训练/微调数据、视觉语言驾驶模型或视频世界模型；BadVLMDriver 的“物理”证据是常见物体照片触发文本动作建议，没有车辆执行。V2X data fabrication 在高保真仿真中给出安全后果，MCity 部分则是在 400 帧、5 秒录制轨迹上注入攻击，不是实时无线闭环。ADvLM 的 CARLA 每设置 5 次，PIXLOOP-Hooke beta 底盘只在白天单场景直接向相机输入流写入数字噪声并做 10+10 次；CAD 使用 JetBot/LIMO、人工赛道、约占图像 12% 且无扰动约束的补丁，每车每路线 3 次。这些结果分别对应上述接口和平台，开放道路攻击效果仍待验证。ReasonBreak 又把接口扩展到文本：开环测量有限预算 Best-of-N 黑盒查询中可发现的操纵效果，闭环每步单次随机腐蚀只测累积传播。\n\n软件更新链也属于攻击面，但需要真实的流程访问假设。UN Regulation No. 156 要求版本可识别、更新前验证、目标车辆兼容检查和安全交付；它能界定治理义务，不能证明学习系统已经免疫投毒或后门。污染训练集、控制通信身份、破坏签名更新链或持续操纵道路环境，都需要分别核验现实攻击者的访问能力。\n\n近期工作还关注**结果是否在决策前到达**这一时间约束。Denial of Deadline 的平均 7.0 HOTA 损失说明边云架构可能在模型未被篡改时退化到快速路径；GNSS-VLM 则尝试用跨模态语义检查捕捉定位与道路行为不一致。二者共同要求安全分析同时记录数据完整性、时间完整性和回退触发，但当前都没有验证独立控制器能否在剩余制动距离内恢复安全。",
+      "body": "早期物理攻击主要证明摄像头分类或检测边界可被操纵。Dirty Road 的证据必须拆成三层：1:12 实体补丁验证车道感知/转向输出，Camry 试验在车道检测模型输出层注入攻击轨迹，10 次攻击试验均撞到纸箱、10 次无攻击试验均未碰撞；另有仿真闭环评测；这些实验分别检验时序放大机制，尚未贯通实体补丁到全尺寸碰撞的全过程。Invisible for both Camera and LiDAR 也分为全尺寸 LiDAR 规避、1:6.67 室内相机—LiDAR 联合测试和 100 次仿真碰撞；frustum 攻击则分为静态硬件可行性、离线数据改写与 LGSVL 回放。融合冗余只有在模态证据独立且冲突可被拒绝时才构成屏障，但这些分层结果不能互相替代。\n\nLiDAR removal 与轨迹预测攻击把操纵推进到时序模块。前者在 0.1 m/s 机器人和约 5 km/h 汽车上证明点云移除可跟踪移动传感器，碰撞仍来自 Apollo/LGSVL；后者以 32 线 LiDAR 测试车、路边 Tesla、两块 A3 纸板、5/10 km/h 和每条件 5 次验证预测操纵，最高 63% 是预测轨迹相交代理而非真实碰撞率。二者验证了特定条件下的跨模块传播，开放道路危害频率尚无对应统计。\n\n训练、软件发布与协同通信也会引入攻击入口。车道检测后门、BadVLMDriver 和 BadDreamer 分别要求污染训练/微调数据、视觉语言驾驶模型或视频世界模型；BadVLMDriver 的“物理”证据是常见物体照片触发文本动作建议，没有车辆执行。V2X data fabrication 在高保真仿真中给出安全后果，MCity 部分则是在 8 个场景各 5 秒、10 Hz 共 400 帧的录制轨迹上注入攻击，不是实时无线闭环。ADvLM 的 CARLA 每设置 5 次，PIXLOOP-Hooke beta 底盘只在白天单场景直接向相机输入流写入数字噪声并做 10+10 次；CAD 使用 JetBot/LIMO、人工赛道、约占图像 12% 且无扰动约束的补丁，每车每路线 3 次。这些结果分别对应上述接口和平台，开放道路攻击效果仍待验证。ReasonBreak 又把接口扩展到文本：开环测量有限预算 Best-of-N 黑盒查询中可发现的操纵效果，闭环每步单次随机腐蚀只测累积传播。\n\n软件更新链也属于攻击面，但需要真实的流程访问假设。UN Regulation No. 156 要求版本可识别、更新前验证、目标车辆兼容检查和安全交付；它能界定治理义务，不能证明学习系统已经免疫投毒或后门。污染训练集、控制通信身份、破坏签名更新链或持续操纵道路环境，都需要分别核验现实攻击者的访问能力。\n\n近期工作还关注**结果是否在决策前到达**这一时间约束。Denial of Deadline 的平均 7.0 HOTA 损失说明边云架构可能在模型未被篡改时退化到快速路径；GNSS-VLM 则尝试用跨模态语义检查捕捉定位与道路行为不一致。二者共同要求安全分析同时记录数据完整性、时间完整性和回退触发，但当前都没有验证独立控制器能否在剩余制动距离内恢复安全。\n\n秋季研究把攻击对象继续推进到共享状态和时间结构。ACA 展示可持续生效的标定污染；Cross-Modal Phantom 在数据层同时注入互相对齐的图像与点云，说明融合一致性也可能由对手制造。STCA 以描述引导帧选择和运动 mask 破坏视频语言模型的时序信息，评价仍是离线回答。与这些输入攻击不同，ADV-0 将对抗生成器和驾驶策略组成 min-max 博弈，通过迭代偏好学习追踪策略正在变化的薄弱区域；它提供训练方法，实验在 MetaDrive/WOMD 场景中进行。",
       "referenceIds": [
         "dirty-road-2021",
         "invisible-camera-lidar-2021",
@@ -54,15 +55,19 @@
         "unece-r156-2021",
         "trustworthy-vlm-attacks-2025",
         "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "adversarial-calibration-2026",
+        "cross-modal-phantom-2026",
+        "stca-video-attack-2026",
+        "adv0-2026"
       ]
     },
     {
       "id": "trust-boundary-taxonomy",
       "kind": "taxonomy",
-      "title": "输入、供应链、推理和资源四类攻击",
+      "title": "输入、训练、推理、状态更新与时限",
       "thesis": "按攻击者能控制的证据分类，再检查哪些独立信息和控制模块能够拦截危险动作。",
-      "body": "第一类是**部署输入攻击**：相机贴纸或投影、LiDAR 点注入/移除、GNSS 欺骗与 V2X 伪造，关键约束是视距、距离、角度、同步、带宽、身份和持续时间。第二类是**训练与供应链攻击**：污染数据、后门微调、受损模型权重或软件更新链被破坏，关键约束是攻击者对数据管线、标注、微调、签名、发布和车端安装流程的访问。第三类是**策略与推理攻击**：数字扰动、文本输入或被污染的世界模型表征影响端到端轨迹，必须区分中间解释变化、动作建议变化和实际控制执行。\n\n把“模态 × 攻击阶段 × 证据等级 × 防御/回退”联合起来看，当前相机和 LiDAR 已有从离线、仿真到有限物理实验的多层证据；GNSS 主要由 FusionRipper 支撑，V2X 主要由协同感知数据伪造支撑，尚不能代表完整空口、身份与协议安全。MA2T、OpenPilot/YOLO 防御复评和 AD2 只覆盖鲁棒训练、输入恢复或异常检测等局部屏障。本综述建议进一步组合规划安全盾、独立运行时监控和最小风险机动，现有纳入论文尚未验证这一完整恢复方案；后续实证必须面对了解检测器的自适应攻击，并报告正常输入损失、检测时延、误报回退代价以及回退控制器是否真正独立。\n\n第四类是**时限与资源攻击**。攻击者不修改感知内容，而是操纵排队、路由或资源竞争，使更可靠结果在融合截止时间后才返回。其关键变量是截止时间、突发强度、资源隔离、过期结果处理和失效回退。它与自然拥塞、设备过载和普通抖动必须做等预算对照，否则无法归因于恶意攻击。GNSS-VLM 和 ObsDriveBench 又提示，跨模态一致性检测必须先估计各模态在当前天气和场景中的可观测性，据此区分观测不足与欺骗造成的不一致。",
+      "body": "第一类是**部署输入攻击**：相机贴纸或投影、LiDAR 点注入/移除、GNSS 欺骗与 V2X 伪造，关键约束是视距、距离、角度、同步、带宽、身份和持续时间。第二类是**训练与供应链攻击**：污染数据、后门微调、受损模型权重或软件更新链被破坏，关键约束是攻击者对数据管线、标注、微调、签名、发布和车端安装流程的访问。第三类是**策略与推理攻击**：数字扰动、文本输入或被污染的世界模型表征影响端到端轨迹，必须区分中间解释变化、动作建议变化和实际控制执行。\n\n把“模态 × 攻击阶段 × 证据等级 × 防御/回退”联合起来看，当前相机和 LiDAR 已有从离线、仿真到有限物理实验的多层证据；GNSS 主要由 FusionRipper 支撑，V2X 主要由协同感知数据伪造支撑，尚不能代表完整空口、身份与协议安全。MA2T、OpenPilot/YOLO 防御复评和 AD2 只覆盖鲁棒训练、输入恢复或异常检测等局部屏障。本综述建议进一步组合规划安全盾、独立运行时监控和最小风险机动，现有纳入论文尚未验证这一完整恢复方案；后续实证必须面对了解检测器的自适应攻击，并报告正常输入损失、检测时延、误报回退代价以及回退控制器是否真正独立。\n\n第四类是**时限与资源攻击**。攻击者不修改感知内容，而是操纵排队、路由或资源竞争，使更可靠结果在融合截止时间后才返回。其关键变量是截止时间、突发强度、资源隔离、过期结果处理和失效回退。它与自然拥塞、设备过载和普通抖动必须做等预算对照，否则无法归因于恶意攻击。GNSS-VLM 和 ObsDriveBench 又提示，跨模态一致性检测必须先估计各模态在当前天气和场景中的可观测性，据此区分观测不足与欺骗造成的不一致。\n\n第五类是**持久状态更新攻击**。标定、地图、记忆或缓存把当前观测转成未来共享状态，因而攻击结束后影响仍可能存在。ACA 是标定侧的具体证据。该类方法应同时报告正常更新收益、错误写入概率、污染持续时间与恢复成本；仅比较单帧检测 AP 会漏掉更新过程。Cross-Modal Phantom 则说明，验证信号若只是重复检查同一组被操纵的跨模态观测，可能仍然不独立。",
       "referenceIds": [
         "cybersecurity-survey-2023",
         "lidar-blackbox-attack-2020",
@@ -79,7 +84,9 @@
         "trustworthy-vlm-attacks-2025",
         "gnss-vlm-spoofing-2026",
         "denial-deadline-2026",
-        "obsdrivebench-2026"
+        "obsdrivebench-2026",
+        "adversarial-calibration-2026",
+        "cross-modal-phantom-2026"
       ]
     },
     {
@@ -87,7 +94,7 @@
       "kind": "evidence",
       "title": "分开报告离线、实体与车辆闭环结果",
       "thesis": "攻击成功率只有在可实现性、攻击特异性、闭环传播和恢复能力四个环节都被审查后，才可进入车辆安全论证。",
-      "body": "最低证据层是数字离线任务指标，其上依次是时序日志回放、闭环仿真、静态传感器实验、移动缩比/全尺寸平台、封闭场地和受控道路；每次升级都要重新核对攻击访问和控制接口。Robust Physical-World Attacks 的车载手机只测交通标志分类；LiDAR 黑盒攻击的 VLP-16 轨迹主要被离线注入 KITTI；FusionRipper 重放 6 条真实传感器轨迹却没有 RF 发射或车辆执行。它们分别检验视觉持续性、传感器欺骗可行性和融合接管机制，车辆级闭环仍需完整执行验证。\n\n实体与碰撞证据也必须分栏。Dirty Road 的实体补丁、Camry 输出轨迹注入后的纸箱碰撞和仿真碰撞属于不同层；Invisible 的全尺寸 LiDAR、缩比融合和仿真 100 次碰撞属于不同层；LiDAR removal 的移动平台只测移除，轨迹预测攻击的 5/10 km/h、每条件 5 次只测预测/规划输出；V2X fabrication 的 MCity 轨迹注入不是实时空口。ADvLM 需要数字相机流写权限，CAD 是小型机器人和每路线 3 次，BadVLMDriver 只有照片到文本响应。这些实验覆盖不同接口，尚缺少跨 ODD、独立重复的全尺寸开放道路安全统计。\n\nReasonBreak 采用两种不同协议：开环测量有限预算 Best-of-N 黑盒查询中可发现的操纵效果；闭环每步只随机采样一次文本腐蚀，不进行攻击搜索，安全指标也是后验影响表征。作者将开环协议称为能力上界，但有限采样和达到目标即停止的搜索没有给出数学上的最坏情况上界证明。闭环结果显示随机文本错误可以沿反馈累积；目标化或自适应文本攻击的车辆级可实现性尚待检验。\n\n强基线至少包括相同预算的随机/非目标扰动、自然腐蚀与设备故障、清洁性能、已知最强攻击、跨模型迁移和针对防御的自适应攻击。防御还应报告误报、漏报、延迟、资源占用以及检测后实际执行的回退。Bench2Drive-Robust 为非恶意部署扰动提供对照；MA2T 评估三种作者自建的同预算白盒自适应攻击，仍需独立攻击套件与物理验证；Revisiting 和 AD2 分别提供输入防御与时序检测比较。若仿真器对动作响应不可信，攻防判定就仍需在更可信的执行环境中复核。\n\n定位和截止时间研究也分别停留在日志与系统重放层。GNSS-VLM 的公共道路部分只提供良性实测日志，攻击是在日志上合成；14% 选择性调用降低平均开销，却留下约 0.5 s 单次推理和慢漂移漏检。Denial of Deadline 从 92 ms 到 2 s 的 p99 延迟与 7.0 HOTA 平均损失发生在单一边云视频重放架构，未验证轨迹或控制。ObsDriveBench 的选择题结果用于认知与可观测性诊断；正文称 14 个现成模型，表 1 具名行计 15 个，数量口径不一致。强基线应分别加入真实 RF 或传感器在环欺骗、同强度自然漂移、非恶意拥塞、资源隔离、截止时间降级策略和实际最小风险机动。",
+      "body": "最低证据层是数字离线任务指标，其上依次是时序日志回放、闭环仿真、静态传感器实验、移动缩比/全尺寸平台、封闭场地和受控道路；每次升级都要重新核对攻击访问和控制接口。Robust Physical-World Attacks 的车载手机只测交通标志分类；LiDAR 黑盒攻击的 VLP-16 轨迹主要被离线注入 KITTI；FusionRipper 重放 6 条真实传感器轨迹却没有 RF 发射或车辆执行。它们分别检验视觉持续性、传感器欺骗可行性和融合接管机制，车辆级闭环仍需完整执行验证。\n\n实体与碰撞证据也必须分栏。Dirty Road 的实体补丁、Camry 输出轨迹注入后的纸箱碰撞和仿真碰撞属于不同层；Invisible 的全尺寸 LiDAR、缩比融合和仿真 100 次碰撞属于不同层；LiDAR removal 的移动平台只测移除，轨迹预测攻击的 5/10 km/h、每条件 5 次只测预测/规划输出；V2X fabrication 的 MCity 轨迹注入不是实时空口。ADvLM 需要数字相机流写权限，CAD 是小型机器人和每路线 3 次，BadVLMDriver 只有照片到文本响应。这些实验覆盖不同接口，尚缺少跨 ODD、独立重复的全尺寸开放道路安全统计。\n\nReasonBreak 采用两种不同协议：开环测量有限预算 Best-of-N 黑盒查询中可发现的操纵效果；闭环每步只随机采样一次文本腐蚀，不进行攻击搜索，安全指标也是后验影响表征。作者将开环协议称为能力上界，但有限采样和达到目标即停止的搜索没有给出数学上的最坏情况上界证明。闭环结果显示随机文本错误可以沿反馈累积；目标化或自适应文本攻击的车辆级可实现性尚待检验。\n\n强基线至少包括相同预算的随机/非目标扰动、自然腐蚀与设备故障、清洁性能、已知最强攻击、跨模型迁移和针对防御的自适应攻击。防御还应报告误报、漏报、延迟、资源占用以及检测后实际执行的回退。Bench2Drive-Robust 为非恶意部署扰动提供对照；MA2T 评估三种作者自建的同预算白盒自适应攻击，仍需独立攻击套件与物理验证；Revisiting 和 AD2 分别提供输入防御与时序检测比较。若仿真器对动作响应不可信，攻防判定就仍需在更可信的执行环境中复核。\n\n定位和截止时间研究也分别停留在日志与系统重放层。GNSS-VLM 的公共道路部分只提供良性实测日志，攻击是在日志上合成；14% 选择性调用降低平均开销，却留下约 0.5 s 单次推理和慢漂移漏检。Denial of Deadline 从 92 ms 到 2 s 的 p99 延迟与 7.0 HOTA 平均损失发生在单一边云视频重放架构，未验证轨迹或控制。ObsDriveBench 的选择题结果用于认知与可观测性诊断；正文称 14 个现成模型，表 1 具名行计 15 个，数量口径不一致。强基线应分别加入真实 RF 或传感器在环欺骗、同强度自然漂移、非恶意拥塞、资源隔离、截止时间降级策略和实际最小风险机动。\n\nACA 的三个证据层应分开：KITTI/nuScenes 的标定和融合输出、Husky A300 上可打印海报造成的标定偏差，以及 CARLA 中接受错误外参后的碰撞。Cross-Modal Phantom 使用 400 个 KITTI 场景和数据层双模态注入，并未实现同步物理装置。STCA 在 BDD100K 与 nuScenes 视频上测试迁移攻击，攻击者可使用代理模型梯度，目标模型为黑盒。ADV-0 的收益则来自模拟驾驶的联合对抗训练，作者将视觉传感器输入列为后续工作；它适合作为鲁棒训练基线，不能代替物理攻击评估。",
       "referenceIds": [
         "dirty-road-2021",
         "invisible-camera-lidar-2021",
@@ -106,7 +113,11 @@
         "trustworthy-vlm-attacks-2025",
         "gnss-vlm-spoofing-2026",
         "denial-deadline-2026",
-        "obsdrivebench-2026"
+        "obsdrivebench-2026",
+        "adversarial-calibration-2026",
+        "cross-modal-phantom-2026",
+        "stca-video-attack-2026",
+        "adv0-2026"
       ]
     },
     {
@@ -114,7 +125,7 @@
       "kind": "challenges",
       "title": "攻击可实现性、防御泛化与因果归因",
       "thesis": "领域已形成“物理约束与闭环后果必须进入评测”的共识，但对攻击者能力、防御泛化和证据可迁移性尚无统一答案。",
-      "body": "较稳定的共识有三点：多传感器不会自动消除共同失效；连续反馈可能放大短时感知或定位偏差；正常性能与实时性是防御的一部分。冲突主要来自威胁模型。白盒数字攻击适合测最坏边界，却可能缺少道路可实现性；黑盒物理攻击更接近部署，却常受角度、距离、天气和同步窗口限制。已有 LiDAR、融合与道路攻击证明特定条件下的可行性，但尚不足以推出跨传感器代际、跨融合结构或跨 ODD 的普遍脆弱性。\n\n供应链和 VLA 证据仍然稀疏：训练后门往往假设数据或微调管线可被污染，ReasonBreak、CAD 与 BadDreamer 仍是预印本，BadVLMDriver 是非归档工作坊论文；正式发表的 ADvLM 增加了 VLM 白盒攻击证据，却仍不能代表完整 VLA 控制链。UN Regulation No. 156 提供软件更新治理基线，但本轮没有纳入能够独立量化构建系统、签名、OTA 和学习模型发布链端到端攻击成功率的实证研究，相关风险尚缺少端到端量化。\n\n异常检测之后的控制恢复，是防御研究仍需补足的一环。MA2T 的自适应攻击来自作者自建的同预算 5-step PGD 风格方案，AD2 尚未对了解检测器的对手和检测后回退进行闭环验证。开放问题包括未知攻击下的误报与回退、组合式相机/LiDAR/GNSS/V2X 攻击、真实无线与身份约束、恢复后的重新接管，以及如何把攻击试验转化为有版本、ODD 与置信边界的安全论证。\n\n另有三类相关工作未纳入核心攻击证据：Architectural Backdoors 是通用 VLM 供应链证据，没有驾驶任务；红外光流攻击没有车辆级传播；PixOOD 同时报告吞吐、能耗与 AP/FPR95 精度，但没有把异常漏检或误报传播到车辆风险和闭环回退效果。它们可用于设计供应链、物理感知和部署防御实验，驾驶闭环效果仍需另测。新增 GNSS 与截止时间工作也没有改变这一结论：现实攻击证据仍需主动对手、可实现接口、车辆级后果和可验证恢复同时成立。",
+      "body": "较稳定的共识有三点：多传感器不会自动消除共同失效；连续反馈可能放大短时感知或定位偏差；正常性能与实时性是防御的一部分。冲突主要来自威胁模型。白盒数字攻击适合测最坏边界，却可能缺少道路可实现性；黑盒物理攻击更接近部署，却常受角度、距离、天气和同步窗口限制。已有 LiDAR、融合与道路攻击证明特定条件下的可行性，但尚不足以推出跨传感器代际、跨融合结构或跨 ODD 的普遍脆弱性。\n\n供应链和 VLA 证据仍然稀疏：训练后门往往假设数据或微调管线可被污染，ReasonBreak、CAD 与 BadDreamer 仍是预印本，BadVLMDriver 是非归档工作坊论文；正式发表的 ADvLM 增加了 VLM 白盒攻击证据，却仍不能代表完整 VLA 控制链。UN Regulation No. 156 提供软件更新治理基线，但本轮没有纳入能够独立量化构建系统、签名、OTA 和学习模型发布链端到端攻击成功率的实证研究，相关风险尚缺少端到端量化。\n\n异常检测之后的控制恢复，是防御研究仍需补足的一环。MA2T 的自适应攻击来自作者自建的同预算 5-step PGD 风格方案，AD2 尚未对了解检测器的对手和检测后回退进行闭环验证。开放问题包括未知攻击下的误报与回退、组合式相机/LiDAR/GNSS/V2X 攻击、真实无线与身份约束、恢复后的重新接管，以及如何把攻击试验转化为有版本、ODD 与置信边界的安全论证。\n\n另有三类相关工作未纳入核心攻击证据：Architectural Backdoors 是通用 VLM 供应链证据，没有驾驶任务；红外光流攻击没有车辆级传播；PixOOD 同时报告吞吐、能耗与 AP/FPR95 精度，但没有把异常漏检或误报传播到车辆风险和闭环回退效果。它们可用于设计供应链、物理感知和部署防御实验，驾驶闭环效果仍需另测。新增 GNSS 与截止时间工作也没有改变这一结论：现实攻击证据仍需主动对手、可实现接口、车辆级后果和可验证恢复同时成立。\n\n这些进展提供了可构建的方法目标。对持久状态，核心是正常自校准与恶意更新之间的取舍；对鲁棒训练，核心是对手随策略变化而调整后是否仍保留有效梯度和场景多样性。前者可比较时间平滑、固定阈值与独立片段验证，后者应纳入 ADV-0 等联合训练方法。缺少完整现成实现时，可先自建受控接口和有限场景实验，分别得到更新机制或训练机制的结论。",
       "referenceIds": [
         "robust-physical-attacks-2018",
         "lidar-blackbox-attack-2020",
@@ -132,38 +143,35 @@
         "trustworthy-vlm-attacks-2025",
         "gnss-vlm-spoofing-2026",
         "denial-deadline-2026",
-        "obsdrivebench-2026"
+        "obsdrivebench-2026",
+        "adversarial-calibration-2026",
+        "adv0-2026"
       ]
     },
     {
       "id": "assurance-driven-research-agenda",
       "kind": "outlook",
-      "title": "配对攻击实验与独立安全回退",
-      "thesis": "后续实验应同时检查攻击可实现性、跨层传播和独立回退，并保留可复现的条件与失败判据。",
-      "body": "第一条路线是**同场景配对测试**：对同一场景同时运行恶意攻击、等预算随机扰动、自然退化和设备故障，记录各层状态并用消融隔离感知、预测、规划和控制的中介作用。实验应预注册效应阈值和置信区间；若攻击相对强自然扰动不能稳定增加危险轨迹或缩小 TTC，就拒绝“攻击特异性”主张。\n\n第二条路线是**逐级验证攻击可实现性**：从数字白盒到黑盒时序回放、传感器在环、封闭场地，再到受控道路，每升一级都重新核定距离、角度、天气、同步、暴露时间和失败基率。跨层结论只有在预注册允许误差内保持，才可从仿真迁移到 HIL 或场地；V2X 与供应链场景还应把身份、签名、数据治理和发布流程纳入威胁模型，并核验数字张量写权限是否对应现实中可获得的接口。\n\n第三条路线是验证**检测后的安全回退**，这仍是本综述提出的研究议程。检测器只负责触发条件，独立安全监控验证轨迹约束，最小风险控制器在可用制动距离内降级；预注册终点应包括检测时延下的最小 TTC/安全裕度、误报回退率、恢复时间和重新进入条件。若检测加回退不能在置信区间内满足安全裕度阈值，系统只能声明发现异常，不能声明恢复安全。基准与世界模型也只有在声明适用包络、动作响应和失效归因后，才可用于作出攻防判定。\n\n第四条路线是**联合测试定位语义与计算时限下的回退**：在同一闭环栈中分别注入真实 RF/定位漂移、等强度自然漂移、恶意突发流量和非恶意拥塞，预注册检测时延、误报率、漏检率、最小 TTC、路线完成与最小风险状态成功率。GNSS 检测只有在慢漂移下仍优于运动学基线且不因恶劣天气误报，时限防御只有在 p99 超限时仍能于安全裕度内降级，才可支持恢复主张；否则结论必须停留在异常发现或系统脆弱性。",
+      "title": "独立验证状态更新，并把恢复接入策略",
+      "thesis": "围绕明确可写接口设计方法，同时保留正常性能与适应能力。",
+      "body": "第一条路线是**带独立证据的标定更新**。将新外参暂存在候选状态，使用未参与触发和估计的后续片段检验重投影、运动与融合一致性，再决定接纳、延迟或回滚。与冻结标定、时间平滑和单一残差阈值比较，同时测试自然机械漂移与 ACA 式操纵。主要终点是正常校准恢复速度、错误写入率、污染持续时间及融合任务表现；若拒绝所有更新才能保持安全，方法尚未解决适应性问题。新意应落在观测选择偏差和证据依赖的处理，而不是事务术语本身。\n\n第二条路线是**时序攻击下的恢复策略**。在同一驾驶栈中比较持续攻击、间歇攻击与攻击结束后的恢复，并将检测器输出接入可观测的策略切换接口。使用非恶意帧冻结、定位漂移和控制延迟作为对照，测任务成功、最小安全裕度、误触发代价和重新接管时间。AlpaSim 或 Bench2Drive-Robust 的公开接口可承担初期执行，自建状态扰动和恢复控制模块则是需要完成的研究工作。\n\n第三条路线是**机制约束的联合对抗训练**。ADV-0 已处理随策略变化的对手分布，因此新的方法应明确增加什么信息，例如传感器一致性约束、可恢复的短时干预或状态污染寿命。固定交互预算，比较冻结生成器、随机扰动、已有联合 min-max 方法及新机制，同时记录正常任务表现、未见场景族和攻击退出后的恢复。若优势仅来自更强对手或更多训练步，应回到同预算和同接口比较。\n\n研究可以先在日志和仿真中建立清楚的状态更新或恢复规律，再选择最能区分机制的传感器在环实验。每个阶段都报告其已完成的结果和适用条件，避免把尚未执行的车辆测试写成当前成果。",
       "referenceIds": [
-        "gps-fusionripper-2020",
-        "lidar-blackbox-attack-2020",
-        "trajectory-prediction-attack-2024",
-        "collaborative-perception-fabrication-2024",
-        "unece-r156-2021",
-        "maat-e2e-adversarial-training-2024",
+        "adversarial-calibration-2026",
+        "cross-modal-phantom-2026",
+        "adv0-2026",
+        "stca-video-attack-2026",
         "bench2drive-robust-2026",
         "ad2-2026",
-        "world-model-admissibility-2026",
         "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026",
-        "obsdrivebench-2026"
+        "denial-deadline-2026"
       ]
     }
   ],
   "takeaways": [
-    "车辆级攻击结论需给出主动对手、可实现路径、目标化操纵和安全后果；分布偏移、传感器故障与普通延迟作为非恶意对照单独测量。",
-    "GNSS 跨模态语义检测在离线合成攻击上有信号，但真实 RF 欺骗、慢漂移、约半秒单次推理和闭环回退仍未解决。",
-    "边云推理的截止时间影响结果能否被采用；视频重放已观察到跟踪 HOTA 下降，车辆级风险传播仍需闭环验证。",
-    "恶劣天气下的可观测性冲突应作为自然退化基线；模态不一致只有在排除可见性和设备故障后才可能支持欺骗判断。",
-    "训练后门、VLM/VLA 和世界模型引入新的供应链与推理接口；通用 VLM 后门、上游光流攻击和异常分割吞吐结果只能说明各自环节。",
-    "安全论证应说明攻击在何种约束下突破了哪些感知—规划—控制屏障，以及系统还有多少时间和空间完成否决、降级和恢复。"
+    "攻击研究应分别记录输入权限、可写状态、持续时间与输出层级；车辆后果是需要进一步验证的一类主张。",
+    "多模态一致性可能被共同伪造，状态验证应检查证据是否真正独立。",
+    "在线标定把短时观测写入长期共享外参，是值得研究的具体更新接口。",
+    "ADV-0 已提供策略与对手共同演化的训练基线，新方法需要增加清楚的机制差分。",
+    "恢复方法应同时保留正常任务表现与自适应收益，比较错误写入、恢复时间及任务后果。"
   ],
   "references": [
     {
@@ -176,7 +184,7 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "doi:10.1109/ojvt.2023.3265363",
       "sourceFamily": "publisher-and-venue",
-      "supports": "系统梳理自动驾驶对抗攻击、防御与车辆网络安全边界，为区分传感、模型、通信和系统层威胁提供二级证据框架。",
+      "supports": "系统梳理自动驾驶中的对抗攻击、机器学习防御及训练数据保护问题，为攻击与防御分类提供文献背景。",
       "limitation": "综述汇总的是异构任务与威胁模型，不能替代对单项攻击可实现性、闭环后果或防御强度的一手核验。",
       "url": "https://doi.org/10.1109/OJVT.2023.3265363"
     },
@@ -370,7 +378,7 @@
       "publicationStatus": "peer-reviewed",
       "canonicalId": "usenix:sec24-zhang-qingzhao",
       "sourceFamily": "publisher-and-venue",
-      "supports": "证明恶意协同参与者伪造远端感知可在高保真仿真中诱发急刹或碰撞风险，并在 MCity 采集的约 400 帧、5 秒车辆轨迹上注入攻击以复核检测和缓解效果。",
+      "supports": "在 Adv-OPV2V 仿真中评估远端感知伪造；MCity 部分采用 8 个场景，每场景 5 秒、10 Hz，共 400 帧的录制数据，注入攻击后比较伪造、移除与异常检测。",
       "limitation": "MCity 证据是对已录制轨迹的仿真注入，不是实时无线攻击、车辆闭环或真实碰撞；结果仍依赖协同协议、身份/信任、非串谋假设，未覆盖真实空口拥塞和规模化部署。",
       "url": "https://www.usenix.org/conference/usenixsecurity24/presentation/zhang-qingzhao",
       "links": [
@@ -455,7 +463,7 @@
       "sourceFamily": "official-project",
       "supports": "要求制造商建立软件更新管理系统，覆盖软件版本识别、更新前验证、目标车辆兼容、更新安全执行与可追溯流程。",
       "limitation": "法规规定治理和型式批准义务，不提供针对学习模型投毒、构建系统入侵或 OTA 攻击的实证成功率，也不能替代具体产品验证。",
-      "url": "https://unece.org/transport/documents/2021/03/standards/un-regulation-no-156-software-update-and-software-update"
+      "url": "https://eur-lex.europa.eu/eli/reg/2021/388/oj/eng/pdf"
     },
     {
       "id": "revisiting-attacks-2025",
@@ -548,9 +556,9 @@
       "title": "Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators",
       "authors": "Christian Oefinger; Finn Rasmus Schäfer; Korbinian Moller; Mattia Piccinini; Johannes Betz",
       "year": 2026,
-      "venue": "RSS 2026 Workshop on Robot World Models",
+      "venue": "RSS 2026 Workshop on Robot World Models（已录用）",
       "publicationType": "position",
-      "publicationStatus": "preprint",
+      "publicationStatus": "workshop-accepted",
       "canonicalId": "arxiv:2607.07196",
       "sourceFamily": "local-corpus",
       "supports": "提出 L0–L4 世界模型准入阶梯，并以动作响应与适用包络说明视觉逼真不能单独支撑闭环测试 verdict。",
@@ -616,12 +624,68 @@
       "limitation": "核心任务是选择题，不执行轨迹，也没有主动攻击者；标签经生成模型辅助和人工复核，数据与评测代码仍是承诺发布状态。它适合作为自然可观测性退化边界，不能被写成攻击或闭环恢复证据。",
       "url": "https://arxiv.org/abs/2607.23537",
       "localPaperId": "obsdrivebench-adverse-weather"
+    },
+    {
+      "id": "adversarial-calibration-2026",
+      "title": "Adversarial Calibration Attack on Autonomous Vehicles",
+      "authors": "Liangkai Liu; Qingzhao Zhang; Kang G. Shin",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2608.28778",
+      "sourceFamily": "arxiv",
+      "supports": "以同一海报先触发在线标定，再使估计的相机—LiDAR 外参发生持久偏移；在 KITTI/nuScenes、Husky 物理平台和 CARLA 分层评价。",
+      "limitation": "Husky 证明物理标定误差，碰撞由 CARLA 展示；攻击迁移受标定架构、位置和视角限制，商业系统更新保护机制未被直接评估。",
+      "url": "https://arxiv.org/abs/2608.28778"
+    },
+    {
+      "id": "cross-modal-phantom-2026",
+      "title": "Cross-Modal Phantom: Coordinated Camera-LiDAR Spoofing Against Multi-Sensor Fusion in Autonomous Vehicles",
+      "authors": "Shahriar Rahman Khan; Raiful Hasan",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2604.21841",
+      "sourceFamily": "arxiv",
+      "supports": "对齐图像 patch 与三维点簇，在 400 个 KITTI 场景中测试伪造的跨模态一致性对 early-fusion 感知的影响。",
+      "limitation": "论文明确采用数据层注入模拟双源欺骗，没有搭建同步 IR/LiDAR 物理攻击装置，也没有车辆闭环证据。",
+      "url": "https://arxiv.org/abs/2604.21841"
+    },
+    {
+      "id": "stca-video-attack-2026",
+      "title": "Transferable Spatial Temporal Coherence Adversarial Attack on Black-Box Vision Language Models for Autonomous Driving",
+      "authors": "Heyam M. Bin Jahlan; Areej M. Alhothali; Abeer Alhothali",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2610.08331",
+      "sourceFamily": "arxiv",
+      "supports": "结合描述引导帧选择、目标区域空间扰动和运动引导的时序扰动，以 LanguageBind 为代理攻击驾驶视频语言模型。",
+      "limitation": "实证是 BDD100K 与 nuScenes 的离线视频语言任务；黑盒指对目标模型的迁移，代理梯度可访问，不能据答题 ASR 推断车辆危害率。",
+      "url": "https://arxiv.org/abs/2610.08331"
+    },
+    {
+      "id": "adv0-2026",
+      "title": "Preference-Guided Adversarial Policy Optimization for Long-Tail Robust Driving",
+      "authors": "Tong Nie; Yihong Tang; Junlin He; Yuewen Mei; Jie Sun; Lijun Sun; Wei Ma; Jian Sun",
+      "year": 2026,
+      "venue": "NeurIPS 2026（作者确认录用，正式页待核）",
+      "publicationType": "method",
+      "publicationStatus": "accepted",
+      "canonicalId": "arxiv:2603.15221",
+      "sourceFamily": "arxiv",
+      "supports": "将驾驶策略和对抗场景生成器组成闭环 min-max 博弈，以迭代偏好学习更新对手，使训练跟踪当前策略的薄弱场景。",
+      "limitation": "实验使用 MetaDrive 与 WOMD 场景，视觉传感器输入是后续工作；它是对抗训练的强方法基线，不提供物理攻击实现或道路安全率。",
+      "url": "https://arxiv.org/abs/2603.15221"
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
     "searchedAt": "2026-11-06",
-    "cutoffDate": "2026-08-01",
+    "cutoffDate": "2026-11-06",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -636,527 +700,903 @@
     ],
     "sourceFamilies": [
       "local-corpus",
-      "arxiv",
+      "openalex",
       "publisher-and-venue",
+      "arxiv",
       "official-project"
     ],
     "counts": {
-      "candidates": 63,
-      "deduplicated": 60,
-      "included": 26,
-      "excluded": 34
+      "candidates": 116,
+      "deduplicated": 106,
+      "included": 30,
+      "excluded": 76
     },
     "candidateLedger": [
       {
-        "canonicalId": "doi:10.1109/ojvt.2023.3265363",
-        "disposition": "included",
+        "canonicalId": "arxiv:2404.12916",
         "queryFamilies": [
-          "闭环攻击评测和安全论证"
+          "端到端和 VLA 推理攻击",
+          "数据、模型与软件供应链风险"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvpr.2018.00175",
         "disposition": "included",
-        "queryFamilies": [
-          "端到端和 VLA 推理攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec20-sun",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR、GNSS 与融合攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec20-shen",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环攻击评测和安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec21-sato",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环攻击评测和安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/sp40001.2021.00076",
-        "disposition": "included",
-        "queryFamilies": [
-          "相机、LiDAR、GNSS 与融合攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec22-hallyburton",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环攻击评测和安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1145/3503161.3548171",
-        "disposition": "included",
-        "queryFamilies": [
-          "数据、模型与软件供应链风险",
-          "闭环攻击评测和安全论证"
-        ],
         "occurrences": 2
       },
       {
-        "canonicalId": "usenix:sec23-cao",
-        "disposition": "included",
+        "canonicalId": "arxiv:2407.10825",
         "queryFamilies": [
-          "闭环攻击评测和安全论证"
+          "数据、模型与软件供应链风险"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec24-lou",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环攻击评测和安全论证"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "usenix:sec24-zhang-qingzhao",
-        "disposition": "included",
-        "queryFamilies": [
-          "闭环攻击评测和安全论证"
-        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2409.07321",
-        "disposition": "included",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2404.12916",
-        "disposition": "included",
+        "canonicalId": "arxiv:2412.15206",
         "queryFamilies": [
           "端到端和 VLA 推理攻击"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1007/s11633-026-1667-4",
-        "disposition": "included",
-        "queryFamilies": [
-          "端到端和 VLA 推理攻击"
-        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2501.13563",
-        "disposition": "included",
         "queryFamilies": [
           "端到端和 VLA 推理攻击"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "unece:r156:2021",
         "disposition": "included",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/dsn-w65791.2025.00071",
-        "disposition": "included",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退",
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2605.29114",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.18059",
-        "disposition": "included",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退",
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 2
-      },
-      {
-        "canonicalId": "arxiv:2606.21172",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "cvf:wacv2026:sahu-ad2",
-        "disposition": "included",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.07196",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.1109/cvprw67362.2025.00067",
-        "disposition": "included",
-        "queryFamilies": [
-          "端到端和 VLA 推理攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1708.06733",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1712.09665",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "端到端和 VLA 推理攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:1412.6572",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "部署扰动、鲁棒性与失效回退"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2312.01468",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "相机、LiDAR、GNSS 与融合攻击"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2508.15778",
-        "disposition": "excluded",
-        "queryFamilies": [
-          "数据、模型与软件供应链风险"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2505.06413",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
         "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2505.19532",
         "queryFamilies": [
           "数据、模型与软件供应链风险"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.23962",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.24692",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.23537",
-        "disposition": "included",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.25479",
         "disposition": "excluded",
-        "queryFamilies": [
-          "数据、模型与软件供应链风险"
-        ],
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2607.26651",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2506.03350",
         "queryFamilies": [
-          "相机、LiDAR、GNSS 与融合攻击"
+          "端到端和 VLA 推理攻击"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2607.28483",
-        "disposition": "excluded",
+        "canonicalId": "arxiv:2506.13285",
         "queryFamilies": [
           "部署扰动、鲁棒性与失效回退"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.26533",
-        "disposition": "deferred",
-        "localPaperId": "barrier-conformal-clearance-certification",
+        "canonicalId": "arxiv:2508.02028",
         "queryFamilies": [
-          "本库安全候选宽检索"
+          "闭环攻击评测和安全论证"
         ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.13751",
-        "disposition": "deferred",
-        "localPaperId": "cars-responsibility-testing",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.18106",
-        "disposition": "deferred",
-        "localPaperId": "commercial-av-failure-sampling",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.16938",
-        "disposition": "deferred",
-        "localPaperId": "cvaa-driving-interpretability",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26074",
-        "disposition": "deferred",
-        "localPaperId": "gating-before-commitment-intent-divergence",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.16336",
-        "disposition": "deferred",
-        "localPaperId": "illusion-of-depth-stereo-attack",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.10232",
-        "disposition": "deferred",
-        "localPaperId": "intention-sharing-delay-resilience",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.02074",
-        "disposition": "deferred",
-        "localPaperId": "lidar-robustness-3d-detection",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.07370",
-        "disposition": "deferred",
-        "localPaperId": "morph-u-resilient-v2x-planning",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.07186",
-        "disposition": "deferred",
-        "localPaperId": "perception-informed-sil-simulation",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "doi:10.5281/zenodo.20395591",
-        "disposition": "deferred",
-        "localPaperId": "perspective-shift-optical-sensor-attack",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26669",
-        "disposition": "deferred",
-        "localPaperId": "public-road-assisted-lane-change-testing",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2601.11781",
-        "disposition": "deferred",
-        "localPaperId": "rail-resilient-autonomous-driving",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.04953",
-        "disposition": "deferred",
-        "localPaperId": "real-world-perturbation-testing",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2605.03491",
-        "disposition": "deferred",
-        "localPaperId": "realtime-adversarial-autonomous-systems",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2606.06423",
-        "disposition": "deferred",
-        "localPaperId": "riskflow-safety-critical-scenario-generation",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2607.19701",
-        "disposition": "deferred",
-        "localPaperId": "safegen-critical-video-diffusion",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2509.17253",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
         "localPaperId": "seeing-is-deceiving-mirror-lidar-attack",
-        "queryFamilies": [
-          "本库安全候选宽检索"
-        ],
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2607.07844",
-        "disposition": "deferred",
-        "localPaperId": "shift-drift-planning-benchmark",
+        "canonicalId": "arxiv:2511.12149",
         "queryFamilies": [
-          "本库安全候选宽检索"
+          "端到端和 VLA 推理攻击"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.04453",
-        "disposition": "deferred",
-        "localPaperId": "twinir-online-map-attack",
+        "canonicalId": "arxiv:2511.16203",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.16055",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2601.11781",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "rail-resilient-autonomous-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2603.15221",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证",
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2603.16405",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2604.08535",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2604.21841",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.03491",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "realtime-adversarial-autonomous-systems",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.07370",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "morph-u-resilient-v2x-planning",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.10904",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2605.12743",
-        "disposition": "deferred",
-        "localPaperId": "view-induced-trajectory-manipulation",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "view-induced-trajectory-manipulation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.13751",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "cars-responsibility-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2605.18059",
+        "queryFamilies": [
+          "本库安全候选宽检索",
+          "闭环攻击评测和安全论证",
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2605.29114",
+        "queryFamilies": [
+          "本库安全候选宽检索",
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.06423",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "riskflow-safety-critical-scenario-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.07186",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "perception-informed-sil-simulation",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2606.12706",
-        "disposition": "deferred",
-        "localPaperId": "vladrivebench-cot-action-vla",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "vladrivebench-cot-action-vla",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.15165",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.21172",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.02074",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "lidar-robustness-3d-detection",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.04953",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "real-world-perturbation-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07196",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.07844",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "shift-drift-planning-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.16938",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "cvaa-driving-interpretability",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.18106",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "commercial-av-failure-sampling",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.19701",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "safegen-critical-video-diffusion",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.23537",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.23962",
+        "queryFamilies": [
+          "本库安全候选宽检索",
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.24692",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.04453",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "twinir-online-map-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.10959",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.16031",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.17092",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26074",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "gating-before-commitment-intent-divergence",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26533",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "barrier-conformal-clearance-certification",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26669",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "public-road-assisted-lane-change-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.28778",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.06368",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.10232",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "intention-sharing-delay-resilience",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.16336",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "illusion-of-depth-stereo-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.26231",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.33948",
-        "disposition": "deferred",
-        "localPaperId": "trackflood-nms-free-tracker-latency",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "trackflood-nms-free-tracker-latency",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.06469",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.08331",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.16012",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.18866",
-        "disposition": "deferred",
-        "localPaperId": "autoagent0-runtime-recovery",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "autoagent0-runtime-recovery",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2611.06204",
-        "disposition": "deferred",
-        "localPaperId": "cosafe-cooperative-runtime-assurance",
         "queryFamilies": [
           "本库安全候选宽检索"
         ],
+        "localPaperId": "cosafe-cooperative-runtime-assurance",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:wacv2026:sahu-ad2",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10291-025-01938-1",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-024-11014-8",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s11633-026-1667-4",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.ijcce.2026.06.003",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.trip.2024.101033",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1049/itr2.70115",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/access.2025.3620992",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/access.2026.3747945",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr.2018.00175",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01432",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvprw67362.2025.00067",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/dsn-w65791.2025.00071",
+        "queryFamilies": [
+          "本库安全候选宽检索",
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/icra55743.2025.11127495",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iv66570.2026.11623929",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/jiot.2025.3558627",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/ojvt.2023.3265363",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/plans61210.2025.11028352",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/sp40001.2021.00076",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3474469",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3503161.3548171",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险",
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1145/3774648",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3831673",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.11575/prism/52006",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.18653/v1/2025.findings-acl.401",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.18653/v1/2026.findings-acl.600",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.21227/4ws7-xy64",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.33012/navi.789",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/engproc2025088042",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.3390/rs16173114",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.36227/techrxiv.177006506.61959855/v1",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.36227/techrxiv.177100288.88303656/v1",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退",
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "excluded",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.5162/ettc2024/a3.2",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-3556",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/085713-0942",
+        "queryFamilies": [
+          "端到端和 VLA 推理攻击"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.5281/zenodo.20395591",
+        "queryFamilies": [
+          "本库安全候选宽检索"
+        ],
+        "localPaperId": "perspective-shift-optical-sensor-attack",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.5281/zenodo.20819271",
+        "queryFamilies": [
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.54660/ijfei.2025.2.3.60-68",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "unece:r156:2021",
+        "queryFamilies": [
+          "数据、模型与软件供应链风险",
+          "部署扰动、鲁棒性与失效回退"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "usenix:sec20-shen",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec20-sun",
+        "queryFamilies": [
+          "相机、LiDAR、GNSS 与融合攻击"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec21-sato",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec22-hallyburton",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec23-cao",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec24-lou",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "usenix:sec24-zhang-qingzhao",
+        "queryFamilies": [
+          "闭环攻击评测和安全论证"
+        ],
+        "disposition": "included",
         "occurrences": 1
       }
     ],
-    "evidenceBoundary": "原站外查询族及执行日期保留，不倒填为本轮检索。2026-09-22 对既有核心引用、正文关键数字与范围重新检查一手来源；出版版本差异以正式版为准，资源可访问与实验复现分开。当前本库查询单独重跑并闭合去向；近期新文献使用本期digest-audit独立记录。",
+    "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "openSearchGaps": [
       "缺少在同一真实车辆与 ODD 中配对比较真实 RF/GNSS 欺骗、自然漂移、设备故障和等预算随机扰动的公开研究。",
       "边云截止时间攻击尚未把网络竞争、感知损失、轨迹风险和最小风险机动闭合到同一车辆级实验。",
@@ -1169,13 +1609,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "finalFinding": "Independent raw-corpus rerun and canonical candidate closure passed; narrative, references and substantive/external dates preserved. Same-family provisional.",
-      "reviewerAgentId": "/root/review_integration_nov06",
-      "artifactPath": "docs/research-updates/2026-11-06/review-integration-round1.json",
-      "artifactSha256": "679fe0a88e5290f6c16b7a9e7bcb6977630e8108fca913fcf3e0f4f40a8ba2ac",
-      "snapshotFingerprint": "f2ea0f05f4e3b6ac1243a0095200a278e860e08b3274e1fc9cad3939a9cbd898",
+      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
+      "reviewerAgentId": "/root/review_centers_embodied",
+      "artifactPath": "docs/center-updates/2026-11-06/independent-review/embodied-round2.json",
+      "artifactSha256": "570dbfa5c02aeb19b7f987c0a41769ad0201e8b67f46748fbb007e05d2f0c674",
+      "snapshotFingerprint": "886ce789100f54ab39a77e123a0e1b84108fc919f966eb68feeaa96806f7e798",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -1238,7 +1678,7 @@
         },
         "rawHitCount": 42,
         "screenedOutCount": 8,
-        "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共42个文件命中；按方向标签与revisionOf归并得34个候选，其余8个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "当前原始 Markdown rg 命中 42 个文件，按方向标签和原始论文身份归并为 34 个候选；文件命中与候选数分别记录。",
         "localCandidateDisposition": {
           "candidateLocalPaperIds": [
             "autoagent0-runtime-recovery",
@@ -1278,12 +1718,31 @@
           ],
           "deferredGroups": [
             {
-              "reasonCode": "cross-direction-support",
-              "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+              "reasonCode": "direct-scope-deferred",
+              "reason": "本轮重新检查当前方向的全部本库候选，核心综合选取能说明方法演进及实验差异的文献；其余报告保留为后续深入阅读入口。",
               "localPaperIds": [
+                "cvaa-driving-interpretability",
+                "illusion-of-depth-stereo-attack",
+                "intention-sharing-delay-resilience",
+                "lidar-robustness-3d-detection",
+                "perspective-shift-optical-sensor-attack",
+                "rail-resilient-autonomous-driving",
+                "realtime-adversarial-autonomous-systems",
+                "seeing-is-deceiving-mirror-lidar-attack",
+                "trackflood-nms-free-tracker-latency",
+                "twinir-online-map-attack",
+                "view-induced-trajectory-manipulation"
+              ]
+            },
+            {
+              "reasonCode": "cross-direction-support",
+              "reason": "与当前方向有交叉，核心方法综合由其主方向承担，本轮未重复展开。",
+              "localPaperIds": [
+                "autoagent0-runtime-recovery",
                 "barrier-conformal-clearance-certification",
                 "cars-responsibility-testing",
                 "commercial-av-failure-sampling",
+                "cosafe-cooperative-runtime-assurance",
                 "gating-before-commitment-intent-divergence",
                 "morph-u-resilient-v2x-planning",
                 "perception-informed-sil-simulation",
@@ -1294,169 +1753,610 @@
                 "shift-drift-planning-benchmark",
                 "vladrivebench-cot-action-vla"
               ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
-              "localPaperIds": [
-                "cvaa-driving-interpretability",
-                "illusion-of-depth-stereo-attack",
-                "intention-sharing-delay-resilience",
-                "lidar-robustness-3d-detection",
-                "perspective-shift-optical-sensor-attack",
-                "rail-resilient-autonomous-driving",
-                "realtime-adversarial-autonomous-systems",
-                "seeing-is-deceiving-mirror-lidar-attack",
-                "twinir-online-map-attack",
-                "view-induced-trajectory-manipulation"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
-              "localPaperIds": [
-                "trackflood-nms-free-tracker-latency"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "autoagent0-runtime-recovery"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "cosafe-cooperative-runtime-assurance"
-              ]
             }
           ]
+        },
+        "historicalRun": {
+          "family": "本库安全候选宽检索",
+          "sourceFamily": "local-corpus",
+          "query": "攻击|防御|adversarial|security|backdoor|autonomous-driving-security",
+          "executedAt": "2026-11-06",
+          "resultCount": 34,
+          "resultIdSample": [
+            "arxiv:2610.18866",
+            "arxiv:2606.21172",
+            "arxiv:2608.26533",
+            "arxiv:2605.18059",
+            "arxiv:2605.13751",
+            "arxiv:2607.18106",
+            "arxiv:2611.06204",
+            "arxiv:2607.16938",
+            "arxiv:2607.24692",
+            "arxiv:2608.26074",
+            "arxiv:2609.16336",
+            "arxiv:2609.10232",
+            "arxiv:2607.02074",
+            "arxiv:2409.07321",
+            "arxiv:2605.07370",
+            "arxiv:2607.23537",
+            "arxiv:2606.07186",
+            "doi:10.5281/zenodo.20395591",
+            "arxiv:2608.26669",
+            "arxiv:2601.11781",
+            "arxiv:2607.04953",
+            "arxiv:2605.03491",
+            "arxiv:2605.29114",
+            "arxiv:2505.11532",
+            "arxiv:2606.06423",
+            "arxiv:2607.19701",
+            "arxiv:2509.17253",
+            "arxiv:2607.07844",
+            "arxiv:2609.33948",
+            "arxiv:2608.04453",
+            "arxiv:2605.12743",
+            "arxiv:2606.12706",
+            "arxiv:2607.23962",
+            "arxiv:2607.07196"
+          ],
+          "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
+          "retrieval": {
+            "provider": "ripgrep-local-corpus",
+            "endpoint": "content/papers",
+            "parameters": {
+              "query": "攻击|防御|adversarial|security|backdoor|autonomous-driving-security",
+              "path": "content/papers",
+              "flags": [
+                "-l",
+                "-i"
+              ]
+            },
+            "sort": "path-ascending",
+            "limit": 200
+          },
+          "rawHitCount": 42,
+          "screenedOutCount": 8,
+          "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共42个文件命中；按方向标签与revisionOf归并得34个候选，其余8个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+          "localCandidateDisposition": {
+            "candidateLocalPaperIds": [
+              "autoagent0-runtime-recovery",
+              "baddreamer-world-model-backdoor",
+              "barrier-conformal-clearance-certification",
+              "bench2drive-robust-deployment-perturbations",
+              "cars-responsibility-testing",
+              "commercial-av-failure-sampling",
+              "cosafe-cooperative-runtime-assurance",
+              "cvaa-driving-interpretability",
+              "denial-of-deadline-inference",
+              "gating-before-commitment-intent-divergence",
+              "illusion-of-depth-stereo-attack",
+              "intention-sharing-delay-resilience",
+              "lidar-robustness-3d-detection",
+              "maat-e2e-adversarial-training",
+              "morph-u-resilient-v2x-planning",
+              "obsdrivebench-adverse-weather",
+              "perception-informed-sil-simulation",
+              "perspective-shift-optical-sensor-attack",
+              "public-road-assisted-lane-change-testing",
+              "rail-resilient-autonomous-driving",
+              "real-world-perturbation-testing",
+              "realtime-adversarial-autonomous-systems",
+              "reasonbreak-vla-vulnerability-driving",
+              "revisiting-adversarial-attacks",
+              "riskflow-safety-critical-scenario-generation",
+              "safegen-critical-video-diffusion",
+              "seeing-is-deceiving-mirror-lidar-attack",
+              "shift-drift-planning-benchmark",
+              "trackflood-nms-free-tracker-latency",
+              "twinir-online-map-attack",
+              "view-induced-trajectory-manipulation",
+              "vladrivebench-cot-action-vla",
+              "vlm-gnss-spoofing-detection",
+              "world-model-simulator-admissibility"
+            ],
+            "deferredGroups": [
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+                "localPaperIds": [
+                  "barrier-conformal-clearance-certification",
+                  "cars-responsibility-testing",
+                  "commercial-av-failure-sampling",
+                  "gating-before-commitment-intent-divergence",
+                  "morph-u-resilient-v2x-planning",
+                  "perception-informed-sil-simulation",
+                  "public-road-assisted-lane-change-testing",
+                  "real-world-perturbation-testing",
+                  "riskflow-safety-critical-scenario-generation",
+                  "safegen-critical-video-diffusion",
+                  "shift-drift-planning-benchmark",
+                  "vladrivebench-cot-action-vla"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
+                "localPaperIds": [
+                  "cvaa-driving-interpretability",
+                  "illusion-of-depth-stereo-attack",
+                  "intention-sharing-delay-resilience",
+                  "lidar-robustness-3d-detection",
+                  "perspective-shift-optical-sensor-attack",
+                  "rail-resilient-autonomous-driving",
+                  "realtime-adversarial-autonomous-systems",
+                  "seeing-is-deceiving-mirror-lidar-attack",
+                  "twinir-online-map-attack",
+                  "view-induced-trajectory-manipulation"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
+                "localPaperIds": [
+                  "trackflood-nms-free-tracker-latency"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "autoagent0-runtime-recovery"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "cosafe-cooperative-runtime-assurance"
+                ]
+              }
+            ]
+          }
         }
       },
       {
         "family": "相机、LiDAR、GNSS 与融合攻击",
-        "sourceFamily": "arxiv",
-        "query": "autonomous driving camera LiDAR GNSS temporal synchronization sensor fusion attack physical hardware in loop",
-        "executedAt": "2026-08-01",
-        "resultCount": 4,
+        "sourceFamily": "openalex",
+        "query": "driving LiDAR GNSS spoofing attack",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 17,
         "resultIdSample": [
-          "usenix:sec20-sun",
+          "arxiv:2604.21841",
+          "arxiv:2607.23962",
+          "arxiv:2608.17092",
+          "arxiv:2608.28778",
+          "arxiv:2609.26231",
+          "doi:10.1007/s10291-025-01938-1",
+          "doi:10.1109/access.2025.3620992",
+          "doi:10.1109/cvpr.2018.00175",
+          "doi:10.1109/icra55743.2025.11127495",
+          "doi:10.1109/plans61210.2025.11028352",
           "doi:10.1109/sp40001.2021.00076",
-          "arxiv:2312.01468",
-          "arxiv:2607.26651"
+          "doi:10.11575/prism/52006",
+          "doi:10.33012/navi.789",
+          "doi:10.3390/engproc2025088042",
+          "doi:10.3390/rs16173114",
+          "doi:10.5162/ettc2024/a3.2",
+          "usenix:sec20-sun"
         ],
-        "scopeRationale": "覆盖相机、LiDAR、GNSS 和融合攻击的物理路径、同步约束与车辆级后果，并明确筛出只有上游光流误差而没有驾驶传播的候选。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.1109/plans61210.2025.11028352",
+          "doi:10.3390/engproc2025088042",
+          "arxiv:2608.17092",
+          "arxiv:2609.26231",
+          "doi:10.1109/icra55743.2025.11127495",
+          "doi:10.1007/s10291-025-01938-1",
+          "arxiv:2607.23962",
+          "doi:10.5162/ettc2024/a3.2",
+          "doi:10.33012/navi.789",
+          "doi:10.11575/prism/52006",
+          "doi:10.1109/access.2025.3620992",
+          "doi:10.3390/rs16173114"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1109/cvpr.2018.00175",
+          "doi:10.1109/sp40001.2021.00076",
+          "usenix:sec20-sun"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2604.21841",
+          "arxiv:2608.28778"
+        ],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving camera LiDAR GNSS temporal synchronization sensor fusion attack physical hardware in loop"
+            "search": "driving LiDAR GNSS spoofing attack",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 17,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "相机、LiDAR、GNSS 与融合攻击",
+          "sourceFamily": "arxiv",
+          "query": "autonomous driving camera LiDAR GNSS temporal synchronization sensor fusion attack physical hardware in loop",
+          "executedAt": "2026-08-01",
+          "resultCount": 4,
+          "resultIdSample": [
+            "usenix:sec20-sun",
+            "doi:10.1109/sp40001.2021.00076",
+            "arxiv:2312.01468",
+            "arxiv:2607.26651"
+          ],
+          "scopeRationale": "覆盖相机、LiDAR、GNSS 和融合攻击的物理路径、同步约束与车辆级后果，并明确筛出只有上游光流误差而没有驾驶传播的候选。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "autonomous driving camera LiDAR GNSS temporal synchronization sensor fusion attack physical hardware in loop"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "端到端和 VLA 推理攻击",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving VLA VLM textual corruption adversarial multimodal backdoor action closed loop",
-        "executedAt": "2026-08-01",
-        "resultCount": 6,
+        "sourceFamily": "openalex",
+        "query": "driving vision language action reasoning attack",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 14,
         "resultIdSample": [
-          "doi:10.1109/cvpr.2018.00175",
           "arxiv:2404.12916",
-          "doi:10.1007/s11633-026-1667-4",
+          "arxiv:2412.15206",
           "arxiv:2501.13563",
+          "arxiv:2505.06413",
+          "arxiv:2506.03350",
+          "arxiv:2511.12149",
+          "arxiv:2511.16203",
+          "arxiv:2605.29114",
+          "arxiv:2606.15165",
+          "arxiv:2610.08331",
+          "doi:10.1007/s11633-026-1667-4",
           "doi:10.1109/cvprw67362.2025.00067",
-          "arxiv:1712.09665"
+          "doi:10.1109/tiv.2024.3402136",
+          "doi:10.52202/085713-0942"
         ],
-        "scopeRationale": "区分离线 VQA/描述攻击、动作建议变化与真正执行到驾驶轨迹的攻击，优先核对正式会议、期刊和可打开的一手记录。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2605.29114",
+          "doi:10.52202/085713-0942",
+          "doi:10.1007/s11633-026-1667-4",
+          "arxiv:2506.03350",
+          "doi:10.1109/tiv.2024.3402136",
+          "arxiv:2501.13563",
+          "arxiv:2412.15206",
+          "arxiv:2511.12149",
+          "arxiv:2505.06413",
+          "arxiv:2404.12916",
+          "arxiv:2606.15165",
+          "arxiv:2511.16203"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1109/cvprw67362.2025.00067"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2610.08331"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving VLA VLM textual corruption adversarial multimodal backdoor action closed loop"
+            "search": "driving vision language action reasoning attack",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 14,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "端到端和 VLA 推理攻击",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving VLA VLM textual corruption adversarial multimodal backdoor action closed loop",
+          "executedAt": "2026-08-01",
+          "resultCount": 6,
+          "resultIdSample": [
+            "doi:10.1109/cvpr.2018.00175",
+            "arxiv:2404.12916",
+            "doi:10.1007/s11633-026-1667-4",
+            "arxiv:2501.13563",
+            "doi:10.1109/cvprw67362.2025.00067",
+            "arxiv:1712.09665"
+          ],
+          "scopeRationale": "区分离线 VQA/描述攻击、动作建议变化与真正执行到驾驶轨迹的攻击，优先核对正式会议、期刊和可打开的一手记录。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving VLA VLM textual corruption adversarial multimodal backdoor action closed loop"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "数据、模型与软件供应链风险",
-        "sourceFamily": "arxiv",
-        "query": "autonomous driving model data software supply chain backdoor OTA signed update VLM representation steering",
-        "executedAt": "2026-08-01",
-        "resultCount": 4,
+        "sourceFamily": "openalex",
+        "query": "driving backdoor data poisoning model supply chain",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 14,
         "resultIdSample": [
+          "arxiv:2404.12916",
+          "arxiv:2407.10825",
+          "arxiv:2505.19532",
+          "arxiv:2603.16405",
+          "arxiv:2608.10959",
+          "doi:10.1109/jiot.2025.3558627",
           "doi:10.1145/3503161.3548171",
-          "arxiv:2508.15778",
-          "arxiv:2505.06413",
-          "arxiv:2607.25479"
+          "doi:10.1145/3774648",
+          "doi:10.18653/v1/2025.findings-acl.401",
+          "doi:10.18653/v1/2026.findings-acl.600",
+          "doi:10.36227/techrxiv.177006506.61959855/v1",
+          "doi:10.52202/079017-3556",
+          "doi:10.54660/ijfei.2025.2.3.60-68",
+          "unece:r156:2021"
         ],
-        "scopeRationale": "检查训练污染、模型后门、软件更新和架构级供应链风险；通用 VLM 后门若没有驾驶模型与车辆后果则明确排除。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.54660/ijfei.2025.2.3.60-68",
+          "arxiv:2505.19532",
+          "doi:10.1109/jiot.2025.3558627",
+          "doi:10.18653/v1/2026.findings-acl.600",
+          "arxiv:2608.10959",
+          "doi:10.36227/techrxiv.177006506.61959855/v1",
+          "doi:10.18653/v1/2025.findings-acl.401",
+          "arxiv:2407.10825",
+          "doi:10.1145/3774648",
+          "arxiv:2603.16405",
+          "doi:10.52202/079017-3556",
+          "arxiv:2404.12916"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1145/3503161.3548171",
+          "unece:r156:2021"
+        ],
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving model data software supply chain backdoor OTA signed update VLM representation steering"
+            "search": "driving backdoor data poisoning model supply chain",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 14,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "数据、模型与软件供应链风险",
+          "sourceFamily": "arxiv",
+          "query": "autonomous driving model data software supply chain backdoor OTA signed update VLM representation steering",
+          "executedAt": "2026-08-01",
+          "resultCount": 4,
+          "resultIdSample": [
+            "doi:10.1145/3503161.3548171",
+            "arxiv:2508.15778",
+            "arxiv:2505.06413",
+            "arxiv:2607.25479"
+          ],
+          "scopeRationale": "检查训练污染、模型后门、软件更新和架构级供应链风险；通用 VLM 后门若没有驾驶模型与车辆后果则明确排除。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "autonomous driving model data software supply chain backdoor OTA signed update VLM representation steering"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "部署扰动、鲁棒性与失效回退",
-        "sourceFamily": "official-project",
-        "query": "autonomous driving deployment perturbation deadline distributed inference detector fallback minimum risk condition official project",
-        "executedAt": "2026-08-01",
-        "resultCount": 7,
+        "sourceFamily": "openalex",
+        "query": "driving robustness fallback defense",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 17,
         "resultIdSample": [
-          "unece:r156:2021",
+          "arxiv:2506.13285",
+          "arxiv:2603.15221",
+          "arxiv:2605.18059",
+          "arxiv:2608.16031",
+          "arxiv:2610.16012",
+          "cvf:wacv2026:sahu-ad2",
+          "doi:10.1007/s10462-024-11014-8",
+          "doi:10.1016/j.ijcce.2026.06.003",
+          "doi:10.1016/j.trip.2024.101033",
+          "doi:10.1109/access.2026.3747945",
           "doi:10.1109/dsn-w65791.2025.00071",
+          "doi:10.1109/tits.2024.3474469",
+          "doi:10.1145/3831673",
+          "doi:10.21227/4ws7-xy64",
+          "doi:10.36227/techrxiv.177100288.88303656/v1",
+          "doi:10.5281/zenodo.20819271",
+          "unece:r156:2021"
+        ],
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "doi:10.5281/zenodo.20819271",
+          "doi:10.1109/access.2026.3747945",
+          "arxiv:2608.16031",
+          "arxiv:2610.16012",
+          "doi:10.36227/techrxiv.177100288.88303656/v1",
+          "arxiv:2506.13285",
+          "doi:10.21227/4ws7-xy64",
+          "doi:10.1145/3831673",
+          "doi:10.1016/j.ijcce.2026.06.003",
+          "doi:10.1007/s10462-024-11014-8",
+          "doi:10.1016/j.trip.2024.101033",
+          "doi:10.1109/tits.2024.3474469"
+        ],
+        "reopenedSeedCanonicalIds": [
           "arxiv:2605.18059",
           "cvf:wacv2026:sahu-ad2",
-          "arxiv:1708.06733",
-          "arxiv:1412.6572",
-          "arxiv:2607.28483"
+          "doi:10.1109/dsn-w65791.2025.00071",
+          "unece:r156:2021"
         ],
-        "scopeRationale": "覆盖自然部署扰动、边云截止时间、异常检测与最小风险回退，要求把攻击、故障、资源竞争和正常输入代价分开。",
+        "supplementalCanonicalIds": [
+          "arxiv:2603.15221"
+        ],
         "retrieval": {
-          "provider": "web-search-official-projects",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving deployment perturbation deadline distributed inference detector fallback minimum risk condition official project"
+            "search": "driving robustness fallback defense",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 17,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "部署扰动、鲁棒性与失效回退",
+          "sourceFamily": "official-project",
+          "query": "autonomous driving deployment perturbation deadline distributed inference detector fallback minimum risk condition official project",
+          "executedAt": "2026-08-01",
+          "resultCount": 7,
+          "resultIdSample": [
+            "unece:r156:2021",
+            "doi:10.1109/dsn-w65791.2025.00071",
+            "arxiv:2605.18059",
+            "cvf:wacv2026:sahu-ad2",
+            "arxiv:1708.06733",
+            "arxiv:1412.6572",
+            "arxiv:2607.28483"
+          ],
+          "scopeRationale": "覆盖自然部署扰动、边云截止时间、异常检测与最小风险回退，要求把攻击、故障、资源竞争和正常输入代价分开。",
+          "retrieval": {
+            "provider": "web-search-official-projects",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving deployment perturbation deadline distributed inference detector fallback minimum risk condition official project"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       },
       {
         "family": "闭环攻击评测和安全论证",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving attack propagation perception prediction planning control closed loop assurance physical experiment",
-        "executedAt": "2026-08-01",
-        "resultCount": 8,
+        "sourceFamily": "openalex",
+        "query": "driving closed loop adversarial benchmark",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 20,
         "resultIdSample": [
+          "arxiv:2508.02028",
+          "arxiv:2512.16055",
+          "arxiv:2603.15221",
+          "arxiv:2604.08535",
+          "arxiv:2605.10904",
+          "arxiv:2605.18059",
+          "arxiv:2609.06368",
+          "arxiv:2610.06469",
+          "doi:10.1049/itr2.70115",
+          "doi:10.1109/cvpr52733.2024.01432",
+          "doi:10.1109/iv66570.2026.11623929",
           "doi:10.1109/ojvt.2023.3265363",
+          "doi:10.1145/3503161.3548171",
+          "doi:10.36227/techrxiv.177100288.88303656/v1",
           "usenix:sec20-shen",
           "usenix:sec21-sato",
           "usenix:sec22-hallyburton",
-          "doi:10.1145/3503161.3548171",
           "usenix:sec23-cao",
           "usenix:sec24-lou",
           "usenix:sec24-zhang-qingzhao"
         ],
-        "scopeRationale": "追踪攻击如何跨感知、预测、规划和控制传播，并以正式物理、闭环和安全论证证据约束车辆级主张。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2604.08535",
+          "doi:10.1109/cvpr52733.2024.01432",
+          "arxiv:2508.02028",
+          "arxiv:2512.16055",
+          "arxiv:2605.18059",
+          "arxiv:2605.10904",
+          "arxiv:2603.15221",
+          "arxiv:2609.06368",
+          "doi:10.1049/itr2.70115",
+          "doi:10.36227/techrxiv.177100288.88303656/v1",
+          "arxiv:2610.06469",
+          "doi:10.1109/iv66570.2026.11623929"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "doi:10.1109/ojvt.2023.3265363",
+          "doi:10.1145/3503161.3548171",
+          "usenix:sec20-shen",
+          "usenix:sec21-sato",
+          "usenix:sec22-hallyburton",
+          "usenix:sec23-cao",
+          "usenix:sec24-lou",
+          "usenix:sec24-zhang-qingzhao"
+        ],
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving attack propagation perception prediction planning control closed loop assurance physical experiment"
+            "search": "driving closed loop adversarial benchmark",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
-          "sort": "relevance",
-          "limit": 200
+          "sort": "relevance_score:desc",
+          "limit": 20,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
+        },
+        "historicalRun": {
+          "family": "闭环攻击评测和安全论证",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving attack propagation perception prediction planning control closed loop assurance physical experiment",
+          "executedAt": "2026-08-01",
+          "resultCount": 8,
+          "resultIdSample": [
+            "doi:10.1109/ojvt.2023.3265363",
+            "usenix:sec20-shen",
+            "usenix:sec21-sato",
+            "usenix:sec22-hallyburton",
+            "doi:10.1145/3503161.3548171",
+            "usenix:sec23-cao",
+            "usenix:sec24-lou",
+            "usenix:sec24-zhang-qingzhao"
+          ],
+          "scopeRationale": "追踪攻击如何跨感知、预测、规划和控制传播，并以正式物理、闭环和安全论证证据约束车辆级主张。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving attack propagation perception prediction planning control closed loop assurance physical experiment"
+            },
+            "sort": "relevance",
+            "limit": 200
+          }
         }
       }
     ],
@@ -1492,7 +2392,11 @@
       "doi:10.1109/cvprw67362.2025.00067",
       "arxiv:2607.23962",
       "arxiv:2607.24692",
-      "arxiv:2607.23537"
+      "arxiv:2607.23537",
+      "arxiv:2608.28778",
+      "arxiv:2604.21841",
+      "arxiv:2610.08331",
+      "arxiv:2603.15221"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -1501,67 +2405,361 @@
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:1708.06733",
-        "title": "BadNets: Identifying Vulnerabilities in the Machine Learning Model Supply Chain",
-        "url": "https://arxiv.org/abs/1708.06733",
-        "reasonCode": "general-foundation-only",
-        "reason": "建立了模型供应链后门问题，但实验不是自动驾驶系统；本综述只把它作为检索到的基础背景，不用其结果替代驾驶专用后门证据。"
+        "canonicalId": "doi:10.1109/plans61210.2025.11028352",
+        "title": "Exploring Lidar Resilience: A Review of Spoofing Threats in Autonomous Driving",
+        "url": "https://doi.org/10.1109/plans61210.2025.11028352",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:1712.09665",
-        "title": "Adversarial Patch",
-        "url": "https://arxiv.org/abs/1712.09665",
-        "reasonCode": "general-vision-only",
-        "reason": "证明通用图像分类器上的实体补丁攻击，但没有驾驶 ODD、多传感器、规划后果或回退验证，因此未纳入驾驶系统证据表。"
+        "canonicalId": "doi:10.3390/engproc2025088042",
+        "title": "Analysis and Validation of Distributed GNSS Spoofing Threat",
+        "url": "https://doi.org/10.3390/engproc2025088042",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:1412.6572",
-        "title": "Explaining and Harnessing Adversarial Examples",
-        "url": "https://arxiv.org/abs/1412.6572",
-        "reasonCode": "general-foundation-only",
-        "reason": "是对抗样本与对抗训练的基础文献，但实验域与自动驾驶闭环相距较远；本轮优先保留能直接约束驾驶攻击面和安全结论的证据。"
+        "canonicalId": "arxiv:2608.17092",
+        "title": "Structured Driving-State Narratives for Small Language Model-Based GNSS Spoofing Detection",
+        "url": "https://doi.org/10.48550/arxiv.2608.17092",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2312.01468",
-        "title": "Exploring Adversarial Robustness of LiDAR-Camera Fusion Model in Autonomous Driving",
-        "url": "https://arxiv.org/abs/2312.01468",
-        "reasonCode": "represented-fusion-attack",
-        "reason": "以受物理约束的点添加攻击补充融合鲁棒性，但证据主要是检测模型与受限攻击几何；本轮核心表已由更完整的相机—LiDAR物理、离线和仿真分层证据代表。"
+        "canonicalId": "arxiv:2609.26231",
+        "title": "High-Order Liquid Evidence Modeling for Continuous and Subtle GNSS Spoofing Detection in Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2609.26231",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2508.15778",
-        "title": "Towards Stealthy and Effective Backdoor Attacks on Lane Detection: A Naturalistic Data Poisoning Approach",
-        "url": "https://arxiv.org/abs/2508.15778",
-        "reasonCode": "recent-preprint-overlap",
-        "reason": "扩散生成自然化车道后门触发器，但截至截止日仍为预印本，且证据主要停留在四类车道检测模型；与已正式发表并含实体平台验证的车道后门工作重叠。"
+        "canonicalId": "doi:10.1109/icra55743.2025.11127495",
+        "title": "Slamspoof: Practical Lidar Spoofing Attacks on Localization Systems Guided by Scan Matching Vulnerability Analysis",
+        "url": "https://doi.org/10.1109/icra55743.2025.11127495",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/s10291-025-01938-1",
+        "title": "GNSS spoofing detection based on lightweight features and CGAN-ANN in unknown scenarios",
+        "url": "https://doi.org/10.1007/s10291-025-01938-1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.5162/ettc2024/a3.2",
+        "title": "A3.2 - Detection and Monitoring of Jamming and Spoofing of GPS/GNSS Signals in Harbours and Industrial Areas",
+        "url": "https://doi.org/10.5162/ettc2024/a3.2",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.33012/navi.789",
+        "title": "A GNSS/IMU Spoofing Detection Method Based on Motion Models for Vehicular Navigation",
+        "url": "https://doi.org/10.33012/navi.789",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.11575/prism/52006",
+        "title": "A Baseline Spoofing Detector Using Standard GNSS Receivers and Open-Source Software",
+        "url": "https://doi.org/10.11575/prism/52006",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/access.2025.3620992",
+        "title": "GPS Spoofing Attacks on Autonomous Navigation Systems for UAVs",
+        "url": "https://doi.org/10.1109/access.2025.3620992",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.3390/rs16173114",
+        "title": "MFO-Fusion: A Multi-Frame Residual-Based Factor Graph Optimization for GNSS/INS/LiDAR Fusion in Challenging GNSS Environments",
+        "url": "https://doi.org/10.3390/rs16173114",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.52202/085713-0942",
+        "title": "AutoVLA: A Vision-Language-Action Model for End-to-End Autonomous Driving with Adaptive Reasoning and Reinforcement Fine-Tuning",
+        "url": "https://doi.org/10.52202/085713-0942",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2506.03350",
+        "title": "Adversarial Attacks on Robotic Vision Language Action Models",
+        "url": "https://doi.org/10.48550/arxiv.2506.03350",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "title": "Vision Language Models in Autonomous Driving: A Survey and Outlook",
+        "url": "https://doi.org/10.1109/tiv.2024.3402136",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2412.15206",
+        "title": "AutoTrust: Benchmarking Trustworthiness in Large Vision Language Models for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2412.15206",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2511.12149",
+        "title": "AttackVLA: Benchmarking Adversarial and Backdoor Attacks on Vision-Language-Action Models",
+        "url": "https://doi.org/10.48550/arxiv.2511.12149",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
         "canonicalId": "arxiv:2505.06413",
         "title": "Natural Reflection Backdoor Attack on Vision Language Model for Autonomous Driving",
-        "url": "https://arxiv.org/abs/2505.06413",
-        "reasonCode": "output-level-preprint",
-        "reason": "以自然反射触发 VLM 输出延迟，能界定新的实时性风险，但截至截止日仍是预印本且未完成车辆控制闭环；保留为供应链候选而不升级核心证据。"
+        "url": "https://doi.org/10.48550/arxiv.2505.06413",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2607.25479",
-        "title": "Architectural Backdoors in Vision-Language Model Supply Chains via Representation Steering",
-        "url": "https://arxiv.org/abs/2607.25479",
-        "reasonCode": "general-vlm-supply-chain-only",
-        "reason": "证明通用 VLM 可在架构层植入触发式表示偏移，但实验是 VQA、文生图、检索和响应偏置，没有自动驾驶模型、驾驶数据、动作接口或车辆级后果；只作为供应链威胁边界，不纳入驾驶核心证据。"
+        "canonicalId": "arxiv:2606.15165",
+        "title": "VLALeaks: Membership Inference Attacks against Vision-Language-Action Models",
+        "url": "https://doi.org/10.48550/arxiv.2606.15165",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2607.26651",
-        "title": "Physically Real-time Infrared Attack against Optical Flow Estimation Networks",
-        "url": "https://arxiv.org/abs/2607.26651",
-        "reasonCode": "upstream-perception-no-driving-consequence",
-        "reason": "物理红外图案对光流网络的实时攻击具有上游可实现性，但提供的证据没有驾驶栈、轨迹、控制或安全后果，不能把通用光流误差外推为自动驾驶车辆攻击。"
+        "canonicalId": "arxiv:2511.16203",
+        "title": "When Alignment Fails: Multimodal Adversarial Attacks on Vision-Language-Action Models",
+        "url": "https://doi.org/10.48550/arxiv.2511.16203",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2607.28483",
-        "title": "Towards Real-Time PixOOD: Efficient Anomaly Segmentation for Autonomous Vehicles",
-        "url": "https://arxiv.org/abs/2607.28483",
-        "reasonCode": "defense-throughput-without-risk-calibration",
-        "reason": "报告 TensorRT 部署的吞吐、能耗和 AP/FPR95，并检验评分重实现的精度偏差；但未评估主动攻击、车辆级风险校准或漏检/误报后的闭环回退，因此作为部署边界而不纳入核心攻防证据。"
+        "canonicalId": "doi:10.54660/ijfei.2025.2.3.60-68",
+        "title": "Training Time Vulnerabilities in Large Language Models: Data Poisoning and Backdoor Attacks",
+        "url": "https://doi.org/10.54660/ijfei.2025.2.3.60-68",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2505.19532",
+        "title": "Fox in the Henhouse: Supply-Chain Backdoor Attacks Against Reinforcement Learning",
+        "url": "https://doi.org/10.48550/arxiv.2505.19532",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/jiot.2025.3558627",
+        "title": "CBPF: A Novel Method for Filtering Poisoned Data Based on Composite Backdoor Attacks",
+        "url": "https://doi.org/10.1109/jiot.2025.3558627",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.18653/v1/2026.findings-acl.600",
+        "title": "P2P: A Poison-to-Poison Remedy for Reliable Backdoor Defense in LLMs",
+        "url": "https://doi.org/10.18653/v1/2026.findings-acl.600",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2608.10959",
+        "title": "Once Poisoned, Arbitrarily Controlled: A Programmable Backdoor in VLMs",
+        "url": "https://doi.org/10.48550/arxiv.2608.10959",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.36227/techrxiv.177006506.61959855/v1",
+        "title": "Security of Large Model-based Agents: A Survey on Adversarial, Poisoning, and Backdoor Attacks",
+        "url": "https://doi.org/10.36227/techrxiv.177006506.61959855/v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.18653/v1/2025.findings-acl.401",
+        "title": "Chain-of-Scrutiny: Detecting Backdoor Attacks for Large Language Models",
+        "url": "https://doi.org/10.18653/v1/2025.findings-acl.401",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2407.10825",
+        "title": "Wicked Oddities: Selectively Poisoning for Effective Clean-Label Backdoor Attacks",
+        "url": "https://doi.org/10.48550/arxiv.2407.10825",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3774648",
+        "title": "Flareon: Stealthy All2all Backdoor Injection via Poisoned Augmentation",
+        "url": "https://doi.org/10.1145/3774648",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2603.16405",
+        "title": "Poisoning the Pixels: Revisiting Backdoor Attacks on Semantic Segmentation",
+        "url": "https://doi.org/10.48550/arxiv.2603.16405",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.52202/079017-3556",
+        "title": "SleeperNets: Universal Backdoor Poisoning Attacks Against Reinforcement Learning Agents",
+        "url": "https://doi.org/10.52202/079017-3556",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.5281/zenodo.20819271",
+        "title": "Phantom Channel Defense Against Coordinated Sensor Spoofing in Autonomous Vehicles",
+        "url": "https://doi.org/10.5281/zenodo.20819271",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/access.2026.3747945",
+        "title": "Adversarial Trajectory Attack Targeting Autonomous Driving Planners with Residual-based Defense",
+        "url": "https://doi.org/10.1109/access.2026.3747945",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2608.16031",
+        "title": "AdROD: HyperNetwork-based Adversarially Robust Object Detection for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2608.16031",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.16012",
+        "title": "Adversarial Robustness of Camera-Radar Sensor Fusion for Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2610.16012",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.36227/techrxiv.177100288.88303656/v1",
+        "title": "Adversarial Robustness in Embodied AI: A Closed-Loop Perspective on Attacks and Defenses",
+        "url": "https://doi.org/10.36227/techrxiv.177100288.88303656/v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2506.13285",
+        "title": "DualEdit: Mitigating Safety Fallback in LLM Backdoor Editing via Affirmation-Refusal Regulation",
+        "url": "https://doi.org/10.48550/arxiv.2506.13285",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.21227/4ws7-xy64",
+        "title": "\"Experimental Results for Adversarially Robust Edge Intelligence Across CARLA, nuScenes, Waymo, and KITTI\"",
+        "url": "https://doi.org/10.21227/4ws7-xy64",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1145/3831673",
+        "title": "Adversarial Attacks and Defenses of Image Classification: A Comprehensive Survey",
+        "url": "https://doi.org/10.1145/3831673",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.ijcce.2026.06.003",
+        "title": "A survey of adversarial threats and defenses for traffic sign recognition in autonomous vehicles",
+        "url": "https://doi.org/10.1016/j.ijcce.2026.06.003",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-024-11014-8",
+        "title": "Deep learning adversarial attacks and defenses in autonomous vehicles: a systematic literature review from a safety perspective",
+        "url": "https://doi.org/10.1007/s10462-024-11014-8",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.trip.2024.101033",
+        "title": "Automated driving regulations – where are we now?",
+        "url": "https://doi.org/10.1016/j.trip.2024.101033",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tits.2024.3474469",
+        "title": "Explainable AI for Safe and Trustworthy Autonomous Driving: A Systematic Review",
+        "url": "https://doi.org/10.1109/tits.2024.3474469",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2604.08535",
+        "title": "Fail2Drive: Benchmarking Closed-Loop Driving Generalization",
+        "url": "https://doi.org/10.48550/arxiv.2604.08535",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr52733.2024.01432",
+        "title": "LMDrive: Closed-Loop End-to-End Driving with Large Language Models",
+        "url": "https://doi.org/10.1109/cvpr52733.2024.01432",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2508.02028",
+        "title": "Bench2ADVLM: A Closed-Loop Benchmark for Vision-language Models in Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2508.02028",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2512.16055",
+        "title": "Driving in Corner Case: A Real-World Adversarial Closed-Loop Evaluation Platform for End-to-End Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2512.16055",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.10904",
+        "title": "MDrive: Benchmarking Closed-Loop Cooperative Driving for End-to-End Multi-agent Systems",
+        "url": "https://doi.org/10.48550/arxiv.2605.10904",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2609.06368",
+        "title": "LANTERN: A Closed-Loop Benchmark for VLM-Based Cooperative Driving with Temporally Grounded Warnings",
+        "url": "https://doi.org/10.48550/arxiv.2609.06368",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1049/itr2.70115",
+        "title": "Benchmarking Recovery Methods for Adversarial Traffic Signs in Autonomous Driving",
+        "url": "https://doi.org/10.1049/itr2.70115",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.06469",
+        "title": "Odyssey: A Closed-Loop Benchmark for Long-Horizon Real-World Driving with Explicit Navigation Routes",
+        "url": "https://doi.org/10.48550/arxiv.2610.06469",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/iv66570.2026.11623929",
+        "title": "nuPlan-R: A Closed-Loop Planning Benchmark for Autonomous Driving via Reactive Multi-Agent Simulation",
+        "url": "https://doi.org/10.1109/iv66570.2026.11623929",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       }
     ],
     "sourceLimitations": [
@@ -1589,39 +2787,48 @@
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 9,
-        "note": "2026-11-06 对当前原始Markdown执行rg -l -i，共42个文件命中；按方向标签与revisionOf归并得34个候选，其余8个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving security GNSS spoofing VLM deadline attack adversarial defense fallback",
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving security attacks defense",
         "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 50,
-        "acceptedCount": 1,
-        "note": "ARIS arxiv_fetch.py 与 arXiv 一手摘要页用于候选发现、版本日期和预印本状态核验；正式出版状态不由 arXiv 自述升级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "limit": 12,
+        "acceptedCount": 5,
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving security GNSS spoofing VLM deadline attack adversarial defense fallback official proceedings journal DOI",
-        "endpoint": "https://www.google.com/search",
-        "limit": 50,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json",
+        "endpoint": "https://doi.org/10.1109/OJVT.2023.3265363",
+        "limit": 15,
         "acceptedCount": 15,
-        "note": "逐项回到 DOI、出版社、正式会议或期刊页面核对标题、作者、年份、venue 与出版状态；正式页为主 URL，并保留可用 arXiv 入口。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       },
       {
         "sourceFamily": "semantic-scholar",
         "status": "limited",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1109/ojvt.2023.3265363",
-        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/",
-        "limit": 1,
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving security attacks defense",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。服务限流或该ID未命中；不解释为论文不存在。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "semantic-scholar",
           "status": "success",
@@ -1631,17 +2838,26 @@
           "limit": 20,
           "acceptedCount": 0,
           "note": "用于候选发现和书目交叉核对；本轮没有以聚合器记录作为最终论据或出版状态依据。"
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1109/ojvt.2023.3265363",
-        "endpoint": "https://api.openalex.org/works/",
-        "limit": 1,
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving security attacks defense",
+        "endpoint": "https://api.openalex.org/works",
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "openalex",
           "status": "success",
@@ -1651,29 +2867,69 @@
           "limit": 20,
           "acceptedCount": 0,
           "note": "用于 DOI、年份和来源交叉核对；宽泛返回经范围筛选，最终支持与限制均回到一手论文或正式页面。"
-        }
+        },
+        "queryLimits": [
+          12,
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "autonomous driving security GNSS spoofing VLM deadline attack adversarial defense fallback official project code dataset standard",
-        "endpoint": "https://www.google.com/search",
-        "limit": 50,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json",
+        "endpoint": "https://eur-lex.europa.eu/eli/reg/2021/388/oj/eng/pdf",
+        "limit": 1,
         "acceptedCount": 1,
-        "note": "核对标准机构、作者项目页、代码和数据入口；资产存在只证明可访问性，不用于升级同行评审状态或现实安全证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json"
       }
     ],
-    "refreshMode": "incremental-local-corpus",
+    "refreshMode": "primary-source-and-literature-refresh",
     "sourceRevalidation": {
-      "checkedAt": "2026-09-22",
-      "referenceCount": 26,
-      "priorCoreReviewedAt": "2026-08-01",
-      "manifestPath": "docs/research-updates/2026-09-22/review-source-manifest.json",
-      "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
-      "claimRecordsPath": "docs/research-updates/2026-09-22/review-source-claims.json",
-      "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+      "checkedAt": "2026-11-06",
+      "scope": "逐项核对当前保留的书目与论断；阅读深度按引用记录，公开范围足以支撑的论断不要求付费标准全文。并非声明所有论文逐字全文阅读。",
+      "referenceIds": [
+        "cybersecurity-survey-2023",
+        "robust-physical-attacks-2018",
+        "lidar-blackbox-attack-2020",
+        "gps-fusionripper-2020",
+        "dirty-road-2021",
+        "invisible-camera-lidar-2021",
+        "camera-lidar-frustum-2022",
+        "lane-backdoor-2022",
+        "lidar-removal-2023",
+        "trajectory-prediction-attack-2024",
+        "collaborative-perception-fabrication-2024",
+        "maat-e2e-adversarial-training-2024",
+        "bad-vlm-driver-2024",
+        "advlm-2026",
+        "cad-vlm-blackbox-2025",
+        "unece-r156-2021",
+        "revisiting-attacks-2025",
+        "reasonbreak-2026",
+        "bench2drive-robust-2026",
+        "baddreamer-2026",
+        "ad2-2026",
+        "world-model-admissibility-2026",
+        "trustworthy-vlm-attacks-2025",
+        "gnss-vlm-spoofing-2026",
+        "denial-deadline-2026",
+        "obsdrivebench-2026",
+        "adversarial-calibration-2026",
+        "cross-modal-phantom-2026",
+        "stca-video-attack-2026",
+        "adv0-2026"
+      ],
+      "authorEvidence": "docs/center-updates/2026-11-06/authoring/embodied/existing-reference-semantic-revalidation.json",
+      "newReferenceEvidence": "docs/center-updates/2026-11-06/authoring/embodied/new-references.json",
+      "publicScopeClosure": "docs/center-updates/2026-11-06/authoring/embodied/parent-public-scope-closure.json",
+      "independentApproval": "pending"
     },
     "metadataCorroboration": {
       "checkedAt": "2026-09-22",
@@ -1681,7 +2937,11 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-11-06",
-    "localRefreshNote": "2026-11-06 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。"
+    "currentRefreshArtifacts": {
+      "retrieval": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-security-evidence-packet.json",
+      "authoring": "docs/center-updates/2026-11-06/authoring/embodied/",
+      "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "discoveryAliasMerges": []
   }
 }

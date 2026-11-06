@@ -2,24 +2,23 @@
   "version": 3,
   "id": "agentic-driving",
   "title": "驾驶智能体：工具、记忆、推理与动作控制",
-  "subtitle": "梳理驾驶 Agent 如何调用工具和记忆、形成动作，以及快慢控制和独立安全层如何处理认知错误。",
-  "abstract": "驾驶智能体通过记忆、工具调用和证据检索持续更新状态，再借助世界模型或结构化推理形成动作。现有研究主要沿工具编排、端到端 VLA、快慢双过程和多车协商展开，安全层负责拒绝、回退或继续执行。组件研究也揭示了具体问题：ObsDriveBench 用多选题诊断恶劣天气下的多模态可观测性；IEDD 从五个既有轨迹库派生交互片段与分层 VQA，涉及来源重叠、viewer 可用性和域内微调后的反事实能力退化；GNSS-VLM 使用公共道路日志，但攻击轨迹在接收机输出层离线合成，单次 VLM 推理约 0.5 秒。这些结果为“慢认知、快控制、独立否决”的架构提供依据，全频语言模型控制仍缺少相应验证。",
-  "reviewedAt": "2026-09-22",
-  "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。",
+  "subtitle": "研究对象是可更新的场景状态、可调用的知识与工具，以及它们对具体动作的作用。",
+  "abstract": "新进展让问题更具体。STEER 学习什么时候推理，GeoCoTDrive 学习推理应读取哪一块几何信息，DriveVLA-M0 用失败经验适配当前规划。TNAS 与 Reasoning–Action Coupling 则提示文字理由和动作可能使用不同信息。下一步可以直接研究行动相关表征怎样被获取、记忆与使用，而不必要求每个模型先给出一套完美的自然语言解释。[steer-2026, geocotdrive-2026, drivevla-m0-2026, tnas-2026, reasoning-action-coupling-2026]",
+  "reviewedAt": "2026-11-06",
+  "searchWindow": "基础文献与近年方法并列比较；2026-11-06 重新打开既有引用的一手正文并核对当前论断，补读近期本库与外部近邻。查询执行、受限来源与候选去向见检索审计；本次阅读为论断级复核，不表示逐篇复现实验。",
   "researchQuestions": [
-    "工具、记忆和 RAG 在什么条件下改善长尾驾驶决策，怎样阻止陈旧、冲突或无关证据进入动作链？",
-    "语言解释、视觉思维链和世界模型中间表征如何影响动作？怎样区分因果作用与事后解释？",
-    "双过程路由如何决定何时启用慢推理，并在漏触发、超时或低置信度时保持可恢复控制？",
-    "多智能体协商在相同通信、延迟和计算预算下是否优于单车策略，冲突或无共识时由谁掌握控制权？",
-    "受约束认知层如何把规则、物理边界和不确定性转化为可执行的安全包络？"
+    "哪些局部证据真正改变动作，而不只改变理由？",
+    "何时值得推理、查工具或使用记忆？",
+    "失败经验应按什么结构组织才能帮助新场景？",
+    "短期状态和长期经验如何在固定延迟预算内共同工作？"
   ],
   "sections": [
     {
       "id": "scope",
       "kind": "scope",
-      "title": "驾驶智能体与感知、诊断组件的分工",
-      "thesis": "驾驶智能体需要更新状态、调用认知或工具能力、执行动作并接收环境反馈；数据集、MCQ 基准和语义监视器分别验证其中的组件。",
-      "body": "GPT-Driver 把运动规划重写为语言建模问题，LanguageMPC 把 LLM 高层决策经参数适配接入低层控制器，DriveGPT4 则把视频理解、解释与低层控制放进同一视觉语言接口，它们奠定了语言参与规划和动作生成的基础。DiLu 用推理、经验记忆和反思构成知识驱动 Agent；Agent-Driver 进一步引入工具库、认知记忆、自反思与任务规划；LMDrive 则在 CARLA 中证明语言指令能够进入连续驾驶控制。由此，本综述把“驾驶智能体”限定为能够依据当前状态选择推理路径、调用外部能力或更新记忆，并让结果实际影响后续动作的系统。\n\n范围内系统包括工具编排型 Agent、端到端 VLA、世界模型式视觉思考、快慢双过程、检索增强规划和多车协商。静态 QA、字幕、规则问答与离线轨迹预测可以提供组件证据，但不能单独证明交互闭环；NAVSIM 也主要是非反应式规划代理评测。DriveGPT4-V2、LMDrive 等提供 CARLA 闭环；DriveVLM-Dual 与 Talk2Drive 进一步提供有限受控实车证据。评估部署效果还需要动作改变后的反馈、场景与里程、接管和安全驾驶员、尾时延及失败记录，现有工作仍没有公开可复核的长时道路或车队安全证明。\n\n2026-08-01 增量纳入的工作分别补充了感知、数据和监视环节。ObsDriveBench 测量相机、LiDAR、雷达在恶劣天气中的可观测性与风险判断，IEDD 提供来源可追溯的交互轨迹和分层 VQA，GNSS-VLM 则把视觉与运动信息接成外部导航行为监视器；三者都能进入驾驶 Agent 的感知、证据或安全监督层，但都没有执行完整感知-规划-控制闭环。本综述将其归入认知组件与评测基础设施。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "认知怎样参与驾驶，而不只是解释驾驶",
+      "thesis": "研究对象是可更新的场景状态、可调用的知识与工具，以及它们对具体动作的作用。",
+      "body": "GPT-Driver、LanguageMPC 和 DriveGPT4 建立语言模型到规划或控制的早期接口。DiLu 与 Agent-Driver 加入记忆、工具和反思，LMDrive、DriveGPT4-V2 与 SimLingo 将语言能力接入 CARLA 闭环。它们提供不同切入点：语言可以生成动作、辅助决策，也可以组织其他模块。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024, lmdrive-2024, drivegpt4-v2-2025, simlingo-2025]\n\n新进展让问题更具体。STEER 学习什么时候推理，GeoCoTDrive 学习推理应读取哪一块几何信息，DriveVLA-M0 用失败经验适配当前规划。TNAS 与 Reasoning–Action Coupling 则提示文字理由和动作可能使用不同信息。下一步可以直接研究行动相关表征怎样被获取、记忆与使用，而不必要求每个模型先给出一套完美的自然语言解释。[steer-2026, geocotdrive-2026, drivevla-m0-2026, tnas-2026, reasoning-action-coupling-2026]",
       "referenceIds": [
         "gpt-driver-2023",
         "languagempc-2023",
@@ -28,160 +27,124 @@
         "agent-driver-2024",
         "lmdrive-2024",
         "drivegpt4-v2-2025",
-        "drivevlm-2025",
-        "talk2drive-2024",
-        "vla-survey-2025",
-        "obsdrivebench-2026",
-        "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "simlingo-2025",
+        "steer-2026",
+        "geocotdrive-2026",
+        "drivevla-m0-2026",
+        "tnas-2026",
+        "reasoning-action-coupling-2026"
       ]
     },
     {
       "id": "evolution",
       "kind": "evolution",
-      "title": "从语言规划到工具调用、记忆与监督",
-      "thesis": "语言规划逐步扩展到工具、记忆和世界模型；近期研究进一步检查证据来源、可观测性和外部行为监视。",
-      "body": "2023 年的 GPT-Driver 与 LanguageMPC 分别把轨迹语言化、把 LLM 决策接入 MPC，DriveGPT4 随后把场景语义、解释与控制纳入多模态接口；GPT-Driver 是 NeurIPS 2023 Workshop，DriveGPT4 后来正式发表于 RA-L 2024，而 LanguageMPC 截至审计日仍是预印本。DiLu 把推理、记忆与反思接入交互环境，Agent-Driver 再把工具调用、经验记忆和任务规划组织成认知代理。LMDrive 与 DriveGPT4-V2 把语言/多模态能力带入 CARLA 闭环；DriveVLM-Dual 和 Talk2Drive 则分别报告生产车辆和有安全驾驶员的受控场地原型，研究开始从“模型是否理解”转向“理解是否影响可执行行为”。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024, lmdrive-2024, drivegpt4-v2-2025, drivevlm-2025, talk2drive-2024]\n\n到 2025 年，SimLingo 显式训练语言与动作对齐，AgentThink 训练动态工具调用，CoLMDriver 用 critic/evaluator 反馈迭代改写协商方案，而不是 actor-critic 强化学习；LangCoop 则把多车共享压缩为自然语言消息，在 CARLA 闭环中比较通信开销与驾驶表现。2026 年的 DrivingAgent、VLADriver-RAG 与 KnowVal 分别推进持续调度、结构化场景检索与法规知识图谱；X-Mind 与 HyWorldVLA 将未来预测内化为视觉或潜空间思考。双过程规划用视觉 Arbiter 决定快慢路径，VLM-CASE 把语义判断约束在物理/RSS 包络内。ReasonBreak 的开环实验在 195 个样本上固定视觉并搜索文本扰动；闭环则把 50 个 NuRec clips 部署到 AlpaSim，每步只采样一次文本扰动，执行轨迹会改变后续视觉观测。两部分都显示语言通道会联动推理和行为，但仍不能建立“推理错误中介碰撞”的因果效应。[simlingo-2025, agentthink-2025, colmdriver-2025, langcoop-2025, drivingagent-2026, vladriver-rag-2026, knowval-2026, x-mind-2026, hyworldvla-2026, cognitive-dual-process-2026, vlm-case-2026, reasonbreak-2026]\n\n2026 年 7 月底的三项工作分别关注能力诊断、数据组织和导航监视。ObsDriveBench 揭示模型 fallback 选择较强时仍可能缺少风险定位和轨迹判断；IEDD 的正式数据论文把交互检索、物理指标、BEV 与 L1-L4 问答绑定到来源记录，同时显示域内 LoRA 会严重损害未训练的反事实任务；GNSS-VLM 则用语义行为一致性补充传统定位完整性检查。它们把评价范围扩展到证据来源、能力断层与监视时延，闭环控制表现仍待验证。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "从语言接口到自适应推理、几何与记忆",
+      "thesis": "方法逐渐将推理成本和可执行信息放入训练目标。",
+      "body": "早期系统把场景写入提示并生成坐标或高层命令。DriveVLM 将复杂场景理解与传统驾驶栈结合；Talk2Drive 在受控实车任务中探索个性化记忆。后续 AgentThink 学习动态工具调用，KnowVal 检索驾驶知识并对轨迹估值，DrivingAgent 区分系统设计与运行时调度。[drivevlm-2025, talk2drive-2024, agentthink-2025, knowval-2026, drivingagent-2026]\n\n双过程规划利用视觉 Arbiter 选择快慢路径；STEER 进一步在同一输入下比较两条路线的环境回报，把路由选择本身作为学习对象。GeoCoTDrive 用局部三维先验补足语义上下文；X-Mind 与 HyWorldVLA 将未来视觉或潜状态带入动作生成。这些做法改变了模型可以使用的信息，而不仅仅是延长推理文本。[cognitive-dual-process-2026, steer-2026, geocotdrive-2026, x-mind-2026, hyworldvla-2026]\n\n记忆也从案例拼接走向适配。VLADriver-RAG 按场景图检索，DriveVLA-M0 保存失败潜状态并在测试时更新小型 LoRA；Hindsight/Foresight 联合短期状态、长期工具经验与离线巩固。后一工作主要验证推理任务，这个边界使它适合作为迁移机制的起点，而不是直接当作驾驶方法已被覆盖。[vladriver-rag-2026, drivevla-m0-2026, hindsight-foresight-2026]",
       "referenceIds": [
-        "gpt-driver-2023",
-        "languagempc-2023",
-        "drivegpt4-2023",
-        "dilu-2024",
-        "agent-driver-2024",
-        "lmdrive-2024",
-        "drivegpt4-v2-2025",
         "drivevlm-2025",
         "talk2drive-2024",
-        "simlingo-2025",
         "agentthink-2025",
-        "colmdriver-2025",
-        "langcoop-2025",
-        "drivingagent-2026",
-        "vladriver-rag-2026",
         "knowval-2026",
+        "drivingagent-2026",
+        "cognitive-dual-process-2026",
+        "steer-2026",
+        "geocotdrive-2026",
         "x-mind-2026",
         "hyworldvla-2026",
-        "cognitive-dual-process-2026",
-        "vlm-case-2026",
-        "reasonbreak-2026",
-        "obsdrivebench-2026",
-        "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "vladriver-rag-2026",
+        "drivevla-m0-2026",
+        "hindsight-foresight-2026"
       ]
     },
     {
       "id": "taxonomy",
       "kind": "taxonomy",
-      "title": "工具、检索、世界模型与协商如何接入动作",
-      "thesis": "比较这些系统时，可依次检查状态由谁维护、证据来源、动作生成与验证、监视结果的时效，以及失败后的控制权归属。",
-      "body": "第一类是工具与记忆编排型 Agent。DiLu 用记忆与反思积累经验，Agent-Driver 通过函数调用连接感知、预测和规划工具，AgentThink 训练模型选择工具，DrivingAgent 再把长短期记忆用于持续系统调度。第二类是检索增强认知：VLADriver-RAG 把视觉场景压缩为时空语义图后检索历史先验，KnowVal 从交通法规、防御性驾驶和伦理知识图谱中检索规则并用价值模型评价轨迹。两类方法都需要检查检索证据是否适用于当前动作，尤其是过期、冲突或场景不匹配的记录。\n\n第三类是联合 VLA 与语言-动作对齐，SimLingo 联合驾驶、视觉语言理解和 Action Dreaming，DriveGPT4-V2 在多视角 CARLA 闭环中生成高层决策、航点和控制。第四类是世界模型认知，X-Mind 以紧凑 BEV 未来草图作为视觉思维链，HyWorldVLA 结合像素监督和潜空间未来建模。第五类是快慢双过程与受约束认知层，前者用轻量路由器只在复杂场景启动结构化推理，后者如 VLM-CASE 将语义判断转成摩擦、制动和转向边界；其保证依赖 VLM 语义判定、摩擦估计、车辆动力学边界、RSS 参数和异步结果不过期等假设，必须把假设失效纳入测试。\n\n第六类是多智能体协商与意图通信。CoLMDriver 通过前述 critic/evaluator 反馈改写协商草案，再迭代生成合作航点。LangCoop 用结构化视觉语言推理和语言打包把共享信息压缩为自然语言消息，MDrive 则在闭环多车环境中比较共享与协作机制。三者分别回答协商生成、通信表征和统一评测，多 Agent 的收益同时受到通信、共识等待、错误传播和控制权仲裁的影响。第七类是 VLM 辅助的双系统原型：DriveVLM-Dual 让传统栈补足 VLM 空间推理和实时性，Talk2Drive 把语言个性化模块接到受控实车。有限原型支持可行性，却没有隔离每个认知模块的净安全贡献。\n\n第八类可称为诊断与监督基础设施。ObsDriveBench 属于能力分解基准，IEDD 属于带 provenance 的派生交互数据，GNSS-VLM 属于异步语义监视器。它们分别回答“模型看见了什么”“训练和评测样本从哪里来”“定位输出是否与独立行为证据一致”，却不承担最终轨迹生成。工程上应让这类模块输出带时间戳、来源和适用包络的结构化证据，由独立安全层决定是否降级；接入语言上下文时也应记录时效和冲突检查结果，以便追踪错误传播。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "按认知状态、调用动作和输出接口比较",
+      "thesis": "先说模型读什么、做什么、更新什么，再讨论它是否像人思考。",
+      "body": "认知状态可为自然语言、场景图、局部几何或预测潜状态。KnowVal 的规则图谱和 GeoCoTDrive 的三维区域特征提供不同外部信息；X-Mind 的未来草图与 HyWorldVLA 的潜未来提供时间信息。它们可在相同规划器上比较，区分“增加了信息”和“改进了推理程序”。[knowval-2026, geocotdrive-2026, x-mind-2026, hyworldvla-2026]\n\n调用动作包括检索、工具查询、切换推理路线和更新参数。STEER 的路由奖励、AgentThink 的工具使用训练、DriveVLA-M0 的测试时 LoRA 分别改变不同环节。保存案例与更新权重不能混成一个 memory 指标，应报告写入时机、检索依据和当前场景可见的信息。[steer-2026, agentthink-2025, drivevla-m0-2026]\n\n输出接口可以是轨迹、离散 meta-action、控制参数或多车协商消息。CoLMDriver 和 LangCoop 让语言影响多车行动，VLM-CASE 用语义环境判断调整动力学安全包络。接口越具体，越容易设计替换或干预实验观察其作用。[colmdriver-2025, langcoop-2025, vlm-case-2026]",
       "referenceIds": [
-        "dilu-2024",
-        "agent-driver-2024",
-        "agentthink-2025",
-        "drivingagent-2026",
-        "vladriver-rag-2026",
         "knowval-2026",
-        "simlingo-2025",
-        "drivegpt4-v2-2025",
+        "geocotdrive-2026",
         "x-mind-2026",
         "hyworldvla-2026",
-        "cognitive-dual-process-2026",
-        "vlm-case-2026",
+        "steer-2026",
+        "agentthink-2025",
+        "drivevla-m0-2026",
         "colmdriver-2025",
         "langcoop-2025",
-        "mdrive-2026",
-        "drivevlm-2025",
-        "talk2drive-2024",
-        "obsdrivebench-2026",
-        "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "vlm-case-2026"
       ]
     },
     {
       "id": "evidence",
       "kind": "evidence",
-      "title": "评测认知作用、响应时延与闭环行为",
-      "thesis": "评测需记录认知模块的触发依据、动作变化、响应延迟和错误拦截结果；问答、派生数据、道路日志与闭环执行分别支持不同判断。",
-      "body": "证据应按层级解读。DriveGPT4、AgentThink 及大量 VQA 指标可验证语义理解、解释或工具选择，但不能证明连续控制安全；GPT-Driver 的 nuScenes 开环规划也不能替代交互反馈。HyWorldVLA 的 NAVSIM 规划与未来建模结果用于比较开环或非反应式代理性能。双过程规划则在 574 个人工核验样本上评估横纵离散动作的联合 exact-match、各类 F1 和规则一致性，不是连续轨迹 PDMS 或交互闭环结果。LMDrive、DriveGPT4-V2、SimLingo、CoLMDriver、LangCoop、VLM-CASE、ReasonBreak 和 MDrive 提供 CARLA、Longest6、Bench2Drive、AlpaSim 或 InterDrive 范围内的仿真闭环证据；DriveVLM-Dual 与 Talk2Drive 增加了受控实车证据，但没有公开足够的里程、随机对照、场景暴露、接管分母和失败轨迹，不能外推为大规模道路安全。LangCoop 报告相对图像通信减少 96% 带宽且单条消息低于 2 KB，同时保持有竞争力的闭环表现；该通信—任务折中来自特定 CARLA 协议，现实 V2X 的可靠性与安全表现尚待测量。[langcoop-2025]\n\nReasonBreak 分别采用两种评测协议：开环部分在固定视觉输入的 195 个样本上用 Best-of-100 查询搜索测量有限预算下可发现的黑盒操纵效果；闭环部分把 50 个 NuRec clips 部署到 AlpaSim，每步只随机采样一次文本腐蚀，执行轨迹会改变后续视觉观测。闭环条件不是目标化或自适应对手，安全指标也是后验影响表征。两部分证明语言通道可影响行为，却没有做跨 VLA、真实车辆或中介因果分析；良性文本变化本身也会触发输出不稳定，因此，推理错误是否中介碰撞、扰动能否在现实中实现，仍是待验证问题。[reasonbreak-2026]\n\n评测应在任务指标之外报告认知触发精确率与漏触发率、工具选择和参数正确率、检索命中与证据时效、推理-动作一致率、协商达成率、平均与尾部延迟、回退频次及安全层否决率。还需要反事实干预：删除或替换记忆，注入冲突检索结果，延迟工具返回，交换语言理由，屏蔽世界模型中间态，或加入不合作车辆，再比较动作和闭环后果。VLM-CASE 还应分别扰动语义分类、摩擦系数、车辆模型和结果时效，验证安全包络在假设破坏后能否保守回退。\n\n三项组件研究还需要按样本构造和执行方式解读。ObsDriveBench 从约 1.4k/1.3k 帧生成 14k+/13k+ 训练/测试题，评测为 MCQ 任务；正文称 14 个现成模型，表 1 具名行计 15 个，另有 2 个 ObsDrive 训练版，数量表述不一致，ObsDrive-RL 的 65.31/83.85/86.44 三类得分描述答题表现，轨迹安全需通过执行评测。IEDD 的 7,313,985 个片段来自五个既有轨迹库的再切片，必须按原始 scene/provenance 去重；在线 viewer 异常不等于归档损坏，却要求固定版本下载和 schema smoke test。GNSS-VLM 的验证日志来自公共道路，但攻击是离线坐标层注入；其 559/3999 次调用降低平均负担，单次 468-522 ms 的 A100 延迟仍可能错过控制时限。下一步需把这些输出接到可执行规划器，记录动作差值、闭环后果和回退时限，检验其系统安全作用。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "同时测量任务表现、认知作用与计算成本",
+      "thesis": "问答、规划、场景理解和闭环执行各有对应指标，比较时应保留任务单位。",
+      "body": "AgentThink 与 Hindsight/Foresight 的推理/MCQ 结果说明工具和记忆可以提高认知任务表现。ObsDriveBench 从真实恶劣天气数据诊断可观测性、空间理解和风险选择；IEDD 则将五个轨迹库重新组织成交互片段与 BEV/VQA。两类数据都能支持问题发现，但派生片段应按原始场景划分，避免同源轨迹泄漏。[agentthink-2025, hindsight-foresight-2026, obsdrivebench-2026, iedd-2026]\n\n规划证据同样要区分协议：双过程规划预测离散高层动作，STEER 和 DriveVLA-M0 使用 NAVSIM v1/v2；LMDrive、SimLingo 与 CoLMDriver 提供 CARLA 交互评测。认知模块的收益还要与触发次数、检索成本、推理时延和基础策略比较。[cognitive-dual-process-2026, steer-2026, drivevla-m0-2026, lmdrive-2024, simlingo-2025, colmdriver-2025]\n\nReasoning–Action Coupling 同时编辑理由和场景对象，TNAS 则直接分解文本与动作敏感方向。它们给“理由影响动作”提供了可操作的实验设计，但各自的编辑、干预和场景集合必须保留。ReasonBreak 的开环搜索与闭环随机腐蚀也不是同一种攻击预算，不能把比例横向拼接。[reasoning-action-coupling-2026, tnas-2026, reasonbreak-2026]",
       "referenceIds": [
-        "gpt-driver-2023",
-        "drivegpt4-2023",
-        "lmdrive-2024",
-        "drivegpt4-v2-2025",
-        "drivevlm-2025",
-        "talk2drive-2024",
-        "simlingo-2025",
         "agentthink-2025",
-        "colmdriver-2025",
-        "langcoop-2025",
-        "cognitive-dual-process-2026",
-        "hyworldvla-2026",
-        "vlm-case-2026",
-        "reasonbreak-2026",
-        "mdrive-2026",
+        "hindsight-foresight-2026",
         "obsdrivebench-2026",
         "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "cognitive-dual-process-2026",
+        "steer-2026",
+        "drivevla-m0-2026",
+        "lmdrive-2024",
+        "simlingo-2025",
+        "colmdriver-2025",
+        "reasoning-action-coupling-2026",
+        "tnas-2026",
+        "reasonbreak-2026"
       ]
     },
     {
       "id": "challenges",
       "kind": "challenges",
-      "title": "错误工具、过期记忆与异步监视",
-      "thesis": "工具、记忆、RAG、协商和监视器扩展了能力，也会引入来源重叠、标签偏差、异步过期和级联错误，需要逐接口追踪。",
-      "body": "工具增强系统面临选择错误、参数错误、异步返回和模块分布外输出；记忆与 RAG 面临时间漂移、错误归因、相似但不适用案例和知识冲突。DiLu、DrivingAgent、VLADriver-RAG 与 KnowVal 展示了记忆和检索潜力，但尚缺少跨城市、地图更新、天气变化和蓄意污染下的长期连续验证。世界模型与视觉思维链可能预测视觉上合理但控制上错误的未来；X-Mind 和 HyWorldVLA 的结果也不能仅凭 NAVSIM 或离线数据外推到真实交互环境。\n\n多智能体协商还需处理通信丢包、身份与意图欺骗、异步认知和无共识回退。CoLMDriver 的 InterDrive 结果、LangCoop 的语言消息压缩与 MDrive 的闭环基准说明协商收益和通信代价都具有场景依赖性，尚不足以证明开放交通中的净安全收益。LangCoop 没有覆盖真实 V2X 时延、丢包、带宽竞争、身份认证或恶意消息；低字节数也不等于信息及时、可信和可执行。语言通道本身同样不是可信控制接口：SimLingo 说明语言与动作需要专门对齐，ReasonBreak 只证明文本扰动可在有限模型和模拟场景中联动推理、轨迹与安全结果，尚未证明普遍的因果中介或现实攻击成功率。\n\n受控车辆原型的实验条件也限制了结论范围。DriveVLM-Dual 报告生产车辆部署，Talk2Drive 在高速、路口和停车等受控场景用安全驾驶员和接管率评估个性化，但公开资料不足以重建暴露量、随机化、基线控制、事故/险情或 99 分位时延。这些原型已提供实车可行性证据，长时公共道路表现、独立安全论证和跨版本回归仍缺少公开资料。\n\n数据和监视接口的新风险已经具体化。ObsDriveBench 的题目由同类 VLM 生成、强模型精炼并人工核验，仍可能保留题型和措辞偏置；IEDD 的多源再切片会把相邻片段或同一交互重复加权，且域内微调使 L4 反事实分数从 4.66 降到 0.19，提示域内适配可能损害未训练的开放推理任务；GNSS-VLM 对明显语义冲突有效，却可能漏掉保持转向/运动语义一致的慢漂移，也没有验证真实 RF、联合传感器攻击或报警后的最小风险控制。接入这三类组件时，应记录 provenance、版本和时效，并明确失败后的回退方式。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "行动信息的分配、记忆适用性与时间尺度",
+      "thesis": "最有用的研究问题是模型为何使用或忽略某条信息，以及怎样让学习改变这种选择。",
+      "body": "自然语言可以表达正确理由，却没有进入决定动作的表征通道。TNAS 的结果与场景级反事实研究共同提示，应直接测量行动敏感特征，而不是只约束文本流畅或前后自洽。GeoCoTDrive 提供几何信息入口，可进一步研究哪些局部证据应改变哪类动作。[tnas-2026, reasoning-action-coupling-2026, geocotdrive-2026]\n\n检索到相似案例不意味着相同动作适用。VLADriver-RAG 侧重拓扑，DriveVLA-M0 侧重失败和快速适配；可以比较结构相似、行为后果相似和反例相似三种检索目标。正结果会指导记忆如何组织；无增益也能说明模型已有表征已包含什么。[vladriver-rag-2026, drivevla-m0-2026]\n\n慢认知与快动作处在不同时间尺度。DrivingAgent、STEER 和 VLM-CASE 分别从调度、推理路线与控制接口处理这个问题。可让时间预算进入学习目标，检查在同等延迟下哪些信息最值得等待；GNSS-VLM 的语义监测和 Talk2Drive 的个性化任务提供另外两类接口参照。[drivingagent-2026, steer-2026, vlm-case-2026, vlm-gnss-spoofing-2026, talk2drive-2024]",
       "referenceIds": [
-        "dilu-2024",
-        "drivingagent-2026",
+        "tnas-2026",
+        "reasoning-action-coupling-2026",
+        "geocotdrive-2026",
         "vladriver-rag-2026",
-        "knowval-2026",
-        "x-mind-2026",
-        "hyworldvla-2026",
-        "colmdriver-2025",
-        "langcoop-2025",
-        "mdrive-2026",
-        "simlingo-2025",
-        "reasonbreak-2026",
-        "drivevlm-2025",
+        "drivevla-m0-2026",
+        "drivingagent-2026",
+        "steer-2026",
+        "vlm-case-2026",
+        "vlm-gnss-spoofing-2026",
         "talk2drive-2024",
         "vla-survey-2025",
-        "obsdrivebench-2026",
-        "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "mdrive-2026"
       ]
     },
     {
       "id": "outlook",
       "kind": "outlook",
-      "title": "用干预实验检验推理与动作的关系",
-      "thesis": "后续实验应把诊断、检索和监视结果接入可执行动作，以闭环结果、响应时限和失败阈值评估收益。",
-      "body": "**慢路径路由实验。**快速基础策略持续给出动作，认知路由器只在感知冲突、预测多模态或安全余量不足时启动工具、记忆或 VLM。预注册触发精确率/召回率、危险漏触发率、99 分位时延和碰撞/违规差值置信区间；以同算力常开、随机触发和不启用慢路径为对照。若安全收益区间跨零、漏触发上界或尾时延超预算，就拒绝慢路径净收益并回退基础策略。[cognitive-dual-process-2026, agentthink-2025, drivingagent-2026]\n\n**证据与包络干预实验。**先预注册 evidence-sensitive 场景及期望动作或包络差值，再对 VLADriver-RAG/KnowVal 注入过期、冲突和近邻但不适用的证据；冗余或与当前动作无关的证据作为“应保持不变”的负对照。对 VLM-CASE 分别扰动语义判定、摩擦估计、车辆动力学参数、RSS 配置和消息时效，并以安全包络相对真实摩擦、可见度和动力学可行集的包含关系及违规率上界定义“保守”。只有在 evidence-sensitive 场景未达到预注册效应、错误证据未被拒绝，或包络违规上界失守时，才拒绝相应证据绑定或条件安全主张并进入最小风险状态。[vladriver-rag-2026, knowval-2026, vlm-case-2026]\n\n**推理因果与实车转移实验。**在相同视觉和车辆状态下交换、打乱或屏蔽理由，比较轨迹与闭环后果；用只看感知特征和只看文本的动作盲基线区分真实中介与共同输入相关。随后在 CARLA、受控场地和真实车辆上使用相同场景语义，预注册风险排序转移、接管率分母和安全驾驶员规则。若 ReasonBreak 式攻击不能跨 VLA/环境复现，或 DriveVLM/Talk2Drive 的实车收益在配对对照中消失，就将结论限定于已复现的模型和条件。[reasonbreak-2026, drivevlm-2025, talk2drive-2024]\n\n多智能体方向还应把自然语言协商压缩为可验证的意图、优先权、时限和安全约束，并以同通信、同算力单车基线比较；在与 LangCoop 相同任务上再注入时延、丢包、乱序、消息伪造和不合作车辆，按场景同时报告带宽—安全 Pareto 前沿和平均字节数。若语言协议相对二进制意图基线没有净闭环收益，或超时、冲突与不可信节点存在时不能自动回到保守单车策略，则当前实验不足以支持部署。还应检查系统能否识别需要推理、证据不足和假设失效的时刻，并在认知失败时恢复控制。[colmdriver-2025, langcoop-2025, mdrive-2026]\n\n**观测—动作与监视时限实验。**先在 ObsDriveBench 三类任务上选择同一模型的高低置信样本，再把其可观测性结论接到固定规划器的模态降权和 fallback，预注册恶劣天气碰撞/不必要停车差值、危险漏触发率与 99 分位时延。训练数据以 IEDD 原始 scene/provenance 分组，加入 viewer/归档版本检查，并用 L4 反事实保持率作为域内微调的否决条件。最后在 GNSS 坐标层离线注入、硬件在环 RF 欺骗和受控车辆三层重复相同事件，比较事件+周期触发、轻量时序基线与 VLM 监视器；若闭环安全收益区间跨零、L4 保持率跌破阈值、真实 RF 召回不能复现或报警超过制动时限，就拒绝相应部署主张并回退多源完整性检查。[obsdrivebench-2026, iedd-2026, vlm-gnss-spoofing-2026]",
+      "title": "围绕行动表征、经验使用和推理预算做实验",
+      "thesis": "每条路线先改变一个核心机制，再用正负对照找出它提供的信息。",
+      "body": "**把行动相关的几何证据变成可学习状态。**在同一开放 VLA 中，比较全局视觉特征、GeoCoTDrive 式局部几何和少量行动查询；训练只对与候选轨迹相关的对象建立中间状态。先做对象删除/位置移动与理由改写的交叉干预，再观察规划变化。以同监督量的普通特征拼接为基线，检验收益是否来自行动接口。[geocotdrive-2026, reasoning-action-coupling-2026, tnas-2026]\n\n**让失败记忆检索行为差异。**复用 DriveVLA-M0 的小型适配接口，比较场景相似、失败机制相似和相同场景下相反后果的检索。第一轮固定记忆容量、训练样本与总时延，在原始场景互斥的 split 上测恢复行为和正常任务；若收益仅来自增加标签，改进记忆机制的主张就不成立。[drivevla-m0-2026, vladriver-rag-2026, iedd-2026]\n\n**按信息价值分配思考。**以 STEER 为直接基线，在路线选择中加入工具查询或局部几何读取，预算只容许选择其中一种。先用固定模型比较同预算的常开、随机和学习选择，再训练单一信息价值目标。高风险路线可进一步研究多个时刻共享推理状态，避免每帧重新生成整段理由。[steer-2026, agentthink-2025, hindsight-foresight-2026]",
       "referenceIds": [
-        "agentthink-2025",
-        "drivingagent-2026",
+        "geocotdrive-2026",
+        "reasoning-action-coupling-2026",
+        "tnas-2026",
+        "drivevla-m0-2026",
         "vladriver-rag-2026",
-        "knowval-2026",
-        "cognitive-dual-process-2026",
-        "vlm-case-2026",
-        "reasonbreak-2026",
-        "drivevlm-2025",
-        "talk2drive-2024",
-        "colmdriver-2025",
-        "langcoop-2025",
-        "mdrive-2026",
-        "obsdrivebench-2026",
         "iedd-2026",
-        "vlm-gnss-spoofing-2026"
+        "steer-2026",
+        "agentthink-2025",
+        "hindsight-foresight-2026"
       ]
     }
   ],
   "takeaways": [
-    "Agentic Driving 的最小证据链仍是状态更新、认知或工具行动、可执行输出、环境反馈和后续修正；MCQ、数据集和语义监视器只覆盖其中部分环节。",
-    "ObsDriveBench 显示 fallback 选择、风险定位和轨迹判断的表现可能不一致；这些多选题结果还需通过动作干预检验其安全意义。",
-    "IEDD 的 7.31M 片段是五个既有轨迹库的派生样本；研究必须按 provenance 去重、固定数据版本，并把域内微调导致的反事实能力退化作为否决项。",
-    "GNSS-VLM 使用公共道路日志和离线坐标攻击检验语义行为监视，真实 RF 与控制闭环尚待评测，约 0.5 秒单次推理也需纳入安全时限。",
-    "可信架构应让慢认知和监视器按需工作，由快控制与独立安全层保留最终否决权，并在证据冲突、过期或超时时回退。"
+    "研究对象是可更新的场景状态、可调用的知识与工具，以及它们对具体动作的作用。",
+    "方法逐渐将推理成本和可执行信息放入训练目标。",
+    "先说模型读什么、做什么、更新什么，再讨论它是否像人思考。",
+    "问答、规划、场景理解和闭环执行各有对应指标，比较时应保留任务单位。",
+    "最有用的研究问题是模型为何使用或忽略某条信息，以及怎样让学习改变这种选择。",
+    "每条路线先改变一个核心机制，再用正负对照找出它提供的信息。"
   ],
   "references": [
     {
@@ -195,7 +158,7 @@
       "canonicalId": "openreview:Pvjk9lxLJK",
       "sourceFamily": "publisher-and-venue",
       "supports": "将运动规划表述为语言建模并输出轨迹坐标与自然语言决策过程，是语言模型进入驾驶规划的早期基础证据。",
-      "limitation": "主要在 nuScenes 上做开环规划评测，不能证明持续交互控制、真实道路安全或语言理由对动作的因果作用。",
+      "limitation": "主要使用 nuScenes 日志规划，语言轨迹输出需与持续反馈控制区分。",
       "url": "https://openreview.net/forum?id=Pvjk9lxLJK",
       "links": [
         {
@@ -215,7 +178,7 @@
       "canonicalId": "arxiv:2310.03026",
       "sourceFamily": "arxiv",
       "supports": "用认知路径生成高层驾驶决策，再经参数矩阵适配接入低层 MPC，提供 LLM 决策到可执行控制的早期方案。",
-      "limitation": "截至审计日仍缺少正式发表和真实车辆闭环；受控场景中的单车/多车结果不能支持开放道路安全或实时性。",
+      "limitation": "SUMO/IDSim 的五类驾驶场景比较高层决策与 MPC；LLM 调用和底层控制处在不同时间尺度。",
       "url": "https://arxiv.org/abs/2310.03026"
     },
     {
@@ -229,7 +192,7 @@
       "canonicalId": "doi:10.1109/lra.2024.3440097",
       "sourceFamily": "publisher-and-venue",
       "supports": "把多帧视频、文本问答、驾驶解释与低层控制信号统一到视觉语言模型接口，奠定早期 VLA 式驾驶范式。",
-      "limitation": "核心结果依赖 BDD-X 离线数据和问答/控制指标，缺少可核验的交互闭环与独立安全约束。",
+      "limitation": "主要任务是 BDD-X 的离线解释、问答与控制预测，结果对应该数据和评价设置。",
       "url": "https://doi.org/10.1109/LRA.2024.3440097",
       "links": [
         {
@@ -249,7 +212,7 @@
       "canonicalId": "openreview:OqTMUPuLuC",
       "sourceFamily": "publisher-and-venue",
       "supports": "把交互环境、LLM 驾驶 Agent、经验记忆、推理与反思连接起来，提供知识驱动持续改进的早期正式证据。",
-      "limitation": "实验基于 Highway-env 的五种离散元动作；CitySim 真实轨迹只用于记忆经验转移，不是实车执行。正文报告 5–10 秒决策延迟，且仍存在幻觉；记忆污染和车端持续闭环尚未充分验证。",
+      "limitation": "Highway-env 使用五种离散动作；CitySim 轨迹用于记忆转移。正文报告每次决策约 5–10 秒。",
       "url": "https://openreview.net/forum?id=OqTMUPuLuC",
       "links": [
         {
@@ -269,7 +232,7 @@
       "canonicalId": "cvf:cvpr2025:xu-drivegpt4-v2",
       "sourceFamily": "publisher-and-venue",
       "supports": "以多视角图像和车辆状态预测高层决策、目标速度与转角，并把 DriveGPT4 从离线理解扩展到 CARLA Longest6 闭环。",
-      "limitation": "闭环仍位于 CARLA；多层输出和语言能力未提供真实车端尾时延、故障回退或公共道路安全证据。",
+      "limitation": "主要闭环是 CARLA Longest6；多视角 tokenizer、控制输出与 on-policy 专家监督共同决定结果。",
       "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Xu_DriveGPT4-V2_Harnessing_Large_Language_Model_Capabilities_for_Enhanced_Closed-Loop_Autonomous_CVPR_2025_paper.html"
     },
     {
@@ -283,7 +246,7 @@
       "canonicalId": "pmlr:v270:tian25c",
       "sourceFamily": "publisher-and-venue",
       "supports": "以场景描述、分析和分层规划构成 VLM 驾驶链，并用传统栈补足空间推理与实时性；论文报告 DriveVLM-Dual 生产车辆部署。",
-      "limitation": "实车材料主要是有限定性场景，未公开足够里程、接管分母、随机对照、失败轨迹或长时公共道路安全统计。",
+      "limitation": "nuScenes/SUP-AD 量化评测与生产车辆定性展示分开；DriveVLM-Dual 保留传统驾驶栈。",
       "url": "https://proceedings.mlr.press/v270/tian25c.html",
       "links": [
         {
@@ -303,7 +266,7 @@
       "canonicalId": "doi:10.1109/itsc58415.2024.10919978",
       "sourceFamily": "publisher-and-venue",
       "supports": "Talk2Drive 把自然语言个性化与记忆接入真实车辆，在高速、路口和停车等受控场景报告接管率及记忆消融。",
-      "limitation": "场地实验由安全驾驶员监督，公开报告不足以重建暴露量、随机化、风险场景覆盖和长时安全；接管率也不是事故风险的直接替代。",
+      "limitation": "平台为线控 2019 Lexus RX450h，接入 Autoware.AI 和 pure-pursuit；高速与路口实验位于 Columbus 试验场，停车位于 West Lafayette 测试赛道。接管由参与者认为行为不满意触发，不能当作事故或安全事件发生率。",
       "url": "https://doi.org/10.1109/ITSC58415.2024.10919978",
       "links": [
         {
@@ -323,7 +286,7 @@
       "canonicalId": "openreview:UPE6WYE8vg",
       "sourceFamily": "publisher-and-venue",
       "supports": "系统化组合驾驶工具库、认知记忆、任务与运动规划、自反思，给出工具和记忆编排型驾驶 Agent 的基础架构。",
-      "limitation": "大量认知依赖结构化输入与外部模块，闭环环境、工具错误传播和持续实时性仍与真实车辆部署有距离。",
+      "limitation": "工具库、结构化输入、记忆与 LLM 共同参与规划；每项工具的信息权限和运行成本需要保持一致。",
       "url": "https://openreview.net/forum?id=UPE6WYE8vg",
       "links": [
         {
@@ -343,7 +306,7 @@
       "canonicalId": "arxiv:2312.07488",
       "sourceFamily": "publisher-and-venue",
       "supports": "将多模态传感输入与自然语言指令接入端到端驾驶，并在 CARLA 中提供语言条件仿真闭环证据。",
-      "limitation": "闭环证据来自模拟器和受控指令分布，不能外推到开放道路、自由对话或真实车端长期运行。",
+      "limitation": "语言指令数据与交互评测来自 CARLA/LangAuto；指令形式和场景构成是实验条件。",
       "url": "https://openaccess.thecvf.com/content/CVPR2024/html/Shao_LMDrive_Closed-Loop_End-to-End_Driving_with_Large_Language_Models_CVPR_2024_paper.html"
     },
     {
@@ -357,7 +320,7 @@
       "canonicalId": "arxiv:2503.09594",
       "sourceFamily": "publisher-and-venue",
       "supports": "联合训练闭环驾驶、视觉语言理解与 Action Dreaming，直接把语言-动作对齐作为驾驶任务而非附属解释。",
-      "limitation": "结果集中于 CARLA、Bench2Drive 与挑战赛设置，语言一致性仍不等于真实道路中的因果忠实或安全保证。",
+      "limitation": "闭环、问答和语言—动作对齐分任务评测；CARLA/Bench2Drive 与语言 benchmark 的分数不互相替代。",
       "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Renz_SimLingo_Vision-Only_Closed-Loop_Autonomous_Driving_with_Language-Action_Alignment_CVPR_2025_paper.html"
     },
     {
@@ -371,7 +334,7 @@
       "canonicalId": "doi:10.18653/v1/2025.findings-emnlp.564",
       "sourceFamily": "publisher-and-venue",
       "supports": "构建驾驶工具库、结构化自验证推理数据和动态工具调用训练，并给出多工具使用评测协议。",
-      "limitation": "主要证据是 DriveLMM-o1 等推理和问答指标，尚未证明工具调用错误在持续控制闭环中可被稳定拦截。",
+      "limitation": "主要终点为 DriveLMM-o1 推理与多工具使用，工具选择改善与连续驾驶效果应分别测量。",
       "url": "https://aclanthology.org/2025.findings-emnlp.564/",
       "links": [
         {
@@ -391,7 +354,7 @@
       "canonicalId": "arxiv:2506.24044",
       "sourceFamily": "publisher-and-venue",
       "supports": "系统整理 VLA 驾驶架构、数据集、评测与从解释模型到推理动作模型的演进，为范围和术语提供正式综述依据。",
-      "limitation": "覆盖面广但依赖截至发表时的异构报告，无法替代对 2026 年预印本、闭环边界和具体安全论断的逐条核验。",
+      "limitation": "综述组织架构、数据和协议，具体模型表现仍需回到各自的一手实验。",
       "url": "https://openaccess.thecvf.com/content/ICCV2025W/WDFM-AD/html/Jiang_A_Survey_on_Vision-Language-Action_Models_for_Autonomous_Driving_ICCVW_2025_paper.html"
     },
     {
@@ -405,7 +368,7 @@
       "canonicalId": "arxiv:2503.08683",
       "sourceFamily": "publisher-and-venue",
       "supports": "让 critic/evaluator 对 LLM 协商草案给出反馈并迭代生成合作航点，在 CARLA InterDrive 场景中评估多车合作。",
-      "limitation": "协作评测重点为 CARLA InterDrive 的 10 类交互场景，另有 Town05 评测；虽然采用异步高低频双通路，仍未充分验证真实通信丢包、恶意节点、异步消息故障和开放交通。",
+      "limitation": "在 InterDrive 交互场景和 Town05 比较协商；慢语言与快控制并行，通信时效及分组规则影响结果。",
       "url": "https://openaccess.thecvf.com/content/ICCV2025/html/Liu_CoLMDriver_LLM-based_Negotiation_Benefits_Cooperative_Autonomous_Driving_ICCV_2025_paper.html"
     },
     {
@@ -419,7 +382,7 @@
       "canonicalId": "arxiv:2504.13406",
       "sourceFamily": "publisher-and-venue",
       "supports": "用 M3CoT 组织零样本视觉语言推理，并以 LangPack 把多车共享信息编码为自然语言消息；论文在 CARLA 闭环中报告相对图像通信减少 96% 带宽、单条消息低于 2 KB且保持有竞争力的驾驶表现。",
-      "limitation": "该结果发表于 CVPR 2025 Workshops，但证据仍限于 CARLA；未覆盖真实 V2X 时延、丢包、乱序、带宽竞争、身份认证、恶意消息或车端算力约束。",
+      "limitation": "CARLA Town05 的双 CAV 场景和模拟 200 m 通信范围；消息量比较针对所选信息媒介。",
       "url": "https://openaccess.thecvf.com/content/CVPR2025W/MEIS/html/Gao_LangCoop_Collaborative_Driving_with_Language_CVPRW_2025_paper.html"
     },
     {
@@ -433,7 +396,7 @@
       "canonicalId": "arxiv:2512.20299",
       "sourceFamily": "publisher-and-venue",
       "supports": "将交通法规、防御性驾驶和伦理规范编码为知识图谱，通过检索与价值模型共同评价可解释轨迹。",
-      "limitation": "公开结果主要来自 nuScenes、Bench2Drive 和 NAVSIM，知识更新、规则冲突及真实道路价值偏差仍未形成长期闭环证据。",
+      "limitation": "知识检索、价值模型与规划器共同组成系统，在 nuScenes/Bench2Drive/NAVSIM 的作用须分别比较。",
       "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xia_KnowVal_A_Knowledge-Augmented_and_Value-Guided_Autonomous_Driving_System_CVPR_2026_paper.html"
     },
     {
@@ -447,7 +410,7 @@
       "canonicalId": "arxiv:2606.12236",
       "sourceFamily": "arxiv",
       "supports": "区分系统设计 Agent 与实时调度 Agent，并用带时间戳短期上下文和长期存储支持连续模块编排。",
-      "limitation": "尚为预印本，速度-精度结果不能替代内存污染、长期漂移、调度失败恢复和真实车端连续运行验证。",
+      "limitation": "nuScenes 和 Bench2Drive 用于分析速度—准确度；系统设计 Agent 与在线调度 Agent 的成本不同。",
       "url": "https://arxiv.org/abs/2606.12236"
     },
     {
@@ -461,7 +424,7 @@
       "canonicalId": "arxiv:2605.08133",
       "sourceFamily": "arxiv",
       "supports": "将感知抽象为时空语义图，以 Graph-DTW 对齐检索结构相似的历史驾驶先验，再融合到 VLA 轨迹生成。",
-      "limitation": "Bench2Drive 结果与检索库规模、检索耗时和驾驶分数的权衡已有报告；检索库污染、过期案例、跨域结构错配、端到端尾时延和超时回退仍缺少真实道路闭环验证。",
+      "limitation": "Bench2Drive 比较结构检索与规划，检索库规模、检索时间和训练/测试隔离是关键条件。",
       "url": "https://arxiv.org/abs/2605.08133"
     },
     {
@@ -475,7 +438,7 @@
       "canonicalId": "arxiv:2607.19194",
       "sourceFamily": "local-corpus",
       "supports": "以视觉 Arbiter 在快动作与慢结构化推理之间路由，并用确定性规则和 GRPO 奖励校验推理-动作一致性。",
-      "limitation": "主要评测是人工核验的高层规划与 NAVSIM 样本，不能写成真实交互闭环；路由漏触发和长时控制后果仍待验证。",
+      "limitation": "主要输出为离散 meta-action，574 样本的规则一致性与规划准确率不等于连续轨迹评分。",
       "url": "https://arxiv.org/abs/2607.19194",
       "localPaperId": "cognitive-dual-process-driving"
     },
@@ -490,7 +453,7 @@
       "canonicalId": "arxiv:2606.28758",
       "sourceFamily": "local-corpus",
       "supports": "把紧凑 BEV 未来草图作为视觉思维链，并用压缩和块扩散降低世界模型式前瞻推理的计算开销。",
-      "limitation": "预印本结果尚缺少独立复现和真实交互闭环；未来草图的视觉合理性不自动等于对最终动作的因果正确性。",
+      "limitation": "主要使用自采大规模驾驶日志与七相机输入；未来草图压缩和动作生成在同一系统中比较，额外未来监督与推理机制的贡献需分开。",
       "url": "https://arxiv.org/abs/2606.28758",
       "localPaperId": "x-mind-visual-cot-driving"
     },
@@ -505,7 +468,7 @@
       "canonicalId": "arxiv:2607.05180",
       "sourceFamily": "arxiv",
       "supports": "把 VLM 对路面与能见度的判断转成基于物理极限和 RSS 的自适应安全包络，并让异步认知不阻塞实时控制。",
-      "limitation": "保证依赖语义判定、摩擦估计、车辆动力学边界、RSS 参数和异步结果时效；安全结果仅来自 CARLA，任一假设域外时是否保守尚未确认。",
+      "limitation": "CARLA 中的自适应包络依赖摩擦/可见性判断、动力学与 RSS 参数，异步 VLM 输出作为控制条件。",
       "url": "https://arxiv.org/abs/2607.05180"
     },
     {
@@ -519,7 +482,7 @@
       "canonicalId": "arxiv:2605.29114",
       "sourceFamily": "local-corpus",
       "supports": "开环在固定视觉输入的 195 个样本上用 Best-of-100 文本查询搜索测量有限预算下可发现的操纵效果；闭环把 50 个 NuRec clips 部署到 AlpaSim，每步单次随机采样文本腐蚀并测量累积行为传播。",
-      "limitation": "闭环不是目标化或自适应对手，执行轨迹会改变后续视觉观测，安全指标为后验影响表征；同现变化不能建立推理因果中介，也没有跨 VLA、跨模拟器或实车复现。",
+      "limitation": "195 个开环样本用 Best-of-100 查询，50 个 NuRec clips 的闭环每步随机腐蚀；两阶段预算、观测反馈与攻击方式不同。",
       "url": "https://arxiv.org/abs/2605.29114",
       "localPaperId": "reasonbreak-vla-vulnerability-driving"
     },
@@ -534,7 +497,7 @@
       "canonicalId": "arxiv:2605.10904",
       "sourceFamily": "local-corpus",
       "supports": "提供端到端多智能体闭环驾驶基准，用统一环境比较信息共享、协作规划和多车交互结果。",
-      "limitation": "基准仍属于仿真闭环，场景、通信模型与 Agent 行为假设无法覆盖真实开放交通和恶意参与者。",
+      "limitation": "225 个模拟场景比较信息共享与协商，基础策略和交通密度共同影响合作收益。",
       "url": "https://arxiv.org/abs/2605.10904",
       "localPaperId": "mdrive-closed-loop-cooperative-driving"
     },
@@ -549,7 +512,7 @@
       "canonicalId": "arxiv:2607.20988",
       "sourceFamily": "arxiv",
       "supports": "结合像素重建监督与潜空间未来建模，直接比较世界模型噪声鲁棒性和 VLA 轨迹生成。",
-      "limitation": "核心结果来自 NAVSIM v1/v2，属于非真实交互的规划代理证据；截至审阅日尚为最新预印本且缺少独立复现。",
+      "limitation": "NAVSIM v1/v2 上比较像素与潜未来监督；预训练重建和部署潜状态预测应区分。",
       "url": "https://arxiv.org/abs/2607.20988"
     },
     {
@@ -563,7 +526,7 @@
       "canonicalId": "arxiv:2607.23537",
       "sourceFamily": "arxiv",
       "supports": "基于 K-Radar 真实恶劣天气数据，把多模态驾驶理解拆为可观测性、空间可靠性和风险决策，对现成模型与专门训练基线做分层诊断；正文称 14 个现成模型，表 1 具名行计 15 个，另有 2 个 ObsDrive 训练版，数量表述不一致。",
-      "limitation": "任务是多选题，轨迹部分只判断候选安全性，没有动力学执行或反应式闭环；标签由多模型生成、Gemini 精炼再人工核验，数据和评测代码截至审计日仍是承诺发布。",
+      "limitation": "K-Radar 派生多选题评价可观测性、空间关系和风险判断，轨迹只作候选安全判断；正文模型数量与表格不一致需保留。",
       "url": "https://arxiv.org/abs/2607.23537",
       "links": [
         {
@@ -584,7 +547,7 @@
       "canonicalId": "doi:10.1038/s41597-026-07929-2",
       "sourceFamily": "publisher-and-venue",
       "supports": "把五个既有自然驾驶轨迹库统一为带 provenance 的交互片段、物理指标、轨迹重建 BEV 与分层 VQA，并正式公开代码和数据入口。",
-      "limitation": "7.31M 片段来自既有轨迹的再切片，不是独立新采集；同源场景可能重叠，在线 viewer 异常需与归档可用性分开核验，且 LoRA 域内收益伴随 L4 反事实分数从 4.66 降至 0.19。",
+      "limitation": "7.31M 片段来自既有轨迹重新切分，需按来源划分；报告的 LoRA 域内收益伴随未训练 L4 反事实分数 4.66→0.19。",
       "url": "https://doi.org/10.1038/s41597-026-07929-2",
       "links": [
         {
@@ -617,15 +580,99 @@
       "canonicalId": "arxiv:2607.23962",
       "sourceFamily": "arxiv",
       "supports": "用前视视频和车载运动传感器推断行为，再与 GNSS 轨迹隐含的转向和运动状态比较；公共道路日志提供跨地区验证，并以事件触发减少 VLM 调用。",
-      "limitation": "wrong-turn、overshoot 和 stop 轨迹是在 GNSS 接收机坐标输出层离线合成，不是实时 RF 欺骗；559/3,999 次选择性调用仍需平均 467.7–522.3 ms，观测最小/最大值为 414–1,110 ms，测试硬件为 A100 研究服务器；慢漂移仍可能低于事件阈值。",
+      "limitation": "公共道路日志上的攻击在接收机坐标输出层离线合成；A100 推理平均 467.7–522.3 ms，事件触发次数与单次延迟需分开。",
       "url": "https://arxiv.org/abs/2607.23962",
       "localPaperId": "vlm-gnss-spoofing-detection"
+    },
+    {
+      "id": "steer-2026",
+      "title": "STEER: Route-Aware Adaptive Reasoning for Autonomous Driving",
+      "authors": "Yangang Zou, Pei Liu, Nan Song, Bozhou Zhang, Mingyu Guo, Jun Ma, Jiankang Deng, Xiatian Zhu, Li Zhang",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2611.00718",
+      "sourceFamily": "arxiv",
+      "supports": "在同一提示下比较推理与直接动作两条路线，用跨路线优势学习是否思考，避免依赖人工场景难度标签。",
+      "limitation": "结果来自 NAVSIM v1/v2；路线奖励与规划评分器有关，需在相同推理预算下比较常开、常关和路由策略。",
+      "url": "https://arxiv.org/abs/2611.00718"
+    },
+    {
+      "id": "tnas-2026",
+      "title": "Say the Same, Act Differently: Diagnosing and Steering Text-Action Divergence in Reasoning VLAs",
+      "authors": "Zihao Feng, Qingzhao Zhang, Chunyu Xia, Bo Yu, Z. Morley Mao, Ramesh Govindan",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2611.04166",
+      "sourceFamily": "arxiv",
+      "supports": "在文本—动作共享接口识别近似文本中性的动作敏感方向，展示理由逐字不变时动作仍可显著改变。",
+      "limitation": "实验涵盖 Alpamayo 驾驶与 InstructVLA 操作；驾驶碰撞比例基于障碍标注场景和输入/隐藏状态干预，不能换算成道路发生率。",
+      "url": "https://arxiv.org/abs/2611.04166"
+    },
+    {
+      "id": "reasoning-action-coupling-2026",
+      "title": "Measuring the Reasoning-Action Coupling in Driving Vision-Language-Action Models through Counterfactuals",
+      "authors": "Gabriel Manalu, Saad Wazir, Thao Do, Seongah Kim, Hyeontaek Hwang, Tolcha Yalew Kidane, Daeyoung Kim",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2610.30953",
+      "sourceFamily": "arxiv",
+      "supports": "对四种驾驶 VLA 分别编辑理由和移除场景关键对象，区分轨迹是否跟随理由与理由是否反映动作成因。",
+      "limitation": "反事实文本与视觉编辑的自然性会影响结果；应把扰动类型、相机 blanking 参照和模型接口一起保留。",
+      "url": "https://arxiv.org/abs/2610.30953"
+    },
+    {
+      "id": "geocotdrive-2026",
+      "title": "Explicit Geometric Chain-of-Thought for Vision-Language-Action in Autonomous Driving",
+      "authors": "Xingtai Gui, Yucheng Zhou, Dongqian Guo, Jiahao Gong, Feiyang Tan, Jianbing Shen",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2610.10390",
+      "sourceFamily": "arxiv",
+      "supports": "先定位与规划有关的二维区域，再从几何基础模型抽取局部三维先验，插入自回归上下文支持动作生成。",
+      "limitation": "几何特征和新增 grounding 监督同时改变输入，比较时需控制数据与监督，区分局部三维信息和推理形式的贡献。",
+      "url": "https://arxiv.org/abs/2610.10390"
+    },
+    {
+      "id": "drivevla-m0-2026",
+      "title": "DriveVLA-M0: Failure-Aware Memory Augmentation for Autonomous Driving",
+      "authors": "Zebin Xing, Yupeng Zheng, Qiang Chen, Linbo Wang, Yichen Zhang, Pengxuan Yang, Junli Wang, Deheng Qian, Xiaoqing Ye, Junyu Han, Yifeng Pan, Qichao Zhang, Dongbin Zhao",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2608.10413",
+      "sourceFamily": "arxiv",
+      "supports": "保存失败场景的结构潜记忆和专家轨迹，通过结构检索与解耦 LoRA 测试时训练完成场景适配。",
+      "limitation": "NAVSIM v1/v2 的记忆与测试场景必须隔离；报告的 TTT backward 开销不等于整个检索和推理时延。",
+      "url": "https://arxiv.org/abs/2608.10413"
+    },
+    {
+      "id": "hindsight-foresight-2026",
+      "title": "Drive by Hindsight and Foresight: Tool-Grounded Synergistic Reasoning over Hierarchical Memory for Autonomous Driving",
+      "authors": "Baojie Chen, Zijun Jia, Jing Zhong",
+      "year": 2026,
+      "venue": "arXiv",
+      "publicationType": "method",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2609.08217",
+      "sourceFamily": "arxiv",
+      "supports": "把短期场景状态、长期工具经验和主动调用组织成循环，离线将已完成的推理经验写回长期记忆。",
+      "limitation": "主要实验是 DriveLMM-o1、STSBench 等推理任务；这里用作记忆与工具协同机制的近邻，不把问答增益写成驾驶控制收益。",
+      "url": "https://arxiv.org/abs/2609.08217"
     }
   ],
   "searchAudit": {
     "workflowVersion": 3,
     "searchedAt": "2026-11-06",
-    "cutoffDate": "2026-08-01",
+    "cutoffDate": "2026-11-06",
     "skills": [
       "research-lit",
       "citation-audit"
@@ -641,16 +688,16 @@
     "sourceFamilies": [
       "local-corpus",
       "arxiv",
-      "publisher-and-venue",
-      "official-project"
+      "openalex",
+      "publisher-and-venue"
     ],
     "counts": {
-      "candidates": 69,
-      "deduplicated": 51,
-      "included": 26,
-      "excluded": 25
+      "candidates": 108,
+      "deduplicated": 86,
+      "included": 32,
+      "excluded": 54
     },
-    "evidenceBoundary": "原站外查询族及执行日期保留，不倒填为本轮检索。2026-09-22 对既有核心引用、正文关键数字与范围重新检查一手来源；出版版本差异以正式版为准，资源可访问与实验复现分开。当前本库查询单独重跑并闭合去向；近期新文献使用本期digest-audit独立记录。",
+    "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "openSearchGaps": [
       "缺少把恶劣天气多模态 MCQ 可观测性分数连接到反应式轨迹执行、碰撞和不必要 fallback 的因果验证。",
       "缺少 IEDD 等派生交互数据的统一 provenance 去重、固定版本 schema 审计，以及域内微调对开放反事实能力的保留门槛。",
@@ -662,13 +709,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "finalFinding": "Independent raw-corpus rerun and canonical candidate closure passed; narrative, references and substantive/external dates preserved. Same-family provisional.",
-      "reviewerAgentId": "/root/review_integration_nov06",
-      "artifactPath": "docs/research-updates/2026-11-06/review-integration-round1.json",
-      "artifactSha256": "679fe0a88e5290f6c16b7a9e7bcb6977630e8108fca913fcf3e0f4f40a8ba2ac",
-      "snapshotFingerprint": "ccad60b0c917114463b744594a281b6524d15b1d05767b175fba975f9ed96994",
+      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
+      "reviewerAgentId": "/root/review_centers_policy",
+      "artifactPath": "docs/center-updates/2026-11-06/independent-review/policy-round2.json",
+      "artifactSha256": "21504ef96997b407f2c8e1d5bd4fb6fd320cd492f6d418f6c41112e60f6e1b91",
+      "snapshotFingerprint": "1aa8d86e12ec27853c42b8db5cb5ce7c2bbee5bcd93f8204e048eb404fcd8086",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -680,7 +727,7 @@
         "resultCount": 29,
         "rawHitCount": 181,
         "screenedOutCount": 152,
-        "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共181个文件命中；按方向标签与revisionOf归并得29个候选，其余152个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+        "screeningNote": "当前原始 Markdown rg 命中 181 个文件，按方向标签和原始论文身份归并为 29 个候选；文件命中与候选数分别记录。",
         "resultIdSample": [
           "arxiv:2609.38641",
           "arxiv:2610.18866",
@@ -761,16 +808,31 @@
           ],
           "deferredGroups": [
             {
+              "reasonCode": "direct-scope-deferred",
+              "reason": "本轮重新检查当前方向的全部本库候选，核心综合选取能说明方法演进及实验差异的文献；其余报告保留为后续深入阅读入口。",
+              "localPaperIds": [
+                "ad-memo-language-driving-memory",
+                "autoagent0-runtime-recovery",
+                "colmin-multi-decision-negotiation",
+                "deft-rlvr-verifiable-driving-reasoning",
+                "drivemind-multi-hypothesis-belief",
+                "teach-to-crash-student-teacher"
+              ]
+            },
+            {
               "reasonCode": "cross-direction-support",
-              "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+              "reason": "与当前方向有交叉，核心方法综合由其主方向承担，本轮未重复展开。",
               "localPaperIds": [
                 "brainwam-action-space-coordination",
+                "bug2scenario-root-cause-regression",
                 "caviar-accident-reasoning",
                 "cl4ad-curriculum-driving",
                 "cvaa-driving-interpretability",
                 "flashdrive-vla-inference",
                 "g-mark-cooperative-driving",
                 "gating-before-commitment-intent-divergence",
+                "language2drive-paired-instruction-evaluation",
+                "last-v2x-communication-failure-testing",
                 "plannerforge-scenario-testing",
                 "rail-resilient-autonomous-driving",
                 "siren-emergency-interaction-benchmark",
@@ -778,200 +840,634 @@
                 "trafficalign-traffic-scenario-generation",
                 "wam-diff2-efficient-driving-vla"
               ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
-              "localPaperIds": [
-                "colmin-multi-decision-negotiation",
-                "deft-rlvr-verifiable-driving-reasoning"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
-              "localPaperIds": [
-                "teach-to-crash-student-teacher"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
-              "localPaperIds": [
-                "ad-memo-language-driving-memory"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "autoagent0-runtime-recovery"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "language2drive-paired-instruction-evaluation"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "last-v2x-communication-failure-testing"
-              ]
-            },
-            {
-              "reasonCode": "direct-scope-deferred",
-              "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "drivemind-multi-hypothesis-belief"
-              ]
-            },
-            {
-              "reasonCode": "cross-direction-support",
-              "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
-              "localPaperIds": [
-                "bug2scenario-root-cause-regression"
-              ]
             }
           ]
+        },
+        "historicalRun": {
+          "family": "语言和视觉语言驾驶智能体",
+          "sourceFamily": "local-corpus",
+          "query": "agent|VLA|语言|推理|记忆|agentic-driving",
+          "executedAt": "2026-11-06",
+          "resultCount": 29,
+          "rawHitCount": 181,
+          "screenedOutCount": 152,
+          "screeningNote": "2026-11-06 对当前原始Markdown执行rg -l -i，共181个文件命中；按方向标签与revisionOf归并得29个候选，其余152个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。",
+          "resultIdSample": [
+            "arxiv:2609.38641",
+            "arxiv:2610.18866",
+            "arxiv:2608.12854",
+            "arxiv:2611.06229",
+            "arxiv:2608.19380",
+            "arxiv:2608.22549",
+            "arxiv:2607.19194",
+            "arxiv:2609.04807",
+            "arxiv:2607.16938",
+            "arxiv:2608.01755",
+            "arxiv:2610.32069",
+            "arxiv:2608.12932",
+            "arxiv:2608.19964",
+            "arxiv:2608.26074",
+            "arxiv:2602.20575",
+            "arxiv:2610.16634",
+            "arxiv:2610.30979",
+            "arxiv:2605.10904",
+            "arxiv:2607.23537",
+            "arxiv:2609.08965",
+            "arxiv:2601.11781",
+            "arxiv:2605.29114",
+            "arxiv:2608.24094",
+            "arxiv:2608.14024",
+            "arxiv:2609.27296",
+            "arxiv:2606.29097",
+            "arxiv:2607.23962",
+            "arxiv:2608.01035",
+            "arxiv:2606.28758"
+          ],
+          "scopeRationale": "对本库 Markdown 全文执行可复现宽正则，并把方向 ID 作为 frontmatter tag 闭合项；先记录全部原始文件命中，再按当前方向标签与 revisionOf 归并规范候选，本地命中只建立候选，不自行升级为核心证据。",
+          "retrieval": {
+            "provider": "ripgrep-local-corpus",
+            "endpoint": "content/papers",
+            "parameters": {
+              "query": "agent|VLA|语言|推理|记忆|agentic-driving",
+              "path": "content/papers",
+              "flags": [
+                "-l",
+                "-i"
+              ]
+            },
+            "sort": "path-ascending",
+            "limit": 200
+          },
+          "localCandidateDisposition": {
+            "candidateLocalPaperIds": [
+              "ad-memo-language-driving-memory",
+              "autoagent0-runtime-recovery",
+              "brainwam-action-space-coordination",
+              "bug2scenario-root-cause-regression",
+              "caviar-accident-reasoning",
+              "cl4ad-curriculum-driving",
+              "cognitive-dual-process-driving",
+              "colmin-multi-decision-negotiation",
+              "cvaa-driving-interpretability",
+              "deft-rlvr-verifiable-driving-reasoning",
+              "drivemind-multi-hypothesis-belief",
+              "flashdrive-vla-inference",
+              "g-mark-cooperative-driving",
+              "gating-before-commitment-intent-divergence",
+              "iedd-interactive-driving-dataset",
+              "language2drive-paired-instruction-evaluation",
+              "last-v2x-communication-failure-testing",
+              "mdrive-closed-loop-cooperative-driving",
+              "obsdrivebench-adverse-weather",
+              "plannerforge-scenario-testing",
+              "rail-resilient-autonomous-driving",
+              "reasonbreak-vla-vulnerability-driving",
+              "siren-emergency-interaction-benchmark",
+              "ssp-syn2sim2phy-vla-evaluation",
+              "teach-to-crash-student-teacher",
+              "trafficalign-traffic-scenario-generation",
+              "vlm-gnss-spoofing-detection",
+              "wam-diff2-efficient-driving-vla",
+              "x-mind-visual-cot-driving"
+            ],
+            "deferredGroups": [
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "跨方向补充候选；当前综述保留最直接核心证据，未将该候选提升为本方向核心方法或实证结论。",
+                "localPaperIds": [
+                  "brainwam-action-space-coordination",
+                  "caviar-accident-reasoning",
+                  "cl4ad-curriculum-driving",
+                  "cvaa-driving-interpretability",
+                  "flashdrive-vla-inference",
+                  "g-mark-cooperative-driving",
+                  "gating-before-commitment-intent-divergence",
+                  "plannerforge-scenario-testing",
+                  "rail-resilient-autonomous-driving",
+                  "siren-emergency-interaction-benchmark",
+                  "ssp-syn2sim2phy-vla-evaluation",
+                  "trafficalign-traffic-scenario-generation",
+                  "wam-diff2-efficient-driving-vla"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "方向直接相关；本轮重新核查既有核心引用与近期简报，尚未将该候选展开为本综述核心综合，不自动升级为支持论断。",
+                "localPaperIds": [
+                  "colmin-multi-decision-negotiation",
+                  "deft-rlvr-verifiable-driving-reasoning"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "本次入库形成新的方向候选；独立论文报告另见本期简报，尚未纳入既有方向综述的核心综合，不据题录判断其质量或升级为综述论据。",
+                "localPaperIds": [
+                  "teach-to-crash-student-teacher"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-05 新简报报告已进入当前方向候选；本轮仅维护本库检索闭合，未重新综合全部外部文献，不将新候选自动升级为本综述核心论断。具体机制与限制见单篇报告。",
+                "localPaperIds": [
+                  "ad-memo-language-driving-memory"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "autoagent0-runtime-recovery"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-18新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "language2drive-paired-instruction-evaluation"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-10-23新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "last-v2x-communication-failure-testing"
+                ]
+              },
+              {
+                "reasonCode": "direct-scope-deferred",
+                "reason": "2026-10-28新报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "drivemind-multi-hypothesis-belief"
+                ]
+              },
+              {
+                "reasonCode": "cross-direction-support",
+                "reason": "2026-11-06新增报告进入本库；单篇另有全文复核，本轮仅更新该综述本库候选闭合，未把新报告自动提升为既有核心综合论据。",
+                "localPaperIds": [
+                  "bug2scenario-root-cause-regression"
+                ]
+              }
+            ]
+          }
         }
       },
       {
         "family": "视觉思维链与双过程规划",
         "sourceFamily": "arxiv",
-        "query": "autonomous driving visual chain-of-thought dual-process planning reasoning-action consistency",
-        "executedAt": "2026-08-01",
-        "resultCount": 6,
+        "query": "all:\"driving\" AND (all:\"chain-of-thought\" OR all:\"dual-process\")",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 14,
         "resultIdSample": [
           "arxiv:2503.09594",
-          "doi:10.18653/v1/2025.findings-emnlp.564",
           "arxiv:2506.24044",
-          "arxiv:2607.19194",
           "arxiv:2606.28758",
-          "arxiv:2607.20988"
+          "arxiv:2607.19194",
+          "arxiv:2607.20988",
+          "arxiv:2610.04751",
+          "arxiv:2610.10390",
+          "arxiv:2610.12575",
+          "arxiv:2610.16985",
+          "arxiv:2610.24590",
+          "arxiv:2610.30953",
+          "arxiv:2610.31639",
+          "arxiv:2611.00718",
+          "doi:10.18653/v1/2025.findings-emnlp.564"
         ],
-        "scopeRationale": "覆盖视觉思维链、世界模型式前瞻、快慢路由和 reasoning-action consistency；候选同时包含正式方法、预印本与综述边界。",
+        "rawDiscoveryCount": 8,
+        "discoveredCanonicalIds": [
+          "arxiv:2611.00718",
+          "arxiv:2610.31639",
+          "arxiv:2610.30953",
+          "arxiv:2610.24590",
+          "arxiv:2610.16985",
+          "arxiv:2610.12575",
+          "arxiv:2610.10390",
+          "arxiv:2610.04751"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2503.09594",
+          "arxiv:2506.24044",
+          "arxiv:2606.28758",
+          "arxiv:2607.19194",
+          "arxiv:2607.20988",
+          "doi:10.18653/v1/2025.findings-emnlp.564"
+        ],
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "arxiv-discovery-with-reopened-seeds",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22driving%22+AND+%28all%3A%22chain-of-thought%22+OR+all%3A%22dual-process%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
           "parameters": {
-            "query": "autonomous driving visual chain-of-thought dual-process planning reasoning-action consistency"
+            "search_query": "all:\"driving\" AND (all:\"chain-of-thought\" OR all:\"dual-process\")",
+            "start": 0,
+            "max_results": 8,
+            "sortBy": "submittedDate",
+            "sortOrder": "descending",
+            "query": "all:\"driving\" AND (all:\"chain-of-thought\" OR all:\"dual-process\")"
           },
-          "sort": "relevance",
-          "limit": 50
+          "sort": "submittedDate",
+          "limit": 14,
+          "directQueryLimit": 8,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
+        },
+        "historicalRun": {
+          "family": "视觉思维链与双过程规划",
+          "sourceFamily": "arxiv",
+          "query": "autonomous driving visual chain-of-thought dual-process planning reasoning-action consistency",
+          "executedAt": "2026-08-01",
+          "resultCount": 6,
+          "resultIdSample": [
+            "arxiv:2503.09594",
+            "doi:10.18653/v1/2025.findings-emnlp.564",
+            "arxiv:2506.24044",
+            "arxiv:2607.19194",
+            "arxiv:2606.28758",
+            "arxiv:2607.20988"
+          ],
+          "scopeRationale": "覆盖视觉思维链、世界模型式前瞻、快慢路由和 reasoning-action consistency；候选同时包含正式方法、预印本与综述边界。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "autonomous driving visual chain-of-thought dual-process planning reasoning-action consistency"
+            },
+            "sort": "relevance",
+            "limit": 50
+          }
         }
       },
       {
         "family": "记忆、工具使用与知识检索",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving language agent memory tool use retrieval augmented generation",
-        "executedAt": "2026-08-01",
-        "resultCount": 7,
+        "sourceFamily": "openalex",
+        "query": "autonomous driving language agent memory tool retrieval",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 20,
         "resultIdSample": [
-          "openreview:OqTMUPuLuC",
-          "doi:10.1109/itsc58415.2024.10919978",
-          "openreview:UPE6WYE8vg",
-          "doi:10.18653/v1/2025.findings-emnlp.564",
+          "arxiv:2506.24044",
+          "arxiv:2512.06865",
           "arxiv:2512.20299",
+          "arxiv:2605.08133",
           "arxiv:2606.12236",
-          "arxiv:2605.08133"
+          "arxiv:2608.10413",
+          "arxiv:2609.08217",
+          "arxiv:2609.38641",
+          "doi:10.1007/s10462-025-11471-9",
+          "doi:10.1016/j.eng.2025.07.038",
+          "doi:10.1039/d4sc03921a",
+          "doi:10.1109/icra57385.2026.11697309",
+          "doi:10.1109/itsc58415.2024.10919978",
+          "doi:10.1109/itsc60802.2025.11423790",
+          "doi:10.1109/tiv.2024.3402136",
+          "doi:10.1109/wacvw60836.2024.00106",
+          "doi:10.18653/v1/2025.findings-emnlp.564",
+          "doi:10.4018/979-8-2600-2601-4.ch004",
+          "openreview:oqtmupuluc",
+          "openreview:upe6wye8vg"
         ],
-        "scopeRationale": "检索记忆、工具调用、RAG 和规则知识，并以正式出版页或 arXiv 一手记录核对状态、作用与过期/污染边界。",
+        "rawDiscoveryCount": 12,
+        "discoveredCanonicalIds": [
+          "arxiv:2609.38641",
+          "doi:10.1109/wacvw60836.2024.00106",
+          "doi:10.1109/tiv.2024.3402136",
+          "doi:10.1039/d4sc03921a",
+          "arxiv:2512.06865",
+          "doi:10.1007/s10462-025-11471-9",
+          "doi:10.1109/icra57385.2026.11697309",
+          "doi:10.4018/979-8-2600-2601-4.ch004",
+          "arxiv:2506.24044",
+          "doi:10.1109/itsc60802.2025.11423790",
+          "arxiv:2608.10413",
+          "doi:10.1016/j.eng.2025.07.038"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2512.20299",
+          "arxiv:2605.08133",
+          "arxiv:2606.12236",
+          "doi:10.1109/itsc58415.2024.10919978",
+          "doi:10.18653/v1/2025.findings-emnlp.564",
+          "openreview:oqtmupuluc",
+          "openreview:upe6wye8vg"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2609.08217"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "openalex-discovery-with-reopened-seeds",
+          "endpoint": "https://api.openalex.org/works",
           "parameters": {
-            "query": "autonomous driving language agent memory tool use retrieval augmented generation"
+            "search": "autonomous driving language agent memory tool retrieval",
+            "per-page": 12,
+            "filter": "from_publication_date:2024-01-01",
+            "sort": "relevance_score:desc"
           },
           "sort": "relevance",
-          "limit": 50
+          "limit": 20,
+          "directQueryLimit": 12,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/parent-extra-queries.json"
+        },
+        "historicalRun": {
+          "family": "记忆、工具使用与知识检索",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving language agent memory tool use retrieval augmented generation",
+          "executedAt": "2026-08-01",
+          "resultCount": 7,
+          "resultIdSample": [
+            "openreview:OqTMUPuLuC",
+            "doi:10.1109/itsc58415.2024.10919978",
+            "openreview:UPE6WYE8vg",
+            "doi:10.18653/v1/2025.findings-emnlp.564",
+            "arxiv:2512.20299",
+            "arxiv:2606.12236",
+            "arxiv:2605.08133"
+          ],
+          "scopeRationale": "检索记忆、工具调用、RAG 和规则知识，并以正式出版页或 arXiv 一手记录核对状态、作用与过期/污染边界。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving language agent memory tool use retrieval augmented generation"
+            },
+            "sort": "relevance",
+            "limit": 50
+          }
         }
       },
       {
         "family": "多智能体协商与意图通信",
         "sourceFamily": "arxiv",
-        "query": "multi-agent autonomous driving negotiation intention communication language model",
-        "executedAt": "2026-08-01",
-        "resultCount": 3,
+        "query": "all:\"driving\" AND (all:\"multi-agent negotiation\" OR all:\"intent communication\")",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 7,
         "resultIdSample": [
+          "arxiv:2001.10208",
+          "arxiv:2209.12968",
+          "arxiv:2503.08683",
+          "arxiv:2504.13406",
+          "arxiv:2510.20409",
+          "arxiv:2605.10904",
+          "arxiv:2608.06922"
+        ],
+        "rawDiscoveryCount": 4,
+        "discoveredCanonicalIds": [
+          "arxiv:2608.06922",
+          "arxiv:2510.20409",
+          "arxiv:2209.12968",
+          "arxiv:2001.10208"
+        ],
+        "reopenedSeedCanonicalIds": [
           "arxiv:2503.08683",
           "arxiv:2504.13406",
           "arxiv:2605.10904"
         ],
-        "scopeRationale": "覆盖多车协商、语言消息和统一多智能体闭环基准；要求候选明确通信或协作接口。",
+        "supplementalCanonicalIds": [],
         "retrieval": {
-          "provider": "ARIS arxiv_fetch.py",
-          "endpoint": "https://export.arxiv.org/api/query",
+          "provider": "arxiv-discovery-with-reopened-seeds",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22driving%22+AND+%28all%3A%22multi-agent+negotiation%22+OR+all%3A%22intent+communication%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
           "parameters": {
-            "query": "multi-agent autonomous driving negotiation intention communication language model"
+            "search_query": "all:\"driving\" AND (all:\"multi-agent negotiation\" OR all:\"intent communication\")",
+            "start": 0,
+            "max_results": 8,
+            "sortBy": "submittedDate",
+            "sortOrder": "descending",
+            "query": "all:\"driving\" AND (all:\"multi-agent negotiation\" OR all:\"intent communication\")"
           },
-          "sort": "relevance",
-          "limit": 50
+          "sort": "submittedDate",
+          "limit": 7,
+          "directQueryLimit": 8,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
+        },
+        "historicalRun": {
+          "family": "多智能体协商与意图通信",
+          "sourceFamily": "arxiv",
+          "query": "multi-agent autonomous driving negotiation intention communication language model",
+          "executedAt": "2026-08-01",
+          "resultCount": 3,
+          "resultIdSample": [
+            "arxiv:2503.08683",
+            "arxiv:2504.13406",
+            "arxiv:2605.10904"
+          ],
+          "scopeRationale": "覆盖多车协商、语言消息和统一多智能体闭环基准；要求候选明确通信或协作接口。",
+          "retrieval": {
+            "provider": "ARIS arxiv_fetch.py",
+            "endpoint": "https://export.arxiv.org/api/query",
+            "parameters": {
+              "query": "multi-agent autonomous driving negotiation intention communication language model"
+            },
+            "sort": "relevance",
+            "limit": 50
+          }
         }
       },
       {
         "family": "推理动作一致性与闭环评测",
-        "sourceFamily": "official-project",
-        "query": "driving VLA reasoning action consistency observability closed-loop evaluation language-action alignment",
-        "executedAt": "2026-08-01",
-        "resultCount": 18,
+        "sourceFamily": "arxiv",
+        "query": "all:\"driving\" AND (all:\"reasoning-action\" OR all:\"reasoning consistency\")",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 23,
         "resultIdSample": [
-          "openreview:Pvjk9lxLJK",
           "arxiv:2310.03026",
-          "doi:10.1109/lra.2024.3440097",
-          "cvf:cvpr2025:xu-drivegpt4-v2",
-          "pmlr:v270:tian25c",
-          "doi:10.1109/itsc58415.2024.10919978",
           "arxiv:2312.07488",
           "arxiv:2503.09594",
-          "arxiv:2607.19194",
-          "arxiv:2605.29114",
+          "arxiv:2605.08830",
           "arxiv:2605.10904",
+          "arxiv:2605.17268",
+          "arxiv:2605.21446",
+          "arxiv:2605.29114",
+          "arxiv:2607.19194",
           "arxiv:2607.20988",
           "arxiv:2607.23537",
-          "doi:10.1038/s41597-026-07929-2",
           "arxiv:2607.23962",
-          "arxiv:2312.14150",
-          "arxiv:2312.14115",
-          "arxiv:2312.00438"
+          "arxiv:2608.10976",
+          "arxiv:2609.31395",
+          "arxiv:2609.32817",
+          "arxiv:2610.30953",
+          "arxiv:2611.04166",
+          "cvf:cvpr2025:xu-drivegpt4-v2",
+          "doi:10.1038/s41597-026-07929-2",
+          "doi:10.1109/itsc58415.2024.10919978",
+          "doi:10.1109/lra.2024.3440097",
+          "openreview:pvjk9lxljk",
+          "pmlr:v270:tian25c"
         ],
-        "scopeRationale": "把语言-动作对齐、可观测性诊断、派生交互评测和仿真/实车闭环分层检索，不把 QA 或 MCQ 自动视为控制证据。",
+        "rawDiscoveryCount": 8,
+        "discoveredCanonicalIds": [
+          "arxiv:2610.30953",
+          "arxiv:2609.32817",
+          "arxiv:2609.31395",
+          "arxiv:2608.10976",
+          "arxiv:2607.19194",
+          "arxiv:2605.21446",
+          "arxiv:2605.17268",
+          "arxiv:2605.08830"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2310.03026",
+          "arxiv:2312.07488",
+          "arxiv:2503.09594",
+          "arxiv:2605.10904",
+          "arxiv:2605.29114",
+          "arxiv:2607.20988",
+          "arxiv:2607.23537",
+          "arxiv:2607.23962",
+          "cvf:cvpr2025:xu-drivegpt4-v2",
+          "doi:10.1038/s41597-026-07929-2",
+          "doi:10.1109/itsc58415.2024.10919978",
+          "doi:10.1109/lra.2024.3440097",
+          "openreview:pvjk9lxljk",
+          "pmlr:v270:tian25c"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2611.04166"
+        ],
         "retrieval": {
-          "provider": "web-search-official-projects",
-          "endpoint": "https://www.google.com/search",
+          "provider": "arxiv-discovery-with-reopened-seeds",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22driving%22+AND+%28all%3A%22reasoning-action%22+OR+all%3A%22reasoning+consistency%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
           "parameters": {
-            "query": "driving VLA reasoning action consistency observability closed-loop evaluation language-action alignment"
+            "search_query": "all:\"driving\" AND (all:\"reasoning-action\" OR all:\"reasoning consistency\")",
+            "start": 0,
+            "max_results": 8,
+            "sortBy": "submittedDate",
+            "sortOrder": "descending",
+            "query": "all:\"driving\" AND (all:\"reasoning-action\" OR all:\"reasoning consistency\")"
           },
-          "sort": "relevance",
-          "limit": 50
+          "sort": "submittedDate",
+          "limit": 23,
+          "directQueryLimit": 8,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
+        },
+        "historicalRun": {
+          "family": "推理动作一致性与闭环评测",
+          "sourceFamily": "official-project",
+          "query": "driving VLA reasoning action consistency observability closed-loop evaluation language-action alignment",
+          "executedAt": "2026-08-01",
+          "resultCount": 18,
+          "resultIdSample": [
+            "openreview:Pvjk9lxLJK",
+            "arxiv:2310.03026",
+            "doi:10.1109/lra.2024.3440097",
+            "cvf:cvpr2025:xu-drivegpt4-v2",
+            "pmlr:v270:tian25c",
+            "doi:10.1109/itsc58415.2024.10919978",
+            "arxiv:2312.07488",
+            "arxiv:2503.09594",
+            "arxiv:2607.19194",
+            "arxiv:2605.29114",
+            "arxiv:2605.10904",
+            "arxiv:2607.20988",
+            "arxiv:2607.23537",
+            "doi:10.1038/s41597-026-07929-2",
+            "arxiv:2607.23962",
+            "arxiv:2312.14150",
+            "arxiv:2312.14115",
+            "arxiv:2312.00438"
+          ],
+          "scopeRationale": "把语言-动作对齐、可观测性诊断、派生交互评测和仿真/实车闭环分层检索，不把 QA 或 MCQ 自动视为控制证据。",
+          "retrieval": {
+            "provider": "web-search-official-projects",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "driving VLA reasoning action consistency observability closed-loop evaluation language-action alignment"
+            },
+            "sort": "relevance",
+            "limit": 50
+          }
         }
       },
       {
         "family": "提示攻击、幻觉与安全回退",
-        "sourceFamily": "publisher-and-venue",
-        "query": "autonomous driving VLA prompt attack hallucination GNSS spoofing safety envelope fallback",
-        "executedAt": "2026-08-01",
-        "resultCount": 6,
+        "sourceFamily": "arxiv",
+        "query": "all:\"driving\" AND (all:\"prompt injection\" OR all:\"hallucination\" OR all:\"safety fallback\")",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "本次方向查询与既有书目种子重核组成候选集；直接发现、既有种子和独立补检分别记录。resultCount 是进入去重台账的候选数，不是搜索引擎总命中或全文阅读量。",
+        "resultCount": 15,
         "resultIdSample": [
-          "pmlr:v270:tian25c",
           "arxiv:2512.20299",
-          "arxiv:2607.05180",
           "arxiv:2605.29114",
+          "arxiv:2607.05180",
           "arxiv:2607.23537",
-          "arxiv:2607.23962"
+          "arxiv:2607.23962",
+          "arxiv:2610.16814",
+          "arxiv:2610.24277",
+          "arxiv:2610.24487",
+          "arxiv:2610.28829",
+          "arxiv:2610.32779",
+          "arxiv:2610.34535",
+          "arxiv:2610.35630",
+          "arxiv:2610.36578",
+          "arxiv:2611.04166",
+          "pmlr:v270:tian25c"
         ],
-        "scopeRationale": "覆盖文本扰动、幻觉、定位欺骗、物理安全包络和 fallback，并明确离线攻击、模拟闭环和受控道路证据等级。",
+        "rawDiscoveryCount": 8,
+        "discoveredCanonicalIds": [
+          "arxiv:2610.36578",
+          "arxiv:2610.35630",
+          "arxiv:2610.34535",
+          "arxiv:2610.32779",
+          "arxiv:2610.28829",
+          "arxiv:2610.24487",
+          "arxiv:2610.24277",
+          "arxiv:2610.16814"
+        ],
+        "reopenedSeedCanonicalIds": [
+          "arxiv:2512.20299",
+          "arxiv:2605.29114",
+          "arxiv:2607.05180",
+          "arxiv:2607.23537",
+          "arxiv:2607.23962",
+          "pmlr:v270:tian25c"
+        ],
+        "supplementalCanonicalIds": [
+          "arxiv:2611.04166"
+        ],
         "retrieval": {
-          "provider": "web-search-primary-domains",
-          "endpoint": "https://www.google.com/search",
+          "provider": "arxiv-discovery-with-reopened-seeds",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22driving%22+AND+%28all%3A%22prompt+injection%22+OR+all%3A%22hallucination%22+OR+all%3A%22safety+fallback%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
           "parameters": {
-            "query": "autonomous driving VLA prompt attack hallucination GNSS spoofing safety envelope fallback"
+            "search_query": "all:\"driving\" AND (all:\"prompt injection\" OR all:\"hallucination\" OR all:\"safety fallback\")",
+            "start": 0,
+            "max_results": 8,
+            "sortBy": "submittedDate",
+            "sortOrder": "descending",
+            "query": "all:\"driving\" AND (all:\"prompt injection\" OR all:\"hallucination\" OR all:\"safety fallback\")"
           },
-          "sort": "relevance",
-          "limit": 50
+          "sort": "submittedDate",
+          "limit": 15,
+          "directQueryLimit": 8,
+          "seedPolicy": "复核旧书目并按其原有语义查询族保留；不把旧书目伪装为本次查询命中。补检参考各组来源记录。",
+          "sourcePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
+        },
+        "historicalRun": {
+          "family": "提示攻击、幻觉与安全回退",
+          "sourceFamily": "publisher-and-venue",
+          "query": "autonomous driving VLA prompt attack hallucination GNSS spoofing safety envelope fallback",
+          "executedAt": "2026-08-01",
+          "resultCount": 6,
+          "resultIdSample": [
+            "pmlr:v270:tian25c",
+            "arxiv:2512.20299",
+            "arxiv:2607.05180",
+            "arxiv:2605.29114",
+            "arxiv:2607.23537",
+            "arxiv:2607.23962"
+          ],
+          "scopeRationale": "覆盖文本扰动、幻觉、定位欺骗、物理安全包络和 fallback，并明确离线攻击、模拟闭环和受控道路证据等级。",
+          "retrieval": {
+            "provider": "web-search-primary-domains",
+            "endpoint": "https://www.google.com/search",
+            "parameters": {
+              "query": "autonomous driving VLA prompt attack hallucination GNSS spoofing safety envelope fallback"
+            },
+            "sort": "relevance",
+            "limit": 50
+          }
         }
       }
     ],
@@ -1007,7 +1503,13 @@
       "arxiv:2607.20988",
       "arxiv:2607.23537",
       "doi:10.1038/s41597-026-07929-2",
-      "arxiv:2607.23962"
+      "arxiv:2607.23962",
+      "arxiv:2611.00718",
+      "arxiv:2611.04166",
+      "arxiv:2610.30953",
+      "arxiv:2610.10390",
+      "arxiv:2608.10413",
+      "arxiv:2609.08217"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -1016,25 +1518,228 @@
     ],
     "excludedCandidates": [
       {
-        "canonicalId": "arxiv:2312.14150",
-        "title": "DriveLM: Driving with Graph Visual Question Answering",
-        "url": "https://arxiv.org/abs/2312.14150",
-        "reasonCode": "redundant-benchmark-evidence",
-        "reason": "Graph VQA 与 DriveLM-Agent 很重要，但本轮对可执行智能体的核心证据已由 LMDrive、DriveGPT4-V2 和 DriveVLM 覆盖；未把问答成绩外推为长期闭环安全收益。"
+        "canonicalId": "arxiv:2610.31639",
+        "title": "Causal Chain of Thought: Mitigating Attention Leakage via Context Isolation",
+        "url": "https://arxiv.org/abs/2610.31639v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2312.14115",
-        "title": "LingoQA: Visual Question Answering for Autonomous Driving",
-        "url": "https://arxiv.org/abs/2312.14115",
-        "reasonCode": "benchmark-only",
-        "reason": "主要贡献是驾驶视频问答数据与真实性评测，没有可执行动作接口、反应式闭环或真实道路安全结果。"
+        "canonicalId": "arxiv:2610.24590",
+        "title": "Scene-Adaptive VLA: Efficient Autonomous Driving via Dynamic Layer Routing",
+        "url": "https://arxiv.org/abs/2610.24590v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
       {
-        "canonicalId": "arxiv:2312.00438",
-        "title": "Dolphins: Multimodal Language Model for Driving",
-        "url": "https://arxiv.org/abs/2312.00438",
-        "reasonCode": "assistant-not-controller",
-        "reason": "展示会话式驾驶理解与反思，但证据集中于驾驶助手任务，不能独立支持智能体控制、工具调用可靠性或闭环安全结论。"
+        "canonicalId": "arxiv:2610.16985",
+        "title": "AUGUstus: Autonomous Driving VLA Model with Unified Generation and Understanding",
+        "url": "https://arxiv.org/abs/2610.16985v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.12575",
+        "title": "Mind the Temporal Gap: Evaluating Video Models for Temporal Understanding in Driving",
+        "url": "https://arxiv.org/abs/2610.12575v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.04751",
+        "title": "Dynamic Routing as a New Dimension for Test-time Versatility of LLMs",
+        "url": "https://arxiv.org/abs/2610.04751v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/wacvw60836.2024.00106",
+        "title": "A Survey on Multimodal Large Language Models for Autonomous Driving",
+        "url": "https://doi.org/10.1109/wacvw60836.2024.00106",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "title": "Vision Language Models in Autonomous Driving: A Survey and Outlook",
+        "url": "https://doi.org/10.1109/tiv.2024.3402136",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1039/d4sc03921a",
+        "title": "A review of large language models and autonomous agents in chemistry",
+        "url": "https://doi.org/10.1039/d4sc03921a",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2512.06865",
+        "title": "Spatial Retrieval Augmented Autonomous Driving",
+        "url": "https://doi.org/10.48550/arxiv.2512.06865",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-025-11471-9",
+        "title": "From language to action: a review of large language models as autonomous agents and tool users",
+        "url": "https://doi.org/10.1007/s10462-025-11471-9",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/icra57385.2026.11697309",
+        "title": "MTRDrive: Memory-Tool Synergistic Reasoning for Robust Autonomous Driving in Corner Cases",
+        "url": "https://doi.org/10.1109/icra57385.2026.11697309",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.4018/979-8-2600-2601-4.ch004",
+        "title": "Agentic AI and Autonomous Systems",
+        "url": "https://doi.org/10.4018/979-8-2600-2601-4.ch004",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc60802.2025.11423790",
+        "title": "Seeking to Collide: Online Safety-Critical Scenario Generation for Autonomous Driving with Retrieval Augmented Large Language Models",
+        "url": "https://doi.org/10.1109/itsc60802.2025.11423790",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1016/j.eng.2025.07.038",
+        "title": "A Survey on Large Language Model-Powered Autonomous Driving",
+        "url": "https://doi.org/10.1016/j.eng.2025.07.038",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2608.06922",
+        "title": "Deal Me Maybe: The Role of Emotions in Multi-Agent Negotiation",
+        "url": "https://arxiv.org/abs/2608.06922v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2510.20409",
+        "title": "Designing Intent Communication for Agent-Human Collaboration",
+        "url": "https://arxiv.org/abs/2510.20409v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2209.12968",
+        "title": "Intention Communication and Hypothesis Likelihood in Game-Theoretic Motion Planning",
+        "url": "https://arxiv.org/abs/2209.12968v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2001.10208",
+        "title": "Towards Learning Multi-agent Negotiations via Self-Play",
+        "url": "https://arxiv.org/abs/2001.10208v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2609.32817",
+        "title": "Right Answer, Wrong Reason: Accuracy, Consistency, and Consensus Are Misleading Indicators of LLM Faithfulness in Clinical Decision Support",
+        "url": "https://arxiv.org/abs/2609.32817v2",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2609.31395",
+        "title": "ActKV: Efficient LLM Agents through Action-Guided KV Cache Management",
+        "url": "https://arxiv.org/abs/2609.31395v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2608.10976",
+        "title": "XCoT-VLA: Executable Chain-of-Thought for Vision-Language-Action Driving",
+        "url": "https://arxiv.org/abs/2608.10976v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.21446",
+        "title": "Lost in Fog: Sensor Perturbations Expose Reasoning Fragility in Driving VLAs",
+        "url": "https://arxiv.org/abs/2605.21446v2",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.17268",
+        "title": "Is VLA Reasoning Faithful? Probing Safety of Chain-of-Causation in Autonomous Driving Models",
+        "url": "https://arxiv.org/abs/2605.17268v2",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2605.08830",
+        "title": "VECTOR-Drive: Tightly Coupled Vision-Language and Trajectory Expert Routing for End-to-End Autonomous Driving",
+        "url": "https://arxiv.org/abs/2605.08830v2",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.36578",
+        "title": "AudioRSI: Recursively Self-Improving Audio Reasoners",
+        "url": "https://arxiv.org/abs/2610.36578v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.35630",
+        "title": "Revisiting Direct Control: A Field Evaluation of Sensor Fusion Efficacy in Teleoperating Full-Scale Autonomous Vehicles via Bird's Eye View",
+        "url": "https://arxiv.org/abs/2610.35630v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.34535",
+        "title": "SentryBench: A Cost-Sensitive Benchmark for Adversarial Robustness of Tool-Using LLM Agents in Public-Safety Deployments",
+        "url": "https://arxiv.org/abs/2610.34535v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.32779",
+        "title": "Computational De Novo Design of Miniprotein Candidate Neutralizers Targeting the IL-23 Cytokine Subunit p19",
+        "url": "https://arxiv.org/abs/2610.32779v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.28829",
+        "title": "HorizonComposer: Spatiotemporally Consistent Driving Video Editing with Enriched Traffic Semantics",
+        "url": "https://arxiv.org/abs/2610.28829v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.24487",
+        "title": "Semantic Routing Framework for Multi-Domain Telecom Intent-Based Networking",
+        "url": "https://arxiv.org/abs/2610.24487v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.24277",
+        "title": "SPIDES: Information-Flow Control for Browser Agents",
+        "url": "https://arxiv.org/abs/2610.24277v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "arxiv:2610.16814",
+        "title": "StableJudge: A Lightweight Adversarial Defense Framework for LLM-as-a-Judge",
+        "url": "https://arxiv.org/abs/2610.16814v1",
+        "reasonCode": "not-developed-in-current-synthesis",
+        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       }
     ],
     "sourceLimitations": [
@@ -1062,39 +1767,48 @@
         "endpoint": "content/papers",
         "limit": 200,
         "acceptedCount": 4,
-        "note": "2026-11-06 对当前原始Markdown执行rg -l -i，共181个文件命中；按方向标签与revisionOf归并得29个候选，其余152个为其它方向、正文提及或修订重复。只更新本库审计，保留站外执行日期。"
+        "note": "Current raw Markdown rg/tag/revision closure rerun saved in local-corpus-rerun.json.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       },
       {
         "sourceFamily": "arxiv",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "Agentic Driving：从语言推理走向受约束、可验证的驾驶智能体 语言和视觉语言驾驶智能体 视觉思维链与双过程规划 记忆、工具使用与知识检索 多智能体协商与意图通信 推理动作一致性与闭环评测 提示攻击、幻觉与安全回退",
-        "endpoint": "https://export.arxiv.org/api/query",
-        "limit": 50,
-        "acceptedCount": 7,
-        "note": "本轮检索证据通过 arXiv API、摘要页与官方 TeX/PDF 交叉核对；预印本状态不因模板或作者自述升级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "executedAt": "2026-11-06",
+        "query": "all:\"driving\" AND (all:\"vision-language-action\" OR all:\"language agent\")",
+        "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22driving%22+AND+%28all%3A%22vision-language-action%22+OR+all%3A%22language+agent%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
+        "limit": 8,
+        "acceptedCount": 13,
+        "note": "Executed every configured query family; returned records are unranked discovery hits, not accepted references.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
+        "queryLimits": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       },
       {
         "sourceFamily": "publisher-and-venue",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "Agentic Driving：从语言推理走向受约束、可验证的驾驶智能体 official proceedings journal DOI",
-        "endpoint": "https://www.google.com/search",
-        "limit": 50,
+        "executedAt": "2026-11-06",
+        "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json",
+        "endpoint": "https://openreview.net/forum?id=Pvjk9lxLJK",
+        "limit": 15,
         "acceptedCount": 15,
-        "note": "逐条回到 DOI、PMLR、CVF、OpenReview、NeurIPS 或其他正式页面核对书目和出版状态；正式页存在时保留 arXiv 入口。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "note": "Existing official venue URLs reopened; additional CVPR2026 primary discovery performed. ScienceDirect primary pages indexed but direct and web open returned403. 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       },
       {
         "sourceFamily": "semantic-scholar",
         "status": "limited",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1109/lra.2024.3440097",
-        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/",
-        "limit": 1,
+        "executedAt": "2026-11-06",
+        "query": "agentic driving",
+        "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search?query=agentic+driving&limit=15&year=2024-2026&fields=title%2Cauthors%2Cyear%2Cvenue%2CexternalIds%2Curl%2Cabstract",
+        "limit": 15,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。服务限流或该ID未命中；不解释为论文不存在。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "Actual API search returned429; no accepted references credited.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
         "historicalAttempt": {
           "sourceFamily": "semantic-scholar",
           "status": "limited",
@@ -1104,17 +1818,21 @@
           "limit": 10,
           "acceptedCount": 0,
           "note": "匿名 API 本轮仍受限，仅作候选发现尝试；没有引用以聚合器记录作为最终核验来源。"
-        }
+        },
+        "queryLimits": [
+          15
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       },
       {
         "sourceFamily": "openalex",
         "status": "success",
-        "executedAt": "2026-09-22",
-        "query": "DOI:10.1109/lra.2024.3440097",
-        "endpoint": "https://api.openalex.org/works/",
-        "limit": 1,
+        "executedAt": "2026-11-06",
+        "query": "autonomous driving language agent memory tool retrieval",
+        "endpoint": "https://api.openalex.org/works",
+        "limit": 12,
         "acceptedCount": 0,
-        "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+        "note": "15 capped results per direction; discovery/metadata only.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
         "historicalAttempt": {
           "sourceFamily": "openalex",
           "status": "success",
@@ -1124,479 +1842,798 @@
           "limit": 10,
           "acceptedCount": 0,
           "note": "用于出版元数据与 DOI/arXiv 别名交叉核对；最终方法、实验和限制均回到一手来源。"
-        }
+        },
+        "queryLimits": [
+          12,
+          15
+        ],
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       },
       {
         "sourceFamily": "official-project",
         "status": "success",
-        "executedAt": "2026-08-01",
-        "query": "Agentic Driving：从语言推理走向受约束、可验证的驾驶智能体 official project code dataset benchmark",
+        "executedAt": "2026-11-06",
+        "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json",
         "endpoint": "https://www.google.com/search",
-        "limit": 50,
+        "limit": 1,
         "acceptedCount": 0,
-        "note": "核对作者项目页、代码仓库和数据入口的存在与当前发布状态；项目自述不用于升级出版或道路安全证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
-        "primarySourceRevalidatedAt": "2026-09-22"
+        "note": "Official project/code READMEs inspected; no experiments executed.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json。",
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json"
       }
     ],
     "candidateLedger": [
       {
-        "canonicalId": "openreview:pvjk9lxljk",
-        "occurrences": 1,
-        "disposition": "included",
+        "canonicalId": "arxiv:2001.10208",
         "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
+          "多智能体协商与意图通信"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2209.12968",
+        "queryFamilies": [
+          "多智能体协商与意图通信"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2310.03026",
-        "occurrences": 1,
-        "disposition": "included",
         "queryFamilies": [
           "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.1109/lra.2024.3440097",
-        "occurrences": 1,
+        ],
         "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "openreview:oqtmupuluc",
-        "occurrences": 1,
-        "disposition": "included",
-        "queryFamilies": [
-          "记忆、工具使用与知识检索"
-        ]
-      },
-      {
-        "canonicalId": "cvf:cvpr2025:xu-drivegpt4-v2",
-        "occurrences": 1,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "pmlr:v270:tian25c",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测",
-          "提示攻击、幻觉与安全回退"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.1109/itsc58415.2024.10919978",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "记忆、工具使用与知识检索",
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "openreview:upe6wye8vg",
-        "occurrences": 1,
-        "disposition": "included",
-        "queryFamilies": [
-          "记忆、工具使用与知识检索"
-        ]
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2312.07488",
-        "occurrences": 1,
-        "disposition": "included",
         "queryFamilies": [
           "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2503.09594",
-        "occurrences": 2,
+        ],
         "disposition": "included",
-        "queryFamilies": [
-          "视觉思维链与双过程规划",
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.18653/v1/2025.findings-emnlp.564",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "视觉思维链与双过程规划",
-          "记忆、工具使用与知识检索"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2506.24044",
-        "occurrences": 1,
-        "disposition": "included",
-        "queryFamilies": [
-          "视觉思维链与双过程规划"
-        ]
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2503.08683",
-        "occurrences": 1,
-        "disposition": "included",
         "queryFamilies": [
           "多智能体协商与意图通信"
-        ]
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2503.09594",
+        "queryFamilies": [
+          "视觉思维链与双过程规划",
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2504.13406",
-        "occurrences": 1,
-        "disposition": "included",
         "queryFamilies": [
           "多智能体协商与意图通信"
-        ]
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2506.24044",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索",
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2510.20409",
+        "queryFamilies": [
+          "多智能体协商与意图通信"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2512.06865",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2512.20299",
-        "occurrences": 2,
-        "disposition": "included",
         "queryFamilies": [
           "记忆、工具使用与知识检索",
           "提示攻击、幻觉与安全回退"
-        ]
+        ],
+        "disposition": "included",
+        "occurrences": 2
       },
       {
-        "canonicalId": "arxiv:2606.12236",
-        "occurrences": 1,
-        "disposition": "included",
+        "canonicalId": "arxiv:2601.11781",
         "queryFamilies": [
-          "记忆、工具使用与知识检索"
-        ]
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "rail-resilient-autonomous-driving",
+        "disposition": "deferred",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2605.08133",
-        "occurrences": 1,
-        "disposition": "included",
         "queryFamilies": [
           "记忆、工具使用与知识检索"
-        ]
+        ],
+        "disposition": "included",
+        "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2607.19194",
-        "occurrences": 3,
-        "disposition": "included",
+        "canonicalId": "arxiv:2605.08830",
         "queryFamilies": [
-          "视觉思维链与双过程规划",
-          "推理动作一致性与闭环评测",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2606.28758",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "视觉思维链与双过程规划",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.05180",
-        "occurrences": 1,
-        "disposition": "included",
-        "queryFamilies": [
-          "提示攻击、幻觉与安全回退"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2605.29114",
-        "occurrences": 3,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测",
-          "提示攻击、幻觉与安全回退",
-          "语言和视觉语言驾驶智能体"
-        ]
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2605.10904",
-        "occurrences": 3,
-        "disposition": "included",
         "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
           "多智能体协商与意图通信",
-          "推理动作一致性与闭环评测",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.20988",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "视觉思维链与双过程规划",
           "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.23537",
-        "occurrences": 3,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测",
-          "提示攻击、幻觉与安全回退",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "doi:10.1038/s41597-026-07929-2",
-        "occurrences": 2,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2607.23962",
-        "occurrences": 3,
-        "disposition": "included",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测",
-          "提示攻击、幻觉与安全回退",
-          "语言和视觉语言驾驶智能体"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2312.14150",
-        "occurrences": 1,
-        "disposition": "excluded",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2312.14115",
-        "occurrences": 1,
-        "disposition": "excluded",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2312.00438",
-        "occurrences": 1,
-        "disposition": "excluded",
-        "queryFamilies": [
-          "推理动作一致性与闭环评测"
-        ]
-      },
-      {
-        "canonicalId": "arxiv:2608.12854",
-        "disposition": "deferred",
-        "localPaperId": "brainwam-action-space-coordination",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
         ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2605.17268",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.19380",
-        "disposition": "deferred",
-        "localPaperId": "caviar-accident-reasoning",
+        "canonicalId": "arxiv:2605.21446",
         "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
+          "推理动作一致性与闭环评测"
         ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.22549",
-        "disposition": "deferred",
-        "localPaperId": "cl4ad-curriculum-driving",
+        "canonicalId": "arxiv:2605.29114",
         "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
+          "语言和视觉语言驾驶智能体",
+          "推理动作一致性与闭环评测",
+          "提示攻击、幻觉与安全回退"
         ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2606.12236",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2609.04807",
-        "disposition": "deferred",
-        "localPaperId": "colmin-multi-decision-negotiation",
+        "canonicalId": "arxiv:2606.28758",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2606.29097",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "trafficalign-traffic-scenario-generation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.05180",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2607.16938",
-        "disposition": "deferred",
-        "localPaperId": "cvaa-driving-interpretability",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "cvaa-driving-interpretability",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2607.19194",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
+          "推理动作一致性与闭环评测",
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.20988",
+        "queryFamilies": [
+          "视觉思维链与双过程规划",
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2607.23537",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
+          "推理动作一致性与闭环评测",
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2607.23962",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
+          "推理动作一致性与闭环评测",
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "included",
+        "occurrences": 3
+      },
+      {
+        "canonicalId": "arxiv:2608.01035",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "wam-diff2-efficient-driving-vla",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2608.01755",
-        "disposition": "deferred",
-        "localPaperId": "deft-rlvr-verifiable-driving-reasoning",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "deft-rlvr-verifiable-driving-reasoning",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.06922",
+        "queryFamilies": [
+          "多智能体协商与意图通信"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.10413",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.10976",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.12854",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "brainwam-action-space-coordination",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2608.12932",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
         "localPaperId": "flashdrive-vla-inference",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.19964",
         "disposition": "deferred",
-        "localPaperId": "g-mark-cooperative-driving",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.26074",
-        "disposition": "deferred",
-        "localPaperId": "gating-before-commitment-intent-divergence",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2609.08965",
-        "disposition": "deferred",
-        "localPaperId": "plannerforge-scenario-testing",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2601.11781",
-        "disposition": "deferred",
-        "localPaperId": "rail-resilient-autonomous-driving",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
-        "occurrences": 1
-      },
-      {
-        "canonicalId": "arxiv:2608.24094",
-        "disposition": "deferred",
-        "localPaperId": "siren-emergency-interaction-benchmark",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2608.14024",
-        "disposition": "deferred",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
         "localPaperId": "ssp-syn2sim2phy-vla-evaluation",
-        "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
-        ],
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2606.29097",
-        "disposition": "deferred",
-        "localPaperId": "trafficalign-traffic-scenario-generation",
+        "canonicalId": "arxiv:2608.19380",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "caviar-accident-reasoning",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2608.01035",
-        "disposition": "deferred",
-        "localPaperId": "wam-diff2-efficient-driving-vla",
+        "canonicalId": "arxiv:2608.19964",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "g-mark-cooperative-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.22549",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "cl4ad-curriculum-driving",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.24094",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "siren-emergency-interaction-benchmark",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2608.26074",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "gating-before-commitment-intent-divergence",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.04807",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "colmin-multi-decision-negotiation",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.08217",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.08965",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "plannerforge-scenario-testing",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.27296",
-        "disposition": "deferred",
-        "localPaperId": "teach-to-crash-student-teacher",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "teach-to-crash-student-teacher",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.31395",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2609.32817",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2609.38641",
-        "disposition": "deferred",
-        "localPaperId": "ad-memo-language-driving-memory",
         "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
+          "语言和视觉语言驾驶智能体",
+          "记忆、工具使用与知识检索"
         ],
+        "localPaperId": "ad-memo-language-driving-memory",
+        "disposition": "deferred",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2610.04751",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.18866",
-        "disposition": "deferred",
-        "localPaperId": "autoagent0-runtime-recovery",
+        "canonicalId": "arxiv:2610.10390",
         "queryFamilies": [
-          "语言和视觉语言驾驶智能体"
+          "视觉思维链与双过程规划"
         ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.12575",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.16634",
-        "disposition": "deferred",
-        "localPaperId": "language2drive-paired-instruction-evaluation",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "language2drive-paired-instruction-evaluation",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2610.30979",
-        "disposition": "deferred",
-        "localPaperId": "last-v2x-communication-failure-testing",
+        "canonicalId": "arxiv:2610.16814",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.16985",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.18866",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "autoagent0-runtime-recovery",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.24277",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.24487",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.24590",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.28829",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.30953",
+        "queryFamilies": [
+          "视觉思维链与双过程规划",
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "arxiv:2610.30979",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体"
+        ],
+        "localPaperId": "last-v2x-communication-failure-testing",
+        "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.31639",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "excluded",
         "occurrences": 1
       },
       {
         "canonicalId": "arxiv:2610.32069",
-        "disposition": "deferred",
-        "localPaperId": "drivemind-multi-hypothesis-belief",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "drivemind-multi-hypothesis-belief",
+        "disposition": "deferred",
         "occurrences": 1
       },
       {
+        "canonicalId": "arxiv:2610.32779",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.34535",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.35630",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2610.36578",
+        "queryFamilies": [
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2611.00718",
+        "queryFamilies": [
+          "视觉思维链与双过程规划"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2611.04166",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测",
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
         "canonicalId": "arxiv:2611.06229",
-        "disposition": "deferred",
-        "localPaperId": "bug2scenario-root-cause-regression",
         "queryFamilies": [
           "语言和视觉语言驾驶智能体"
         ],
+        "localPaperId": "bug2scenario-root-cause-regression",
+        "disposition": "deferred",
         "occurrences": 1
+      },
+      {
+        "canonicalId": "cvf:cvpr2025:xu-drivegpt4-v2",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/s10462-025-11471-9",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.eng.2025.07.038",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1038/s41597-026-07929-2",
+        "queryFamilies": [
+          "语言和视觉语言驾驶智能体",
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1039/d4sc03921a",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/icra57385.2026.11697309",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc58415.2024.10919978",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索",
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/itsc60802.2025.11423790",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/lra.2024.3440097",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/tiv.2024.3402136",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/wacvw60836.2024.00106",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.18653/v1/2025.findings-emnlp.564",
+        "queryFamilies": [
+          "视觉思维链与双过程规划",
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.4018/979-8-2600-2601-4.ch004",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:oqtmupuluc",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:pvjk9lxljk",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "openreview:upe6wye8vg",
+        "queryFamilies": [
+          "记忆、工具使用与知识检索"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "pmlr:v270:tian25c",
+        "queryFamilies": [
+          "推理动作一致性与闭环评测",
+          "提示攻击、幻觉与安全回退"
+        ],
+        "disposition": "included",
+        "occurrences": 2
       }
     ],
-    "refreshMode": "incremental-local-corpus",
+    "refreshMode": "primary-source-and-literature-refresh",
     "sourceRevalidation": {
-      "checkedAt": "2026-09-22",
-      "referenceCount": 26,
-      "priorCoreReviewedAt": "2026-08-01",
-      "manifestPath": "docs/research-updates/2026-09-22/review-source-manifest.json",
-      "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
-      "claimRecordsPath": "docs/research-updates/2026-09-22/review-policy-claims.json",
-      "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+      "checkedAt": "2026-11-06",
+      "scope": "重新核对当前保留的书目及正文论断；实际阅读深度见逐引用记录，不声明所有论文均逐字全文阅读。",
+      "artifactDirectory": "docs/center-updates/2026-11-06/authoring/policy/",
+      "referenceIds": [
+        "gpt-driver-2023",
+        "languagempc-2023",
+        "drivegpt4-2023",
+        "dilu-2024",
+        "drivegpt4-v2-2025",
+        "drivevlm-2025",
+        "talk2drive-2024",
+        "agent-driver-2024",
+        "lmdrive-2024",
+        "simlingo-2025",
+        "agentthink-2025",
+        "vla-survey-2025",
+        "colmdriver-2025",
+        "langcoop-2025",
+        "knowval-2026",
+        "drivingagent-2026",
+        "vladriver-rag-2026",
+        "cognitive-dual-process-2026",
+        "x-mind-2026",
+        "vlm-case-2026",
+        "reasonbreak-2026",
+        "mdrive-2026",
+        "hyworldvla-2026",
+        "obsdrivebench-2026",
+        "iedd-2026",
+        "vlm-gnss-spoofing-2026",
+        "steer-2026",
+        "tnas-2026",
+        "reasoning-action-coupling-2026",
+        "geocotdrive-2026",
+        "drivevla-m0-2026",
+        "hindsight-foresight-2026"
+      ]
     },
     "metadataCorroboration": {
       "checkedAt": "2026-09-22",
@@ -1604,7 +2641,28 @@
       "artifactSha256": "3af83302f1e74662bfeeabda3d276e06c0928eea5e6a201b74cff6431b7d4e34",
       "note": "OpenAlex七项精确ID核对均返回匹配题名；Semantic Scholar两项成功、四项429、一项404。仅作元数据交叉核对，核心论断仍由逐篇一手材料支撑。"
     },
-    "incrementalLocalAuditAt": "2026-11-06",
-    "localRefreshNote": "2026-11-06 新简报入库后重跑当前本库候选检索；原站外queryRuns、cutoffDate、sourceRevalidation与实质reviewedAt保持原值。历史本库记录及审批另存本期local-corpus-evidence.json。"
+    "discoveryAliasMerges": [
+      {
+        "observedId": "doi:10.1109/iccvw69036.2025.00476",
+        "canonicalId": "arxiv:2506.24044",
+        "title": "A Survey on Vision-Language-Action Models for Autonomous Driving",
+        "url": "https://doi.org/10.1109/iccvw69036.2025.00476",
+        "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
+      }
+    ],
+    "currentRefreshArtifacts": {
+      "retrieval": "docs/center-updates/2026-11-06/retrieval/policy/agentic-driving.json",
+      "authoring": "docs/center-updates/2026-11-06/authoring/policy/",
+      "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "previousSourceRevalidation": {
+      "checkedAt": "2026-09-22",
+      "referenceCount": 26,
+      "priorCoreReviewedAt": "2026-08-01",
+      "manifestPath": "docs/research-updates/2026-09-22/review-source-manifest.json",
+      "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
+      "claimRecordsPath": "docs/research-updates/2026-09-22/review-policy-claims.json",
+      "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+    }
   }
 }
