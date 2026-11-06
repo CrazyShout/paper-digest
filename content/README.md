@@ -261,6 +261,10 @@ content/reviews/<direction-id>.json
 
 ## 本地检查
 
+方向阅读页由已发布简报自动归组，包含主方向和相关方向的公开论文，并沿用原始收录期号。`content/direction-reading.json` 只保存需要编辑判断的变化摘要、对照理由和可选跟进，`issueId` 指向这些判断对应的简报；后续发刊不自动把旧判断改成新一期结论。读者反馈入口是公开 GitHub Issue 表单，本机笔记不会发送给编辑。
+
+目录标题初筛可运行 `npm run discover:screen -- --input records.json --output screen.json --seed YYYY-MM-DD`。输入为含 `canonicalId`、`title` 和可选类别的数组，也可用 `{ "records": [...] }` 包装。命中配置关键词的候选与原宽泛规则取并集；输出保留理由和未命中抽查样本。此命令不接受论文、不改历史审计，后续仍按筛选规则阅读原文。
+
 更新完内容后，按发布要求运行：
 
 ```bash

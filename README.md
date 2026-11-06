@@ -7,6 +7,7 @@
 - GitHub Actions 自动构建并部署到 GitHub Pages。
 - Cloudflare Worker 可选接入匿名评论，把评论写回仓库。
 - Idea 中心结合本库与站外文献，比较研究方法、实现路径和首项实验，保留独立评审与历史判断。
+- 面向不同研究方向的读者：`/directions/` 提供近期短评、跨期对照与完整报告，再连接经典和前沿综述。Idea 与实验跟进按需阅读。
 
 ## Project Layout
 
@@ -18,6 +19,7 @@ content/
   README.md                 # 更新简报的具体操作说明
   idea-center.json          # Idea 探索工作流、方向审计与候选课题
   idea-explorations/        # 当前研究候选、实验计划与独立投入建议
+  direction-reading.json   # 按期号组织的比较理由、迁移边界和后续阅读
   research-landscape.json   # 全库趋势、热点和方向建议
   digests/                  # 每期简报 Markdown
   papers/                   # 每篇论文详细报告 Markdown

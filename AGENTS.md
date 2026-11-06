@@ -6,6 +6,17 @@ Guidance for Codex, Claude Code, Cursor, and other coding agents working in this
 
 Paper Digest is a static Astro site for periodic paper digests, paper reading reports, and optional anonymous comments.
 
+It is a public literature digest for readers with different interests. Keep the
+configured directions and complete reports available; do not assume one reader
+will read every direction or pursue the same experiments. Direction priorities
+allocate retrieval effort, not subscriber interests. Direction pages connect
+short comments, cross-issue comparisons, full reports and systematic reviews.
+Cross-direction mechanisms and Idea/experiment follow-up are optional reading
+layers. Evaluate evidence against a paper's actual claims; lack of driving
+closed-loop experiments alone does not exclude a useful adjacent mechanism.
+Keep local browser notes distinct from public feedback. Do not infer subscriber
+preferences or resend existing issues for a reading-interface update.
+
 The main data source is Markdown content under `content/`, with JSON frontmatter. Astro builds the static site into `dist/`. GitHub Actions deploys the built site to GitHub Pages. An optional Cloudflare Worker can accept anonymous comments and write them back to the repository through the GitHub Contents API.
 
 ## Tech Stack
@@ -33,6 +44,7 @@ content/
   digests/                  # One Markdown file per digest
   papers/                   # One Markdown file per paper report
   idea-explorations/         # Dated research proposals and independent prioritization
+  direction-reading.json    # Dated cross-issue comparisons and optional reading leads
   templates/                # Content templates and selection rubric
 src/
   components/               # Astro content components and React notebook/search/comments
@@ -156,6 +168,14 @@ Do not commit `dist/`; it is an ignored build artifact uploaded by GitHub Action
 - `markdownToHtml` supports headings (levels 1–3), paragraphs, bullet lists, images, links, bold text, inline code, pipe tables, and `$...$` / `$$...$$` math. Tables need outer pipes and consistent column counts; display-math delimiters may each occupy their own line. KaTeX renders during the build with untrusted commands disabled. Escape literal dollars as `\$`. Raw HTML, fenced code blocks, Obsidian syntax, and arbitrary extensions remain unsupported.
 
 ## Dynamic Literature Review Workflow
+
+For catalog title screening, use `npm run discover:screen -- --input <records.json>
+--output <screen.json> --seed <issue-id>` before semantic selection. The input is
+an array (or `{ "records": [...] }`) with canonical IDs, titles and optional
+categories. It unions the broad title screen with current configured keywords,
+records match reasons, and samples unmatched categories for manual inspection.
+It is a discovery aid, not an acceptance rule or recall estimate. Never rewrite
+historical retrieval snapshots with a newer screening rule.
 
 Every update to `content/reviews/` must use the repository workflow in
 `config/literature-review-workflow.json`. This contract is derived from the
