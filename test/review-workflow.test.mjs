@@ -22,6 +22,7 @@ const REQUIRED_QUALITY_CHECKS = [
   "publication-status-primary-source",
   "formal-arxiv-link-retention",
   "physical-evidence-boundary",
+  "foundations-and-survey-coverage",
   "independent-review-current-snapshot"
 ];
 
@@ -114,6 +115,8 @@ test("review prompt uses the selected runtime skill root", () => {
   assert.match(prompt, /snapshotFingerprint/);
   assert.match(prompt, /query-family-alignment/);
   assert.match(prompt, /review-quality-checklist\.md/);
+  assert.match(prompt, /foundationsAudit/);
+  assert.match(prompt, /综述截止后的进展/);
 });
 
 test("review workflow keeps every mandatory quality gate", async () => {

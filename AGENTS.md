@@ -193,6 +193,16 @@ checked. A passed review must store the SHA-256 `snapshotFingerprint` for the
 review content excluding the mutable `independentReview` metadata; any later
 content, reference, or audit change invalidates that approval.
 
+Every substantive review update must also check foundational coverage against
+complementary established and current surveys. Read their taxonomy, historical
+discussion and relevant references, trace missing milestones to original papers,
+and check developments after each survey's cutoff. A paper is foundational
+because of its role in the method or benchmark lineage, not merely its age or
+citation count. Record survey reading depth, branch coverage, citation tracing
+and remaining gaps in `searchAudit.foundationsAudit`; explain a useful survey
+reading order in the scope section. Preserve the six section IDs. Young fields
+may use early systematic accounts without labelling them established classics.
+
 For `local-corpus` runs, `resultCount` means the papers that survived scope
 screening and entered cross-source deduplication. Record the broader `rg` file
 matches separately as `rawHitCount`, plus `screenedOutCount` and a concrete

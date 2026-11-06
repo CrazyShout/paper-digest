@@ -24,6 +24,7 @@ import {
   unusedAuditedSourceFamilies
 } from "../src/lib/review-audit.js";
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
+import { validateFoundationsAudit } from "../src/lib/review-foundations.js";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
 import {
   CATEGORY_COVERAGE_SNAPSHOT_ALGORITHM,
@@ -887,6 +888,7 @@ const REQUIRED_REVIEW_QUALITY_CHECK_CODES = [
   "publication-status-primary-source",
   "formal-arxiv-link-retention",
   "physical-evidence-boundary",
+  "foundations-and-survey-coverage",
   "independent-review-current-snapshot"
 ];
 
@@ -981,6 +983,9 @@ function validateLiteratureReviewWorkflow(workflow, knownTags, file) {
     addError(
       `${file} requirements.candidateLedgerRequiredFrom must be a real YYYY-MM-DD calendar date`
     );
+  }
+  if (!isValidIsoDate(requirements.foundationsAuditRequiredFrom)) {
+    addError(`${file} requirements.foundationsAuditRequiredFrom must be a real YYYY-MM-DD calendar date`);
   }
   if (
     Number.isInteger(requirements.minSourceFamilies)
@@ -1440,6 +1445,10 @@ function validateReviewCenter(
 
     const searchAudit = isPlainObject(review.searchAudit) ? review.searchAudit : {};
     const searchAuditLabel = `${label} searchAudit`;
+    for (const error of validateFoundationsAudit(review, {
+      requiredFrom: requirements.foundationsAuditRequiredFrom,
+      today
+    })) addError(`${searchAuditLabel}.foundationsAudit: ${error}`);
     validateRequiredStrings(
       searchAudit,
       ["searchedAt", "cutoffDate", "evidenceBoundary"],

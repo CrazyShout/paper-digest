@@ -255,6 +255,8 @@ export function buildPrompt(workflow, interest, review, runtime = "codex") {
     "1. 先检索本库，随后并行检索 arXiv、正式出版社/会议、Semantic Scholar、OpenAlex 与官方项目页。",
     "2. 检索分片只抽取候选，不排序质量；父流程按 DOI、arXiv ID 或规范化标题机械去重。",
     "3. 每条纳入引用必须打开一手来源，核对标题、作者、年份、出版状态、venue、URL、支撑论断和限制。",
+    "3a. 建立经典工作与综述覆盖表：阅读互补的成熟综述/早期系统整理和近期综述的分类、历史与参考文献章节，沿引文向后查方法源头，向前查补综述截止后的进展。按问题定义、方法、关键转折、数据集与评测检查遗漏；年份和引用数量不能代替覆盖判断。",
+    "3b. 在 searchAudit.foundationsAudit 记录 surveyAnchors（referenceId/role/sectionsRead/use/coverageCutoff）、milestones、coverage、citationTrace 和 limitations。每条追溯保留综述章节出处、原论文 URL、canonical ID 与已覆盖/补入/排除理由；正文 scope 给出阅读路径，evolution/taxonomy 体现脉络。没有合适综述时用 surveyGap 保存查询和具体缺口，不凑数或虚构经典地位。",
     "4. 综合时按 scope/evolution/taxonomy/evidence/challenges/outlook 组织，明确共识、冲突证据、失败边界和可验证研究议程。",
     "5. 完成后由未参与撰写的独立审阅者复核事实、覆盖、结构和可读性；通过后记录当前内容的 snapshotFingerprint，任何后续内容变化都必须重新复核。",
     "",

@@ -242,6 +242,8 @@ content/reviews/<direction-id>.json
 - 站外论文不填写 `localPaperId`，使用 DOI、会议、期刊或 arXiv 的 HTTPS 一手链接；页面会派生“外部文献”标记并直达原文。
 - 不要手填来源布尔值。本库状态以 `localPaperId` 为唯一依据；论文日后入库时补上该字段即可自动切换状态。
 - 每方向至少 10 篇参考文献，并同时包含本库论文、外部论文、基础工作、近期工作、正式发表成果和至少一篇 `survey` 或 `tutorial`；具体阈值以 `config/literature-review-workflow.json` 为准。
+- 数量阈值只是最低检查。每次实质更新还要对照互补的成熟与近期综述，检查方法源头、关键转折及基准是否遗漏；阅读分类与引用章节，再回到原论文核对。`scope` 给出简短的综述阅读顺序，`evolution` 与 `taxonomy` 吸收补全的脉络。
+- `searchAudit.foundationsAudit` 保存 `surveyAnchors`（已有/前沿综述、实际阅读章节、用途与覆盖范围）、`milestones`、逐分支 `coverage`、可追溯的 `citationTrace` 和 `limitations`。领域较新或缺少匹配综述时，用 `surveyGap` 记录实际查询、已检查的一手链接及具体缺口，避免为了数量贴上“经典”标签。
 - `publicationType` 只使用 `survey`、`tutorial`、`method`、`benchmark`、`dataset`、`standard`、`position`。
 - `publicationStatus` 只使用 `peer-reviewed`、`accepted`、`workshop`、`workshop-accepted`、`preprint`、`technical-report`、`standard` 或 `dataset`。`peer-reviewed` 与 `workshop` 必须已有可核验的正式出版页；仅确认录用但正式页尚未发布时分别使用 `accepted` 或 `workshop-accepted`，并保留预印本证据边界。
 - 已录用论文若同时存在正式出版页与 arXiv，`url` 应指向正式出版页。有正式 DOI 时优先使用 `doi:<id>` 作为 `canonicalId`，并在 `links` 显式加入 arXiv；没有正式 DOI 时可保留 `arxiv:<id>`，页面会自动派生 arXiv 入口。代码、项目页或其他一手入口也放入 `links: [{ "label": "...", "url": "https://..." }]`。
