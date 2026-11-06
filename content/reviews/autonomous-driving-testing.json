@@ -18,7 +18,7 @@
       "kind": "scope",
       "title": "一项测试需要记录哪些条件",
       "thesis": "解释测试结论时，应同时给出系统版本、ODD、场景、执行层级、oracle、不确定度和证据边界。",
-      "body": "ISO 21448、ISO 34502 和 UL 4600 把测试放在风险分析、验证确认与安全论证的上下文中。记录里程和碰撞结果前，应先固定被测系统的软件、模型、传感器和配置版本，声明 ODD 与排除条件，再说明场景来源、执行环境和采用的判定规则（oracle）。**系统版本—ODD—场景—执行层级—oracle—不确定度—证据边界**共同构成本综述建议的最小测试记录，便于复查测试对象、条件与结论。这里的七字段是本综述综合标准与测试研究提出的工作模板，不是 ISO 21448、ISO 34502 或 UL 4600 逐字规定的强制清单。\n\n这个结构也限定了测试能证明什么。一次碰撞可能来自被测系统缺陷、他车不可避免行为、仿真器错误或 oracle 误判；一次无碰撞执行也可能包含交通违规、极端制动或任务失败。场景式测试进入安全论证时，需要逐步说明场景抽取、参数化、执行、判定和外推的假设；单个案例与指标仅覆盖其中一部分。\n\n数据集与系统测试说明了这些字段的具体作用。IEDD 的数百万片段来自五个既有数据源重组，必须保存场景 provenance 和去重键；ObsDriveBench 的恶劣天气选择题只测可观测性、空间判断与风险决策，不执行轨迹；Denial of Deadline 则表明同一模型在不同网络时序下会产生不同有效输出。解释数据规模、答题准确率和模型精度时，需要同时报告来源、执行层级与时间 oracle；上述组件结果还需闭环检验。",
+      "body": "ISO 21448、ISO 34502 和 UL 4600 把测试放在风险分析、验证确认与安全论证的上下文中。记录里程和碰撞结果前，应先固定被测系统的软件、模型、传感器和配置版本，声明 ODD 与排除条件，再说明场景来源、执行环境和采用的判定规则（oracle）。**系统版本—ODD—场景—执行层级—oracle—不确定度—证据边界**共同构成本综述建议的最小测试记录，便于复查测试对象、条件与结论。这里的七字段是本综述综合标准与测试研究提出的工作模板，不是 ISO 21448、ISO 34502 或 UL 4600 逐字规定的强制清单。\n\n这个结构也限定了测试能证明什么。一次碰撞可能来自被测系统缺陷、他车不可避免行为、仿真器错误或 oracle 误判；一次无碰撞执行也可能包含交通违规、极端制动或任务失败。场景式测试进入安全论证时，需要逐步说明场景抽取、参数化、执行、判定和外推的假设；单个案例与指标仅覆盖其中一部分。\n\n数据集与系统测试说明了这些字段的具体作用。IEDD 的数百万片段来自五个既有数据源重组，必须保存场景 provenance 和去重键；ObsDriveBench 的恶劣天气选择题只测可观测性、空间判断与风险决策，不执行轨迹；Denial of Deadline 则表明同一模型在不同网络时序下会产生不同有效输出。解释数据规模、答题准确率和模型精度时，需要同时报告来源、执行层级与时间 oracle；上述组件结果还需闭环检验。\n\n### 综述阅读路径\n\n[A Survey on Automated Driving System Testing: Landscapes and Trends](https://doi.org/10.1145/3579642) 适合先读：它按模块级与系统级组织测试，再区分测试生成、判定和充分性，纳入范围为 2015 年 1 月至 2022 年 6 月。随后读 [The Reality Gap in Automated Driving Systems Testing](https://arxiv.org/abs/2610.38628)；这篇 2026 年 10 月预印本重点检查仿真与现实的对应关系，区分构建方法时用了现实信息，和评价结论时真正有现实执行证据。\n\n前者提供测试分类，后者帮助检查仿真结论的适用范围。场景层次、概率描述语言和稀有事件统计动机分别回到 Menzel 等、Scenic 与 Kalra–Paddock 的原始工作，避免把已有的测试基础设施误当作近期生成模型的新贡献。",
       "referenceIds": [
         "iso-sotif-2022",
         "iso-scenario-testing-2022",
@@ -27,7 +27,11 @@
         "scenario-testing-considerations-2020",
         "iedd-2026",
         "obsdrivebench-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "reality-gap-survey-2026",
+        "scenarios-abstraction-2018",
+        "scenic-2019",
+        "driving-to-safety-2016"
       ]
     },
     {
@@ -35,7 +39,7 @@
       "kind": "evolution",
       "title": "失效发现、事件率估计与安全论证的演进",
       "thesis": "主动搜索定位失效机制，重要性采样在给定假设下估计事件率，闭环和道路测试则用于检查执行后果与迁移。",
-      "body": "CARLA 使天气、交通、地图和传感器条件可以重复控制。失效发现支线中，Adaptive Stress Testing 把环境扰动写成序贯决策问题，用强化学习或树搜索寻找高可能失败路径；DriveFuzz 把搜索扩展到完整自动驾驶栈，以交通规则 oracle 和驾驶质量引导场景变异；AdvSim 又在传感器级场景中生成具有物理约束的安全关键交互。这些方法优化的是有限预算内发现失败的效率，不自动恢复自然交通中的事件概率。\n\n另一条支线把测试明确写成稀有事件估计。Zhao 等人的加速评估对切入场景的自然分布做重要性偏置，再以似然比恢复冲突、碰撞和伤害频率；NADE 只在关键时刻扭曲少量背景车辆行为，并以权重保持对自然环境事件率的无偏估计。它们与 AST、模糊测试的目标不同：前者在自然分布模型、似然可计算和代理模型误差可控时估计特定事件率，后者主要定位失效机制。Safe-Sim 等生成式方法则发展出第三类能力，用扩散引导生成可控且交互的长尾场景，但其危险样本频率仍不是现实暴露率。\n\n近年的第四条支线转向证据是否可采信。Bench2Drive 用多能力、路线级闭环协议减少开环规划指标的盲区；CARS 尝试区分可归因于自车的失败与不可避免冲突；Bench2Drive-Robust 把相机流、ego-state 和执行延迟纳入系统接口；商用卡车测试、RiskFlow、实车扰动和世界模型准入研究则分别追问失效搜索能否进入商业系统、生成场景是否仍然自然、离线结果能否迁移到实车，以及仿真器本身给出的测试判定是否可靠。标准和安全案例把这些支线重新绑定到具体系统版本、ODD 与可审计主张。\n\n本轮增量把四条支线继续细化。RL fuzzing 横评在统一 12 小时预算和 5 次重复下显示 MDPFuzz 在 CARLA 找到 291 个唯一 crash、随机测试为 157，同时不同 fuzzer 的失败高度互补；不同工具的失败并集因此值得单独比较。Pictura 把大规模自博弈推进到透视图像输入，Learning from Risk 用 LLM 把先验知识转成场景损失；两者仍是模拟器证据。IEDD 与公共道路 78 次换道分别提供大规模交互任务和有限现实行为锚点，Denial of Deadline 则把网络时限加入系统级测试对象。\n\n2026 年秋季，测试开始更直接地连接缺陷发现和后续修复。Bug2Scenario 用种子的根因模式约束变异，并按执行证据区分严格保持、边界保持与新故障；failure-boundary profiles 沿同一个场景因素测量承诺和能力曲线，解释总分相近的策略为何作出不同决策。SCAPE 则学习情景条件的目标性能，校正便宜代理评价的偏差。三者分别提供可复用案例、可解释能力边界和低成本评估机制。",
+      "body": "场景式测试有两个互补的早期动机。Kalra 与 Paddock 从事故稀有性和统计置信要求说明，仅靠自然驾驶里程难以高效评价可靠性；其里程需求取决于事件基率和比较目标，不是统一认证门槛。Menzel 等则把场景分成功能、逻辑和具体三个抽象层次，使同一驾驶情境能够从文字描述逐步变为参数范围与可执行测试。前者解释为什么需要更有效的验证，后者说明测试对象怎样表述。\n\nScenic 把带约束的场景分布写成概率程序，通过采样生成感知系统的训练和测试输入，也能围绕已知失败探索变化条件。2019 年论文主要研究静态场景和感知组件；后续动态行为与整车测试能力应归到对应扩展版本。它与后来的搜索式、生成式方法可以组合，分别承担场景表达和测试选择。\n\nCARLA 使天气、交通、地图和传感器条件可以重复控制。失效发现支线中，Adaptive Stress Testing 把环境扰动写成序贯决策问题，用强化学习或树搜索寻找高可能失败路径；DriveFuzz 把搜索扩展到完整自动驾驶栈，以交通规则 oracle 和驾驶质量引导场景变异；AdvSim 又在传感器级场景中生成具有物理约束的安全关键交互。这些方法优化的是有限预算内发现失败的效率，不自动恢复自然交通中的事件概率。\n\n另一条支线把测试明确写成稀有事件估计。Zhao 等人的加速评估对切入场景的自然分布做重要性偏置，再以似然比恢复冲突、碰撞和伤害频率；NADE 只在关键时刻扭曲少量背景车辆行为，并以权重保持对自然环境事件率的无偏估计。它们与 AST、模糊测试的目标不同：前者在自然分布模型、似然可计算和代理模型误差可控时估计特定事件率，后者主要定位失效机制。Safe-Sim 等生成式方法则发展出第三类能力，用扩散引导生成可控且交互的长尾场景，但其危险样本频率仍不是现实暴露率。\n\n近年的第四条支线转向证据是否可采信。Bench2Drive 用多能力、路线级闭环协议减少开环规划指标的盲区；CARS 尝试区分可归因于自车的失败与不可避免冲突；Bench2Drive-Robust 把相机流、ego-state 和执行延迟纳入系统接口；商用卡车测试、RiskFlow、实车扰动和世界模型准入研究则分别追问失效搜索能否进入商业系统、生成场景是否仍然自然、离线结果能否迁移到实车，以及仿真器本身给出的测试判定是否可靠。标准和安全案例把这些支线重新绑定到具体系统版本、ODD 与可审计主张。\n\n本轮增量把四条支线继续细化。RL fuzzing 横评在统一 12 小时预算和 5 次重复下显示 MDPFuzz 在 CARLA 找到 291 个唯一 crash、随机测试为 157，同时不同 fuzzer 的失败高度互补；不同工具的失败并集因此值得单独比较。Pictura 把大规模自博弈推进到透视图像输入，Learning from Risk 用 LLM 把先验知识转成场景损失；两者仍是模拟器证据。IEDD 与公共道路 78 次换道分别提供大规模交互任务和有限现实行为锚点，Denial of Deadline 则把网络时限加入系统级测试对象。\n\n2026 年秋季，测试开始更直接地连接缺陷发现和后续修复。Bug2Scenario 用种子的根因模式约束变异，并按执行证据区分严格保持、边界保持与新故障；failure-boundary profiles 沿同一个场景因素测量承诺和能力曲线，解释总分相近的策略为何作出不同决策。SCAPE 则学习情景条件的目标性能，校正便宜代理评价的偏差。三者分别提供可复用案例、可解释能力边界和低成本评估机制。",
       "referenceIds": [
         "carla-2017",
         "accelerated-evaluation-2017",
@@ -59,7 +63,11 @@
         "denial-deadline-2026",
         "bug2scenario-2026",
         "failure-boundary-profiles-2026",
-        "scape-2026"
+        "scape-2026",
+        "driving-to-safety-2016",
+        "scenarios-abstraction-2018",
+        "scenic-2019",
+        "testing-survey-2023"
       ]
     },
     {
@@ -67,7 +75,7 @@
       "kind": "taxonomy",
       "title": "从单次结果到可比较的场景族",
       "thesis": "比较失败率、覆盖率和闭环分数前，应核对七个字段中的设置差异。",
-      "body": "第一字段是**系统版本**，包括模型权重、软件提交、传感器和计算平台；第二是 **ODD**，明确道路、天气、交通和系统边界；第三是**场景**，记录来自自然日志、规则组合、搜索、重要性采样还是生成模型；第四是**执行层级**，区分开环日志、纯仿真闭环、SIL/HIL、封闭场地和道路车辆；第五是 **oracle**，区分碰撞、规则、任务、舒适度、风险、责任和反事实判定。\n\n第六字段是**不确定度**，至少包含随机种子、重复次数、置信区间、采样分布及失败去重；第七是**证据边界**，说明结果只适用于哪些版本、场景和层级。这七字段是本综述用于落实可追溯性的综合模板，不是对任一标准原文的转录。关键性指标综述表明不存在适合所有任务的单一风险指标，场景库覆盖研究也明确指出：在给定分类体系下达到覆盖，并不等于连续场景空间已经完备。闭环协议能够观察动作对后续状态的影响，但若场景分布、oracle 或仿真器不可信，闭环分数仍不能被解释为安全证明。\n\n新工作还要求在系统版本字段中记录**网络路由、截止时间和资源隔离**，在场景字段中记录**数据来源与场景级 provenance**。IEDD 需先做源数据场景去重，才能判断独立覆盖；ObsDriveBench 需记录天气下各模态可见性，区分保守动作选择与空间理解；RL fuzzing 需共同报告唯一失败、随机种子和测试预算，才能判断不同 fuzzer 的互补性。\n\n对于回归测试，还需给场景族保存根因模式、被改变的参数和保持证据。Bug2Scenario 的“出现同类碰撞”和“原机制仍然存在”采用不同判定；failure-boundary profiles 也把尝试通过概率与无接触通过概率分开。把这些变量保存到上述记录中，可避免将更激进的行为当作能力提升。这里的记录结构是综述提出的工作方法，不把每个字段都归于某项标准。",
+      "body": "第一字段是**系统版本**，包括模型权重、软件提交、传感器和计算平台；第二是 **ODD**，明确道路、天气、交通和系统边界；第三是**场景**，记录来自自然日志、规则组合、搜索、重要性采样还是生成模型；第四是**执行层级**，区分开环日志、纯仿真闭环、SIL/HIL、封闭场地和道路车辆；第五是 **oracle**，区分碰撞、规则、任务、舒适度、风险、责任和反事实判定。\n\n第六字段是**不确定度**，至少包含随机种子、重复次数、置信区间、采样分布及失败去重；第七是**证据边界**，说明结果只适用于哪些版本、场景和层级。这七字段是本综述用于落实可追溯性的综合模板，不是对任一标准原文的转录。关键性指标综述表明不存在适合所有任务的单一风险指标，场景库覆盖研究也明确指出：在给定分类体系下达到覆盖，并不等于连续场景空间已经完备。闭环协议能够观察动作对后续状态的影响，但若场景分布、oracle 或仿真器不可信，闭环分数仍不能被解释为安全证明。\n\n新工作还要求在系统版本字段中记录**网络路由、截止时间和资源隔离**，在场景字段中记录**数据来源与场景级 provenance**。IEDD 需先做源数据场景去重，才能判断独立覆盖；ObsDriveBench 需记录天气下各模态可见性，区分保守动作选择与空间理解；RL fuzzing 需共同报告唯一失败、随机种子和测试预算，才能判断不同 fuzzer 的互补性。\n\n对于回归测试，还需给场景族保存根因模式、被改变的参数和保持证据。Bug2Scenario 的“出现同类碰撞”和“原机制仍然存在”采用不同判定；failure-boundary profiles 也把尝试通过概率与无接触通过概率分开。把这些变量保存到上述记录中，可避免将更激进的行为当作能力提升。这里的记录结构是综述提出的工作方法，不把每个字段都归于某项标准。\n\n场景字段还应记录抽象层次。功能场景描述道路情境和参与者关系，逻辑场景给出参数及其范围，具体场景固定一次执行所需的值。Menzel 等提供了这种层次衔接；Scenic 一类概率语言负责表达约束和采样分布。生成器找到更多危险样本，既不等于逻辑场景空间已覆盖，也不直接给出自然驾驶中的危险发生率。后者仍依赖采样分布与统计估计。",
       "referenceIds": [
         "testing-survey-2023",
         "bench2drive-2024",
@@ -80,7 +88,10 @@
         "rl-fuzzing-2026",
         "denial-deadline-2026",
         "bug2scenario-2026",
-        "failure-boundary-profiles-2026"
+        "failure-boundary-profiles-2026",
+        "scenarios-abstraction-2018",
+        "scenic-2019",
+        "driving-to-safety-2016"
       ]
     },
     {
@@ -770,6 +781,74 @@
       "limitation": "驾驶部分是 nuPlan 开环代理与闭环目标配对的 Sim2Sim；现实配对来自四足机器人，不能写成驾驶道路 sim-real 校准。",
       "url": "https://arxiv.org/abs/2608.19425",
       "localPaperId": "scape-policy-evaluation"
+    },
+    {
+      "id": "scenarios-abstraction-2018",
+      "title": "Scenarios for Development, Test and Validation of Automated Vehicles",
+      "authors": "Till Menzel, Gerrit Bagschik, Markus Maurer",
+      "year": 2018,
+      "venue": "IEEE Intelligent Vehicles Symposium 2018",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/ivs.2018.8500406",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1109/IVS.2018.8500406",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1801.08598"
+        }
+      ],
+      "supports": "区分functional、logical和concrete场景，说明场景如何沿开发流程从自然语言转成参数空间与具体测试。",
+      "limitation": "提供场景表述和细化框架；覆盖这些层级本身不等于充分风险覆盖。"
+    },
+    {
+      "id": "scenic-2019",
+      "title": "Scenic: A Language for Scenario Specification and Scene Generation",
+      "authors": "Daniel J. Fremont, Tommaso Dreossi, Shromona Ghosh, Xiangyu Yue, Alberto L. Sangiovanni-Vincentelli, Sanjit A. Seshia",
+      "year": 2019,
+      "venue": "PLDI 2019",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1145/3314221.3314633",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1145/3314221.3314633",
+      "links": [
+        {
+          "label": "项目页",
+          "url": "https://people.ucsc.edu/~dfremont/papers/PLDI19.pdf"
+        },
+        {
+          "label": "项目页",
+          "url": "https://docs.scenic-lang.org/en/latest/publications.html"
+        },
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1809.09310"
+        }
+      ],
+      "supports": "用带约束的概率程序描述场景分布，可用于稀有场景生成、感知测试和失败邻域分析。",
+      "limitation": "2019论文主要围绕静态场景及感知组件；不要把后续Scenic动态行为能力全部归给原始论文。"
+    },
+    {
+      "id": "driving-to-safety-2016",
+      "title": "Driving to safety: How many miles of driving would it take to demonstrate autonomous vehicle reliability?",
+      "authors": "Nidhi Kalra, Susan M. Paddock",
+      "year": 2016,
+      "venue": "Transportation Research Part A: Policy and Practice",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1016/j.tra.2016.09.010",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1016/j.tra.2016.09.010",
+      "links": [
+        {
+          "label": "项目页",
+          "url": "https://www.rand.org/pubs/research_reports/RR1478.html"
+        }
+      ],
+      "supports": "从事故稀有性和统计置信要求解释为什么仅积累自然驾驶里程不足以高效论证安全，提供加速评估与场景测试的动机。",
+      "limitation": "数量结论依赖事件基率、置信条件及比较目标；这里不把报告中的里程数字写成统一认证门槛。"
     }
   ],
   "searchAudit": {
@@ -786,7 +865,8 @@
       "生成式场景和世界模型测试",
       "覆盖率、风险度量与责任归因",
       "仿真真实性与 sim-to-real",
-      "真实系统、闭环与回归测试"
+      "真实系统、闭环与回归测试",
+      "经典工作、综述分类与引文追溯"
     ],
     "sourceFamilies": [
       "local-corpus",
@@ -796,9 +876,9 @@
       "arxiv"
     ],
     "counts": {
-      "candidates": 174,
-      "deduplicated": 163,
-      "included": 34,
+      "candidates": 179,
+      "deduplicated": 166,
+      "included": 37,
       "excluded": 129
     },
     "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
@@ -814,13 +894,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 2,
+      "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
-      "reviewerAgentId": "/root/review_centers_embodied",
-      "artifactPath": "docs/center-updates/2026-11-06/independent-review/embodied-round2.json",
-      "artifactSha256": "570dbfa5c02aeb19b7f987c0a41769ad0201e8b67f46748fbb007e05d2f0c674",
-      "snapshotFingerprint": "84c31a9d6af7407d035b020adae6784f80a9cc2f0813381c13a363b05652b6bc",
+      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
+      "reviewerAgentId": "/root/foundations_review_embodied",
+      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/embodied-round1.json",
+      "artifactSha256": "68db1a65f3fa8ca6f85c48f654731f0bb91c9c3472c2e77f6c730799c016c148",
+      "snapshotFingerprint": "25584f3b3cfae27b8f2af039c2278c7a49bc0e6497799e5195e60d4a40a117e1",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -1939,6 +2019,123 @@
             "limit": 200
           }
         }
+      },
+      {
+        "family": "经典工作、综述分类与引文追溯",
+        "sourceFamily": "publisher-and-venue",
+        "query": "综述分类与引文追溯：A Survey on Automated Driving System Testing: Landscapes and Trends；The Reality Gap in Automated Driving Systems Testing: Landscape, Challenges, and Research Directions；按引用定位打开原论文并核对身份与方法。",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "围绕缺失的方法源头、关键转折和综述分类进行定向追溯。该族统计进入父流程范围判定的候选；API和Web宽泛返回只记录为发现，不作为本族已读或纳入数。原有语义族及本库rg审计保留。",
+        "resultCount": 5,
+        "resultIdSample": [
+          "arxiv:2610.38628",
+          "doi:10.1016/j.tra.2016.09.010",
+          "doi:10.1109/ivs.2018.8500406",
+          "doi:10.1145/3314221.3314633",
+          "doi:10.1145/3579642"
+        ],
+        "retrieval": {
+          "provider": "primary-survey-reference-tracing-with-targeted-source-verification",
+          "endpoint": "https://doi.org/10.1145/3579642",
+          "parameters": {
+            "query": "综述分类与引文追溯：A Survey on Automated Driving System Testing: Landscapes and Trends；The Reality Gap in Automated Driving Systems Testing: Landscape, Challenges, and Research Directions；按引用定位打开原论文并核对身份与方法。",
+            "surveyUrls": [
+              "https://doi.org/10.1145/3579642",
+              "https://arxiv.org/abs/2610.38628"
+            ],
+            "primaryUrls": [
+              "https://doi.org/10.1145/3579642",
+              "https://arxiv.org/abs/2610.38628",
+              "https://doi.org/10.1109/IVS.2018.8500406",
+              "https://doi.org/10.1145/3314221.3314633",
+              "https://doi.org/10.1016/j.tra.2016.09.010"
+            ],
+            "discoveryQueriesArtifact": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json"
+          },
+          "sort": "survey branch and citation order; parent scope screening",
+          "limit": 5,
+          "limitMeaning": "Frozen scoped candidate inventory; exact search engine/API caps and raw hits are retained in the evidence packet, not replaced by this inventory size.",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "evidencePacketSha256": "eb9e54b970f84075c5c04d5ed94049de0ac80844b2478b74dd3850f8266d0859",
+          "entries": [
+            {
+              "canonicalId": "doi:10.1145/3579642",
+              "referenceId": "testing-survey-2023",
+              "reason": "补足综述分类和阅读入口：同时组织模块级与系统级测试，并区分测试生成、判定和充分性。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1145/3579642",
+                "tracedFromSurvey": [],
+                "readingDepth": "全文提取后阅读3检索范围、5模块测试、6系统测试/现实差距、场景语言表及refs146/287/361"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2610.38628",
+              "referenceId": "reality-gap-survey-2026",
+              "reason": "补足综述分类和阅读入口：区分构建仿真所用的现实信息和评价结论所依赖的真实执行证据，按组件讨论现实差距。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "arxiv:2610.38628",
+                "tracedFromSurvey": [],
+                "readingDepth": "摘要、分类维度、5结果与6讨论、相关文献条目"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/ivs.2018.8500406",
+              "referenceId": "scenarios-abstraction-2018",
+              "reason": "测试生成前需要明确场景层级。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1109/ivs.2018.8500406",
+                "tracedFromSurvey": [
+                  {
+                    "id": "testing-survey-2023",
+                    "section": "场景抽象讨论 / reference[146]",
+                    "why": "测试生成前需要明确场景层级。",
+                    "url": "https://doi.org/10.1145/3579642"
+                  }
+                ],
+                "readingDepth": "官方作者预印本摘要、I和IV层次定义；出版DOI元数据"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1145/3314221.3314633",
+              "referenceId": "scenic-2019",
+              "reason": "语言级约束与采样是测试基础设施，不应被归为新生成模型。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1145/3314221.3314633",
+                "tracedFromSurvey": [
+                  {
+                    "id": "testing-survey-2023",
+                    "section": "场景描述语言表 / reference[361]",
+                    "why": "语言级约束与采样是测试基础设施，不应被归为新生成模型。",
+                    "url": "https://doi.org/10.1145/3579642"
+                  }
+                ],
+                "readingDepth": "作者正式版PDF摘要、1动机和语言示例；正式DOI元数据；官方项目论文表"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1016/j.tra.2016.09.010",
+              "referenceId": "driving-to-safety-2016",
+              "reason": "自然驾驶里程的统计限制是场景式验证的重要动机。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1016/j.tra.2016.09.010",
+                "tracedFromSurvey": [
+                  {
+                    "id": "testing-survey-2023",
+                    "section": "6.3 Real-World Testing / reference[287]",
+                    "why": "自然驾驶里程的统计限制是场景式验证的重要动机。",
+                    "url": "https://doi.org/10.1145/3579642"
+                  }
+                ],
+                "readingDepth": "正式期刊Crossref元数据；作者机构RAND研究报告版摘要及主要结论（期刊全文403）"
+              }
+            }
+          ]
+        }
       }
     ],
     "deduplicationKeys": [
@@ -1981,7 +2178,10 @@
       "arxiv:2611.06229",
       "arxiv:2611.06453",
       "arxiv:2610.38628",
-      "arxiv:2608.19425"
+      "arxiv:2608.19425",
+      "doi:10.1109/ivs.2018.8500406",
+      "doi:10.1145/3314221.3314633",
+      "doi:10.1016/j.tra.2016.09.010"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -2389,7 +2589,8 @@
       "publication-status-primary-source",
       "formal-arxiv-link-retention",
       "physical-evidence-boundary",
-      "independent-review-current-snapshot"
+      "independent-review-current-snapshot",
+      "foundations-and-survey-coverage"
     ],
     "sourceAttempts": [
       {
@@ -2401,7 +2602,23 @@
         "limit": 210,
         "acceptedCount": 10,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "local-corpus",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "测试|场景|testing|scenario|coverage|autonomous-driving-testing",
+          "endpoint": "content/papers",
+          "limit": 210,
+          "acceptedCount": 10,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "arxiv",
@@ -2420,7 +2637,31 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "scenario testing automated driving SOTIF",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "limit": 12,
+          "acceptedCount": 4,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -2429,9 +2670,25 @@
         "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
         "endpoint": "https://doi.org/10.1145/3579642",
         "limit": 17,
-        "acceptedCount": 17,
+        "acceptedCount": 20,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+          "endpoint": "https://doi.org/10.1145/3579642",
+          "limit": 17,
+          "acceptedCount": 17,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "semantic-scholar",
@@ -2460,7 +2717,41 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-11-06",
+          "query": "scenario testing automated driving SOTIF",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+          "limit": 12,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "semantic-scholar",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "autonomous driving testing fuzzing self-play interactive dataset adverse weather deadline regression",
+            "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+            "limit": 20,
+            "acceptedCount": 0,
+            "note": "用于候选发现和书目交叉核对；本轮没有以聚合器记录作为最终论据或出版状态依据。"
+          },
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "openalex",
@@ -2489,7 +2780,41 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "scenario testing automated driving SOTIF",
+          "endpoint": "https://api.openalex.org/works",
+          "limit": 12,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "openalex",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "autonomous driving testing fuzzing self-play interactive dataset adverse weather deadline regression",
+            "endpoint": "https://api.openalex.org/works",
+            "limit": 20,
+            "acceptedCount": 0,
+            "note": "用于 DOI、年份和来源交叉核对；宽泛返回经范围筛选，最终支持与限制均回到一手论文或正式页面。"
+          },
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -2500,7 +2825,23 @@
         "limit": 3,
         "acceptedCount": 3,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json",
+          "endpoint": "https://www.iso.org/standard/77490.html",
+          "limit": 3,
+          "acceptedCount": 3,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/autonomous-driving-testing-evidence-packet.json"
+        }
       }
     ],
     "candidateLedger": [
@@ -3326,10 +3667,11 @@
       {
         "canonicalId": "arxiv:2610.38628",
         "queryFamilies": [
-          "仿真真实性与 sim-to-real"
+          "仿真真实性与 sim-to-real",
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
-        "occurrences": 1
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2611.02648",
@@ -3467,6 +3809,14 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1016/j.tra.2016.09.010",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1016/j.trc.2024.104620",
         "queryFamilies": [
           "生成式场景和世界模型测试"
@@ -3595,6 +3945,14 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1109/ivs.2018.8500406",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1109/jproc.2025.3600903",
         "queryFamilies": [
           "搜索式与重要性采样失效发现"
@@ -3667,6 +4025,14 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1145/3314221.3314633",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1145/3548606.3560558",
         "queryFamilies": [
           "搜索式与重要性采样失效发现"
@@ -3677,10 +4043,11 @@
       {
         "canonicalId": "doi:10.1145/3579642",
         "queryFamilies": [
-          "覆盖率、风险度量与责任归因"
+          "覆盖率、风险度量与责任归因",
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
-        "occurrences": 1
+        "occurrences": 2
       },
       {
         "canonicalId": "doi:10.1145/3702989",
@@ -3958,7 +4325,150 @@
         "url": "https://doi.org/10.1007/978-3-031-72664-4_14",
         "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
       }
-    ]
+    ],
+    "foundationsAudit": {
+      "auditedAt": "2026-11-06",
+      "scope": "检查本方向主要方法分支的经典起点与综述阅读依据；补全已确认的衔接缺口，不宣称穷尽全部历史文献。",
+      "surveyAnchors": [
+        {
+          "referenceId": "testing-survey-2023",
+          "role": "established",
+          "sectionsRead": [
+            "3.1 collection criteria（相关段落）",
+            "5 module-level tests（相关段落）",
+            "6.1–6.3 system-level/mixed-reality/real-world testing（相关段落）",
+            "scenario-language table（相关段落）",
+            "references146,287,361（相关段落）"
+          ],
+          "use": "作为测试对象、生成策略、oracle与adequacy的阅读骨架，并向后追溯场景抽象与可靠性统计。",
+          "coverageCutoff": "论文纳入条件明确January2015–June2022"
+        },
+        {
+          "referenceId": "reality-gap-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "1 Introduction（相关段落）",
+            "4 classification / extraction scheme（相关段落）",
+            "5 Results（相关段落）",
+            "6.1–6.6 Discussion（相关段落）"
+          ],
+          "use": "检验早期场景式测试路线在现实对应性上的不足。",
+          "coverageCutoff": "预印本v1 2026-10-28；本次未从正文核定统一数据库检索截止日期"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "driving-to-safety-2016",
+          "branch": "统计安全评价",
+          "role": "问题动机",
+          "reason": "稀有事件与置信要求解释自然里程验证的成本。"
+        },
+        {
+          "referenceId": "scenarios-abstraction-2018",
+          "branch": "场景表述",
+          "role": "抽象层次",
+          "reason": "连接功能、逻辑和具体场景。"
+        },
+        {
+          "referenceId": "scenic-2019",
+          "branch": "场景表述",
+          "role": "概率语言",
+          "reason": "以约束分布描述和采样测试输入。"
+        },
+        {
+          "referenceId": "accelerated-evaluation-2017",
+          "branch": "事件率估计",
+          "role": "重要性采样",
+          "reason": "区别失败搜索与带权事件率估计。"
+        },
+        {
+          "referenceId": "carla-2017",
+          "branch": "仿真测试",
+          "role": "开放基础设施",
+          "reason": "提供可重复控制的驾驶仿真条件。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "场景抽象与可执行表达",
+          "status": "covered",
+          "rationale": "补入Menzel的层次和Scenic的概率语言，使生成方法的历史前提明确。",
+          "foundationalReferenceIds": [
+            "scenarios-abstraction-2018",
+            "scenic-2019"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023"
+          ]
+        },
+        {
+          "branch": "失败发现与统计事件率",
+          "status": "covered",
+          "rationale": "补入里程可靠性动机，保留AST、加速评估与NADE不同目标。",
+          "foundationalReferenceIds": [
+            "driving-to-safety-2016",
+            "adaptive-stress-testing-2018",
+            "accelerated-evaluation-2017",
+            "nade-2021"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023"
+          ]
+        },
+        {
+          "branch": "仿真、真实执行与安全论证",
+          "status": "bounded",
+          "rationale": "CARLA和现有标准提供锚点，现实对应性由2026综述补充；未覆盖所有认证体系。",
+          "foundationalReferenceIds": [
+            "carla-2017",
+            "iso-sotif-2022",
+            "iso-scenario-testing-2022"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023",
+            "reality-gap-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "场景抽象讨论 / reference[146]",
+          "candidateCanonicalId": "doi:10.1109/ivs.2018.8500406",
+          "primaryUrl": "https://doi.org/10.1109/IVS.2018.8500406",
+          "disposition": "included",
+          "reason": "测试生成前需要明确场景层级。"
+        },
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "场景描述语言表 / reference[361]",
+          "candidateCanonicalId": "doi:10.1145/3314221.3314633",
+          "primaryUrl": "https://doi.org/10.1145/3314221.3314633",
+          "disposition": "included",
+          "reason": "语言级约束与采样是测试基础设施，不应被归为新生成模型。"
+        },
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "6.3 Real-World Testing / reference[287]",
+          "candidateCanonicalId": "doi:10.1016/j.tra.2016.09.010",
+          "primaryUrl": "https://doi.org/10.1016/j.tra.2016.09.010",
+          "disposition": "included",
+          "reason": "自然驾驶里程的统计限制是场景式验证的重要动机。"
+        }
+      ],
+      "limitations": [
+        "综述用于建立分类、术语与引文追溯，具体方法结论以原论文为依据；所列章节为本轮实际查看的相关段落。",
+        "本轮在同日已复核的正文基础上补查经典脉络；未重新逐页阅读全部既有文献，也未运行模型实验。",
+        "Kalra–Paddock 的期刊元数据已核对，本轮内容依据作者机构 RAND 研究报告版公开页面；未取得期刊全文，不使用具体里程数字推导统一门槛。"
+      ]
+    },
+    "foundationRefresh": {
+      "date": "2026-11-06",
+      "baseCommit": "9df6e450e5cd40cbaec96462a07fdbbd10c18965",
+      "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+      "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
+      "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
+    }
   },
   "lastUpdated": "2026-08-01"
 }

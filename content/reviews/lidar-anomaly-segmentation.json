@@ -17,7 +17,7 @@
       "kind": "scope",
       "title": "真实未知物体与类别留出的区别",
       "thesis": "道路 LiDAR 未知物体分割值得持续跟踪，具体方法仍需查新和可观测性检查。",
-      "body": "本方向聚焦道路 LiDAR 中未知物体的点级与实例级异常分割，并把开放集语义/全景分割作为直接邻域。输入是观测到的三维点，输出是异常分数、未知掩码或未知实例；已知语义的保留也是评价对象。工业物体表面缺陷、图像像素异常、罕见已知类检测、异常驾驶行为与任意场景分布漂移具有不同的异常定义和输出，需分别评价。\n\nSTU 把真正不属于训练内分布的道路物体单列出来，同时将部分训练时见过但未受监督的物体置于 ignore 区域。REAL/APF 等类留出协议与这一设定不同：前者将已知类别留作 unknown，后者要求测试物体未在训练分布中出现。CODA 又以目标框和角落案例为主，包含新类别以及普通类的新实例。读论文前应先写清未知集合、训练暴露、背景来源和输出粒度。\n\n既有独立评估以中等置信度建议持续跟踪该方向，具体方法立项仍需验证。站内将其列为第十个跟踪方向，归于世界与表征，与测试和安全交叉；这一安排不表示某个新模型已获认可。站内的 STU、NDP、LIDO、DriveOSS 与 TriO 报告提供阅读入口，REL 与 DOODLE 补充评分与后处理的直接比较。\n\nDriveOSS 将已知类语义保留纳入同一基准；TriO 则把高于可行驶表面的占据分成障碍。后者也会检出训练中见过的车辆等对象，因此其“anything”结果不能直接解释为识别语义未知类别。",
+      "body": "本方向聚焦道路 LiDAR 中未知物体的点级与实例级异常分割，并把开放集语义/全景分割作为直接邻域。输入是观测到的三维点，输出是异常分数、未知掩码或未知实例；已知语义的保留也是评价对象。工业物体表面缺陷、图像像素异常、罕见已知类检测、异常驾驶行为与任意场景分布漂移具有不同的异常定义和输出，需分别评价。\n\nSTU 把真正不属于训练内分布的道路物体单列出来，同时将部分训练时见过但未受监督的物体置于 ignore 区域。REAL/APF 等类留出协议与这一设定不同：前者将已知类别留作 unknown，后者要求测试物体未在训练分布中出现。CODA 又以目标框和角落案例为主，包含新类别以及普通类的新实例。读论文前应先写清未知集合、训练暴露、背景来源和输出粒度。\n\n既有独立评估以中等置信度建议持续跟踪该方向，具体方法立项仍需验证。站内将其列为第十个跟踪方向，归于世界与表征，与测试和安全交叉；这一安排不表示某个新模型已获认可。站内的 STU、NDP、LIDO、DriveOSS 与 TriO 报告提供阅读入口，REL 与 DOODLE 补充评分与后处理的直接比较。\n\nDriveOSS 将已知类语义保留纳入同一基准；TriO 则把高于可行驶表面的占据分成障碍。后者也会检出训练中见过的车辆等对象，因此其“anything”结果不能直接解释为识别语义未知类别。\n\n### 综述阅读路径\n\n先读 [Bogdoll 等的道路异常检测综述](https://openaccess.thecvf.com/content/CVPR2022W/WAD/html/Bogdoll_Anomaly_Detection_in_Autonomous_Driving_A_Survey_CVPRW_2022_paper.html)，按相机、LiDAR、雷达与多模态区分异常来源；其中 LiDAR 章节可追到早期未知实例方法 OSIS。这篇 2022 年综述不覆盖后来的 STU 等真实异常基准。\n\n[2025 年道路 OoD 分割综述](https://openaccess.thecvf.com/content/CVPR2025W/SAIAD/html/Shoeb_Out-of-Distribution_Segmentation_in_Autonomous_Driving_Problems_and_State_of_the_CVPRW_2025_paper.html)适合比较异常暴露、点评分与实例指标，但主要依据图像道路障碍基准。[Li 等的 3D OOD 综述](https://doi.org/10.1016/j.neucom.2026.134503)再将方法放到不同三维传感器和应用中对照；本轮细读其 2025 年预印本，并核对 2026 年期刊记录。工业缺陷、医学异常与道路未知物体的监督和评测不能混用。\n\n带着这些分类读 STU、REAL、APF、LiPSOW 与近期论文，重点比较未知集合、训练暴露、点到实例的转换，以及连续行驶中的误报和首次检出。",
       "referenceIds": [
         "stu-2025",
         "real-2022",
@@ -27,7 +27,8 @@
         "survey2023-2023",
         "survey2025-2025",
         "driveoss-2026",
-        "trio-2026"
+        "trio-2026",
+        "3d-ood-review-2026"
       ]
     },
     {
@@ -35,7 +36,7 @@
       "kind": "evolution",
       "title": "从几何障碍检测到分布与暴露学习",
       "thesis": "异常来源、分数和评测协议共同演化，单换一个模块通常不足以形成独立贡献。",
-      "body": "2016 年的 Lost and Found 已使用双目几何检验小道路障碍，并报告每帧误报与距离适应；远距离检出和正常帧误报由此已有早期基线。2019 年的 Outlier Exposure 表明，训练时接触辅助异常能够改变未知输入判别，但它的图像/文本结果本身不证明三维道路收益。\n\n2022 年的 REAL 把冗余分类器、伪未知物体与开放世界三维分割联系起来；2023 年的 APF 在特征空间学习对抗原型，减少对手工点云异常构造的依赖。LiON 使用多样合成形状和逐点弃权惩罚；DOODLE 进一步用扩散重建的分布差异，并显式加入随距离校正的密度后处理。因此原型、对比、合成和密度过滤都已有直接方法谱系。\n\n2024 年的 Latency-aware 视频工作与 AnoVox 扩展了流式、时间和模拟多模态评测。2025 年的 STU 提供 128 线实采 LiDAR、同步相机与序列内实例身份，把验证重点转向真实未见物体。2026 年 REL 用相对能量与 Point Raise，NDP 联合可学习分布先验、Perlin Raise 与软 void 暴露，LIDO 则在只用正常训练数据的设定下学习类原型分布，并提供多种传感器分辨率的混合评测集。\n\n2026年9–10月的 TriO 与 DriveOSS 扩展了问题边界：TriO 联合学习占据和地面分离，DriveOSS 将真实多天气异常与开放集语义放到同一评测中。两者都提示仅看异常排序分数不够，但前者的道路障碍定义、后者的已知类保护与 STU 的未知实例并非同一终点。\n\n近期研究开始改变异常证据的组织方式。ReinSeg 从多视角图像检索场景上下文，细化 LiDAR 特征后仍交给原评分器。COVAL 在训练中配对不同可见性观测，联合重建变化与表示一致性。实例路线已有明确先例：LiPSOW 的 OWL 通过类别无关层次分组覆盖未知对象，ULOPS 用证据不确定性、嵌入和中心预测形成开放全景输出。因此，三维实例化和可见性建模已有强参照，新的时间机制应说明多帧新增了什么信息。",
+      "body": "2016 年的 Lost and Found 使用双目几何检验小道路障碍，并报告每帧误报与距离适应。通用评分路线则从 2017 年的最大 softmax 概率基线，发展到 2019 年的 Outlier Exposure 和 2020 年的能量评分。MSP 提供无需改变分类器的比较起点；能量分数可用于预训练分类器，也可通过训练塑造 ID/OOD 间隔。它们主要在图像、文本或语音分类协议中建立，迁移到 LiDAR 后仍需重新评价逐点、实例与时间性能。\n\n未知实例也有早期道路工作。OSIS 在 CoRL 2019 提出、PMLR 2020 出版：先将点关联到已知实例和背景原型，再按类别无关嵌入与三维坐标聚合剩余未知点。它已经支持经自车运动补偿的多帧 BEV 堆叠；其 TOR4D/Rare4D 评测使用的未知质量 UQ 不计 precision，所以后续时间方法应具体比较首次检出和误报，而不能只以“使用多帧”作为区别。\n\n2022 年的 REAL 把冗余分类器、伪未知物体与开放世界三维分割联系起来；2023 年的 APF 在特征空间学习对抗原型，减少对手工点云异常构造的依赖。LiON 使用多样合成形状和逐点弃权惩罚；DOODLE 进一步用扩散重建的分布差异，并显式加入随距离校正的密度后处理。因此原型、对比、合成和密度过滤都已有直接方法谱系。\n\n2024 年的 Latency-aware 视频工作与 AnoVox 扩展了流式、时间和模拟多模态评测。2025 年的 STU 提供 128 线实采 LiDAR、同步相机与序列内实例身份，把验证重点转向真实未见物体。2026 年 REL 用相对能量与 Point Raise，NDP 联合可学习分布先验、Perlin Raise 与软 void 暴露，LIDO 则在只用正常训练数据的设定下学习类原型分布，并提供多种传感器分辨率的混合评测集。\n\n2026年9–10月的 TriO 与 DriveOSS 扩展了问题边界：TriO 联合学习占据和地面分离，DriveOSS 将真实多天气异常与开放集语义放到同一评测中。两者都提示仅看异常排序分数不够，但前者的道路障碍定义、后者的已知类保护与 STU 的未知实例并非同一终点。\n\n近期研究开始改变异常证据的组织方式。ReinSeg 从多视角图像检索场景上下文，细化 LiDAR 特征后仍交给原评分器。COVAL 在训练中配对不同可见性观测，联合重建变化与表示一致性。实例路线已有明确先例：LiPSOW 的 OWL 通过类别无关层次分组覆盖未知对象，ULOPS 用证据不确定性、嵌入和中心预测形成开放全景输出。因此，三维实例化和可见性建模已有强参照，新的时间机制应说明多帧新增了什么信息。",
       "referenceIds": [
         "lost-found-2016",
         "oe-2019",
@@ -54,7 +55,10 @@
         "reinseg-2026",
         "coval-2026",
         "lipsow-2024",
-        "ulops-2025"
+        "ulops-2025",
+        "msp-baseline-2017",
+        "energy-ood-2020",
+        "osis-2020"
       ]
     },
     {
@@ -62,7 +66,7 @@
       "kind": "taxonomy",
       "title": "分别控制训练暴露、评分、实例化与观测域",
       "thesis": "训练时见过什么、异常分数如何形成、实例如何得到、部署输入有哪些，必须分列。",
-      "body": "第一轴是暴露：只使用正常标签、使用 void 区域、合成伪异常、引入外部对象资产是不同信息条件。NDP 的 Perlin 扰动来自正常扫描，但仍提供辅助 OOD 监督；是否使用外部下载数据，与是否接受异常监督是两个条件。LIDO 的新合成数据主要用于扩展评测，方法训练不依赖异常样本。\n\n第二轴是评分机制：固定 logit/能量、相对能量、可学习类分布先验、已知类原型分布和重建偏差各自假设不同。第三轴是输出粒度：逐点分数还需要阈值与分组才成为实例，AP 与未知实例召回应分别报告；UQ 忽略误报，部署评估还需补充误报指标。第四轴是观测与域：单帧/因果历史、LiDAR/相机融合、真实 128 线/较低分辨率/混合模拟应独立标明。\n\n读图时沿“正常训练数据→异常构造或暴露→骨干→分数→阈值与聚类→实例/时间指标”追踪信息。用训练专用 void、测试域标签或未来帧帮助推理，都会改变问题定义。三维语义分割的正常类精度必须和异常指标同时报告，否则检测器可能仅把难分类的正常点都当成异常。\n\n还需分开排序和工作点：AP/FPR95 描述随阈值变化的异常分数，验证集上确定阈值后，测试集的已知类损失和未知 IoU 才描述该工作点。DriveOSS 的 mOpenIoU 是19个已知类在开放集预测下的均值，outlier IoU 另报，不能误写成20类均值。\n\n第五轴是异常证据的组织。ReinSeg 使用当前图像上下文；COVAL 使用训练期可见性干预；UGainS 用异常区域提示图像分割器；OWL 和 ULOPS 在三维空间中分组对象。这些机制分别增加语义上下文、几何缺失线索或对象一致性，可以在同一固定点评分器上拆开比较。ClimaOoD 扩展图像天气和异常外观，而 LIDO 的混合数据处理 LiDAR 波束几何，两者代表不同的合成变量。",
+      "body": "第一轴是暴露：只使用正常标签、使用 void 区域、合成伪异常、引入外部对象资产是不同信息条件。NDP 的 Perlin 扰动来自正常扫描，但仍提供辅助 OOD 监督；是否使用外部下载数据，与是否接受异常监督是两个条件。LIDO 的新合成数据主要用于扩展评测，方法训练不依赖异常样本。\n\n第二轴是评分机制：固定 logit/能量、相对能量、可学习类分布先验、已知类原型分布和重建偏差各自假设不同。第三轴是输出粒度：逐点分数还需要阈值与分组才成为实例，AP 与未知实例召回应分别报告；UQ 忽略误报，部署评估还需补充误报指标。第四轴是观测与域：单帧/因果历史、LiDAR/相机融合、真实 128 线/较低分辨率/混合模拟应独立标明。\n\n读图时沿“正常训练数据→异常构造或暴露→骨干→分数→阈值与聚类→实例/时间指标”追踪信息。用训练专用 void、测试域标签或未来帧帮助推理，都会改变问题定义。三维语义分割的正常类精度必须和异常指标同时报告，否则检测器可能仅把难分类的正常点都当成异常。\n\n还需分开排序和工作点：AP/FPR95 描述随阈值变化的异常分数，验证集上确定阈值后，测试集的已知类损失和未知 IoU 才描述该工作点。DriveOSS 的 mOpenIoU 是19个已知类在开放集预测下的均值，outlier IoU 另报，不能误写成20类均值。\n\n第五轴是异常证据的组织。ReinSeg 使用当前图像上下文；COVAL 使用训练期可见性干预；UGainS 用异常区域提示图像分割器；OWL 和 ULOPS 在三维空间中分组对象。这些机制分别增加语义上下文、几何缺失线索或对象一致性，可以在同一固定点评分器上拆开比较。ClimaOoD 扩展图像天气和异常外观，而 LIDO 的混合数据处理 LiDAR 波束几何，两者代表不同的合成变量。\n\n通用评分和实例输出是两层设计。MSP 与能量方法提供类别分数的比较起点，OSIS 则通过原型关联和聚类形成未知实例。3D OOD 综述也按评分机制、传感器和应用分开讨论；道路图像综述的像素/组件结果可以帮助理解指标，却不能替代 LiDAR 的遮挡、稀疏度和点到实例评测。",
       "referenceIds": [
         "ndp-2026",
         "lido-2026",
@@ -77,7 +81,13 @@
         "ugains-2023",
         "lipsow-2024",
         "ulops-2025",
-        "climaood-2025"
+        "climaood-2025",
+        "survey2022-2022",
+        "survey2025-2025",
+        "3d-ood-review-2026",
+        "msp-baseline-2017",
+        "energy-ood-2020",
+        "osis-2020"
       ]
     },
     {
@@ -665,6 +675,86 @@
           "url": "https://arxiv.org/abs/2409.14273"
         }
       ]
+    },
+    {
+      "id": "3d-ood-review-2026",
+      "title": "Out-of-distribution Detection in 3D Applications: A Review",
+      "authors": "Zizhao Li, Xueyang Kang, Joseph West, Kourosh Khoshelham",
+      "year": 2026,
+      "venue": "Neurocomputing",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1016/j.neucom.2026.134503",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "按3D应用、传感器模态和评分方法交叉组织OOD研究，连接点云开放集任务与通用logit、特征和重建方法。",
+      "limitation": "范围还包括工业与医学3D；这些数据和方法的结果不能直接外推为道路LiDAR异常分割收益。",
+      "url": "https://doi.org/10.1016/j.neucom.2026.134503",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2507.00570"
+        }
+      ]
+    },
+    {
+      "id": "osis-2020",
+      "title": "Identifying Unknown Instances for Autonomous Driving",
+      "authors": "Kelvin Wong, Shenlong Wang, Mengye Ren, Ming Liang, Raquel Urtasun",
+      "year": 2020,
+      "venue": "CoRL 2019; PMLR 100 (2020)",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "pmlr:v100:wong20a",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "OSIS先把LiDAR点关联到已知实例/背景原型，再将关联不确定的点按类别无关嵌入和三维坐标聚成未知实例；可堆叠经自车运动补偿的多帧BEV输入。",
+      "limitation": "评测为TOR4D与只用于测试的Rare4D。未知质量UQ只计已标注实例的召回与分割，不计precision，因此不提供正常道路误报率或早报延迟结论。",
+      "url": "https://proceedings.mlr.press/v100/wong20a.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1910.11296"
+        }
+      ]
+    },
+    {
+      "id": "msp-baseline-2017",
+      "title": "A Baseline for Detecting Misclassified and Out-of-Distribution Examples in Neural Networks",
+      "authors": "Dan Hendrycks, Kevin Gimpel",
+      "year": 2017,
+      "venue": "ICLR 2017",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:1610.02136",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以最大softmax概率建立错误与分布外输入检测基线，并用AUROC/AUPR讨论检测评估。",
+      "limitation": "原始实验跨图像、文本和语音，不是道路LiDAR逐点或实例评测；softmax概率不等于可靠的绝对置信度。",
+      "url": "https://openreview.net/forum?id=Hkg4TI9xl",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1610.02136"
+        }
+      ]
+    },
+    {
+      "id": "energy-ood-2020",
+      "title": "Energy-based Out-of-distribution Detection",
+      "authors": "Weitang Liu, Xiaoyun Wang, John D. Owens, Yixuan Li",
+      "year": 2020,
+      "venue": "NeurIPS 2020",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2010.03759",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用温度缩放的log-sum-exp能量构建OOD分数，可直接评分预训练分类器，也可通过训练约束塑造能量间隔。",
+      "limitation": "原文是分类OOD实验；用于LiDAR时还需独立处理空间稀疏性、逐点分布、实例与阈值协议。",
+      "url": "https://proceedings.neurips.cc/paper/2020/hash/f5496252609c43eb8a3d147ab9b9c006-Abstract.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2010.03759"
+        }
+      ]
     }
   ],
   "searchAudit": {
@@ -683,7 +773,8 @@
       "publication-status-primary-source",
       "formal-arxiv-link-retention",
       "physical-evidence-boundary",
-      "independent-review-current-snapshot"
+      "independent-review-current-snapshot",
+      "foundations-and-survey-coverage"
     ],
     "searchedAt": "2026-11-06",
     "cutoffDate": "2026-11-06",
@@ -693,7 +784,8 @@
       "三维异常分数与表征学习",
       "合成异常与外部暴露监督",
       "时序、多模态与跨域泛化",
-      "综述、校准与下游安全效用"
+      "综述、校准与下游安全效用",
+      "经典工作、综述分类与引文追溯"
     ],
     "sourceFamilies": [
       "local-corpus",
@@ -1629,6 +1721,163 @@
             "rawResponseSha256": "10fd6ae2069bbf97641dbbf7a3c5ab6d1071ff3cee7071c6eec45d90f7da8010"
           }
         }
+      },
+      {
+        "family": "经典工作、综述分类与引文追溯",
+        "sourceFamily": "publisher-and-venue",
+        "query": "综述分类与引文追溯：Anomaly Detection in Autonomous Driving: A Survey；Out-of-Distribution Segmentation in Autonomous Driving: Problems and State of the Art；Out-of-distribution Detection in 3D Applications: A Review；按引用定位打开原论文并核对身份与方法。",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "围绕缺失的方法源头、关键转折和综述分类进行定向追溯。该族统计进入父流程范围判定的候选；API和Web宽泛返回只记录为发现，不作为本族已读或纳入数。原有语义族及本库rg审计保留。",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:1610.02136",
+          "arxiv:2010.03759",
+          "arxiv:2204.07974",
+          "arxiv:2503.08695",
+          "doi:10.1016/j.neucom.2026.134503",
+          "doi:10.1109/cvpr.2016.173",
+          "pmlr:v100:wong20a"
+        ],
+        "retrieval": {
+          "provider": "primary-survey-reference-tracing-with-targeted-source-verification",
+          "endpoint": "https://openaccess.thecvf.com/content/CVPR2022W/WAD/html/Bogdoll_Anomaly_Detection_in_Autonomous_Driving_A_Survey_CVPRW_2022_paper.html",
+          "parameters": {
+            "query": "综述分类与引文追溯：Anomaly Detection in Autonomous Driving: A Survey；Out-of-Distribution Segmentation in Autonomous Driving: Problems and State of the Art；Out-of-distribution Detection in 3D Applications: A Review；按引用定位打开原论文并核对身份与方法。",
+            "surveyUrls": [
+              "https://openaccess.thecvf.com/content/CVPR2022W/WAD/html/Bogdoll_Anomaly_Detection_in_Autonomous_Driving_A_Survey_CVPRW_2022_paper.html",
+              "https://openaccess.thecvf.com/content/CVPR2025W/SAIAD/papers/Shoeb_Out-of-Distribution_Segmentation_in_Autonomous_Driving_Problems_and_State_of_the_CVPRW_2025_paper.pdf",
+              "https://doi.org/10.1016/j.neucom.2026.134503"
+            ],
+            "primaryUrls": [
+              "https://openaccess.thecvf.com/content/CVPR2022W/WAD/html/Bogdoll_Anomaly_Detection_in_Autonomous_Driving_A_Survey_CVPRW_2022_paper.html",
+              "https://openaccess.thecvf.com/content/CVPR2025W/SAIAD/papers/Shoeb_Out-of-Distribution_Segmentation_in_Autonomous_Driving_Problems_and_State_of_the_CVPRW_2025_paper.pdf",
+              "https://doi.org/10.1016/j.neucom.2026.134503",
+              "https://proceedings.mlr.press/v100/wong20a.html",
+              "https://openreview.net/forum?id=Hkg4TI9xl",
+              "https://papers.neurips.cc/paper/2020/hash/f5496252609c43eb8a3d147ab9b9c006-Abstract.html",
+              "https://openaccess.thecvf.com/content_cvpr_2016/html/Bendale_Towards_Open_Set_CVPR_2016_paper.html"
+            ],
+            "discoveryQueriesArtifact": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json"
+          },
+          "sort": "survey branch and citation order; parent scope screening",
+          "limit": 7,
+          "limitMeaning": "Frozen scoped candidate inventory; exact search engine/API caps and raw hits are retained in the evidence packet, not replaced by this inventory size.",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "evidencePacketSha256": "b9228965a57293ad17682ef16bef0c09bc713448f4a5644c5d39f1dee5824a08",
+          "entries": [
+            {
+              "canonicalId": "arxiv:2204.07974",
+              "referenceId": "survey2022-2022",
+              "reason": "补足综述分类和阅读入口：按camera/LiDAR/radar/multimodal/abstract object-level梳理异常检测，区分检测层级和online能力。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "arxiv:2204.07974",
+                "tracedFromSurvey": [],
+                "readingDepth": "Primary PDF §3 LiDAR,Table2,References[94] read"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2503.08695",
+              "referenceId": "survey2025-2025",
+              "reason": "补足综述分类和阅读入口：复核2D道路OoD分割，比较SMIYC obstacle与LostAndFound-NoKnown，讨论ROI、阈值校准、OE偏差、边缘运行和下游规划。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "arxiv:2503.08695",
+                "tracedFromSurvey": [],
+                "readingDepth": "Official PDF §§1–3,Tables1–2, taxonomy and references read"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1016/j.neucom.2026.134503",
+              "referenceId": "3d-ood-review-2026",
+              "reason": "补足综述分类和阅读入口：按3D应用、传感器模态和评分方法交叉组织OOD研究，连接点云开放集任务与通用logit、特征和重建方法。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1016/j.neucom.2026.134503",
+                "tracedFromSurvey": [],
+                "readingDepth": "Primary arXiv HTML §§1–2,3.1,4.1,5.1 and cited references read; publisher DOI landing and deposited metadata verified; full publisher HTML access403"
+              }
+            },
+            {
+              "canonicalId": "pmlr:v100:wong20a",
+              "referenceId": "osis-2020",
+              "reason": "道路LiDAR未知实例分组的直接早期工作，当前综述遗漏。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "pmlr:v100:wong20a",
+                "tracedFromSurvey": [
+                  {
+                    "id": "survey2022-2022",
+                    "url": "https://arxiv.org/pdf/2204.07974",
+                    "section": "§3 / Table2 / reference [94]",
+                    "why": "道路LiDAR未知实例分组的直接早期工作，当前综述遗漏。"
+                  }
+                ],
+                "readingDepth": "Official PMLR PDF §§1–4.1, Eq5/Table1 read; formal PMLR metadata reopened"
+              }
+            },
+            {
+              "canonicalId": "arxiv:1610.02136",
+              "referenceId": "msp-baseline-2017",
+              "reason": "当前点评分机制的源头基线。；道路图像OoD比较保留MaximumSoftmax作为基线。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "arxiv:1610.02136",
+                "tracedFromSurvey": [
+                  {
+                    "id": "3d-ood-review-2026",
+                    "url": "https://arxiv.org/html/2507.00570v1",
+                    "section": "§4.1/§5.1; Hendrycks and Gimpel(2017)",
+                    "why": "当前点评分机制的源头基线。"
+                  },
+                  {
+                    "id": "survey2025-2025",
+                    "url": "https://openaccess.thecvf.com/content/CVPR2025W/SAIAD/papers/Shoeb_Out-of-Distribution_Segmentation_in_Autonomous_Driving_Problems_and_State_of_the_CVPRW_2025_paper.pdf",
+                    "section": "Table1/reference[21]",
+                    "why": "道路图像OoD比较保留MaximumSoftmax作为基线。"
+                  }
+                ],
+                "readingDepth": "Primary arXiv PDF abstract and §2; actual OpenReview-hosted accepted PDF reopened, forum challenge preserved asaccesslimitation"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2010.03759",
+              "referenceId": "energy-ood-2020",
+              "reason": "解释当前relativeenergy路线继承的评分基础。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "arxiv:2010.03759",
+                "tracedFromSurvey": [
+                  {
+                    "id": "3d-ood-review-2026",
+                    "url": "https://arxiv.org/html/2507.00570v1",
+                    "section": "§2/§5.1; Liu etal.(2020)",
+                    "why": "解释当前relativeenergy路线继承的评分基础。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/cvpr.2016.173",
+              "referenceId": "openmax-2016",
+              "reason": "保留在候选追溯中：它是图像开放集分类的统计拒识源头；本篇当前评分脉络用MSP、Energy及已有OE展开，三维实例机制用OSIS，暂不增加另一组图像分类方法详述。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1109/CVPR.2016.173",
+                "tracedFromSurvey": [
+                  {
+                    "id": "3d-ood-review-2026",
+                    "url": "https://arxiv.org/html/2507.00570v1",
+                    "section": "§5.1; Bendale and Boult(2016)",
+                    "why": "与MSP/energy比较统计拒识来源；是否需要正文展开由执行者按范围决定。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            }
+          ]
+        }
       }
     ],
     "sourceAttempts": [
@@ -1641,7 +1890,23 @@
         "limit": 1000,
         "acceptedCount": 6,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "local-corpus",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "lidar-anomaly-segmentation|out.of.distribution|open.set|unknown object|anomaly|异常",
+          "endpoint": "content/papers",
+          "limit": 1000,
+          "acceptedCount": 6,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       },
       {
         "sourceFamily": "arxiv",
@@ -1660,7 +1925,31 @@
           8,
           8
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "LiDAR open set anomaly segmentation",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22LiDAR+open+set+anomaly+segmentation%22&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
+          "limit": 8,
+          "acceptedCount": 6,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "queryLimits": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -1669,9 +1958,25 @@
         "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
         "endpoint": "https://link.springer.com/chapter/10.1007/978-3-031-19839-7_19",
         "limit": 11,
-        "acceptedCount": 11,
+        "acceptedCount": 15,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+          "endpoint": "https://link.springer.com/chapter/10.1007/978-3-031-19839-7_19",
+          "limit": 11,
+          "acceptedCount": 11,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       },
       {
         "sourceFamily": "semantic-scholar",
@@ -1685,7 +1990,26 @@
         "queryLimits": [
           10
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-11-06",
+          "query": "LiDAR open set anomaly segmentation",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search?query=LiDAR+open+set+anomaly+segmentation&limit=10&fields=title%2Cyear%2CexternalIds%2Curl%2Cabstract",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "queryLimits": [
+            10
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       },
       {
         "sourceFamily": "openalex",
@@ -1699,7 +2023,26 @@
         "queryLimits": [
           10
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "LiDAR open set anomaly segmentation",
+          "endpoint": "https://api.openalex.org/works?search=LiDAR+open+set+anomaly+segmentation&per-page=10&sort=relevance_score%3Adesc&filter=from_publication_date%3A2024-01-01%2Cto_publication_date%3A2026-11-06",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "queryLimits": [
+            10
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -1710,7 +2053,23 @@
         "limit": 2,
         "acceptedCount": 2,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
+          "endpoint": "https://link.springer.com/chapter/10.1007/978-3-031-19839-7_24",
+          "limit": 2,
+          "acceptedCount": 2,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json"
+        }
       }
     ],
     "deduplicationKeys": [
@@ -1744,7 +2103,11 @@
       "arxiv:2606.30937",
       "pmlr:v306:yang26ax",
       "doi:10.1109/iros60139.2025.11245993",
-      "doi:10.1007/s11263-024-02166-9"
+      "doi:10.1007/s11263-024-02166-9",
+      "doi:10.1016/j.neucom.2026.134503",
+      "pmlr:v100:wong20a",
+      "arxiv:1610.02136",
+      "arxiv:2010.03759"
     ],
     "exclusionCriteria": [
       "不混用工业、图像、行为异常与道路LiDAR证据",
@@ -1847,13 +2210,6 @@
         "canonicalId": "venue:9a192ac7dcf5389fd6d9",
         "title": "Out-of-Distribution Detection with Adversarial Outlier Exposure",
         "url": "https://openaccess.thecvf.com/content/CVPR2025W/SAIAD/papers/Botschen_Out-of-Distribution_Detection_with_Adversarial_Outlier_Exposure_CVPRW_2025_paper.pdf",
-        "reasonCode": "not-developed-in-current-synthesis",
-        "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
-      },
-      {
-        "canonicalId": "doi:10.1016/j.neucom.2026.134503",
-        "title": "Out-of-distribution detection in 3D applications: A review - ScienceDirect",
-        "url": "https://doi.org/10.1016/j.neucom.2026.134503",
         "reasonCode": "not-developed-in-current-synthesis",
         "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
       },
@@ -2066,6 +2422,13 @@
         "url": "https://openaccess.thecvf.com/content/WACV2025W/COOOL/papers/Kamod_Weighted_anomaly_scoring_for_vision-based_driving_hazard_prediction_and_identification_WACVW_2025_paper.pdf",
         "reasonCode": "not-developed-in-current-synthesis",
         "reason": "本轮查询发现的后续阅读候选，尚未完成足以纳入核心比较的方法与实验核对；本综述保留已核实的代表方法，不据此否定该论文的价值。"
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr.2016.173",
+        "title": "Towards Open Set Deep Networks",
+        "url": "https://openaccess.thecvf.com/content_cvpr_2016/html/Bendale_Towards_Open_Set_CVPR_2016_paper.html",
+        "reasonCode": "outside-focused-lineage",
+        "reason": "保留在候选追溯中：它是图像开放集分类的统计拒识源头；本篇当前评分脉络用MSP、Energy及已有OE展开，三维实例机制用OSIS，暂不增加另一组图像分类方法详述。"
       }
     ],
     "openSearchGaps": [
@@ -2081,6 +2444,14 @@
     "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
     "candidateLedger": [
       {
+        "canonicalId": "arxiv:1610.02136",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "arxiv:1812.04606",
         "queryFamilies": [
           "合成异常与外部暴露监督"
@@ -2089,12 +2460,21 @@
         "occurrences": 1
       },
       {
-        "canonicalId": "arxiv:2204.07974",
+        "canonicalId": "arxiv:2010.03759",
         "queryFamilies": [
-          "综述、校准与下游安全效用"
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2204.07974",
+        "queryFamilies": [
+          "综述、校准与下游安全效用",
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2401.04942",
@@ -2124,10 +2504,11 @@
       {
         "canonicalId": "arxiv:2503.08695",
         "queryFamilies": [
-          "综述、校准与下游安全效用"
+          "综述、校准与下游安全效用",
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
-        "occurrences": 1
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2507.07460",
@@ -2329,7 +2710,16 @@
       {
         "canonicalId": "doi:10.1016/j.neucom.2026.134503",
         "queryFamilies": [
-          "合成异常与外部暴露监督"
+          "合成异常与外部暴露监督",
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 2
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr.2016.173",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "excluded",
         "occurrences": 1
@@ -2389,6 +2779,14 @@
         "canonicalId": "doi:10.1609/aaai.v39i9.32968",
         "queryFamilies": [
           "合成异常与外部暴露监督"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "pmlr:v100:wong20a",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
@@ -2661,22 +3059,22 @@
       }
     ],
     "counts": {
-      "candidates": 89,
-      "deduplicated": 70,
-      "included": 25,
+      "candidates": 96,
+      "deduplicated": 74,
+      "included": 29,
       "excluded": 45
     },
     "independentReview": {
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 6,
+      "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；来源筛选修订已复核并绑定最终内容。未执行模型实验。",
-      "reviewerAgentId": "/root/review_centers_sensing",
-      "artifactPath": "docs/center-updates/2026-11-06/independent-review/sensing-round6.json",
-      "artifactSha256": "2a31dd320ac06e2f379c13aef991e79eb4e1043b3695fbe5df96bbfd562b8146",
-      "snapshotFingerprint": "3bea80d4cbdc4e5268861395ded9b41749f771922b218775122a2305f9ba80d0",
+      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
+      "reviewerAgentId": "/root/foundations_review_sensing",
+      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/sensing-round1.json",
+      "artifactSha256": "d9fd7aac53d942a0a63becae4f34ab4d28fe59146a2d4efbad13b06ab4079b53",
+      "snapshotFingerprint": "2ed399ef5285576e587c54e81af4dc2898a36102dd1c0b347c47025e6ba0a762",
       "assurance": "same-family provisional"
     },
     "refreshMode": "primary-source-and-literature-refresh",
@@ -2788,6 +3186,193 @@
       "retrieval": "docs/center-updates/2026-11-06/retrieval/sensing/lidar-anomaly-segmentation.json",
       "authoring": "docs/center-updates/2026-11-06/authoring/sensing/",
       "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "foundationsAudit": {
+      "auditedAt": "2026-11-06",
+      "scope": "在当前已复核书目上，针对经典方法/数据来源与互补综述进行增量核查；不将经典文献数量当作覆盖充分的证明。",
+      "surveyAnchors": [
+        {
+          "referenceId": "survey2022-2022",
+          "sectionsRead": [
+            "3 LiDAR",
+            "Table2",
+            "reference94"
+          ],
+          "coverageCutoff": "2022survey scope; laterREAL/APF/STU not represented as contemporaneous foundations",
+          "use": "把语义未知、异常域与实例分组分开，并追溯OSIS。",
+          "role": "established"
+        },
+        {
+          "referenceId": "survey2025-2025",
+          "sectionsRead": [
+            "1problemdefinition",
+            "2benchmarks",
+            "3taxonomy",
+            "Tables1and2"
+          ],
+          "coverageCutoff": "CVPRW2025; experimentsfocusSMIYCOT/LostAndFoundNoKnown",
+          "use": "比较pixel和component指标及OE配置；明确其主要是图像基准。",
+          "role": "frontier"
+        },
+        {
+          "referenceId": "3d-ood-review-2026",
+          "sectionsRead": [
+            "1/2",
+            "3.1",
+            "4.1",
+            "5.1",
+            "referencesHendrycks2017,Liu2020,Bendale2016"
+          ],
+          "coverageCutoff": "Read2025arxivv1 with formal2026metadata; broad3Dscope, not latestSTU-onlysurvey",
+          "use": "把通用评分、3D传感器和不同应用的协议交叉起来，避免将工业异常迁移结论直接写成道路收益。",
+          "role": "frontier"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "lost-found-2016",
+          "branch": "道路小障碍",
+          "role": "几何基准源头",
+          "reason": "将小物体检出、距离与误报联系起来，明确属于双目图像路径。"
+        },
+        {
+          "referenceId": "msp-baseline-2017",
+          "branch": "异常评分",
+          "role": "基线源头",
+          "reason": "为类别分数的拒识能力提供低成本参照。"
+        },
+        {
+          "referenceId": "energy-ood-2020",
+          "branch": "异常评分",
+          "role": "能量评分源头",
+          "reason": "连接当前能量/相对能量评分与原始训练条件。"
+        },
+        {
+          "referenceId": "osis-2020",
+          "branch": "道路未知实例",
+          "role": "三维方法源头",
+          "reason": "类别无关点嵌入、已知原型关联和未知聚类的早期直接证据。"
+        },
+        {
+          "referenceId": "real-2022",
+          "branch": "开放集语义",
+          "role": "三维分割里程碑",
+          "reason": "把未知分割和冗余分类器/伪未知监督联系起来。"
+        },
+        {
+          "referenceId": "stu-2025",
+          "branch": "真实异常评测",
+          "role": "数据里程碑",
+          "reason": "将真实未知物体和序列实例身份引入三维道路异常评测。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "通用异常分数与训练暴露",
+          "status": "covered",
+          "rationale": "补入MSP和能量原文，与已有OE区分评分函数和训练信息。",
+          "foundationalReferenceIds": [
+            "msp-baseline-2017",
+            "energy-ood-2020",
+            "oe-2019"
+          ],
+          "surveyReferenceIds": [
+            "3d-ood-review-2026",
+            "survey2025-2025"
+          ]
+        },
+        {
+          "branch": "三维未知实例与开放语义",
+          "status": "covered",
+          "rationale": "OSIS补足REAL/APF之前的直接实例方法，保留其多帧输入与UQ边界。",
+          "foundationalReferenceIds": [
+            "osis-2020",
+            "real-2022",
+            "apf-2023"
+          ],
+          "surveyReferenceIds": [
+            "survey2022-2022",
+            "3d-ood-review-2026"
+          ]
+        },
+        {
+          "branch": "真实道路基准与传感器差异",
+          "status": "bounded",
+          "rationale": "已有道路综述多以图像为主，3D综述涵盖多种应用；STU及后续LiDAR数据仍需原论文单独核验。",
+          "foundationalReferenceIds": [
+            "lost-found-2016",
+            "stu-2025"
+          ],
+          "surveyReferenceIds": [
+            "survey2022-2022",
+            "survey2025-2025",
+            "3d-ood-review-2026"
+          ]
+        },
+        {
+          "branch": "持续行驶的首次检出与误报",
+          "status": "gap",
+          "rationale": "当前所读综述未形成统一道路LiDAR序列协议；UQ、点级FPR95与正常道路误报/距离不能互换。",
+          "foundationalReferenceIds": [],
+          "surveyReferenceIds": [
+            "3d-ood-review-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "survey2022-2022",
+          "sourceLocator": "§3 / Table2 / reference [94]",
+          "candidateCanonicalId": "pmlr:v100:wong20a",
+          "primaryUrl": "https://proceedings.mlr.press/v100/wong20a.html",
+          "disposition": "included",
+          "reason": "道路LiDAR未知实例分组的直接早期工作，当前综述遗漏。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§4.1/§5.1; Hendrycks and Gimpel(2017)",
+          "candidateCanonicalId": "arxiv:1610.02136",
+          "primaryUrl": "https://openreview.net/forum?id=Hkg4TI9xl",
+          "disposition": "included",
+          "reason": "当前点评分机制的源头基线。；道路图像OoD比较保留MaximumSoftmax作为基线。"
+        },
+        {
+          "surveyReferenceId": "survey2025-2025",
+          "sourceLocator": "Table1/reference[21]",
+          "candidateCanonicalId": "arxiv:1610.02136",
+          "primaryUrl": "https://openreview.net/forum?id=Hkg4TI9xl",
+          "disposition": "included",
+          "reason": "当前点评分机制的源头基线。；道路图像OoD比较保留MaximumSoftmax作为基线。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§2/§5.1; Liu etal.(2020)",
+          "candidateCanonicalId": "arxiv:2010.03759",
+          "primaryUrl": "https://papers.neurips.cc/paper/2020/hash/f5496252609c43eb8a3d147ab9b9c006-Abstract.html",
+          "disposition": "included",
+          "reason": "解释当前relativeenergy路线继承的评分基础。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§5.1; Bendale and Boult(2016)",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2016.173",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2016/html/Bendale_Towards_Open_Set_CVPR_2016_paper.html",
+          "disposition": "excluded",
+          "reason": "保留在候选追溯中：它是图像开放集分类的统计拒识源头；本篇当前评分脉络用MSP、Energy及已有OE展开，三维实例机制用OSIS，暂不增加另一组图像分类方法详述。"
+        }
+      ],
+      "limitations": [
+        "这是围绕现有研究问题的代表性脉络检查，不声称穷尽全部经典论文。",
+        "综述用于分类、术语和向后追溯；具体方法与结果以已打开的原论文为依据。",
+        "记录的阅读版本与期刊年份分别保留，最新论文仍需直接检索；未运行模型实验。"
+      ]
+    },
+    "foundationRefresh": {
+      "date": "2026-11-06",
+      "baseCommit": "9df6e450e5cd40cbaec96462a07fdbbd10c18965",
+      "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+      "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
+      "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
   }
 }

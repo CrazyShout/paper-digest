@@ -18,7 +18,7 @@
       "kind": "scope",
       "title": "共享场景状态怎样改善多车行动",
       "thesis": "协同的核心是让另一辆车的观测或意图改变本车对场景和动作的判断；通信、感知与协调决定了这种改变是否有用。",
-      "body": "Cooper、V2VNet、OPV2V 与 DAIR-V2X 建立了跨视角互补的基础：遮挡后的目标和远处稀疏观测可由其他主体补充。随后研究不再只比较融合前后的检测 AP，而是把远端信息接入预测、规划和控制。Coopernaut 与 CoDriving 提供模拟闭环，UniV2X 将真实车路日志中的多任务表示连接到规划。[cooper-2019, v2vnet-2020, opv2v-2022, dair-v2x-2022, coopernaut-2022, codriving-2025, univ2x-2025]\n\n近期进展把共享对象从单帧特征推进到持续更新的状态。MirrorComm 让双端维护预测历史，只发送难预测位置的观测；TRB 与 EgoRefine 根据历史和当前 ego 线索校正延迟；CoSafe 则用共享感知和意图共同分配接管轨迹。值得研究的是三者如何围绕同一场景状态组织，而不必分别增加预测器、消息评分器和安全开关。[mirrorcomm-2026, trb-2026, egorefine-2026, cosafe-2026]",
+      "body": "Cooper、V2VNet、OPV2V 与 DAIR-V2X 建立了跨视角互补的基础：遮挡后的目标和远处稀疏观测可由其他主体补充。随后研究不再只比较融合前后的检测 AP，而是把远端信息接入预测、规划和控制。Coopernaut 与 CoDriving 提供模拟闭环，UniV2X 将真实车路日志中的多任务表示连接到规划。[cooper-2019, v2vnet-2020, opv2v-2022, dair-v2x-2022, coopernaut-2022, codriving-2025, univ2x-2025]\n\n近期进展把共享对象从单帧特征推进到持续更新的状态。MirrorComm 让双端维护预测历史，只发送难预测位置的观测；TRB 与 EgoRefine 根据历史和当前 ego 线索校正延迟；CoSafe 则用共享感知和意图共同分配接管轨迹。值得研究的是三者如何围绕同一场景状态组织，而不必分别增加预测器、消息评分器和安全开关。[mirrorcomm-2026, trb-2026, egorefine-2026, cosafe-2026]\n\n### 综述阅读路径\n\n先读 [Liu 等的协同感知综述](https://arxiv.org/abs/2308.16714)：其融合阶段、通信效率、时延和位姿误差分类适合建立方法地图，覆盖的是 2023 年前后的研究。再用 [Yazgan 等的数据集综述](https://ieeexplore.ieee.org/document/10588870/) 对照真实与仿真来源、传感器、主体数量和任务；这是 2024 年的数据集快照，后续系统仍需回到各自的协议与资源。两篇综述分别帮助理解“如何合作”和“在什么条件下比较”。[survey-collaborative-perception-2023, collaborative-datasets-survey-2024]\n\n再读 2026 年的 [MAEAD 综述](https://arxiv.org/abs/2606.13840)，把感知融合接到意图协调、联合规划和闭环验证。其 v4 主覆盖期截至 2026 年 5 月 31 日；共享世界模型是作者组织这些层次的视角，之后的通信与控制新结果仍要查各自原文。",
       "referenceIds": [
         "cooper-2019",
         "v2vnet-2020",
@@ -30,15 +30,18 @@
         "mirrorcomm-2026",
         "trb-2026",
         "egorefine-2026",
-        "cosafe-2026"
+        "cosafe-2026",
+        "survey-collaborative-perception-2023",
+        "collaborative-datasets-survey-2024",
+        "maead-survey-2026"
       ]
     },
     {
       "id": "evolution",
       "kind": "evolution",
-      "title": "从特征融合到预测通信与行动协调",
+      "title": "从共享层次、通信选择到预测与行动协调",
       "thesis": "方法演进正在把“传什么”和“怎样使用”放到同一决策中。",
-      "body": "Where2comm 用置信图选择空间区域；AutoCast 根据对象位置、轨迹和接收方盲区调度；EdgeCooper 把多跳传输与原始点云融合联动。Update the Unseen 把本地感知也计入信息年龄，说明接收端重新看见的区域不必重复广播。它们逐步把通信价值从数据量转向接收端真正缺少的信息。[where2comm-2022, autocast-2022, edgecooper-2024, update-unseen-2026]\n\nMirrorComm 进一步利用可预测性减少发送，LinkDreamer 在 ego-only、历史复用、潜状态预测、摘要与完整刷新之间选择。对于到达但不对齐的消息，CoAlign 处理几何位姿，TRB 保留 pose-warped 锚点并学习残差，EgoRefine 用 ego 当前观测引导对齐。AgentNorm 则展示合作方的统计漂移可能经共享归一化污染干净 ego，分开统计即可获得收益。[mirrorcomm-2026, linkdreamer-2026, coalign-2023, trb-2026, egorefine-2026, agentnorm-2026]\n\nHEAL 与 HeteroPROMPT 解决新模型/模态加入的表示接口，SimBEV2X 扩大多车多任务训练资源。MDrive 和 CoSafe 把讨论推进到行为：更好的感知如何改变协商，独立避险为何会相互等待，以及如何联合分配仍可通行的轨迹。[heal-2024, heteroprompt-2026, simbev2x-2026, mdrive-2026, cosafe-2026]",
+      "body": "早期工作先回答共享哪一层信息。Cooper 共享三维点云，F-Cooper 转向中间点云特征，V2VNet 将跨车通信用于联合感知与预测。DiscoNet 用完整视角的早期融合教师指导中间融合学生，并以矩阵值边权选择空间信息；教师获得的全局信息属于训练条件，部署时使用学生网络。[cooper-2019, fcooper-2019, v2vnet-2020, disconet-2021]\n\n通信选择也有不同粒度。Who2com 通过请求、匹配和连接选择合作方；When2com 学习通信分组和何时通信。Where2comm 则把选择细化到空间区域。这些工作共同构成后续带宽研究的来源，但任务、骨干与通信模型不同，性能数字不能直接拼成一条排名。[who2com-2020, when2com-2020, where2comm-2022]\n\nWhere2comm 用置信图选择空间区域；AutoCast 根据对象位置、轨迹和接收方盲区调度；EdgeCooper 把多跳传输与原始点云融合联动。Update the Unseen 把本地感知也计入信息年龄，说明接收端重新看见的区域不必重复广播。它们逐步把通信价值从数据量转向接收端真正缺少的信息。[where2comm-2022, autocast-2022, edgecooper-2024, update-unseen-2026]\n\nMirrorComm 进一步利用可预测性减少发送，LinkDreamer 在 ego-only、历史复用、潜状态预测、摘要与完整刷新之间选择。对于到达但不对齐的消息，CoAlign 处理几何位姿，TRB 保留 pose-warped 锚点并学习残差，EgoRefine 用 ego 当前观测引导对齐。AgentNorm 则展示合作方的统计漂移可能经共享归一化污染干净 ego，分开统计即可获得收益。[mirrorcomm-2026, linkdreamer-2026, coalign-2023, trb-2026, egorefine-2026, agentnorm-2026]\n\nHEAL 与 HeteroPROMPT 解决新模型/模态加入的表示接口，SimBEV2X 扩大多车多任务训练资源。MDrive 和 CoSafe 把讨论推进到行为：更好的感知如何改变协商，独立避险为何会相互等待，以及如何联合分配仍可通行的轨迹。[heal-2024, heteroprompt-2026, simbev2x-2026, mdrive-2026, cosafe-2026]",
       "referenceIds": [
         "where2comm-2022",
         "autocast-2022",
@@ -54,7 +57,13 @@
         "heteroprompt-2026",
         "simbev2x-2026",
         "mdrive-2026",
-        "cosafe-2026"
+        "cosafe-2026",
+        "cooper-2019",
+        "fcooper-2019",
+        "v2vnet-2020",
+        "disconet-2021",
+        "who2com-2020",
+        "when2com-2020"
       ]
     },
     {
@@ -62,7 +71,7 @@
       "kind": "taxonomy",
       "title": "按共享信息、更新机制与控制权限比较",
       "thesis": "分类应说明消息带来什么信息、接收端怎样更新，以及谁有权改变动作。",
-      "body": "**共享信息**包括原始点云、稀疏/稠密特征、对象运动与行动意图。**更新机制**可以是逐帧全量融合、置信区域选择、时间预测后的观测修正，或按任务需要刷新。MirrorComm 的预测残差用于选择位置，实际传输量化观测；TRB 的残差则是接收侧表征校正，两者不能因为都叫 residual 就当成同一种通信方法。[v2vnet-2020, where2comm-2022, mirrorcomm-2026, trb-2026]\n\n**误差结构**同样重要：CoAlign 面向位姿，V2X-INCOP 面向消息中断，EgoRefine 面向时序对齐，HEAL/HeteroPROMPT 面向模型与模态差异，AgentNorm 面向主体间不同的统计偏移。遮挡导致的内容缺失不会仅靠归一化恢复，因此需要把可校正的表征误差和需要新观测的信息缺口分开。[coalign-2023, v2x-incop-2024, egorefine-2026, heal-2024, heteroprompt-2026, agentnorm-2026]\n\n**控制权限**区分建议式合作与直接接管。CoSafe 的 RSU 能改写危险车辆参考轨迹，CoDriving 从协同表示输出规划，而 AutoCast 主要决定共享信息。只有在相同控制权限和单车基础策略下比较，才能判断收益来自消息、联合决策还是额外执行能力。[cosafe-2026, codriving-2025, autocast-2022]",
+      "body": "协同感知综述常从早期、中间、后期融合划分共享内容，再沿通信效率、时延、位姿与攻击展开。数据集综述则把 V2V/V2I/V2X、真实或仿真来源和可用传感器分开。本页在这两套分类上进一步讨论更新机制与控制权限，以连接持续状态维护和多车行动；这些轴回答不同问题，不应合并为一个“协同能力”分数。[survey-collaborative-perception-2023, collaborative-datasets-survey-2024]\n\n**共享信息**包括原始点云、稀疏/稠密特征、对象运动与行动意图。**更新机制**可以是逐帧全量融合、置信区域选择、时间预测后的观测修正，或按任务需要刷新。MirrorComm 的预测残差用于选择位置，实际传输量化观测；TRB 的残差则是接收侧表征校正，两者不能因为都叫 residual 就当成同一种通信方法。[v2vnet-2020, where2comm-2022, mirrorcomm-2026, trb-2026]\n\n**误差结构**同样重要：CoAlign 面向位姿，V2X-INCOP 面向消息中断，EgoRefine 面向时序对齐，HEAL/HeteroPROMPT 面向模型与模态差异，AgentNorm 面向主体间不同的统计偏移。遮挡导致的内容缺失不会仅靠归一化恢复，因此需要把可校正的表征误差和需要新观测的信息缺口分开。[coalign-2023, v2x-incop-2024, egorefine-2026, heal-2024, heteroprompt-2026, agentnorm-2026]\n\n**控制权限**区分建议式合作与直接接管。CoSafe 的 RSU 能改写危险车辆参考轨迹，CoDriving 从协同表示输出规划，而 AutoCast 主要决定共享信息。只有在相同控制权限和单车基础策略下比较，才能判断收益来自消息、联合决策还是额外执行能力。[cosafe-2026, codriving-2025, autocast-2022]\n\nMAEAD 综述提供了另一条交叉分类：共享状态是否对齐、是否显式协调未来意图，以及共享信息是否改变联合动作。这条轴可与早期/中间/后期融合同时使用：融合位置说明信息在哪里汇合，跨层分类说明汇合后的状态实际服务什么任务。它是综述的分析框架，不替代具体方法的机制和实验。",
       "referenceIds": [
         "v2vnet-2020",
         "where2comm-2022",
@@ -76,7 +85,10 @@
         "agentnorm-2026",
         "cosafe-2026",
         "codriving-2025",
-        "autocast-2022"
+        "autocast-2022",
+        "survey-collaborative-perception-2023",
+        "collaborative-datasets-survey-2024",
+        "maead-survey-2026"
       ]
     },
     {
@@ -679,6 +691,124 @@
       "supports": "将历史复用、潜状态预测、摘要刷新和完整刷新作为可选择动作，用相对运动条件世界模型与神经模糊控制器分配通信。",
       "limitation": "V2X-Real 上的链路退化由轨迹和 LiDAR 几何推导；它是明确的合成通信协议，不是实际物理层 trace。",
       "url": "https://arxiv.org/abs/2610.39258"
+    },
+    {
+      "id": "collaborative-datasets-survey-2024",
+      "title": "Collaborative Perception Datasets in Autonomous Driving: A Survey",
+      "authors": "Melih Yazgan, Mythra Varun Akkanapragada, J. Marius Zöllner",
+      "year": 2024,
+      "venue": "IEEE Intelligent Vehicles Symposium",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/IV55156.2024.10588870",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "按路口与协同感知数据集比较传感器、主体数量、任务、真实或仿真来源以及公开与复用情况。",
+      "limitation": "2024 年数据集快照，不能代替逐个数据集的当前下载、许可和评测协议。",
+      "url": "https://ieeexplore.ieee.org/document/10588870/",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2404.14022"
+        }
+      ]
+    },
+    {
+      "id": "fcooper-2019",
+      "title": "F-Cooper: Feature based Cooperative Perception for Autonomous Vehicle Edge Computing System Using 3D Point Clouds",
+      "authors": "Qi Chen, Xu Ma, Sihai Tang, Jingda Guo, Qing Yang, Song Fu",
+      "year": 2019,
+      "venue": "ACM/IEEE Symposium on Edge Computing (SEC)",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1145/3318216.3363300",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "以中间点云特征共享和融合缓解原始点云传输负担，是早期特征级协同感知的直接来源。",
+      "limitation": "任务为协同目标检测；检测精度与传输代价的结果不能直接外推为闭环驾驶收益。",
+      "url": "https://doi.org/10.1145/3318216.3363300",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1909.06459"
+        },
+        {
+          "label": "项目页",
+          "url": "https://par.nsf.gov/servlets/purl/10206344"
+        }
+      ]
+    },
+    {
+      "id": "who2com-2020",
+      "title": "Who2com: Collaborative Perception via Learnable Handshake Communication",
+      "authors": "Yen-Cheng Liu, Junjiao Tian, Chih-Yao Ma, Nathan Glaser, Chia-Wen Kuo, Zsolt Kira",
+      "year": 2020,
+      "venue": "ICRA",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/ICRA40945.2020.9197364",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用请求、匹配、连接的可学习握手机制选择合作方，在带宽受限的多主体感知中共享信息。",
+      "limitation": "测试重点为感知任务与通信效率，没有建立城市驾驶闭环收益。",
+      "url": "https://ieeexplore.ieee.org/document/9197364/",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2003.09575"
+        }
+      ]
+    },
+    {
+      "id": "when2com-2020",
+      "title": "When2com: Multi-Agent Perception via Communication Graph Grouping",
+      "authors": "Yen-Cheng Liu, Junjiao Tian, Nathaniel Glaser, Zsolt Kira",
+      "year": 2020,
+      "venue": "CVPR",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/CVPR42600.2020.00416",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "同时学习通信分组和何时通信，在两个感知任务中比较性能与通信量。",
+      "limitation": "通信决策在论文的感知任务和链路模型下成立，不等于真实车联网中的完整链路时延验证。",
+      "url": "https://openaccess.thecvf.com/content_CVPR_2020/html/Liu_When2com_Multi-Agent_Perception_via_Communication_Graph_Grouping_CVPR_2020_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2006.00176"
+        }
+      ]
+    },
+    {
+      "id": "disconet-2021",
+      "title": "Learning Distilled Collaboration Graph for Multi-Agent Perception",
+      "authors": "Yiming Li, Shunli Ren, Pengxiang Wu, Siheng Chen, Chen Feng, Wenjun Zhang",
+      "year": 2021,
+      "venue": "NeurIPS",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "arxiv:2111.00643",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用全视角早期融合教师蒸馏中间融合学生，并用矩阵值图边权表达空间区域注意力。",
+      "limitation": "实验基于 CARLA/SUMO 构造的 V2X-Sim 1.0 三维检测；教师信息仅用于训练，不能当作部署可得输入。",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2021/hash/f702defbc67edb455949f46babab0c18-Abstract.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2111.00643"
+        }
+      ]
+    },
+    {
+      "id": "maead-survey-2026",
+      "title": "Multi-Agent Embodied Autonomous Driving (MAEAD): From V2X Information Exchange to Shared World Models",
+      "authors": "Senkang Hu, Zhengru Fang, Yihang Tao, Zihan Fang, Yiqin Deng, Yuguang Fang",
+      "year": 2026,
+      "venue": "arXiv preprint, v4",
+      "publicationType": "survey",
+      "publicationStatus": "preprint",
+      "canonicalId": "arxiv:2606.13840",
+      "sourceFamily": "arxiv",
+      "url": "https://arxiv.org/abs/2606.13840",
+      "supports": "以共享状态、意图协调和联合行动串联协同感知、通信、推理、规划、端到端驾驶与仿真评测，提供跨层阅读框架。",
+      "limitation": "这是叙述性综述及作者提出的组织视角，非统一性能元分析或部署认证；主覆盖期截至2026年5月31日，之后进展需回到新论文。"
     }
   ],
   "searchAudit": {
@@ -696,7 +826,8 @@
       "异步、位姿误差与鲁棒融合",
       "协同预测、规划与多主体协商",
       "真实通信、闭环验证与安全回退",
-      "恶意或故障节点与信任校准"
+      "恶意或故障节点与信任校准",
+      "经典工作、综述分类与引文追溯"
     ],
     "sourceFamilies": [
       "arxiv",
@@ -705,9 +836,9 @@
       "official-project"
     ],
     "counts": {
-      "candidates": 113,
-      "deduplicated": 88,
-      "included": 30,
+      "candidates": 120,
+      "deduplicated": 94,
+      "included": 36,
       "excluded": 58
     },
     "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
@@ -722,13 +853,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 2,
+      "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
-      "reviewerAgentId": "/root/review_centers_policy",
-      "artifactPath": "docs/center-updates/2026-11-06/independent-review/policy-round2.json",
-      "artifactSha256": "21504ef96997b407f2c8e1d5bd4fb6fd320cd492f6d418f6c41112e60f6e1b91",
-      "snapshotFingerprint": "2827f67a09f1ed56fc6ad2d861e41275cfc67aa47426eefc45e2b44c93408ace",
+      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
+      "reviewerAgentId": "/root/foundations_review_policy",
+      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/policy-round1.json",
+      "artifactSha256": "a9236b15bfbae1d58725a41a4bbb747f67b7a8bb2be2b7a8203d8ffc4f16ae0d",
+      "snapshotFingerprint": "ee75dc1d4c756f3450d52ad83394219705db8c6b55bd278d7230093324f1cea2",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -1533,6 +1664,158 @@
             "limit": 20
           }
         }
+      },
+      {
+        "family": "经典工作、综述分类与引文追溯",
+        "sourceFamily": "publisher-and-venue",
+        "query": "综述分类与引文追溯：Towards Vehicle-to-everything Autonomous Driving: A Survey on Collaborative Perception；Collaborative Perception Datasets in Autonomous Driving: A Survey；Multi-Agent Embodied Autonomous Driving (MAEAD): From V2X Information Exchange to Shared World Models；按引用定位打开原论文并核对身份与方法。",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "围绕缺失的方法源头、关键转折和综述分类进行定向追溯。该族统计进入父流程范围判定的候选；API和Web宽泛返回只记录为发现，不作为本族已读或纳入数。原有语义族及本库rg审计保留。",
+        "resultCount": 7,
+        "resultIdSample": [
+          "arxiv:2111.00643",
+          "arxiv:2308.16714",
+          "arxiv:2606.13840",
+          "doi:10.1109/cvpr42600.2020.00416",
+          "doi:10.1109/icra40945.2020.9197364",
+          "doi:10.1109/iv55156.2024.10588870",
+          "doi:10.1145/3318216.3363300"
+        ],
+        "retrieval": {
+          "provider": "primary-survey-reference-tracing-with-targeted-source-verification",
+          "endpoint": "https://arxiv.org/abs/2308.16714",
+          "parameters": {
+            "query": "综述分类与引文追溯：Towards Vehicle-to-everything Autonomous Driving: A Survey on Collaborative Perception；Collaborative Perception Datasets in Autonomous Driving: A Survey；Multi-Agent Embodied Autonomous Driving (MAEAD): From V2X Information Exchange to Shared World Models；按引用定位打开原论文并核对身份与方法。",
+            "surveyUrls": [
+              "https://arxiv.org/abs/2308.16714",
+              "https://ieeexplore.ieee.org/document/10588870/",
+              "https://arxiv.org/abs/2606.13840"
+            ],
+            "primaryUrls": [
+              "https://arxiv.org/abs/2308.16714",
+              "https://ieeexplore.ieee.org/document/10588870/",
+              "https://arxiv.org/abs/1909.06459",
+              "https://ieeexplore.ieee.org/document/9197364/",
+              "https://openaccess.thecvf.com/content_CVPR_2020/html/Liu_When2com_Multi-Agent_Perception_via_Communication_Graph_Grouping_CVPR_2020_paper.html",
+              "https://proceedings.nips.cc/paper_files/paper/2021/hash/f702defbc67edb455949f46babab0c18-Abstract.html",
+              "https://arxiv.org/abs/2606.13840"
+            ],
+            "discoveryQueriesArtifact": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+            "supplementalEvidencePackets": [
+              "docs/review-foundations/2026-11-06/retrieval/parent/evidence.json"
+            ]
+          },
+          "sort": "survey branch and citation order; parent scope screening",
+          "limit": 7,
+          "limitMeaning": "Frozen scoped candidate inventory; exact search engine/API caps and raw hits are retained in the evidence packet, not replaced by this inventory size.",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "evidencePacketSha256": "b12adec4fb6c7e8b26c3fd51d0be148e2cb244d0fd41d9db31d85ff680dc769c",
+          "entries": [
+            {
+              "canonicalId": "arxiv:2308.16714",
+              "referenceId": "survey-collaborative-perception-2023",
+              "reason": "补足综述分类和阅读入口：系统覆盖融合阶段、协同位置、带宽、时延、攻击、位姿误差和 sim-to-real，为领域边界与术语提供基础 taxonomy。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "arxiv:2308.16714",
+                "tracedFromSurvey": [],
+                "readingDepth": "primary fulltext selected sections and bibliography"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/iv55156.2024.10588870",
+              "referenceId": "collaborative-datasets-survey-2024",
+              "reason": "补足综述分类和阅读入口：按路口与协同感知数据集比较传感器、主体数量、任务、真实或仿真来源以及公开与复用情况。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "doi:10.1109/IV55156.2024.10588870",
+                "tracedFromSurvey": [],
+                "readingDepth": "primary fulltext selected sections and bibliography"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1145/3318216.3363300",
+              "referenceId": "fcooper-2019",
+              "reason": "原始点云合作与中间特征合作之间的缺失环节。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "arxiv:1909.06459",
+                "tracedFromSurvey": [
+                  {
+                    "surveyId": "survey-collaborative-perception-2023",
+                    "section": "§4.1 and Table 3; reference [88]",
+                    "why": "原始点云合作与中间特征合作之间的缺失环节。",
+                    "url": "https://arxiv.org/abs/2308.16714"
+                  }
+                ],
+                "readingDepth": "primary fulltext selected sections and bibliography"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/icra40945.2020.9197364",
+              "referenceId": "who2com-2020",
+              "reason": "选择通信对象的源头，区别于后续空间区域选择。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "doi:10.1109/ICRA40945.2020.9197364",
+                "tracedFromSurvey": [
+                  {
+                    "surveyId": "survey-collaborative-perception-2023",
+                    "section": "§4.4; reference [53]",
+                    "why": "选择通信对象的源头，区别于后续空间区域选择。",
+                    "url": "https://arxiv.org/abs/2308.16714"
+                  }
+                ],
+                "readingDepth": "primary abstract and formal metadata"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/cvpr42600.2020.00416",
+              "referenceId": "when2com-2020",
+              "reason": "说明通信时机与对象选择并非近期才出现。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "doi:10.1109/CVPR42600.2020.00416",
+                "tracedFromSurvey": [
+                  {
+                    "surveyId": "survey-collaborative-perception-2023",
+                    "section": "§4.4; reference [49]",
+                    "why": "说明通信时机与对象选择并非近期才出现。",
+                    "url": "https://arxiv.org/abs/2308.16714"
+                  }
+                ],
+                "readingDepth": "primary abstract and formal metadata"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2111.00643",
+              "referenceId": "disconet-2021",
+              "reason": "共享表示的蒸馏起点；同名 Disconet 的 [89] 是三维编辑论文，需防止错引。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+                "candidateKey": "arxiv:2111.00643",
+                "tracedFromSurvey": [
+                  {
+                    "surveyId": "survey-collaborative-perception-2023",
+                    "section": "§4.4; reference [47], not [89]",
+                    "why": "共享表示的蒸馏起点；同名 Disconet 的 [89] 是三维编辑论文，需防止错引。",
+                    "url": "https://arxiv.org/abs/2308.16714"
+                  }
+                ],
+                "readingDepth": "primary abstract and formal metadata"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2606.13840",
+              "referenceId": "maead-survey-2026",
+              "reason": "补足2026跨层综述视角：感知、意图、规划与闭环评测；已读当前v4相关章节并区分主覆盖截止。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/parent/evidence.json",
+                "readingDepth": "Currentv4 primaryHTML title/authors and selectedscope, taxonomy, mechanismandbenchmarksections read; v1 separatelyretained, notmixedinto v4authors"
+              }
+            }
+          ]
+        }
       }
     ],
     "deduplicationKeys": [
@@ -1571,7 +1854,13 @@
       "arxiv:2610.10090",
       "arxiv:2610.00319",
       "arxiv:2610.39505",
-      "arxiv:2610.39258"
+      "arxiv:2610.39258",
+      "doi:10.1109/IV55156.2024.10588870",
+      "doi:10.1145/3318216.3363300",
+      "doi:10.1109/ICRA40945.2020.9197364",
+      "doi:10.1109/CVPR42600.2020.00416",
+      "arxiv:2111.00643",
+      "arxiv:2606.13840"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -1729,12 +2018,21 @@
     ],
     "candidateLedger": [
       {
-        "canonicalId": "arxiv:2308.16714",
+        "canonicalId": "arxiv:2111.00643",
         "queryFamilies": [
-          "协同感知与 V2X 基准"
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2308.16714",
+        "queryFamilies": [
+          "协同感知与 V2X 基准",
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2401.09032",
@@ -1943,6 +2241,14 @@
         ],
         "localPaperId": "camasa-v2x-trajectory-dataset",
         "disposition": "deferred",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "arxiv:2606.13840",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
@@ -2406,6 +2712,14 @@
         "occurrences": 3
       },
       {
+        "canonicalId": "doi:10.1109/cvpr42600.2020.00416",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1109/cvpr52688.2022.02067",
         "queryFamilies": [
           "协同感知与 V2X 基准"
@@ -2422,6 +2736,14 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1109/icra40945.2020.9197364",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1109/icra46639.2022.9812038",
         "queryFamilies": [
           "协同感知与 V2X 基准"
@@ -2433,6 +2755,14 @@
         "canonicalId": "doi:10.1109/icra48891.2023.10160546",
         "queryFamilies": [
           "异步、位姿误差与鲁棒融合"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iv55156.2024.10588870",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
@@ -2457,6 +2787,14 @@
         "canonicalId": "doi:10.1109/tpami.2025.3560327",
         "queryFamilies": [
           "协同预测、规划与多主体协商"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1145/3318216.3363300",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
@@ -2511,7 +2849,8 @@
       "publication-status-primary-source",
       "formal-arxiv-link-retention",
       "physical-evidence-boundary",
-      "independent-review-current-snapshot"
+      "independent-review-current-snapshot",
+      "foundations-and-survey-coverage"
     ],
     "sourceAttempts": [
       {
@@ -2523,7 +2862,23 @@
         "limit": 200,
         "acceptedCount": 4,
         "note": "Current raw Markdown rg/tag/revision closure rerun saved in local-corpus-rerun.json.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "local-corpus",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "通信|communication|bandwidth|带宽|AoI|freshness|latency|时延|调度|scheduling|cooperative-autonomous-driving",
+          "endpoint": "content/papers",
+          "limit": 200,
+          "acceptedCount": 4,
+          "note": "Current raw Markdown rg/tag/revision closure rerun saved in local-corpus-rerun.json.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       },
       {
         "sourceFamily": "arxiv",
@@ -2532,7 +2887,7 @@
         "query": "(all:\"cooperative perception\" OR all:\"V2X\") AND (all:\"benchmark\" OR all:\"dataset\")",
         "endpoint": "https://export.arxiv.org/api/query?search_query=%28all%3A%22cooperative+perception%22+OR+all%3A%22V2X%22%29+AND+%28all%3A%22benchmark%22+OR+all%3A%22dataset%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
         "limit": 8,
-        "acceptedCount": 8,
+        "acceptedCount": 9,
         "note": "Executed every configured query family; returned records are unranked discovery hits, not accepted references.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
         "queryLimits": [
           8,
@@ -2542,7 +2897,31 @@
           8,
           8
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "(all:\"cooperative perception\" OR all:\"V2X\") AND (all:\"benchmark\" OR all:\"dataset\")",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=%28all%3A%22cooperative+perception%22+OR+all%3A%22V2X%22%29+AND+%28all%3A%22benchmark%22+OR+all%3A%22dataset%22%29&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
+          "limit": 8,
+          "acceptedCount": 8,
+          "note": "Executed every configured query family; returned records are unranked discovery hits, not accepted references.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "queryLimits": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -2551,9 +2930,25 @@
         "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
         "endpoint": "https://doi.org/10.1109/ICDCS.2019.00058",
         "limit": 17,
-        "acceptedCount": 17,
+        "acceptedCount": 22,
         "note": "Existing official venue URLs reopened; additional CVPR2026 primary discovery performed. ScienceDirect primary pages indexed but direct and web open returned403. 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+          "endpoint": "https://doi.org/10.1109/ICDCS.2019.00058",
+          "limit": 17,
+          "acceptedCount": 17,
+          "note": "Existing official venue URLs reopened; additional CVPR2026 primary discovery performed. ScienceDirect primary pages indexed but direct and web open returned403. 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       },
       {
         "sourceFamily": "semantic-scholar",
@@ -2577,7 +2972,36 @@
         "queryLimits": [
           15
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-11-06",
+          "query": "cooperative autonomous driving",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search?query=cooperative+autonomous+driving&limit=15&year=2024-2026&fields=title%2Cauthors%2Cyear%2Cvenue%2CexternalIds%2Curl%2Cabstract",
+          "limit": 15,
+          "acceptedCount": 0,
+          "note": "Actual API search returned429; no accepted references credited.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "historicalAttempt": {
+            "sourceFamily": "semantic-scholar",
+            "status": "limited",
+            "executedAt": "2026-08-01",
+            "query": "cooperative autonomous driving V2X collaborative perception",
+            "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+            "limit": 3,
+            "acceptedCount": 0,
+            "note": "Graph API 返回 HTTP 429；未把聚合器结果直接纳入引用或虚构命中。"
+          },
+          "queryLimits": [
+            15
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       },
       {
         "sourceFamily": "openalex",
@@ -2601,7 +3025,36 @@
         "queryLimits": [
           15
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "cooperative autonomous driving",
+          "endpoint": "https://api.openalex.org/works?search=cooperative+autonomous+driving&per-page=15&filter=from_publication_date%3A2024-01-01",
+          "limit": 15,
+          "acceptedCount": 0,
+          "note": "15 capped results per direction; discovery/metadata only.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "historicalAttempt": {
+            "sourceFamily": "openalex",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "cooperative autonomous driving V2X collaborative perception",
+            "endpoint": "https://api.openalex.org/works",
+            "limit": 3,
+            "acceptedCount": 0,
+            "note": "API 返回 HTTP 200，仅用于书目交叉核对；最终结论回到一手页面。"
+          },
+          "queryLimits": [
+            15
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -2612,7 +3065,23 @@
         "limit": 1,
         "acceptedCount": 1,
         "note": "Official project/code READMEs inspected; no experiments executed.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json",
+          "endpoint": "https://arxiv.org/abs/2607.23910",
+          "limit": 1,
+          "acceptedCount": 1,
+          "note": "Official project/code READMEs inspected; no experiments executed.  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/policy/cooperative-autonomous-driving.json"
+        }
       }
     ],
     "refreshMode": "primary-source-and-literature-refresh",
@@ -2688,6 +3157,237 @@
       "manifestSha256": "1dc1254be5be2bc6d591ed9bc562f011147d0ed77bae0475d096249aca4b004b",
       "claimRecordsPath": "docs/research-updates/2026-09-22/review-policy-claims.json",
       "boundary": "原文与可访问一手元数据/官方范围说明逐条区分。ISO付费全文、部分IEEE/作者正式全文与OpenReview页面存在访问限制；只保留可打开官方材料支持的范围陈述，不据HTTP200或题名宣布全文核验，不声明任何实验复现。"
+    },
+    "foundationsAudit": {
+      "auditedAt": "2026-11-06",
+      "scope": "按已读综述的主要分类核对本方向的方法源头、历史节点与已有参考文献；只补与当前研究问题直接相关的缺口。",
+      "surveyAnchors": [
+        {
+          "referenceId": "survey-collaborative-perception-2023",
+          "role": "established",
+          "sectionsRead": [
+            "§3 datasets",
+            "§4.1 fusion stage",
+            "§4.4 communication efficiency",
+            "§5 protocol comparisons",
+            "references [47],[49],[53],[88]"
+          ],
+          "use": "以融合阶段和通信机制重建Cooper/F-Cooper/V2VNet/Who2com/When2com/DiscoNet/Where2comm脉络。",
+          "coverageCutoff": "2023 arXiv baseline; no explicit later systematic search cutoff asserted"
+        },
+        {
+          "referenceId": "collaborative-datasets-survey-2024",
+          "role": "frontier",
+          "sectionsRead": [
+            "§II-A/B",
+            "Tables I and II",
+            "§III discussion",
+            "references [19],[22],[33],[34]"
+          ],
+          "use": "核对真实/仿真、传感器、主体与评测任务，不能把不同数据集结果放在同一排名中。",
+          "coverageCutoff": "2024 IV/arXiv snapshot; not a2026exhaustive review"
+        },
+        {
+          "referenceId": "maead-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "v4 §2.1 Scope of the Review",
+            "v4 §3.4 Operational Criteria for SWM-Driven Coordination",
+            "v4 §4.2 Intermediate Fusion",
+            "v4 §6.4 Agreement and Safety Gaps",
+            "v4 §8.3 Evaluation Benchmarks and Datasets"
+          ],
+          "coverageCutoff": "v4 revised2026-08-19; explicit main literature coverage2019-01 through2026-05-31, with earlier foundations retained",
+          "use": "把感知层融合与意图、规划和闭环验证放到同一跨层框架，补上只读检测综述时容易遗漏的系统问题。"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "cooper-2019",
+          "branch": "共享层次与特征融合",
+          "role": "retained-milestone",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "fcooper-2019",
+          "branch": "共享层次与特征融合",
+          "role": "method-origin",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "v2vnet-2020",
+          "branch": "共享层次与特征融合",
+          "role": "retained-milestone",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "disconet-2021",
+          "branch": "共享层次与特征融合",
+          "role": "method-origin",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "who2com-2020",
+          "branch": "通信对象、时机和区域",
+          "role": "method-origin",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "when2com-2020",
+          "branch": "通信对象、时机和区域",
+          "role": "method-origin",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "where2comm-2022",
+          "branch": "通信对象、时机和区域",
+          "role": "retained-milestone",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "opv2v-2022",
+          "branch": "数据集与跨域协议",
+          "role": "retained-milestone",
+          "reason": "用真实/仿真和传感器/任务维度理解旧基准及新资源。"
+        },
+        {
+          "referenceId": "dair-v2x-2022",
+          "branch": "数据集与跨域协议",
+          "role": "retained-milestone",
+          "reason": "用真实/仿真和传感器/任务维度理解旧基准及新资源。"
+        },
+        {
+          "referenceId": "coopernaut-2022",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        },
+        {
+          "referenceId": "codriving-2025",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        },
+        {
+          "referenceId": "univ2x-2025",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "共享层次与特征融合",
+          "status": "covered",
+          "rationale": "补入原始点云到中间特征及蒸馏的关键转换。",
+          "foundationalReferenceIds": [
+            "cooper-2019",
+            "fcooper-2019",
+            "v2vnet-2020",
+            "disconet-2021"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "通信对象、时机和区域",
+          "status": "covered",
+          "rationale": "区分通信决策的不同粒度，并连接本库的预测通信。",
+          "foundationalReferenceIds": [
+            "who2com-2020",
+            "when2com-2020",
+            "where2comm-2022"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "数据集与跨域协议",
+          "status": "covered",
+          "rationale": "用真实/仿真和传感器/任务维度理解旧基准及新资源。",
+          "foundationalReferenceIds": [
+            "opv2v-2022",
+            "dair-v2x-2022"
+          ],
+          "surveyReferenceIds": [
+            "collaborative-datasets-survey-2024"
+          ]
+        },
+        {
+          "branch": "协同感知到行为协调",
+          "status": "bounded",
+          "rationale": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。",
+          "foundationalReferenceIds": [
+            "coopernaut-2022",
+            "codriving-2025",
+            "univ2x-2025"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "从协同感知到意图与联合动作",
+          "status": "covered",
+          "rationale": "以已有Coopernaut端到端协作基础及MAEAD跨层分类连接感知与动作；2026年下半年进展由已纳入原论文补充。",
+          "foundationalReferenceIds": [
+            "coopernaut-2022"
+          ],
+          "surveyReferenceIds": [
+            "maead-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.1 and Table 3; reference [88]",
+          "candidateCanonicalId": "doi:10.1145/3318216.3363300",
+          "primaryUrl": "https://doi.org/10.1145/3318216.3363300",
+          "disposition": "included",
+          "reason": "原始点云合作与中间特征合作之间的缺失环节。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [53]",
+          "candidateCanonicalId": "doi:10.1109/ICRA40945.2020.9197364",
+          "primaryUrl": "https://ieeexplore.ieee.org/document/9197364/",
+          "disposition": "included",
+          "reason": "选择通信对象的源头，区别于后续空间区域选择。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [49]",
+          "candidateCanonicalId": "doi:10.1109/CVPR42600.2020.00416",
+          "primaryUrl": "https://openaccess.thecvf.com/content_CVPR_2020/html/Liu_When2com_Multi-Agent_Perception_via_Communication_Graph_Grouping_CVPR_2020_paper.html",
+          "disposition": "included",
+          "reason": "说明通信时机与对象选择并非近期才出现。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [47], not [89]",
+          "candidateCanonicalId": "arxiv:2111.00643",
+          "primaryUrl": "https://proceedings.nips.cc/paper_files/paper/2021/hash/f702defbc67edb455949f46babab0c18-Abstract.html",
+          "disposition": "included",
+          "reason": "共享表示的蒸馏起点；同名 Disconet 的 [89] 是三维编辑论文，需防止错引。"
+        }
+      ],
+      "limitations": [
+        "本轮为有界的谱系补查，不能证明所有经典工作均已收录。",
+        "综述用于分类和引文发现；机制及实验结论以原论文核对，综述中的错误和跨领域概括不直接继承。",
+        "覆盖日期按实际阅读版本记录；发表年份不等同于系统检索截止日。",
+        "2024数据集综述仅作为较新的互补入口，2026前沿综述由主流程补充核对。",
+        "MAEAD采用当前v4作者与标题；其主检索期截至2026-05-31，不等于覆盖到本综述更新日。"
+      ]
+    },
+    "foundationRefresh": {
+      "date": "2026-11-06",
+      "baseCommit": "9df6e450e5cd40cbaec96462a07fdbbd10c18965",
+      "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/policy/evidence.json",
+      "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
+      "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
   }
 }

@@ -1,0 +1,1770 @@
+{
+  "date": "2026-11-06",
+  "directions": [
+    {
+      "id": "3d-reconstruction",
+      "title": "自动驾驶三维重建：4D 高斯、传感器渲染与闭环评测",
+      "auditedAt": "2026-11-06",
+      "scope": "检查本方向主要方法分支的经典起点与综述阅读依据；补全已确认的衔接缺口，不宣称穷尽全部历史文献。",
+      "surveyAnchors": [
+        {
+          "referenceId": "neural-rendering-survey-2022",
+          "role": "established",
+          "sectionsRead": [
+            "4.3 Non-static scenes（相关段落）",
+            "4.3.1 Time-varying Neural Radiance Fields（相关段落）",
+            "Table3（相关段落）",
+            "references PCPMMN21 / PSB21（相关段落）"
+          ],
+          "use": "解释规范空间与直接时间条件的源头，为4D高斯分类提供前史。",
+          "coverageCutoff": "arXiv v2 2022-03-30；未声称统一检索截止日"
+        },
+        {
+          "referenceId": "representation-centric-4d-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "I scope（相关段落）",
+            "II historical evolution（相关段落）",
+            "III-A / III-B 4DNeRF（相关段落）",
+            "V datasets/metrics（相关段落）",
+            "references102,107,114（相关段落）"
+          ],
+          "use": "比较4D NeRF和4DGS，向后追溯D-NeRF、Nerfies与SfM。",
+          "coverageCutoff": "v2 2026-10-06；覆盖4D场景专属优化与相关新工作"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "colmap-sfm-2016",
+          "branch": "位姿与几何",
+          "role": "基础工具",
+          "reason": "图像重建中的位姿与稀疏结构起点。"
+        },
+        {
+          "referenceId": "nerf-2020",
+          "branch": "辐射场",
+          "role": "表示起点",
+          "reason": "连续隐式场和可微体渲染。"
+        },
+        {
+          "referenceId": "d-nerf-2021",
+          "branch": "时间形变",
+          "role": "早期方法",
+          "reason": "规范场与时间条件形变衔接静态和动态NeRF。"
+        },
+        {
+          "referenceId": "nerfies-2021",
+          "branch": "时间形变",
+          "role": "约束与优化",
+          "reason": "真实可变形拍摄中的粗到细优化和弹性正则。"
+        },
+        {
+          "referenceId": "gaussian-splatting-2023",
+          "branch": "显式时空表示",
+          "role": "表示转变",
+          "reason": "显式基元和栅格化为动态高斯提供表示基础。"
+        },
+        {
+          "referenceId": "neural-scene-graphs-2021",
+          "branch": "驾驶场景组织",
+          "role": "对象组织",
+          "reason": "场景图与对象变换是不同于时间参数化的演进轴。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "位姿、静态几何与辐射场",
+          "status": "covered",
+          "rationale": "补入SfM基础，并与已收录NeRF连接。",
+          "foundationalReferenceIds": [
+            "colmap-sfm-2016",
+            "nerf-2020"
+          ],
+          "surveyReferenceIds": [
+            "neural-rendering-survey-2022",
+            "representation-centric-4d-survey-2026"
+          ]
+        },
+        {
+          "branch": "规范形变到动态高斯",
+          "status": "covered",
+          "rationale": "补入D-NeRF/Nerfies，并保留2024各类高斯路线的区别。",
+          "foundationalReferenceIds": [
+            "d-nerf-2021",
+            "nerfies-2021",
+            "gaussian-splatting-2023",
+            "dynamic-3d-gaussians-2024",
+            "4dgs-wu-2024"
+          ],
+          "surveyReferenceIds": [
+            "neural-rendering-survey-2022",
+            "representation-centric-4d-survey-2026"
+          ]
+        },
+        {
+          "branch": "驾驶对象组织与闭环资产",
+          "status": "bounded",
+          "rationale": "已有NeuralSceneGraphs与UniSim等驾驶锚点；通用4D综述不是驾驶闭环安全评测综述。",
+          "foundationalReferenceIds": [
+            "neural-scene-graphs-2021",
+            "unisim-2023"
+          ],
+          "surveyReferenceIds": [
+            "representation-centric-4d-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "I / reference[114]",
+          "candidateCanonicalId": "doi:10.1109/cvpr.2016.445",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html",
+          "disposition": "included",
+          "reason": "综述明确把经典SfM作为相机跟踪与映射基础。"
+        },
+        {
+          "surveyReferenceId": "neural-rendering-survey-2022",
+          "sourceLocator": "4.3.1 / PCPMMN21",
+          "candidateCanonicalId": "doi:10.1109/cvpr46437.2021.01018",
+          "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+          "disposition": "included",
+          "reason": "显式规范形变早期方法。"
+        },
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "III-B / reference[107]",
+          "candidateCanonicalId": "doi:10.1109/cvpr46437.2021.01018",
+          "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+          "disposition": "included",
+          "reason": "4DNeRF规范形变分支源头。"
+        },
+        {
+          "surveyReferenceId": "neural-rendering-survey-2022",
+          "sourceLocator": "4.3.1 / PSB21",
+          "candidateCanonicalId": "doi:10.1109/iccv48922.2021.00581",
+          "primaryUrl": "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html",
+          "disposition": "included",
+          "reason": "解释形变正则和局部极小值。"
+        },
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "III-A/III-B / reference[102]",
+          "candidateCanonicalId": "doi:10.1109/iccv48922.2021.00581",
+          "primaryUrl": "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html",
+          "disposition": "included",
+          "reason": "规范场形变代表工作。"
+        }
+      ],
+      "limitations": [
+        "综述用于建立分类、术语与引文追溯，具体方法结论以原论文为依据；所列章节为本轮实际查看的相关段落。",
+        "本轮在同日已复核的正文基础上补查经典脉络；未重新逐页阅读全部既有文献，也未运行模型实验。"
+      ]
+    },
+    {
+      "id": "agentic-driving",
+      "title": "驾驶智能体：工具、记忆、推理与动作控制",
+      "auditedAt": "2026-11-06",
+      "scope": "按已读综述的主要分类核对本方向的方法源头、历史节点与已有参考文献；只补与当前研究问题直接相关的缺口。",
+      "surveyAnchors": [
+        {
+          "referenceId": "vlm-driving-survey-2024",
+          "role": "established",
+          "sectionsRead": [
+            "§III vision-language tasks",
+            "§IV-C/D decision and end-to-end",
+            "§V datasets",
+            "§VII challenges"
+          ],
+          "use": "先按任务和接口理解早期语言增强驾驶；不人为称年轻领域有成熟经典共识。",
+          "coverageCutoff": "arXiv v2 2024-06-20; formalonlineMay2024"
+        },
+        {
+          "referenceId": "vla-survey-2025",
+          "role": "frontier",
+          "sectionsRead": [
+            "§2.3-2.4 VLM to VLA",
+            "§3.1-3.3 architecture",
+            "§4.1-4.4 evolution",
+            "§6 evaluation"
+          ],
+          "use": "对照输入、语言处理器和动作解码器，以及解释器/模块化/统一/推理增强路线。",
+          "coverageCutoff": "ICCVW2025; representative models through2025, no universal cutoff asserted"
+        },
+        {
+          "referenceId": "llm-agents-survey-2024",
+          "role": "established",
+          "sectionsRead": [
+            "§2.1.2 memory",
+            "§2.1.3 planning",
+            "§2.1.4 action",
+            "references45and60"
+          ],
+          "use": "仅用于记忆、规划与行动机制溯源，驾驶验证仍以驾驶原论文为准。",
+          "coverageCutoff": "formal2024; arXivcurrentmanuscript has2025header, so version separated"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "chain-of-thought-2022",
+          "branch": "中间推理与环境反馈",
+          "role": "method-origin",
+          "reason": "追溯相邻机制，明确原始任务不含驾驶。"
+        },
+        {
+          "referenceId": "react-2023",
+          "branch": "中间推理与环境反馈",
+          "role": "method-origin",
+          "reason": "追溯相邻机制，明确原始任务不含驾驶。"
+        },
+        {
+          "referenceId": "gpt-driver-2023",
+          "branch": "语言到驾驶接口",
+          "role": "retained-milestone",
+          "reason": "以早期系统化梳理作为历史入口，不人为宣称成熟经典共识。"
+        },
+        {
+          "referenceId": "languagempc-2023",
+          "branch": "语言到驾驶接口",
+          "role": "retained-milestone",
+          "reason": "以早期系统化梳理作为历史入口，不人为宣称成熟经典共识。"
+        },
+        {
+          "referenceId": "drivegpt4-2023",
+          "branch": "语言到驾驶接口",
+          "role": "retained-milestone",
+          "reason": "以早期系统化梳理作为历史入口，不人为宣称成熟经典共识。"
+        },
+        {
+          "referenceId": "dilu-2024",
+          "branch": "记忆与工具调用",
+          "role": "retained-milestone",
+          "reason": "通用架构与驾驶实例相互对照。"
+        },
+        {
+          "referenceId": "agent-driver-2024",
+          "branch": "记忆与工具调用",
+          "role": "retained-milestone",
+          "reason": "通用架构与驾驶实例相互对照。"
+        },
+        {
+          "referenceId": "lmdrive-2024",
+          "branch": "VLA动作架构及闭环",
+          "role": "retained-milestone",
+          "reason": "2025架构综述帮助理解接口，2026推理—动作一致性仍需具体干预证据。"
+        },
+        {
+          "referenceId": "simlingo-2025",
+          "branch": "VLA动作架构及闭环",
+          "role": "retained-milestone",
+          "reason": "2025架构综述帮助理解接口，2026推理—动作一致性仍需具体干预证据。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "中间推理与环境反馈",
+          "status": "covered",
+          "rationale": "追溯相邻机制，明确原始任务不含驾驶。",
+          "foundationalReferenceIds": [
+            "chain-of-thought-2022",
+            "react-2023"
+          ],
+          "surveyReferenceIds": [
+            "llm-agents-survey-2024"
+          ]
+        },
+        {
+          "branch": "语言到驾驶接口",
+          "status": "covered",
+          "rationale": "以早期系统化梳理作为历史入口，不人为宣称成熟经典共识。",
+          "foundationalReferenceIds": [
+            "gpt-driver-2023",
+            "languagempc-2023",
+            "drivegpt4-2023"
+          ],
+          "surveyReferenceIds": [
+            "vlm-driving-survey-2024"
+          ]
+        },
+        {
+          "branch": "记忆与工具调用",
+          "status": "covered",
+          "rationale": "通用架构与驾驶实例相互对照。",
+          "foundationalReferenceIds": [
+            "dilu-2024",
+            "agent-driver-2024"
+          ],
+          "surveyReferenceIds": [
+            "llm-agents-survey-2024",
+            "vlm-driving-survey-2024"
+          ]
+        },
+        {
+          "branch": "VLA动作架构及闭环",
+          "status": "bounded",
+          "rationale": "2025架构综述帮助理解接口，2026推理—动作一致性仍需具体干预证据。",
+          "foundationalReferenceIds": [
+            "lmdrive-2024",
+            "simlingo-2025"
+          ],
+          "surveyReferenceIds": [
+            "vla-survey-2025"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "llm-agents-survey-2024",
+          "sourceLocator": "§2.1.3 Planning Module; reference [45]",
+          "candidateCanonicalId": "doi:10.52202/068431-1800",
+          "primaryUrl": "https://proceedings.neurips.cc/paper/2022/hash/9d5609613524ecf4f15af0f7b31abca4-Abstract-Conference.html",
+          "disposition": "included",
+          "reason": "区别纯推理链提示与带工具或环境反馈的行动循环。"
+        },
+        {
+          "surveyReferenceId": "llm-agents-survey-2024",
+          "sourceLocator": "§2.1.3 Planning Module with environmental feedback; reference [60]",
+          "candidateCanonicalId": "arxiv:2210.03629",
+          "primaryUrl": "https://openreview.net/forum?id=WE_vluYUL-X",
+          "disposition": "included",
+          "reason": "为驾驶工具调用和交互式推理提供相邻方法源头，保留跨领域边界。"
+        }
+      ],
+      "limitations": [
+        "本轮为有界的谱系补查，不能证明所有经典工作均已收录。",
+        "综述用于分类和引文发现；机制及实验结论以原论文核对，综述中的错误和跨领域概括不直接继承。",
+        "覆盖日期按实际阅读版本记录；发表年份不等同于系统检索截止日。",
+        "驾驶LLM/VLA发展较新，established表示较早的系统化入口；通用CoT和ReAct不提供驾驶实验结论。"
+      ]
+    },
+    {
+      "id": "autonomous-driving-security",
+      "title": "自动驾驶模型攻防：攻击路径、防御与闭环后果",
+      "auditedAt": "2026-11-06",
+      "scope": "检查本方向主要方法分支的经典起点与综述阅读依据；补全已确认的衔接缺口，不宣称穷尽全部历史文献。",
+      "surveyAnchors": [
+        {
+          "referenceId": "automated-vehicle-cyberattacks-2015",
+          "role": "established",
+          "sectionsRead": [
+            "II Related work（相关段落）",
+            "III definitions and assumptions（相关段落）",
+            "VII autonomous-vehicle threats（相关段落）",
+            "VIII cooperative-vehicle threats（相关段落）",
+            "references13,14（相关段落）"
+          ],
+          "use": "帮助分开车内控制访问、外部传感器欺骗与协同通信威胁，追溯ECU攻击起点。",
+          "coverageCutoff": "2014接收/2015卷期；未报告统一系统检索截止日期"
+        },
+        {
+          "referenceId": "physical-ads-attacks-survey-2025",
+          "role": "frontier",
+          "sectionsRead": [
+            "II-C.1 threat model（相关段落）",
+            "III-A/III-B four-label taxonomy（相关段落）",
+            "IV attack analyses（相关段落）",
+            "V directions（相关段落）",
+            "Appendix/TableIII（相关段落）"
+          ],
+          "use": "使本综述的物理攻击载体、访问假设和下游任务分类有可追溯依据。",
+          "coverageCutoff": "接收2024-10-05，正式卷期2025-09；未确认统一检索截止日期"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "automobile-security-2010",
+          "branch": "车内控制与访问",
+          "role": "实验起点",
+          "reason": "ECU渗透后的控制影响与无接触感知攻击有不同前提。"
+        },
+        {
+          "referenceId": "automated-vehicle-cyberattacks-2015",
+          "branch": "系统攻击面",
+          "role": "范围框架",
+          "reason": "区分自主式与协同式自动驾驶威胁。"
+        },
+        {
+          "referenceId": "robust-physical-attacks-2018",
+          "branch": "物理感知攻击",
+          "role": "相机侧代表",
+          "reason": "可打印扰动进入实际图像采集过程。"
+        },
+        {
+          "referenceId": "lidar-adversarial-sensor-2019",
+          "branch": "物理感知攻击",
+          "role": "传感器与模型衔接",
+          "reason": "区分能注入回波和能诱发障碍检测。"
+        },
+        {
+          "referenceId": "lidar-blackbox-attack-2020",
+          "branch": "物理感知攻击",
+          "role": "访问假设扩展",
+          "reason": "黑盒传感器攻击与反制的后续路线。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "车辆访问权限与系统结构",
+          "status": "covered",
+          "rationale": "补入ECU实验起点与自主/协同威胁框架。",
+          "foundationalReferenceIds": [
+            "automobile-security-2010",
+            "automated-vehicle-cyberattacks-2015"
+          ],
+          "surveyReferenceIds": [
+            "automated-vehicle-cyberattacks-2015"
+          ]
+        },
+        {
+          "branch": "物理载体与感知响应",
+          "status": "covered",
+          "rationale": "相机扰动、LiDAR传感器注入和黑盒攻击构成可比较的早期路线。",
+          "foundationalReferenceIds": [
+            "robust-physical-attacks-2018",
+            "lidar-adversarial-sensor-2019",
+            "lidar-blackbox-attack-2020"
+          ],
+          "surveyReferenceIds": [
+            "physical-ads-attacks-survey-2025"
+          ]
+        },
+        {
+          "branch": "供应链、VLA与持续状态",
+          "status": "bounded",
+          "rationale": "现有旧文献覆盖部分访问与生命周期问题，2026模型接口和更新机制由原始研究补充。",
+          "foundationalReferenceIds": [
+            "unece-r156-2021",
+            "lane-backdoor-2022"
+          ],
+          "surveyReferenceIds": [
+            "automated-vehicle-cyberattacks-2015",
+            "physical-ads-attacks-survey-2025"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "automated-vehicle-cyberattacks-2015",
+          "sourceLocator": "II / reference[13]",
+          "candidateCanonicalId": "doi:10.1109/sp.2010.34",
+          "primaryUrl": "https://doi.org/10.1109/SP.2010.34",
+          "disposition": "included",
+          "reason": "区分车辆控制攻击前提和后续无接触传感器攻击。"
+        },
+        {
+          "surveyReferenceId": "physical-ads-attacks-survey-2025",
+          "sourceLocator": "Introduction / reference[9]",
+          "candidateCanonicalId": "doi:10.1109/cvpr.2018.00175",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2018/html/Eykholt_Robust_Physical-World_Attacks_CVPR_2018_paper.html",
+          "disposition": "existing",
+          "reason": "物理贴纸攻击是该综述追溯的视觉攻击代表。"
+        },
+        {
+          "surveyReferenceId": "physical-ads-attacks-survey-2025",
+          "sourceLocator": "References[118] / LiDAR sensor attack discussion",
+          "candidateCanonicalId": "usenix:sec20-sun",
+          "primaryUrl": "https://www.usenix.org/conference/usenixsecurity20/presentation/sun",
+          "disposition": "existing",
+          "reason": "对照已收录的黑盒LiDAR攻击，保留访问假设差异。"
+        }
+      ],
+      "limitations": [
+        "综述用于建立分类、术语与引文追溯，具体方法结论以原论文为依据；所列章节为本轮实际查看的相关段落。",
+        "本轮在同日已复核的正文基础上补查经典脉络；未重新逐页阅读全部既有文献，也未运行模型实验。",
+        "Cao2019 的发现路径来自跨方向测试综述[71]，已保存于选择与检索记录；不虚构它出现在Chi2025的参考表。"
+      ]
+    },
+    {
+      "id": "autonomous-driving-testing",
+      "title": "自动驾驶测试：失效搜索、风险估计与现实验证",
+      "auditedAt": "2026-11-06",
+      "scope": "检查本方向主要方法分支的经典起点与综述阅读依据；补全已确认的衔接缺口，不宣称穷尽全部历史文献。",
+      "surveyAnchors": [
+        {
+          "referenceId": "testing-survey-2023",
+          "role": "established",
+          "sectionsRead": [
+            "3.1 collection criteria（相关段落）",
+            "5 module-level tests（相关段落）",
+            "6.1–6.3 system-level/mixed-reality/real-world testing（相关段落）",
+            "scenario-language table（相关段落）",
+            "references146,287,361（相关段落）"
+          ],
+          "use": "作为测试对象、生成策略、oracle与adequacy的阅读骨架，并向后追溯场景抽象与可靠性统计。",
+          "coverageCutoff": "论文纳入条件明确January2015–June2022"
+        },
+        {
+          "referenceId": "reality-gap-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "1 Introduction（相关段落）",
+            "4 classification / extraction scheme（相关段落）",
+            "5 Results（相关段落）",
+            "6.1–6.6 Discussion（相关段落）"
+          ],
+          "use": "检验早期场景式测试路线在现实对应性上的不足。",
+          "coverageCutoff": "预印本v1 2026-10-28；本次未从正文核定统一数据库检索截止日期"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "driving-to-safety-2016",
+          "branch": "统计安全评价",
+          "role": "问题动机",
+          "reason": "稀有事件与置信要求解释自然里程验证的成本。"
+        },
+        {
+          "referenceId": "scenarios-abstraction-2018",
+          "branch": "场景表述",
+          "role": "抽象层次",
+          "reason": "连接功能、逻辑和具体场景。"
+        },
+        {
+          "referenceId": "scenic-2019",
+          "branch": "场景表述",
+          "role": "概率语言",
+          "reason": "以约束分布描述和采样测试输入。"
+        },
+        {
+          "referenceId": "accelerated-evaluation-2017",
+          "branch": "事件率估计",
+          "role": "重要性采样",
+          "reason": "区别失败搜索与带权事件率估计。"
+        },
+        {
+          "referenceId": "carla-2017",
+          "branch": "仿真测试",
+          "role": "开放基础设施",
+          "reason": "提供可重复控制的驾驶仿真条件。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "场景抽象与可执行表达",
+          "status": "covered",
+          "rationale": "补入Menzel的层次和Scenic的概率语言，使生成方法的历史前提明确。",
+          "foundationalReferenceIds": [
+            "scenarios-abstraction-2018",
+            "scenic-2019"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023"
+          ]
+        },
+        {
+          "branch": "失败发现与统计事件率",
+          "status": "covered",
+          "rationale": "补入里程可靠性动机，保留AST、加速评估与NADE不同目标。",
+          "foundationalReferenceIds": [
+            "driving-to-safety-2016",
+            "adaptive-stress-testing-2018",
+            "accelerated-evaluation-2017",
+            "nade-2021"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023"
+          ]
+        },
+        {
+          "branch": "仿真、真实执行与安全论证",
+          "status": "bounded",
+          "rationale": "CARLA和现有标准提供锚点，现实对应性由2026综述补充；未覆盖所有认证体系。",
+          "foundationalReferenceIds": [
+            "carla-2017",
+            "iso-sotif-2022",
+            "iso-scenario-testing-2022"
+          ],
+          "surveyReferenceIds": [
+            "testing-survey-2023",
+            "reality-gap-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "场景抽象讨论 / reference[146]",
+          "candidateCanonicalId": "doi:10.1109/ivs.2018.8500406",
+          "primaryUrl": "https://doi.org/10.1109/IVS.2018.8500406",
+          "disposition": "included",
+          "reason": "测试生成前需要明确场景层级。"
+        },
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "场景描述语言表 / reference[361]",
+          "candidateCanonicalId": "doi:10.1145/3314221.3314633",
+          "primaryUrl": "https://doi.org/10.1145/3314221.3314633",
+          "disposition": "included",
+          "reason": "语言级约束与采样是测试基础设施，不应被归为新生成模型。"
+        },
+        {
+          "surveyReferenceId": "testing-survey-2023",
+          "sourceLocator": "6.3 Real-World Testing / reference[287]",
+          "candidateCanonicalId": "doi:10.1016/j.tra.2016.09.010",
+          "primaryUrl": "https://doi.org/10.1016/j.tra.2016.09.010",
+          "disposition": "included",
+          "reason": "自然驾驶里程的统计限制是场景式验证的重要动机。"
+        }
+      ],
+      "limitations": [
+        "综述用于建立分类、术语与引文追溯，具体方法结论以原论文为依据；所列章节为本轮实际查看的相关段落。",
+        "本轮在同日已复核的正文基础上补查经典脉络；未重新逐页阅读全部既有文献，也未运行模型实验。",
+        "Kalra–Paddock 的期刊元数据已核对，本轮内容依据作者机构 RAND 研究报告版公开页面；未取得期刊全文，不使用具体里程数字推导统一门槛。"
+      ]
+    },
+    {
+      "id": "cooperative-autonomous-driving",
+      "title": "协同自动驾驶：消息选择、可信融合与联合规划",
+      "auditedAt": "2026-11-06",
+      "scope": "按已读综述的主要分类核对本方向的方法源头、历史节点与已有参考文献；只补与当前研究问题直接相关的缺口。",
+      "surveyAnchors": [
+        {
+          "referenceId": "survey-collaborative-perception-2023",
+          "role": "established",
+          "sectionsRead": [
+            "§3 datasets",
+            "§4.1 fusion stage",
+            "§4.4 communication efficiency",
+            "§5 protocol comparisons",
+            "references [47],[49],[53],[88]"
+          ],
+          "use": "以融合阶段和通信机制重建Cooper/F-Cooper/V2VNet/Who2com/When2com/DiscoNet/Where2comm脉络。",
+          "coverageCutoff": "2023 arXiv baseline; no explicit later systematic search cutoff asserted"
+        },
+        {
+          "referenceId": "collaborative-datasets-survey-2024",
+          "role": "frontier",
+          "sectionsRead": [
+            "§II-A/B",
+            "Tables I and II",
+            "§III discussion",
+            "references [19],[22],[33],[34]"
+          ],
+          "use": "核对真实/仿真、传感器、主体与评测任务，不能把不同数据集结果放在同一排名中。",
+          "coverageCutoff": "2024 IV/arXiv snapshot; not a2026exhaustive review"
+        },
+        {
+          "referenceId": "maead-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "v4 §2.1 Scope of the Review",
+            "v4 §3.4 Operational Criteria for SWM-Driven Coordination",
+            "v4 §4.2 Intermediate Fusion",
+            "v4 §6.4 Agreement and Safety Gaps",
+            "v4 §8.3 Evaluation Benchmarks and Datasets"
+          ],
+          "coverageCutoff": "v4 revised2026-08-19; explicit main literature coverage2019-01 through2026-05-31, with earlier foundations retained",
+          "use": "把感知层融合与意图、规划和闭环验证放到同一跨层框架，补上只读检测综述时容易遗漏的系统问题。"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "cooper-2019",
+          "branch": "共享层次与特征融合",
+          "role": "retained-milestone",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "fcooper-2019",
+          "branch": "共享层次与特征融合",
+          "role": "method-origin",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "v2vnet-2020",
+          "branch": "共享层次与特征融合",
+          "role": "retained-milestone",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "disconet-2021",
+          "branch": "共享层次与特征融合",
+          "role": "method-origin",
+          "reason": "补入原始点云到中间特征及蒸馏的关键转换。"
+        },
+        {
+          "referenceId": "who2com-2020",
+          "branch": "通信对象、时机和区域",
+          "role": "method-origin",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "when2com-2020",
+          "branch": "通信对象、时机和区域",
+          "role": "method-origin",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "where2comm-2022",
+          "branch": "通信对象、时机和区域",
+          "role": "retained-milestone",
+          "reason": "区分通信决策的不同粒度，并连接本库的预测通信。"
+        },
+        {
+          "referenceId": "opv2v-2022",
+          "branch": "数据集与跨域协议",
+          "role": "retained-milestone",
+          "reason": "用真实/仿真和传感器/任务维度理解旧基准及新资源。"
+        },
+        {
+          "referenceId": "dair-v2x-2022",
+          "branch": "数据集与跨域协议",
+          "role": "retained-milestone",
+          "reason": "用真实/仿真和传感器/任务维度理解旧基准及新资源。"
+        },
+        {
+          "referenceId": "coopernaut-2022",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        },
+        {
+          "referenceId": "codriving-2025",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        },
+        {
+          "referenceId": "univ2x-2025",
+          "branch": "协同感知到行为协调",
+          "role": "retained-milestone",
+          "reason": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "共享层次与特征融合",
+          "status": "covered",
+          "rationale": "补入原始点云到中间特征及蒸馏的关键转换。",
+          "foundationalReferenceIds": [
+            "cooper-2019",
+            "fcooper-2019",
+            "v2vnet-2020",
+            "disconet-2021"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "通信对象、时机和区域",
+          "status": "covered",
+          "rationale": "区分通信决策的不同粒度，并连接本库的预测通信。",
+          "foundationalReferenceIds": [
+            "who2com-2020",
+            "when2com-2020",
+            "where2comm-2022"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "数据集与跨域协议",
+          "status": "covered",
+          "rationale": "用真实/仿真和传感器/任务维度理解旧基准及新资源。",
+          "foundationalReferenceIds": [
+            "opv2v-2022",
+            "dair-v2x-2022"
+          ],
+          "surveyReferenceIds": [
+            "collaborative-datasets-survey-2024"
+          ]
+        },
+        {
+          "branch": "协同感知到行为协调",
+          "status": "bounded",
+          "rationale": "基础综述以感知为主；2025—2026的行为协调仍依赖本库新论文逐项比较。",
+          "foundationalReferenceIds": [
+            "coopernaut-2022",
+            "codriving-2025",
+            "univ2x-2025"
+          ],
+          "surveyReferenceIds": [
+            "survey-collaborative-perception-2023"
+          ]
+        },
+        {
+          "branch": "从协同感知到意图与联合动作",
+          "status": "covered",
+          "rationale": "以已有Coopernaut端到端协作基础及MAEAD跨层分类连接感知与动作；2026年下半年进展由已纳入原论文补充。",
+          "foundationalReferenceIds": [
+            "coopernaut-2022"
+          ],
+          "surveyReferenceIds": [
+            "maead-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.1 and Table 3; reference [88]",
+          "candidateCanonicalId": "doi:10.1145/3318216.3363300",
+          "primaryUrl": "https://doi.org/10.1145/3318216.3363300",
+          "disposition": "included",
+          "reason": "原始点云合作与中间特征合作之间的缺失环节。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [53]",
+          "candidateCanonicalId": "doi:10.1109/ICRA40945.2020.9197364",
+          "primaryUrl": "https://ieeexplore.ieee.org/document/9197364/",
+          "disposition": "included",
+          "reason": "选择通信对象的源头，区别于后续空间区域选择。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [49]",
+          "candidateCanonicalId": "doi:10.1109/CVPR42600.2020.00416",
+          "primaryUrl": "https://openaccess.thecvf.com/content_CVPR_2020/html/Liu_When2com_Multi-Agent_Perception_via_Communication_Graph_Grouping_CVPR_2020_paper.html",
+          "disposition": "included",
+          "reason": "说明通信时机与对象选择并非近期才出现。"
+        },
+        {
+          "surveyReferenceId": "survey-collaborative-perception-2023",
+          "sourceLocator": "§4.4; reference [47], not [89]",
+          "candidateCanonicalId": "arxiv:2111.00643",
+          "primaryUrl": "https://proceedings.nips.cc/paper_files/paper/2021/hash/f702defbc67edb455949f46babab0c18-Abstract.html",
+          "disposition": "included",
+          "reason": "共享表示的蒸馏起点；同名 Disconet 的 [89] 是三维编辑论文，需防止错引。"
+        }
+      ],
+      "limitations": [
+        "本轮为有界的谱系补查，不能证明所有经典工作均已收录。",
+        "综述用于分类和引文发现；机制及实验结论以原论文核对，综述中的错误和跨领域概括不直接继承。",
+        "覆盖日期按实际阅读版本记录；发表年份不等同于系统检索截止日。",
+        "2024数据集综述仅作为较新的互补入口，2026前沿综述由主流程补充核对。",
+        "MAEAD采用当前v4作者与标题；其主检索期截至2026-05-31，不等于覆盖到本综述更新日。"
+      ]
+    },
+    {
+      "id": "dynamic-scene-representation",
+      "title": "动态场景表征与占据：空间状态、时间更新和规划用途",
+      "auditedAt": "2026-11-06",
+      "scope": "在当前已复核书目上，针对经典方法/数据来源与互补综述进行增量核查；不将经典文献数量当作覆盖充分的证明。",
+      "surveyAnchors": [
+        {
+          "referenceId": "ssc-survey-2022",
+          "sectionsRead": [
+            "2 Problem statement",
+            "3 Datasets and representations",
+            "4 Methods and Table2",
+            "references6and137"
+          ],
+          "coverageCutoff": "2022formalpublication; downloaded arXiv contains methods through2021, no explicit systematic cutoff found",
+          "use": "补全问题定义、室内外转移、表示和监督来源。",
+          "role": "established"
+        },
+        {
+          "referenceId": "occupancy-survey-2025",
+          "sectionsRead": [
+            "2.1–2.3",
+            "3.1–3.3",
+            "4.1",
+            "Tables1and2",
+            "references24,35,43,59,111"
+          ],
+          "coverageCutoff": "Read arXivv2 dated2024-05-18 alongside2025formalrecord; not a2026frontierinventory",
+          "use": "用输入模态与融合轴核对现有taxonomy，并补升维和benchmark源头。",
+          "role": "frontier"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "sscnet-2017",
+          "branch": "几何—语义联合补全",
+          "role": "问题与方法源头",
+          "reason": "联合预测占据与类别，连接可见表面和遮挡区域。"
+        },
+        {
+          "referenceId": "semantickitti-2019",
+          "branch": "道路SSC数据",
+          "role": "基准里程碑",
+          "reason": "将语义场景补全与多帧分割推进到真实道路。"
+        },
+        {
+          "referenceId": "lift-splat-shoot-2020",
+          "branch": "相机几何升维",
+          "role": "表示源头",
+          "reason": "显式视锥提升与统一BEV汇聚。"
+        },
+        {
+          "referenceId": "bevformer-2022",
+          "branch": "时间状态融合",
+          "role": "表示里程碑",
+          "reason": "跨相机查询与历史BEV递归融合。"
+        },
+        {
+          "referenceId": "occ3d-2023",
+          "branch": "占据标签与可见性",
+          "role": "基准里程碑",
+          "reason": "密集占据标签和可见性协议的重要出处。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "语义场景补全",
+          "status": "covered",
+          "rationale": "补入室内联合SSC与室外道路基准，明确补全和观测的区别。",
+          "foundationalReferenceIds": [
+            "sscnet-2017",
+            "semantickitti-2019"
+          ],
+          "surveyReferenceIds": [
+            "ssc-survey-2022",
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "相机升维与时空BEV",
+          "status": "covered",
+          "rationale": "显式视锥投影与查询式时空融合两条关键路线都有原始来源。",
+          "foundationalReferenceIds": [
+            "lift-splat-shoot-2020",
+            "bevformer-2022"
+          ],
+          "surveyReferenceIds": [
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "标签生成、遮挡与评价",
+          "status": "covered",
+          "rationale": "Occ3D和SemanticKITTI分别说明密集标签与道路扫描覆盖条件。",
+          "foundationalReferenceIds": [
+            "occ3d-2023",
+            "semantickitti-2019"
+          ],
+          "surveyReferenceIds": [
+            "ssc-survey-2022",
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "2025—2026流式占据与世界模型",
+          "status": "bounded",
+          "rationale": "本轮用于分类的综述主要覆盖经典SSC和截至2024年的信息融合；2026补查候选尚未完成足够原文核对。现有2025—2026进展由已核验原论文支撑。",
+          "foundationalReferenceIds": [
+            "proxy-4d-occupancy-2023",
+            "cam4docc-2024"
+          ],
+          "surveyReferenceIds": [
+            "occupancy-survey-2025"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "Introduction/related surveys [22]",
+          "candidateCanonicalId": "doi:10.1007/s11263-021-01504-5",
+          "primaryUrl": "https://link.springer.com/article/10.1007/s11263-021-01504-5",
+          "disposition": "included",
+          "reason": "现代占据综述引用其作为室内外场景补全基础。"
+        },
+        {
+          "surveyReferenceId": "ssc-survey-2022",
+          "sourceLocator": "Table2 / reference [137]",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2017.28",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+          "disposition": "included",
+          "reason": "表格从SSCNet2017开始梳理联合SSC网络。；回顾SSC问题源头。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.2 / reference [24]",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2017.28",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+          "disposition": "included",
+          "reason": "表格从SSCNet2017开始梳理联合SSC网络。；回顾SSC问题源头。"
+        },
+        {
+          "surveyReferenceId": "ssc-survey-2022",
+          "sourceLocator": "§3.1 datasets / reference [6]",
+          "candidateCanonicalId": "doi:10.1109/ICCV.2019.00939",
+          "primaryUrl": "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+          "disposition": "included",
+          "reason": "室外SSC基准。；说明室内SSC转向道路SSC的数据基础。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.2 / reference [59]",
+          "candidateCanonicalId": "doi:10.1109/ICCV.2019.00939",
+          "primaryUrl": "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+          "disposition": "included",
+          "reason": "室外SSC基准。；说明室内SSC转向道路SSC的数据基础。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§3.2.2 / reference [111]",
+          "candidateCanonicalId": "doi:10.1007/978-3-030-58568-6_12",
+          "primaryUrl": "https://link.springer.com/chapter/10.1007/978-3-030-58568-6_12",
+          "disposition": "included",
+          "reason": "2D-to-3D前向投影的关键来源。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.1,§3.2.2 / reference [43]",
+          "candidateCanonicalId": "doi:10.1007/978-3-031-20077-9_1",
+          "primaryUrl": "https://link.springer.com/chapter/10.1007/978-3-031-20077-9_1",
+          "disposition": "included",
+          "reason": "BEV和占据反向投影/查询路线的背景。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§4.1.1 / reference [35]",
+          "candidateCanonicalId": "doi:10.52202/075280-2809",
+          "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/cabfaeecaae7d6540ee797a66f0130b0-Abstract-Datasets_and_Benchmarks.html",
+          "disposition": "included",
+          "reason": "现代环视occupancy标签与评测基准。"
+        }
+      ],
+      "limitations": [
+        "这是围绕现有研究问题的代表性脉络检查，不声称穷尽全部经典论文。",
+        "综述用于分类、术语和向后追溯；具体方法与结果以已打开的原论文为依据。",
+        "记录的阅读版本与期刊年份分别保留，最新论文仍需直接检索；未运行模型实验。"
+      ],
+      "surveyGap": {
+        "reason": "本轮用于分类的近期信息融合综述主要覆盖至2024年的文献。补查发现2026综述候选，但正式页受限且尚未完成足够的原文核对，因此不据其新增论断；这不表示2026综述不存在。",
+        "queries": [
+          "3D semantic scene completion survey occupancy prediction autonomous driving survey 2024 2025",
+          "A Survey on Occupancy Perception for Autonomous Driving authors arxiv"
+        ],
+        "primaryUrls": [
+          "https://arxiv.org/html/2405.05173v2",
+          "https://link.springer.com/article/10.1007/s11263-021-01504-5"
+        ],
+        "supplementalQueryArtifact": "docs/review-foundations/2026-11-06/retrieval/parent/web-query-log.json"
+      }
+    },
+    {
+      "id": "end-to-end-autonomous-driving",
+      "title": "端到端自动驾驶：联合表征、生成式规划与闭环训练",
+      "auditedAt": "2026-11-06",
+      "scope": "按已读综述的主要分类核对本方向的方法源头、历史节点与已有参考文献；只补与当前研究问题直接相关的缺口。",
+      "surveyAnchors": [
+        {
+          "referenceId": "e2e-architectures-survey-2022",
+          "role": "established",
+          "sectionsRead": [
+            "§III-A imitation and on-policy learning",
+            "§IV input modalities",
+            "§V output modalities",
+            "§VI evaluation",
+            "references [3],[5],[43]"
+          ],
+          "use": "解释输入输出与策略诱导分布，追溯早期方法。",
+          "coverageCutoff": "2020 online publication; arXiv v2 revised2021; journal issue2022"
+        },
+        {
+          "referenceId": "e2e-survey-2024",
+          "role": "established",
+          "sectionsRead": [
+            "§1.2 roadmap and Fig.2",
+            "§2 methods",
+            "§3 benchmarking",
+            "§4.1 sensors",
+            "references [3],[6],[8],[9],[28]"
+          ],
+          "use": "衔接早期驾驶、可控模仿、多模态融合和规划导向表征。",
+          "coverageCutoff": "2024 TPAMI; publication date is not claimed systematic retrieval cutoff"
+        },
+        {
+          "referenceId": "e2e-training-ecosystem-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "§II-A development",
+            "§III data",
+            "§IV strategy",
+            "§V platform",
+            "TableI related surveys"
+          ],
+          "use": "补上数据—策略—平台三个轴，解释近期训练收益并非仅来自网络结构。",
+          "coverageCutoff": "arXiv v1 2026-10-01; no explicit systematic search end date found"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "alvinn-1988",
+          "branch": "传感器到道路跟随",
+          "role": "method-origin",
+          "reason": "从浅层网络到CNN转向，明确原始任务边界。"
+        },
+        {
+          "referenceId": "dave2-2016",
+          "branch": "传感器到道路跟随",
+          "role": "method-origin",
+          "reason": "从浅层网络到CNN转向，明确原始任务边界。"
+        },
+        {
+          "referenceId": "conditional-imitation-2018",
+          "branch": "导航命令与条件策略",
+          "role": "method-origin",
+          "reason": "补足同一观测下行动歧义的控制接口来源。"
+        },
+        {
+          "referenceId": "dagger-2011",
+          "branch": "策略诱导分布与监督",
+          "role": "method-origin",
+          "reason": "区分在线状态采集与特权教师监督，不把相邻理论当成驾驶实验。"
+        },
+        {
+          "referenceId": "learning-by-cheating-2020",
+          "branch": "策略诱导分布与监督",
+          "role": "retained-milestone",
+          "reason": "区分在线状态采集与特权教师监督，不把相邻理论当成驾驶实验。"
+        },
+        {
+          "referenceId": "transfuser-2021",
+          "branch": "多模态与规划导向表征",
+          "role": "method-origin",
+          "reason": "为当前query/slot表征补入融合和规划路线。"
+        },
+        {
+          "referenceId": "uniad-2023",
+          "branch": "多模态与规划导向表征",
+          "role": "retained-milestone",
+          "reason": "为当前query/slot表征补入融合和规划路线。"
+        },
+        {
+          "referenceId": "genad-2024",
+          "branch": "生成式训练与基础设施",
+          "role": "retained-milestone",
+          "reason": "最新综述补充数据—策略—平台，当前新论文仍按自身协议解释。"
+        },
+        {
+          "referenceId": "diffusiondrive-2025",
+          "branch": "生成式训练与基础设施",
+          "role": "retained-milestone",
+          "reason": "最新综述补充数据—策略—平台，当前新论文仍按自身协议解释。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "传感器到道路跟随",
+          "status": "covered",
+          "rationale": "从浅层网络到CNN转向，明确原始任务边界。",
+          "foundationalReferenceIds": [
+            "alvinn-1988",
+            "dave2-2016"
+          ],
+          "surveyReferenceIds": [
+            "e2e-architectures-survey-2022",
+            "e2e-survey-2024"
+          ]
+        },
+        {
+          "branch": "导航命令与条件策略",
+          "status": "covered",
+          "rationale": "补足同一观测下行动歧义的控制接口来源。",
+          "foundationalReferenceIds": [
+            "conditional-imitation-2018"
+          ],
+          "surveyReferenceIds": [
+            "e2e-architectures-survey-2022",
+            "e2e-survey-2024"
+          ]
+        },
+        {
+          "branch": "策略诱导分布与监督",
+          "status": "covered",
+          "rationale": "区分在线状态采集与特权教师监督，不把相邻理论当成驾驶实验。",
+          "foundationalReferenceIds": [
+            "dagger-2011",
+            "learning-by-cheating-2020"
+          ],
+          "surveyReferenceIds": [
+            "e2e-architectures-survey-2022",
+            "e2e-training-ecosystem-survey-2026"
+          ]
+        },
+        {
+          "branch": "多模态与规划导向表征",
+          "status": "covered",
+          "rationale": "为当前query/slot表征补入融合和规划路线。",
+          "foundationalReferenceIds": [
+            "transfuser-2021",
+            "uniad-2023"
+          ],
+          "surveyReferenceIds": [
+            "e2e-survey-2024"
+          ]
+        },
+        {
+          "branch": "生成式训练与基础设施",
+          "status": "bounded",
+          "rationale": "最新综述补充数据—策略—平台，当前新论文仍按自身协议解释。",
+          "foundationalReferenceIds": [
+            "genad-2024",
+            "diffusiondrive-2025"
+          ],
+          "surveyReferenceIds": [
+            "e2e-training-ecosystem-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "e2e-survey-2024",
+          "sourceLocator": "§1.2, Fig. 2 and reference [3]",
+          "candidateCanonicalId": "venue:neurips:1988:812b4ba287f5ee0bc9d43bbf5bbe87fb",
+          "primaryUrl": "https://papers.neurips.cc/paper_files/paper/1988/hash/812b4ba287f5ee0bc9d43bbf5bbe87fb-Abstract.html",
+          "disposition": "included",
+          "reason": "端到端传感器到控制映射的早期源头。"
+        },
+        {
+          "surveyReferenceId": "e2e-survey-2024",
+          "sourceLocator": "§1.2 and reference [8]",
+          "candidateCanonicalId": "arxiv:1604.07316",
+          "primaryUrl": "https://arxiv.org/abs/1604.07316",
+          "disposition": "included",
+          "reason": "从浅层早期网络到 CNN 直接转向的演变。"
+        },
+        {
+          "surveyReferenceId": "e2e-survey-2024",
+          "sourceLocator": "§1.2 and reference [9]",
+          "candidateCanonicalId": "doi:10.1109/ICRA.2018.8460487",
+          "primaryUrl": "https://ieeexplore.ieee.org/abstract/document/8460487/",
+          "disposition": "included",
+          "reason": "解释从无条件道路跟随到可控路线选择的关键接口变化。"
+        },
+        {
+          "surveyReferenceId": "e2e-survey-2024",
+          "sourceLocator": "§1.2 and reference [6]; journal extension is [28]",
+          "candidateCanonicalId": "doi:10.1109/CVPR46437.2021.00700",
+          "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2021/html/Prakash_Multi-Modal_Fusion_Transformer_for_End-to-End_Autonomous_Driving_CVPR_2021_paper.html",
+          "disposition": "included",
+          "reason": "当前规划导向网络之前的重要多传感器融合路线。"
+        },
+        {
+          "surveyReferenceId": "e2e-architectures-survey-2022",
+          "sourceLocator": "§III-A.3 On-policy learning; reference [43]",
+          "candidateCanonicalId": "venue:pmlr:v15:ross11a",
+          "primaryUrl": "https://proceedings.mlr.press/v15/ross11a.html",
+          "disposition": "included",
+          "reason": "当前回恢复训练和闭环模仿所依赖的数据分布基础。"
+        }
+      ],
+      "limitations": [
+        "本轮为有界的谱系补查，不能证明所有经典工作均已收录。",
+        "综述用于分类和引文发现；机制及实验结论以原论文核对，综述中的错误和跨领域概括不直接继承。",
+        "覆盖日期按实际阅读版本记录；发表年份不等同于系统检索截止日。"
+      ]
+    },
+    {
+      "id": "lidar-anomaly-segmentation",
+      "title": "LiDAR 异常分割：真实未知物体、开放集语义与序列误报",
+      "auditedAt": "2026-11-06",
+      "scope": "在当前已复核书目上，针对经典方法/数据来源与互补综述进行增量核查；不将经典文献数量当作覆盖充分的证明。",
+      "surveyAnchors": [
+        {
+          "referenceId": "survey2022-2022",
+          "sectionsRead": [
+            "3 LiDAR",
+            "Table2",
+            "reference94"
+          ],
+          "coverageCutoff": "2022survey scope; laterREAL/APF/STU not represented as contemporaneous foundations",
+          "use": "把语义未知、异常域与实例分组分开，并追溯OSIS。",
+          "role": "established"
+        },
+        {
+          "referenceId": "survey2025-2025",
+          "sectionsRead": [
+            "1problemdefinition",
+            "2benchmarks",
+            "3taxonomy",
+            "Tables1and2"
+          ],
+          "coverageCutoff": "CVPRW2025; experimentsfocusSMIYCOT/LostAndFoundNoKnown",
+          "use": "比较pixel和component指标及OE配置；明确其主要是图像基准。",
+          "role": "frontier"
+        },
+        {
+          "referenceId": "3d-ood-review-2026",
+          "sectionsRead": [
+            "1/2",
+            "3.1",
+            "4.1",
+            "5.1",
+            "referencesHendrycks2017,Liu2020,Bendale2016"
+          ],
+          "coverageCutoff": "Read2025arxivv1 with formal2026metadata; broad3Dscope, not latestSTU-onlysurvey",
+          "use": "把通用评分、3D传感器和不同应用的协议交叉起来，避免将工业异常迁移结论直接写成道路收益。",
+          "role": "frontier"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "lost-found-2016",
+          "branch": "道路小障碍",
+          "role": "几何基准源头",
+          "reason": "将小物体检出、距离与误报联系起来，明确属于双目图像路径。"
+        },
+        {
+          "referenceId": "msp-baseline-2017",
+          "branch": "异常评分",
+          "role": "基线源头",
+          "reason": "为类别分数的拒识能力提供低成本参照。"
+        },
+        {
+          "referenceId": "energy-ood-2020",
+          "branch": "异常评分",
+          "role": "能量评分源头",
+          "reason": "连接当前能量/相对能量评分与原始训练条件。"
+        },
+        {
+          "referenceId": "osis-2020",
+          "branch": "道路未知实例",
+          "role": "三维方法源头",
+          "reason": "类别无关点嵌入、已知原型关联和未知聚类的早期直接证据。"
+        },
+        {
+          "referenceId": "real-2022",
+          "branch": "开放集语义",
+          "role": "三维分割里程碑",
+          "reason": "把未知分割和冗余分类器/伪未知监督联系起来。"
+        },
+        {
+          "referenceId": "stu-2025",
+          "branch": "真实异常评测",
+          "role": "数据里程碑",
+          "reason": "将真实未知物体和序列实例身份引入三维道路异常评测。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "通用异常分数与训练暴露",
+          "status": "covered",
+          "rationale": "补入MSP和能量原文，与已有OE区分评分函数和训练信息。",
+          "foundationalReferenceIds": [
+            "msp-baseline-2017",
+            "energy-ood-2020",
+            "oe-2019"
+          ],
+          "surveyReferenceIds": [
+            "3d-ood-review-2026",
+            "survey2025-2025"
+          ]
+        },
+        {
+          "branch": "三维未知实例与开放语义",
+          "status": "covered",
+          "rationale": "OSIS补足REAL/APF之前的直接实例方法，保留其多帧输入与UQ边界。",
+          "foundationalReferenceIds": [
+            "osis-2020",
+            "real-2022",
+            "apf-2023"
+          ],
+          "surveyReferenceIds": [
+            "survey2022-2022",
+            "3d-ood-review-2026"
+          ]
+        },
+        {
+          "branch": "真实道路基准与传感器差异",
+          "status": "bounded",
+          "rationale": "已有道路综述多以图像为主，3D综述涵盖多种应用；STU及后续LiDAR数据仍需原论文单独核验。",
+          "foundationalReferenceIds": [
+            "lost-found-2016",
+            "stu-2025"
+          ],
+          "surveyReferenceIds": [
+            "survey2022-2022",
+            "survey2025-2025",
+            "3d-ood-review-2026"
+          ]
+        },
+        {
+          "branch": "持续行驶的首次检出与误报",
+          "status": "gap",
+          "rationale": "当前所读综述未形成统一道路LiDAR序列协议；UQ、点级FPR95与正常道路误报/距离不能互换。",
+          "foundationalReferenceIds": [],
+          "surveyReferenceIds": [
+            "3d-ood-review-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "survey2022-2022",
+          "sourceLocator": "§3 / Table2 / reference [94]",
+          "candidateCanonicalId": "pmlr:v100:wong20a",
+          "primaryUrl": "https://proceedings.mlr.press/v100/wong20a.html",
+          "disposition": "included",
+          "reason": "道路LiDAR未知实例分组的直接早期工作，当前综述遗漏。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§4.1/§5.1; Hendrycks and Gimpel(2017)",
+          "candidateCanonicalId": "arxiv:1610.02136",
+          "primaryUrl": "https://openreview.net/forum?id=Hkg4TI9xl",
+          "disposition": "included",
+          "reason": "当前点评分机制的源头基线。；道路图像OoD比较保留MaximumSoftmax作为基线。"
+        },
+        {
+          "surveyReferenceId": "survey2025-2025",
+          "sourceLocator": "Table1/reference[21]",
+          "candidateCanonicalId": "arxiv:1610.02136",
+          "primaryUrl": "https://openreview.net/forum?id=Hkg4TI9xl",
+          "disposition": "included",
+          "reason": "当前点评分机制的源头基线。；道路图像OoD比较保留MaximumSoftmax作为基线。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§2/§5.1; Liu etal.(2020)",
+          "candidateCanonicalId": "arxiv:2010.03759",
+          "primaryUrl": "https://papers.neurips.cc/paper/2020/hash/f5496252609c43eb8a3d147ab9b9c006-Abstract.html",
+          "disposition": "included",
+          "reason": "解释当前relativeenergy路线继承的评分基础。"
+        },
+        {
+          "surveyReferenceId": "3d-ood-review-2026",
+          "sourceLocator": "§5.1; Bendale and Boult(2016)",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2016.173",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2016/html/Bendale_Towards_Open_Set_CVPR_2016_paper.html",
+          "disposition": "excluded",
+          "reason": "保留在候选追溯中：它是图像开放集分类的统计拒识源头；本篇当前评分脉络用MSP、Energy及已有OE展开，三维实例机制用OSIS，暂不增加另一组图像分类方法详述。"
+        }
+      ],
+      "limitations": [
+        "这是围绕现有研究问题的代表性脉络检查，不声称穷尽全部经典论文。",
+        "综述用于分类、术语和向后追溯；具体方法与结果以已打开的原论文为依据。",
+        "记录的阅读版本与期刊年份分别保留，最新论文仍需直接检索；未运行模型实验。"
+      ]
+    },
+    {
+      "id": "radar-occupancy-representation",
+      "title": "雷达占据与场景表征：自由空间、三维状态与未来运动",
+      "auditedAt": "2026-11-06",
+      "scope": "在当前已复核书目上，针对经典方法/数据来源与互补综述进行增量核查；不将经典文献数量当作覆盖充分的证明。",
+      "surveyAnchors": [
+        {
+          "referenceId": "radar-signal-review-2017",
+          "sectionsRead": [
+            "Introduction",
+            "Radar signal processing/measurement equations",
+            "Radar waveforms/Table2",
+            "references"
+          ],
+          "coverageCutoff": "PublishedMarch2017; no explicit systematic search cutoff found",
+          "use": "先建立波形和测量信息的物理基础，再读4D学习方法。",
+          "role": "established"
+        },
+        {
+          "referenceId": "radar4d-survey-2023",
+          "sectionsRead": [
+            "II theoretical background",
+            "III data enhancement",
+            "IV perception",
+            "V localization/mapping",
+            "references",
+            "VI datasets",
+            "VII future trends"
+          ],
+          "coverageCutoff": "Read arXivv4 dated2024-04-26; no explicit systematic cutoff found",
+          "use": "把传统处理流程接到pre-CFAR/点云输入和数据集。",
+          "role": "established"
+        },
+        {
+          "referenceId": "radar-perception-review-2026",
+          "sectionsRead": [
+            "II",
+            "VII",
+            "VIII",
+            "IX",
+            "references"
+          ],
+          "coverageCutoff": "arXivv1 submitted2026-09-16; papers after this release are outside coverage",
+          "use": "对照2026任务扩展，区分检测/场景流/占据/动态重建和训练推理模态。",
+          "role": "frontier"
+        },
+        {
+          "referenceId": "occupancy-survey-2024",
+          "role": "established",
+          "sectionsRead": [
+            "§2.3",
+            "§3.1–3.3",
+            "§4.1"
+          ],
+          "coverageCutoff": "本轮阅读 arXiv v2（2024-05-18），另核对2025年正式期刊记录；不覆盖2026年全部雷达方法。",
+          "use": "对照输入模态、训练监督与占据输出的差别。"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "elfes-1989",
+          "branch": "概率占据地图",
+          "role": "状态与递归更新基础",
+          "reason": "占据地图并非由近期语义网络才提出。"
+        },
+        {
+          "referenceId": "dogm-rfs-2018",
+          "branch": "动态占据地图",
+          "role": "动态概率建模",
+          "reason": "已有动态栅格路线为后续速度与不确定性建模提供比较起点。"
+        },
+        {
+          "referenceId": "kradar-2022",
+          "branch": "4D雷达测量输入",
+          "role": "数据里程碑",
+          "reason": "把原始张量与多天气评测接入学习方法。"
+        },
+        {
+          "referenceId": "radarocc-2024",
+          "branch": "雷达三维占据",
+          "role": "任务里程碑",
+          "reason": "建立雷达张量到当前三维占据的直接参照。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "物理测量与前端处理",
+          "status": "covered",
+          "rationale": "2017信号综述和4D雷达综述提供互补入口；关键输入信息不只由后端网络决定。",
+          "foundationalReferenceIds": [
+            "radar-signal-review-2017"
+          ],
+          "surveyReferenceIds": [
+            "radar-signal-review-2017",
+            "radar4d-survey-2023"
+          ]
+        },
+        {
+          "branch": "概率和动态栅格",
+          "status": "bounded",
+          "rationale": "现有Elfes、逆传感器模型与随机有限集动态栅格已覆盖主线；一般占据综述不等同于全部汽车雷达历史的穷尽目录。",
+          "foundationalReferenceIds": [
+            "elfes-1989",
+            "dogm-rfs-2018"
+          ],
+          "surveyReferenceIds": [
+            "occupancy-survey-2024"
+          ]
+        },
+        {
+          "branch": "雷达张量与三维语义占据",
+          "status": "covered",
+          "rationale": "从公开测量张量到当前占据任务，可与2026任务综述交叉核对。",
+          "foundationalReferenceIds": [
+            "kradar-2022",
+            "radarocc-2024"
+          ],
+          "surveyReferenceIds": [
+            "radar4d-survey-2023",
+            "radar-perception-review-2026"
+          ]
+        },
+        {
+          "branch": "运动、时空状态与动态重建",
+          "status": "bounded",
+          "rationale": "2026综述区分场景流、体素状态与动态重建；其9月截点后的工作仍由原论文补充。",
+          "foundationalReferenceIds": [
+            "raflow-2022",
+            "rf4d-2026"
+          ],
+          "surveyReferenceIds": [
+            "radar-perception-review-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "radar-perception-review-2026",
+          "sourceLocator": "References [1]",
+          "candidateCanonicalId": "arxiv:2306.04242",
+          "primaryUrl": "https://arxiv.org/abs/2306.04242",
+          "disposition": "included",
+          "reason": "较新的任务综述明确以前一轮4D雷达综述作为背景。"
+        },
+        {
+          "surveyReferenceId": "radar-perception-review-2026",
+          "sourceLocator": "§IX Datasets and Benchmark Protocols",
+          "candidateCanonicalId": "doi:10.52202/068431-0276",
+          "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+          "disposition": "existing",
+          "reason": "雷达张量和多天气数据的既有里程碑，用于确认此轴已覆盖。"
+        },
+        {
+          "surveyReferenceId": "radar-perception-review-2026",
+          "sourceLocator": "§IX Datasets and Benchmark Protocols",
+          "candidateCanonicalId": "doi:10.52202/068431-0276",
+          "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2022/hash/185fdf627eaae2abab36205dcd19b817-Abstract-Datasets_and_Benchmarks.html",
+          "disposition": "existing",
+          "reason": "确认雷达张量和多天气基准已在当前书目中，避免重复补入。"
+        }
+      ],
+      "limitations": [
+        "这是围绕现有研究问题的代表性脉络检查，不声称穷尽全部经典论文。",
+        "综述用于分类、术语和向后追溯；具体方法与结果以已打开的原论文为依据。",
+        "记录的阅读版本与期刊年份分别保留，最新论文仍需直接检索；未运行模型实验。"
+      ]
+    },
+    {
+      "id": "world-models",
+      "title": "驾驶世界模型：未来生成、规划学习与交互仿真",
+      "auditedAt": "2026-11-06",
+      "scope": "按已读综述的主要分类核对本方向的方法源头、历史节点与已有参考文献；只补与当前研究问题直接相关的缺口。",
+      "surveyAnchors": [
+        {
+          "referenceId": "world-models-survey-2024",
+          "role": "established",
+          "sectionsRead": [
+            "§II-A architectural foundations",
+            "TableI historical milestones",
+            "§III generation/planning",
+            "references [31],[32],[43],[46]"
+          ],
+          "use": "补回WorldModels/PlaNet/Dreamer来源，再进入驾驶专用建模。",
+          "coverageCutoff": "2024 initial survey"
+        },
+        {
+          "referenceId": "world-models-survey-2025",
+          "role": "frontier",
+          "sectionsRead": [
+            "§2 background",
+            "§3.1-3.3 taxonomy",
+            "§4 training",
+            "§6 benchmarking",
+            "references [67]-[71]"
+          ],
+          "use": "用生成/规划/交互分类对照本库表示/动作/响应轴；不照抄其关于算法谱系或统一latentgraph的概括。",
+          "coverageCutoff": "arXiv v4 2025-09-10; no exact systematic search cutoff asserted"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "recurrent-world-models-2018",
+          "branch": "紧凑状态与学习环境",
+          "role": "method-origin",
+          "reason": "补回感知压缩、循环记忆和控制器分工。"
+        },
+        {
+          "referenceId": "planet-2019",
+          "branch": "在线潜规划与想象策略学习",
+          "role": "method-origin",
+          "reason": "两种利用潜动态的方式必须分别说明。"
+        },
+        {
+          "referenceId": "dreamer-2020",
+          "branch": "在线潜规划与想象策略学习",
+          "role": "method-origin",
+          "reason": "两种利用潜动态的方式必须分别说明。"
+        },
+        {
+          "referenceId": "world-on-rails-2021",
+          "branch": "驾驶生成与传感器仿真",
+          "role": "retained-milestone",
+          "reason": "保留驾驶专用建模与通用视觉控制的迁移边界。"
+        },
+        {
+          "referenceId": "gaia1-2023",
+          "branch": "驾驶生成与传感器仿真",
+          "role": "retained-milestone",
+          "reason": "保留驾驶专用建模与通用视觉控制的迁移边界。"
+        },
+        {
+          "referenceId": "unisim-2023",
+          "branch": "驾驶生成与传感器仿真",
+          "role": "retained-milestone",
+          "reason": "保留驾驶专用建模与通用视觉控制的迁移边界。"
+        },
+        {
+          "referenceId": "copilot4d-2024",
+          "branch": "空间表征与预测—规划交互",
+          "role": "retained-milestone",
+          "reason": "较新分类提供表示与用途坐标，尚非所有2026交互系统的完整检索目录。"
+        },
+        {
+          "referenceId": "occworld-2024",
+          "branch": "空间表征与预测—规划交互",
+          "role": "retained-milestone",
+          "reason": "较新分类提供表示与用途坐标，尚非所有2026交互系统的完整检索目录。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "紧凑状态与学习环境",
+          "status": "covered",
+          "rationale": "补回感知压缩、循环记忆和控制器分工。",
+          "foundationalReferenceIds": [
+            "recurrent-world-models-2018"
+          ],
+          "surveyReferenceIds": [
+            "world-models-survey-2024"
+          ]
+        },
+        {
+          "branch": "在线潜规划与想象策略学习",
+          "status": "covered",
+          "rationale": "两种利用潜动态的方式必须分别说明。",
+          "foundationalReferenceIds": [
+            "planet-2019",
+            "dreamer-2020"
+          ],
+          "surveyReferenceIds": [
+            "world-models-survey-2024"
+          ]
+        },
+        {
+          "branch": "驾驶生成与传感器仿真",
+          "status": "covered",
+          "rationale": "保留驾驶专用建模与通用视觉控制的迁移边界。",
+          "foundationalReferenceIds": [
+            "world-on-rails-2021",
+            "gaia1-2023",
+            "unisim-2023"
+          ],
+          "surveyReferenceIds": [
+            "world-models-survey-2024",
+            "world-models-survey-2025"
+          ]
+        },
+        {
+          "branch": "空间表征与预测—规划交互",
+          "status": "bounded",
+          "rationale": "较新分类提供表示与用途坐标，尚非所有2026交互系统的完整检索目录。",
+          "foundationalReferenceIds": [
+            "copilot4d-2024",
+            "occworld-2024"
+          ],
+          "surveyReferenceIds": [
+            "world-models-survey-2025"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "world-models-survey-2024",
+          "sourceLocator": "§II, Table I; references [31] and [32]",
+          "candidateCanonicalId": "arxiv:1809.01999",
+          "primaryUrl": "https://papers.nips.cc/paper_files/paper/2018/hash/2de5d16682c3c35007e4e92982f1a2ba-Abstract.html",
+          "disposition": "included",
+          "reason": "区分2018交互网页版本与NeurIPS扩展版，补回感知—记忆—控制结构。"
+        },
+        {
+          "surveyReferenceId": "world-models-survey-2024",
+          "sourceLocator": "§II-A, Table I; reference [46]",
+          "candidateCanonicalId": "venue:pmlr:v97:hafner19a",
+          "primaryUrl": "https://proceedings.mlr.press/v97/hafner19a.html",
+          "disposition": "included",
+          "reason": "RSSM与潜空间在线规划起点，区别于直接视频预测。"
+        },
+        {
+          "surveyReferenceId": "world-models-survey-2024",
+          "sourceLocator": "§II-A, Table I; reference [43]",
+          "candidateCanonicalId": "arxiv:1912.01603",
+          "primaryUrl": "https://openreview.net/forum?id=S1lOTC4tDS",
+          "disposition": "included",
+          "reason": "从在线潜空间规划转向想象中的策略学习。"
+        }
+      ],
+      "limitations": [
+        "本轮为有界的谱系补查，不能证明所有经典工作均已收录。",
+        "综述用于分类和引文发现；机制及实验结论以原论文核对，综述中的错误和跨领域概括不直接继承。",
+        "覆盖日期按实际阅读版本记录；发表年份不等同于系统检索截止日。"
+      ]
+    }
+  ]
+}

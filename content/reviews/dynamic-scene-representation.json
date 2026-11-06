@@ -18,14 +18,15 @@
       "kind": "scope",
       "title": "场景状态与重建、预测和动作的关系",
       "thesis": "动态场景表征提供可查询、可校准且带时间信息的中间状态；比较相邻任务时，应先确认其输出了哪些状态、验证了哪些用途。",
-      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源，以及每类信息分别怎样影响规划。\n\n4D 高斯的时间坐标也需要按用途解释。Wu 4D-GS 由时间条件形变生成当前高斯，Yang 4DGS 则将 xyz-t 联合高斯条件化到指定时刻；二者首先是动态辐射场。它们能在已拟合的时间范围内渲染场景，但仅凭这一能力，无法得出 occupied/free/unknown 已知、对象身份可靠或新动作下未来可预测的结论。",
+      "body": "本方向以输出状态而不是网络名字划界。三维重建关心几何、外观和新视角渲染，世界模型关心动作条件未来，端到端驾驶关心从传感器到自车动作；动态场景表征则回答当前及短期环境中哪里 occupied、free 或 unknown，哪些状态属于同一对象、如何运动、何时过期，以及规划器能否读取这些信息。一个模型可以跨越多类，但每项结论必须落回对应终点。\n\nMonoScene 把单目图像提升为稠密三维语义场景补全，TPVFormer 用三正交平面提高三维结构效率，Scene as Occupancy 明确把 occupancy 作为检测、分割与规划的通用描述符。这三项建立了当前状态主线，也暴露关键风险：遮挡区内容可能是合理补全而非观测事实，稀疏监督不等于 free/unknown 已校准，下游碰撞率下降也不能证明所有体素都具有因果价值。信息融合综述提供了方法全景；比较动态状态时，还需说明时间、身份、来源，以及每类信息分别怎样影响规划。\n\n4D 高斯的时间坐标也需要按用途解释。Wu 4D-GS 由时间条件形变生成当前高斯，Yang 4DGS 则将 xyz-t 联合高斯条件化到指定时刻；二者首先是动态辐射场。它们能在已拟合的时间范围内渲染场景，但仅凭这一能力，无法得出 occupied/free/unknown 已知、对象身份可靠或新动作下未来可预测的结论。\n\n### 综述阅读路径\n\n从 [Roldão 等的语义场景补全综述](https://link.springer.com/article/10.1007/s11263-021-01504-5)入手，先理解不完整观测、遮挡补全、室内外数据与几何—语义联合监督。它在 2022 年正式发表，适合追溯 SSCNet 和 SemanticKITTI；后来的环视占据和世界模型需继续向前读。\n\n再用 [Xu 等的信息融合综述](https://doi.org/10.1016/j.inffus.2024.102671)比较 LiDAR、相机与多模态输入，以及升维、融合和标签生成。其 2025 年期刊版本对应的本轮阅读材料是 2024 年 5 月预印本，不能据此判断 2026 年的方法覆盖。下文另列近期流式更新、未来预测和规划用途，并回到各论文核对。",
       "referenceIds": [
         "monoscene-2022",
         "tpvformer-2023",
         "scene-as-occupancy-2023",
         "occupancy-survey-2025",
         "4dgs-wu-2024",
-        "native-4dgs-yang-2024"
+        "native-4dgs-yang-2024",
+        "ssc-survey-2022"
       ]
     },
     {
@@ -33,7 +34,7 @@
       "kind": "evolution",
       "title": "从三维语义补全到时空状态与未来预测",
       "thesis": "领域正在沿三条轴演化：更完整的空间状态、更稳定的时间身份，以及能被规划动作询问的未来。",
-      "body": "2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 在对齐历史状态后，结合当前图像更新稀疏 Gaussian 占据；这里的时间用途是观测驱动的状态更新。I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。\n\nEvoOcc 进一步把状态更新时间与传感器帧率分开：慢模型到达时建立高质量差分锚点，快模型到达时传播和校正当前状态。UFMF 则以雷达运动先验维持未来物体支撑，属于预测路线。与之并行，ConSSC 利用可见性和相似性聚合历史，HD²-SSC 分开处理图像升维与标签密度。这些工作把问题从“选哪种基元”推进到“状态如何从不完整、不同步的证据中演化”。",
+      "body": "2017 年 SSCNet 将单张深度图的几何补全与语义预测放进同一体素网络，早期问题集中在室内遮挡区域。2019 年 SemanticKITTI 把单帧、多帧语义分割和场景补全带到真实道路 LiDAR 序列；从扫描构造的真值仍受可见性与覆盖限制，不能视为完整世界状态。\n\n相机路线随后形成两种空间映射。2020 年 Lift-Splat-Shoot 按深度分布把图像特征提升到视锥，再汇入 BEV；2022 年 BEVFormer 以查询提取跨相机特征，并递归融合历史 BEV。二者为升维与时间融合提供基础，原始输出主要服务 BEV 语义、三维检测或地图分割。2023 年 Occ3D 再用稠密化、遮挡推理和图像引导细化生成占据标签，使可见性与标注流程成为方法比较的一部分。\n\n2022 至 2023 年的关键变化是从检测框和 BEV 平面转向可表达高度、细粒度障碍和遮挡区域的三维语义状态。Point Cloud Forecasting as a Proxy for 4D Occupancy 随后把传感器采样与世界演化分离，强调系统应预测环境占据而不是未来点云；OccWorld 又用离散 occupancy token 同时生成未来场景与自车状态。这里的 4D occupancy 指 x-y-z-t 状态，需要包含显式时间维度。\n\n2025 年的 GaussianWorld 在对齐历史状态后，结合当前图像更新稀疏 Gaussian 占据；这里的时间用途是观测驱动的状态更新。I2-World 把场内空间压缩与跨场景时间建模分开，UniScene 则把 occupancy 设为视频与 LiDAR 生成的中介。这些论文在各自离线协议中报告了更新效率、未来预测或跨模态生成收益，但不能相互替代。Cam4DOcc、FSF-Net、Drive-OccWorld 与 OccSora 又表明四维 occupancy 已形成 benchmark、scene-flow 传播、动作条件预测和长时生成的多条路线。\n\n2026 年工作把边界进一步推向统一接口：CascadeOcc 与 SparseWorld 关注紧凑 occupancy/稀疏状态对未来和规划的作用，GeoUP 联合 metric depth、三维检测与占据，USR-Drive 联合 Gaussian 表面和对象框，CAAD、GeoWAM 与 GeoWorldAD 把场景状态接到自车决策，VADv2使用向量化场景与概率规划。它们说明表示正在成为多个任务的共享接口，却也使“辅助任务带来的正则化”与“状态本身具有决策价值”更难区分。\n\n长期和实例状态也已有直接进展：PanoOcc 联合语义与实例 occupancy，LMPOcc 把跨遍历全局 occupancy map 作为长期先验，BeyondSight 解耦存在性与可观测性，CarlaOcc 提供高分辨率合成实例真值。现有工作已覆盖长期和实例状态的多个方面；本综述尚未发现同时覆盖现实传感器来源、状态年龄、free/unknown、跨长遮挡身份和固定规划器干预的统一协议。\n\n近期状态更新更关注历史证据何时有效。RoadOcc 在固定路侧坐标下区分 Persist、Transport 与 Refresh，说明纠正历史地址后还需要决定是否复用；SelectOccFlow 则按体素状态选择历史，再联合预测当前占据与场景流。前者的同类支持不保证实例身份，后者的流输出也不构成未来占据序列。两者把时间更新变成可拆开检验的机制，但尚未测量这些改进对车辆闭环规划的作用。\n\nEvoOcc 进一步把状态更新时间与传感器帧率分开：慢模型到达时建立高质量差分锚点，快模型到达时传播和校正当前状态。UFMF 则以雷达运动先验维持未来物体支撑，属于预测路线。与之并行，ConSSC 利用可见性和相似性聚合历史，HD²-SSC 分开处理图像升维与标签密度。这些工作把问题从“选哪种基元”推进到“状态如何从不完整、不同步的证据中演化”。",
       "referenceIds": [
         "proxy-4d-occupancy-2023",
         "occworld-2024",
@@ -61,7 +62,12 @@
         "evoocc-2026",
         "ufmf-2026",
         "conssc-2026",
-        "hd2ssc-2026"
+        "hd2ssc-2026",
+        "sscnet-2017",
+        "semantickitti-2019",
+        "lift-splat-shoot-2020",
+        "bevformer-2022",
+        "occ3d-2023"
       ]
     },
     {
@@ -69,7 +75,7 @@
       "kind": "taxonomy",
       "title": "体素、对象、向量与 Gaussian 的状态定义",
       "thesis": "比较表示形式时，还要检查它保留了哪些状态变量、如何更新、使用什么监督，以及验证了哪些用途。",
-      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线共享连续显式基元，但基元属性与聚合规则决定输出的含义。Wu/Yang 4DGS 的权重进入图像合成，GaussianFormer-2 将基元用于占据概率聚合，GaussianWorld 再通过历史与当前图像更新占据状态。USR-Drive 联合表面与对象去噪，GUIDE 则联合实例占据、检测和跟踪。渲染不透明度、occupied 概率、实例分数与对象存在概率应分别标注；只有额外定义射线自由空间、unknown、身份和更新不确定性，才能讨论这些量作为可校准场景状态的价值。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。\n\n按时间操作可以把方法分为预测、校正、持续存在和学习更新。UFMF 预测未来占据；EvoOcc 利用已经发生但晚到的预测校正当前状态；BeyondSight 延续暂时看不到的对象假设；可观测性约束的 LiDAR TTA 则决定哪些区域可以更新模型参数。后者使用射线终止与邻域支持调节 prompt，并更新时序类别原型，是监督更新的邻近机制，输出仍是闭集语义。将这些操作区分后，可以分别设计状态传播和参数适配，不必把所有时间信息塞进一个记忆模块。",
+      "body": "体素/occupancy 路线提供规则空间和明确坐标系，适合表达非规则障碍、自由空间与语义，却受分辨率、类别不平衡和标签生成影响。TPV 与 BEV 类平面表示以压缩换效率，但高度细节需要额外平面、查询或解码器恢复。对象和向量路线保留实例、拓扑与规划接口，VADv2、GeoUP 和 CAAD说明它们适合决策，却可能遗漏无框障碍与形状边界。\n\nGaussian 路线共享连续显式基元，但基元属性与聚合规则决定输出的含义。Wu/Yang 4DGS 的权重进入图像合成，GaussianFormer-2 将基元用于占据概率聚合，GaussianWorld 再通过历史与当前图像更新占据状态。USR-Drive 联合表面与对象去噪，GUIDE 则联合实例占据、检测和跟踪。渲染不透明度、occupied 概率、实例分数与对象存在概率应分别标注；只有额外定义射线自由空间、unknown、身份和更新不确定性，才能讨论这些量作为可校准场景状态的价值。\n\n混合表示能连接多个任务，但联合收益的来源更难分离。GeoWAM、GeoWorldAD、SparseWorld 与 CascadeOcc把几何、稀疏 token、未来或动作连接起来；RbFT-Net则说明多帧雷达锚点在进入后端前需要显式位置校正和可靠性。比较时可固定传感器、监督、参数和规划器，逐项移除状态变量，以区分状态结构与整套系统规模的影响。\n\n自适应粒度已有多条路线：OctreeOcc 用 octree query 表达多粒度，AdaOcc 在对象 ROI 中分配更高分辨率，MR-Occ 以层级 voxel 和 occluded 类联合效率与遮挡。PanoOcc、CarlaOcc 和 BeyondSight 又分别覆盖单帧 panoptic identity、合成实例级真值和遮挡后的 actor permanence。评价当前状态表示时，应纳入这些直接基线，再单独比较未来世界建模能力。\n\n按时间操作可以把方法分为预测、校正、持续存在和学习更新。UFMF 预测未来占据；EvoOcc 利用已经发生但晚到的预测校正当前状态；BeyondSight 延续暂时看不到的对象假设；可观测性约束的 LiDAR TTA 则决定哪些区域可以更新模型参数。后者使用射线终止与邻域支持调节 prompt，并更新时序类别原型，是监督更新的邻近机制，输出仍是闭集语义。将这些操作区分后，可以分别设计状态传播和参数适配，不必把所有时间信息塞进一个记忆模块。\n\n两份综述提供互补坐标：Roldão 等关注不完整输入怎样补成几何和语义，Xu 等关注不同传感器如何升维、融合与监督。相同的体素输出可能来自不同观测和标签；Occ3D 的可见性标记、SemanticKITTI 的扫描覆盖，以及模型对遮挡区域的推断需要分别记录。比较动态表示时，再增加时间更新和对象身份轴。",
       "referenceIds": [
         "tpvformer-2023",
         "scene-as-occupancy-2023",
@@ -95,7 +101,11 @@
         "native-4dgs-yang-2024",
         "ufmf-2026",
         "evoocc-2026",
-        "observability-tta-2026"
+        "observability-tta-2026",
+        "ssc-survey-2022",
+        "occupancy-survey-2025",
+        "occ3d-2023",
+        "semantickitti-2019"
       ]
     },
     {
@@ -1055,6 +1065,126 @@
       "supports": "由射线终止和邻域支持计算局部可观测性，调节冻结 FRNet 骨干的 prompt 残差，并用可靠区域更新时序类别原型。",
       "limitation": "方法任务是闭集 LiDAR 语义测试时适配；几何支持权重不是异常标签，稀疏未知物体会不会被抑制需在开放集协议下另测。",
       "url": "https://arxiv.org/abs/2606.30937"
+    },
+    {
+      "id": "ssc-survey-2022",
+      "title": "3D Semantic Scene Completion: A Survey",
+      "authors": "Luis Roldão, Raoul de Charette, Anne Verroust-Blondet",
+      "year": 2022,
+      "venue": "International Journal of Computer Vision",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/s11263-021-01504-5",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "从稀疏输入补全几何与语义的问题出发，比较室内外数据、表示、输入编码、网络设计和监督。",
+      "limitation": "覆盖早期SSC文献；未覆盖2023以后环视占据、未来生成和世界模型。",
+      "url": "https://link.springer.com/article/10.1007/s11263-021-01504-5",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2103.07466"
+        }
+      ]
+    },
+    {
+      "id": "sscnet-2017",
+      "title": "Semantic Scene Completion from a Single Depth Image",
+      "authors": "Shuran Song, Fisher Yu, Andy Zeng, Angel X. Chang, Manolis Savva, Thomas Funkhouser",
+      "year": 2017,
+      "venue": "CVPR 2017",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/CVPR.2017.28",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "SSCNet从单张深度图联合预测视锥内体素占据和语义，以3D上下文学习推断未观测区域。",
+      "limitation": "核心实验是室内场景补全，不是动态道路预测；推断被遮挡几何与已观测表面分割应分开。",
+      "url": "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1611.08974"
+        }
+      ]
+    },
+    {
+      "id": "semantickitti-2019",
+      "title": "SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences",
+      "authors": "Jens Behley, Martin Garbade, Andres Milioto, Jan Quenzel, Sven Behnke, Cyrill Stachniss, Jürgen Gall",
+      "year": 2019,
+      "venue": "ICCV 2019",
+      "publicationType": "dataset",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/ICCV.2019.00939",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "为真实道路LiDAR序列提供逐点语义，并建立单帧、多帧分割与语义场景补全基准。",
+      "limitation": "几何真值受扫描可见性和重建覆盖限制；它不等同于完整动态世界真值或异常专用评测。",
+      "url": "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/1904.01416"
+        }
+      ]
+    },
+    {
+      "id": "lift-splat-shoot-2020",
+      "title": "Lift, Splat, Shoot: Encoding Images from Arbitrary Camera Rigs by Implicitly Unprojecting to 3D",
+      "authors": "Jonah Philion, Sanja Fidler",
+      "year": 2020,
+      "venue": "ECCV 2020",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/978-3-030-58568-6_12",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "把相机特征按预测深度分布提升为视锥，再汇聚到统一BEV网格，提供显式几何升维与多相机融合路径。",
+      "limitation": "主要输出是BEV语义/代价图；不能把它直接称为三维语义占据或动态未来体素预测。",
+      "url": "https://link.springer.com/chapter/10.1007/978-3-030-58568-6_12",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2008.05711"
+        }
+      ]
+    },
+    {
+      "id": "bevformer-2022",
+      "title": "BEVFormer: Learning Bird’s-Eye-View Representation from Multi-Camera Images via Spatiotemporal Transformers",
+      "authors": "Zhiqi Li, Wenhai Wang, Hongyang Li, Enze Xie, Chonghao Sima, Tong Lu, Yu Qiao, Jifeng Dai",
+      "year": 2022,
+      "venue": "ECCV 2022",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1007/978-3-031-20077-9_1",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "用BEV查询从多相机提取空间特征，再通过时间自注意力融合历史状态，是时空BEV表示的基础。",
+      "limitation": "原始任务是三维检测与地图分割；BEV时间融合本身不产生完整三维占据或未来状态。",
+      "url": "https://link.springer.com/chapter/10.1007/978-3-031-20077-9_1",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2203.17270"
+        }
+      ]
+    },
+    {
+      "id": "occ3d-2023",
+      "title": "Occ3D: A Large-Scale 3D Occupancy Prediction Benchmark for Autonomous Driving",
+      "authors": "Xiaoyu Tian, Tao Jiang, Longfei Yun, Yucheng Mao, Huitong Yang, Yue Wang, Yilun Wang, Hang Zhao",
+      "year": 2023,
+      "venue": "NeurIPS 2023 Datasets and Benchmarks",
+      "publicationType": "dataset",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.52202/075280-2809",
+      "sourceFamily": "publisher-and-venue",
+      "supports": "通过体素稠密化、遮挡推理和图像引导细化建立可见性感知的占据标签，并提供nuScenes与Waymo基准。",
+      "limitation": "离线标签由多源观测与处理生成；方法比较必须保持可见性掩码、范围和类别协议一致，不是未来预测真值。",
+      "url": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/cabfaeecaae7d6540ee797a66f0130b0-Abstract-Datasets_and_Benchmarks.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2304.14365"
+        }
+      ]
     }
   ],
   "searchAudit": {
@@ -1073,7 +1203,8 @@
       "publication-status-primary-source",
       "formal-arxiv-link-retention",
       "physical-evidence-boundary",
-      "independent-review-current-snapshot"
+      "independent-review-current-snapshot",
+      "foundations-and-survey-coverage"
     ],
     "searchedAt": "2026-11-06",
     "cutoffDate": "2026-11-06",
@@ -1083,7 +1214,8 @@
       "对象、向量、Gaussian 与体素统一表示",
       "多模态监督、可见性与未知状态",
       "地图、定位与长期场景身份",
-      "规划效用、校准与部署验证"
+      "规划效用、校准与部署验证",
+      "经典工作、综述分类与引文追溯"
     ],
     "sourceFamilies": [
       "local-corpus",
@@ -2503,6 +2635,182 @@
             "screeningEvidence": "docs/research-updates/2026-10-18/dynamic-screening.json"
           }
         }
+      },
+      {
+        "family": "经典工作、综述分类与引文追溯",
+        "sourceFamily": "publisher-and-venue",
+        "query": "综述分类与引文追溯：A Survey on Occupancy Perception for Autonomous Driving: The Information Fusion Perspective；3D Semantic Scene Completion: A Survey；按引用定位打开原论文并核对身份与方法。",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "围绕缺失的方法源头、关键转折和综述分类进行定向追溯。该族统计进入父流程范围判定的候选；API和Web宽泛返回只记录为发现，不作为本族已读或纳入数。原有语义族及本库rg审计保留。",
+        "resultCount": 7,
+        "resultIdSample": [
+          "doi:10.1007/978-3-030-58568-6_12",
+          "doi:10.1007/978-3-031-20077-9_1",
+          "doi:10.1007/s11263-021-01504-5",
+          "doi:10.1016/j.inffus.2024.102671",
+          "doi:10.1109/cvpr.2017.28",
+          "doi:10.1109/iccv.2019.00939",
+          "doi:10.52202/075280-2809"
+        ],
+        "retrieval": {
+          "provider": "primary-survey-reference-tracing-with-targeted-source-verification",
+          "endpoint": "https://doi.org/10.1016/j.inffus.2024.102671",
+          "parameters": {
+            "query": "综述分类与引文追溯：A Survey on Occupancy Perception for Autonomous Driving: The Information Fusion Perspective；3D Semantic Scene Completion: A Survey；按引用定位打开原论文并核对身份与方法。",
+            "surveyUrls": [
+              "https://doi.org/10.1016/j.inffus.2024.102671",
+              "https://link.springer.com/article/10.1007/s11263-021-01504-5"
+            ],
+            "primaryUrls": [
+              "https://link.springer.com/article/10.1007/s11263-021-01504-5",
+              "https://doi.org/10.1016/j.inffus.2024.102671",
+              "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+              "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+              "https://link.springer.com/chapter/10.1007/978-3-030-58568-6_12",
+              "https://link.springer.com/chapter/10.1007/978-3-031-20077-9_1",
+              "https://proceedings.neurips.cc/paper_files/paper/2023/hash/cabfaeecaae7d6540ee797a66f0130b0-Abstract-Datasets_and_Benchmarks.html"
+            ],
+            "discoveryQueriesArtifact": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json"
+          },
+          "sort": "survey branch and citation order; parent scope screening",
+          "limit": 7,
+          "limitMeaning": "Frozen scoped candidate inventory; exact search engine/API caps and raw hits are retained in the evidence packet, not replaced by this inventory size.",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "evidencePacketSha256": "b9228965a57293ad17682ef16bef0c09bc713448f4a5644c5d39f1dee5824a08",
+          "entries": [
+            {
+              "canonicalId": "doi:10.1007/s11263-021-01504-5",
+              "referenceId": "ssc-survey-2022",
+              "reason": "现代占据综述引用其作为室内外场景补全基础。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1007/s11263-021-01504-5",
+                "tracedFromSurvey": [
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "Introduction/related surveys [22]",
+                    "why": "现代占据综述引用其作为室内外场景补全基础。"
+                  }
+                ],
+                "readingDepth": "Primary arXiv PDF §§2–4, Table1/Table2 and references [6],[137] read; Springer publisher metadata reopened"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1016/j.inffus.2024.102671",
+              "referenceId": "occupancy-survey-2025",
+              "reason": "补足综述分类和阅读入口：从输入模态、融合位置、监督和评测系统整理自动驾驶三维 occupancy 方法。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1016/j.inffus.2024.102671",
+                "tracedFromSurvey": [],
+                "readingDepth": "Primary HTML §§2.1–2.3,3.1–3.3,4.1, references and Table1 read; formal metadata already maintained in baseline"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/cvpr.2017.28",
+              "referenceId": "sscnet-2017",
+              "reason": "表格从SSCNet2017开始梳理联合SSC网络。；回顾SSC问题源头。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1109/CVPR.2017.28",
+                "tracedFromSurvey": [
+                  {
+                    "id": "ssc-survey-2022",
+                    "url": "https://arxiv.org/pdf/2103.07466",
+                    "section": "Table2 / reference [137]",
+                    "why": "表格从SSCNet2017开始梳理联合SSC网络。"
+                  },
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "§2.3.2 / reference [24]",
+                    "why": "回顾SSC问题源头。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/iccv.2019.00939",
+              "referenceId": "semantickitti-2019",
+              "reason": "室外SSC基准。；说明室内SSC转向道路SSC的数据基础。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1109/ICCV.2019.00939",
+                "tracedFromSurvey": [
+                  {
+                    "id": "ssc-survey-2022",
+                    "url": "https://arxiv.org/pdf/2103.07466",
+                    "section": "§3.1 datasets / reference [6]",
+                    "why": "室外SSC基准。"
+                  },
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "§2.3.2 / reference [59]",
+                    "why": "说明室内SSC转向道路SSC的数据基础。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1007/978-3-030-58568-6_12",
+              "referenceId": "lift-splat-shoot-2020",
+              "reason": "2D-to-3D前向投影的关键来源。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1007/978-3-030-58568-6_12",
+                "tracedFromSurvey": [
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "§3.2.2 / reference [111]",
+                    "why": "2D-to-3D前向投影的关键来源。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1007/978-3-031-20077-9_1",
+              "referenceId": "bevformer-2022",
+              "reason": "BEV和占据反向投影/查询路线的背景。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.1007/978-3-031-20077-9_1",
+                "tracedFromSurvey": [
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "§2.3.1,§3.2.2 / reference [43]",
+                    "why": "BEV和占据反向投影/查询路线的背景。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            },
+            {
+              "canonicalId": "doi:10.52202/075280-2809",
+              "referenceId": "occ3d-2023",
+              "reason": "现代环视occupancy标签与评测基准。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+                "candidateKey": "doi:10.52202/075280-2809",
+                "tracedFromSurvey": [
+                  {
+                    "id": "occupancy-survey-2025",
+                    "url": "https://arxiv.org/html/2405.05173v2",
+                    "section": "§4.1.1 / reference [35]",
+                    "why": "现代环视occupancy标签与评测基准。"
+                  }
+                ],
+                "readingDepth": "Primary paper abstract and targeted method/scope sections; no reproduction"
+              }
+            }
+          ]
+        }
       }
     ],
     "sourceAttempts": [
@@ -2515,7 +2823,23 @@
         "limit": 200,
         "acceptedCount": 15,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "local-corpus",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "dynamic-scene-representation|dynamic scene representation|semantic occupancy|3D occupancy|4D occupancy|occupancy flow|unified scene representation|scene representation|vectorized scene|Gaussian occupancy|scene memory|free space|unknown space|object occupancy",
+          "endpoint": "content/papers",
+          "limit": 200,
+          "acceptedCount": 15,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       },
       {
         "sourceFamily": "arxiv",
@@ -2534,7 +2858,31 @@
           8,
           8
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "autonomous driving semantic occupancy completion",
+          "endpoint": "https://export.arxiv.org/api/query?search_query=all%3A%22autonomous+driving+semantic+occupancy+completion%22&start=0&max_results=8&sortBy=submittedDate&sortOrder=descending",
+          "limit": 8,
+          "acceptedCount": 11,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "queryLimits": [
+            8,
+            8,
+            8,
+            8,
+            8,
+            8
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -2543,9 +2891,25 @@
         "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
         "endpoint": "https://doi.org/10.1109/CVPR52688.2022.00396",
         "limit": 15,
-        "acceptedCount": 15,
+        "acceptedCount": 21,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+          "endpoint": "https://doi.org/10.1109/CVPR52688.2022.00396",
+          "limit": 15,
+          "acceptedCount": 15,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       },
       {
         "sourceFamily": "semantic-scholar",
@@ -2559,7 +2923,26 @@
         "queryLimits": [
           10
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-11-06",
+          "query": "autonomous driving semantic occupancy completion",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search?query=autonomous+driving+semantic+occupancy+completion&limit=10&fields=title%2Cyear%2CexternalIds%2Curl%2Cabstract",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "queryLimits": [
+            10
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       },
       {
         "sourceFamily": "openalex",
@@ -2573,7 +2956,26 @@
         "queryLimits": [
           10
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "autonomous driving semantic occupancy completion",
+          "endpoint": "https://api.openalex.org/works?search=autonomous+driving+semantic+occupancy+completion&per-page=10&sort=relevance_score%3Adesc&filter=from_publication_date%3A2024-01-01%2Cto_publication_date%3A2026-11-06",
+          "limit": 10,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "queryLimits": [
+            10
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -2584,7 +2986,23 @@
         "limit": 2,
         "acceptedCount": 2,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
+          "endpoint": "https://doi.org/10.1109/CVPR52734.2025.01118",
+          "limit": 2,
+          "acceptedCount": 2,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json"
+        }
       }
     ],
     "deduplicationKeys": [
@@ -2636,7 +3054,13 @@
       "arxiv:2610.40947",
       "cvf:cvpr2026:xue-conssc",
       "doi:10.1609/aaai.v40i14.38169",
-      "arxiv:2606.30937"
+      "arxiv:2606.30937",
+      "doi:10.1007/s11263-021-01504-5",
+      "doi:10.1109/CVPR.2017.28",
+      "doi:10.1109/ICCV.2019.00939",
+      "doi:10.1007/978-3-030-58568-6_12",
+      "doi:10.1007/978-3-031-20077-9_1",
+      "doi:10.52202/075280-2809"
     ],
     "exclusionCriteria": [
       "没有自动驾驶三维/四维状态终点，仅为通用控制、融合或综述的候选不纳入核心表。",
@@ -3460,6 +3884,22 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1007/978-3-030-58568-6_12",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1007/978-3-031-20077-9_1",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1007/978-3-031-72624-8_4",
         "queryFamilies": [
           "规划效用、校准与部署验证"
@@ -3468,12 +3908,21 @@
         "occurrences": 1
       },
       {
-        "canonicalId": "doi:10.1016/j.inffus.2024.102671",
+        "canonicalId": "doi:10.1007/s11263-021-01504-5",
         "queryFamilies": [
-          "多模态监督、可见性与未知状态"
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1016/j.inffus.2024.102671",
+        "queryFamilies": [
+          "多模态监督、可见性与未知状态",
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 2
       },
       {
         "canonicalId": "doi:10.1016/j.knosys.2026.116032",
@@ -3497,6 +3946,14 @@
           "规划效用、校准与部署验证"
         ],
         "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr.2017.28",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
@@ -3570,6 +4027,14 @@
         "canonicalId": "doi:10.1109/cvpr52734.2025.02559",
         "queryFamilies": [
           "对象、向量、Gaussian 与体素统一表示"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv.2019.00939",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
         "occurrences": 1
@@ -3658,6 +4123,14 @@
           "对象、向量、Gaussian 与体素统一表示"
         ],
         "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.52202/075280-2809",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
@@ -3970,22 +4443,22 @@
       }
     ],
     "counts": {
-      "candidates": 143,
-      "deduplicated": 112,
-      "included": 43,
+      "candidates": 150,
+      "deduplicated": 118,
+      "included": 49,
       "excluded": 69
     },
     "independentReview": {
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 6,
+      "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；来源筛选修订已复核并绑定最终内容。未执行模型实验。",
-      "reviewerAgentId": "/root/review_centers_sensing",
-      "artifactPath": "docs/center-updates/2026-11-06/independent-review/sensing-round6.json",
-      "artifactSha256": "2a31dd320ac06e2f379c13aef991e79eb4e1043b3695fbe5df96bbfd562b8146",
-      "snapshotFingerprint": "6410d41b0243df8b67c91d41a3d12beee267c6575099be9f0b34697352b2dc5a",
+      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
+      "reviewerAgentId": "/root/foundations_review_sensing",
+      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/sensing-round1.json",
+      "artifactSha256": "d9fd7aac53d942a0a63becae4f34ab4d28fe59146a2d4efbad13b06ab4079b53",
+      "snapshotFingerprint": "2b997228a3b10623aa676912ebbf41f8880914291530961f0ed64b229d4d5cec",
       "assurance": "same-family provisional"
     },
     "refreshEvidencePath": "docs/research-updates/2026-10-18/dynamic-verification.json",
@@ -4102,6 +4575,211 @@
       "retrieval": "docs/center-updates/2026-11-06/retrieval/sensing/dynamic-scene-representation.json",
       "authoring": "docs/center-updates/2026-11-06/authoring/sensing/",
       "baselineCommit": "b3f99975a54cfe525db8ef943eba2d5a84a98ee0"
+    },
+    "foundationsAudit": {
+      "auditedAt": "2026-11-06",
+      "scope": "在当前已复核书目上，针对经典方法/数据来源与互补综述进行增量核查；不将经典文献数量当作覆盖充分的证明。",
+      "surveyAnchors": [
+        {
+          "referenceId": "ssc-survey-2022",
+          "sectionsRead": [
+            "2 Problem statement",
+            "3 Datasets and representations",
+            "4 Methods and Table2",
+            "references6and137"
+          ],
+          "coverageCutoff": "2022formalpublication; downloaded arXiv contains methods through2021, no explicit systematic cutoff found",
+          "use": "补全问题定义、室内外转移、表示和监督来源。",
+          "role": "established"
+        },
+        {
+          "referenceId": "occupancy-survey-2025",
+          "sectionsRead": [
+            "2.1–2.3",
+            "3.1–3.3",
+            "4.1",
+            "Tables1and2",
+            "references24,35,43,59,111"
+          ],
+          "coverageCutoff": "Read arXivv2 dated2024-05-18 alongside2025formalrecord; not a2026frontierinventory",
+          "use": "用输入模态与融合轴核对现有taxonomy，并补升维和benchmark源头。",
+          "role": "frontier"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "sscnet-2017",
+          "branch": "几何—语义联合补全",
+          "role": "问题与方法源头",
+          "reason": "联合预测占据与类别，连接可见表面和遮挡区域。"
+        },
+        {
+          "referenceId": "semantickitti-2019",
+          "branch": "道路SSC数据",
+          "role": "基准里程碑",
+          "reason": "将语义场景补全与多帧分割推进到真实道路。"
+        },
+        {
+          "referenceId": "lift-splat-shoot-2020",
+          "branch": "相机几何升维",
+          "role": "表示源头",
+          "reason": "显式视锥提升与统一BEV汇聚。"
+        },
+        {
+          "referenceId": "bevformer-2022",
+          "branch": "时间状态融合",
+          "role": "表示里程碑",
+          "reason": "跨相机查询与历史BEV递归融合。"
+        },
+        {
+          "referenceId": "occ3d-2023",
+          "branch": "占据标签与可见性",
+          "role": "基准里程碑",
+          "reason": "密集占据标签和可见性协议的重要出处。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "语义场景补全",
+          "status": "covered",
+          "rationale": "补入室内联合SSC与室外道路基准，明确补全和观测的区别。",
+          "foundationalReferenceIds": [
+            "sscnet-2017",
+            "semantickitti-2019"
+          ],
+          "surveyReferenceIds": [
+            "ssc-survey-2022",
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "相机升维与时空BEV",
+          "status": "covered",
+          "rationale": "显式视锥投影与查询式时空融合两条关键路线都有原始来源。",
+          "foundationalReferenceIds": [
+            "lift-splat-shoot-2020",
+            "bevformer-2022"
+          ],
+          "surveyReferenceIds": [
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "标签生成、遮挡与评价",
+          "status": "covered",
+          "rationale": "Occ3D和SemanticKITTI分别说明密集标签与道路扫描覆盖条件。",
+          "foundationalReferenceIds": [
+            "occ3d-2023",
+            "semantickitti-2019"
+          ],
+          "surveyReferenceIds": [
+            "ssc-survey-2022",
+            "occupancy-survey-2025"
+          ]
+        },
+        {
+          "branch": "2025—2026流式占据与世界模型",
+          "status": "bounded",
+          "rationale": "本轮用于分类的综述主要覆盖经典SSC和截至2024年的信息融合；2026补查候选尚未完成足够原文核对。现有2025—2026进展由已核验原论文支撑。",
+          "foundationalReferenceIds": [
+            "proxy-4d-occupancy-2023",
+            "cam4docc-2024"
+          ],
+          "surveyReferenceIds": [
+            "occupancy-survey-2025"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "Introduction/related surveys [22]",
+          "candidateCanonicalId": "doi:10.1007/s11263-021-01504-5",
+          "primaryUrl": "https://link.springer.com/article/10.1007/s11263-021-01504-5",
+          "disposition": "included",
+          "reason": "现代占据综述引用其作为室内外场景补全基础。"
+        },
+        {
+          "surveyReferenceId": "ssc-survey-2022",
+          "sourceLocator": "Table2 / reference [137]",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2017.28",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+          "disposition": "included",
+          "reason": "表格从SSCNet2017开始梳理联合SSC网络。；回顾SSC问题源头。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.2 / reference [24]",
+          "candidateCanonicalId": "doi:10.1109/CVPR.2017.28",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2017/html/Song_Semantic_Scene_Completion_CVPR_2017_paper.html",
+          "disposition": "included",
+          "reason": "表格从SSCNet2017开始梳理联合SSC网络。；回顾SSC问题源头。"
+        },
+        {
+          "surveyReferenceId": "ssc-survey-2022",
+          "sourceLocator": "§3.1 datasets / reference [6]",
+          "candidateCanonicalId": "doi:10.1109/ICCV.2019.00939",
+          "primaryUrl": "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+          "disposition": "included",
+          "reason": "室外SSC基准。；说明室内SSC转向道路SSC的数据基础。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.2 / reference [59]",
+          "candidateCanonicalId": "doi:10.1109/ICCV.2019.00939",
+          "primaryUrl": "https://openaccess.thecvf.com/content_ICCV_2019/html/Behley_SemanticKITTI_A_Dataset_for_Semantic_Scene_Understanding_of_LiDAR_Sequences_ICCV_2019_paper.html",
+          "disposition": "included",
+          "reason": "室外SSC基准。；说明室内SSC转向道路SSC的数据基础。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§3.2.2 / reference [111]",
+          "candidateCanonicalId": "doi:10.1007/978-3-030-58568-6_12",
+          "primaryUrl": "https://link.springer.com/chapter/10.1007/978-3-030-58568-6_12",
+          "disposition": "included",
+          "reason": "2D-to-3D前向投影的关键来源。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§2.3.1,§3.2.2 / reference [43]",
+          "candidateCanonicalId": "doi:10.1007/978-3-031-20077-9_1",
+          "primaryUrl": "https://link.springer.com/chapter/10.1007/978-3-031-20077-9_1",
+          "disposition": "included",
+          "reason": "BEV和占据反向投影/查询路线的背景。"
+        },
+        {
+          "surveyReferenceId": "occupancy-survey-2025",
+          "sourceLocator": "§4.1.1 / reference [35]",
+          "candidateCanonicalId": "doi:10.52202/075280-2809",
+          "primaryUrl": "https://proceedings.neurips.cc/paper_files/paper/2023/hash/cabfaeecaae7d6540ee797a66f0130b0-Abstract-Datasets_and_Benchmarks.html",
+          "disposition": "included",
+          "reason": "现代环视occupancy标签与评测基准。"
+        }
+      ],
+      "limitations": [
+        "这是围绕现有研究问题的代表性脉络检查，不声称穷尽全部经典论文。",
+        "综述用于分类、术语和向后追溯；具体方法与结果以已打开的原论文为依据。",
+        "记录的阅读版本与期刊年份分别保留，最新论文仍需直接检索；未运行模型实验。"
+      ],
+      "surveyGap": {
+        "reason": "本轮用于分类的近期信息融合综述主要覆盖至2024年的文献。补查发现2026综述候选，但正式页受限且尚未完成足够的原文核对，因此不据其新增论断；这不表示2026综述不存在。",
+        "queries": [
+          "3D semantic scene completion survey occupancy prediction autonomous driving survey 2024 2025",
+          "A Survey on Occupancy Perception for Autonomous Driving authors arxiv"
+        ],
+        "primaryUrls": [
+          "https://arxiv.org/html/2405.05173v2",
+          "https://link.springer.com/article/10.1007/s11263-021-01504-5"
+        ],
+        "supplementalQueryArtifact": "docs/review-foundations/2026-11-06/retrieval/parent/web-query-log.json"
+      }
+    },
+    "foundationRefresh": {
+      "date": "2026-11-06",
+      "baseCommit": "9df6e450e5cd40cbaec96462a07fdbbd10c18965",
+      "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/sensing/evidence.json",
+      "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
+      "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
   }
 }

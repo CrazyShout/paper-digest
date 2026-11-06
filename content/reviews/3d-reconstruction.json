@@ -20,14 +20,16 @@
       "kind": "scope",
       "title": "重建资产支持什么用途",
       "thesis": "先确定资产输出和使用范围，再选择表示与评测。",
-      "body": "NeRF 用连续辐射场和体渲染从已标定图像恢复场景，3DGS 则通过显式各向异性高斯和可微栅格化提高渲染效率。加入时间后，模型还要说明同一基元怎样运动、什么时候有效，以及外观为何改变。“4D Gaussian”既可能指带时间条件的 3D 基元，也可能指真正的 xyz-t 联合高斯；二者的参数、约束和可操作接口不同。\n\n驾驶资产可按用途逐层检查：日志附近的视觉重放；改变相机、LiDAR 或雷达位姿后的传感器渲染；编辑参与者和环境后的反事实场景；由被测系统动作驱动的闭环测试。UniSim 展示了从驾驶日志到可编辑多传感器模拟器的路径。每增加一层用途，都要补查此前的图像损失没有约束的部分，例如未见表面、扫描时序、交互响应和碰撞结局。\n\n本综述纳入通用动态高斯作为机制基础，不把其室内或合成视频结果直接当成驾驶证据。重建一段已观察运动、在两帧之间插值，以及预测新动作下的未来，是不同任务；是否能成为世界模型取决于输入、状态转移与评测，而不是名称中是否含有“4D”或“World”。",
+      "body": "NeRF 用连续辐射场和体渲染从已标定图像恢复场景，3DGS 则通过显式各向异性高斯和可微栅格化提高渲染效率。加入时间后，模型还要说明同一基元怎样运动、什么时候有效，以及外观为何改变。“4D Gaussian”既可能指带时间条件的 3D 基元，也可能指真正的 xyz-t 联合高斯；二者的参数、约束和可操作接口不同。\n\n驾驶资产可按用途逐层检查：日志附近的视觉重放；改变相机、LiDAR 或雷达位姿后的传感器渲染；编辑参与者和环境后的反事实场景；由被测系统动作驱动的闭环测试。UniSim 展示了从驾驶日志到可编辑多传感器模拟器的路径。每增加一层用途，都要补查此前的图像损失没有约束的部分，例如未见表面、扫描时序、交互响应和碰撞结局。\n\n本综述纳入通用动态高斯作为机制基础，不把其室内或合成视频结果直接当成驾驶证据。重建一段已观察运动、在两帧之间插值，以及预测新动作下的未来，是不同任务；是否能成为世界模型取决于输入、状态转移与评测，而不是名称中是否含有“4D”或“World”。\n\n### 综述阅读路径\n\n先读 [Advances in Neural Rendering](https://doi.org/10.1111/cgf.14507) 的动态场景部分，理解直接时间条件、规范空间形变及其监督方式；它覆盖的是 2022 年前后的神经渲染，还没有后来的高斯表示。再读 [Reconstructing the Dynamic World](https://arxiv.org/abs/2609.39960) 的历史演变、4D NeRF 与 4DGS 分类和评测部分。其 2026 年 10 月版本主要围绕逐场景优化，适合比较时间表示与重建目标，前馈方法和驾驶闭环需要结合后文的专门工作。\n\n阅读顺序可以沿“位姿与几何—规范形变—显式时空基元—驾驶资产”展开。综述给出术语和分类，每一步的输入条件、约束与能力仍回到代表论文核对。",
       "referenceIds": [
         "nerf-2020",
         "gaussian-splatting-2023",
         "driving-3dgs-review-2025",
         "4dgs-wu-2024",
         "native-4dgs-yang-2024",
-        "unisim-2023"
+        "unisim-2023",
+        "neural-rendering-survey-2022",
+        "representation-centric-4d-survey-2026"
       ]
     },
     {
@@ -35,7 +37,7 @@
       "kind": "evolution",
       "title": "从持久动态基元到前馈资产构建",
       "thesis": "时间表示、驾驶场景组织和构建速度沿着不同轴发展。",
-      "body": "Dynamic 3D Gaussians 先固定基元颜色、尺寸和不透明度，再逐帧优化位置与旋转，用局部刚性等约束维持对应。随后两篇同名近似的 4DGS 采用了不同设计：Wu 等人的 CVPR 2024 工作由规范空间高斯和形变网络生成各时刻状态；Yang 等人的 ICLR 2024 工作直接拟合四维联合高斯。Spacetime Gaussians 则显式参数化时间不透明度、运动和旋转，并用神经特征表示外观。它们分别提供追踪、形变、联合时空表示与时间支持的参照，不能合并为一个方法。\n\n驾驶场景还有对象组织这一层。Neural Scene Graphs 用背景、对象和跟踪变换实现可重排场景；DrivingGaussian 与 Street Gaussians 将对象结构接入显式高斯；OmniRe 扩展到车辆、行人和骑行者。DeSiRe-GS 通过运动先验和几何约束减少对外部三维框的依赖。对象场景图可与不同时间表示组合，主要解决“哪些基元属于谁、怎样一起编辑”，而不是替代时间建模。\n\n前馈化在 2025 年的 DrivingForward 与 STORM 中已经出现：前者联合预测位姿、深度和高斯，后者利用速度和跨帧聚合恢复动态场景。DGGT 进一步把相机参数作为输出，Instant NuRec 构建分层驾驶资产并检查有限策略集合的闭环排序。2026 年 10 月的 Drive2Gauss 用联合生成的 RGB、深度和流构建稀疏高斯查询；SplatFlux 从视频潜变量直接解码，聚合静态基元并插值动态运动。前者的关键是多模态生成与几何对应，后者的关键是统一潜变量解码与动静分解；二者共享前馈目标，输入和证据并不相同。\n\n另一条进展是把时间一致性和系统更新作为直接对象。Multi4D 让静态结构、持久动态几何与瞬态外观竞争解释残差，避免用一种基元承担所有变化；PersistGS 则通过对象碰撞网格和可微刚体仿真，在完全遮挡期间继续推进位姿。Geometry-Aware Online Mapping 将初始化和增密改到在线有限预算的建图线程，DGOMapping 进一步处理异步多主体的评分交换与记忆调整。这些工作说明，继续研究高斯生命周期有明确基础，新的方案需要在观测关联、更新决策或跨主体一致性上给出机制差分。",
+      "body": "更早的几何基础是从多幅图像估计相机位姿与稀疏结构。COLMAP 对增量式 SfM 的稳健性、完整性和扩展性作了系统改进；NeRF 随后以已知位姿下的图像重建学习连续辐射场。这里的位姿与场景一致性问题并未随表示改变而消失，静态几何初始化也不自动解释动态目标。\n\n从静态 NeRF 到动态场景的关键一步发生在高斯方法之前。D-NeRF 把时间变化写成规范场与形变映射；Nerfies 在真实手机视频中进一步用粗到细优化和弹性正则稳定形变。两者给出了“保持一个规范表示，再解释各时刻观测”的早期路线。D-NeRF 的物体级动态场景、Nerfies 的近距离可变形对象与驾驶街景的尺度、遮挡和参与者结构不同，后续驾驶方法还要解决这些条件变化。\n\nDynamic 3D Gaussians 先固定基元颜色、尺寸和不透明度，再逐帧优化位置与旋转，用局部刚性等约束维持对应。随后两篇同名近似的 4DGS 采用了不同设计：Wu 等人的 CVPR 2024 工作由规范空间高斯和形变网络生成各时刻状态；Yang 等人的 ICLR 2024 工作直接拟合四维联合高斯。Spacetime Gaussians 则显式参数化时间不透明度、运动和旋转，并用神经特征表示外观。它们分别提供追踪、形变、联合时空表示与时间支持的参照，不能合并为一个方法。\n\n驾驶场景还有对象组织这一层。Neural Scene Graphs 用背景、对象和跟踪变换实现可重排场景；DrivingGaussian 与 Street Gaussians 将对象结构接入显式高斯；OmniRe 扩展到车辆、行人和骑行者。DeSiRe-GS 通过运动先验和几何约束减少对外部三维框的依赖。对象场景图可与不同时间表示组合，主要解决“哪些基元属于谁、怎样一起编辑”，而不是替代时间建模。\n\n前馈化在 2025 年的 DrivingForward 与 STORM 中已经出现：前者联合预测位姿、深度和高斯，后者利用速度和跨帧聚合恢复动态场景。DGGT 进一步把相机参数作为输出，Instant NuRec 构建分层驾驶资产并检查有限策略集合的闭环排序。2026 年 10 月的 Drive2Gauss 用联合生成的 RGB、深度和流构建稀疏高斯查询；SplatFlux 从视频潜变量直接解码，聚合静态基元并插值动态运动。前者的关键是多模态生成与几何对应，后者的关键是统一潜变量解码与动静分解；二者共享前馈目标，输入和证据并不相同。\n\n另一条进展是把时间一致性和系统更新作为直接对象。Multi4D 让静态结构、持久动态几何与瞬态外观竞争解释残差，避免用一种基元承担所有变化；PersistGS 则通过对象碰撞网格和可微刚体仿真，在完全遮挡期间继续推进位姿。Geometry-Aware Online Mapping 将初始化和增密改到在线有限预算的建图线程，DGOMapping 进一步处理异步多主体的评分交换与记忆调整。这些工作说明，继续研究高斯生命周期有明确基础，新的方案需要在观测关联、更新决策或跨主体一致性上给出机制差分。",
       "referenceIds": [
         "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
@@ -56,7 +58,12 @@
         "persistgs-2026",
         "geometry-aware-online-gs-2026",
         "dgomapping-2026",
-        "representation-centric-4d-survey-2026"
+        "representation-centric-4d-survey-2026",
+        "colmap-sfm-2016",
+        "nerf-2020",
+        "d-nerf-2021",
+        "nerfies-2021",
+        "neural-rendering-survey-2022"
       ]
     },
     {
@@ -64,7 +71,7 @@
       "kind": "taxonomy",
       "title": "高斯的时间变量到底控制什么",
       "thesis": "把时间机制与优化方式、传感器模型和资产组织分开比较。",
-      "body": "| 时间机制 | 代表工作 | 变化量与约束 | 需要单独检查的能力 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 位置与旋转逐帧变化，颜色、尺寸和不透明度固定；局部运动约束保持对应 | 新出现内容、长期遮挡与身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型 MLP 预测位置、旋转和尺度变化 | 形变的几何合理性、快速运动和轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | 联合建模 xyz-t 均值与协方差，在目标时刻条件化后渲染 | 时间支持、空间与时间耦合及不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、显式运动和旋转、随视角及时间变化的特征 | 短暂内容与复杂运动的拟合范围 |\n\n原生四维高斯可以直观写成 $G(x,t)=G(t)G(x\\mid t)$：$G(t)$ 控制该时刻的贡献，$G(x\\mid t)$ 给出用于投影的三维分布。它与“用网络预测一个 3D 高斯的位移”不是同一种参数化。这里的高斯权重服务于渲染；若要输出 occupied、free、unknown 或对象存在概率，还需要相应的状态定义、监督与校准。\n\n优化方式是另一条轴。逐场景优化可反复利用同一日志；前馈网络把统计先验放入训练阶段。Drive2Gauss 的前馈部分是高斯重建，前面的未来视频生成仍需单独计时。SplatFlux 虽一次生成可查询的场景，当前仍为离线方法。对象场景图则规定背景与参与者如何组合，并不由上述四类时间机制唯一决定。\n\n传感器模型同样不能省略。NeuRAD 建模滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接入高斯表示；RadarSplat 进一步处理雷达噪声和多径。Real2Sim 另接 MPM 求解器，使高斯资产能够执行碰撞模拟；这项物理能力来自新增的动力学和材料参数，不来自“4DGS”这个表示名称。\n\n时间机制之外，还应增加“更新接口”这一分类轴：离线整段优化、固定窗口前馈、在线关键帧更新和异步多主体合并。Multi4D 的三个集合各有优化及增密策略；其持久集合服务于对应，瞬态集合吸收外观残差。Geometry-Aware Online Mapping 用透明度保持与几何尺度初始化管理有限迭代；DGOMapping 用不确定性与评分管理外部更新。它们解决的对象不同，适合按每次更新的输入、状态改变和成本比较。Uni-Gaussians 的栅格化/ray-tracing 双渲染路径又表明，共享几何与共享成像模型是两件事。",
+      "body": "| 时间机制 | 代表工作 | 变化量与约束 | 需要单独检查的能力 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 位置与旋转逐帧变化，颜色、尺寸和不透明度固定；局部运动约束保持对应 | 新出现内容、长期遮挡与身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型 MLP 预测位置、旋转和尺度变化 | 形变的几何合理性、快速运动和轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | 联合建模 xyz-t 均值与协方差，在目标时刻条件化后渲染 | 时间支持、空间与时间耦合及不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、显式运动和旋转、随视角及时间变化的特征 | 短暂内容与复杂运动的拟合范围 |\n\n原生四维高斯可以直观写成 $G(x,t)=G(t)G(x\\mid t)$：$G(t)$ 控制该时刻的贡献，$G(x\\mid t)$ 给出用于投影的三维分布。它与“用网络预测一个 3D 高斯的位移”不是同一种参数化。这里的高斯权重服务于渲染；若要输出 occupied、free、unknown 或对象存在概率，还需要相应的状态定义、监督与校准。\n\n优化方式是另一条轴。逐场景优化可反复利用同一日志；前馈网络把统计先验放入训练阶段。Drive2Gauss 的前馈部分是高斯重建，前面的未来视频生成仍需单独计时。SplatFlux 虽一次生成可查询的场景，当前仍为离线方法。对象场景图则规定背景与参与者如何组合，并不由上述四类时间机制唯一决定。\n\n传感器模型同样不能省略。NeuRAD 建模滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接入高斯表示；RadarSplat 进一步处理雷达噪声和多径。Real2Sim 另接 MPM 求解器，使高斯资产能够执行碰撞模拟；这项物理能力来自新增的动力学和材料参数，不来自“4DGS”这个表示名称。\n\n时间机制之外，还应增加“更新接口”这一分类轴：离线整段优化、固定窗口前馈、在线关键帧更新和异步多主体合并。Multi4D 的三个集合各有优化及增密策略；其持久集合服务于对应，瞬态集合吸收外观残差。Geometry-Aware Online Mapping 用透明度保持与几何尺度初始化管理有限迭代；DGOMapping 用不确定性与评分管理外部更新。它们解决的对象不同，适合按每次更新的输入、状态改变和成本比较。Uni-Gaussians 的栅格化/ray-tracing 双渲染路径又表明，共享几何与共享成像模型是两件事。\n\n这张分类表沿用了早期动态神经渲染中的问题划分，但表示的改变仍然重要。D-NeRF 和 Nerfies 的规范场是隐式辐射场，Wu 4D-GS 的规范基元则是显式高斯；相同的“规范空间加形变”思想并不意味着它们具有相同优化成本、几何约束或编辑接口。比较方法时，应同时注明规范表示、形变参数、监督来源和所评估的场景类型。",
       "referenceIds": [
         "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
@@ -80,7 +87,10 @@
         "geometry-aware-online-gs-2026",
         "dgomapping-2026",
         "uni-gaussians-2025",
-        "gs-systems-survey-2026"
+        "gs-systems-survey-2026",
+        "d-nerf-2021",
+        "nerfies-2021",
+        "neural-rendering-survey-2022"
       ]
     },
     {
@@ -851,6 +861,84 @@
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13306729/"
         }
       ]
+    },
+    {
+      "id": "neural-rendering-survey-2022",
+      "title": "Advances in Neural Rendering",
+      "authors": "Ayush Tewari, Justus Thies, Ben Mildenhall, Pratul Srinivasan, Edgar Tretschk, Yifan Wang, Christoph Lassner, Vincent Sitzmann, Ricardo Martin-Brualla, Stephen Lombardi, Tomas Simon, Christian Theobalt, Matthias Nießner, Jonathan T. Barron, Gordon Wetzstein, Michael Zollhöfer, Vladislav Golyanik",
+      "year": 2022,
+      "venue": "Computer Graphics Forum / Eurographics 2022",
+      "publicationType": "survey",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1111/cgf.14507",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://doi.org/10.1111/cgf.14507",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2111.05849"
+        }
+      ],
+      "supports": "按场景表示、监督和可控参数整理神经渲染，并区分直接时间条件与规范空间形变。",
+      "limitation": "覆盖到2022年前后，不包含后来3DGS与驾驶专用多传感器高斯系统。"
+    },
+    {
+      "id": "colmap-sfm-2016",
+      "title": "Structure-from-Motion Revisited",
+      "authors": "Johannes L. Schönberger, Jan-Michael Frahm",
+      "year": 2016,
+      "venue": "CVPR 2016",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/cvpr.2016.445",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html",
+      "supports": "提出增量式SfM流程改进，并公开重建实现，为图像重建中的位姿与稀疏几何提供基础。",
+      "limitation": "这里的作用是几何前提和初始化；静态图像重建不直接解决动态目标、时相或接触关系。"
+    },
+    {
+      "id": "d-nerf-2021",
+      "title": "D-NeRF: Neural Radiance Fields for Dynamic Scenes",
+      "authors": "Albert Pumarola, Enric Corona, Gerard Pons-Moll, Francesc Moreno-Noguer",
+      "year": 2021,
+      "venue": "CVPR 2021",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/cvpr46437.2021.01018",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2011.13961"
+        }
+      ],
+      "supports": "在NeRF中加入时间条件，将规范场与时变形变分开学习，实现动态场景的时间和视角重采样。",
+      "limitation": "主要证据为物体级刚体、关节与非刚体合成场景；不直接提供驾驶多传感器或物理交互保证。"
+    },
+    {
+      "id": "nerfies-2021",
+      "title": "Nerfies: Deformable Neural Radiance Fields",
+      "authors": "Keunhong Park, Utkarsh Sinha, Jonathan T. Barron, Sofien Bouaziz, Dan B Goldman, Steven M. Seitz, Ricardo Martin-Brualla",
+      "year": 2021,
+      "venue": "ICCV 2021",
+      "publicationType": "method",
+      "publicationStatus": "peer-reviewed",
+      "canonicalId": "doi:10.1109/iccv48922.2021.00581",
+      "sourceFamily": "publisher-and-venue",
+      "url": "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html",
+      "links": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/abs/2011.12948"
+        },
+        {
+          "label": "项目页",
+          "url": "https://nerfies.github.io/"
+        }
+      ],
+      "supports": "把观测点映射到规范NeRF，利用粗到细优化和弹性正则约束形变，重建随手拍摄的非刚体场景。",
+      "limitation": "实验证据聚焦近距离可变形对象与自拍式场景；大范围动态街景、遮挡对象身份和物理交互仍需另外验证。"
     }
   ],
   "searchAudit": {
@@ -867,7 +955,8 @@
       "相机、LiDAR 与多传感器渲染",
       "前馈重建、压缩与实时渲染",
       "可编辑 Real2Sim 和场景生成",
-      "闭环仿真资产的物理与任务验证"
+      "闭环仿真资产的物理与任务验证",
+      "经典工作、综述分类与引文追溯"
     ],
     "sourceFamilies": [
       "openalex",
@@ -877,9 +966,9 @@
       "arxiv"
     ],
     "counts": {
-      "candidates": 119,
-      "deduplicated": 104,
-      "included": 38,
+      "candidates": 124,
+      "deduplicated": 108,
+      "included": 42,
       "excluded": 66
     },
     "evidenceBoundary": "本轮重新查询各主题并复核既有书目，再加入近期报告和站外近邻。查询候选数包含单列的既有书目种子和补检记录，不能解释为新发现论文数或全文阅读数；历史审计保留于更新前版本，实际阅读深度及修订见本轮逐引用记录。",
@@ -894,13 +983,13 @@
       "status": "passed",
       "completedAt": "2026-11-06",
       "reviewers": 1,
-      "rounds": 2,
+      "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "独立核对当前正文、一手证据、实验范围、检索候选及历史记录兼容；修订已复核并绑定最终内容。未执行模型实验。",
-      "reviewerAgentId": "/root/review_centers_embodied",
-      "artifactPath": "docs/center-updates/2026-11-06/independent-review/embodied-round2.json",
-      "artifactSha256": "570dbfa5c02aeb19b7f987c0a41769ad0201e8b67f46748fbb007e05d2f0c674",
-      "snapshotFingerprint": "b6e01d1a16015fc19823f7886bcd1a37044b4db6665560cc5f60f4aab246f7e5",
+      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
+      "reviewerAgentId": "/root/foundations_review_embodied",
+      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/embodied-round1.json",
+      "artifactSha256": "68db1a65f3fa8ca6f85c48f654731f0bb91c9c3472c2e77f6c730799c016c148",
+      "snapshotFingerprint": "0c7c50cb5e52fce3a73422178d36ac36638933882e5713b14f890da4d46fc2f6",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -1672,6 +1761,135 @@
             "limit": 20
           }
         }
+      },
+      {
+        "family": "经典工作、综述分类与引文追溯",
+        "sourceFamily": "publisher-and-venue",
+        "query": "综述分类与引文追溯：Reconstructing the Dynamic World: A Representation-Centric View of 4D Scene Reconstruction；Advances in Neural Rendering；按引用定位打开原论文并核对身份与方法。",
+        "executedAt": "2026-11-06",
+        "scopeRationale": "围绕缺失的方法源头、关键转折和综述分类进行定向追溯。该族统计进入父流程范围判定的候选；API和Web宽泛返回只记录为发现，不作为本族已读或纳入数。原有语义族及本库rg审计保留。",
+        "resultCount": 5,
+        "resultIdSample": [
+          "arxiv:2609.39960",
+          "doi:10.1109/cvpr.2016.445",
+          "doi:10.1109/cvpr46437.2021.01018",
+          "doi:10.1109/iccv48922.2021.00581",
+          "doi:10.1111/cgf.14507"
+        ],
+        "retrieval": {
+          "provider": "primary-survey-reference-tracing-with-targeted-source-verification",
+          "endpoint": "https://arxiv.org/abs/2609.39960",
+          "parameters": {
+            "query": "综述分类与引文追溯：Reconstructing the Dynamic World: A Representation-Centric View of 4D Scene Reconstruction；Advances in Neural Rendering；按引用定位打开原论文并核对身份与方法。",
+            "surveyUrls": [
+              "https://arxiv.org/abs/2609.39960",
+              "https://doi.org/10.1111/cgf.14507"
+            ],
+            "primaryUrls": [
+              "https://doi.org/10.1111/cgf.14507",
+              "https://arxiv.org/abs/2609.39960",
+              "https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html",
+              "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+              "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html"
+            ],
+            "discoveryQueriesArtifact": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json"
+          },
+          "sort": "survey branch and citation order; parent scope screening",
+          "limit": 5,
+          "limitMeaning": "Frozen scoped candidate inventory; exact search engine/API caps and raw hits are retained in the evidence packet, not replaced by this inventory size.",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "evidencePacketSha256": "eb9e54b970f84075c5c04d5ed94049de0ac80844b2478b74dd3850f8266d0859",
+          "entries": [
+            {
+              "canonicalId": "doi:10.1111/cgf.14507",
+              "referenceId": "neural-rendering-survey-2022",
+              "reason": "补足综述分类和阅读入口：按场景表示、监督和可控参数整理神经渲染，并区分直接时间条件与规范空间形变。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1111/cgf.14507",
+                "tracedFromSurvey": [],
+                "readingDepth": "正式元数据、摘要、4.3及4.3.1动态表示、Table3和对应参考条目"
+              }
+            },
+            {
+              "canonicalId": "arxiv:2609.39960",
+              "referenceId": "representation-centric-4d-survey-2026",
+              "reason": "补足综述分类和阅读入口：以场景表示、时间建模、重建流程和优化目标连接4D NeRF与4DGS。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "arxiv:2609.39960",
+                "tracedFromSurvey": [],
+                "readingDepth": "摘要；I–III时间表示分类；V数据/指标；参考[102][107][114]"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/cvpr.2016.445",
+              "referenceId": "colmap-sfm-2016",
+              "reason": "综述明确把经典SfM作为相机跟踪与映射基础。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1109/cvpr.2016.445",
+                "tracedFromSurvey": [
+                  {
+                    "id": "representation-centric-4d-survey-2026",
+                    "section": "I / reference[114]",
+                    "why": "综述明确把经典SfM作为相机跟踪与映射基础。",
+                    "url": "https://arxiv.org/abs/2609.39960"
+                  }
+                ],
+                "readingDepth": "CVF正式页面摘要、作者、书目；Crossref精确标题/DOI"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/cvpr46437.2021.01018",
+              "referenceId": "d-nerf-2021",
+              "reason": "显式规范形变早期方法。；4DNeRF规范形变分支源头。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1109/cvpr46437.2021.01018",
+                "tracedFromSurvey": [
+                  {
+                    "id": "neural-rendering-survey-2022",
+                    "section": "4.3.1 / PCPMMN21",
+                    "why": "显式规范形变早期方法。",
+                    "url": "https://doi.org/10.1111/cgf.14507"
+                  },
+                  {
+                    "id": "representation-centric-4d-survey-2026",
+                    "section": "III-B / reference[107]",
+                    "why": "4DNeRF规范形变分支源头。",
+                    "url": "https://arxiv.org/abs/2609.39960"
+                  }
+                ],
+                "readingDepth": "CVF/arXiv摘要机制与正式元数据；两综述对应方法分类"
+              }
+            },
+            {
+              "canonicalId": "doi:10.1109/iccv48922.2021.00581",
+              "referenceId": "nerfies-2021",
+              "reason": "解释形变正则和局部极小值。；规范场形变代表工作。",
+              "queryEvidence": {
+                "packet": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+                "candidateKey": "doi:10.1109/iccv48922.2021.00581",
+                "tracedFromSurvey": [
+                  {
+                    "id": "neural-rendering-survey-2022",
+                    "section": "4.3.1 / PSB21",
+                    "why": "解释形变正则和局部极小值。",
+                    "url": "https://doi.org/10.1111/cgf.14507"
+                  },
+                  {
+                    "id": "representation-centric-4d-survey-2026",
+                    "section": "III-A/III-B / reference[102]",
+                    "why": "规范场形变代表工作。",
+                    "url": "https://arxiv.org/abs/2609.39960"
+                  }
+                ],
+                "readingDepth": "CVF/arXiv摘要机制、双手机评测设计；精确标题Crossref匹配"
+              }
+            }
+          ]
+        }
       }
     ],
     "deduplicationKeys": [
@@ -1718,7 +1936,11 @@
       "arxiv:2606.03479",
       "doi:10.1007/978-3-032-37531-5_28",
       "arxiv:2608.14902",
-      "doi:10.3390/s26123871"
+      "doi:10.3390/s26123871",
+      "doi:10.1111/cgf.14507",
+      "doi:10.1109/cvpr.2016.445",
+      "doi:10.1109/cvpr46437.2021.01018",
+      "doi:10.1109/iccv48922.2021.00581"
     ],
     "exclusionCriteria": [
       "无法从可打开的一手来源核验书目信息、方法或关键实验的候选不纳入。",
@@ -2458,10 +2680,11 @@
       {
         "canonicalId": "arxiv:2609.39960",
         "queryFamilies": [
-          "NeRF 与 3D Gaussian Splatting 基础"
+          "NeRF 与 3D Gaussian Splatting 基础",
+          "经典工作、综述分类与引文追溯"
         ],
         "disposition": "included",
-        "occurrences": 1
+        "occurrences": 2
       },
       {
         "canonicalId": "arxiv:2610.06469",
@@ -2662,6 +2885,22 @@
         "occurrences": 1
       },
       {
+        "canonicalId": "doi:10.1109/cvpr.2016.445",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/cvpr46437.2021.01018",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
+        "occurrences": 1
+      },
+      {
         "canonicalId": "doi:10.1109/cvpr52733.2024.01428",
         "queryFamilies": [
           "可编辑 Real2Sim 和场景生成"
@@ -2684,6 +2923,14 @@
           "前馈重建、压缩与实时渲染"
         ],
         "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1109/iccv48922.2021.00581",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
@@ -2796,6 +3043,14 @@
           "NeRF 与 3D Gaussian Splatting 基础"
         ],
         "disposition": "excluded",
+        "occurrences": 1
+      },
+      {
+        "canonicalId": "doi:10.1111/cgf.14507",
+        "queryFamilies": [
+          "经典工作、综述分类与引文追溯"
+        ],
+        "disposition": "included",
         "occurrences": 1
       },
       {
@@ -2953,7 +3208,8 @@
       "publication-status-primary-source",
       "formal-arxiv-link-retention",
       "physical-evidence-boundary",
-      "independent-review-current-snapshot"
+      "independent-review-current-snapshot",
+      "foundations-and-survey-coverage"
     ],
     "sourceAttempts": [
       {
@@ -2965,7 +3221,23 @@
         "limit": 200,
         "acceptedCount": 5,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "local-corpus",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "4DGS|4D reconstruction|dynamic.{0,40}reconstruction|static.{0,20}dynamic|scene graph|动态.{0,40}重建|静态.{0,20}动态|场景图|3d-reconstruction",
+          "endpoint": "content/papers",
+          "limit": 200,
+          "acceptedCount": 5,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "arxiv",
@@ -2995,7 +3267,42 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "arxiv",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "Gaussian splatting reconstruction survey",
+          "endpoint": "https://export.arxiv.org/api/query",
+          "limit": 12,
+          "acceptedCount": 6,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。 该族部分查询接口受限，逐篇一手来源重开仍有已核实引用；成功状态指后者，不能解释为所有请求成功。 计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "arxiv",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "六个驾驶三维重建语义查询族及候选 arXiv 主页面复核",
+            "endpoint": "https://arxiv.org/",
+            "limit": 80,
+            "acceptedCount": 1,
+            "note": "语义查询用于发现，逐篇打开 arXiv 主页面核对标题、版本与方法边界；2 条最终引用以 arXiv 为直接核验源。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+            "primarySourceRevalidatedAt": "2026-09-22"
+          },
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "publisher-and-venue",
@@ -3004,7 +3311,7 @@
         "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
         "endpoint": "https://openaccess.thecvf.com/content/CVPR2021/html/Ost_Neural_Scene_Graphs_for_Dynamic_Scenes_CVPR_2021_paper.html",
         "limit": 26,
-        "acceptedCount": 26,
+        "acceptedCount": 30,
         "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
         "historicalAttempt": {
           "sourceFamily": "publisher-and-venue",
@@ -3017,7 +3324,34 @@
           "note": "逐篇复核正式出版入口；确认 Are NeRFs Ready for Autonomous Driving 位于 CVPR 2024 Workshops。16 条最终引用以出版方或会议页面为直接核验源。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
           "primarySourceRevalidatedAt": "2026-09-22"
         },
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "publisher-and-venue",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 publisher-and-venue 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+          "endpoint": "https://openaccess.thecvf.com/content/CVPR2021/html/Ost_Neural_Scene_Graphs_for_Dynamic_Scenes_CVPR_2021_paper.html",
+          "limit": 26,
+          "acceptedCount": 26,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "publisher-and-venue",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "retained reconstruction DOI, CVF, ECVA, OpenReview, ICLR and AAAI records",
+            "endpoint": "https://doi.org/ and official proceedings pages",
+            "limit": 50,
+            "acceptedCount": 17,
+            "note": "逐篇复核正式出版入口；确认 Are NeRFs Ready for Autonomous Driving 位于 CVPR 2024 Workshops。16 条最终引用以出版方或会议页面为直接核验源。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+            "primarySourceRevalidatedAt": "2026-09-22"
+          },
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "semantic-scholar",
@@ -3056,7 +3390,51 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "semantic-scholar",
+          "status": "limited",
+          "executedAt": "2026-11-06",
+          "query": "Gaussian splatting reconstruction survey",
+          "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+          "limit": 12,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "semantic-scholar",
+            "status": "limited",
+            "executedAt": "2026-09-22",
+            "query": "DOI:10.1145/3592433",
+            "endpoint": "https://api.semanticscholar.org/graph/v1/paper/",
+            "limit": 1,
+            "acceptedCount": 0,
+            "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。服务限流或该ID未命中；不解释为论文不存在。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+            "historicalAttempt": {
+              "sourceFamily": "semantic-scholar",
+              "status": "limited",
+              "executedAt": "2026-08-01",
+              "query": "autonomous driving neural reconstruction Gaussian splatting closed loop",
+              "endpoint": "https://api.semanticscholar.org/graph/v1/paper/search",
+              "limit": 3,
+              "acceptedCount": 0,
+              "note": "Graph API 限流；未把聚合器结果直接纳入引用或虚构命中。"
+            }
+          },
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "openalex",
@@ -3095,7 +3473,51 @@
           12,
           12
         ],
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "openalex",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "Gaussian splatting reconstruction survey",
+          "endpoint": "https://api.openalex.org/works",
+          "limit": 12,
+          "acceptedCount": 0,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "openalex",
+            "status": "success",
+            "executedAt": "2026-09-22",
+            "query": "DOI:10.1145/3592433",
+            "endpoint": "https://api.openalex.org/works/",
+            "limit": 1,
+            "acceptedCount": 0,
+            "note": "精确ID交叉核对一个既有引用的书目信息，不作为新候选发现或论断依据。返回真实元数据；OpenAlex助手缺requests时改用同一官方公共API。 具体返回、时间与哈希见metadataCorroboration，原广检索保留为historicalAttempt。",
+            "historicalAttempt": {
+              "sourceFamily": "openalex",
+              "status": "success",
+              "executedAt": "2026-08-01",
+              "query": "autonomous driving neural reconstruction Gaussian splatting",
+              "endpoint": "https://api.openalex.org/works",
+              "limit": 3,
+              "acceptedCount": 0,
+              "note": "API 仅用于书目交叉核对；最终结论回到一手页面。"
+            }
+          },
+          "queryLimits": [
+            12,
+            12,
+            12,
+            12,
+            12,
+            12
+          ],
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       },
       {
         "sourceFamily": "official-project",
@@ -3117,7 +3539,34 @@
           "note": "官方 3DGS 项目页作为一条基础表示引用的直接核验源；其他项目页只用于核对资产，不升级出版或闭环证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
           "primarySourceRevalidatedAt": "2026-09-22"
         },
-        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+        "foundationSupplement": {
+          "executedAt": "2026-11-06",
+          "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+          "note": "本次真实补检调用及受限记录见来源包；acceptedCount 是最终全部引用中该来源族的核验数，不是本轮接口返回量。"
+        },
+        "previousFoundationAttempt": {
+          "sourceFamily": "official-project",
+          "status": "success",
+          "executedAt": "2026-11-06",
+          "query": "重新打开 official-project 一手来源；逐项 URL 与访问结果见 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json",
+          "endpoint": "https://doi.org/10.1145/3592433",
+          "limit": 1,
+          "acceptedCount": 1,
+          "note": "本轮实际查询、访问状态和逐项核对见对应来源包。  计数仅对应最终引用的 sourceFamily；完整查询及补检保留在 docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json。",
+          "historicalAttempt": {
+            "sourceFamily": "official-project",
+            "status": "success",
+            "executedAt": "2026-08-01",
+            "query": "official NeRF 3DGS driving reconstruction projects and code",
+            "endpoint": "https://github.com/ and official project pages",
+            "limit": 20,
+            "acceptedCount": 1,
+            "note": "官方 3DGS 项目页作为一条基础表示引用的直接核验源；其他项目页只用于核对资产，不升级出版或闭环证据等级。 原查询日期保留；最终采纳数已按2026-09-22逐条一手来源复核重新对账，见sourceRevalidation。",
+            "primarySourceRevalidatedAt": "2026-09-22"
+          },
+          "evidencePacket": "docs/center-updates/2026-11-06/retrieval/embodied/3d-reconstruction-evidence-packet.json"
+        }
       }
     ],
     "refreshMode": "primary-source-and-literature-refresh",
@@ -3207,6 +3656,171 @@
         "url": "https://doi.org/10.1109/cvprf71909.2026.00101",
         "reason": "相同规范化标题或已核对的一手来源别名合并；原始结果保留在来源包。"
       }
-    ]
+    ],
+    "foundationsAudit": {
+      "auditedAt": "2026-11-06",
+      "scope": "检查本方向主要方法分支的经典起点与综述阅读依据；补全已确认的衔接缺口，不宣称穷尽全部历史文献。",
+      "surveyAnchors": [
+        {
+          "referenceId": "neural-rendering-survey-2022",
+          "role": "established",
+          "sectionsRead": [
+            "4.3 Non-static scenes（相关段落）",
+            "4.3.1 Time-varying Neural Radiance Fields（相关段落）",
+            "Table3（相关段落）",
+            "references PCPMMN21 / PSB21（相关段落）"
+          ],
+          "use": "解释规范空间与直接时间条件的源头，为4D高斯分类提供前史。",
+          "coverageCutoff": "arXiv v2 2022-03-30；未声称统一检索截止日"
+        },
+        {
+          "referenceId": "representation-centric-4d-survey-2026",
+          "role": "frontier",
+          "sectionsRead": [
+            "I scope（相关段落）",
+            "II historical evolution（相关段落）",
+            "III-A / III-B 4DNeRF（相关段落）",
+            "V datasets/metrics（相关段落）",
+            "references102,107,114（相关段落）"
+          ],
+          "use": "比较4D NeRF和4DGS，向后追溯D-NeRF、Nerfies与SfM。",
+          "coverageCutoff": "v2 2026-10-06；覆盖4D场景专属优化与相关新工作"
+        }
+      ],
+      "milestones": [
+        {
+          "referenceId": "colmap-sfm-2016",
+          "branch": "位姿与几何",
+          "role": "基础工具",
+          "reason": "图像重建中的位姿与稀疏结构起点。"
+        },
+        {
+          "referenceId": "nerf-2020",
+          "branch": "辐射场",
+          "role": "表示起点",
+          "reason": "连续隐式场和可微体渲染。"
+        },
+        {
+          "referenceId": "d-nerf-2021",
+          "branch": "时间形变",
+          "role": "早期方法",
+          "reason": "规范场与时间条件形变衔接静态和动态NeRF。"
+        },
+        {
+          "referenceId": "nerfies-2021",
+          "branch": "时间形变",
+          "role": "约束与优化",
+          "reason": "真实可变形拍摄中的粗到细优化和弹性正则。"
+        },
+        {
+          "referenceId": "gaussian-splatting-2023",
+          "branch": "显式时空表示",
+          "role": "表示转变",
+          "reason": "显式基元和栅格化为动态高斯提供表示基础。"
+        },
+        {
+          "referenceId": "neural-scene-graphs-2021",
+          "branch": "驾驶场景组织",
+          "role": "对象组织",
+          "reason": "场景图与对象变换是不同于时间参数化的演进轴。"
+        }
+      ],
+      "coverage": [
+        {
+          "branch": "位姿、静态几何与辐射场",
+          "status": "covered",
+          "rationale": "补入SfM基础，并与已收录NeRF连接。",
+          "foundationalReferenceIds": [
+            "colmap-sfm-2016",
+            "nerf-2020"
+          ],
+          "surveyReferenceIds": [
+            "neural-rendering-survey-2022",
+            "representation-centric-4d-survey-2026"
+          ]
+        },
+        {
+          "branch": "规范形变到动态高斯",
+          "status": "covered",
+          "rationale": "补入D-NeRF/Nerfies，并保留2024各类高斯路线的区别。",
+          "foundationalReferenceIds": [
+            "d-nerf-2021",
+            "nerfies-2021",
+            "gaussian-splatting-2023",
+            "dynamic-3d-gaussians-2024",
+            "4dgs-wu-2024"
+          ],
+          "surveyReferenceIds": [
+            "neural-rendering-survey-2022",
+            "representation-centric-4d-survey-2026"
+          ]
+        },
+        {
+          "branch": "驾驶对象组织与闭环资产",
+          "status": "bounded",
+          "rationale": "已有NeuralSceneGraphs与UniSim等驾驶锚点；通用4D综述不是驾驶闭环安全评测综述。",
+          "foundationalReferenceIds": [
+            "neural-scene-graphs-2021",
+            "unisim-2023"
+          ],
+          "surveyReferenceIds": [
+            "representation-centric-4d-survey-2026"
+          ]
+        }
+      ],
+      "citationTrace": [
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "I / reference[114]",
+          "candidateCanonicalId": "doi:10.1109/cvpr.2016.445",
+          "primaryUrl": "https://openaccess.thecvf.com/content_cvpr_2016/html/Schonberger_Structure-From-Motion_Revisited_CVPR_2016_paper.html",
+          "disposition": "included",
+          "reason": "综述明确把经典SfM作为相机跟踪与映射基础。"
+        },
+        {
+          "surveyReferenceId": "neural-rendering-survey-2022",
+          "sourceLocator": "4.3.1 / PCPMMN21",
+          "candidateCanonicalId": "doi:10.1109/cvpr46437.2021.01018",
+          "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+          "disposition": "included",
+          "reason": "显式规范形变早期方法。"
+        },
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "III-B / reference[107]",
+          "candidateCanonicalId": "doi:10.1109/cvpr46437.2021.01018",
+          "primaryUrl": "https://openaccess.thecvf.com/content/CVPR2021/html/Pumarola_D-NeRF_Neural_Radiance_Fields_for_Dynamic_Scenes_CVPR_2021_paper.html",
+          "disposition": "included",
+          "reason": "4DNeRF规范形变分支源头。"
+        },
+        {
+          "surveyReferenceId": "neural-rendering-survey-2022",
+          "sourceLocator": "4.3.1 / PSB21",
+          "candidateCanonicalId": "doi:10.1109/iccv48922.2021.00581",
+          "primaryUrl": "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html",
+          "disposition": "included",
+          "reason": "解释形变正则和局部极小值。"
+        },
+        {
+          "surveyReferenceId": "representation-centric-4d-survey-2026",
+          "sourceLocator": "III-A/III-B / reference[102]",
+          "candidateCanonicalId": "doi:10.1109/iccv48922.2021.00581",
+          "primaryUrl": "https://openaccess.thecvf.com/content/ICCV2021/html/Park_Nerfies_Deformable_Neural_Radiance_Fields_ICCV_2021_paper.html",
+          "disposition": "included",
+          "reason": "规范场形变代表工作。"
+        }
+      ],
+      "limitations": [
+        "综述用于建立分类、术语与引文追溯，具体方法结论以原论文为依据；所列章节为本轮实际查看的相关段落。",
+        "本轮在同日已复核的正文基础上补查经典脉络；未重新逐页阅读全部既有文献，也未运行模型实验。"
+      ]
+    },
+    "foundationRefresh": {
+      "date": "2026-11-06",
+      "baseCommit": "9df6e450e5cd40cbaec96462a07fdbbd10c18965",
+      "evidencePacket": "docs/review-foundations/2026-11-06/retrieval/embodied/evidence.json",
+      "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
+      "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
+    }
   }
 }
