@@ -18,6 +18,7 @@
 ## 书目与证据
 
 - 用一手页面核对标题、完整作者、年份、venue、DOI/arXiv ID 和出版状态。
+- 使用替代 PDF 或 arXiv 全文前，先核对其标题和作者；页面参考文献中的链接不能当作当前论文的全文。错配缓存保留访问记录，但明确排除出有效证据。
 - `workshop`、`workshop-accepted`、`preprint`、`accepted`、`peer-reviewed`、`standard` 分开记录。`peer-reviewed` 与 `workshop` 必须已有可核验的正式出版页；仅确认录用但正式页尚未发布时分别使用 `accepted` 或 `workshop-accepted`，不能写成已正式出版。
 - 已录用论文若同时存在正式出版页与 arXiv，必须保留两个可点击入口：`url` 指向正式版；有正式 DOI 时用 DOI 作为 `canonicalId` 并在 `links` 显式保留 arXiv，没有正式 DOI 时可保留 arXiv canonical ID 由页面自动派生入口。不得用正式版覆盖或删掉预印本入口。
 - 链接类型必须由真实 URL 主机名派生，不能相信手写标签；正式来源只接受精确主机或合法子域，拒绝 `official.example.evil.test` 这类相似后缀。只要记录了正式出版入口，就必须把它放在主 `url`，不能让 arXiv、代码或项目页占据主链接。

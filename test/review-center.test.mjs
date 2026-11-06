@@ -79,14 +79,16 @@ test("literature review workflow is pinned and covers every direction", async ()
   }
 });
 
+function retainedQueryRuns(runs) {
+  return runs.flatMap((run) => [run, ...retainedQueryRuns(run.historicalRun ? [run.historicalRun] : [])]);
+}
+
 test("OpenAlex review retrievals use the real search API parameter", async () => {
   const review = await readFile(
     "content/reviews/radar-occupancy-representation.json",
     "utf8"
   ).then(JSON.parse);
-  const retainedRuns = review.searchAudit.queryRuns.flatMap((run) =>
-    run.historicalRun ? [run, run.historicalRun] : [run]
-  );
+  const retainedRuns = retainedQueryRuns(review.searchAudit.queryRuns);
   const openAlexRuns = retainedRuns.filter((run) =>
     run.retrieval.provider.includes("openalex")
   );
@@ -95,7 +97,7 @@ test("OpenAlex review retrievals use the real search API parameter", async () =>
   for (const run of openAlexRuns) {
     assert.equal(run.retrieval.parameters.search, run.query);
     assert.equal(Object.hasOwn(run.retrieval.parameters, "query"), false);
-    assert.ok(Number.isInteger(run.retrieval.parameters.per_page));
+    assert.ok(Number.isInteger(run.retrieval.parameters.per_page ?? run.retrieval.parameters["per-page"]));
   }
 });
 
@@ -103,9 +105,7 @@ test("ranked OpenAlex snapshots bind aliases and citation expansion counts", asy
   const review = JSON.parse(
     await readFile("content/reviews/radar-occupancy-representation.json", "utf8")
   );
-  const retainedRuns = review.searchAudit.queryRuns.flatMap((run) =>
-    run.historicalRun ? [run, run.historicalRun] : [run]
-  );
+  const retainedRuns = retainedQueryRuns(review.searchAudit.queryRuns);
   const snapshotRuns = retainedRuns.filter(
     (run) => Array.isArray(run.retrieval?.rankedOpenAlexIds)
   );

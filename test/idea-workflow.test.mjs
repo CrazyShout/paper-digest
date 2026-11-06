@@ -458,7 +458,7 @@ test("evaluation prompts are lens-specific and keep the publication threshold hi
   assert.equal(new Set(prompts).size, workflow.evaluation.reviewerLenses.length);
 });
 
-test("idea template uses the same ten-point blind-review contract as the workflow", async () => {
+test("idea template separates research priorities from historical formal review", async () => {
   const template = await readFile(
     new URL("content/templates/idea-exploration-template.md", ROOT),
     "utf8"
@@ -466,12 +466,12 @@ test("idea template uses the same ten-point blind-review contract as the workflo
 
   assert.doesNotMatch(template, /0[–-]100\s*分/);
   assert.doesNotMatch(template, /低于\s*(?:55|65|70|75)\s*分/);
-  assert.match(template, /新颖性/);
-  assert.match(template, /实现可行性/);
-  assert.match(template, /成功率/);
-  assert.match(template, /影响力/);
-  assert.match(template, /前人实验可对比性/);
-  assert.match(template, /发布分不得写入评估提示/);
-  assert.match(template, /可信自建路径/);
-  assert.match(template, /不要求已有开箱即用代码/);
+  assert.match(template, /research-lit.*idea-creator.*novelty-check.*research-review/);
+  assert.match(template, /优先试验.*pilot/);
+  assert.match(template, /继续展开.*develop/);
+  assert.match(template, /暂存.*park/);
+  assert.match(template, /首项实验/);
+  assert.match(template, /未运行的实验/);
+  assert.match(template, /历史正式盲评继续按其原始工作流核验/);
+  assert.match(template, /分数、评审原文、通过或否定状态不回写/);
 });

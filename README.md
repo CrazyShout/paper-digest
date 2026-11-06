@@ -6,7 +6,7 @@
 - Astro 7 负责静态页面生成，React 19 / Fumadocs 16 提供笔记本布局、搜索和评论交互。
 - GitHub Actions 自动构建并部署到 GitHub Pages。
 - Cloudflare Worker 可选接入匿名评论，把评论写回仓库。
-- Idea 中心用独立的方向审计工作流检索顶会前沿、判断研究余量并形成可证伪候选课题。
+- Idea 中心结合本库与站外文献，比较研究方法、实现路径和首项实验，保留独立评审与历史判断。
 
 ## Project Layout
 
@@ -17,6 +17,7 @@ config/
 content/
   README.md                 # 更新简报的具体操作说明
   idea-center.json          # Idea 探索工作流、方向审计与候选课题
+  idea-explorations/        # 当前研究候选、实验计划与独立投入建议
   research-landscape.json   # 全库趋势、热点和方向建议
   digests/                  # 每期简报 Markdown
   papers/                   # 每篇论文详细报告 Markdown
@@ -107,7 +108,7 @@ config/research-interests.json
 
 这个文件主要服务后续论文抓取和筛选。页面顶部的 tag 不做固定筛选下拉，而是每期简报根据实际入选论文动态生成。
 
-Idea 中心位于 `/ideas/`。它不会只从本站历史论文外推灵感，而是先检索一手论文和顶会前沿，再通过研究意义、突破余量、新颖空间和短期可行四道门槛。通过的方向才会展示带证据、最小实验、成功标准、停止条件和统一评分的候选 Idea。长期格式见：
+Idea 中心位于 `/ideas/`。新轮次使用 `research-lit`、`idea-creator`、`novelty-check` 和 `research-review`，先从本库及外部文献展开方法，再由独立评审者比较首项实验的投入价值。`pilot`、`develop`、`park` 分别表示优先试验、继续展开和暂存；未运行的实验明确标注。旧正式盲评的分数与判定单独保留，不用全员满分替代当前探索。长期格式见：
 
 ```text
 content/templates/idea-exploration-template.md

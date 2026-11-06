@@ -15,6 +15,8 @@ import { validateIdeaAuditPool } from "./validate-idea-audit-pool.mjs";
 import { validateIdeaDossier as validatePreReviewDossier } from "./validate-idea-dossier.mjs";
 import { validateIdeaReview } from "./validate-idea-review.mjs";
 import { evaluateIdeaReviewGate } from "./idea-review-gate.mjs";
+import { getPapers, isValidIsoDate } from "../src/lib/content.js";
+import { validateExploration } from "../src/lib/idea-exploration.js";
 
 const ROOT = process.cwd();
 const CENTER_PATH = path.join(ROOT, "content", "idea-center.json");
@@ -1076,6 +1078,18 @@ async function main() {
     readJson(INTERESTS_PATH)
   ]);
   await validateIdeaCenter(center, workflow, interests);
+  if (center.currentExplorationId) {
+    assertValid(isValidIsoDate(center.currentExplorationId), "Invalid current exploration ID.");
+    const exploration = await readJson(path.join(
+      ROOT, "content", "idea-explorations", `${center.currentExplorationId}.json`
+    ));
+    assertValid(exploration.id === center.currentExplorationId, "Exploration ID does not match its filename.");
+    const counts = validateExploration(exploration, {
+      directionIds: interests.interests.map((interest) => interest.id),
+      paperIds: (await getPapers()).map((paper) => paper.id)
+    });
+    console.log(`Current exploration: ${counts.directions} directions, ${counts.candidates} research candidates, ${counts.sources} sources; independently reviewed, experiments planned.`);
+  }
 }
 
 const isDirect = process.argv[1]

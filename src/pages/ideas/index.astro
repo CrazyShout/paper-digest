@@ -2,11 +2,18 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import NotebookDocs from "../../components/NotebookDocs.jsx";
 import IdeaCard from "../../components/IdeaCard.astro";
+import IdeaExploration from "../../components/IdeaExploration.astro";
 import { ideaArtifactSnapshotFingerprint } from "../../lib/idea-fingerprint.js";
 import { getNotebookData, routeUrl } from "../../lib/navigation.js";
 
 const notebook = await getNotebookData(import.meta.env.BASE_URL);
 const center = notebook.ideaCenter || {};
+const currentExploration = center.currentExploration;
+const currentCandidates = currentExploration?.candidates || [];
+const priorityIds = new Set((currentExploration?.review?.recommendations || [])
+  .filter((entry) => entry.decision === "pilot").map((entry) => entry.candidateId));
+const priorityCandidates = currentCandidates.filter((entry) => priorityIds.has(entry.id));
+const currentCandidateCount = (id) => currentCandidates.filter((entry) => entry.directionId === id).length;
 
 function list(value) {
   return Array.isArray(value) ? value : [];
@@ -66,9 +73,10 @@ const globalReviewScores = record(globalReview?.scores);
 const ideaCenterFingerprint = ideaArtifactSnapshotFingerprint(center);
 const updatedLabel = formatDate(center.updatedAt);
 const toc = [
+  ...(currentExploration ? [{ depth: 2, title: "本轮研究探索", url: "#currentExploration" }] : []),
   { depth: 2, title: "各方向候选", url: "#workspaceTitle" },
   ...(globalReview ? [{ depth: 2, title: "全局终审", url: "#globalReviewTitle" }] : []),
-  { depth: 2, title: "检索与评审方法", url: "#workflowTitle" }
+  { depth: 2, title: currentExploration ? "历史盲评规则" : "检索与评审方法", url: "#workflowTitle" }
 ];
 const dimensionLabels = new Map(
   scoringDimensions.map((dimension) => [dimension.id, dimension.label])
@@ -105,6 +113,20 @@ function auditMetric(pool, key) {
     homeUrl={notebook.base}
     client:load
   >
+    {currentExploration && (
+      <section class="idea-current-intro" id="currentExploration">
+        <h2>{currentExploration.title}</h2>
+        <p>{currentExploration.summary}</p>
+        <p class="idea-current-budget">{currentExploration.directions.length} 个方向 · {currentCandidates.length} 个研究候选 · {priorityCandidates.length} 项优先试验</p>
+        {priorityCandidates.length > 0 && (
+          <ul>{priorityCandidates.map((candidate) => (
+            <li><a href={`#explore-${candidate.id}`}>{candidate.title}</a></li>
+          ))}</ul>
+        )}
+      </section>
+    )}
+    <details class="reading-disclosure idea-history-summary" open={!currentExploration}>
+      <summary>历史盲评统计</summary>
     <dl
       class="idea-hero-stats"
       aria-label="Idea 中心统计"
@@ -114,18 +136,19 @@ function auditMetric(pool, key) {
       data-idea-fingerprint={ideaCenterFingerprint}
     >
       <div>
-        <dt>完成检索方向</dt>
+        <dt>{currentExploration ? "历史检索方向" : "完成检索方向"}</dt>
         <dd>{completedDirections.length}</dd>
       </div>
       <div>
-        <dt>进入独立盲评</dt>
+        <dt>{currentExploration ? "历史盲评候选" : "进入独立盲评"}</dt>
         <dd>{reviewedIdeas.length}</dd>
       </div>
       <div>
-        <dt>通过全部评审</dt>
+        <dt>{currentExploration ? "历史全项通过" : "通过全部评审"}</dt>
         <dd>{passedIdeas.length}</dd>
       </div>
     </dl>
+    </details>
 
     <section class="idea-workspace" id="workspace" aria-labelledby="workspaceTitle">
       <aside class="idea-direction-rail" data-direction-navigation>
@@ -139,7 +162,7 @@ function auditMetric(pool, key) {
               <optgroup label={group.label}>
                 {records(group.directions).map((direction) => (
                   <option value={direction.id} selected={direction.id === activeDirectionId}>
-                    {direction.label} · {exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个候选` : "待探索"}
+                    {direction.label} · {currentExploration ? `${currentCandidateCount(direction.id)} 个新候选` : exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个候选` : "待探索"}
                   </option>
                 ))}
               </optgroup>
@@ -162,7 +185,7 @@ function auditMetric(pool, key) {
                   style={`--direction-color: ${direction.color}`}
                 >
                   <span>{direction.label}</span>
-                  <small>{exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待整理"}</small>
+                  <small>{currentExploration ? `${currentCandidateCount(direction.id)} 个新候选` : exploredStatuses.has(direction.status) ? `${list(direction.ideas).length} 个盲评候选` : "待整理"}</small>
                 </button>
               ))}
             </div>
@@ -180,6 +203,9 @@ function auditMetric(pool, key) {
             data-direction-panel={direction.id}
             hidden={direction.id !== activeDirectionId}
           >
+            {currentExploration && <IdeaExploration round={currentExploration} direction={direction} base={import.meta.env.BASE_URL} />}
+            <details class="reading-disclosure idea-history" open={!currentExploration}>
+              <summary>历史候选与评审记录</summary>
             {exploredStatuses.has(direction.status) ? (
               <>
                 <header class="idea-direction-head" style={`--direction-color: ${direction.color}`}>
@@ -191,7 +217,7 @@ function auditMetric(pool, key) {
 
                 <section class="exploration-verdict" aria-labelledby={`${direction.id}-verdict`}>
                   <div>
-                    <h3 id={`${direction.id}-verdict`}>本轮结论</h3>
+                    <h3 id={`${direction.id}-verdict`}>历史结论</h3>
                   </div>
                   <p>{direction.outcome?.summary || direction.explorationRun?.verdict}</p>
                   {direction.outcome?.noPassedReason && <small>{direction.outcome.noPassedReason}</small>}
@@ -348,14 +374,22 @@ function auditMetric(pool, key) {
               <section class="idea-direction-pending" style={`--direction-color: ${direction.color}`}>
                 <h2>{direction.label}</h2>
                 <p class="idea-direction-subtitle">{direction.subtitle}</p>
-                <p>该方向尚无完成独立评审的候选，可先从方向综述了解相关问题。</p>
+                <p>{currentExploration ? "此前尚未形成正式盲评候选；本轮研究探索见上方。" : "该方向尚无完成独立评审的候选，可先从方向综述了解相关问题。"}</p>
                 <a href={routeUrl(import.meta.env.BASE_URL, `reviews/${direction.id}`)}>阅读方向综述</a>
               </section>
             )}
+            </details>
           </section>
         ))}
       </div>
     </section>
+    {currentExploration && (
+      <details class="reading-disclosure">
+        <summary>本轮检索与复核说明</summary>
+        <p>{currentExploration.review.summary}</p>
+        <p>{currentExploration.evidenceBoundary}</p>
+      </details>
+    )}
     {globalReview && (
       <section class="idea-global-review" id="global-review" aria-labelledby="globalReviewTitle">
         <header class="idea-section-head">
@@ -389,7 +423,7 @@ function auditMetric(pool, key) {
     )}
 
     <details class="reading-disclosure idea-workflow" id="workflow">
-      <summary id="workflowTitle">候选如何检索与评审</summary>
+      <summary id="workflowTitle">{currentExploration ? "历史盲评规则" : "候选如何检索与评审"}</summary>
       <p>{workflow.principle}</p>
 
       <ol class="workflow-steps">

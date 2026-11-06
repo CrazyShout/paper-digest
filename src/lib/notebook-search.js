@@ -64,9 +64,18 @@ export function buildNotebookSearchIndex(notebook) {
     record({
       id: "idea-center", kind: "idea", url: url("ideas"),
       title: ideaCenter.title, description: ideaCenter.summary,
-      content: ideaCenter.directions.map((direction) => fields(direction, ["label", "scope", "outcome"])).join(" "),
+      content: [
+        ...ideaCenter.directions.map((direction) => fields(direction, ["label", "scope", "outcome"])),
+        ...(ideaCenter.currentExploration?.directions || []).map((direction) => fields(direction, ["progress", "opportunity"]))
+      ].join(" "),
       breadcrumbs: ["Paper Digest", "Idea 中心"], featured: true
     }),
+    ...(ideaCenter.currentExploration?.candidates || []).map((candidate) => record({
+      id: `exploration-${candidate.id}`, kind: "idea", url: `${url("ideas")}#explore-${candidate.id}`,
+      title: candidate.title, description: candidate.hypothesis,
+      content: fields(candidate, ["method", "whyNow", "upside", "risk", "priorWork", "researchPosition", "sharedExperiment", "implementation", "firstExperiment"]),
+      breadcrumbs: ["Idea 中心", "当前探索", tags.find((tag) => tag.id === candidate.directionId)?.label || candidate.directionId]
+    })),
     ...ideaCenter.directions.flatMap((direction) => direction.ideas.map((idea) => record({
       id: `idea-${idea.id}`, kind: "idea", url: `${url("ideas")}#idea-${idea.id}`,
       title: idea.title, description: idea.hook,

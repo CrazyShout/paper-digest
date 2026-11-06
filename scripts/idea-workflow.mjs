@@ -156,6 +156,21 @@ function renderPrompt(
   }
 
   const queryLines = queryConfig.queryFamilies.map((family) => `- ${family}`).join("\n");
+  if (phase === "explore") {
+    return [
+      `方向：${direction.label} (${directionId})`,
+      "阶段：研究探索。先展开方法空间，再比较首项实验的投入价值。",
+      workflow.currentExplorationPolicy.purpose,
+      "检索主题：",
+      queryLines,
+      "",
+      ...workflow.currentExplorationPolicy.principles,
+      "",
+      "对同一证据包独立生成候选，随后机械合并；保留直接方法、跨方向连接与高收益路线。",
+      "每项先写两到四步方法，再写假设、最近邻差分、实现路径、首项实验、正负及不确定结果的解释、预算。",
+      "输出当前研究建议，实验未运行时明确记录；原始候选全部保留供独立比较。"
+    ].join("\n");
+  }
   const hardStopLines = workflow.candidateHardStops
     .map((rule) => `- ${rule.id}: ${rule.rule}`)
     .join("\n");

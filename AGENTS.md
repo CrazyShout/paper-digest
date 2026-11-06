@@ -32,6 +32,7 @@ content/
   reported-papers.md        # Deduplication ledger for reported papers
   digests/                  # One Markdown file per digest
   papers/                   # One Markdown file per paper report
+  idea-explorations/         # Dated research proposals and independent prioritization
   templates/                # Content templates and selection rubric
 src/
   components/               # Astro content components and React notebook/search/comments
@@ -214,6 +215,30 @@ the arXiv canonical ID so the page derives that link automatically. Use
 `links` for code and official project pages as well. Reserve `peer-reviewed`
 and `workshop` for records with a verifiable formal destination. Use `accepted`
 or `workshop-accepted` while the formal page is still unavailable.
+
+## Idea Exploration Updates
+
+Use `content/templates/idea-exploration-template.md` and
+`config/idea-exploration-workflow.json#currentExplorationPolicy` for new rounds.
+Run `npm run idea:preflight` and generate each direction's prompt with
+`npm run idea:prompt -- <direction-id> explore`. Combine the local corpus with
+external primary sources and adjacent fields through `research-lit`,
+`idea-creator`, `novelty-check`, and `research-review`.
+
+Lead proposals with a concrete method and a useful first experiment. Compare
+high-upside approaches alongside inexpensive ones. Missing turnkey code,
+competing work, or an untested hypothesis does not alone disqualify an idea.
+Use evidence to identify actual overlap and experiments to resolve uncertainty.
+An independent reviewer assigns `pilot`, `develop`, or `park` with reasons;
+these are research priorities, not claims of experimental success.
+
+Store new rounds in `content/idea-explorations/<YYYY-MM-DD>.json` and set
+`currentExplorationId` in the Idea center. Preserve historical candidate IDs,
+scores, reviews and verdicts under their original contract. The historical
+full-score publication rule does not classify new exploratory proposals.
+Keep unrun experiments explicit, bind independent content review to the final
+round snapshot, and preserve search, deep-link and print access to both new
+proposals and historical records.
 
 ## Architecture Notes
 

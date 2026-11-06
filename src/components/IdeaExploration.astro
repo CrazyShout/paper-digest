@@ -1,0 +1,73 @@
+---
+import { EXPLORATION_DECISIONS } from "../lib/idea-exploration.js";
+import { routeUrl } from "../lib/navigation.js";
+
+const { round, direction, base } = Astro.props;
+const current = round.directions.find((entry) => entry.id === direction.id);
+const candidates = round.candidates.filter((candidate) => candidate.directionId === direction.id);
+const sources = new Map(round.sources.map((source) => [source.id, source]));
+const recommendations = new Map(round.review.recommendations.map((entry) => [entry.candidateId, entry]));
+---
+
+<section class="idea-current-direction" aria-labelledby={`current-${direction.id}`}>
+  <header>
+    <p class="eyebrow">本轮探索 · {round.id}</p>
+    <h2 id={`current-${direction.id}`}>{direction.label}</h2>
+    <p>{current.progress}</p>
+    <p>{current.opportunity}</p>
+    <a href={routeUrl(base, `reviews/${direction.id}`)}>阅读方向综述</a>
+  </header>
+  {candidates.map((candidate) => {
+    const recommendation = recommendations.get(candidate.id);
+    const experiment = candidate.firstExperiment;
+    return (
+      <article class="idea-current-candidate" id={`explore-${candidate.id}`}>
+        <header>
+          <p class="idea-current-status">{EXPLORATION_DECISIONS[recommendation.decision]}</p>
+          <h3>{candidate.title}</h3>
+        </header>
+        <ol>{candidate.method.map((step) => <li>{step}</li>)}</ol>
+        <p><strong>要验证的判断：</strong>{candidate.hypothesis}</p>
+        <p>{candidate.whyNow}</p>
+        <p><strong>第一项实验：</strong>{experiment.question} {experiment.setup}</p>
+        <p class="idea-current-budget">{experiment.budget} · 尚未运行</p>
+        <details class="reading-disclosure">
+          <summary>相关工作、实现与实验设计</summary>
+          <h3>与已有工作的区别</h3>
+          <p>{candidate.researchPosition}</p>
+          <ul>{candidate.priorWork.map((prior) => (
+            <li>
+              <a href={sources.get(prior.sourceId).url} target="_blank" rel="noopener noreferrer">{sources.get(prior.sourceId).title}</a>
+              <p>{prior.overlap} {prior.difference}</p>
+            </li>
+          ))}</ul>
+          <h3>实现路径</h3>
+          <p><strong>复用：</strong>{candidate.implementation.reuse.join("；")}</p>
+          <p><strong>实现：</strong>{candidate.implementation.build.join("；")}</p>
+          <h3>如何判断实验结果</h3>
+          <p><strong>对照：</strong>{experiment.baselines.join("；")}</p>
+          <p>{experiment.measurement}</p>
+          <ul>
+            <li><strong>支持假设：</strong>{experiment.positive}</li>
+            <li><strong>反对假设：</strong>{experiment.negative}</li>
+            <li><strong>仍不明确：</strong>{experiment.unclear}</li>
+          </ul>
+          <h3>研究价值与下一步</h3>
+          <p>{candidate.upside}</p>
+          <p>{candidate.risk}</p>
+          <p>{recommendation.reason}</p>
+          <p>{candidate.sharedExperiment}</p>
+          <h3>阅读依据</h3>
+          <ul>{candidate.evidenceIds.map((id) => {
+            const source = sources.get(id);
+            return <li>
+              <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>
+              {source.localPaperId && <a class="idea-local-note" href={routeUrl(base, `papers/${source.localPaperId}`)}>本库报告</a>}
+              <p>{source.finding}</p>
+            </li>;
+          })}</ul>
+        </details>
+      </article>
+    );
+  })}
+</section>

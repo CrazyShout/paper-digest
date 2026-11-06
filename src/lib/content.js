@@ -1184,8 +1184,19 @@ async function loadIdeaCenter() {
   ]);
 
   const projected = await projectIdeaCenterData(ideaCenter, { papers, workflow });
+  let currentExploration = null;
+  if (ideaCenter.currentExplorationId) {
+    if (!isValidIsoDate(ideaCenter.currentExplorationId)) {
+      throw new Error("Idea Center: invalid currentExplorationId");
+    }
+    currentExploration = JSON.parse(await readFile(
+      path.join(CONTENT, "idea-explorations", `${ideaCenter.currentExplorationId}.json`),
+      "utf8"
+    ));
+  }
   return {
     ...projected,
+    currentExploration,
     directionGroups: projectDirectionGroups(interestConfig, projected.directions)
   };
 }
@@ -1202,9 +1213,9 @@ const REVIEW_TYPE_LABELS = {
 
 const REVIEW_STATUS_LABELS = {
   "peer-reviewed": "已同行评审",
-  accepted: "已录用，正式页待发布",
+  accepted: "已录用，正式页待核验",
   workshop: "正式 Workshop",
-  "workshop-accepted": "Workshop 已录用，正式页待发布",
+  "workshop-accepted": "Workshop 已录用，正式页待核验",
   preprint: "预印本",
   "technical-report": "技术报告",
   standard: "标准",
