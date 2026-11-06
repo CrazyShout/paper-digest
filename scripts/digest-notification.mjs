@@ -256,6 +256,12 @@ export async function verifyLiveArtifact({ directory, siteUrl, snapshots, fetchI
     for (const match of html.matchAll(/(?:src|href|srcset)="([^"]+)"/g)) {
       for (const part of match[1].split(",")) {
         const url = new URL(part.trim().split(/\s+/)[0], new URL(file, base));
+        if (url.origin === base.origin && url.pathname.startsWith(base.pathname)) {
+          const relative = decodeURIComponent(url.pathname.slice(base.pathname.length));
+          // Discover current reading hubs from artifact links. Older published
+          // artifacts used for welcomes need not contain these newer routes.
+          if (/^directions\/(?:[a-z0-9-]+\/)?$/.test(relative)) files.add(`${relative}index.html`);
+        }
         if (url.origin === base.origin && url.pathname.startsWith(`${base.pathname}assets/`)) {
           const relative = decodeURIComponent(url.pathname.slice(base.pathname.length));
           if (relative.startsWith("assets/papers/") || relative.startsWith("assets/paper-previews/")) files.add(relative);

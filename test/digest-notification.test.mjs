@@ -187,6 +187,26 @@ test("online gate checks artifact bytes, original/preview images, CSS and decode
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test("online gate follows new direction hubs without requiring them in older artifacts", async () => {
+  const { directory, files } = await fixture();
+  try {
+    files.set("index.html", Buffer.concat([files.get("index.html"), Buffer.from('<a href="/paper-digest/directions/">Read</a><a href="/paper-digest/directions/example/#history">History</a>')]));
+    files.set("directions/index.html", Buffer.from("Direction index"));
+    files.set("directions/example/index.html", Buffer.from("Direction history"));
+    for (const file of ["index.html", "directions/index.html", "directions/example/index.html"]) {
+      await mkdir(path.dirname(path.join(directory, file)), { recursive: true });
+      await writeFile(path.join(directory, file), files.get(file));
+    }
+    const fetchImpl = async (url) => new Response(files.get(url.pathname.replace("/paper-digest/", "")));
+    const result = await verifyLiveArtifact({ directory, siteUrl: "https://example.test/paper-digest", snapshots: [], retries: 0, fetchImpl });
+    assert.equal(result.resourceCount, files.size);
+    assert.ok(result.resources.some((resource) => resource.path === "directions/example/index.html"));
+    await assert.rejects(verifyLiveArtifact({ directory, siteUrl: "https://example.test/paper-digest", snapshots: [], retries: 0,
+      fetchImpl: async (url) => url.pathname.includes("directions/example/") ? new Response("old direction") : fetchImpl(url)
+    }), /Live verification failed: directions\/example\/index.html/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test("frozen baseline is consistent with the existing published content", async () => {
   const baseline = JSON.parse(await readFile("config/digest-notification-baseline.json", "utf8"));
   // New issues may be added later; only assert that the recorded baseline is
