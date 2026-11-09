@@ -3,22 +3,21 @@
   "id": "world-models",
   "title": "驾驶世界模型：未来生成、规划学习与交互仿真",
   "subtitle": "视频生成、未来预测、规划与交互仿真是并行用途；各自有值得解决的核心方法问题。",
-  "abstract": "近期共同问题是状态接口。MORE 在视频预训练时学习运动相关 registers，RFWorld 用未来监督构造共享评分记忆，Artemis 显式维护跨主体三维地图，CoDrive 在共享坐标系内联合生成观察。研究可以围绕一种状态的可预测性、可控性和计算成本展开，再检验它怎样帮助下游任务。[more-2026, rfworld-2026, artemis-2026, codrive-2026]",
+  "abstract": "如果车辆现在减速或转向，接下来会看到什么、其他车辆会怎样移动？驾驶世界模型用学习到的状态演化回答这类问题。有的生成相机视频，有的预测点云或占用，有的只保留规划需要的潜在状态。本文解释这些路线各自为什么存在，以及生成逼真的未来、帮助选择动作和充当交互环境之间还有哪些差别。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "基础文献与近年方法并列比较；2026-11-06 重新打开既有引用的一手正文并核对当前论断，补读近期本库与外部近邻。查询执行、受限来源与候选去向见检索审计；本次阅读为论断级复核，不表示逐篇复现实验。",
   "researchQuestions": [
-    "能否用更小的状态保留对动作有用的动态？",
-    "多车能否共享一个可更新、可解码的场景状态？",
-    "事实后续如何帮助同一事件的反事实预测？",
-    "生成的外观变化和行为变化分别怎样帮助策略学习？"
+    "为了服务驾驶，模型需要保留完整外观，还是少量空间与运动信息就够？",
+    "输入一条不同的自车轨迹，模型的未来会怎样改变？",
+    "生成环境中的其他车辆是否会响应自车，而不只是继续回放原轨迹？"
   ],
   "sections": [
     {
       "id": "scope",
       "kind": "scope",
-      "title": "学习什么世界状态，服务什么驾驶任务",
-      "thesis": "视频生成、未来预测、规划与交互仿真是并行用途；各自有值得解决的核心方法问题。",
-      "body": "驾驶世界模型学习状态如何随时间和动作演化。像素模型保留外观，点云和占用保留空间结构，潜状态模型可以直接服务规划。内容生成不必承担控制，规划表示也不必还原全部像素；用途决定应保存哪些信息。[world-models-survey-2024, gaia1-2023, copilot4d-2024, occworld-2024, law-2025]\n\n近期共同问题是状态接口。MORE 在视频预训练时学习运动相关 registers，RFWorld 用未来监督构造共享评分记忆，Artemis 显式维护跨主体三维地图，CoDrive 在共享坐标系内联合生成观察。研究可以围绕一种状态的可预测性、可控性和计算成本展开，再检验它怎样帮助下游任务。[more-2026, rfworld-2026, artemis-2026, codrive-2026]\n\n### 综述阅读路径\n\n先读 [Guan 等的初期综述](https://doi.org/10.1109/TIV.2024.3398357)中的架构与历史表，建立感知压缩、动态预测和控制学习的联系；它提供 2024 年的领域入口。再读 [Feng 等的综述](https://arxiv.org/abs/2501.11260)，用未来生成、行为规划、预测—规划交互三个层次比较驾驶用途，所读版本更新于 2025 年 9 月。两者的分类可帮助组织本页，但具体机制与性能仍以原论文为依据，不能由名称相近推断算法继承关系。[world-models-survey-2024, world-models-survey-2025]",
+      "title": "世界模型要预测什么，又准备用来做什么",
+      "thesis": "未来视频、三维状态和潜在表示都可以描述世界，选择取决于下游任务。",
+      "body": "可以从一个简单问题开始：本车接近前方车辆时，如果减速，下一刻的观察会怎样；如果继续前进，又会怎样？驾驶世界模型学习场景随时间和动作变化的规律。它的输出可以是一段相机视频、一帧 LiDAR 点云、未来占用空间，也可以是只供规划器读取的向量。[world-models-survey-2024, gaia1-2023, copilot4d-2024, occworld-2024, law-2025]\n\n不同输出保留的信息不同。视频保留外观，适合生成传感器观察；点云和占用突出空间结构；潜在表示可以省去像素还原，只保存对行动有用的动态。由此也产生几种用途：扩充数据、预测未来、比较候选动作，以及让策略在学习环境中训练。一个模型可以服务多个用途，但每个用途需要的准确性和响应方式不同。\n\n例如，为候选轨迹评分的模型可以只在训练时接受未来监督，部署时直接读取当前表示；交互模拟器则必须随着自车动作不断产生新观察。RFWorld 与 DriveArena 分别说明了这两种连接方式。先确定用途，再读模型结构，会比把所有带有“world model”名称的系统放进同一排名更清楚。[rfworld-2026, drivearena-2025]\n\n### 从哪些综述开始\n\n[Guan 等的初期综述](https://doi.org/10.1109/TIV.2024.3398357)用架构和历史梳理建立感知压缩、动态预测与控制学习的联系，可作为 2024 年的领域入口。[Feng 等的综述](https://arxiv.org/abs/2501.11260)再按未来生成、行为规划、预测—规划交互三个层次组织驾驶用途，所读版本更新于 2025 年 9 月。两者有助于理解不同任务的关系，具体算法的继承与差异仍要回到原论文。[world-models-survey-2024, world-models-survey-2025]",
       "referenceIds": [
         "world-models-survey-2024",
         "gaia1-2023",
@@ -35,9 +34,9 @@
     {
       "id": "evolution",
       "kind": "evolution",
-      "title": "从潜动态与想象控制到驾驶生成与交互",
-      "thesis": "表示、动作接口和训练方式的变化，比模型名称更能解释路线差别。",
-      "body": "驾驶专用模型之前，World Models 已用压缩视觉表示和循环动态支持紧凑控制器，并研究在学习到的环境中训练策略。PlaNet 进一步以包含确定与随机转移的潜状态模型在线规划；Dreamer 则在潜想象轨迹中传播价值梯度，学习动作和价值网络。三者分别提供表示与模拟、在线搜索、想象中的策略学习这几个起点，原始证据来自游戏或视觉控制任务。[recurrent-world-models-2018, planet-2019, dreamer-2020]\n\n这条控制学习脉络与驾驶视频生成相互启发，但目标并不相同。前者关心学习到的动态能否支持更好的行为，后者还需要多视角外观、场景结构与长时序生成。Dreamer 和 DriveDreamer 应按各自的状态、动作接口和训练目标比较，而不是当作同一算法的连续版本。[dreamer-2020, drivedreamer-2024, world-models-survey-2025]\n\nWorld on Rails 用固定日志环境的近似学习驾驶；GAIA-1 展示大规模动作条件视频生成；UniSim 将日志重建为可编辑传感器环境。DriveDreamer、Drive-WM、Vista 和 DrivingWorld 扩展结构条件、多视角、控制接口与生成长度；Copilot4D 和 OccWorld 则将未来预测移到点云和占用空间。[world-on-rails-2021, gaia1-2023, unisim-2023, drivedreamer-2024, drive-wm-2024, vista-2024, drivingworld-2024, copilot4d-2024, occworld-2024]\n\nLAW 将未来潜特征作为规划监督，Epona 和 DrivingGPT 共享世界与动作表示。DAWN 在紧凑语义潜空间中递归更新世界预测和动作，**这里不是像素视频生成**。DriveDreamer-Policy 引入深度，EponaV2 增加多种未来监督，DriveWAM 使用视频预训练和有界记忆。RFWorld 则说明未来监督也能只留在训练阶段，部署直接读取共享状态。[law-2025, epona-2025, drivinggpt-2025, dawn-2026, drivedreamer-policy-2026, eponav2-2026, drivewam-2026, rfworld-2026]\n\n交互生成正在增加显式结构。GenieDrive 先预测占用再生成视频，Artemis 随 rollout 更新共享地图，CoDrive 处理跨车一致性，HelloWorld 组织多相机、LiDAR 与少步生成。OmniDreams 和 World Engine 展示面向运行时仿真和策略后训练的系统接口。[geniedrive-2026, artemis-2026, codrive-2026, helloworld-2026, omnidreams-2026, world-engine-2026]",
+      "title": "从想象中学习控制，到生成驾驶世界",
+      "thesis": "潜在状态控制和驾驶视频生成有共同问题，也有不同目标。",
+      "body": "在驾驶专用模型之前，World Models 已把视觉压缩表示与循环动态结合，用紧凑控制器执行任务，并研究在学习环境中训练策略。PlaNet 用兼具确定与随机转移的潜动态模型在线搜索动作；Dreamer 则在潜在的想象轨迹中传播价值梯度，学习动作与价值网络。三者分别展示了学习环境、在线规划和想象中训练策略的路径，原始证据来自游戏或视觉控制任务。[recurrent-world-models-2018, planet-2019, dreamer-2020]\n\n驾驶增加了多视角、遮挡和交通结构等要求。GAIA-1 用视频、文本和车辆动作条件生成驾驶视频；DriveDreamer 加入结构化交通条件，Drive-WM 将多视角未来与候选轨迹连接，Vista 扩展控制接口，DrivingWorld 探索更长的视频生成。这里不仅要帮助控制，还要还原连续的传感器观察。因此，Dreamer 与 DriveDreamer 名称相近，却分别属于潜空间控制学习和驾驶视频生成的不同工作。[gaia1-2023, drivedreamer-2024, drive-wm-2024, vista-2024, drivingworld-2024, dreamer-2020]\n\n空间结构也可以直接作为预测对象。Copilot4D 预测未来 LiDAR 点云，OccWorld 预测三维语义占用；UniSim 则从日志重建可编辑的相机和 LiDAR 环境。这些路线分别强调结构演化与新视点渲染。World on Rails 使用环境沿固定日志演化的近似来学习驾驶，进一步说明“怎样生成观察”和“其他车辆怎样行动”可以由不同部分承担。[copilot4d-2024, occworld-2024, unisim-2023, world-on-rails-2021]\n\n规划并不总需要生成完整画面。LAW 把未来潜特征作为辅助监督；Epona 与 DrivingGPT 共享世界和动作表示；DAWN 在语义潜空间内让未来预测与动作递归互馈，而不是生成像素视频。DriveDreamer-Policy、EponaV2 与 DriveWAM 分别加入几何、多种未来监督或视频预训练。RFWorld 更进一步把未来监督留在训练期，部署时让不同候选共用一份评分记忆。[law-2025, epona-2025, drivinggpt-2025, dawn-2026, drivedreamer-policy-2026, eponav2-2026, drivewam-2026, rfworld-2026]\n\n要形成持续运行的生成环境，还需要维护跨帧、跨视角的同一个世界。GenieDrive 先预测占用再生成视频；Artemis 随生成过程更新共享三维地图，CoDrive 用共享坐标处理跨车一致性；HelloWorld 连接多相机、LiDAR 与少步生成。OmniDreams 和 World Engine 则将这些能力接到运行时仿真或策略后训练。模型由一次性预测走向循环使用后，历史误差如何进入下一轮成为新的问题。[geniedrive-2026, artemis-2026, codrive-2026, helloworld-2026, omnidreams-2026, world-engine-2026]",
       "referenceIds": [
         "world-on-rails-2021",
         "gaia1-2023",
@@ -71,9 +70,9 @@
     {
       "id": "taxonomy",
       "kind": "taxonomy",
-      "title": "状态表示、动作条件与参与者响应",
-      "thesis": "把这三个轴分开，才能知道模型到底学习了哪些动态。",
-      "body": "初期综述把表示、记忆、世界动态与控制作为架构组成，较新的驾驶综述区分未来生成、行为规划以及两者的交互。本页用状态表示、动作条件、参与者响应来细化这些用途：生成一段视觉上连贯的未来、为动作搜索提供转移模型、在想象中训练策略，对模型的要求不同。[world-models-survey-2024, world-models-survey-2025, planet-2019, dreamer-2020]\n\n**状态表示**可为像素、点云、体素、对象、registers 或显式地图。CascadeOcc 的层次 VQ 表示与 MORE 的紧凑 registers 使用不同监督；M4World 和 HelloWorld 联合多传感器输出。比较应包含移动对象、遮挡和长期状态保持，而不只使用图像平均质量。[cascadeocc-2026, more-2026, m4world-2026, helloworld-2026]\n\n**动作条件**可能是轨迹输入、联合动作输出或递归互馈。Epona 的视频/轨迹头共享潜状态，DAWN 在推理时迭代互相条件化，RFWorld 的共享记忆本身不依赖每条候选动作。三者可用于不同成本与交互要求，不能由 world-action 名称推断模型具备同一种因果响应。[epona-2025, dawn-2026, rfworld-2026]\n\n**参与者响应**可以来自日志回放、规则模型或学习行为。Scenario Dreamer 生成初始场景并学习参与者行为，DriveArena 将交通管理器与生成传感器闭环，ReactSim-Bench 独立控制自车以检测周车反应。Artemis/CoDrive 的跨主体观察一致性首先是生成任务，与策略间博弈反应需要分别评价。[scenario-dreamer-2025, drivearena-2025, reactsim-bench-2026, artemis-2026, codrive-2026]",
+      "title": "用三个问题区分世界模型",
+      "thesis": "模型保存什么，动作如何进入，周围参与者又由谁驱动。",
+      "body": "**它保存什么状态？**像素、点云、体素占用、对象和显式地图保留不同层次的信息。MORE 在视频预训练中学习少量运动相关 registers，也就是用于汇聚信息的向量；CascadeOcc 用层次量化表示预测占用。M4World 与 HelloWorld 则联合生成多种传感器输出。比较时既要看整体观感，也要看移动对象、遮挡后重现和长期状态保持。[more-2026, cascadeocc-2026, m4world-2026, helloworld-2026]\n\n**动作怎样进入模型？**有些模型把给定轨迹作为未来生成条件，有些共同输出视频与轨迹，有些在推理时反复交换世界预测和动作信息。Epona 的视频头与轨迹头共享时序潜状态；DAWN 递归地相互条件化；RFWorld 的共享记忆本身不随每条候选动作重新生成。三者的计算代价和能够表达的响应关系不同。[epona-2025, dawn-2026, rfworld-2026]\n\n**其他参与者由谁驱动？**日志回放保持原来的车辆轨迹，规则模型按预设规则响应，学习行为模型则尝试从数据中获得交互规律。Scenario Dreamer 生成初始场景并学习参与者行为，DriveArena 将交通管理器与生成观察连接，ReactSim-Bench 则让自车独立偏离日志，以观察周车是否响应。Artemis 与 CoDrive 主要处理跨主体观察的一致生成；几辆车看到一致的场景，与几辆车的策略相互响应，仍是两件事。[scenario-dreamer-2025, drivearena-2025, reactsim-bench-2026, artemis-2026, codrive-2026]\n\n这三个问题细化了综述中未来生成、行为规划及两者交互的分类，也解释了为什么视觉上连贯的视频未必适合直接训练策略：后者还依赖动作转移与环境响应。[world-models-survey-2024, world-models-survey-2025, planet-2019, dreamer-2020]",
       "referenceIds": [
         "cascadeocc-2026",
         "more-2026",
@@ -96,9 +95,9 @@
     {
       "id": "evidence",
       "kind": "evidence",
-      "title": "围绕生成、控制和规划设计对照",
-      "thesis": "每类输出有对应真值或任务终点，增加测量维度应服务具体假设。",
-      "body": "视频生成使用 FID/FVD、时间稳定和人工评价；三维状态另测深度、点云、占用与对象保持。DrivingGen 和 WorldLens 展示模型间不同的能力取舍，ACT-Bench 与 DrivingDojo 将动作兑现拆出来评测。生成得像和按指令变化是两项实验事实。[drivinggen-2026, worldlens-2026, act-bench-2025, drivingdojo-2024]\n\n动作条件预测与同一事件的反事实也不同。Counterfactual Prediction 使用事实后续做 abduction，并在匹配模拟分支中比较替代视角；其短时设定假定 ego 的动作变化不改变周车演化。扩展到反应式交通需要额外建模，但该限定实验已经能辨别模型是否保存了本次事件的信息。[counterfactual-prediction-2026]\n\n规划比较要固定候选、训练和评分接口。RFWorld 的同候选实测延迟由 49.2 ms 降至 37.5 ms；MORE 同时评价紧凑表示的规划与预测作用。若将模型用于测试裁决，才进一步比较同场景的失败判断、排序与真实或可信模拟参照；准入框架提供这种特定用途的检查表，不应成为所有生成研究的统一门槛。[rfworld-2026, more-2026, world-model-admissibility-2026]",
+      "title": "生成得像、听从动作和帮助规划怎样分别验证",
+      "thesis": "评价应跟着用途走，先知道指标测量的是哪一部分能力。",
+      "body": "视频生成常用 FID/FVD 衡量生成与真实图像/视频的特征分布差异，也检查时间稳定性和人工评价；三维状态还需要深度、点云、占用及对象保持指标。DrivingGen 与 WorldLens 展示不同模型在这些维度上的取舍。ACT-Bench 和 DrivingDojo 则单独检查给定动作是否在生成中兑现：画面逼真与正确转向或减速，并不是同一个测量结果。[drivinggen-2026, worldlens-2026, act-bench-2025, drivingdojo-2024]\n\n“如果换一个动作会怎样”也有两种含义。一般动作条件预测从当前信息生成一种可能未来；同一事件的反事实还想保留这次事件实际发生的背景。Counterfactual Prediction 利用事实后续推断事件状态，再把可见证据映射到替代视角并补全。其匹配模拟分支限定在短时，并假设自车动作变化不改变周车演化；因此它检验的是这个条件下的事件信息保持，而不是一般交通博弈。[counterfactual-prediction-2026]\n\n用于规划时，要看未来建模怎样改变候选选择及成本。RFWorld 在同候选对照中将实测延迟从 49.2 ms 降至 37.5 ms；MORE 同时评价紧凑表示的预测与规划作用。这类结果需要与候选、训练和评分设置一起解释。如果用途进一步变为测试裁决，才需要比较同场景失败判断、方法排序及可信参照；世界模型准入框架提供的是这种用途下的检查方式。[rfworld-2026, more-2026, world-model-admissibility-2026]",
       "referenceIds": [
         "drivinggen-2026",
         "worldlens-2026",
@@ -113,9 +112,9 @@
     {
       "id": "challenges",
       "kind": "challenges",
-      "title": "共享状态、长期更新与反事实条件",
-      "thesis": "值得推进的难点集中在信息保持、行动响应和生成误差的反馈。",
-      "body": "紧凑状态会丢弃细节，但并非所有细节都影响规划。MORE 与 RFWorld 给出两个可试验接口：在预训练时选择运动相关信息，或由未来语义监督塑造共享记忆。可以直接问哪些对象状态在压缩后仍能支持动作排序，而不把任务退回完整视频重建。[more-2026, rfworld-2026]\n\n显式地图改善跨视角一致性，却要处理生成结果回写后的漂移。Artemis 的地图更新与 CoDrive 的共享坐标生成提供互补起点；HelloWorld 的自生成上下文训练、DriveWAM 的有界 KV 记忆研究长期推理的另一侧。地图、动态对象和记忆可在不同时间尺度更新。[artemis-2026, codrive-2026, helloworld-2026, drivewam-2026]\n\n策略后训练需要有用的困难状态。World Engine、Scenario Dreamer 和 SafeGen 从日志重建、生成场景或目标终态构造训练/测试材料。关键是区分模型生成了新的外观、交互还是失败机制，并在固定训练预算下观察策略学到了什么。[world-engine-2026, scenario-dreamer-2025, safegen-2026]",
+      "title": "压缩、长期生成与训练反馈的困难",
+      "thesis": "模型反复使用自己的输出之后，小误差可能改变后续状态与行为。",
+      "body": "紧凑状态必然舍弃一些细节，问题是舍弃了什么。对视频重建不显眼的对象运动，可能影响两条轨迹的选择；大量纹理细节却未必影响规划。MORE 通过视频预训练保留运动信息，RFWorld 用未来语义监督塑造共享记忆，提供了两种理解压缩与行动信息关系的入口。[more-2026, rfworld-2026]\n\n显式地图有助于把不同视角约束到同一空间，但生成结果回写地图时也可能积累误差。Artemis 的地图更新与 CoDrive 的共享坐标生成从不同方向处理一致性；HelloWorld 用自生成上下文适配，DriveWAM 用有界的注意力键值（KV）记忆支持长期推理。地图、动态对象和记忆各自变化的速度不同，如何持续更新而不过度保留旧错误仍是难点。[artemis-2026, codrive-2026, helloworld-2026, drivewam-2026]\n\n生成数据用于训练策略时，还要弄清它增加了什么。World Engine、Scenario Dreamer 和 SafeGen 分别从失败日志、场景生成或目标终态构造材料。新的外观可能帮助视觉适应，新的行为分支才可能扩大交互覆盖；二者不能仅以“合成样本更多”概括。最终需要观察策略在固定训练预算下学到了哪些恢复或决策能力。[world-engine-2026, scenario-dreamer-2025, safegen-2026]",
       "referenceIds": [
         "more-2026",
         "rfworld-2026",
@@ -132,9 +131,9 @@
     {
       "id": "outlook",
       "kind": "outlook",
-      "title": "学习可干预状态，再扩大生成和交互规模",
-      "thesis": "可以同时推进低成本的状态实验和高收益的共享世界路线。",
-      "body": "**紧凑但保留行动差异的状态。**固定一个开放视觉编码器，比较密集 BEV、MORE 式 registers 和对象 slots，使用相同未来监督。第一轮让相同候选轨迹查询三种状态，测排序、运动对象保持与时延；再只改变动作条件化方式。这样能分辨压缩收益与行动信息损失。[more-2026, rfworld-2026, occworld-2024]\n\n**跨主体共用一个动态世界。**以 Artemis 的显式地图和 CoDrive 的共享坐标为直接近邻，维护一个对象级动态状态，由不同车辆视点解码。先在小型 CARLA 路口固定对象轨迹，测多车遮挡重现、身份保持和通信量；再开放部分车辆动作，检验共享状态是否仍能预测相互作用。首轮无需训练完整大视频模型。[artemis-2026, codrive-2026]\n\n**把事实后续变成反事实记忆。**从短时不反应设置开始，比较不使用事实后续、直接拼接后续和按几何映射读取后续三种条件。再逐步允许一个周车响应，检查误差来自状态推断还是行为转移。正负结果都能明确一般动作条件模型何时需要事件记忆。[counterfactual-prediction-2026, reactsim-bench-2026]\n\n**让合成困难样本服务一个具体学习问题。**用 Scenario Dreamer 或已有重建资产生成少量交互分支，在相同预算下比较随机扩充、视觉变化和行为变化对规划恢复的作用。先测迁移，再决定是否投入 HelloWorld/OmniDreams 规模的系统训练。[scenario-dreamer-2025, world-engine-2026, helloworld-2026, omnidreams-2026]",
+      "title": "让世界模型保留行动差异与事件连续性",
+      "thesis": "未来表示有多完整，不如它是否保留了当前用途真正需要的信息。",
+      "body": "紧凑表示仍有很大研究空间。MORE 的 registers 与 RFWorld 的共享记忆都说明，未来监督可以塑造一个供规划读取的状态，而不必在每次选择动作时重新生成完整未来。接下来的问题是，这种压缩在什么场景会丢失关键对象或运动关系，以及表示是否仍能区分后果不同的候选动作。[more-2026, rfworld-2026, occworld-2024]\n\n跨主体生成则提出“同一个世界怎样被多辆车共同使用”。Artemis 的显式地图和 CoDrive 的共享坐标为几何一致性提供了起点；进一步需要理解动态对象怎样保持身份、遮挡后如何重现，以及车辆改变动作后这些状态怎样更新。共同看见一个一致世界，是学习相互作用的重要基础，但行为响应仍有自己的建模问题。[artemis-2026, codrive-2026, reactsim-bench-2026]\n\n反事实研究还提醒我们保存事件本身的信息。只知道当前观察，模型可能生成合理却不同的未来；已知事实后续，则可以约束“这一次事件”在替代动作下可能怎样发展。怎样从短时不反应设定扩展到有周车响应的交通，是 Counterfactual Prediction 留下的自然问题，需要同时处理状态推断与行为变化。[counterfactual-prediction-2026, reactsim-bench-2026]\n\n对策略学习而言，生成器的价值最终体现在提供了哪些原本缺少的训练情形。Scenario Dreamer 与 World Engine 让场景和行为分支可以被组织起来，HelloWorld 与 OmniDreams 扩展了连续生成和系统运行能力。值得区分的是规模带来的覆盖、外观多样性带来的适应，以及新的交互后果带来的学习收益。[scenario-dreamer-2025, world-engine-2026, helloworld-2026, omnidreams-2026]",
       "referenceIds": [
         "more-2026",
         "rfworld-2026",
@@ -151,12 +150,9 @@
     }
   ],
   "takeaways": [
-    "视频生成、未来预测、规划与交互仿真是并行用途；各自有值得解决的核心方法问题。",
-    "表示、动作接口和训练方式的变化，比模型名称更能解释路线差别。",
-    "把这三个轴分开，才能知道模型到底学习了哪些动态。",
-    "每类输出有对应真值或任务终点，增加测量维度应服务具体假设。",
-    "值得推进的难点集中在信息保持、行动响应和生成误差的反馈。",
-    "可以同时推进低成本的状态实验和高收益的共享世界路线。"
+    "世界模型没有统一的最佳输出形式。视频、三维结构和潜在状态各保留不同信息，应先确定它用于生成数据、预测、规划还是交互训练。",
+    "动作条件、共享世界表示和参与者响应是不同机制。共同生成视频不自动意味着具备交通交互模型。",
+    "生成质量、动作兑现与下游规划分别需要证据。循环使用模型时，还要理解状态压缩和历史误差怎样影响后续行为。"
   ],
   "references": [
     {
@@ -857,15 +853,16 @@
     ],
     "independentReview": {
       "status": "passed",
-      "completedAt": "2026-11-06",
+      "completedAt": "2026-11-09",
       "reviewers": 1,
       "rounds": 1,
       "finalOutcome": "passed",
-      "finalFinding": "本轮新增经典工作、综述阅读路径、引文定位及增量审计已由未参与撰写的审阅者核对；先前同日复核的未改正文沿用原记录。未运行模型实验。",
-      "reviewerAgentId": "/root/foundations_review_policy",
-      "artifactPath": "docs/review-foundations/2026-11-06/independent-review/policy-round1.json",
-      "artifactSha256": "a9236b15bfbae1d58725a41a4bbb747f67b7a8bb2be2b7a8203d8ffc4f16ae0d",
-      "snapshotFingerprint": "33710753807721f34976066a61e6fc810693e3ac1dd71232ae77d23dfc62396a",
+      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
+      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
+      "reviewerAgentId": "/root/review_prose_policy",
+      "artifactPath": "docs/review-prose/2026-11-09/independent-review/policy-round1.json",
+      "artifactSha256": "c50d8e13fb2250690475d27cf420d46b6bb8735ce8f6cfe7c8b87cb324abfbb6",
+      "snapshotFingerprint": "f4695948883f002206b7864141d5f095fcf663496d0714fc9d2feb46c36d2afc",
       "assurance": "same-family provisional"
     },
     "queryRuns": [

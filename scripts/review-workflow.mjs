@@ -257,7 +257,7 @@ export function buildPrompt(workflow, interest, review, runtime = "codex") {
     "3. 每条纳入引用必须打开一手来源，核对标题、作者、年份、出版状态、venue、URL、支撑论断和限制。",
     "3a. 建立经典工作与综述覆盖表：阅读互补的成熟综述/早期系统整理和近期综述的分类、历史与参考文献章节，沿引文向后查方法源头，向前查补综述截止后的进展。按问题定义、方法、关键转折、数据集与评测检查遗漏；年份和引用数量不能代替覆盖判断。",
     "3b. 在 searchAudit.foundationsAudit 记录 surveyAnchors（referenceId/role/sectionsRead/use/coverageCutoff）、milestones、coverage、citationTrace 和 limitations。每条追溯保留综述章节出处、原论文 URL、canonical ID 与已覆盖/补入/排除理由；正文 scope 给出阅读路径，evolution/taxonomy 体现脉络。没有合适综述时用 surveyGap 保存查询和具体缺口，不凑数或虚构经典地位。",
-    "4. 综合时按 scope/evolution/taxonomy/evidence/challenges/outlook 组织，明确共识、冲突证据、失败边界和可验证研究议程。",
+    "4. 综合时按 scope/evolution/taxonomy/evidence/challenges/outlook 组织。先用具体情景说明输入、输出和困难，再讲方法如何工作及路线为何变化；解释术语，不以连续列举论文代替机制讲解。保留公式、实验条件和具体限制，避免摘要、导语与结尾重复。展望解释未解决的问题及原因，详细实验方案留在可选的 Idea 层；检索和审核过程放到来源记录。纯编辑改写保留原检索和实质复核日期，另存当前语料核对与编辑复核记录。",
     "5. 完成后由未参与撰写的独立审阅者复核事实、覆盖、结构和可读性；通过后记录当前内容的 snapshotFingerprint，任何后续内容变化都必须重新复核。",
     "",
     "强制终审检查：",
