@@ -32,6 +32,7 @@ const reviewedLabel = new Intl.DateTimeFormat("zh-CN", {
 const localReferenceCount = direction.references
   .filter((reference) => reference.origin === "local").length;
 const externalReferenceCount = direction.references.length - localReferenceCount;
+const referenceNumbers = new Map(direction.references.map((reference, index) => [reference.id, index + 1]));
 const toc = [
   { depth: 2, title: "主要问题", url: "#research-questions" },
   ...direction.sections.map((section) => ({
@@ -65,7 +66,7 @@ const toc = [
   >
     <dl class="review-detail-meta">
       <div>
-        <dt>最近复核</dt>
+        <dt>文献核对</dt>
         <dd>{reviewedLabel}</dd>
       </div>
       <div>
@@ -75,12 +76,12 @@ const toc = [
     </dl>
 
     <article class="review-article">
-      <section class="review-questions" id="research-questions" aria-labelledby="researchQuestionsTitle">
-        <h2 id="researchQuestionsTitle">主要问题</h2>
+      <details class="reading-disclosure review-questions" id="research-questions">
+        <summary id="researchQuestionsTitle">本文讨论的问题</summary>
         <ol>
           {direction.researchQuestions.map((question) => <li>{question}</li>)}
         </ol>
-      </section>
+      </details>
 
 
       {direction.sections.map((section) => (
@@ -91,14 +92,19 @@ const toc = [
           </header>
           <div class="review-prose" set:html={section.bodyHtml} />
           {section.references.length > 0 && (
-            <aside class="review-section-sources" aria-label={`${section.title}引用文献`}>
-              <strong>本节关键文献</strong>
-              <div>
+            <details class="reading-disclosure review-section-sources">
+              <summary>本节参考文献（{section.references.length}）</summary>
+              <ul>
                 {section.references.map((reference) => (
-                  <ReviewReference reference={reference} compact />
+                  <li>
+                    <a href={`#reference-${reference.id}`}>
+                      [{referenceNumbers.get(reference.id)}] {reference.title}
+                    </a>
+                    <span> · {reference.year}</span>
+                  </li>
                 ))}
-              </div>
-            </aside>
+              </ul>
+            </details>
           )}
         </section>
       ))}
@@ -164,13 +170,9 @@ const toc = [
       </details>
 
 
-      <section class="review-bibliography" id="references" aria-labelledby="referencesTitle">
-        <header>
-          <div>
-            <h2 id="referencesTitle">参考文献</h2>
-          </div>
-          <p>已收录论文可阅读本站报告，其余链接前往原论文。</p>
-        </header>
+      <details class="reading-disclosure review-bibliography" id="references">
+        <summary id="referencesTitle">参考文献（{direction.references.length}）</summary>
+        <p>已收录论文可阅读本站报告，其余链接前往原论文。</p>
         <ol>
           {direction.references.map((reference, index) => (
             <li id={`reference-${reference.id}`}>
@@ -179,7 +181,7 @@ const toc = [
             </li>
           ))}
         </ol>
-      </section>
+      </details>
 
       <nav class="review-direction-pagination" aria-label="相邻方向综述">
         {previousDirection ? (
