@@ -1,187 +1,120 @@
 {
   "version": 3,
   "id": "autonomous-driving-security",
-  "title": "自动驾驶模型攻防：攻击路径、防御与闭环后果",
-  "subtitle": "从输入扰动追踪到在线状态写入、时序传播与闭环对抗训练。",
-  "abstract": "自动驾驶攻击研究关心的是：对手能改动什么信息，这些改动怎样影响系统，以及车辆能否发现并恢复。贴纸、伪造点云、训练后门和计算延迟涉及不同权限，不能只用一个攻击成功率比较。本文沿攻击进入系统的路径，解释感知、融合、推理和在线状态更新中的机制，并把数字实验、传感器实验与车辆执行的证据分开。近期研究尤其关注多模态共同伪造，以及短时输入如何留下持续生效的错误状态。",
+  "title": "自动驾驶安全：攻击入口、传播与恢复",
+  "subtitle": "把攻击权限、组件变化和车辆后果联系起来理解研究证据。",
+  "abstract": "自动驾驶攻击可以作用于传感器输入、通信、训练数据、计算时限和持久状态。相同的检测退化可能经过不同路径影响车辆，防御也需要处理攻击后的残留状态与恢复。本文按这些路径组织方法，并保留数字、实体传感器和车辆实验各自的条件。",
   "reviewedAt": "2026-11-06",
   "lastUpdated": "2026-08-01",
   "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
-  "researchQuestions": [
-    "攻击者需要哪些权限、设备和持续时间，才能改变系统看到的信息？",
-    "相机与 LiDAR 相互核对时，为什么仍可能同时受骗？",
-    "一个短时攻击怎样通过标定、记忆或其他状态影响后续帧？",
-    "模型输出改变、预测轨迹相交和车辆实际碰撞分别证明了什么？",
-    "检测到异常以后，系统怎样恢复，同时保留正常场景性能和自适应能力？"
-  ],
   "sections": [
     {
-      "id": "threat-model-and-safety-boundary",
-      "kind": "scope",
-      "title": "从攻击者能改动什么开始",
-      "thesis": "同样是“让系统判断错误”，在图像文件中改像素、在路旁放置物体和修改车端软件，需要完全不同的条件。",
-      "body": "假设目标是让系统漏看前方障碍。研究者可以直接改写一张测试图像，也可以制作路旁物体，让真实相机拍到改变后的外观；还可以伪造 LiDAR 点，或污染模型训练数据。它们都可能降低检测表现，但攻击者的访问权限、物理约束与影响路径不同。阅读结果时，第一步是看清对手实际控制了什么。[robust-physical-attacks-2018, lidar-blackbox-attack-2020, cybersecurity-survey-2023]\n\n这些前提通常称为**威胁模型**，包括对手知道多少模型信息、能访问训练还是部署流程、可用的设备与扰动预算、持续时间、目标对象，以及被测系统和设计运行范围（ODD）。例如，可打印贴纸研究观察分类器如何受骗；LiDAR 黑盒欺骗研究点云输入；FusionRipper 研究全球导航卫星系统（GNSS）与惯性融合定位。各自的组件结果有独立价值，若继续讨论车辆危害，就要追踪错误如何进入后续决策。[robust-physical-attacks-2018, lidar-blackbox-attack-2020, gps-fusionripper-2020]\n\n一条典型传播路径是 **输入—感知/定位—预测—规划—控制—车辆状态**。系统可能在中途纠正错误，也可能因反馈把短时偏差放大。因此“检测漏了目标”“预测轨迹相交”和“实际发生碰撞”是不同观测，应分别说明实验执行到哪一层。\n\n攻击也要与自然退化区分。Bench2Drive-Robust 注入帧丢失、状态误差和执行延迟，没有设置主动对手；ObsDriveBench 考察恶劣天气下不同模态能否观察到同一信息。它们提供了有用对照：如果相同强度的自然故障就会产生相同结果，攻击研究仍需解释对手额外利用了什么机制。[bench2drive-robust-2026, obsdrivebench-2026]\n\n### 怎样阅读已有综述\n\n先读 Petit 与 Shladover 的 [Potential Cyberattacks on Automated Vehicles](https://doi.org/10.1109/TITS.2014.2342271)。这篇 2015 年论文区分自主式与协同式自动驾驶，帮助理解车内访问、传感器输入和通信攻击的前提；其中的潜在威胁分析并非每项都已实证。\n\n再读 [Adversarial Attacks on Autonomous Driving Systems in the Physical World](https://doi.org/10.1109/TIV.2024.3484152)，按攻击场景、生成依据、目标任务和攻击形式梳理物理攻击。它于 2024 年录用、2025 年出版，2026 年的 VLA、世界模型和在线状态攻击需接续原论文。[2023 年对抗攻击与防御综述](https://doi.org/10.1109/OJVT.2023.3265363) 可作为机器学习攻击面的中间入口。贯穿这些阅读的线索是权限、传播过程和实际后果。",
+      "id": "threat-model",
+      "title": "威胁模型与系统边界",
+      "covers": [
+        "scope",
+        "taxonomy",
+        "evolution"
+      ],
+      "body": "威胁模型规定攻击者能控制的输入、已知的模型信息、访问阶段、扰动预算与持续时间。直接改写测试图像、通过物理载体改变相机观察、操纵通信消息和污染训练数据，具有不同的权限。组件输出出现错误以后，还需经过预测、规划与控制，才可能产生车辆层面的后果。[cybersecurity-survey-2023,automated-vehicle-cyberattacks-2015]\n\n| 入口 | 对手改动什么 | 首先要核对的条件 |\n| --- | --- | --- |\n| 部署输入 | 图像、LiDAR 返回、GNSS 信息或 V2X 数据 | 视距、距离、角度、同步、带宽、身份与持续时间 |\n| 训练与供应链 | 数据、标注、微调过程、权重或更新链 | 数据访问、签名发布、安装权限和触发条件 |\n| 策略与推理 | 图像/文本输入、中间解释或世界模型表征 | 模型知识、查询预算、写入位置，以及输出是否被执行 |\n| 时限与资源 | 排队、路由和资源竞争 | 截止时间、突发强度、隔离方式和过期结果处理 |\n| 持久状态更新 | 标定、地图、记忆或缓存 | 哪些观测可触发写入、状态持续多久、怎样恢复 |\n\n攻击也要与自然退化区分。Bench2Drive-Robust 注入帧丢失、状态误差和执行延迟，没有设置主动对手；ObsDriveBench 考察恶劣天气下不同模态能否观察到同一信息。它们提供了有用对照：如果相同强度的自然故障就会产生相同结果，攻击研究仍需解释对手额外利用了什么机制。[bench2drive-robust-2026, obsdrivebench-2026]\n\n先读 Petit 与 Shladover 的 [Potential Cyberattacks on Automated Vehicles](https://doi.org/10.1109/TITS.2014.2342271)。这篇 2015 年论文区分自主式与协同式自动驾驶，帮助理解车内访问、传感器输入和通信攻击的前提；其中的潜在威胁分析并非每项都已实证。\n\n再读 [Adversarial Attacks on Autonomous Driving Systems in the Physical World](https://doi.org/10.1109/TIV.2024.3484152)，按攻击场景、生成依据、目标任务和攻击形式梳理物理攻击。它于 2024 年录用、2025 年出版，2026 年的 VLA、世界模型和在线状态攻击需接续原论文。[2023 年对抗攻击与防御综述](https://doi.org/10.1109/OJVT.2023.3265363) 可作为机器学习攻击面的中间入口。贯穿这些阅读的线索是权限、传播过程和实际后果。",
       "referenceIds": [
         "cybersecurity-survey-2023",
-        "robust-physical-attacks-2018",
-        "lidar-blackbox-attack-2020",
-        "gps-fusionripper-2020",
         "bench2drive-robust-2026",
-        "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026",
         "obsdrivebench-2026",
-        "adversarial-calibration-2026",
         "automated-vehicle-cyberattacks-2015",
         "physical-ads-attacks-survey-2025"
       ]
     },
     {
-      "id": "stack-expansion-and-attack-propagation",
-      "kind": "evolution",
-      "title": "从操纵单次观测，到影响后续决策与状态",
-      "thesis": "研究逐步把注意力从某个模型是否出错，扩展到错误怎样跨模块、跨时间持续传播。",
-      "body": "### 车内访问与外部传感器是两种起点\n\nKoscher 等在 2010 年研究电子控制单元（ECU）和车内网络，展示已经进入系统的攻击者可以操纵安全关键功能。它揭示了跨组件控制与信任问题，但访问前提不同于路旁攻击者。Petit 与 Shladover 后来把分析扩展到自主感知和协同通信，说明车辆系统结构如何改变攻击面。[automobile-security-2010, automated-vehicle-cyberattacks-2015]\n\n外部传感器攻击则需要把物理输入与模型响应连起来。Cao 等的 CCS 2019 工作发现，注入虚假 LiDAR 点并不必然让检测器输出障碍框，于是联合考虑能注入哪些点、检测器怎样处理这些点。随后黑盒欺骗、物体移除与跨模态攻击分别改变访问假设、攻击目标和传播方式。这条脉络的关键在于，传感器能产生的干扰与模型最敏感的干扰不一定相同。[lidar-adversarial-sensor-2019]\n\n### 反馈与融合改变了攻击后果\n\nDirty Road 关注车道感知误差如何经转向反馈被放大；LiDAR removal 研究随移动传感器持续移除点云；轨迹预测攻击进一步观察点云操纵如何改变后续运动判断。它们把研究从单帧输出推进到时间过程，各自的实体传感器、车辆输出和仿真碰撞实验并不完全重合，具体平台与结果在后文分列。[dirty-road-2021, lidar-removal-2023, trajectory-prediction-attack-2024]\n\n多模态融合本来希望一种传感器补足另一种的错误。Invisible for both Camera and LiDAR 与 frustum 攻击考察这种冗余何时失效；Cross-Modal Phantom 进一步在数据层注入互相对齐的图像与点云。由此出现一个重要问题：相互一致的观测，也可能来自协调的伪造。判断融合是否提供独立证据，需要知道两路信息是否能被同一个对手共同控制。[invisible-camera-lidar-2021, camera-lidar-frustum-2022, cross-modal-phantom-2026]\n\n### 攻击入口随学习系统扩展\n\n训练与微调引入了后门路径。车道检测后门、BadVLMDriver 和 BadDreamer 分别研究污染数据或模型后，特定触发怎样改变车道输出、文本动作建议和视频世界模型。协同感知则让其他车辆发送的数据成为入口。这里的先决条件是对数据管线、模型或通信身份的访问，不能由一次输入攻击的权限直接推出。[lane-backdoor-2022, bad-vlm-driver-2024, baddreamer-2026, collaborative-perception-fabrication-2024]\n\n语言与视频推理又增加了可操纵信息。ADvLM 和 CAD 研究视觉语言模型受到图像扰动时的响应；ReasonBreak 通过文本腐蚀观察推理与动作的变化，STCA 用描述引导的帧选择和运动 mask 破坏时序信息。它们的评价对象从离线回答到有限机器人执行不等，理解“攻击有效”仍要看输出是否进入了控制。[advlm-2026, cad-vlm-blackbox-2025, reasonbreak-2026, stca-video-attack-2026]\n\n### 时间与持久状态成为新的对象\n\n更准确的结果如果错过决策时间，也可能失去作用。Denial of Deadline 通过网络竞争，使云端慢路径错过 250 ms 合并时限，在视频重放中观察跟踪精度下降。GNSS-VLM 则利用视觉、运动与导航行为的一致性检测定位异常，其欺骗坐标在公共道路日志上离线合成。这两类工作分别关心结果何时可用，以及不同信息是否互相吻合。[denial-deadline-2026, gnss-vlm-spoofing-2026]\n\nACA 更进一步攻击在线标定：同一海报既诱发标定，又干扰外参更新。外参会供后续帧持续使用，因而一次短时操纵可能留下较长影响。与这类攻击构造不同，ADV-0 把驾驶策略和对抗生成器放进 min-max 博弈，通过迭代偏好学习追踪策略变化中的薄弱区域；其训练证据来自 MetaDrive/WOMD。[adversarial-calibration-2026, adv0-2026]\n\n模型之外，软件更新链仍需独立保护。UN Regulation No. 156 要求版本可识别、更新前验证、目标车辆兼容检查与安全交付。它界定更新治理义务，实际投毒或后门防护效果则取决于数据、构建、签名、发布与车端安装过程。[unece-r156-2021]",
+      "id": "physical-inputs",
+      "title": "物理输入与多模态融合",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "evidence",
+        "challenges"
+      ],
+      "body": "Koscher 等在 2010 年研究电子控制单元（ECU）和车内网络，展示已经进入系统的攻击者可以操纵安全关键功能。它揭示了跨组件控制与信任问题，但访问前提不同于路旁攻击者。Petit 与 Shladover 后来把分析扩展到自主感知和协同通信，说明车辆系统结构如何改变攻击面。[automobile-security-2010, automated-vehicle-cyberattacks-2015]\n\n外部传感器攻击则需要把物理输入与模型响应连起来。Cao 等的 CCS 2019 工作发现，注入虚假 LiDAR 点并不必然让检测器输出障碍框，于是联合考虑能注入哪些点、检测器怎样处理这些点。随后黑盒欺骗、物体移除与跨模态攻击分别改变访问假设、攻击目标和传播方式。这条脉络的关键在于，传感器能产生的干扰与模型最敏感的干扰不一定相同。[lidar-adversarial-sensor-2019]\n\n车道、定位和轨迹预测把单帧误差连接到时间过程。Dirty Road 研究车道感知与转向反馈，FusionRipper 研究 GNSS 与惯性融合定位，LiDAR removal 研究随传感器运动持续移除点云。实体可实现性、组件响应和闭环后果在这些工作中并不总是由同一组实验贯通。[dirty-road-2021,gps-fusionripper-2020,lidar-removal-2023,trajectory-prediction-attack-2024]\n\n| 工作 | 实验设置与实际观察 |\n| --- | --- |\n| Robust Physical-World Attacks | 车载手机测试交通标志分类，终点是分类输出。 |\n| LiDAR 黑盒攻击 | VLP-16 采集轨迹主要离线注入 KITTI，连接硬件可行性与检测响应。 |\n| FusionRipper | 重放 6 条真实传感器轨迹，检验融合定位接管；没有 RF 发射或车辆执行。 |\n| Dirty Road | 1:12 实体补丁验证车道感知/转向输出；Camry 在车道检测模型输出层注入攻击轨迹，10 次攻击均撞纸箱、10 次无攻击均未碰撞；另有仿真闭环。实体补丁到全尺寸碰撞尚未贯通。 |\n| Invisible for both Camera and LiDAR | 分别进行全尺寸 LiDAR 规避、1:6.67 室内相机—LiDAR 联合测试与 100 次仿真碰撞，三者条件不同。 |\n| Frustum 攻击 | 静态硬件可行性、离线数据改写与 LGSVL 回放分别验证不同环节。 |\n| LiDAR removal | 0.1 m/s 机器人和约 5 km/h 汽车验证点云移除能跟踪移动传感器；碰撞结果来自 Apollo/LGSVL。 |\n| 轨迹预测攻击 | 32 线 LiDAR 测试车、路边 Tesla、两块 A3 纸板，5/10 km/h、每条件 5 次；最高 63% 是预测轨迹相交代理，未测真实碰撞率。 |\n\n这些结果明确了特定接口与条件下的可行性，也显示“物理攻击”覆盖范围很宽。跨传感器代际、跨 ODD 的风险频率仍需要对应统计。[robust-physical-attacks-2018, lidar-blackbox-attack-2020, gps-fusionripper-2020, dirty-road-2021, invisible-camera-lidar-2021, camera-lidar-frustum-2022, lidar-removal-2023, trajectory-prediction-attack-2024]\n\n相机与 LiDAR 的冗余依赖两路信息是否提供独立约束。Invisible for both Camera and LiDAR、frustum 攻击与 Cross-Modal Phantom 分别研究物理载体或数据层的联合操纵。共同可见的伪造和协调注入可能使两路观察一致但错误；自然恶劣天气又可能造成不一致，防御需要面对这两种条件。[invisible-camera-lidar-2021,camera-lidar-frustum-2022,cross-modal-phantom-2026,obsdrivebench-2026]",
       "referenceIds": [
+        "robust-physical-attacks-2018",
+        "lidar-blackbox-attack-2020",
+        "gps-fusionripper-2020",
         "dirty-road-2021",
         "invisible-camera-lidar-2021",
         "camera-lidar-frustum-2022",
         "lidar-removal-2023",
         "trajectory-prediction-attack-2024",
-        "collaborative-perception-fabrication-2024",
-        "lane-backdoor-2022",
-        "advlm-2026",
-        "cad-vlm-blackbox-2025",
-        "bad-vlm-driver-2024",
-        "baddreamer-2026",
-        "reasonbreak-2026",
-        "unece-r156-2021",
-        "trustworthy-vlm-attacks-2025",
-        "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026",
-        "adversarial-calibration-2026",
-        "cross-modal-phantom-2026",
-        "stca-video-attack-2026",
-        "adv0-2026",
-        "automobile-security-2010",
-        "automated-vehicle-cyberattacks-2015",
-        "lidar-adversarial-sensor-2019",
-        "physical-ads-attacks-survey-2025"
-      ]
-    },
-    {
-      "id": "trust-boundary-taxonomy",
-      "kind": "taxonomy",
-      "title": "五类攻击入口，各自需要什么权限",
-      "thesis": "按可控制的信息分类，比按“攻击成功”与否分类更容易看清方法之间的关系。",
-      "body": "| 入口 | 对手改动什么 | 首先要核对的条件 |\n| --- | --- | --- |\n| 部署输入 | 图像、LiDAR 返回、GNSS 信息或 V2X 数据 | 视距、距离、角度、同步、带宽、身份与持续时间 |\n| 训练与供应链 | 数据、标注、微调过程、权重或更新链 | 数据访问、签名发布、安装权限和触发条件 |\n| 策略与推理 | 图像/文本输入、中间解释或世界模型表征 | 模型知识、查询预算、写入位置，以及输出是否被执行 |\n| 时限与资源 | 排队、路由和资源竞争 | 截止时间、突发强度、隔离方式和过期结果处理 |\n| 持久状态更新 | 标定、地图、记忆或缓存 | 哪些观测可触发写入、状态持续多久、怎样恢复 |\n\n这些入口可能组合，但各自的访问前提需要保留。例如已获得 ECU 访问的控制攻击，与通过光学回波操纵感知的攻击，即使都影响车辆，也不是同一种威胁。Petit–Shladover 的自主/协同系统分类适合理解结构；物理攻击综述的场景、生成依据、目标任务和形式四类标签，则帮助描述载体与约束。上表沿系统入口整理，与这些分类可以交叉使用。[automobile-security-2010, lidar-adversarial-sensor-2019, automated-vehicle-cyberattacks-2015, physical-ads-attacks-survey-2025]\n\n时限攻击说明，对手未必需要修改内容。慢路径结果迟到后，系统可能只能使用较弱的快速路径；自然拥塞和设备过载也会产生类似现象。因此归因需要比较同强度的非恶意负载。跨模态不一致也有类似歧义：恶劣天气可能让某个传感器本来就看不清，检测器需要先考虑可观测性，再判断是否存在欺骗。[denial-deadline-2026, gnss-vlm-spoofing-2026, obsdrivebench-2026]\n\n持久状态的区别在于影响会跨帧保存。ACA 提供在线标定的具体例子：正常情况下，新观测帮助修正外参；攻击时，同一个更新机制把错误写入后续帧共用的状态。仅检查当前检测 AP 容易漏掉污染持续时间和恢复成本。Cross-Modal Phantom 还提示，用同一组受操纵观测反复核对，未必增加独立信息。[adversarial-calibration-2026, cross-modal-phantom-2026]\n\n防御也应沿接口理解。MA2T 的鲁棒训练、输入恢复方法和 AD2 的异常检测分别处理不同环节。检测后怎样让控制策略进入较安全状态、何时恢复正常运行，是进一步的系统问题；当前纳入论文尚未完整验证由规划安全盾、独立运行时监控和最小风险机动组成的恢复方案。[maat-e2e-adversarial-training-2024, revisiting-attacks-2025, ad2-2026]",
-      "referenceIds": [
-        "cybersecurity-survey-2023",
-        "lidar-blackbox-attack-2020",
-        "gps-fusionripper-2020",
-        "camera-lidar-frustum-2022",
-        "collaborative-perception-fabrication-2024",
-        "lane-backdoor-2022",
-        "unece-r156-2021",
-        "advlm-2026",
-        "cad-vlm-blackbox-2025",
-        "maat-e2e-adversarial-training-2024",
-        "revisiting-attacks-2025",
-        "ad2-2026",
-        "trustworthy-vlm-attacks-2025",
-        "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026",
         "obsdrivebench-2026",
-        "adversarial-calibration-2026",
         "cross-modal-phantom-2026",
         "automated-vehicle-cyberattacks-2015",
-        "physical-ads-attacks-survey-2025",
         "automobile-security-2010",
         "lidar-adversarial-sensor-2019"
       ]
     },
     {
-      "id": "evidence-ladder-and-strong-baselines",
-      "kind": "evidence",
-      "title": "把模型、传感器与车辆实验分开看",
-      "thesis": "具体实验支持什么结论，取决于操纵怎样进入系统，以及测量停止在哪一层。",
-      "body": "### 同一篇论文也可能包含不同层次的实验\n\n离线数字测试便于控制输入，传感器实验检查物理可实现性，闭环仿真观察反馈传播，车辆执行检验具体平台上的后果。这些实验可以互相补充，但必须保留各自的攻击权限。最容易误读的情况，是把同一篇论文里分开的实体攻击与碰撞实验串成一次完整验证。\n\n| 工作 | 实验设置与实际观察 |\n| --- | --- |\n| Robust Physical-World Attacks | 车载手机测试交通标志分类，终点是分类输出。 |\n| LiDAR 黑盒攻击 | VLP-16 采集轨迹主要离线注入 KITTI，连接硬件可行性与检测响应。 |\n| FusionRipper | 重放 6 条真实传感器轨迹，检验融合定位接管；没有 RF 发射或车辆执行。 |\n| Dirty Road | 1:12 实体补丁验证车道感知/转向输出；Camry 在车道检测模型输出层注入攻击轨迹，10 次攻击均撞纸箱、10 次无攻击均未碰撞；另有仿真闭环。实体补丁到全尺寸碰撞尚未贯通。 |\n| Invisible for both Camera and LiDAR | 分别进行全尺寸 LiDAR 规避、1:6.67 室内相机—LiDAR 联合测试与 100 次仿真碰撞，三者条件不同。 |\n| Frustum 攻击 | 静态硬件可行性、离线数据改写与 LGSVL 回放分别验证不同环节。 |\n| LiDAR removal | 0.1 m/s 机器人和约 5 km/h 汽车验证点云移除能跟踪移动传感器；碰撞结果来自 Apollo/LGSVL。 |\n| 轨迹预测攻击 | 32 线 LiDAR 测试车、路边 Tesla、两块 A3 纸板，5/10 km/h、每条件 5 次；最高 63% 是预测轨迹相交代理，未测真实碰撞率。 |\n\n这些结果明确了特定接口与条件下的可行性，也显示“物理攻击”覆盖范围很宽。跨传感器代际、跨 ODD 的风险频率仍需要对应统计。[robust-physical-attacks-2018, lidar-blackbox-attack-2020, gps-fusionripper-2020, dirty-road-2021, invisible-camera-lidar-2021, camera-lidar-frustum-2022, lidar-removal-2023, trajectory-prediction-attack-2024]\n\n### 协同感知与视觉语言接口\n\n| 工作 | 平台、权限与重复条件 | 结果到达的层级 |\n| --- | --- | --- |\n| V2X data fabrication | 高保真仿真；MCity 部分为 8 场景 × 5 秒 × 10 Hz，共 400 帧录制轨迹注入 | 仿真安全后果及记录上的数据操纵，未执行实时无线闭环 |\n| ADvLM | CARLA 每设置 5 次；PIXLOOP-Hooke beta 底盘在白天单场景直接写入数字相机噪声，10+10 次 | 需要相机输入流写权限的有限执行 |\n| CAD | JetBot/LIMO 人工赛道，补丁约占图像 12%、无扰动约束，每车每路线 3 次 | 小型机器人平台 |\n| BadVLMDriver | 常见物体照片触发 | 文本动作建议，没有车辆执行 |\n\nReasonBreak 又包含两种不同协议。开环采用有限预算 Best-of-N 黑盒查询，测量搜索能发现的操纵；闭环每步只随机采样一次文本腐蚀，观察错误随反馈累积，没有进行攻击搜索。作者称开环是能力上界，但有限采样与达到目标即停止的搜索并未给出数学最坏情况上界。闭环结果支持随机文本错误的传播机制，目标化或自适应攻击的车辆可实现性尚待检验。[reasonbreak-2026]\n\n### 定位、计算时限与持久状态\n\nGNSS-VLM 的公共道路部分提供良性仪器日志，欺骗坐标随后离线合成。14% 的选择性调用降低了平均开销，单次推理仍约 0.5 s，且存在慢漂移漏检。Denial of Deadline 在单一边云视频重放架构中，使 99 分位延迟（p99）从 92 ms 增至 2 s，多目标跟踪指标 HOTA 平均下降 7.0；它没有执行轨迹或控制。两者分别支持一致性检测和时限脆弱性的分析。[gnss-vlm-spoofing-2026, denial-deadline-2026]\n\nACA 的证据包括 KITTI/nuScenes 的标定与融合输出、Husky A300 上可打印海报造成的标定偏差，以及 CARLA 接受错误外参后的碰撞。Cross-Modal Phantom 在 400 个 KITTI 场景中进行数据层双模态注入，尚未实现同步物理装置。STCA 在 BDD100K 与 nuScenes 视频上测试离线迁移攻击，攻击者可使用代理模型梯度，目标模型为黑盒。ADV-0 则是 MetaDrive/WOMD 中的联合对抗训练，作者把视觉传感器输入列为后续工作。[adversarial-calibration-2026, cross-modal-phantom-2026, stca-video-attack-2026, adv0-2026]\n\n### 防御结果要连同正常表现阅读\n\n对照需要包括同预算随机/非目标扰动、自然腐蚀与设备故障、清洁性能、已有强攻击、跨模型迁移，以及了解防御机制的自适应攻击。MA2T 评估三种作者自建、同预算的 5-step PGD 风格白盒自适应攻击；独立攻击套件与物理验证仍待补充。Revisiting 和 AD2 分别比较输入防御与时序检测，误报、漏报、延迟、资源占用和检测后实际回退仍决定系统用途。[maat-e2e-adversarial-training-2024, revisiting-attacks-2025, ad2-2026]\n\nBench2Drive-Robust 可提供无主动对手的部署扰动对照。ObsDriveBench 的选择题则诊断认知与可观测性，正文称 14 个现成模型，表 1 具名行计 15 个，数量口径存在差异；它没有测量车辆恢复。若继续评价防御的驾驶后果，还需要可信的动作响应环境与实际回退执行。[bench2drive-robust-2026, obsdrivebench-2026, world-model-admissibility-2026]",
+      "id": "learned-and-language-interfaces",
+      "title": "通信、训练与语言接口",
+      "covers": [
+        "taxonomy",
+        "evolution",
+        "evidence",
+        "challenges"
+      ],
+      "body": "训练与微调引入了后门路径。车道检测后门、BadVLMDriver 和 BadDreamer 分别研究污染数据或模型后，特定触发怎样改变车道输出、文本动作建议和视频世界模型。协同感知则让其他车辆发送的数据成为入口。这里的先决条件是对数据管线、模型或通信身份的访问，不能由一次输入攻击的权限直接推出。[lane-backdoor-2022, bad-vlm-driver-2024, baddreamer-2026, collaborative-perception-fabrication-2024]\n\n视觉语言与视频模型扩大了可操作的输入空间。ADvLM 和 CAD 研究图像扰动，ReasonBreak 操纵推理文本，STCA 通过帧选择和运动 mask 干扰时序信息。它们的输出可能是回答、动作建议或控制输入，实验到达的层级各不相同。[advlm-2026,cad-vlm-blackbox-2025,reasonbreak-2026,stca-video-attack-2026]\n\n| 工作 | 平台、权限与重复条件 | 结果到达的层级 |\n| --- | --- | --- |\n| V2X data fabrication | 高保真仿真；MCity 部分为 8 场景 × 5 秒 × 10 Hz，共 400 帧录制轨迹注入 | 仿真安全后果及记录上的数据操纵，未执行实时无线闭环 |\n| ADvLM | CARLA 每设置 5 次；PIXLOOP-Hooke beta 底盘在白天单场景直接写入数字相机噪声，10+10 次 | 需要相机输入流写权限的有限执行 |\n| CAD | JetBot/LIMO 人工赛道，补丁约占图像 12%、无扰动约束，每车每路线 3 次 | 小型机器人平台 |\n| BadVLMDriver | 常见物体照片触发 | 文本动作建议，没有车辆执行 |\n\nReasonBreak 又包含两种不同协议。开环采用有限预算 Best-of-N 黑盒查询，测量搜索能发现的操纵；闭环每步只随机采样一次文本腐蚀，观察错误随反馈累积，没有进行攻击搜索。作者称开环是能力上界，但有限采样与达到目标即停止的搜索并未给出数学最坏情况上界。闭环结果支持随机文本错误的传播机制，目标化或自适应攻击的车辆可实现性尚待检验。[reasonbreak-2026]\n\n供应链与 VLA 证据还较零散。后门研究往往假设数据或微调管线可被污染；ReasonBreak、CAD 和 BadDreamer 仍为预印本，BadVLMDriver 为非归档工作坊论文；正式发表的 ADvLM 提供了 VLM 白盒攻击证据，但并未覆盖完整 VLA 控制链。UN Regulation No. 156 给出软件更新治理基线，当前引用中尚无独立量化构建、签名、OTA 与学习模型发布链端到端攻击成功率的完整实证。[lane-backdoor-2022, reasonbreak-2026, cad-vlm-blackbox-2025, baddreamer-2026, bad-vlm-driver-2024, advlm-2026, unece-r156-2021]",
       "referenceIds": [
-        "dirty-road-2021",
-        "invisible-camera-lidar-2021",
-        "camera-lidar-frustum-2022",
-        "lidar-removal-2023",
-        "trajectory-prediction-attack-2024",
-        "collaborative-perception-fabrication-2024",
-        "maat-e2e-adversarial-training-2024",
-        "revisiting-attacks-2025",
-        "advlm-2026",
-        "cad-vlm-blackbox-2025",
-        "reasonbreak-2026",
-        "bench2drive-robust-2026",
-        "ad2-2026",
-        "world-model-admissibility-2026",
-        "trustworthy-vlm-attacks-2025",
-        "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026",
-        "obsdrivebench-2026",
-        "adversarial-calibration-2026",
-        "cross-modal-phantom-2026",
-        "stca-video-attack-2026",
-        "adv0-2026"
-      ]
-    },
-    {
-      "id": "consensus-conflicts-and-gaps",
-      "kind": "challenges",
-      "title": "为什么已有防御仍难直接迁移",
-      "thesis": "对手能力、传感器条件与恢复机制一变，原先有效的检测或训练可能面对不同问题。",
-      "body": "数字白盒攻击便于测量模型的敏感方向，却往往允许道路环境中难以实现的扰动；黑盒物理攻击更接近外部输入，但受距离、角度、天气和同步窗口约束。现有 LiDAR、融合与道路攻击已经证明特定条件下的可行性，跨传感器代际、融合结构和 ODD 的效果仍需对应研究。比较方法时保留这些差异，才能知道实验是否在回答同一个问题。[robust-physical-attacks-2018, lidar-blackbox-attack-2020, invisible-camera-lidar-2021, lidar-removal-2023]\n\n多传感器的难点在于信息是否独立。一种传感器可以纠正另一种的错误，但共同可见的伪造物或协调输入也可能同时误导两者；恶劣天气又会自然造成不一致。检测器既要识别操纵，也要容忍正常观测不足，否则高误报会不断触发回退。[invisible-camera-lidar-2021, gnss-vlm-spoofing-2026, obsdrivebench-2026]\n\n供应链与 VLA 证据还较零散。后门研究往往假设数据或微调管线可被污染；ReasonBreak、CAD 和 BadDreamer 仍为预印本，BadVLMDriver 为非归档工作坊论文；正式发表的 ADvLM 提供了 VLM 白盒攻击证据，但并未覆盖完整 VLA 控制链。UN Regulation No. 156 给出软件更新治理基线，当前引用中尚无独立量化构建、签名、OTA 与学习模型发布链端到端攻击成功率的完整实证。[lane-backdoor-2022, reasonbreak-2026, cad-vlm-blackbox-2025, baddreamer-2026, bad-vlm-driver-2024, advlm-2026, unece-r156-2021]\n\n检测以后的恢复尤其重要。AD2 尚未闭环验证了解检测器的对手与检测后的回退；MA2T 的自适应攻击来自作者自建方案。一个防御即使能发现异常，也仍要处理车辆怎样减速、何时恢复、恢复后如何重新接管，以及这些措施对正常交通的代价。网络时限工作还说明，恢复必须赶得上决策时间，平均精度无法单独回答这一点。[ad2-2026, denial-deadline-2026]\n\n在线更新使防御同时承担两种目标：允许系统纠正自然漂移，又阻止恶意观测留下错误状态。冻结外参能去掉更新入口，却也失去正常自校准收益。联合对抗训练则要保持对手能追踪策略的新弱点，同时避免场景多样性下降。ACA 与 ADV-0 分别提供了研究这些取舍的具体起点。[adversarial-calibration-2026, adv0-2026]",
-      "referenceIds": [
-        "robust-physical-attacks-2018",
-        "lidar-blackbox-attack-2020",
-        "invisible-camera-lidar-2021",
-        "lidar-removal-2023",
         "lane-backdoor-2022",
+        "collaborative-perception-fabrication-2024",
         "bad-vlm-driver-2024",
         "advlm-2026",
         "cad-vlm-blackbox-2025",
+        "unece-r156-2021",
         "reasonbreak-2026",
         "baddreamer-2026",
-        "unece-r156-2021",
-        "ad2-2026",
-        "world-model-admissibility-2026",
-        "trustworthy-vlm-attacks-2025",
+        "stca-video-attack-2026"
+      ]
+    },
+    {
+      "id": "persistent-state",
+      "title": "时限、在线标定与跨帧影响",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "evidence",
+        "challenges"
+      ],
+      "body": "时限攻击不必改动内容。Denial of Deadline 用网络竞争使云端慢路径错过 250 ms 合并时限；系统只能使用及时到达的较弱结果。GNSS-VLM 则利用视觉、运动与导航行为的一致性检测定位异常。负载与可观测性会影响这些判断，归因需要相应的自然拥塞和正常退化对照。[denial-deadline-2026,gnss-vlm-spoofing-2026,obsdrivebench-2026]\n\nGNSS-VLM 的公共道路部分提供良性仪器日志，欺骗坐标随后离线合成。14% 的选择性调用降低了平均开销，单次推理仍约 0.5 s，且存在慢漂移漏检。Denial of Deadline 在单一边云视频重放架构中，使 99 分位延迟（p99）从 92 ms 增至 2 s，多目标跟踪指标 HOTA 平均下降 7.0；它没有执行轨迹或控制。两者分别支持一致性检测和时限脆弱性的分析。[gnss-vlm-spoofing-2026, denial-deadline-2026]\n\n在线标定将新观测写入后续帧共用的外参。ACA 的同一海报既诱发标定又干扰更新，因此短时输入可以留下较长影响。错误写入与污染寿命成为当前帧检测精度之外的对象；冻结更新能删除入口，却也会失去自然漂移下的自校准收益。[adversarial-calibration-2026]\n\nACA 的证据包括 KITTI/nuScenes 的标定与融合输出、Husky A300 上可打印海报造成的标定偏差，以及 CARLA 接受错误外参后的碰撞。Cross-Modal Phantom 在 400 个 KITTI 场景中进行数据层双模态注入，尚未实现同步物理装置。STCA 在 BDD100K 与 nuScenes 视频上测试离线迁移攻击，攻击者可使用代理模型梯度，目标模型为黑盒。ADV-0 则是 MetaDrive/WOMD 中的联合对抗训练，作者把视觉传感器输入列为后续工作。[adversarial-calibration-2026, cross-modal-phantom-2026, stca-video-attack-2026, adv0-2026]\n\n更新触发与外参估计如果依赖同一组受操纵观察，反复核对残差可能仍然接受错误。后续不同片段的运动和重投影约束能否提供独立检验，同时保留正常校准速度，是这一机制提出的开放问题。[adversarial-calibration-2026,cross-modal-phantom-2026]",
+      "referenceIds": [
         "gnss-vlm-spoofing-2026",
         "denial-deadline-2026",
         "obsdrivebench-2026",
         "adversarial-calibration-2026",
+        "cross-modal-phantom-2026",
+        "stca-video-attack-2026",
         "adv0-2026"
       ]
     },
     {
-      "id": "assurance-driven-research-agenda",
-      "kind": "outlook",
-      "title": "怎样保留适应能力，并在攻击后恢复",
-      "thesis": "后续问题集中在更新所依据的信息是否独立，以及防御如何真正改变系统行为。",
-      "body": "### 什么证据足以接受一次在线更新？\n\n标定更新必须利用新观测，但触发更新与估计外参如果都来自同一组受操纵内容，反复检查残差可能仍然接受错误。ACA 暴露了这一依赖。一个值得研究的问题是，后续不同片段的运动和重投影信息能否提供足够独立的检验，同时保留对自然机械漂移的适应速度。核心取舍是正常校准收益、错误写入和污染持续时间，而不只是当前帧的检测精度。[adversarial-calibration-2026, cross-modal-phantom-2026]\n\n### 攻击停止以后，系统何时才算恢复？\n\n输入恢复正常时，错误定位、标定或缓存可能仍留在系统中。检测器报出异常也不意味着车辆已回到安全状态。因此恢复研究需要连接状态、策略切换与后续行为：持续攻击、间歇攻击以及攻击退出，可能需要不同处理；自然帧冻结、定位漂移和控制延迟则提供对照。误触发的代价、恢复时间和重新接管条件，都是这个问题的一部分。[ad2-2026, bench2drive-robust-2026, gnss-vlm-spoofing-2026, denial-deadline-2026]\n\n### 对手与策略共同学习，会学到怎样的鲁棒性？\n\nADV-0 已让对手随策略变化，研究重点因而可以继续追问：传感器一致性、短时可恢复干预或状态污染寿命，能否为生成器提供更有用的约束？若新方法只增加攻击强度或训练次数，仍难解释收益来自哪里。更有意义的是看它是否发现不同机制的弱点，并同时保留正常任务表现、未见场景能力和攻击后的恢复。[adv0-2026, stca-video-attack-2026]\n\n日志、仿真、传感器在环和车辆试验各自适合回答其中一部分。组件机制可以先得到清楚结论，再沿实际需要检查传播与恢复；不必把每项研究都写成已经完成的整车安全证明。",
+      "id": "defense-and-recovery",
+      "title": "鲁棒训练、检测与恢复",
+      "covers": [
+        "evidence",
+        "challenges",
+        "outlook"
+      ],
+      "body": "对照需要包括同预算随机/非目标扰动、自然腐蚀与设备故障、清洁性能、已有强攻击、跨模型迁移，以及了解防御机制的自适应攻击。MA2T 评估三种作者自建、同预算的 5-step PGD 风格白盒自适应攻击；独立攻击套件与物理验证仍待补充。Revisiting 和 AD2 分别比较输入防御与时序检测，误报、漏报、延迟、资源占用和检测后实际回退仍决定系统用途。[maat-e2e-adversarial-training-2024, revisiting-attacks-2025, ad2-2026]\n\nBench2Drive-Robust 可提供无主动对手的部署扰动对照。ObsDriveBench 的选择题则诊断认知与可观测性，正文称 14 个现成模型，表 1 具名行计 15 个，数量口径存在差异；它没有测量车辆恢复。若继续评价防御的驾驶后果，还需要可信的动作响应环境与实际回退执行。[bench2drive-robust-2026, obsdrivebench-2026, world-model-admissibility-2026]\n\n防御后的状态变化需要继续跟踪。输入恢复正常时，错误定位、标定或缓存仍可能存在；持续攻击、间歇攻击与退出后的恢复，也可能要求不同策略。AD2 的检测研究尚未闭环验证了解检测器的对手及检测后的回退，因此误触发代价、恢复时间与重新接管仍是系统层面的待解问题。[ad2-2026,denial-deadline-2026,gnss-vlm-spoofing-2026]\n\nADV-0 让策略和对手在 MetaDrive/WOMD 中共同学习，为跟踪策略变化中的薄弱区域提供了起点。后续约束可以关注传感器一致性、短时可恢复干预或状态污染持续时间，但收益应体现为不同机制的弱点覆盖，并保留正常任务与未见场景表现。其已有训练证据未包含视觉传感器输入。[adv0-2026,stca-video-attack-2026]",
       "referenceIds": [
-        "adversarial-calibration-2026",
-        "cross-modal-phantom-2026",
-        "adv0-2026",
-        "stca-video-attack-2026",
+        "maat-e2e-adversarial-training-2024",
+        "revisiting-attacks-2025",
         "bench2drive-robust-2026",
         "ad2-2026",
+        "world-model-admissibility-2026",
         "gnss-vlm-spoofing-2026",
-        "denial-deadline-2026"
+        "denial-deadline-2026",
+        "obsdrivebench-2026",
+        "stca-video-attack-2026",
+        "adv0-2026"
       ]
     }
-  ],
-  "takeaways": [
-    "读攻击结果先看权限与输入路径，再看输出到达哪一层。数字模型、实体传感器和车辆执行的证据可以互补，但条件不同。",
-    "融合的作用取决于信息独立性；多模态一致也可能来自协调伪造，自然可观测性下降又可能造成不一致。",
-    "在线标定等持久状态会把短时输入影响留给后续帧，错误写入、污染时长与恢复成本值得单独研究。",
-    "防御需要同时面对自适应对手和正常交通；能检测异常、能按时回退、能恢复运行是不同能力。",
-    "联合对抗训练已经有策略与对手共同演化的基线，后续价值在于明确的新约束、机制覆盖和恢复效果。"
   ],
   "references": [
     {
@@ -1733,14 +1666,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_embodied",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/embodied-round1.json",
-      "artifactSha256": "907ef62070a8cfcc1de93d7722e66856966002832eb0d12cc07cab12dc65d137",
-      "snapshotFingerprint": "3d17c3b46e917971377c612f306675409c1357c7412e79e12a99b9626e514b4b",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_assessment",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/assessment-round2.json",
+      "artifactSha256": "031244f69e3fc81439cb3caf1d56113f8d9a5b037aadc9ad77bd05bc30a607d9",
+      "snapshotFingerprint": "4ed95c56d2e70813e5c98a714b40a1b51434ee39938581900af08d558e381556",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -3465,5 +3398,27 @@
       "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
-  }
+  },
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "threat-model-and-safety-boundary": "threat-model",
+    "threat-model-and-safety-boundary-title": "threat-model",
+    "stack-expansion-and-attack-propagation": "physical-inputs",
+    "stack-expansion-and-attack-propagation-title": "physical-inputs",
+    "trust-boundary-taxonomy": "threat-model",
+    "trust-boundary-taxonomy-title": "threat-model",
+    "evidence-ladder-and-strong-baselines": "physical-inputs",
+    "evidence-ladder-and-strong-baselines-title": "physical-inputs",
+    "consensus-conflicts-and-gaps": "persistent-state",
+    "consensus-conflicts-and-gaps-title": "persistent-state",
+    "assurance-driven-research-agenda": "defense-and-recovery",
+    "assurance-driven-research-agenda-title": "defense-and-recovery",
+    "research-questions": "threat-model",
+    "researchQuestionsTitle": "threat-model",
+    "takeaways": "defense-and-recovery",
+    "takeawaysTitle": "defense-and-recovery"
+  },
+  "additionalReferenceIds": [
+    "trustworthy-vlm-attacks-2025"
+  ]
 }

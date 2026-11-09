@@ -236,13 +236,15 @@ content/reviews/<direction-id>.json
 
 综述中心面向“一个方向已经知道什么、证据在哪里、还缺什么”组织内容，而不是把本站论文卡片重新排列一遍。`content/reviews/` 必须恰好覆盖 `config/research-interests.json` 中的全部长期方向；文件名、正文 `id` 和方向 id 必须一致。
 
-每份方向综述固定包含六类章节：`scope`、`evolution`、`taxonomy`、`evidence`、`challenges`、`outlook`。先用具体情景解释问题、输入和输出，再展开路线如何工作、为什么发生变化。术语首次出现时说明；不要用连续点名论文代替机制讲解，也不要让摘要、导语和结尾反复说同一件事。公式、关键实验条件和限制保留在对应论述旁，检索与审核过程放到来源记录。展望讨论未解决的问题及原因，详细实验方案留在可选的 Idea 层。纯文案修改保留原检索和实质复核日期，另存当前语料核对与独立编辑复核记录。参考文献同时覆盖本库报告和站外重要论文：
+综述章节按领域的技术关系组织，不固定章数或开篇套路。`structureVersion: 2` 的每节包含 `id/title/body/referenceIds/covers`；`covers` 合计覆盖 scope、evolution、taxonomy、evidence、challenges、outlook 六个编辑维度。相同方法尽量在一个论证位置展开，保留公式、比较条件和重要负结果。摘要交代文章角度，正文解释机制，不强制章导语与结尾清单。旧章节、问题和结尾片段通过 `legacyAnchors` 指向对应新章，历史锚点登记见 `config/review-anchors.json`。
+
+每节 `referenceIds` 对应正文引用、阅读入口或图表依据；未展开的保留文献放在 `additionalReferenceIds`，在完整书目中标为延伸阅读。原创综合图使用 `figures` 记录 URL、真实尺寸、来源 reference IDs 与 SHA-256；图文件变化会使校验失败，必须重新检查并绑定。图用于解释关系，表用于对齐条件，不设统一数量。作者及独立审阅者都需打开实际图片。纯编辑调整保留历史检索和实质复核日期，另存当前语料与改写审核记录。参考文献同时覆盖本库报告和站外重要论文：
 
 - 本库论文填写 `localPaperId`，标题必须与对应论文报告完全一致；页面会派生“本库已报告”标记并跳转本站详情。
 - 站外论文不填写 `localPaperId`，使用 DOI、会议、期刊或 arXiv 的 HTTPS 一手链接；页面会派生“外部文献”标记并直达原文。
 - 不要手填来源布尔值。本库状态以 `localPaperId` 为唯一依据；论文日后入库时补上该字段即可自动切换状态。
 - 每方向至少 10 篇参考文献，并同时包含本库论文、外部论文、基础工作、近期工作、正式发表成果和至少一篇 `survey` 或 `tutorial`；具体阈值以 `config/literature-review-workflow.json` 为准。
-- 数量阈值只是最低检查。每次实质更新还要对照互补的成熟与近期综述，检查方法源头、关键转折及基准是否遗漏；阅读分类与引用章节，再回到原论文核对。`scope` 给出简短的综述阅读顺序，`evolution` 与 `taxonomy` 吸收补全的脉络。
+- 数量阈值只是最低检查。每次实质更新还要对照互补的成熟与近期综述，检查方法源头、关键转折及基准是否遗漏；阅读分类与引用章节，再回到原论文核对。正文引入范围时给出有用途说明的综述阅读顺序，技术章节吸收补全的脉络。
 - `searchAudit.foundationsAudit` 保存 `surveyAnchors`（已有/前沿综述、实际阅读章节、用途与覆盖范围）、`milestones`、逐分支 `coverage`、可追溯的 `citationTrace` 和 `limitations`。领域较新或缺少匹配综述时，用 `surveyGap` 记录实际查询、已检查的一手链接及具体缺口，避免为了数量贴上“经典”标签。
 - `publicationType` 只使用 `survey`、`tutorial`、`method`、`benchmark`、`dataset`、`standard`、`position`。
 - `publicationStatus` 只使用 `peer-reviewed`、`accepted`、`workshop`、`workshop-accepted`、`preprint`、`technical-report`、`standard` 或 `dataset`。`peer-reviewed` 与 `workshop` 必须已有可核验的正式出版页；仅确认录用但正式页尚未发布时分别使用 `accepted` 或 `workshop-accepted`，并保留预印本证据边界。

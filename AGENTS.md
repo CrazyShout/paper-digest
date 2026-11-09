@@ -220,7 +220,15 @@ and check developments after each survey's cutoff. A paper is foundational
 because of its role in the method or benchmark lineage, not merely its age or
 citation count. Record survey reading depth, branch coverage, citation tracing
 and remaining gaps in `searchAudit.foundationsAudit`; explain a useful survey
-reading order in the scope section. Preserve the six section IDs. Young fields
+reading order where the article introduces its scope. Preserve historical section
+anchors through `legacyAnchors` when reorganizing. In `structureVersion: 2`,
+domain-specific sections use `covers` to retain scope, evolution, taxonomy,
+evidence, challenges and outlook as coverage dimensions; they need not be six
+separate chapters. Do not impose a uniform anecdotal opening or per-section
+summary. Bind original synthesis figures to source references, dimensions and
+SHA-256, and inspect the actual images independently. `referenceIds` follow the
+section's evidence; unexpanded retained references use `additionalReferenceIds`
+and remain accessible as further reading. Young fields
 may use early systematic accounts without labelling them established classics.
 
 For `local-corpus` runs, `resultCount` means the papers that survived scope

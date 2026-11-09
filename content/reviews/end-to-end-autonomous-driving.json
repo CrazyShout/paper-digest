@@ -1,157 +1,117 @@
 {
   "version": 3,
   "id": "end-to-end-autonomous-driving",
-  "title": "端到端自动驾驶：联合表征、生成式规划与闭环训练",
-  "subtitle": "端到端不是取消结构，而是让内部状态和学习目标围绕最终行动组织。",
-  "abstract": "同一个路口可以减速等待，也可以在条件允许时通过；一次小偏差还会改变车辆下一刻看到的场景。端到端驾驶需要同时处理这两件事：从传感器中保留行动所需的信息，并学会在自己造成的状态里继续驾驶。本文从道路跟随讲到生成式规划和闭环训练，重点区分表示、候选动作、评分与训练数据各自的作用。",
+  "title": "端到端驾驶：场景表示、轨迹生成与闭环学习",
+  "subtitle": "生成什么动作、怎样选择，以及训练状态怎样影响实际驾驶。",
+  "abstract": "端到端驾驶把观察与行动连接到共同的学习目标，内部可以保留感知、地图与预测结构。当前方法在场景表示、轨迹候选、评分和训练分布上采用不同设计；这些差异决定了系统怎样处理多种可行动作与执行后的状态偏移。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "基础文献与近年方法并列比较；2026-11-06 重新打开既有引用的一手正文并核对当前论断，补读近期本库与外部近邻。查询执行、受限来源与候选去向见检索审计；本次阅读为论断级复核，不表示逐篇复现实验。",
-  "researchQuestions": [
-    "模型从图像或点云中保留了哪些会影响行动的信息？",
-    "规划失败是因为没有生成合适轨迹，还是因为选错了轨迹？",
-    "策略偏离专家路线后，训练是否教过它如何恢复？"
-  ],
   "sections": [
     {
-      "id": "scope-and-boundary",
-      "kind": "scope",
-      "title": "端到端模型怎样从观察走到行动",
-      "thesis": "端到端描述的是学习目标的连接方式，内部仍然可以有感知、预测和规划结构。",
-      "body": "一辆车接近路口时，需要理解车道、其他车辆和导航意图，再决定未来几秒怎样移动。端到端方法尝试让这些环节围绕最终行动共同学习。它可以直接从图像输出转向，也可以先提取鸟瞰图（BEV）、对象或地图表示，再输出轨迹；使用中间结构本身不违背端到端训练。[e2e-architectures-survey-2022, e2e-survey-2024]\n\n这类模型有三个相互关联的问题。首先，什么信息应留在内部表示里？UniAD 用任务查询连接检测、跟踪、地图、运动预测与规划。其次，怎样表示不止一种合理动作？GenAD 用结构潜变量，VADv2 用轨迹词表描述动作分布。最后，怎样获得足够的训练监督？Learning by Cheating 在训练期使用特权教师，再把能力传给只看视觉的学生。训练时可见的信息和部署时输入，应始终分开理解。[uniad-2023, genad-2024, vadv2, learning-by-cheating-2020]\n\n后文沿这三个问题展开。这样读一篇新论文时，可以先判断它改变了表示、动作生成还是训练分布，再理解整套系统的结果。\n\n### 从哪些综述开始\n\n[Tampuu 等的综述](https://ieeexplore.ieee.org/abstract/document/9310544)适合建立输入、输出与学习方式的基本框架；它在线发表于 2020 年，卷期发表于 2022 年，主要讨论早期路线。[Chen 等的 Challenges and Frontiers](https://doi.org/10.1109/TPAMI.2024.3435937)接着串起条件模仿、多传感器融合、规划导向系统及分布偏移。[e2e-architectures-survey-2022, e2e-survey-2024]\n\n再读 [Xu 等的训练生态综述](https://arxiv.org/abs/2610.00926)。其 2026 年 10 月版本按数据、策略和平台组织近期研究，适合解释为什么架构相似的模型，换了训练覆盖或交互平台后会呈现不同能力。[e2e-training-ecosystem-survey-2026]",
+      "id": "learning-actions",
+      "title": "从观察学习动作",
+      "covers": [
+        "scope",
+        "evolution"
+      ],
+      "body": "ALVINN 从相机和激光测距输入预测行驶方向，DAVE-2 用卷积网络从前视图像输出转向。条件模仿学习随后加入高层导航命令，使同一路口的相同观察能够对应不同目标。随着任务从道路跟随扩展到城市交互，模型还需表达车道、其他参与者及其未来运动。[alvinn-1988,dave2-2016,conditional-imitation-2018]\n\n端到端训练并不要求删去所有中间结构。UniAD 用任务查询连接检测、跟踪、地图、运动预测与规划；结构是否有用，取决于它为行动保留了什么信息，以及监督怎样约束这种信息。相比单独优化每个感知任务，规划导向的设计把后续行动纳入了表示学习。[uniad-2023,e2e-survey-2024]\n\n[Tampuu 等的综述](https://ieeexplore.ieee.org/abstract/document/9310544)适合建立输入、输出与学习方式的基本框架；它在线发表于 2020 年，卷期发表于 2022 年，主要讨论早期路线。[Chen 等的 Challenges and Frontiers](https://doi.org/10.1109/TPAMI.2024.3435937)接着串起条件模仿、多传感器融合、规划导向系统及分布偏移。[e2e-architectures-survey-2022, e2e-survey-2024]\n\n再读 [Xu 等的训练生态综述](https://arxiv.org/abs/2610.00926)。其 2026 年 10 月版本按数据、策略和平台组织近期研究，适合解释为什么架构相似的模型，换了训练覆盖或交互平台后会呈现不同能力。[e2e-training-ecosystem-survey-2026]",
       "referenceIds": [
-        "learning-by-cheating-2020",
-        "uniad-2023",
-        "genad-2024",
-        "vadv2",
-        "driftingplanner-2026",
-        "interact-2026",
-        "drivemlp-2026",
-        "rfworld-2026",
-        "e2e-architectures-survey-2022",
         "e2e-survey-2024",
-        "e2e-training-ecosystem-survey-2026"
-      ]
-    },
-    {
-      "id": "paradigm-evolution",
-      "kind": "evolution",
-      "title": "从学会跟随道路，到学会处理自己的偏差",
-      "thesis": "路线变化来自两个困难：动作不只有一个答案，执行也会改变后续输入。",
-      "body": "早期研究先把传感器观察直接映射到驾驶命令。ALVINN 从相机和激光测距输入预测行驶方向，DAVE-2 用卷积网络从前视图像输出转向。仅靠画面却无法决定在同一路口向左还是向右，因此条件模仿学习加入高层导航命令，让相同观察对应不同目标。道路跟随与城市交互由此有了清楚的接口区别，早期道路或缩小车辆测试也应按各自场景理解。[alvinn-1988, dave2-2016, conditional-imitation-2018]\n\n模仿专家还有另一个困难：训练日志里的车辆通常沿专家轨迹前进，模型一旦稍微偏离，就可能遇到没有学过的观察。DAgger 通过迭代收集策略实际访问的状态并补充专家监督来处理这种分布偏移。Learning by Cheating 用特权教师训练视觉学生，解决的是教师信息如何传给部署策略的问题；TransFuser 和 UniAD 则分别推进多传感器融合与面向规划的联合表示。这些改进可以组合，但并不是同一个问题的替代答案。[dagger-2011, learning-by-cheating-2020, transfuser-2021, uniad-2023]\n\n在有多种合理行动的场景里，直接回归平均航点还可能抹掉有效模式。Hidden Biases 分析了航点平均和目标点跟随对 CARLA 成绩的影响。生成式规划转而保留多个候选：DiffusionDrive 用锚点与截断去噪生成轨迹，GuideFlow 在生成中加入显式约束，DriftingPlanner 把漂移迭代放到训练阶段，并用配对噪声支持单步解码。生成更快之后，是否生成了好候选、能否选中它们，仍是两步不同的工作。[hidden-biases-2023, diffusiondrive-2025, guideflow-2026, driftingplanner-2026]\n\n闭环学习则直接面对策略造成的后续状态。Think2Drive 与 Raw2Drive 利用潜世界模型训练，RAD 在重建场景中做强化学习，自博弈路线扩大主体间交互。DriveMLP 提供了较简单的参照：在给定状态输入上，以专家轨迹距离指导轻量多层感知机（MLP）的闭环优化。它让训练分布与模型复杂度可以被更清楚地分开研究。[think2drive-2024, raw2drive-2025, rad-2025, scaling-self-play, pictura-2026, drivemlp-2026]\n\n近期预测与规划又进一步连接。DAWN 在语义潜空间里递归更新世界预测与动作，INTERACT 从视频转移学习动作相关对象状态。未来信息也可以只用于训练：RFWorld 用未来语义监督塑造共享记忆，部署时让候选轨迹直接读取并评分；NegWAM 则加入接近专家、但会失败的轨迹，帮助区分看似相近的行动后果。[dawn-world-action, interact-2026, rfworld-2026, negwam-2026]",
-      "referenceIds": [
-        "hidden-biases-2023",
-        "diffusiondrive-2025",
-        "guideflow-2026",
-        "driftingplanner-2026",
-        "think2drive-2024",
-        "raw2drive-2025",
-        "rad-2025",
-        "scaling-self-play",
-        "pictura-2026",
-        "drivemlp-2026",
-        "dawn-world-action",
-        "interact-2026",
-        "negwam-2026",
-        "rfworld-2026",
+        "uniad-2023",
+        "e2e-architectures-survey-2022",
+        "e2e-training-ecosystem-survey-2026",
         "alvinn-1988",
         "dave2-2016",
-        "conditional-imitation-2018",
-        "dagger-2011",
-        "learning-by-cheating-2020",
-        "transfuser-2021",
-        "uniad-2023"
+        "conditional-imitation-2018"
       ]
     },
     {
-      "id": "design-taxonomy",
-      "kind": "taxonomy",
-      "title": "把表示、生成、选择与训练分开看",
-      "thesis": "完整系统的总分无法直接说明是哪一个环节在起作用。",
-      "body": "先看模型如何保存场景。BEV 把空间关系放到鸟瞰平面，对象查询或对象槽（slots）用一组向量表示场景实体，语言上下文还可以携带导航或语义信息。OpenDriveVLA 对齐结构视觉与语言，MOJITO 在多层中共同更新图像、LiDAR 和动作 token，INTERACT 则学习持续的场景实体。这里应问的是规划能从表示里读出什么，而不是仅比较表示的名称。[opendrivevla-2026, mojito-2026, interact-2026]\n\n再看动作怎样产生并被选择。回归输出一条轨迹，词表、扩散、流或漂移模型可以提供多个候选；评分器再决定执行哪一条。DriftingPlanner 的单查询配对平均会抵消部分偏移，把配对候选保留下来交给评分器属于另一设置。RFWorld 让各候选稀疏读取同一份记忆，RAD-2 则把生成器和长期质量判别器分开。因此生成时间、评分时间和候选数共同决定规划成本。[vadv2, diffusiondrive-2025, driftingplanner-2026, rfworld-2026, rad2-2026]\n\n最后看学习信号从哪里来。专家轨迹教模型模仿，未来表示监督教它保留动态信息，交互回报反映执行后果，失败轨迹提供相近动作之间的反例。ReCogDrive 与 AutoVLA 使用强化后训练，NegWAM 引入近专家负例。相同架构可能因这些信号不同而学出不同的候选覆盖和恢复行为。[recogdrive-2026, autovla-2025, negwam-2026]\n\n这些比较还需要数据条件。早期综述主要按学习方式和输入输出分类，2024 年综述强调规划导向表示与闭环，2026 年训练生态综述进一步讨论数据和平台。三个视角可以合用：先说明模型改变了什么，再说明它是否同时获得了更多监督、不同输入或更多交互。[e2e-architectures-survey-2022, e2e-survey-2024, e2e-training-ecosystem-survey-2026]",
+      "id": "planning-representation",
+      "title": "规划使用的场景表示",
+      "covers": [
+        "taxonomy",
+        "evolution",
+        "challenges"
+      ],
+      "body": "BEV 把空间关系汇入鸟瞰平面，对象查询或对象槽用一组向量保留实体，语言上下文则可携带导航或语义信息。OpenDriveVLA 对齐结构视觉与语言，MOJITO 在多层中共同更新图像、LiDAR 与动作 token；INTERACT 从视频转移学习持续的对象状态。这些表示具有不同的归纳偏置，尚不能仅依据表示名称确定规划优劣。[opendrivevla-2026,mojito-2026,interact-2026]\n\nDAWN 在语义潜空间中递归连接未来预测与动作；RFWorld 将未来语义监督用于训练共享记忆，部署时直接供候选轨迹读取；NegWAM 引入接近专家但会失败的轨迹。三者分别改变推理过程、记忆学习与反例监督，未来信息进入系统的位置不同。[dawn-world-action,rfworld-2026,negwam-2026]\n\n更新感知模型也可能意外改变驾驶。下游策略即使被冻结，上游特征的数值分布变化仍会让它读到不同信号。Policy Stitching 用适配器保持兼容；但完全保持旧行为，又可能浪费新感知能力。FlowAD 的自车相对场景流和 MOJITO 的反复传感器读取，从不同方向提示：需要进一步理解哪些信息变化应该改变行动，哪些只是表示形式改变。[policy-stitching, flowad-2026, mojito-2026]",
       "referenceIds": [
+        "flowad-2026",
         "opendrivevla-2026",
-        "mojito-2026",
-        "interact-2026",
+        "dawn-world-action",
         "policy-stitching",
-        "vadv2",
-        "diffusiondrive-2025",
-        "driftingplanner-2026",
-        "rfworld-2026",
-        "rad2-2026",
-        "recogdrive-2026",
-        "autovla-2025",
+        "mojito-2026",
         "negwam-2026",
-        "e2e-architectures-survey-2022",
-        "e2e-survey-2024",
-        "e2e-training-ecosystem-survey-2026"
+        "interact-2026",
+        "rfworld-2026"
       ]
     },
     {
-      "id": "evidence-matrix",
-      "kind": "evidence",
-      "title": "离线轨迹、模拟闭环和实车各能说明什么",
-      "thesis": "评测是否允许动作改变后续观察，决定了它能暴露哪些失败。",
-      "body": "nuScenes 日志适合比较预测轨迹与辅助感知任务，但模型的动作不会改变下一帧。NAVSIM v1 用非反应环境评价短时规划；Pseudo-Simulation 预生成第二阶段观察，按第一阶段终点加权，每阶段固定执行轨迹，背景车可通过 IDM 跟驰模型响应。Bench2Drive 则在 CARLA 中让策略连续接收观察并驾驶。它们分别揭示轨迹质量、分阶段偏差与闭环累积行为，跨方法分数拟合的 R² 也不等同于逐场景失败一致性。[uniad-2023, navsim-2024, pseudo-simulation-2025, bench2drive-2024]\n\n效率数字同样需要落回设置。RFWorld 在相同 1,024 个候选、RTX 3090 的对照下，将重训 WoTE 的 49.2 ms 降至 37.5 ms。这是具体实现的实测收益，不能把复杂度式中的重复因子直接当作加速倍数。DriveMLP 的 nuPlan Reactive 结果采用状态级输入；INTERACT 与 NegWAM 的 NAVSIM 分数还需区分 v1/v2 和数据划分。[rfworld-2026, drivemlp-2026, interact-2026, negwam-2026]\n\n重建环境与车辆运行进一步检验感知—动作循环。HUGSIM 将重建视觉和行为模型接到闭环；VADv2 与 Sim2Real-AD 展示不同范围的车辆运行。ViLaD 的停车案例使用专门训练的 SMDM 模型选择最终 waypoint，再交给既有规划控制栈，不能与主框架中的 LLaDA 规划器视作同一个部署模型。解释这些结果时，场地、速度、车辆和重复数与成功率同样必要。[hugsim-2026, vadv2, sim2real-ad-2026, vilad-2025]",
+      "id": "candidate-selection",
+      "title": "候选生成与轨迹选择",
+      "covers": [
+        "taxonomy",
+        "evidence",
+        "challenges"
+      ],
+      "body": "一组相近观察可能对应多种合理行动，回归平均航点可能抹平这些模式。Hidden Biases 分析了航点平均与目标点跟随对 CARLA 成绩的影响；VADv2 用轨迹词表表达动作分布，GenAD 学习结构潜变量，扩散与流模型则通过生成过程保留多个候选。[hidden-biases-2023,vadv2,genad-2024]\n\n| 方法环节 | 代表操作 | 直接影响 | 未由该环节单独解决的问题 |\n| --- | --- | --- | --- |\n| 候选表示 | 轨迹词表、结构潜变量 | 能表达哪些行动 | 当前场景下哪条最合适 |\n| 候选生成 | 锚点去噪、约束流、训练期漂移 | 覆盖范围与生成成本 | 候选质量的识别 |\n| 候选评分 | 共享记忆读取、长期质量判别 | 最终选择与评分成本 | 好轨迹未进入候选池 |\n\nDiffusionDrive 用锚点与截断去噪生成轨迹，GuideFlow 在生成中加入显式约束，DriftingPlanner 把漂移迭代移到训练阶段以支持单步解码。DriftingPlanner 的单查询配对平均会抵消部分偏移，保留配对候选交给评分器则是另一种设置。RFWorld 让候选共用记忆，RAD-2 将生成器和长期质量判别器分开，计算成本因而由候选数量、生成和评分共同决定。[diffusiondrive-2025,guideflow-2026,driftingplanner-2026,rfworld-2026,rad2-2026]\n\n候选很多不代表选项足够好。它们可能集中在同一种行为，也可能包含合适轨迹却被评分器排在后面。用知道结果的理想选择器选出最佳候选，再与实际评分器的选择比较，可以分辨“没有生成”与“没有选中”。生成模型和共享记忆评分的分离，让这种诊断更容易进行。[driftingplanner-2026, rfworld-2026, diffusiondrive-2025]\n\nRFWorld 在相同 1,024 个候选、RTX 3090 的对照下，将重训 WoTE 的延迟从 49.2 ms 降至 37.5 ms。这个结果对应具体的生成与评分实现，复杂度式中的重复因子不能直接解释为同等加速倍数。[rfworld-2026]",
+      "referenceIds": [
+        "hidden-biases-2023",
+        "genad-2024",
+        "diffusiondrive-2025",
+        "guideflow-2026",
+        "vadv2",
+        "rad2-2026",
+        "driftingplanner-2026",
+        "rfworld-2026"
+      ]
+    },
+    {
+      "id": "evaluation",
+      "title": "日志、交互环境与车辆执行",
+      "covers": [
+        "evidence",
+        "challenges"
+      ],
+      "body": "nuScenes 日志适合比较预测轨迹与辅助感知任务，但模型的动作不会改变下一帧。NAVSIM v1 用非反应环境评价短时规划；Pseudo-Simulation 预生成第二阶段观察，按第一阶段终点加权，每阶段固定执行轨迹，背景车可通过 IDM 跟驰模型响应。Bench2Drive 则在 CARLA 中让策略连续接收观察并驾驶。它们分别揭示轨迹质量、分阶段偏差与闭环累积行为，跨方法分数拟合的 R² 也不等同于逐场景失败一致性。[uniad-2023, navsim-2024, pseudo-simulation-2025, bench2drive-2024]\n\n重建环境与车辆运行进一步检验感知—动作循环。HUGSIM 将重建视觉和行为模型接到闭环；VADv2 与 Sim2Real-AD 展示不同范围的车辆运行。ViLaD 的停车案例使用专门训练的 SMDM 模型选择最终 waypoint，再交给既有规划控制栈，不能与主框架中的 LLaDA 规划器视作同一个部署模型。解释这些结果时，场地、速度、车辆和重复数与成功率同样必要。[hugsim-2026, vadv2, sim2real-ad-2026, vilad-2025]\n\n状态可见性也改变任务难度。DriveMLP 的 nuPlan Reactive 结果采用状态级输入，INTERACT 与 NegWAM 的 NAVSIM 结果还涉及 v1/v2 及数据划分差异。将这些条件放在结果旁，才能把输入优势、模型变化与训练收益分开讨论。[drivemlp-2026,interact-2026,negwam-2026]",
       "referenceIds": [
         "uniad-2023",
         "navsim-2024",
-        "pseudo-simulation-2025",
         "bench2drive-2024",
-        "rfworld-2026",
-        "drivemlp-2026",
-        "interact-2026",
-        "negwam-2026",
+        "pseudo-simulation-2025",
         "hugsim-2026",
         "vadv2",
         "sim2real-ad-2026",
-        "vilad-2025"
+        "vilad-2025",
+        "drivemlp-2026",
+        "negwam-2026",
+        "interact-2026"
       ]
     },
     {
-      "id": "challenges-and-failure-modes",
-      "kind": "challenges",
-      "title": "候选、训练分布和模型升级仍会相互牵制",
-      "thesis": "一个环节变好以后，收益可能被另一个环节挡住。",
-      "body": "候选很多不代表选项足够好。它们可能集中在同一种行为，也可能包含合适轨迹却被评分器排在后面。用知道结果的理想选择器选出最佳候选，再与实际评分器的选择比较，可以分辨“没有生成”与“没有选中”。生成模型和共享记忆评分的分离，让这种诊断更容易进行。[driftingplanner-2026, rfworld-2026, diffusiondrive-2025]\n\n训练覆盖决定模型会不会恢复。离线模仿主要看专家状态，闭环优化会看见策略偏离后的状态，自博弈还改变了其他主体的行为。DriveMLP、RAD 与自博弈方法使用的状态可见性、回报和环境不同，比较时需要说明训练帧数或交互步数，以及额外的特权信息。否则，架构收益与数据覆盖容易混在一起。[drivemlp-2026, rad-2025, scaling-self-play, pictura-2026]\n\n更新感知模型也可能意外改变驾驶。下游策略即使被冻结，上游特征的数值分布变化仍会让它读到不同信号。Policy Stitching 用适配器保持兼容；但完全保持旧行为，又可能浪费新感知能力。FlowAD 的自车相对场景流和 MOJITO 的反复传感器读取，从不同方向提示：需要进一步理解哪些信息变化应该改变行动，哪些只是表示形式改变。[policy-stitching, flowad-2026, mojito-2026]",
+      "id": "training-distribution",
+      "title": "学习执行后的偏差",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "challenges",
+        "outlook"
+      ],
+      "body": "模仿学习主要观察专家访问的状态，部署策略偏离之后却可能遇到训练中少见的输入。DAgger 通过迭代采集策略访问状态并补充专家监督处理这一偏移；Learning by Cheating 用训练期特权教师指导视觉学生，解决的是监督信息怎样转移到部署策略。两种机制可以结合，收益来源仍需分别解释。[dagger-2011,learning-by-cheating-2020]\n\n闭环学习则直接面对策略造成的后续状态。Think2Drive 与 Raw2Drive 利用潜世界模型训练，RAD 在重建场景中做强化学习，自博弈路线扩大主体间交互。DriveMLP 提供了较简单的参照：在给定状态输入上，以专家轨迹距离指导轻量多层感知机（MLP）的闭环优化。它让训练分布与模型复杂度可以被更清楚地分开研究。[think2drive-2024, raw2drive-2025, rad-2025, scaling-self-play, pictura-2026, drivemlp-2026]\n\n强化后训练、未来表示监督和近专家负例提供了不同学习信号。ReCogDrive 与 AutoVLA 使用强化后训练，NegWAM 通过失败轨迹区分相近动作后果。对于同一架构，训练状态、回报和额外监督的改变都可能影响候选覆盖及恢复能力。[recogdrive-2026,autovla-2025,negwam-2026]\n\n训练覆盖决定模型会不会恢复。离线模仿主要看专家状态，闭环优化会看见策略偏离后的状态，自博弈还改变了其他主体的行为。DriveMLP、RAD 与自博弈方法使用的状态可见性、回报和环境不同，比较时需要说明训练帧数或交互步数，以及额外的特权信息。否则，架构收益与数据覆盖容易混在一起。[drivemlp-2026, rad-2025, scaling-self-play, pictura-2026]\n\n后续研究的一个实质问题是，未来监督究竟保留了哪些会改变轨迹选择的对象关系。另一个是，恢复能力来自架构设计还是交互状态的覆盖。持续实体表示、近专家失败轨迹与较简单的闭环模型分别提供了可检验的切入点；比较时应同时保留正常驾驶、偏离恢复和计算成本。[interact-2026,negwam-2026,drivemlp-2026,raw2drive-2025]",
       "referenceIds": [
-        "driftingplanner-2026",
-        "rfworld-2026",
-        "diffusiondrive-2025",
-        "drivemlp-2026",
+        "learning-by-cheating-2020",
+        "autovla-2025",
+        "raw2drive-2025",
+        "think2drive-2024",
+        "rad-2025",
+        "recogdrive-2026",
         "scaling-self-play",
         "pictura-2026",
-        "rad-2025",
-        "policy-stitching",
-        "flowad-2026",
-        "mojito-2026",
-        "e2e-survey-2024",
-        "lmdrive-2024",
-        "caad",
-        "cognitive-dual-process"
-      ]
-    },
-    {
-      "id": "research-outlook",
-      "kind": "outlook",
-      "title": "更值得追问的是：模型为什么做对了",
-      "thesis": "把总分拆回信息、动作与训练，才能知道下一步该改哪里。",
-      "body": "生成式规划的下一步不只是扩大候选池。真正有用的是覆盖不同的合理行动，并让评分器识别它们在当前场景中的后果。DriftingPlanner 与 RFWorld 分别提供生成和评分的清楚接口；两者的理想选择与实际选择差距，可以帮助判断瓶颈究竟在哪里。更快的解码只有在保留有效选项、且评分成本可控时，才能转化为整套规划器的优势。[driftingplanner-2026, rfworld-2026]\n\n另一个问题是怎样学习对行动有用的对象状态。视觉上准确预测一辆车，并不自动回答它会不会影响本车路线。INTERACT 的持续实体表示和 NegWAM 的近专家失败轨迹，分别提供了状态学习与后果区分的线索。值得弄清的是，未来监督到底保留了哪些相对位置、运动或交互信息，才让轨迹选择变好。[interact-2026, negwam-2026]\n\n训练方面，小模型也能用于理解大问题。DriveMLP 的简洁结构有助于观察闭环访问状态本身的作用；再与原始传感器策略对照，才能知道收益是否依赖状态输入。恢复能力、正常驾驶表现和计算成本可能一起变化，研究需要解释这种变化，而不只是寻找更高的单项分数。[drivemlp-2026, raw2drive-2025, bench2drive-robust]",
-      "referenceIds": [
-        "driftingplanner-2026",
-        "rfworld-2026",
-        "hugsim-2026",
-        "interact-2026",
-        "negwam-2026",
         "drivemlp-2026",
-        "raw2drive-2025",
-        "bench2drive-robust"
+        "negwam-2026",
+        "interact-2026",
+        "dagger-2011"
       ]
     }
-  ],
-  "takeaways": [
-    "端到端模型仍可保留对象、地图和预测结构。关键是这些表示怎样为行动提供信息，以及训练与部署各能看见什么。",
-    "生成候选与选择候选是不同瓶颈。候选覆盖、理想选择和实际选择之间的差距，比单看候选数更能解释规划表现。",
-    "闭环训练改变了模型遇见的状态。比较架构时，需要把输入权限、监督与交互预算一起说明；离线分数与车辆运行也应按各自协议解读。"
   ],
   "references": [
     {
@@ -939,14 +899,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_policy",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/policy-round1.json",
-      "artifactSha256": "c50d8e13fb2250690475d27cf420d46b6bb8735ce8f6cfe7c8b87cb324abfbb6",
-      "snapshotFingerprint": "0ee1fae839ed97c78d50118180693a92551ad17c688446548e99e61366f6ba6b",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_policy",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/policy-round2.json",
+      "artifactSha256": "87d163ba3b5df18274ba46720444e32458dc854e1fe3b69b79952ea0456bc1fd",
+      "snapshotFingerprint": "c098a0a35c3dfa4aa7953752d7c0ffce1d2a34af62059267e91d37a43d52e113",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -4557,5 +4517,31 @@
       "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
-  }
+  },
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "scope-and-boundary": "learning-actions",
+    "scope-and-boundary-title": "learning-actions",
+    "paradigm-evolution": "training-distribution",
+    "paradigm-evolution-title": "training-distribution",
+    "design-taxonomy": "planning-representation",
+    "design-taxonomy-title": "planning-representation",
+    "evidence-matrix": "evaluation",
+    "evidence-matrix-title": "evaluation",
+    "challenges-and-failure-modes": "candidate-selection",
+    "challenges-and-failure-modes-title": "candidate-selection",
+    "research-outlook": "training-distribution",
+    "research-outlook-title": "training-distribution",
+    "research-questions": "learning-actions",
+    "researchQuestionsTitle": "learning-actions",
+    "takeaways": "training-distribution",
+    "takeawaysTitle": "training-distribution"
+  },
+  "additionalReferenceIds": [
+    "lmdrive-2024",
+    "caad",
+    "bench2drive-robust",
+    "cognitive-dual-process",
+    "transfuser-2021"
+  ]
 }

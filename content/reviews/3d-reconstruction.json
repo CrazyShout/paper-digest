@@ -1,171 +1,147 @@
 {
   "version": 3,
   "id": "3d-reconstruction",
-  "title": "自动驾驶三维重建：4D 高斯、传感器渲染与闭环评测",
-  "subtitle": "从时间表示和传感器渲染，推进到持续更新、遮挡恢复与可执行场景。",
-  "abstract": "给定一段驾驶视频和传感器记录，三维重建要恢复能从新视角观察的场景；加入时间后，还要解释车辆和行人怎样运动、遮挡前后是否属于同一对象。本文从 NeRF 与 3D 高斯的基本表示讲起，比较持久基元、规范空间形变和原生四维高斯，再讨论对象编辑、前馈构建与多传感器渲染。图像逼真、几何准确和可用于闭环测试是不同目标，选择方法时需要先确定要恢复哪一种信息。",
+  "title": "自动驾驶三维重建：动态表示、场景构建与仿真",
+  "subtitle": "动态高斯的参数化差别，以及从重建图像到可用场景的距离。",
+  "abstract": "动态重建需要同时处理运动、遮挡和视角变化。持久三维基元、规范空间形变与原生四维高斯采用了不同的时间假设；对象编辑、构建速度和传感器渲染又构成独立的设计选择。本文围绕这些选择比较经典方法与近期驾驶场景重建。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "保留既有历史检索记录；2026-11-01 重开 24 条既有引用的一手元数据、摘要及相关正文，专题补查 4D Gaussian 基础与近期前馈方法。SafeComp 全文及部分正式 PDF 受限，具体阅读深度见来源记录；本轮不是对全部神经渲染文献的穷尽重检。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
-  "researchQuestions": [
-    "同一辆车在不同时刻出现，模型靠什么知道哪些高斯仍然属于它？",
-    "常说的“4D 高斯”有哪些不同实现，时间在各自模型中控制什么？",
-    "把相机移到采集轨迹之外，或把场景中的车辆挪走，重建结果还能保留哪些可信信息？",
-    "怎样分别评价重建的图像、几何、传感器输出和驾驶行为？",
-    "前馈重建和在线更新节省了哪些计算，又在哪些场景仍需要优化或额外观测？"
-  ],
   "sections": [
     {
-      "id": "scope",
-      "kind": "scope",
-      "title": "从一段驾驶记录恢复什么",
-      "thesis": "重建先回答“这个场景从别处看是什么样”，动态重建再回答“同一部分场景随时间怎样变化”。",
-      "body": "设想一辆车从自车前方驶过，随后被卡车挡住。输入视频只记录有限时刻、有限视角下看到的表面。若想把相机向旁边移动，就要恢复空间结构；若想在遮挡期间继续追踪这辆车，就要保留它的身份和运动；若想让它在新场景中刹车，还需要描述动作后果的动力学。三类需求会用到同一段日志，却需要不同信息。\n\nNeRF 用连续函数从空间位置预测密度，并结合观察方向预测颜色，再沿光线累积得到图像。3D Gaussian Splatting（3DGS）把场景写成许多有位置、尺度、方向、颜色和不透明度的三维高斯，通过投影与合成得到图像。两者都能从已标定图像学习场景，显式高斯还提供了高效渲染和直接操作基元的方式。[nerf-2020, gaussian-splatting-2023]\n\n静态模型假定场景不随时间改变。加入运动后，可以让三维高斯在不同时刻移动，也可以直接拟合空间与时间的联合分布。这正是“4D Gaussian”容易产生歧义的地方：带时间条件的 3D 基元和原生 xyz-t 四维高斯都使用时间，但参数和约束不同，后文会分别解释。[4dgs-wu-2024, native-4dgs-yang-2024]\n\n驾驶应用从附近视角的视觉重放，逐渐扩展到改变传感器位姿、编辑交通参与者，再到让驾驶策略的动作决定后续观测。UniSim 展示了这条从日志重建到可编辑多传感器模拟器的路径。用途每向前一步，都会遇到图像拟合没有单独解决的问题：未见表面怎样补全、LiDAR 怎样扫描、被编辑的车辆怎样响应。本文因此把表示能力与使用条件放在一起讨论。[unisim-2023]\n\n### 怎样开始阅读这个方向\n\n[Advances in Neural Rendering](https://doi.org/10.1111/cgf.14507) 的动态场景部分适合建立基础：先理解直接时间条件与规范空间形变，以及它们怎样从图像获得监督。它覆盖 2022 年前后的神经渲染，尚未包含高斯表示。随后可读 [Reconstructing the Dynamic World](https://arxiv.org/abs/2609.39960) 的历史、4D NeRF/4DGS 分类与评测部分；其 2026 年 10 月版本侧重逐场景优化，便于比较时间表示。驾驶专用的多传感器、前馈和闭环方法，再接着读本文对应章节。\n\n通用动态重建是理解机制的起点。室内多相机视频、合成物体与驾驶街景的可见范围、遮挡和尺度差别很大，迁移时最值得关注的正是这些输入条件。",
+      "id": "scene-models",
+      "title": "辐射场与驾驶场景",
+      "covers": [
+        "scope",
+        "evolution"
+      ],
+      "body": "驾驶日志记录了沿一条轨迹观察到的场景。重建模型要把这些图像、点云与位姿组织成可以从其他位置查询的表示。对静态背景，主要困难是恢复未充分观测的表面；对运动参与者，还要估计不同时刻的对应关系。场景中的车辆若被重新放置，模型又需要区分车辆本身、原位置露出的背景和各传感器的遮挡变化。[nerf-2020,neural-scene-graphs-2021,unisim-2023]\n\nNeRF 用连续函数从空间位置预测密度，并结合观察方向预测颜色，再沿光线累积得到图像。3D Gaussian Splatting（3DGS）把场景写成许多有位置、尺度、方向、颜色和不透明度的三维高斯，通过投影与合成得到图像。两者都能从已标定图像学习场景，显式高斯还提供了高效渲染和直接操作基元的方式。[nerf-2020, gaussian-splatting-2023]\n\n动态重建与未来预测在这里有不同的监督条件。前者拟合已经观测的一段运动，可以利用整段视频；后者需要根据可用历史推断尚未发生的状态。增加时间变量扩展了场景的查询方式，动作条件预测则还需要动力学和交互机制。[neural-rendering-survey-2022,representation-centric-4d-survey-2026]\n\n关于背景知识，[Advances in Neural Rendering](https://doi.org/10.1111/cgf.14507) 从表示、成像与优化建立神经渲染的基本框架，其动态部分覆盖到高斯方法兴起之前；[Reconstructing the Dynamic World](https://arxiv.org/abs/2609.39960) 的 2026 年 10 月版本进一步整理 4D NeRF 与 4DGS，重点仍是逐场景优化。前馈构建与驾驶仿真的证据在下文分别讨论。",
       "referenceIds": [
+        "neural-scene-graphs-2021",
         "nerf-2020",
         "gaussian-splatting-2023",
-        "driving-3dgs-review-2025",
-        "4dgs-wu-2024",
-        "native-4dgs-yang-2024",
         "unisim-2023",
-        "neural-rendering-survey-2022",
-        "representation-centric-4d-survey-2026"
+        "representation-centric-4d-survey-2026",
+        "neural-rendering-survey-2022"
       ]
     },
     {
-      "id": "evolution",
-      "kind": "evolution",
-      "title": "从静态几何到动态场景，再到快速构建",
-      "thesis": "这条脉络包含三个相互配合的问题：怎样描述运动、怎样组织对象、怎样减少每个新场景的计算。",
-      "body": "### 先有几何，再解释变化\n\n多视图重建首先需要知道相机在哪里。COLMAP 改进增量式 Structure-from-Motion（SfM），从图像估计相机位姿和稀疏结构。NeRF 接着在已知位姿下用图像重建损失学习辐射场。换一种场景表示并不会消除位姿误差，也不会让静态几何自动解释运动物体。[colmap-sfm-2016, nerf-2020]\n\n一种处理运动的办法是保留一个“规范场景”：可以把它理解为所有时刻共用的参考形状，再学习各时刻观测与它之间的形变。D-NeRF 将规范辐射场与时间相关形变分开；Nerfies 进一步用粗到细优化和弹性正则稳定真实手机视频中的形变。这样就能共享不同时刻的信息，而不必把每帧当成完全无关的重建。它们的物体级合成场景、近距离非刚体视频仍有别于大范围街景。[d-nerf-2021, nerfies-2021]\n\n### 高斯表示让“什么在动”更直接\n\nDynamic 3D Gaussians 保留同一组基元，固定颜色、尺寸和不透明度，逐帧优化位置与旋转；局部刚性约束帮助相邻基元一起运动。这里的重点是持续对应：同一个基元在后续帧仍表示同一部分场景。Wu 等人的 CVPR 2024 工作则把规范空间与形变网络接到高斯上，按时间生成基元状态；Yang 等人的 ICLR 2024 工作直接建模四维联合高斯。Spacetime Gaussians 又为基元增加显式运动、旋转与时间不透明度，让短暂出现的内容有自己的有效时段。名称相近的工作，实际上对“随时间变化的是什么”给出了不同答案。[dynamic-3d-gaussians-2024, 4dgs-wu-2024, native-4dgs-yang-2024, spacetime-gaussians-2024]\n\n驾驶场景还要知道哪些基元属于同一辆车，否则移动一个对象就可能连背景一起改变。Neural Scene Graphs 通过背景、对象与跟踪变换组织场景；DrivingGaussian 和 Street Gaussians 把这类对象结构接入高斯，OmniRe 将参与者扩展到车辆、行人和骑行者。DeSiRe-GS 使用运动先验和几何约束减少对外部三维框的依赖。对象组织负责共同编辑与动静分解，可以与多种时间表示配合。[neural-scene-graphs-2021, drivinggaussian-2024, street-gaussians-2024, omnire-2025, desire-gs-2025]\n\n### 从每段日志优化，转向一次预测和持续更新\n\n逐场景优化能够反复利用同一段观测，但车队日志很多时，每个场景重新优化会成为成本。前馈方法把部分先验移到训练阶段：DrivingForward 联合预测位姿、深度和高斯，STORM 通过速度与跨帧聚合恢复动态场景，DGGT 将相机参数也作为输出。它们共享快速构建目标，所需的相机信息与动态约束仍不同。[drivingforward-2025, storm-2025, dggt-2026]\n\n前馈构建又出现两种与生成模型结合的方式。Drive2Gauss 先获得生成的 RGB、深度和流，再利用几何与运动对应构建稀疏高斯；SplatFlux 直接解码视频潜变量，将静态基元聚合、动态基元按速度插值。前者先建立多模态观测，后者把资产解码统一到潜变量中。Instant NuRec 则从快速构建走向分层驾驶资产及有限策略集合的闭环排序评测。[drive2gauss-2026, splatflux-2026, instant-nurec-2026]\n\n一次快速重建之后，新的观测仍会到来。Multi4D 让静态结构、持久动态几何和瞬态外观竞争解释残差，减少它们相互替代；PersistGS 用对象碰撞网格与可微刚体仿真推进完全遮挡期间的位姿。在线 GS 建图关注有限迭代下怎样初始化和增密，多主体建图进一步处理异步信息的交换与合并。这些路线共同关心场景如何继续更新，但分别处理外观解释、遮挡运动和计算分配。[multi4d-2026, persistgs-2026, geometry-aware-online-gs-2026, dgomapping-2026]",
+      "id": "time-models",
+      "title": "高斯怎样表示运动",
+      "covers": [
+        "taxonomy",
+        "evolution"
+      ],
+      "body": "规范空间是处理动态场景的一条早期路线。D-NeRF 与 Nerfies 让不同时刻的观测共享一个参考辐射场，再用形变解释变化。前者主要研究物体级合成场景，后者通过粗到细优化和弹性正则处理真实近距离视频。共享参考形状减少了逐帧独立建模的自由度，也把问题集中到对应关系是否可靠。[d-nerf-2021,nerfies-2021]\n\n高斯表示把空间基元显式写出来，时间因而可以作用于具体参数。Dynamic 3D Gaussians 在首帧建立基元，随后固定尺寸、颜色和不透明度，只逐帧优化位置与旋转；局部运动约束维持对应。Wu 4D-GS 则从规范高斯的位置和查询时刻提取时空平面特征，再预测位置、旋转与尺度增量，生成目标时刻的高斯。这一前向形变与动态 NeRF 中常见的“观测点映回规范空间”方向不同。[dynamic-3d-gaussians-2024,4dgs-wu-2024]\n\n![规范空间形变与四维条件化。示意图比较两条路线如何生成目标时刻的三维高斯。](../../assets/reviews/gaussian-time-models.svg)\n\n图中两条计算过程依据 Wu 4D-GS 与 Yang 4DGS 的方法部分整理，四种时间机制的完整比较见下表。[dynamic-3d-gaussians-2024,4dgs-wu-2024,native-4dgs-yang-2024,spacetime-gaussians-2024]\n\n| 时间机制 | 代表工作 | 哪些量随时间变化 | 主要难点 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 逐帧位置与旋转；颜色、尺寸、不透明度固定，局部运动约束维持对应 | 新内容进入、长期遮挡、身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型多层感知机（MLP）预测位置、旋转与尺度变化 | 快速运动、形变几何、轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | xyz-t 联合均值与协方差，在目标时刻条件化 | 空间与时间耦合、时间支持、不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、运动、旋转，以及随视角和时间变化的特征 | 短暂内容、复杂运动的拟合范围 |\n\nYang 4DGS 直接优化 xyz-t 联合高斯。给定时刻 $t$，渲染权重分解为 $G(x,t)=G(t)G(x\\mid t)$：$G(t)$ 控制时间贡献，$G(x\\mid t)$ 是待投影的三维高斯。单个基元的条件均值随时间线性移动，条件协方差保持不变；多个基元共同拟合复杂动态。Spacetime Gaussians 另用时间不透明度和参数化位置、旋转描述变化，尺度不随时间改变。两者都能产生动态图像，但优化变量并不相同。[native-4dgs-yang-2024,spacetime-gaussians-2024]",
       "referenceIds": [
-        "dynamic-3d-gaussians-2024",
         "4dgs-wu-2024",
         "native-4dgs-yang-2024",
+        "dynamic-3d-gaussians-2024",
         "spacetime-gaussians-2024",
+        "d-nerf-2021",
+        "nerfies-2021"
+      ]
+    },
+    {
+      "id": "objects-and-updates",
+      "title": "对象组织与遮挡后的对应",
+      "covers": [
+        "taxonomy",
+        "challenges",
+        "evidence"
+      ],
+      "body": "驾驶场景还要知道哪些基元属于同一辆车，否则移动一个对象就可能连背景一起改变。Neural Scene Graphs 通过背景、对象与跟踪变换组织场景；DrivingGaussian 和 Street Gaussians 把这类对象结构接入高斯，OmniRe 将参与者扩展到车辆、行人和骑行者。DeSiRe-GS 使用运动先验和几何约束减少对外部三维框的依赖。对象组织负责共同编辑与动静分解，可以与多种时间表示配合。[neural-scene-graphs-2021, drivinggaussian-2024, street-gaussians-2024, omnire-2025, desire-gs-2025]\n\n时间参数化与对象组织可以组合：一组高斯怎样变化，与哪些高斯属于同一辆车，是两个不同的建模问题。Multi4D 将静态结构、持久动态几何和瞬态外观分开，允许它们竞争解释残差；PersistGS 则用对象碰撞网格与可微刚体仿真，在遮挡期间继续推进位姿。[multi4d-2026,persistgs-2026]\n\nPersistGS 用三个合成球体接触场景和留出相机检查遮挡期轨迹，恒速外推是因果对照，利用重现位置进行插值则是事后对照。Multi4D 的分割实验先固定重建几何，再只对持久基元学习语义特征；动态视图质量反映的是重建能力，在线建图速度需要单独测量。[persistgs-2026, multi4d-2026]\n\n单车采集把时间与视角绑定。目标位置变了，可能因为目标在动，也可能因为自车换了视角；像素亮度变了，还可能来自反光或曝光。只要最终图像相似，错误几何与时间变化就可能相互补偿。物理一致 4D 重建通过可辨识性分析和正交梯度缓解空间、时间外观参数的混淆，但仍要求较好的基础几何；漂浮基元和复杂非刚体行人尚未得到同样处理。这里的“物理一致”是重建约束，模型没有据此获得碰撞求解能力。[physical-4d-2026]\n\n遮挡把这个问题进一步放大。一个基元是否参与当前渲染、遮挡前后是否表示同一处表面、一个对象是否仍在场，是三个不同问题。允许短暂基元出现和消失，容易拟合遮挡边缘，也可能藏住错误几何；固定一组基元方便追踪，却较难接纳后来才进入视野的内容。动静分解、分层表示和时间支持因此各有取舍，快速运动、长遮挡和新出现区域最能显示这些差别。[dynamic-3d-gaussians-2024, native-4dgs-yang-2024, spacetime-gaussians-2024, desire-gs-2025, instant-nurec-2026, splatflux-2026]",
+      "referenceIds": [
         "neural-scene-graphs-2021",
         "drivinggaussian-2024",
         "street-gaussians-2024",
         "omnire-2025",
         "desire-gs-2025",
-        "drivingforward-2025",
-        "storm-2025",
-        "dggt-2026",
-        "instant-nurec-2026",
-        "drive2gauss-2026",
-        "splatflux-2026",
-        "multi4d-2026",
-        "persistgs-2026",
-        "geometry-aware-online-gs-2026",
-        "dgomapping-2026",
-        "representation-centric-4d-survey-2026",
-        "colmap-sfm-2016",
-        "nerf-2020",
-        "d-nerf-2021",
-        "nerfies-2021",
-        "neural-rendering-survey-2022"
-      ]
-    },
-    {
-      "id": "taxonomy",
-      "kind": "taxonomy",
-      "title": "四种时间机制，以及另外三项选择",
-      "thesis": "时间表示决定场景怎样变化；对象组织、优化方式和传感器模型决定它怎样被构建和使用。",
-      "body": "以运动中的车辆为例，模型可以追踪一组持续存在的高斯，可以把观测映射回参考形状，也可以直接学习空间与时间的联合分布。下面四类机制的区别，落在可学习参数和约束上。\n\n| 时间机制 | 代表工作 | 哪些量随时间变化 | 主要难点 |\n| --- | --- | --- | --- |\n| 持久三维基元 | Dynamic 3D Gaussians | 逐帧位置与旋转；颜色、尺寸、不透明度固定，局部运动约束维持对应 | 新内容进入、长期遮挡、身份漂移 |\n| 规范空间加形变 | Wu 4D-GS | 时空平面特征经小型多层感知机（MLP）预测位置、旋转与尺度变化 | 快速运动、形变几何、轨迹外视角 |\n| 原生四维高斯 | Yang 4DGS | xyz-t 联合均值与协方差，在目标时刻条件化 | 空间与时间耦合、时间支持、不可观测运动 |\n| 时间支持加参数化运动 | Spacetime Gaussians | 时间不透明度、运动、旋转，以及随视角和时间变化的特征 | 短暂内容、复杂运动的拟合范围 |\n\n原生四维高斯可以写成 $G(x,t)=G(t)G(x\\mid t)$。给定渲染时刻 $t$，$G(t)$ 表示这一时刻的贡献，$G(x\\mid t)$ 给出用于投影的三维分布。空间—时间协方差决定不同时刻切出的三维分布怎样变化；形变网络则显式预测一个三维基元怎样移动。两者都能产生动态图像，但学习的参数不同。[native-4dgs-yang-2024, 4dgs-wu-2024]\n\n这些权重首先服务于渲染。例如，一个基元在某时刻贡献很小，可能只是模型用它解释其他时刻的外观；若要把权重解释成对象仍然存在、空间被占据或自由的概率，还需定义相应状态并提供监督与校准。类似地，D-NeRF、Nerfies 和 Wu 4D-GS 都采用规范空间思想，前两者的隐式辐射场与后者的显式高斯仍有不同优化成本和编辑接口。[d-nerf-2021, nerfies-2021]\n\n### 构建与更新方式\n\n同一种时间机制可以逐场景优化，也可以由前馈网络预测。比较速度时，完整流程很重要：Drive2Gauss 的前馈部分是高斯重建，之前的未来视频生成需要另外计时；SplatFlux 当前仍是离线方法。在线系统还要为每次新增观测付出关联、跟踪、增密与优化成本，仅给渲染 FPS 很难说明场景更新速度。[drive2gauss-2026, splatflux-2026, gs-systems-survey-2026]\n\n更新过程中，保留哪些基元也是方法的一部分。Multi4D 的持久集合保留对应，瞬态集合吸收外观残差；Geometry-Aware Online Mapping 用透明度保持与几何尺度初始化适应有限迭代；DGOMapping 用不确定性和评分管理外部更新。比较这些机制时，先看一次更新读入什么、改变哪些状态，再看耗时，能够避免把不同任务的速度混为一谈。[multi4d-2026, geometry-aware-online-gs-2026, dgomapping-2026]\n\n### 传感器与物理模型\n\n共享几何之后，成像过程还需要分别建模。NeuRAD 处理滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接到高斯上；RadarSplat 处理雷达噪声和多径。Uni-Gaussians 的栅格化与光线追踪（ray-tracing）双路径也说明，同一份几何可以通过不同成像模型产生观测。[neurad-2024, splatad-2025, radarsplat-2025, uni-gaussians-2025]\n\n物理交互是另一层。Real2Sim 接入物质点法（MPM）求解器后，资产才有碰撞与变形计算；这需要动力学和材料参数。“4D”表示时间变化，本身并未指定碰撞以后会发生什么。[real2sim-2026]",
-      "referenceIds": [
-        "dynamic-3d-gaussians-2024",
-        "4dgs-wu-2024",
-        "native-4dgs-yang-2024",
-        "spacetime-gaussians-2024",
-        "drive2gauss-2026",
-        "splatflux-2026",
-        "neurad-2024",
-        "splatad-2025",
-        "radarsplat-2025",
-        "real2sim-2026",
-        "multi4d-2026",
-        "geometry-aware-online-gs-2026",
-        "dgomapping-2026",
-        "uni-gaussians-2025",
-        "gs-systems-survey-2026",
-        "d-nerf-2021",
-        "nerfies-2021",
-        "neural-rendering-survey-2022"
-      ]
-    },
-    {
-      "id": "evidence",
-      "kind": "evidence",
-      "title": "图像好看之后，还需要评价什么",
-      "thesis": "各类实验分别回答视图合成、几何恢复、传感器模拟和驾驶行为的问题。",
-      "body": "### 先看测试要求恢复哪种信息\n\n动态视图合成常用 PSNR 反映像素重建误差、SSIM 衡量结构相似度、LPIPS 衡量学习特征中的感知差异，并分出动态区域和未见时刻。追踪还要检查三维对应；驾驶重建会增加深度、点云与采集轨迹之外的视角。四类基础时间机制所用相机数量、分辨率、场景和硬件不同，各自的 FPS 或平均 PSNR 不能直接组成同一排名。\n\n轨迹外评测尤其重要，因为自车一旦偏离原日志，就会看到原先没有充分观测的表面。FlexDrive 使用模拟器真值评价 out-of-path 视角；SafeComp 的工业评测检查车辆与行人在横向、纵向视点变化时的退化。它们明确了视角变化造成的问题，结果也分别受模拟器和受控对象范围约束。[flexdrive-2025, safecomp-capability-2026]\n\n前馈论文的图像指标要连同目标图像的来源阅读。Drive2Gauss 的 29.91 dB 衡量对生成观测的重建，现实中是否会发生这些观测是另一个问题；偏移视点后的直接渲染与 SPVC 修复也对应不同处理流程。SplatFlux 通过静态聚合与速度插值减少重复构建，但当前不支持流式输入。效率比较需要分列生成、特征提取、资产构建、渲染及可选修复的开销。[drive2gauss-2026, splatflux-2026]\n\nRoadVGGT 聚焦静态道路表面的外观、语义和高程，因而适合单独比较：\n\n| 数据与设置 | PSNR | mIoU | Z-RMSE | 存储 |\n| --- | --- | --- | --- | --- |\n| Waymo | 25.71 | 0.4692 | 0.2312 m | 112.81 MB |\n| 零样本 nuScenes | 23.80 | 0.4722 | 0.2241 m | 此处未列 |\n\n这些结果使用给定 pose/depth 和微调 Mask2Former，质量只在各方法共同有效区域计算，高程经过中位数偏移对齐。实验支持静态路面重建比较，没有包含动态交通参与者和规划任务。[roadvggt-2026]\n\n### 感知一致性和驾驶行为\n\n全图相似度可能掩盖小目标附近的关键误差。Are NeRFs Ready for Autonomous Driving? 直接比较真实与渲染输入上的检测、在线建图；感知对齐 3DGS 则用对象区域与感知输出引导优化。它们把评价从“图像有多像”推进到“下游模型是否作出相近判断”。[nerfs-ready-driving-2024, perception-aware-3dgs-2026]\n\nUniSim 和 NeuroNCAP 进一步执行动作驱动的闭环测试。Instant NuRec 在 140 个场景、五种策略配置中保留了相对内部优化版 NuRec 的策略排序；Cam2Sim 将真实城市记录转换为 CARLA 场景，比较常规模拟器渲染、GS 渲染和真实记录下的 DAVE-2 行为，现实参照限于单场景。前者考察有限场景与策略集合中的相对评价，后者给出局部现实对应；它们尚未建立任意反事实的现实结局一致性。[unisim-2023, neuroncap-2024, instant-nurec-2026, cam2sim-2026]\n\n### 解释遮挡与更新结果时的条件\n\nPersistGS 用三个合成球体接触场景和留出相机检查遮挡期轨迹，恒速外推是因果对照，利用重现位置进行插值则是事后对照。Multi4D 的分割实验先固定重建几何，再只对持久基元学习语义特征；动态视图质量反映的是重建能力，在线建图速度需要单独测量。[persistgs-2026, multi4d-2026]\n\n公开工具也决定可复用范围。Instant NuRec 的默认推理入口输出静态高斯和天空；pa-front / pa-multiview 的 dense PA 配置支持 `--include-dynamic`，可以导出 `.dynamic.npz`，运动来源可选 tracks 或 learned。动态导出已有实现，公开训练范围仍有限，使用时需区分这些入口与论文完整流程。[instant-nurec-2026]",
-      "referenceIds": [
-        "dynamic-3d-gaussians-2024",
-        "4dgs-wu-2024",
-        "native-4dgs-yang-2024",
-        "spacetime-gaussians-2024",
-        "drive2gauss-2026",
-        "splatflux-2026",
-        "flexdrive-2025",
-        "safecomp-capability-2026",
-        "nerfs-ready-driving-2024",
-        "perception-aware-3dgs-2026",
-        "unisim-2023",
-        "neuroncap-2024",
-        "instant-nurec-2026",
-        "roadvggt-2026",
-        "persistgs-2026",
-        "multi4d-2026",
-        "cam2sim-2026",
-        "gs-systems-survey-2026"
-      ]
-    },
-    {
-      "id": "challenges",
-      "kind": "challenges",
-      "title": "遮挡、外观变化与未见表面为何仍然困难",
-      "thesis": "同一段图像变化往往有多种解释，而重建损失只观察它们合成后的结果。",
-      "body": "单车采集把时间与视角绑定。目标位置变了，可能因为目标在动，也可能因为自车换了视角；像素亮度变了，还可能来自反光或曝光。只要最终图像相似，错误几何与时间变化就可能相互补偿。物理一致 4D 重建通过可辨识性分析和正交梯度缓解空间、时间外观参数的混淆，但仍要求较好的基础几何；漂浮基元和复杂非刚体行人尚未得到同样处理。这里的“物理一致”是重建约束，模型没有据此获得碰撞求解能力。[physical-4d-2026]\n\n遮挡把这个问题进一步放大。一个基元是否参与当前渲染、遮挡前后是否表示同一处表面、一个对象是否仍在场，是三个不同问题。允许短暂基元出现和消失，容易拟合遮挡边缘，也可能藏住错误几何；固定一组基元方便追踪，却较难接纳后来才进入视野的内容。动静分解、分层表示和时间支持因此各有取舍，快速运动、长遮挡和新出现区域最能显示这些差别。[dynamic-3d-gaussians-2024, native-4dgs-yang-2024, spacetime-gaussians-2024, desire-gs-2025, instant-nurec-2026, splatflux-2026]\n\n生成模型能补足未见内容，但多个输出彼此吻合仍可能共享同一个错误。Drive2Gauss 的 RGB、深度与流来自同一生成链，三者一致说明内部对应较好，并不构成独立现实观测。物理仿真也依赖未知参数：Real2Sim 的碰撞示例人为调软材料以凸显变形，作者说明缺少真实车辆物性，因此不能精确复现现实碰撞。[drive2gauss-2026, real2sim-2026]\n\n最后，统一几何仍会产生传感器特有误差。相机的扫描时序、LiDAR 的返回缺失、雷达的噪声与多径需要各自的观测模型。判断这些误差是否重要，还要看它们出现的位置与任务：大面积背景的细小外观差异，和行人边缘的局部几何偏差，对检测或规划的影响可能不同。[neurad-2024, radarsplat-2025, perception-aware-3dgs-2026]",
-      "referenceIds": [
         "physical-4d-2026",
-        "dynamic-3d-gaussians-2024",
-        "native-4dgs-yang-2024",
-        "spacetime-gaussians-2024",
-        "desire-gs-2025",
         "instant-nurec-2026",
+        "native-4dgs-yang-2024",
+        "dynamic-3d-gaussians-2024",
+        "spacetime-gaussians-2024",
         "splatflux-2026",
-        "drive2gauss-2026",
-        "real2sim-2026",
-        "neurad-2024",
-        "radarsplat-2025",
-        "perception-aware-3dgs-2026"
+        "persistgs-2026",
+        "multi4d-2026"
       ]
     },
     {
-      "id": "outlook",
-      "kind": "outlook",
-      "title": "场景怎样持续更新，并服务于具体任务",
-      "thesis": "值得继续研究的是新观测与旧结构冲突时如何处理，以及有限计算应花在哪里。",
-      "body": "### 新观测到来时，哪些结构值得保留？\n\n从头重建可以重新解释全部观测，却丢掉先前已经建立的对应；完全相信旧结构，又难以吸收新对象与场景变化。Multi4D 已区分持久几何和瞬态外观，PersistGS 用物理运动补足遮挡期信息，多主体建图还要接收异步更新。剩下的关键问题是：可见性、运动预测和重投影残差相互矛盾时，哪种证据足以修改已有结构？这个问题关系到遮挡后身份能否延续、错误更新能否恢复，也关系到每次更新要付出的计算。[multi4d-2026, persistgs-2026, dgomapping-2026, geometry-aware-online-gs-2026]\n\n### 哪些重建误差最值得花计算去修？\n\n感知对齐 GS 已经说明，图像损失与任务输出并不总是同步改善。有限优化次数可以用来细化高图像残差区域，也可以用来修复对检测或规划敏感的结构。真正困难的是这种选择能否跨城市、相机配置和下游模型成立：如果只改善一个固定评价器，资产对其他用途的价值仍不清楚。因而预算分配与任务泛化值得一起研究。[perception-aware-3dgs-2026]\n\n### 一次场景编辑能否同时改变各个传感器的正确部分？\n\n把停放车辆挪开后，相机应看到后方表面，LiDAR 返回和遮挡边界也会随之改变。现有多传感器渲染提供了计算这些变化的起点，Cam2Sim 和 NeuroNCAP 让编辑后的场景能够进入行为测试。仍待解决的是，缺失表面的补全误差怎样影响不同传感器与下游判断。物体响应和碰撞材料则需要另外的物理信息，可以与局部可编辑几何分开推进。[uni-gaussians-2025, splatad-2025, neurad-2024, cam2sim-2026, neuroncap-2024, real2sim-2026]",
+      "id": "construction",
+      "title": "逐场景优化、前馈构建与在线更新",
+      "covers": [
+        "evolution",
+        "evidence",
+        "challenges"
+      ],
+      "body": "逐场景优化能够反复利用同一段观测，但车队日志很多时，每个场景重新优化会成为成本。前馈方法把部分先验移到训练阶段：DrivingForward 联合预测位姿、深度和高斯，STORM 通过速度与跨帧聚合恢复动态场景，DGGT 将相机参数也作为输出。它们共享快速构建目标，所需的相机信息与动态约束仍不同。[drivingforward-2025, storm-2025, dggt-2026]\n\n前馈构建又出现两种与生成模型结合的方式。Drive2Gauss 先获得生成的 RGB、深度和流，再利用几何与运动对应构建稀疏高斯；SplatFlux 直接解码视频潜变量，将静态基元聚合、动态基元按速度插值。前者先建立多模态观测，后者把资产解码统一到潜变量中。Instant NuRec 则从快速构建走向分层驾驶资产及有限策略集合的闭环排序评测。[drive2gauss-2026, splatflux-2026, instant-nurec-2026]\n\n更新过程中，保留哪些基元也是方法的一部分。Multi4D 的持久集合保留对应，瞬态集合吸收外观残差；Geometry-Aware Online Mapping 用透明度保持与几何尺度初始化适应有限迭代；DGOMapping 用不确定性和评分管理外部更新。比较这些机制时，先看一次更新读入什么、改变哪些状态，再看耗时，能够避免把不同任务的速度混为一谈。[multi4d-2026, geometry-aware-online-gs-2026, dgomapping-2026]\n\n前馈论文的图像指标要连同目标图像的来源阅读。Drive2Gauss 的 29.91 dB 衡量对生成观测的重建，现实中是否会发生这些观测是另一个问题；偏移视点后的直接渲染与 SPVC 修复也对应不同处理流程。SplatFlux 当前不支持流式输入。效率比较需要分列生成、特征提取、资产构建、渲染及可选修复的开销。[drive2gauss-2026, splatflux-2026]\n\n公开工具也决定可复用范围。Instant NuRec 的默认推理入口输出静态高斯和天空；pa-front / pa-multiview 的 dense PA 配置支持 `--include-dynamic`，可以导出 `.dynamic.npz`，运动来源可选 tracks 或 learned。动态导出已有实现，公开训练范围仍有限，使用时需区分这些入口与论文完整流程。[instant-nurec-2026]\n\n### 静态道路表面这一子任务\n\nRoadVGGT 聚焦静态道路表面的外观、语义和高程，因而适合单独比较：\n\n| 数据与设置 | PSNR | mIoU | Z-RMSE | 存储 |\n| --- | --- | --- | --- | --- |\n| Waymo | 25.71 | 0.4692 | 0.2312 m | 112.81 MB |\n| 零样本 nuScenes | 23.80 | 0.4722 | 0.2241 m | 此处未列 |\n\n这些结果使用给定 pose/depth 和微调 Mask2Former，质量只在各方法共同有效区域计算，高程经过中位数偏移对齐。实验支持静态路面重建比较，没有包含动态交通参与者和规划任务。[roadvggt-2026]",
       "referenceIds": [
+        "instant-nurec-2026",
+        "dggt-2026",
+        "storm-2025",
+        "drivingforward-2025",
+        "roadvggt-2026",
+        "drive2gauss-2026",
+        "splatflux-2026",
         "multi4d-2026",
-        "persistgs-2026",
-        "dgomapping-2026",
         "geometry-aware-online-gs-2026",
-        "perception-aware-3dgs-2026",
-        "uni-gaussians-2025",
+        "dgomapping-2026"
+      ]
+    },
+    {
+      "id": "sensors-and-interaction",
+      "title": "多传感器渲染与物理交互",
+      "covers": [
+        "taxonomy",
+        "evidence",
+        "challenges"
+      ],
+      "body": "共享几何之后，成像过程还需要分别建模。NeuRAD 处理滚动快门、LiDAR 光束发散和丢失返回；SplatAD 将相机与 LiDAR 渲染接到高斯上；RadarSplat 处理雷达噪声和多径。Uni-Gaussians 的栅格化与光线追踪（ray-tracing）双路径也说明，同一份几何可以通过不同成像模型产生观测。[neurad-2024, splatad-2025, radarsplat-2025, uni-gaussians-2025]\n\n物理交互是另一层。Real2Sim 接入物质点法（MPM）求解器后，资产才有碰撞与变形计算；这需要动力学和材料参数。“4D”表示时间变化，本身并未指定碰撞以后会发生什么。[real2sim-2026]\n\n对象编辑会同时改变可见表面和遮挡关系。相机、LiDAR 与雷达可以共享几何，却仍需要不同的成像过程；在一种传感器上拟合良好的误差补偿，可能不适用于另一种传感器。Cam2Sim 与 Real2Sim 为可编辑资产和物理驱动提供了不同接口，多模态观测的一致性仍需针对编辑后的状态评价。[cam2sim-2026,real2sim-2026]",
+      "referenceIds": [
         "splatad-2025",
+        "real2sim-2026",
         "neurad-2024",
-        "cam2sim-2026",
+        "radarsplat-2025",
+        "uni-gaussians-2025",
+        "cam2sim-2026"
+      ]
+    },
+    {
+      "id": "evaluation",
+      "title": "重建质量与仿真有效性",
+      "covers": [
+        "evidence",
+        "challenges"
+      ],
+      "body": "动态视图合成常用 PSNR 反映像素重建误差、SSIM 衡量结构相似度、LPIPS 衡量学习特征中的感知差异，并分出动态区域和未见时刻。追踪还要检查三维对应；驾驶重建会增加深度、点云与采集轨迹之外的视角。四类基础时间机制所用相机数量、分辨率、场景和硬件不同，各自的 FPS 或平均 PSNR 不能直接组成同一排名。\n\n轨迹外评测尤其重要，因为自车一旦偏离原日志，就会看到原先没有充分观测的表面。FlexDrive 使用模拟器真值评价 out-of-path 视角；SafeComp 的工业评测检查车辆与行人在横向、纵向视点变化时的退化。它们明确了视角变化造成的问题，结果也分别受模拟器和受控对象范围约束。[flexdrive-2025, safecomp-capability-2026]\n\n全图相似度可能掩盖小目标附近的关键误差。Are NeRFs Ready for Autonomous Driving? 直接比较真实与渲染输入上的检测、在线建图；感知对齐 3DGS 则用对象区域与感知输出引导优化。它们把评价从“图像有多像”推进到“下游模型是否作出相近判断”。[nerfs-ready-driving-2024, perception-aware-3dgs-2026]\n\nUniSim 和 NeuroNCAP 进一步执行动作驱动的闭环测试。Instant NuRec 在 140 个场景、五种策略配置中保留了相对内部优化版 NuRec 的策略排序；Cam2Sim 将真实城市记录转换为 CARLA 场景，比较常规模拟器渲染、GS 渲染和真实记录下的 DAVE-2 行为，现实参照限于单场景。前者考察有限场景与策略集合中的相对评价，后者给出局部现实对应；它们尚未建立任意反事实的现实结局一致性。[unisim-2023, neuroncap-2024, instant-nurec-2026, cam2sim-2026]",
+      "referenceIds": [
+        "nerfs-ready-driving-2024",
+        "instant-nurec-2026",
+        "unisim-2023",
+        "flexdrive-2025",
         "neuroncap-2024",
-        "real2sim-2026"
+        "perception-aware-3dgs-2026",
+        "safecomp-capability-2026",
+        "cam2sim-2026"
+      ]
+    },
+    {
+      "id": "open-problems",
+      "title": "尚未解决的对应与外推问题",
+      "covers": [
+        "challenges",
+        "outlook"
+      ],
+      "body": "生成模型能补足未见内容，但多个输出彼此吻合仍可能共享同一个错误。Drive2Gauss 的 RGB、深度与流来自同一生成链，三者一致说明内部对应较好，并不构成独立现实观测。物理仿真也依赖未知参数：Real2Sim 的碰撞示例人为调软材料以凸显变形，作者说明缺少真实车辆物性，因此不能精确复现现实碰撞。[drive2gauss-2026, real2sim-2026]\n\n新观测到来后，系统要在保留已建立的对应和修正旧解释之间作选择。持久几何与瞬态外观的分离，已经让这类更新具有明确对象；在线建图和异步多主体更新又把计算预算、来源与更新顺序纳入问题。遮挡后的对象关联、错误结构的撤回和长期地图一致性，仍可能成为快速构建之后的主要误差来源。[multi4d-2026,geometry-aware-online-gs-2026,dgomapping-2026]\n\n感知对齐 GS 已经说明，图像损失与任务输出并不总是同步改善。有限优化次数可以用来细化高图像残差区域，也可以用来修复对检测或规划敏感的结构。真正困难的是这种选择能否跨城市、相机配置和下游模型成立：如果只改善一个固定评价器，资产对其他用途的价值仍不清楚。因而预算分配与任务泛化值得一起研究。[perception-aware-3dgs-2026]",
+      "referenceIds": [
+        "real2sim-2026",
+        "perception-aware-3dgs-2026",
+        "drive2gauss-2026",
+        "multi4d-2026",
+        "geometry-aware-online-gs-2026",
+        "dgomapping-2026"
       ]
     }
-  ],
-  "takeaways": [
-    "理解动态高斯，先看时间改变了哪些参数：持久基元、规范形变、四维联合分布和时间支持各有不同约束。",
-    "对象归属、时间表示、构建方式和传感器模型可以组合；一种高斯表示并不唯一决定整套系统。",
-    "图像、几何、传感器输出和闭环行为回答不同问题。评价资产时，应选与用途相符的测试，并保留其输入和场景条件。",
-    "持续更新的难点在于吸收新证据的同时保留正确对应；任务驱动重建的难点在于局部收益能否迁移到其他场景与评价器。"
   ],
   "references": [
     {
@@ -978,14 +954,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_embodied",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/embodied-round1.json",
-      "artifactSha256": "907ef62070a8cfcc1de93d7722e66856966002832eb0d12cc07cab12dc65d137",
-      "snapshotFingerprint": "5d321b5c596bcbc958dd475438e89ef0ef9ed876895495f9279170bd66d587fe",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_core",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/core-round2.json",
+      "artifactSha256": "3586a94ed94a5d5e8a58ae7a2bb6951ffe58405953d3d9decd03748ba145f69c",
+      "snapshotFingerprint": "6f4f68936078c844aa592e36426fb6621f3911b1c228d3ef907a374e4887760f",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -3818,5 +3794,41 @@
       "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
-  }
+  },
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "scope": "scene-models",
+    "scope-title": "scene-models",
+    "evolution": "time-models",
+    "evolution-title": "time-models",
+    "taxonomy": "time-models",
+    "taxonomy-title": "time-models",
+    "evidence": "evaluation",
+    "evidence-title": "evaluation",
+    "challenges": "open-problems",
+    "challenges-title": "open-problems",
+    "outlook": "open-problems",
+    "outlook-title": "open-problems",
+    "research-questions": "scene-models",
+    "researchQuestionsTitle": "scene-models",
+    "takeaways": "open-problems",
+    "takeawaysTitle": "open-problems"
+  },
+  "figures": [
+    {
+      "url": "../../assets/reviews/gaussian-time-models.svg",
+      "width": 720,
+      "height": 840,
+      "sourceReferenceIds": [
+        "4dgs-wu-2024",
+        "native-4dgs-yang-2024"
+      ],
+      "sha256": "e8c3b9015726d17aeff40e5b5d4ec1ed32445941f30f5a327f3049d92ee44457"
+    }
+  ],
+  "additionalReferenceIds": [
+    "driving-3dgs-review-2025",
+    "gs-systems-survey-2026",
+    "colmap-sfm-2016"
+  ]
 }

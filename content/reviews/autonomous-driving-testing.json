@@ -1,176 +1,129 @@
 {
   "version": 3,
   "id": "autonomous-driving-testing",
-  "title": "自动驾驶测试：失效搜索、风险估计与现实验证",
-  "subtitle": "把失效发现接到根因保持、能力边界、策略修复与跨版本回归。",
-  "abstract": "自动驾驶测试首先要分清问题：是尽快找到一个会出错的场景，估计某类事故在自然交通中的发生率，还是确认软件更新修好了旧问题？主动搜索、重要性采样和回归测试分别服务于这些目标。本文从场景如何描述和执行讲起，解释常见方法的采样与判定方式，再讨论仿真结果怎样与现实建立联系。近期研究进一步关注失败的根因、策略愿不愿意冒险，以及有限昂贵测试应怎样分配。",
+  "title": "自动驾驶测试：失效搜索、概率评估与回归验证",
+  "subtitle": "不同测试目标怎样决定场景采样、判定规则和结果解释。",
+  "abstract": "自动驾驶测试包含寻找失效、估计事件发生率和验证软件修复等不同目标。主动搜索与重要性采样都能提高危险场景出现频率，但只有后者显式恢复参考分布下的概率。本文据此组织场景建模、失效诊断、版本比较与仿真迁移研究。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "核心文献检索沿用 2023 至 2026-08-01 的记录；2026-09-22 重新打开既有引用与关键论断的一手来源，复核版本、出版状态及资源，并重跑当前本库候选闭合。9月新论文另见 2026-09-22 简报，本次来源再核不代表重做全领域检索。 2026-11-06 增补站外方法与方法综述，重开既有一手来源并进行章节级核对；未完成全文或版本核验的具体项目保留在本轮复核记录，因此实质复核日期暂沿用上一轮。",
-  "researchQuestions": [
-    "找到更多碰撞案例，为什么不等于测出了现实事故率？",
-    "同一个切入或让行场景，怎样从文字描述变成可重复执行的测试？",
-    "两种策略得分接近时，怎样区分通行能力与冒险倾向？",
-    "软件更新后，怎样判断旧故障已修复，同时发现新的退化？",
-    "哪些仿真结果已有现实参照，哪些差异还会改变测试结论？"
-  ],
   "sections": [
     {
-      "id": "claim-bounded-test-unit",
-      "kind": "scope",
-      "title": "测试究竟想回答什么",
-      "thesis": "发现失败、估计发生概率、比较修复效果，需要不同的场景选择与判定方式。",
-      "body": "假设一辆车在前车突然切入时发生碰撞。测试者可以继续调整切入距离，寻找触发失败的条件；也可以询问这样的条件在自然交通中多常见；软件修复后，还可以重跑附近场景，检查修复有没有引入过度保守或新的风险。三种工作都可能统计碰撞，目标却不同。\n\n这也是为什么仅报告里程、碰撞数或闭环总分通常不够。一次碰撞可能来自自车缺陷、无法避免的他车行为、仿真误差或判定规则的问题；一次没有碰撞的执行，也可能出现违规、极端制动或任务失败。测试需要先说明要评价什么，再选择相应的场景和指标。[scenario-testing-considerations-2020]\n\n两个术语会反复出现。**ODD（设计运行范围）**说明系统预期在哪些道路、天气、交通等条件下工作；**oracle（测试判定规则）**决定一次执行是否通过，例如是否碰撞、是否完成任务、是否违反交通规则。ISO 21448、ISO 34502 和 UL 4600 将测试放在风险分析、验证确认和安全论证中，强调具体条件与结论的联系。[iso-sotif-2022, iso-scenario-testing-2022, ul-4600-ed3]\n\n本文用七项信息整理这种联系：系统版本、ODD、场景、执行层级、oracle、不确定度、证据边界。这是综合标准与测试研究提出的阅读和记录模板，并非上述标准逐字规定的强制清单。它的用途很直接：读到一个结果时，能看清测试了哪套系统、在哪些条件下执行、用什么规则判断，以及结果适用于哪里。\n\n### 怎样阅读已有综述\n\n先读 [A Survey on Automated Driving System Testing: Landscapes and Trends](https://doi.org/10.1145/3579642)。它覆盖 2015 年 1 月至 2022 年 6 月的工作，按模块级与系统级测试组织材料，再区分测试生成、判定和充分性，适合建立整体分类。\n\n随后读 [The Reality Gap in Automated Driving Systems Testing](https://arxiv.org/abs/2610.38628)。这篇 2026 年 10 月预印本关注仿真与现实的对应：用现实数据构建仿真器，和用现实执行验证仿真结论，是两个不同环节。场景层次、概率描述语言和稀有事件统计的基础，则可沿下节回到 Menzel 等、Scenic 与 Kalra–Paddock 的原始工作。",
+      "id": "test-objectives",
+      "title": "测试目标与结果含义",
+      "covers": [
+        "scope",
+        "taxonomy"
+      ],
+      "body": "在固定预算内发现更多失败，与估计自然交通中的风险，是两种不同的统计任务。修复验证又要求保持场景机制与比较条件，观察同一系统变化前后的差异。三者可以共用仿真器和场景库，采样与判定规则却各有作用。[scenario-testing-considerations-2020,accelerated-evaluation-2017,nade-2021,bug2scenario-2026]\n\n| 测试目的 | 场景怎样选择 | 主要看什么 | 解释结果所需的信息 |\n| --- | --- | --- | --- |\n| 发现失败 | 搜索、变异或生成危险场景 | 有效失败、独特机制、搜索成本 | 执行预算、失败去重、场景约束 |\n| 估计自然事件率 | 对参考分布偏置采样并加权 | 事件率、方差、置信区间 | 自然分布、采样概率、支持集和权重 |\n| 比较版本或修复 | 在相同场景及邻近条件中配对执行 | 旧故障是否消失、是否出现新退化 | 系统版本、场景根因、配对差异 |\n\n设计运行范围（ODD）规定道路、天气与交通等条件，测试判定规则（oracle）决定何种输出算作失败。ISO 21448、ISO 34502 和 UL 4600 将这些条件放在风险分析、验证确认与安全论证中；本文的分类是对测试研究的组织，并非标准规定的统一检查清单。[iso-sotif-2022,iso-scenario-testing-2022,ul-4600-ed3]\n\n先读 [A Survey on Automated Driving System Testing: Landscapes and Trends](https://doi.org/10.1145/3579642)。它覆盖 2015 年 1 月至 2022 年 6 月的工作，按模块级与系统级测试组织材料，再区分测试生成、判定和充分性，适合建立整体分类。\n\n随后读 [The Reality Gap in Automated Driving Systems Testing](https://arxiv.org/abs/2610.38628)。这篇 2026 年 10 月预印本关注仿真与现实的对应：用现实数据构建仿真器，和用现实执行验证仿真结论，是两个不同环节。场景层次、概率描述语言和稀有事件统计的基础，则可沿下节回到 Menzel 等、Scenic 与 Kalra–Paddock 的原始工作。",
       "referenceIds": [
         "iso-sotif-2022",
         "iso-scenario-testing-2022",
         "ul-4600-ed3",
         "testing-survey-2023",
         "scenario-testing-considerations-2020",
-        "iedd-2026",
-        "obsdrivebench-2026",
-        "denial-deadline-2026",
-        "reality-gap-survey-2026",
-        "scenarios-abstraction-2018",
-        "scenic-2019",
-        "driving-to-safety-2016"
-      ]
-    },
-    {
-      "id": "from-mileage-to-active-evidence",
-      "kind": "evolution",
-      "title": "为什么从累计里程走向主动选择场景",
-      "thesis": "事故的稀有性推动了更高效的测试，而“高效”可以指更快找到失败，也可以指更精确地估计概率。",
-      "body": "### 先把道路情境变成可重复的测试\n\nKalra 与 Paddock 从事件基率和统计置信要求出发，说明仅靠自然驾驶里程往往难以高效评价可靠性；所需里程随事件和比较目标改变，并不是统一认证门槛。这个困难促使研究者主动选择更有信息的场景。[driving-to-safety-2016]\n\n场景如何描述是前提。Menzel 等区分功能、逻辑和具体场景：先说“前车切入”这样的情境，再给出车速、间距等参数范围，最后固定一次执行的参数值。Scenic 进一步用概率程序表达场景约束与分布，使生成器能够采样合法组合。其 2019 年论文主要面向静态场景和感知组件，动态行为与整车测试属于后续扩展。CARLA 则提供可控制天气、交通、地图和传感器的执行环境。[scenarios-abstraction-2018, scenic-2019, carla-2017]\n\n### 一条路线寻找失败，另一条路线估计概率\n\nAdaptive Stress Testing（AST）把环境扰动作为序贯决策，借助强化学习或树搜索寻找高可能的失败路径。DriveFuzz 根据驾驶质量和交通规则引导场景变异，AdvSim 在传感器级场景中生成满足物理约束的危险交互。它们把执行预算集中到更可能暴露问题的位置，核心收益是找到有诊断价值的失败。[adaptive-stress-testing-2018, drivefuzz-2022, advsim-2021]\n\n重要性采样多做了一步：既改变场景出现频率，也保留它与自然分布之间的概率关系。Zhao 等人的加速评估对切入场景进行偏置采样，再以似然比恢复冲突、碰撞与伤害频率；NADE 只在关键时刻改变少量背景车辆行为，用权重保持对自然环境事件率的无偏估计。这里的概率模型、支持集和权重都属于方法本身。单纯搜索到很多失败，没有提供这些信息。[accelerated-evaluation-2017, nade-2021]\n\n生成式方法增加了场景扩展能力。Safe-Sim 用扩散引导生成可控的交互场景，RiskFlow 关注快速且自然的危险交互；Pictura 将大规模自博弈扩展到透视图像输入，Learning from Risk 用 LLM 将先验知识转成场景损失。它们改善了场景生成或模拟器内训练测试，生成的危险样本比例仍需通过参考分布才能解释为现实暴露率。[safe-sim-2024, riskflow, pictura-2026, learning-from-risk-2026]\n\n### 找到失败以后，怎样解释和复用它？\n\n系统级测试需要观察动作对下一时刻的影响。Bench2Drive 用多能力、路线级闭环协议补足开环规划指标；CARS 研究哪些失败可归因于自车；Bench2Drive-Robust 将相机流、ego-state 和执行延迟加入测试。这些工作使“失败了多少次”进一步变为“因为什么失败”。[bench2drive-2024, cars-responsibility, bench2drive-robust]\n\n近期的 Bug2Scenario 沿着失败根因扩增场景，并区分严格保持、边界保持和新故障；failure-boundary profiles 把策略尝试通过的倾向与实际通过的能力画成两条曲线；SCAPE 利用少量目标/代理配对纠正便宜评价的偏差。三者分别帮助保存失败机制、解释行为差异和节省评价成本。测试因此开始连接缺陷发现、修复比较与后续版本，而不只结束于一个排行榜分数。[bug2scenario-2026, failure-boundary-profiles-2026, scape-2026]",
-      "referenceIds": [
-        "carla-2017",
         "accelerated-evaluation-2017",
         "nade-2021",
-        "adaptive-stress-testing-2018",
-        "drivefuzz-2022",
-        "advsim-2021",
-        "safe-sim-2024",
-        "bench2drive-2024",
-        "cars-responsibility",
-        "bench2drive-robust",
-        "commercial-av-failure",
-        "riskflow",
-        "real-world-perturbation",
-        "world-model-admissibility",
-        "rl-fuzzing-2026",
-        "pictura-2026",
-        "iedd-2026",
-        "lane-changing-public-road-2026",
-        "learning-from-risk-2026",
-        "denial-deadline-2026",
         "bug2scenario-2026",
-        "failure-boundary-profiles-2026",
-        "scape-2026",
-        "driving-to-safety-2016",
-        "scenarios-abstraction-2018",
-        "scenic-2019",
-        "testing-survey-2023"
-      ]
-    },
-    {
-      "id": "seven-field-test-record",
-      "kind": "taxonomy",
-      "title": "怎样比较两项测试",
-      "thesis": "先按目的区分测试，再核对场景、执行和判定条件，能够解释许多看似矛盾的结果。",
-      "body": "| 测试目的 | 场景怎样选择 | 主要看什么 | 解释结果所需的信息 |\n| --- | --- | --- | --- |\n| 发现失败 | 搜索、变异或生成危险场景 | 有效失败、独特机制、搜索成本 | 执行预算、失败去重、场景约束 |\n| 估计自然事件率 | 对参考分布偏置采样并加权 | 事件率、方差、置信区间 | 自然分布、采样概率、支持集和权重 |\n| 比较版本或修复 | 在相同场景及邻近条件中配对执行 | 旧故障是否消失、是否出现新退化 | 系统版本、场景根因、配对差异 |\n\n这三类目标可以共用仿真器和场景语言，但收益的含义不同。例如搜索器故意多采危险切入，碰撞命中率上升可能说明搜索更有效；同一数字若用于评价车辆安全，则需要恢复自然场景中的采样比例。\n\n具体阅读论文时，可把七项记录缩成下面这张对照表。它延续前述综合模板，方便定位差异。\n\n| 记录项 | 需要弄清楚的问题 |\n| --- | --- |\n| 系统版本 | 权重、软件提交、传感器、平台和配置是否相同？分布式系统还包括路由、截止时间与资源隔离。 |\n| ODD | 哪些道路、天气、交通条件属于评价范围？ |\n| 场景 | 来自日志、规则、搜索、重要性采样还是生成模型？来源是否重复？ |\n| 执行层级 | 是开环日志、仿真闭环、软件/硬件在环，还是封闭场地与道路车辆？ |\n| Oracle | 判断碰撞、规则、任务、舒适度、风险还是责任？ |\n| 不确定度 | 有多少种子与重复，如何给置信区间和去重失败？ |\n| 证据边界 | 结论适用于哪些场景、系统和执行条件？ |\n\n场景还存在抽象层次：功能场景描述情境关系，逻辑场景规定参数范围，具体场景固定一次执行。生成更多具体危险样本，并不等于覆盖了整个逻辑场景空间。场景库覆盖指标只能相对于给定分类解释；风险指标也各有用途，TTC（按当前运动估计的碰撞剩余时间）、碰撞、路线完成率和舒适度并非同一件事。[scenarios-abstraction-2018, scenic-2019, scenario-coverage-2024, criticality-metrics-2022]\n\n近期结果提供了几个直观例子。IEDD 将五个既有数据源重组成数百万片段，场景来源和去重决定独立覆盖究竟有多少；RL fuzzing 的唯一失败数需要与种子和预算一起看；ObsDriveBench 先区分恶劣天气下各模态是否可观察；Denial of Deadline 则把结果是否按时到达纳入有效输出。这些条件改变的分别是样本独立性、搜索成本、信息可得性和系统时序。[iedd-2026, rl-fuzzing-2026, obsdrivebench-2026, denial-deadline-2026]\n\n回归测试另有一个常被忽略的区别：同类碰撞不一定来自同一根因。Bug2Scenario 为此保留根因模式、变化参数与执行证据；failure-boundary profiles 区分尝试通过概率与无接触通过概率。否则，软件变得更愿意冒险，就可能被误读成通行能力提高。[bug2scenario-2026, failure-boundary-profiles-2026]",
-      "referenceIds": [
-        "testing-survey-2023",
-        "bench2drive-2024",
-        "bench2drive-robust",
-        "cars-responsibility",
-        "criticality-metrics-2022",
-        "scenario-coverage-2024",
-        "iedd-2026",
-        "obsdrivebench-2026",
-        "rl-fuzzing-2026",
-        "denial-deadline-2026",
-        "bug2scenario-2026",
-        "failure-boundary-profiles-2026",
-        "scenarios-abstraction-2018",
-        "scenic-2019",
-        "driving-to-safety-2016"
-      ]
-    },
-    {
-      "id": "supported-evidence-and-nonclaims",
-      "kind": "evidence",
-      "title": "现有实验分别证明了什么",
-      "thesis": "把具体数字放回采样和执行条件后，才看得出它支持搜索效率、行为解释还是现实迁移。",
-      "body": "### 搜索效率与概率估计\n\n商用卡车研究中，AST 和 DiFS 在传统 Monte Carlo 未发现碰撞的预算内找到了碰撞；RiskFlow、Safe-Sim 也能提高危险交互的出现频率。这些结果说明测试资源被更有效地用于暴露失败。采样分布已经改变，命中率不能直接当作现实事故率。[commercial-av-failure, adaptive-stress-testing-2018, riskflow, safe-sim-2024]\n\nRL fuzzing 的横评给出一个可比较的例子：统一 12 小时预算、5 次重复下，MDPFuzz 在 CARLA 找到 291 个唯一 crash，随机测试为 157；不同 fuzzer 找到的失败还高度互补。结果既支持固定预算下的搜索收益，也提示应比较失败并集，而不只比较单一工具的总数。[rl-fuzzing-2026]\n\n加速评估与 NADE 则从自然驾驶数据建立参考分布，改变明确定义的切入或高速交互采样，再用可计算似然比加权。在分布模型、支持集覆盖、代理系统和权重方差等假设下，它们估计特定事件率并给出置信区间。换 ODD、行为模型或系统版本后，这些假设与校准也要重新检查。[accelerated-evaluation-2017, nade-2021]\n\n### 失败机制与策略行为\n\nBug2Scenario 在匹配比较中，严格根因保持为 65/180 对 53/180，p=0.104；包含边界情况后为 99/180 对 80/180，p=0.011。执行反馈帮助了部分种子，但严格指标尚未显示显著优势。把两种口径分开，才能看出方法保留原机制的程度。[bug2scenario-2026]\n\nFailure-boundary profiles 在七类 CARLA 场景中画出承诺与能力曲线；decision accuracy 只计算具有通行认证标签的三个场景族。它把“应停时停下”也计入表现，用于区分合理停止与能力不足，而碰撞、进度的乘积可能掩盖这种区别。[failure-boundary-profiles-2026]\n\nBench2Drive-Robust 观察到帧流、定位与延迟误差沿反馈累积；实车扰动研究则发现离线模型指标只能有限预测整车失效。两者说明系统执行会改变局部误差的后果。ObsDriveBench 的恶劣天气选择题考察可观测性、空间判断和风险决策，Denial of Deadline 考察高精度结果是否及时到达；后两者没有执行车辆轨迹、碰撞或恢复评测。[bench2drive-robust, real-world-perturbation, obsdrivebench-2026, denial-deadline-2026]\n\n### 仿真与现实之间已有多少联系\n\n| 工作 | 实际评价对象 | 结果的适用范围 |\n| --- | --- | --- |\n| Pictura | 透视图像输入的合成闭环训练与测试 | 96×54 栅格图及模拟器内布局迁移，真实传感器迁移尚待检验 |\n| Learning from Risk | CARLA/SMARTS 中的长尾场景覆盖 | 结果受所用模拟器及近饱和碰撞覆盖约束 |\n| Digital Siblings | 用跨仿真器一致性预测缩比车数字孪生的失败 | 主要终点仍是仿真代理 |\n| 公共道路换道实验 | 78 次受控换道的现实行为时间线 | 单一路线、协议和有限样本 |\n| 事故重建 | 用真实事故记录约束反事实 | 依赖记录、重建假设及所覆盖 ODD |\n\n这些研究分别提供模拟器扩展、代理预测与现实参照，不能简单排列成一个统一“真实性分数”。[pictura-2026, learning-from-risk-2026, digital-siblings-2024, lane-changing-public-road-2026, waymo-fatal-crash-reconstruction]\n\nSCAPE 将少量目标/代理配对与大量便宜代理样本结合，先校正偏差，再做情景条件预测与共形（conformal）校准。其驾驶配对来自 nuPlan 同一场景的开环代理和闭环目标，属于 Sim2Sim；真实 sim-real 配对来自四足机器人。它提供了有用的驾驶评价估计器，道路车辆的现实校准仍待完成。Reality Gap 综述所强调的区分在这里尤其有用：构建过程使用真实信息，与结论得到现实执行支持，并不相同。[scape-2026, reality-gap-survey-2026]",
-      "referenceIds": [
-        "adaptive-stress-testing-2018",
-        "commercial-av-failure",
-        "riskflow",
-        "accelerated-evaluation-2017",
-        "nade-2021",
-        "safe-sim-2024",
-        "bench2drive-robust",
-        "digital-siblings-2024",
-        "real-world-perturbation",
-        "waymo-fatal-crash-reconstruction",
-        "rl-fuzzing-2026",
-        "pictura-2026",
-        "learning-from-risk-2026",
-        "lane-changing-public-road-2026",
-        "obsdrivebench-2026",
-        "denial-deadline-2026",
-        "bug2scenario-2026",
-        "failure-boundary-profiles-2026",
-        "scape-2026",
         "reality-gap-survey-2026"
       ]
     },
     {
-      "id": "oracle-fidelity-and-transfer",
-      "kind": "challenges",
-      "title": "危险场景是否合理，测试裁判是否可靠",
-      "thesis": "测试结论同时依赖场景生成、系统执行和结果判定，任何一环的偏差都可能改变结论。",
-      "body": "主动搜索会偏好容易制造碰撞的条件。若背景车辆不自然地急转、越界，或制造自车根本无法避免的冲突，更多碰撞未必带来更多可修复问题。责任模型可以筛去一部分无诊断价值的案例，但 FSM、CC-JP、RSS 等模型采用不同规则与假设，其归因是相对于参考模型的技术判断，不能直接等同于法律责任。[cars-responsibility]\n\n判定规则也会遗漏行为差异。碰撞率低可能因为策略通行能力更好，也可能因为它几乎不前进；路线完成率高可能伴随不舒适或过于激进的动作。TTC、DRAC（避免碰撞所需的减速度）、碰撞、进度与舒适度观察不同方面，用场景条件解释这些指标比单独追求一个综合分数更有信息。[criticality-metrics-2022, failure-boundary-profiles-2026]\n\n仿真误差不仅来自画面。车辆动力学、交通行为、传感器、计算时序、碰撞检测和策略动作响应都可能改变测试判定。生成式世界模型还会把环境响应交给学习系统：图像连贯时，动作后果仍可能错误。用于安全测试前，需要知道模型在哪些动作与场景内可靠，以及结论能否由外部执行核对；超出已有验证范围时，保留无法判定的结果更符合实际信息。[digital-siblings-2024, world-model-admissibility]\n\n现实参照的覆盖仍有限。IEDD 的规模来自多源数据重组，独立场景覆盖需要先去重；78 次公共道路换道提供受控行为记录，也限于单一路线和协议。它们能约束部分假设，却尚未建立从合成场景命中率到自然交通暴露率的统一映射。[iedd-2026, lane-changing-public-road-2026]\n\n版本更新让归因更困难：某条能力边界移动，可能来自策略真正修复，也可能因为生成器改变了根因，或仿真执行本身不稳定。根因保持检查、重复执行与目标/代理配对分别帮助辨认这些来源。新版本沿用旧测试结论时，最需要补足的是这种具体对应关系。[bug2scenario-2026, failure-boundary-profiles-2026, scape-2026, reality-gap-survey-2026]",
+      "id": "scenario-models",
+      "title": "场景描述与执行环境",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "challenges"
+      ],
+      "body": "Kalra 与 Paddock 从事件基率和统计置信要求出发，说明仅靠自然驾驶里程往往难以高效评价可靠性；所需里程随事件和比较目标改变，并不是统一认证门槛。这个困难促使研究者主动选择更有信息的场景。[driving-to-safety-2016]\n\n场景如何描述是前提。Menzel 等区分功能、逻辑和具体场景：先说“前车切入”这样的情境，再给出车速、间距等参数范围，最后固定一次执行的参数值。Scenic 进一步用概率程序表达场景约束与分布，使生成器能够采样合法组合。其 2019 年论文主要面向静态场景和感知组件，动态行为与整车测试属于后续扩展。CARLA 则提供可控制天气、交通、地图和传感器的执行环境。[scenarios-abstraction-2018, scenic-2019, carla-2017]\n\n场景参数覆盖依赖所选分类与约束。生成大量具体实例，可能仍集中在同一小片参数区域；IEDD 将五个既有来源重组为片段时，独立覆盖也需要沿原始场景去重。传感器是否可观察、输出是否按时到达，则进一步影响场景执行的有效性。[scenario-coverage-2024,iedd-2026,obsdrivebench-2026,denial-deadline-2026]",
       "referenceIds": [
-        "cars-responsibility",
-        "digital-siblings-2024",
-        "criticality-metrics-2022",
+        "carla-2017",
         "scenario-coverage-2024",
-        "real-world-perturbation",
-        "world-model-admissibility",
-        "pictura-2026",
         "iedd-2026",
-        "lane-changing-public-road-2026",
-        "reality-gap-survey-2026",
-        "scape-2026",
+        "obsdrivebench-2026",
+        "denial-deadline-2026",
+        "scenarios-abstraction-2018",
+        "scenic-2019",
+        "driving-to-safety-2016"
+      ]
+    },
+    {
+      "id": "search-and-diagnosis",
+      "title": "失效搜索与原因分析",
+      "covers": [
+        "evolution",
+        "evidence",
+        "challenges"
+      ],
+      "body": "Adaptive Stress Testing（AST）把环境扰动作为序贯决策，借助强化学习或树搜索寻找高可能的失败路径。DriveFuzz 根据驾驶质量和交通规则引导场景变异，AdvSim 在传感器级场景中生成满足物理约束的危险交互。它们把执行预算集中到更可能暴露问题的位置，核心收益是找到有诊断价值的失败。[adaptive-stress-testing-2018, drivefuzz-2022, advsim-2021]\n\n生成式方法增加了场景扩展能力。Safe-Sim 用扩散引导生成可控的交互场景，RiskFlow 关注快速且自然的危险交互；Pictura 将大规模自博弈扩展到透视图像输入，Learning from Risk 用 LLM 将先验知识转成场景损失。它们改善了场景生成或模拟器内训练测试，生成的危险样本比例仍需通过参考分布才能解释为现实暴露率。[safe-sim-2024, riskflow, pictura-2026, learning-from-risk-2026]\n\n商用卡车研究中，AST 和 DiFS 在传统 Monte Carlo 未发现碰撞的预算内找到了碰撞；RiskFlow、Safe-Sim 也能提高危险交互的出现频率。这些结果说明测试资源被更有效地用于暴露失败。采样分布已经改变，命中率不能直接当作现实事故率。[commercial-av-failure, adaptive-stress-testing-2018, riskflow, safe-sim-2024]\n\nRL fuzzing 的横评给出一个可比较的例子：统一 12 小时预算、5 次重复下，MDPFuzz 在 CARLA 找到 291 个唯一 crash，随机测试为 157；不同 fuzzer 找到的失败还高度互补。结果既支持固定预算下的搜索收益，也提示应比较失败并集，而不只比较单一工具的总数。[rl-fuzzing-2026]\n\n搜索器会偏好容易制造碰撞的条件。若周车动作不自然，或冲突根本无法避免，更多碰撞未必带来更多可修复问题。CARS 等工作借助责任模型辨认自车可归因失效；FSM、CC-JP 与 RSS 的结果仍是相对于其规则和假设的技术归因。[cars-responsibility]\n\n系统级测试需要观察动作对下一时刻的影响。Bench2Drive 用多能力、路线级闭环协议补足开环规划指标；CARS 研究哪些失败可归因于自车；Bench2Drive-Robust 将相机流、ego-state 和执行延迟加入测试。这些工作使“失败了多少次”进一步变为“因为什么失败”。[bench2drive-2024, cars-responsibility, bench2drive-robust]\n\nBench2Drive-Robust 观察到帧流、定位与延迟误差沿反馈累积；实车扰动研究则发现离线模型指标只能有限预测整车失效。两者说明系统执行会改变局部误差的后果。ObsDriveBench 的恶劣天气选择题考察可观测性、空间判断和风险决策，Denial of Deadline 考察高精度结果是否及时到达；后两者没有执行车辆轨迹、碰撞或恢复评测。[bench2drive-robust, real-world-perturbation, obsdrivebench-2026, denial-deadline-2026]",
+      "referenceIds": [
+        "adaptive-stress-testing-2018",
+        "safe-sim-2024",
+        "drivefuzz-2022",
+        "advsim-2021",
+        "bench2drive-2024",
+        "cars-responsibility",
+        "bench2drive-robust",
+        "commercial-av-failure",
+        "riskflow",
+        "real-world-perturbation",
+        "rl-fuzzing-2026",
+        "pictura-2026",
+        "obsdrivebench-2026",
+        "denial-deadline-2026",
+        "learning-from-risk-2026"
+      ]
+    },
+    {
+      "id": "event-probabilities",
+      "title": "自然分布与重要性采样",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "evidence"
+      ],
+      "body": "重要性采样多做了一步：既改变场景出现频率，也保留它与自然分布之间的概率关系。Zhao 等人的加速评估对切入场景进行偏置采样，再以似然比恢复冲突、碰撞与伤害频率；NADE 只在关键时刻改变少量背景车辆行为，用权重保持对自然环境事件率的无偏估计。这里的概率模型、支持集和权重都属于方法本身。单纯搜索到很多失败，没有提供这些信息。[accelerated-evaluation-2017, nade-2021]\n\n无偏估计与置信区间依赖参考分布模型、支持集覆盖、代理系统和权重方差等假设。换 ODD、行为模型或系统版本后，需要重新检查这些条件及其校准。[accelerated-evaluation-2017,nade-2021]",
+      "referenceIds": [
+        "accelerated-evaluation-2017",
+        "nade-2021"
+      ]
+    },
+    {
+      "id": "regression",
+      "title": "根因保持与版本回归",
+      "covers": [
+        "evolution",
+        "evidence",
+        "challenges",
+        "outlook"
+      ],
+      "body": "同类碰撞可能由不同根因造成，单个失败样本也不足以描述修复范围。Bug2Scenario 沿根因关系扩增场景，failure-boundary profiles 分开观察策略尝试通过的倾向与实际通过的能力。二者分别处理场景机制和行为变化，能够补充只有碰撞与路线完成率的比较。[bug2scenario-2026,failure-boundary-profiles-2026]\n\nBug2Scenario 在匹配比较中，严格根因保持为 65/180 对 53/180，p=0.104；包含边界情况后为 99/180 对 80/180，p=0.011。执行反馈帮助了部分种子，但严格指标尚未显示显著优势。把两种口径分开，才能看出方法保留原机制的程度。[bug2scenario-2026]\n\nFailure-boundary profiles 在七类 CARLA 场景中画出承诺与能力曲线；decision accuracy 只计算具有通行认证标签的三个场景族。它把“应停时停下”也计入表现，用于区分合理停止与能力不足，而碰撞、进度的乘积可能掩盖这种区别。[failure-boundary-profiles-2026]\n\n修复后只重跑原失败点，会漏掉附近参数区域中的冒险增加或保守化。根因保持、配对执行和重复试验可以区分修复效果、场景改变与执行不稳定。进一步的问题是，怎样围绕同一故障机制选择有信息的邻近条件，并明确哪些变化已经属于新的问题。[bug2scenario-2026,failure-boundary-profiles-2026,bench2drive-robust]",
+      "referenceIds": [
+        "bench2drive-robust",
         "bug2scenario-2026",
         "failure-boundary-profiles-2026"
       ]
     },
     {
-      "id": "auditable-evidence-stack",
-      "kind": "outlook",
-      "title": "怎样让测试结果在修复和更新后仍然有用",
-      "thesis": "近期方法开始把一个失败案例扩展成可解释的场景族，并研究哪些昂贵执行最有信息。",
-      "body": "### 一次失败能否变成长期有用的场景族？\n\n距离或时隙稍有变化，原来的失败可能消失，也可能变成另一种故障。Bug2Scenario 已用根因关系约束扩增，能力边界研究又能显示策略在哪些条件下开始失败。两者之间还有一个问题：怎样围绕同一机制选择最有信息的条件，同时知道何时已经进入新的故障？答案关系到一个场景库能否积累知识，而不只是积累碰撞录像。[bug2scenario-2026, failure-boundary-profiles-2026]\n\n### 修好旧问题后，策略是否变得过于激进或保守？\n\n只重跑原先失败的单点，容易漏掉邻近区域的退化。配对比较更新前后的承诺、能力与正确停止，可以区分修复、冒险增加和保守化。更深的问题是哪些旧证据可复用：模型名字相同或提交改动较少，都不足以说明行为没变；场景族中可重复的差异提供了更直接的依据。[failure-boundary-profiles-2026, bench2drive-2024, bench2drive-robust]\n\n### 有限的现实或高精度执行应该放在哪里？\n\nSCAPE 类方法用少量目标执行修正大量便宜代理评价。若不同策略的排名不稳定，或某些场景的预测区间很宽，额外执行可能比在已稳定区域重复测试更有价值。仍待回答的是这种选择能否维持区间覆盖，以及仿真间得到的校准在引入现实记录后会怎样改变。驾驶中的开环—闭环配对本身已有研究价值，现实配对则带来新的误差来源。[scape-2026, reality-gap-survey-2026]\n\n这些问题与自然事件率估计各有用途。修复研究关心机制、配对差异与新增退化；概率安全评估仍需要明确参考分布、可计算权重和统计覆盖。先明确目标，才知道增加场景或执行次数究竟改善了什么。[accelerated-evaluation-2017, nade-2021]",
+      "id": "reality-gap",
+      "title": "代理评价与现实参照",
+      "covers": [
+        "evidence",
+        "challenges",
+        "outlook"
+      ],
+      "body": "| 工作 | 实际评价对象 | 结果的适用范围 |\n| --- | --- | --- |\n| Pictura | 透视图像输入的合成闭环训练与测试 | 96×54 栅格图及模拟器内布局迁移，真实传感器迁移尚待检验 |\n| Learning from Risk | CARLA/SMARTS 中的长尾场景覆盖 | 结果受所用模拟器及近饱和碰撞覆盖约束 |\n| Digital Siblings | 用跨仿真器一致性预测缩比车数字孪生的失败 | 主要终点仍是仿真代理 |\n| 公共道路换道实验 | 78 次受控换道的现实行为时间线 | 单一路线、协议和有限样本 |\n| 事故重建 | 用真实事故记录约束反事实 | 依赖记录、重建假设及所覆盖 ODD |\n\n这些研究分别提供模拟器扩展、代理预测与现实参照，不能简单排列成一个统一“真实性分数”。[pictura-2026, learning-from-risk-2026, digital-siblings-2024, lane-changing-public-road-2026, waymo-fatal-crash-reconstruction]\n\nSCAPE 将少量目标/代理配对与大量便宜代理样本结合，先校正偏差，再做情景条件预测与共形（conformal）校准。其驾驶配对来自 nuPlan 同一场景的开环代理和闭环目标，属于 Sim2Sim；真实 sim-real 配对来自四足机器人。连续指标的共形区间使用不随场景变化的半宽，提供边际覆盖；情景条件预测不等于条件覆盖保证。道路车辆的现实校准仍待完成。Reality Gap 综述所强调的区分在这里尤其有用：构建过程使用真实信息，与结论得到现实执行支持，并不相同。[scape-2026, reality-gap-survey-2026]\n\n仿真误差可以来自图像、动力学、周车行为、传感器、时序和碰撞判定。生成式世界模型还会将环境响应交给学习系统，视觉连贯并不能单独确保动作后果可靠。现实执行与目标/代理配对的价值，在于检查具体场景和系统下的对应关系。[digital-siblings-2024,world-model-admissibility,reality-gap-survey-2026]\n\n当目标与代理的策略排序冲突，或评价接近决策阈值时，额外执行可能帮助辨认差异。SCAPE 已展示少量目标配对校正便宜代理的路径，按场景分配额外预算则还需要独立的选择与校准方法；主动选择之后能否保留统计覆盖，仍是开放问题。[scape-2026,reality-gap-survey-2026]",
       "referenceIds": [
-        "bug2scenario-2026",
-        "failure-boundary-profiles-2026",
-        "scape-2026",
+        "digital-siblings-2024",
+        "world-model-admissibility",
+        "waymo-fatal-crash-reconstruction",
+        "pictura-2026",
+        "lane-changing-public-road-2026",
+        "learning-from-risk-2026",
         "reality-gap-survey-2026",
-        "drivefuzz-2022",
-        "bench2drive-2024",
-        "bench2drive-robust",
-        "accelerated-evaluation-2017",
-        "nade-2021"
+        "scape-2026"
       ]
     }
-  ],
-  "takeaways": [
-    "发现失败、估计自然事件率、比较版本修复是三类任务；相同的碰撞数字在其中有不同含义。",
-    "测试可比较的前提是场景、系统、执行层级与判定规则可追溯，覆盖率和闭环总分都需要这些条件。",
-    "根因保持与能力边界帮助解释失败；承诺曲线还揭示策略是更会通过，还是更愿意尝试。",
-    "仿真使用现实数据并不等于结论已获现实验证。SCAPE 的驾驶实验为 Sim2Sim，现实配对来自四足机器人。",
-    "将失败组织成场景族、配对检查版本变化，并选择有信息的昂贵测试，有望让测试结果持续积累。"
   ],
   "references": [
     {
@@ -895,14 +848,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_embodied",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/embodied-round1.json",
-      "artifactSha256": "907ef62070a8cfcc1de93d7722e66856966002832eb0d12cc07cab12dc65d137",
-      "snapshotFingerprint": "1b0b3fc7a34ad038ab679b5bc00fbb6cf626faf70e3046f0f48873ea3d1142c0",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_assessment",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/assessment-round2.json",
+      "artifactSha256": "031244f69e3fc81439cb3caf1d56113f8d9a5b037aadc9ad77bd05bc30a607d9",
+      "snapshotFingerprint": "682bbd397bb68632a73cd5c1da4de88a9cbe8586df78b46ab83ea2e5600be79f",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -4472,5 +4425,27 @@
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
   },
-  "lastUpdated": "2026-08-01"
+  "lastUpdated": "2026-08-01",
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "claim-bounded-test-unit": "test-objectives",
+    "claim-bounded-test-unit-title": "test-objectives",
+    "from-mileage-to-active-evidence": "scenario-models",
+    "from-mileage-to-active-evidence-title": "scenario-models",
+    "seven-field-test-record": "test-objectives",
+    "seven-field-test-record-title": "test-objectives",
+    "supported-evidence-and-nonclaims": "search-and-diagnosis",
+    "supported-evidence-and-nonclaims-title": "search-and-diagnosis",
+    "oracle-fidelity-and-transfer": "reality-gap",
+    "oracle-fidelity-and-transfer-title": "reality-gap",
+    "auditable-evidence-stack": "regression",
+    "auditable-evidence-stack-title": "regression",
+    "research-questions": "test-objectives",
+    "researchQuestionsTitle": "test-objectives",
+    "takeaways": "reality-gap",
+    "takeawaysTitle": "reality-gap"
+  },
+  "additionalReferenceIds": [
+    "criticality-metrics-2022"
+  ]
 }

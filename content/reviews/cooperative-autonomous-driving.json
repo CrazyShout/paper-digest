@@ -1,155 +1,125 @@
 {
   "version": 3,
   "id": "cooperative-autonomous-driving",
-  "title": "协同自动驾驶：消息选择、可信融合与联合规划",
-  "subtitle": "协同的核心是让另一辆车的观测或意图改变本车对场景和动作的判断；通信、感知与协调决定了这种改变是否有用。",
-  "abstract": "前车挡住了路口，本车传感器看不到横向来车，路侧设备却能看见。协同驾驶希望把这份额外观察变成更早、更合适的行动。难点在于消息到达时场景已经变化，不同车辆的表示未必兼容，而“大家都看见了”也不保证“大家会配合”。这篇综述沿着共享观察、选择消息、处理误差和协调行动，解释这些问题如何逐步连在一起。",
+  "title": "协同驾驶：通信、异步融合与联合行动",
+  "subtitle": "信息怎样经过带宽和时延约束，最终影响本车与多车决策。",
+  "abstract": "协同驾驶的增益来自额外视角，也受消息时效、表示兼容和控制权限限制。本文沿信息的传递过程讨论共享表示、消息选择、接收端校正与联合行动，将通信收益、感知收益和驾驶结果放回各自的实验条件。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "基础文献与近年方法并列比较；2026-11-06 重新打开既有引用的一手正文并核对当前论断，补读近期本库与外部近邻。查询执行、受限来源与候选去向见检索审计；本次阅读为论断级复核，不表示逐篇复现实验。",
-  "researchQuestions": [
-    "另一辆车知道什么，是本车传感器或历史观测无法补足的？",
-    "消息有延迟、定位误差或模型差异时，怎样把它用在当前场景中？",
-    "感知变好以后，车辆为什么仍可能互相等待或做出冲突动作？"
-  ],
   "sections": [
     {
-      "id": "scope",
-      "kind": "scope",
-      "title": "从遮挡路口理解协同驾驶",
-      "thesis": "合作的起点是视野互补，最终是否有用还取决于车辆怎样使用这份信息。",
-      "body": "设想一辆车准备驶过被货车遮挡的路口。只靠本车相机和 LiDAR，它很难判断遮挡后是否有来车；路侧传感器或另一辆车可能拥有更好的视角。最直接的办法是传回点云，让本车补上看不见的部分。也可以只发送网络提取的特征，或已经检测出的对象。这里首先要解决的是“怎样补足观察”，早期点云共享和特征融合工作由此展开。[cooper-2019, v2vnet-2020]\n\n但消息只是中间环节。检测到横向来车后，本车可能减速、等待，也可能通过协商改变双方通行顺序。协同感知主要回答场景中有什么；协同驾驶还要回答这些信息如何改变预测和动作。Coopernaut 与 CoDriving 在模拟闭环中连接了这两步；UniV2X 则在真实车路日志中联合学习感知、地图、占用和规划。真实日志能检验规划输出，但日志中的其他车辆不会响应被测策略。[coopernaut-2022, codriving-2025, univ2x-2025]\n\n因此，阅读这一方向可以一直追问三个问题：远端提供了什么新信息，它到达后还是否有效，以及哪辆车有权据此改变动作。后文的通信压缩、异步融合和联合控制，分别处理这条链上的不同困难。\n\n### 从哪些综述开始\n\n[Liu 等的协同感知综述](https://arxiv.org/abs/2308.16714)适合先理解原始数据、特征和对象级融合，以及带宽、时延和位姿误差；它主要覆盖 2023 年前后的方法。[Yazgan 等的数据集综述](https://ieeexplore.ieee.org/document/10588870/)接着帮助比较真实与仿真来源、传感器和主体数量，是一份 2024 年的数据集快照。[survey-collaborative-perception-2023, collaborative-datasets-survey-2024]\n\n若关注信息如何进入多车行动，再读 [MAEAD 综述](https://arxiv.org/abs/2606.13840)。它用共享状态、意图协调和联合规划组织跨层研究，v4 主覆盖期截至 2026 年 5 月 31 日。前三者是互补的阅读入口：先理解融合机制，再看实验条件，最后连接到车辆行为。",
+      "id": "shared-observation",
+      "title": "共享观察与共享表示",
+      "covers": [
+        "scope",
+        "evolution"
+      ],
+      "body": "协同感知利用车间或车路之间的视角差异，补足本车的遮挡与感知范围。Cooper 共享原始点云；F-Cooper 将压缩移到网络中间层；V2VNet 让融合特征同时用于检测与运动预测。原始数据保留了更多重处理空间，中间特征减少传输量，却需要不同主体对表示有共同理解。[cooper-2019,fcooper-2019,v2vnet-2020]\n\nDiscoNet 用训练时的全视角早期融合教师指导中间融合学生，把额外观察的部分作用转移到训练阶段。与之相比，部署时的实时协作依赖实际收到的消息。训练输入、推理输入和传输对象共同决定了系统的能力与成本。[disconet-2021]\n\n协同感知的基础分类可参考 [Liu 等的综述](https://arxiv.org/abs/2308.16714)，其重点是融合层次及带宽、时延、位姿误差。[Yazgan 等的数据集综述](https://ieeexplore.ieee.org/document/10588870/)整理了截至 2024 年前后的真实与仿真采集条件；[MAEAD](https://arxiv.org/abs/2606.13840)进一步连接共享状态、意图与联合规划，v4 主覆盖期截至 2026 年 5 月 31 日。",
       "referenceIds": [
         "cooper-2019",
         "v2vnet-2020",
-        "opv2v-2022",
-        "dair-v2x-2022",
-        "coopernaut-2022",
-        "codriving-2025",
-        "univ2x-2025",
-        "mirrorcomm-2026",
-        "trb-2026",
-        "egorefine-2026",
-        "cosafe-2026",
         "survey-collaborative-perception-2023",
         "collaborative-datasets-survey-2024",
+        "fcooper-2019",
+        "disconet-2021",
         "maead-survey-2026"
       ]
     },
     {
-      "id": "evolution",
-      "kind": "evolution",
-      "title": "为什么从共享点云走向按需通信",
-      "thesis": "传得更多能扩大视野，却同时增加带宽、对齐和决策的负担。",
-      "body": "原始点云保留的信息较完整，但把各车点云都送来，通信代价很高。Cooper 建立了这条早期路线；F-Cooper 转而共享中间点云特征，V2VNet 又让特征同时服务感知与运动预测。DiscoNet 进一步用全视角的早期融合教师指导中间融合学生：训练时利用完整观察，部署时只运行学生。这些方法改变了信息压缩的位置，也改变了训练与部署各自能看见什么。[cooper-2019, fcooper-2019, v2vnet-2020, disconet-2021]\n\n压缩之后仍有大量重复信息。例如两辆车都能清楚看见同一段空路，就没有必要反复交换该区域。Who2com 先选择合作方，When2com 学习通信分组和时机，Where2comm 则用置信图把选择细化到空间位置。AutoCast 根据对象位置、轨迹和接收方盲区安排消息；Update the Unseen 还把接收端自己重新看见的区域计入信息更新。由此，通信价值逐渐从“发送了多少数据”转向“接收方还缺什么”。[who2com-2020, when2com-2020, where2comm-2022, autocast-2022, update-unseen-2026]\n\n历史观测让这种选择更细。MirrorComm 让两端维护相同的预测历史，只挑选预测误差大的位置发送量化观测；它发送的是观测值，预测残差用于决定位置。LinkDreamer 则在使用本车信息、复用历史、预测潜状态、发送摘要和完整刷新之间选择。前者利用可预测性压缩消息，后者把是否更新及更新多少都变成决策。两者都依赖历史状态与链路恢复条件。[mirrorcomm-2026, linkdreamer-2026]\n\n收到消息后还要把“那时那地的观察”变成“此时此地可用的信息”。CoAlign 校正几何位姿；TRB 保留位姿变换后的特征作为锚点，再从历史学习时间残差；EgoRefine 用本车当前观察引导远端特征对齐。模型或传感器不同时，HEAL 与 HeteroPROMPT 处理表示兼容，AgentNorm 则把各合作方的归一化统计分开，减少退化合作方对本车特征的污染。这些不是同一类误差，解决定位偏差的方法不会自动恢复被遮挡的内容。[coalign-2023, trb-2026, egorefine-2026, heal-2024, heteroprompt-2026, agentnorm-2026]\n\n当观察已经较完整，新的瓶颈出现在行动之间。MDrive 显示，感知改善不总能带来规划改善；CoSafe 用路侧单元联合选择危险车辆的接管轨迹，尝试同时处理碰撞和循环等待。研究对象由“本车看得更准”扩展到“几辆车的动作是否相容”。[mdrive-2026, cosafe-2026]",
+      "id": "information-path",
+      "title": "消息构造与接收端处理",
+      "covers": [
+        "taxonomy"
+      ],
+      "body": "一条远端观察进入本车模型，至少经过表示、选择、传输、对齐和融合。通信策略决定哪些内容到达，接收端处理决定这些内容怎样与本车观察结合。模型可以在其中一个环节改进，也可以同时改变多个环节；比较完整系统时，需要保留这些变化的对应关系。\n\n![协同信息传递过程。空间选择发生在发送前，时间与几何校正在接收后，联合行动还涉及额外控制权限。](../../assets/reviews/cooperative-information-path.svg)\n\n图中模块位置依据各自论文整理，不表示这些方法已经被组合成同一系统。[v2vnet-2020,where2comm-2022,mirrorcomm-2026,trb-2026,egorefine-2026,cosafe-2026]\n\n| 设计选择 | 改变的对象 | 代表做法 | 比较时需要固定的条件 |\n| --- | --- | --- | --- |\n| 共享表示 | 消息承载的信息 | 点云、特征、对象或意图 | 传感器、编码器与训练数据 |\n| 消息选择 | 哪个主体、位置、时刻更新 | 合作方选择、置信图、预测误差 | 字节预算、协议开销与历史状态 |\n| 接收校正 | 旧观察在当前坐标中的含义 | 位姿变换、时序残差、ego 引导 | 时延、定位误差与本车可见范围 |\n| 行动协调 | 谁有权改动车辆动作 | 本车规划或路侧轨迹接管 | 控制权限、交通响应与候选动作 |",
+      "referenceIds": [
+        "v2vnet-2020",
+        "where2comm-2022",
+        "cosafe-2026",
+        "mirrorcomm-2026",
+        "trb-2026",
+        "egorefine-2026"
+      ]
+    },
+    {
+      "id": "message-selection",
+      "title": "带宽分配与历史预测",
+      "covers": [
+        "evolution",
+        "taxonomy",
+        "challenges"
+      ],
+      "body": "Who2com 和 When2com 在合作方、通信分组及时机上减少冗余；Where2comm 将选择细化到空间位置。其首轮依据发送方的感知置信度选择区域，后续再结合接收方请求。低置信区域表达接收方的需求，高置信观测表达发送方能提供的内容。AutoCast 则利用对象与轨迹安排消息；Update the Unseen 把接收端自己重新看见的区域也计入更新。[who2com-2020,when2com-2020,where2comm-2022,autocast-2022,update-unseen-2026]\n\nMirrorComm 利用收发两端一致的重建历史预测当前特征，用预测误差选择位置，传输这些位置的量化观测。未发送位置沿用预测，已发送位置用解码观测替换。预测残差在这里负责选择位置，传输内容仍是观测特征。LinkDreamer 进一步在复用历史、预测状态、发送摘要和完整刷新之间选择更新动作。[mirrorcomm-2026,linkdreamer-2026]\n\n预测历史有助于减少通信，前提是两端对历史的理解足够一致。一旦丢包使状态分叉，发送方认为“可以预测”的位置，接收方未必真的预测正确。压缩率因此需要与预测误差、重同步频率和恢复代价一起理解。另一层困难是，重建误差很小的特征差异，也可能改变两条候选轨迹的优先级；感知需要的更新与规划需要的更新未必相同。[mirrorcomm-2026, linkdreamer-2026, update-unseen-2026]",
       "referenceIds": [
         "where2comm-2022",
         "autocast-2022",
-        "edgecooper-2024",
         "update-unseen-2026",
         "mirrorcomm-2026",
         "linkdreamer-2026",
-        "coalign-2023",
-        "trb-2026",
-        "egorefine-2026",
-        "agentnorm-2026",
-        "heal-2024",
-        "heteroprompt-2026",
-        "simbev2x-2026",
-        "mdrive-2026",
-        "cosafe-2026",
-        "cooper-2019",
-        "fcooper-2019",
-        "v2vnet-2020",
-        "disconet-2021",
         "who2com-2020",
         "when2com-2020"
       ]
     },
     {
-      "id": "taxonomy",
-      "kind": "taxonomy",
-      "title": "读一个协同系统时，先分清三件事",
-      "thesis": "共享内容、误差来源和控制权限决定了方法究竟解决哪一段问题。",
-      "body": "**第一件事是共享什么。**原始点云提供细粒度观察，中间特征由网络压缩，对象和意图则更接近决策所需的语义。早期、中间、后期融合描述的是信息在哪里汇合，不代表能力高低。逐帧全量发送、按区域发送和预测后刷新，可以与这些表示组合使用。[survey-collaborative-perception-2023, v2vnet-2020, where2comm-2022]\n\n这里有一个容易混淆的例子：MirrorComm 和 TRB 都使用“残差”，但前者以预测残差挑选要发送的观测位置，后者在接收端学习残差来校正延迟特征。一个节省传输，另一个改善到达信息的使用方式；名称相近并不意味着可直接替代。[mirrorcomm-2026, trb-2026]\n\n**第二件事是信息为什么不可靠。**位姿误差会把目标放错位置，延迟会让运动目标停留在过去，消息中断会让观察缺失，模型差异会让同一对象的特征难以比较。CoAlign、EgoRefine、V2X-INCOP 和 HEAL 分别提供这些问题的代表性处理。AgentNorm 面向的是主体间统计偏移；如果障碍物根本没有被看见，调整统计量也补不出这份观察。[coalign-2023, egorefine-2026, v2x-incop-2024, heal-2024, heteroprompt-2026, agentnorm-2026]\n\n**第三件事是谁能改变动作。**AutoCast 主要调度消息，CoDriving 从协同表示生成规划，CoSafe 的路侧单元还可以改写危险车辆的参考轨迹。最后一种系统拥有额外执行能力，因此比较时需要同时交代信息来源和控制权限。MAEAD 从共享状态、意图与联合行动组织研究，正好补充融合层次的分类：前者看信息怎样影响行为，后者看信息怎样进入模型。[autocast-2022, codriving-2025, cosafe-2026]",
+      "id": "asynchronous-fusion",
+      "title": "异步、异构与相关错误",
+      "covers": [
+        "taxonomy",
+        "challenges",
+        "evidence"
+      ],
+      "body": "位姿变换把不同主体的参考系对齐，但独立运动对象仍可能停留在消息产生的时刻。V2VNet 已利用时间差和相对位姿初始化融合状态，并在接收车本地执行 GNN 更新。TRB 保留位姿变换后的旧特征，从历史提取时间残差作门控修正；EgoRefine 则在运动场预测前引入当前本车观察。后者的参照来自本车可见区域，无法提供全部远端对象的当前位置。[v2vnet-2020,trb-2026,egorefine-2026]\n\n表示兼容又是另一种误差。HEAL 与 HeteroPROMPT 处理模型和传感器差异，AgentNorm 将各合作方的归一化统计分开。位姿校正、时间补偿和统计适配作用于不同原因；在同一退化下比较，才容易看清每个模块补回了什么信息。[coalign-2023,v2x-incop-2024,heal-2024,heteroprompt-2026,agentnorm-2026]\n\n鲁棒性结果也要看退化的具体形式。TRB 的选定模型用少量同步精度换取严重延迟或丢包下的收益；AgentNorm 对统计漂移有效，对遮挡和所有主体共同漂移的改善较弱；LinkDreamer 的链路退化由运动轨迹和 LiDAR 几何推导。它们揭示了不同失效条件，单列一个“鲁棒性提升”会丢掉这些信息。[trb-2026, agentnorm-2026, linkdreamer-2026]\n\n多车一致也不必然意味着判断正确。ROBOSAC 借助本车与合作子集的一致性筛选消息，PRBI 使用前帧参考和伪随机分组；MVIG 则利用防御暴露的跨视角线索安排攻击。如果多辆车受到相关误差影响，融合器可能反复强化同一错误。因此，可信合作既关心单条消息的质量，也关心不同消息是否真正提供独立证据。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]",
       "referenceIds": [
         "v2vnet-2020",
-        "where2comm-2022",
-        "mirrorcomm-2026",
-        "trb-2026",
         "coalign-2023",
+        "among-us-2023",
+        "all-vehicles-can-lie-2026",
+        "mvig-2026",
         "v2x-incop-2024",
-        "egorefine-2026",
         "heal-2024",
         "heteroprompt-2026",
+        "trb-2026",
+        "egorefine-2026",
         "agentnorm-2026",
-        "cosafe-2026",
-        "codriving-2025",
-        "autocast-2022",
-        "survey-collaborative-perception-2023",
-        "collaborative-datasets-survey-2024",
-        "maead-survey-2026"
+        "linkdreamer-2026"
       ]
     },
     {
-      "id": "evidence",
-      "kind": "evidence",
-      "title": "怎样判断更好的感知是否带来了更好的驾驶",
-      "thesis": "检测、无线传输和车辆行为需要各自的实验，结果应沿着系统链条解释。",
-      "body": "协同检测数据首先提供受控比较。OPV2V 和 SimBEV2X 来自仿真，便于控制主体数量、场景与训练规模；DAIR-V2X、V2V4Real 和 CooperScene 提供真实采集观察。CooperScene 还记录商用 C-V2X 链路特征，但数据依赖紧同步与空间对齐，其约 0.2 m 的数字是再次执行 ICP（迭代最近点）配准后的点云匹配均方根误差（RMSE）。它描述对齐后的点云差异，而不是全局定位误差。[opv2v-2022, simbev2x-2026, dair-v2x-2022, cooperscene-2026]\n\n链路实验回答消息能否按预期到达，驾驶实验回答到达后有没有用。AutoCast 的真实 radio testbed 验证调度与传输，事故规避收益来自另一个模拟实验。将两部分合起来可以理解系统，但不能把它们写成一次真实道路闭环试验。[autocast-2022]\n\n鲁棒性结果也要看退化的具体形式。TRB 的选定模型用少量同步精度换取严重延迟或丢包下的收益；AgentNorm 对统计漂移有效，对遮挡和所有主体共同漂移的改善较弱；LinkDreamer 的链路退化由运动轨迹和 LiDAR 几何推导。它们揭示了不同失效条件，单列一个“鲁棒性提升”会丢掉这些信息。[trb-2026, agentnorm-2026, linkdreamer-2026]\n\n最后要观察车辆是否完成任务、是否违规、是否长时间等待。Defer to Plan 的 Driving Score（DS）从 77.15 增至 79.72，Route Completion（RC）却从 92.34 降至 91.05，体现了进度与违规之间的权衡。CoSafe 的异构混部 DS 从 55.16 增至 83.00，但 VAD 个别设置的死锁数量增加。碰撞减少和通行更顺畅是两个结果，不能互相替代。[defer-to-plan-2026, cosafe-2026]",
+      "id": "benchmarks",
+      "title": "链路、感知与驾驶评测",
+      "covers": [
+        "evidence"
+      ],
+      "body": "协同检测数据首先提供受控比较。OPV2V 和 SimBEV2X 来自仿真，便于控制主体数量、场景与训练规模；DAIR-V2X、V2V4Real 和 CooperScene 提供真实采集观察。CooperScene 还记录商用 C-V2X 链路特征，但数据依赖紧同步与空间对齐，其约 0.2 m 的数字是再次执行 ICP（迭代最近点）配准后的点云匹配均方根误差（RMSE）。它描述对齐后的点云差异，而不是全局定位误差。[opv2v-2022, simbev2x-2026, dair-v2x-2022, cooperscene-2026]\n\n链路实验回答消息能否按预期到达，驾驶实验回答到达后有没有用。AutoCast 的真实 radio testbed 验证调度与传输，事故规避收益来自另一个模拟实验。将两部分合起来可以理解系统，但不能把它们写成一次真实道路闭环试验。[autocast-2022]\n\n| 证据来源 | 可以直接观察 | 尚未包含的环节 |\n| --- | --- | --- |\n| 仿真协同检测 | 受控视角、主体数量与融合效果 | 实际链路及真实传感器误差 |\n| 真实协同日志 | 采集条件下的检测和离线规划 | 其他车辆对新策略的响应 |\n| 无线 testbed | 传输、调度与链路行为 | 感知错误怎样影响驾驶 |\n| 反应式驾驶仿真 | 行动改变后续观察和交通状态 | 开放道路部署的有效性 |\n\n最后要观察车辆是否完成任务、是否违规、是否长时间等待。Defer to Plan 的 Driving Score（DS）从 77.15 增至 79.72，Route Completion（RC）却从 92.34 降至 91.05，体现了进度与违规之间的权衡。CoSafe 的异构混部 DS 从 55.16 增至 83.00，但 VAD 个别设置的死锁数量增加。碰撞减少和通行更顺畅是两个结果，不能互相替代。[defer-to-plan-2026, cosafe-2026]",
       "referenceIds": [
         "opv2v-2022",
-        "simbev2x-2026",
         "dair-v2x-2022",
-        "cooperscene-2026",
         "autocast-2022",
-        "trb-2026",
-        "agentnorm-2026",
-        "linkdreamer-2026",
+        "cooperscene-2026",
         "defer-to-plan-2026",
+        "simbev2x-2026",
         "cosafe-2026"
       ]
     },
     {
-      "id": "challenges",
-      "kind": "challenges",
-      "title": "信息可能过时，意见可能一致但错误",
-      "thesis": "合作增加了可用信息，也增加了错误传播和相互依赖的途径。",
-      "body": "预测历史有助于减少通信，前提是两端对历史的理解足够一致。一旦丢包使状态分叉，发送方认为“可以预测”的位置，接收方未必真的预测正确。压缩率因此需要与预测误差、重同步频率和恢复代价一起理解。另一层困难是，重建误差很小的特征差异，也可能改变两条候选轨迹的优先级；感知需要的更新与规划需要的更新未必相同。[mirrorcomm-2026, linkdreamer-2026, update-unseen-2026]\n\n多车一致也不必然意味着判断正确。ROBOSAC 借助本车与合作子集的一致性筛选消息，PRBI 使用前帧参考和伪随机分组；MVIG 则利用防御暴露的跨视角线索安排攻击。如果多辆车受到相关误差影响，融合器可能反复强化同一错误。因此，可信合作既关心单条消息的质量，也关心不同消息是否真正提供独立证据。[among-us-2023, all-vehicles-can-lie-2026, mvig-2026]\n\n行为协调还要付出等待与搜索代价。几辆车各自安全刹停，可能形成谁也不先动的局面。CoSafe 的有限轨迹池展示了联合选择的价值，也留下无法解除的循环等待；MDrive 则显示交通密度和基础策略会改变协商效果。这里的难点是把可选择的动作、消息时效和其他车辆的响应放在一起考虑。[cosafe-2026, mdrive-2026]",
+      "id": "joint-action",
+      "title": "从信息增益到多车行动",
+      "covers": [
+        "scope",
+        "evidence",
+        "outlook"
+      ],
+      "body": "消息只是中间环节。检测到横向来车后，本车可能减速、等待，也可能通过协商改变双方通行顺序。协同感知主要回答场景中有什么；协同驾驶还要回答这些信息如何改变预测和动作。Coopernaut 与 CoDriving 在模拟闭环中连接了这两步；UniV2X 则在真实车路日志中联合学习感知、地图、占用和规划。真实日志能检验规划输出，但日志中的其他车辆不会响应被测策略。[coopernaut-2022, codriving-2025, univ2x-2025]\n\nCoSafe 将路侧单元用于危险识别和多车候选轨迹的联合选择，车辆可以通过控制开关执行路侧下发的参考轨迹。原型使用共享的辅助 BEV 编码器和路侧融合模型，在 InterDrive/CARLA 中评测。这份控制权限与单纯共享特征的系统不同，有限候选池也会限制可达的协调结果。[cosafe-2026]\n\n行为协调还要付出等待与搜索代价。几辆车各自安全刹停，可能形成谁也不先动的局面。CoSafe 的有限轨迹池展示了联合选择的价值，也留下无法解除的循环等待；MDrive 则显示交通密度和基础策略会改变协商效果。这里的难点是把可选择的动作、消息时效和其他车辆的响应放在一起考虑。[cosafe-2026, mdrive-2026]\n\n感知置信度和预测误差已经提供了可计算的通信选择信号，行动差异则提出了更接近规划的问题：哪些远端信息足以改变一条轨迹的选择？另一方面，联合规划需要生成真正能够解除冲突的动作，尤其要处理未通信车辆的反应。这两类问题分别连接消息价值和行动空间，适合沿各自已有基线继续研究。[where2comm-2022,mirrorcomm-2026,codriving-2025,cosafe-2026,mdrive-2026]",
       "referenceIds": [
-        "mirrorcomm-2026",
-        "linkdreamer-2026",
-        "update-unseen-2026",
-        "among-us-2023",
-        "all-vehicles-can-lie-2026",
-        "mvig-2026",
+        "where2comm-2022",
+        "coopernaut-2022",
+        "codriving-2025",
+        "univ2x-2025",
         "mdrive-2026",
         "cosafe-2026",
-        "v2x-vit-2022",
-        "survey-collaborative-perception-2023"
-      ]
-    },
-    {
-      "id": "outlook",
-      "kind": "outlook",
-      "title": "接下来要弄清：什么信息值得共享，什么动作需要联合决定",
-      "thesis": "通信与规划之间仍有空间，但两者怎样互相帮助，需要明确的机制解释。",
-      "body": "一个值得继续追问的问题是：消息能否直接围绕接收方的行动差异组织？Where2comm 根据感知置信度选择区域，MirrorComm 根据可预测性选择位置；如果两条可行轨迹的取舍只取决于某个被遮挡对象，那么围绕这个差异编码信息，可能比统一提高所有区域的重建精度更有效。这仍是研究问题，关键在于找到稳定的行动相关信息，而不是把更大的规划器包装成通信收益。[where2comm-2022, mirrorcomm-2026, codriving-2025]\n\n另一个问题是历史与当前本车观察怎样互补。历史有助于解释远端对象的运动，本车当前观察提供此刻的几何参照；TRB 与 EgoRefine 从两个方向接近它。将两类信息放在同一次更新中，有望减少对齐与融合之间的重复处理，但何时相信哪一方、何时必须等待新观察，仍取决于遮挡和误差结构。[trb-2026, egorefine-2026, agentnorm-2026]\n\n联合决策则需要超越“让每辆车都更保守”。CoSafe 已说明共享感知和意图可以帮助分配接管轨迹，剩余死锁提示候选动作本身可能限制了协调能力。怎样生成能够解除冲突的动作，同时兼顾未通信车辆的反应，是比单独提高检测分数更接近多车合作目标的问题。[cosafe-2026, mdrive-2026]",
-      "referenceIds": [
-        "codriving-2025",
-        "where2comm-2022",
-        "mirrorcomm-2026",
-        "trb-2026",
-        "egorefine-2026",
-        "agentnorm-2026",
-        "cosafe-2026",
-        "mdrive-2026"
+        "mirrorcomm-2026"
       ]
     }
-  ],
-  "takeaways": [
-    "协同系统的收益取决于接收方缺少什么信息，以及这份信息是否还能改变当前动作；发送量和检测 AP 只描述其中一部分。",
-    "延迟、位姿、模型差异和相关攻击带来不同误差。选择方法时先定位误差来源，再判断是需要校正已有信息，还是获取新的观察。",
-    "进入联合控制后，控制权限、任务完成和死锁必须一起解释。更少碰撞与更顺畅通行可以发生不同变化。"
   ],
   "references": [
     {
@@ -849,14 +819,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_policy",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/policy-round1.json",
-      "artifactSha256": "c50d8e13fb2250690475d27cf420d46b6bb8735ce8f6cfe7c8b87cb324abfbb6",
-      "snapshotFingerprint": "3481cecd35d1eb5781ea6bea0adb8daf34ab9f75714568aa3d592f324a336757",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_core",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/core-round2.json",
+      "artifactSha256": "3586a94ed94a5d5e8a58ae7a2bb6951ffe58405953d3d9decd03748ba145f69c",
+      "snapshotFingerprint": "920d243012d1ceb38e52e72ea40675742ba08cbff07cd5dc4136860b32ca2d07",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -3386,5 +3356,44 @@
       "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
-  }
+  },
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "scope": "shared-observation",
+    "scope-title": "shared-observation",
+    "evolution": "message-selection",
+    "evolution-title": "message-selection",
+    "taxonomy": "information-path",
+    "taxonomy-title": "information-path",
+    "evidence": "benchmarks",
+    "evidence-title": "benchmarks",
+    "challenges": "asynchronous-fusion",
+    "challenges-title": "asynchronous-fusion",
+    "outlook": "joint-action",
+    "outlook-title": "joint-action",
+    "research-questions": "shared-observation",
+    "researchQuestionsTitle": "shared-observation",
+    "takeaways": "joint-action",
+    "takeawaysTitle": "joint-action"
+  },
+  "figures": [
+    {
+      "url": "../../assets/reviews/cooperative-information-path.svg",
+      "width": 720,
+      "height": 790,
+      "sourceReferenceIds": [
+        "v2vnet-2020",
+        "where2comm-2022",
+        "mirrorcomm-2026",
+        "trb-2026",
+        "egorefine-2026",
+        "cosafe-2026"
+      ],
+      "sha256": "902e98c0d2d767823e33f6f16493a2410003215730c64b6f5dad0942dacb1fac"
+    }
+  ],
+  "additionalReferenceIds": [
+    "v2x-vit-2022",
+    "edgecooper-2024"
+  ]
 }

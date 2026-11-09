@@ -1,158 +1,115 @@
 {
   "version": 3,
   "id": "agentic-driving",
-  "title": "驾驶智能体：工具、记忆、推理与动作控制",
-  "subtitle": "研究对象是可更新的场景状态、可调用的知识与工具，以及它们对具体动作的作用。",
-  "abstract": "驾驶智能体把语言理解、工具和记忆接入车辆决策。例如，面对看不清的路口，系统可以查询局部几何、检索相似经历，再决定是否减速。研究重点因此是这些信息怎样进入动作，以及何时值得花时间获取它们。本文从语言规划的早期接口讲起，梳理推理、工具、记忆和控制之间的关系，并解释为什么文字理由正确与驾驶决策正确需要分别检验。",
+  "title": "驾驶智能体：语言、工具、记忆与动作",
+  "subtitle": "语言推理怎样获得信息，又怎样真正影响驾驶决策。",
+  "abstract": "驾驶智能体将语言、检索、工具与记忆接入决策过程。新增信息、推理程序和动作接口是不同的设计因素；本文围绕这些因素讨论代表方法，并比较理由—动作关联、经验迁移及运行时成本的证据。",
   "reviewedAt": "2026-11-06",
   "searchWindow": "基础文献与近年方法并列比较；2026-11-06 重新打开既有引用的一手正文并核对当前论断，补读近期本库与外部近邻。查询执行、受限来源与候选去向见检索审计；本次阅读为论断级复核，不表示逐篇复现实验。",
-  "researchQuestions": [
-    "哪些场景信息真正改变了动作，哪些只改变了文字理由？",
-    "车辆需要快速响应时，何时值得调用工具、检索记忆或进行较慢的推理？",
-    "过去的驾驶经历在什么条件下适用于当前场景？"
-  ],
   "sections": [
     {
-      "id": "scope",
-      "kind": "scope",
-      "title": "驾驶智能体到底比普通规划器多做什么",
-      "thesis": "它把获取信息、使用经验和选择动作组织起来，这些环节可以有不同的实现方式。",
-      "body": "设想车辆驶近一个视野不佳的路口。普通规划器根据当前输入计算轨迹；加入视觉语言模型（VLM）后，系统还可能描述遮挡、查询某个区域的几何信息，或检索过去的相似经历。只有说明这些操作读取了什么、返回了什么、最终怎样影响轨迹，才容易理解“智能体”在系统中的具体作用。\n\n语言可以在不同位置参与决策。GPT-Driver 让模型处理规划输出；Agent-Driver 则加入记忆和工具，让模型使用当前观察之外的信息。前者着重从场景走到动作，后者还要组织获取和调用信息的过程。因此，语言可能是输入指令、中间解释或工具调用形式，并不意味着所有系统都直接输出转向和油门。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024]\n\n一些路线进一步进入 CARLA 驾驶模拟器的闭环：车辆执行动作后，系统接收新的观察，再继续决策。与只对一帧场景回答问题相比，这类测试还能暴露动作带来的后续变化和误差积累。[lmdrive-2024, drivegpt4-v2-2025, simlingo-2025]\n\n这一区分很重要：描述对了场景，仍可能选错动作；模型也可能依靠视觉特征正确规划，却给出不准确的理由。后文分别讨论信息怎样进入模型、推理怎样被调用、经验怎样保留，再回到动作评测。[tnas-2026, reasoning-action-coupling-2026]\n\n### 从哪些综述开始\n\n[Zhou 等的驾驶 VLM 综述](https://ieeexplore.ieee.org/abstract/document/10531702/)提供 2024 年的任务地图，适合区分理解、导航、决策、控制和数据生成。[Jiang 等的视觉—语言—动作（VLA）综述](https://openaccess.thecvf.com/content/ICCV2025W/WDFM-AD/html/Jiang_A_Survey_on_Vision-Language-Action_Models_for_Autonomous_Driving_ICCVW_2025_paper.html)进一步按多模态输入、语言处理和动作解码整理 2025 年前后的架构。[vlm-driving-survey-2024, vla-survey-2025]\n\n若想追溯记忆、规划与工具调用的来源，可补读 [Wang 等的通用智能体综述](https://link.springer.com/article/10.1007/s11704-024-40231-1)。其中的机制可以作为驾驶研究的设计线索，具体驾驶效果仍看驾驶任务中的实验。[llm-agents-survey-2024]",
+      "id": "interfaces",
+      "title": "语言进入驾驶系统的位置",
+      "covers": [
+        "scope",
+        "taxonomy"
+      ],
+      "body": "视觉语言模型可以描述交通场景，视觉—语言—动作模型还将多模态输入连接到动作输出。驾驶智能体进一步组织检索、工具调用和记忆等内部操作。输入包含语言，或输出一段解释，并不能单独说明系统具有怎样的决策能力；具体实现取决于这些信息在计算中的位置。[vlm-driving-survey-2024,vla-survey-2025,llm-agents-survey-2024]\n\n语言可以在不同位置参与决策。GPT-Driver 让模型处理规划输出；Agent-Driver 则加入记忆和工具，让模型使用当前观察之外的信息。前者着重从场景走到动作，后者还要组织获取和调用信息的过程。因此，语言可能是输入指令、中间解释或工具调用形式，并不意味着所有系统都直接输出转向和油门。[gpt-driver-2023, languagempc-2023, drivegpt4-2023, dilu-2024, agent-driver-2024]\n\n| 输出接口 | 系统可改变的部分 | 对应评测 |\n| --- | --- | --- |\n| 场景回答与解释 | 信息描述 | 问答、空间关系与风险识别 |\n| 离散高层动作 | 机动意图 | 动作准确率及下游执行 |\n| 连续轨迹 | 自车运动计划 | 轨迹评分或交互驾驶 |\n| 控制条件与协商消息 | 约束、参数或多车协调 | 控制行为与合作结果 |\n\n[Zhou 等的驾驶 VLM 综述](https://ieeexplore.ieee.org/abstract/document/10531702/)提供 2024 年的任务地图，适合区分理解、导航、决策、控制和数据生成。[Jiang 等的视觉—语言—动作（VLA）综述](https://openaccess.thecvf.com/content/ICCV2025W/WDFM-AD/html/Jiang_A_Survey_on_Vision-Language-Action_Models_for_Autonomous_Driving_ICCVW_2025_paper.html)进一步按多模态输入、语言处理和动作解码整理 2025 年前后的架构。[vlm-driving-survey-2024, vla-survey-2025]\n\n若想追溯记忆、规划与工具调用的来源，可补读 [Wang 等的通用智能体综述](https://link.springer.com/article/10.1007/s11704-024-40231-1)。其中的机制可以作为驾驶研究的设计线索，具体驾驶效果仍看驾驶任务中的实验。[llm-agents-survey-2024]",
       "referenceIds": [
         "gpt-driver-2023",
         "languagempc-2023",
         "drivegpt4-2023",
         "dilu-2024",
         "agent-driver-2024",
-        "lmdrive-2024",
-        "drivegpt4-v2-2025",
-        "simlingo-2025",
-        "steer-2026",
-        "geocotdrive-2026",
-        "drivevla-m0-2026",
-        "tnas-2026",
-        "reasoning-action-coupling-2026",
-        "vlm-driving-survey-2024",
         "vla-survey-2025",
+        "vlm-driving-survey-2024",
         "llm-agents-survey-2024"
       ]
     },
     {
-      "id": "evolution",
-      "kind": "evolution",
-      "title": "从生成一句决策，到主动获取信息和使用经验",
-      "thesis": "变化的重点是模型能做哪些操作，以及这些操作怎样帮助下一步行动。",
-      "body": "语言推理的一个起点是 Chain-of-Thought：在提示中提供中间步骤，帮助模型处理算术、常识和符号问题。ReAct 进一步交替生成思考、任务动作和外部观察，让计划随反馈更新。两者分别提供了展开推理和主动获取信息的机制，原始实验并不涉及驾驶控制。[chain-of-thought-2022, react-2023]\n\n驾驶研究把这些机制接到具体输入输出。GPT-Driver、LanguageMPC 等工作从场景描述走向轨迹或高层控制；DiLu、Agent-Driver 增加经验和工具；DriveVLM 将复杂场景理解与传统驾驶栈结合。这里的进展不只是回答变长，而是模型可以读取更多类型的信息，并通过不同接口影响执行。[gpt-driver-2023, languagempc-2023, dilu-2024, agent-driver-2024, drivevlm-2025]\n\n但每次都运行完整推理会增加等待。双过程规划用视觉仲裁器（Arbiter）在快动作与慢推理之间选择；STEER 则在同一输入下比较两条路线的环境回报，直接学习何时思考。AgentThink 把工具选择纳入训练，DrivingAgent 区分系统设计与运行时调度。这些方法开始把“是否调用某个能力”本身视为决策。[cognitive-dual-process-2026, steer-2026, agentthink-2025, drivingagent-2026]\n\n另一些方法改变推理可用的内容。GeoCoTDrive 先找到与规划有关的二维区域，再从几何模型提取局部三维先验；KnowVal 检索驾驶规则并评价轨迹；X-Mind 用未来鸟瞰图（BEV）草图，HyWorldVLA 用预测潜状态提供时间信息。它们给模型补充的证据不同，结果需要分别理解为几何、知识或未来信息的作用。[geocotdrive-2026, knowval-2026, x-mind-2026, hyworldvla-2026]\n\n记忆也有几种不同用法。Talk2Drive 在受控实车任务中探索个性化记忆；VLADriver-RAG 根据场景图检索结构相似经历；DriveVLA-M0 保存失败潜状态与专家轨迹，再通过测试时低秩适配（LoRA）更新做适配。Hindsight/Foresight 把短期状态、长期工具经验和离线巩固连接起来，主要结果来自推理任务。检索案例、更新模型参数和整理工具经验，是相关但不同的研究问题。[talk2drive-2024, vladriver-rag-2026, drivevla-m0-2026, hindsight-foresight-2026]",
+      "id": "reasoning-and-tools",
+      "title": "推理步骤与外部信息",
+      "covers": [
+        "evolution",
+        "taxonomy"
+      ],
+      "body": "语言推理的一个起点是 Chain-of-Thought：在提示中提供中间步骤，帮助模型处理算术、常识和符号问题。ReAct 进一步交替生成思考、任务动作和外部观察，让计划随反馈更新。两者分别提供了展开推理和主动获取信息的机制，原始实验并不涉及驾驶控制。[chain-of-thought-2022, react-2023]\n\nGPT-Driver 和 LanguageMPC 将语言处理接到规划或高层控制，DiLu 与 Agent-Driver 加入经验和工具，DriveVLM 将复杂场景理解与传统驾驶栈结合。这些系统的差异包括读入的信息、可执行的内部操作，以及结果如何进入规划器。[gpt-driver-2023,languagempc-2023,dilu-2024,agent-driver-2024,drivevlm-2025]\n\n另一些方法改变推理可用的内容。GeoCoTDrive 先找到与规划有关的二维区域，再从几何模型提取局部三维先验；KnowVal 检索驾驶规则并评价轨迹；X-Mind 用未来鸟瞰图（BEV）草图，HyWorldVLA 用预测潜状态提供时间信息。它们给模型补充的证据不同，结果需要分别理解为几何、知识或未来信息的作用。[geocotdrive-2026, knowval-2026, x-mind-2026, hyworldvla-2026]\n\n几何查询、驾驶规则和未来状态分别补充空间、规范与时间信息。一次工具调用的收益可能来自额外证据，也可能来自调用时机和后续使用方式。把原始输入、工具返回与动作输出对应起来，有助于分析究竟是哪一部分改变了决策。[geocotdrive-2026,knowval-2026,x-mind-2026,hyworldvla-2026]",
       "referenceIds": [
-        "drivevlm-2025",
-        "talk2drive-2024",
-        "agentthink-2025",
-        "knowval-2026",
-        "drivingagent-2026",
-        "cognitive-dual-process-2026",
-        "steer-2026",
-        "geocotdrive-2026",
-        "x-mind-2026",
-        "hyworldvla-2026",
-        "vladriver-rag-2026",
-        "drivevla-m0-2026",
-        "hindsight-foresight-2026",
-        "chain-of-thought-2022",
-        "react-2023",
         "gpt-driver-2023",
         "languagempc-2023",
         "dilu-2024",
-        "agent-driver-2024"
-      ]
-    },
-    {
-      "id": "taxonomy",
-      "kind": "taxonomy",
-      "title": "比较智能体时，先看信息流向",
-      "thesis": "输入、内部操作和执行接口，比“会推理”这个标签更能说明系统能力。",
-      "body": "**先看它读什么。**输入可能包含图像、语言指令、场景图、局部几何或预测未来。KnowVal 的规则图谱提供驾驶知识，GeoCoTDrive 的三维区域特征提供空间线索，X-Mind 与 HyWorldVLA 提供不同形式的未来信息。增加信息与改进处理这些信息的程序，是两种可能的收益来源。[knowval-2026, geocotdrive-2026, x-mind-2026, hyworldvla-2026]\n\n**再看它能做什么内部操作。**检索历史、调用工具、切换快慢路线和更新参数，对成本与信息可见性有不同要求。STEER 学习推理路由，AgentThink 学习工具使用，DriveVLA-M0 在测试时更新小型 LoRA。仅说“使用记忆”还不够：需要知道记忆何时写入、按什么检索，以及当前测试场景是否已经进入了记忆库。[steer-2026, agentthink-2025, drivevla-m0-2026]\n\n**最后看输出落在哪里。**有的系统输出连续轨迹，有的预测离散高层动作（meta-action），有的调整控制参数或发送协商消息。CoLMDriver 与 LangCoop 用语言参与多车合作，VLM-CASE 将语义环境判断转成动力学安全包络。输出接口决定了模型能改变哪部分行为，也决定了适合用什么指标评价。[colmdriver-2025, langcoop-2025, vlm-case-2026]\n\n三类综述恰好补足这些视角：驾驶 VLM 综述按任务划分，VLA 综述解释视觉—语言—动作架构，通用智能体综述拆分记忆、规划和行动。一个系统可以同时属于多个类别；分类的作用是帮助追踪信息和动作，而不是给系统贴一个能力等级。[vlm-driving-survey-2024, vla-survey-2025, llm-agents-survey-2024]",
-      "referenceIds": [
+        "drivevlm-2025",
+        "agent-driver-2024",
         "knowval-2026",
-        "geocotdrive-2026",
         "x-mind-2026",
         "hyworldvla-2026",
-        "steer-2026",
-        "agentthink-2025",
-        "drivevla-m0-2026",
-        "colmdriver-2025",
-        "langcoop-2025",
-        "vlm-case-2026",
-        "vlm-driving-survey-2024",
-        "vla-survey-2025",
-        "llm-agents-survey-2024"
+        "geocotdrive-2026",
+        "chain-of-thought-2022",
+        "react-2023"
       ]
     },
     {
-      "id": "evidence",
-      "kind": "evidence",
-      "title": "怎样知道推理、记忆或工具确实帮了忙",
-      "thesis": "任务成绩之外，还需要观察新增信息怎样改变输出，以及它耗费了多少时间。",
-      "body": "问答评测可以诊断理解能力。AgentThink 与 Hindsight/Foresight 的推理和多选题结果显示工具、记忆对相应任务的作用；ObsDriveBench 用真实恶劣天气数据分析可观测性、空间理解和风险选择。IEDD 则把五个既有轨迹库重组为交互片段、BEV 与视觉问答。由于这些片段派生自原始轨迹，训练测试划分应按来源场景隔离，避免同源片段泄漏。[agentthink-2025, hindsight-foresight-2026, obsdrivebench-2026, iedd-2026]\n\n动作评测回答另一组问题。双过程规划主要预测离散高层动作；STEER 与 DriveVLA-M0 使用 NAVSIM v1/v2；LMDrive、SimLingo 与 CoLMDriver 提供 CARLA 交互测试。离散动作准确率、轨迹评分和闭环完成表现各有对应任务，不能互换。使用慢推理或检索时，还需同时看触发次数、检索成本、推理延迟和基础策略。[cognitive-dual-process-2026, steer-2026, drivevla-m0-2026, lmdrive-2024, simlingo-2025, colmdriver-2025]\n\n要检查文字理由是否参与动作，可以主动改变理由或场景，再观察轨迹。Reasoning–Action Coupling 同时研究理由编辑与关键对象移除；TNAS 分解文本与动作敏感方向。这些干预比文字看起来是否合理更接近机制问题，但编辑方式和场景集合会影响结果。ReasonBreak 的开环文本搜索与闭环随机腐蚀也采用不同预算，比例需要在各自实验中解释。[reasoning-action-coupling-2026, tnas-2026, reasonbreak-2026]",
+      "id": "memory",
+      "title": "检索经验与测试时适配",
+      "covers": [
+        "taxonomy",
+        "evidence",
+        "challenges"
+      ],
+      "body": "记忆也有几种不同用法。Talk2Drive 在受控实车任务中探索个性化记忆；VLADriver-RAG 根据场景图检索结构相似经历；DriveVLA-M0 保存失败潜状态与专家轨迹，再通过测试时低秩适配（LoRA）更新做适配。Hindsight/Foresight 把短期状态、长期工具经验和离线巩固连接起来，主要结果来自推理任务。检索案例、更新模型参数和整理工具经验，是相关但不同的研究问题。[talk2drive-2024, vladriver-rag-2026, drivevla-m0-2026, hindsight-foresight-2026]\n\n记忆有时只是可检索案例，有时会触发模型参数更新。前者改变当前决策的上下文，后者改变后续输入的处理方式。因此，记忆写入时机、检索键、更新频率与测试数据隔离都会影响结果。相似场景的外观并不保证相同的优先权和相对运动，结构检索与失败适配恰好针对不同方面。[vladriver-rag-2026,drivevla-m0-2026]\n\n失败经历可以提供动作不适用的条件，成功案例则提供可采用的行为。关键仍是这些机制在什么情形下超出增加带标签样本的作用，以及适配后是否保留正常场景能力。训练、记忆库和测试片段来自同一轨迹源时，划分必须沿原始场景隔离。[drivevla-m0-2026,vladriver-rag-2026,iedd-2026]",
       "referenceIds": [
-        "agentthink-2025",
-        "hindsight-foresight-2026",
-        "obsdrivebench-2026",
+        "talk2drive-2024",
+        "vladriver-rag-2026",
         "iedd-2026",
-        "cognitive-dual-process-2026",
-        "steer-2026",
         "drivevla-m0-2026",
+        "hindsight-foresight-2026"
+      ]
+    },
+    {
+      "id": "action-grounding",
+      "title": "理由、动作与实验条件",
+      "covers": [
+        "evidence",
+        "challenges"
+      ],
+      "body": "问答评测可以诊断理解能力。AgentThink 与 Hindsight/Foresight 的推理和多选题结果显示工具、记忆对相应任务的作用；ObsDriveBench 用真实恶劣天气数据分析可观测性、空间理解和风险选择。IEDD 则把五个既有轨迹库重组为交互片段、BEV 与视觉问答。由于这些片段派生自原始轨迹，训练测试划分应按来源场景隔离，避免同源片段泄漏。[agentthink-2025, hindsight-foresight-2026, obsdrivebench-2026, iedd-2026]\n\n动作评测回答另一组问题。双过程规划主要预测离散高层动作；STEER 与 DriveVLA-M0 使用 NAVSIM v1/v2；LMDrive、SimLingo 与 CoLMDriver 提供 CARLA 交互测试。离散动作准确率、轨迹评分和闭环完成表现各有对应任务，不能互换。使用慢推理或检索时，还需同时看触发次数、检索成本、推理延迟和基础策略。[cognitive-dual-process-2026, steer-2026, drivevla-m0-2026, lmdrive-2024, simlingo-2025, colmdriver-2025]\n\n要检查文字理由是否参与动作，可以主动改变理由或场景，再观察轨迹。Reasoning–Action Coupling 同时研究理由编辑与关键对象移除；TNAS 分解文本与动作敏感方向。这些干预比文字看起来是否合理更接近机制问题，但编辑方式和场景集合会影响结果。ReasonBreak 的开环文本搜索与闭环随机腐蚀也采用不同预算，比例需要在各自实验中解释。[reasoning-action-coupling-2026, tnas-2026, reasonbreak-2026]\n\n自然语言理由可能与动作依赖的表征不一致。文本自洽约束可以改善解释，却没有自动证明系统依赖了正确对象。TNAS 和场景反事实干预把问题转为可观察的动作变化；局部几何工具进一步提供了可以被干预的空间信息。对象状态、文本解释和轨迹响应之间的对应关系，因而成为比理由长度更具体的分析对象。[tnas-2026,reasoning-action-coupling-2026,geocotdrive-2026]",
+      "referenceIds": [
         "lmdrive-2024",
         "simlingo-2025",
+        "agentthink-2025",
         "colmdriver-2025",
-        "reasoning-action-coupling-2026",
-        "tnas-2026",
-        "reasonbreak-2026"
-      ]
-    },
-    {
-      "id": "challenges",
-      "kind": "challenges",
-      "title": "理由、经验和动作之间仍有距离",
-      "thesis": "系统拥有某种信息，并不意味着它会在合适的时候使用这份信息。",
-      "body": "自然语言理由可能正确，却没有进入决定动作的表征通道。TNAS 与场景级反事实研究提示，约束文本流畅或前后自洽，仍不足以说明模型依赖了正确的对象和关系。GeoCoTDrive 提供了局部几何入口，进一步的问题是：哪些几何变化应该影响减速、转向或等待，模型是否确实对它们敏感。[tnas-2026, reasoning-action-coupling-2026, geocotdrive-2026]\n\n经验迁移也容易混淆相似性。两个路口看起来相似，车辆优先权、遮挡或相对运动却可能不同；按外观找到的成功案例，动作未必适用于当前情况。VLADriver-RAG 用拓扑结构检索，DriveVLA-M0 关注失败与快速适配，为研究“什么样的相似性与行动后果有关”提供了两种入口。[vladriver-rag-2026, drivevla-m0-2026]\n\n最后是时间。车辆需要持续控制，查询工具和生成长理由却可能较慢。DrivingAgent 处理运行时调度，STEER 选择推理路线，VLM-CASE 让异步认知参与控制条件。GNSS-VLM 的语义监测和 Talk2Drive 的个性化任务又有不同的调用频率。讨论推理价值时，必须把信息获得的时间放回任务：来得太晚的信息，可能已经不能改变当前动作。[drivingagent-2026, steer-2026, vlm-case-2026, vlm-gnss-spoofing-2026, talk2drive-2024]",
-      "referenceIds": [
-        "tnas-2026",
-        "reasoning-action-coupling-2026",
-        "geocotdrive-2026",
-        "vladriver-rag-2026",
-        "drivevla-m0-2026",
-        "drivingagent-2026",
-        "steer-2026",
-        "vlm-case-2026",
-        "vlm-gnss-spoofing-2026",
-        "talk2drive-2024",
-        "vla-survey-2025",
-        "mdrive-2026"
-      ]
-    },
-    {
-      "id": "outlook",
-      "kind": "outlook",
-      "title": "让推理围绕真正影响行动的信息展开",
-      "thesis": "值得推进的方向，是更有针对性地获取证据、使用经验和分配时间。",
-      "body": "局部几何与动作之间还有可研究的连接。GeoCoTDrive 已经让模型主动读取规划相关区域，TNAS 与 Reasoning–Action Coupling 则提供检查动作依赖的办法。将这些线索放在一起，可以追问模型是否需要保存少量、明确与候选轨迹有关的对象状态。这样的表示有助于解释信息的作用，但需要与普通特征拼接、额外监督的收益区分。[geocotdrive-2026, reasoning-action-coupling-2026, tnas-2026]\n\n记忆的价值也可能来自行为差异，而不只是相似场景。失败经历告诉模型某个动作为什么不适用，成功案例提供可采用的路径；同一场景中相反后果的经历，可能帮助区分细微但关键的条件。DriveVLA-M0 与 VLADriver-RAG 分别提供适配和结构检索机制。尚待回答的是这些机制在什么场景下超出“增加了一批带标签样本”的作用，以及如何保持对正常场景的表现。[drivevla-m0-2026, vladriver-rag-2026, iedd-2026]\n\n推理预算则可以围绕信息价值分配。STEER 已经学习何时思考，工具调用和几何读取还提供了不同的获取信息方式。下一步的问题是模型能否判断当前缺少哪一类证据，并在后续时刻复用已有推理状态。这样既可能减少重复计算，也能把推理过程与连续驾驶中的信息变化联系起来。[steer-2026, agentthink-2025, hindsight-foresight-2026]",
-      "referenceIds": [
-        "geocotdrive-2026",
-        "reasoning-action-coupling-2026",
-        "tnas-2026",
-        "drivevla-m0-2026",
-        "vladriver-rag-2026",
+        "cognitive-dual-process-2026",
+        "reasonbreak-2026",
+        "obsdrivebench-2026",
         "iedd-2026",
         "steer-2026",
+        "tnas-2026",
+        "reasoning-action-coupling-2026",
+        "geocotdrive-2026",
+        "drivevla-m0-2026",
+        "hindsight-foresight-2026"
+      ]
+    },
+    {
+      "id": "runtime",
+      "title": "推理预算与连续控制",
+      "covers": [
+        "evolution",
+        "challenges",
+        "outlook"
+      ],
+      "body": "每次都运行完整推理会增加等待。双过程规划用视觉仲裁器（Arbiter）在快动作与慢推理之间选择；STEER 则在同一输入下比较两条路线的环境回报，直接学习何时思考。AgentThink 把工具选择纳入训练，DrivingAgent 区分系统设计与运行时调度。这些方法开始把“是否调用某个能力”本身视为决策。[cognitive-dual-process-2026, steer-2026, agentthink-2025, drivingagent-2026]\n\n推理路线、工具选择与参数更新具有不同的运行成本。STEER 学习快慢路线的选择，AgentThink 学习工具使用，DrivingAgent 处理运行时调度；VLM-CASE 将语义判断转成动力学安全包络。GNSS-VLM 的监测与 Talk2Drive 的个性化任务又具有不同调用频率，不能按同一种控制周期理解。[steer-2026,agentthink-2025,drivingagent-2026,vlm-case-2026,vlm-gnss-spoofing-2026,talk2drive-2024]\n\n连续驾驶中，已经得到的推理结果可能很快过期，也可能在若干时刻仍然有效。如何复用有效状态、在缺少几何或规则证据时调用相应工具，涉及信息价值与时限的共同判断。这个问题可以在已有快慢路由和工具机制上展开，不必预设更长的推理总会改善动作。[steer-2026,agentthink-2025,hindsight-foresight-2026]",
+      "referenceIds": [
+        "talk2drive-2024",
         "agentthink-2025",
+        "drivingagent-2026",
+        "cognitive-dual-process-2026",
+        "vlm-case-2026",
+        "vlm-gnss-spoofing-2026",
+        "steer-2026",
         "hindsight-foresight-2026"
       ]
     }
-  ],
-  "takeaways": [
-    "理解一个驾驶智能体，应追踪它读取的信息、执行的内部操作和最终控制接口。语言解释、轨迹生成和工具调用不能仅凭名称视为同一种能力。",
-    "理由合理和动作合理需要分别检验。对象编辑、理由编辑及表示干预，有助于观察模型究竟依赖了什么。",
-    "记忆和慢推理的收益取决于场景适用性与时间成本。相似案例是否有用、信息是否来得及影响动作，是持续研究的核心问题。"
   ],
   "references": [
     {
@@ -798,14 +755,14 @@
       "status": "passed",
       "completedAt": "2026-11-09",
       "reviewers": 1,
-      "rounds": 1,
+      "rounds": 2,
       "finalOutcome": "passed",
-      "scope": "Editorial rewrite and current local corpus reconciliation; historical source retrieval and substantive review dates preserved.",
-      "finalFinding": "独立审阅者逐段对照原稿与改稿，核对机制解释、数字、实验条件、引用和历史锚点；术语澄清已复核。此次不声称重新检索全部站外来源或复现实验。",
-      "reviewerAgentId": "/root/review_prose_policy",
-      "artifactPath": "docs/review-prose/2026-11-09/independent-review/policy-round1.json",
-      "artifactSha256": "c50d8e13fb2250690475d27cf420d46b6bb8735ce8f6cfe7c8b87cb324abfbb6",
-      "snapshotFingerprint": "484884cd8f26c9cad0d498fbe0429c816d018b2ca0b94d9c0e8e4bfa8be8d959",
+      "scope": "Editorial restructuring with targeted primary-source checks, original synthesis figures and current local corpus reconciliation; historical retrieval and substantive review dates preserved.",
+      "finalFinding": "两轮独立审阅逐段检查领域组织、重复、方法比较与关键技术条件；已修正首轮发现，核对图像及引用分配。原始书目和历史检索记录保留，本轮不声称新增全面检索或实验复现。",
+      "reviewerAgentId": "/root/article_review_policy",
+      "artifactPath": "docs/review-articles/2026-11-09/reviews/policy-round2.json",
+      "artifactSha256": "87d163ba3b5df18274ba46720444e32458dc854e1fe3b69b79952ea0456bc1fd",
+      "snapshotFingerprint": "1d2b2c8ec71f59938cc102fd32297741b390f11937d337b923f12088a0828623",
       "assurance": "same-family provisional"
     },
     "queryRuns": [
@@ -3202,5 +3159,29 @@
       "selectionArtifact": "docs/review-foundations/2026-11-06/selection.json",
       "scope": "Targeted survey and missing-foundation supplement; earlier same-day primary checks remain separate."
     }
-  }
+  },
+  "structureVersion": 2,
+  "legacyAnchors": {
+    "scope": "interfaces",
+    "scope-title": "interfaces",
+    "evolution": "reasoning-and-tools",
+    "evolution-title": "reasoning-and-tools",
+    "taxonomy": "interfaces",
+    "taxonomy-title": "interfaces",
+    "evidence": "action-grounding",
+    "evidence-title": "action-grounding",
+    "challenges": "memory",
+    "challenges-title": "memory",
+    "outlook": "runtime",
+    "outlook-title": "runtime",
+    "research-questions": "interfaces",
+    "researchQuestionsTitle": "interfaces",
+    "takeaways": "runtime",
+    "takeawaysTitle": "runtime"
+  },
+  "additionalReferenceIds": [
+    "drivegpt4-v2-2025",
+    "langcoop-2025",
+    "mdrive-2026"
+  ]
 }

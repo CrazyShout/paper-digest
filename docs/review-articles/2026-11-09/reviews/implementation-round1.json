@@ -1,0 +1,418 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "implementation-round1",
+  "reviewedAt": "2026-11-09T08:45:07.082Z",
+  "reviewer": "Independent Codex subagent /root/article_review_contract",
+  "reviewType": "same-family provisional",
+  "scope": "Implementation and rendering of domain-specific review articles, six-dimension coverage, historical anchors, search projection, SVG bindings and live verification. No primary-source or substantive literature approval.",
+  "status": "changes-requested",
+  "dependencyHashes": {
+    "config/literature-review-workflow.json": "06ef46dac2d1283644815001540154f3b4fd07762ca7931bf2559c4d9e7a2e13",
+    "config/review-anchors.json": "6ffe5b83be9313aa777f7005fa2d7c548b786db9d26dedbf5d1d25bdf76feaf3",
+    "content/reviews/3d-reconstruction.json": "3307b9078074289a51011598ac5b48827b23b90267ceb1ca6041be1016dc5ebc",
+    "content/reviews/agentic-driving.json": "cf9ec1dc0428b65f75be37ada02b07d8a002588d9c0168f11eded5f5d4533609",
+    "content/reviews/autonomous-driving-security.json": "6f24adbf147f3b8ca70f3856a1d2be2cdceb2c5da42fa52bc9249026452a9169",
+    "content/reviews/autonomous-driving-testing.json": "563f196aab99baf28c07ff3aa70a4377247af6362ccfb99c7944618291d14c43",
+    "content/reviews/cooperative-autonomous-driving.json": "eef30f4b14505f32ba9913062f10c978d2b5d148fb1e76c8dc2eac92b073f1f7",
+    "content/reviews/dynamic-scene-representation.json": "7a044aba818ce79cb10becc8f1995f5b892b1668389fc9d3af2c7fed4de6a4cb",
+    "content/reviews/end-to-end-autonomous-driving.json": "2ad76e024d9df88e9dd310074146ac9a9caa8b785c2194ad35f328b4b6513f36",
+    "content/reviews/lidar-anomaly-segmentation.json": "1ce570cddf8a44adf0adf241aa6fb998b6972188507840f79cd83517b8a02e7e",
+    "content/reviews/radar-occupancy-representation.json": "3f378a78f8dbd60d2052c3a1e2aff02ee104abbcb58216ca410d9d913af6c2a7",
+    "content/reviews/world-models.json": "308d7bac9a5343031d2fedbbc6391cc531565423d1b9f37d16f3d355e22bfe33",
+    "public/assets/reviews/cooperative-information-path.svg": "902e98c0d2d767823e33f6f16493a2410003215730c64b6f5dad0942dacb1fac",
+    "public/assets/reviews/gaussian-time-models.svg": "8ce2b6c4ed336279c95360226463cf66c7e8bacfe37b284228ba359ba16029f9",
+    "public/assets/reviews/radar-measurement-and-state.svg": "8b6109314877aab7a7dca303bdccdd7dd844bae1749b26c760d2ce76e5a696cb",
+    "scripts/digest-notification.mjs": "9204c8282ca8a9881445221674a87dc754d482b42ed3f925698eb56b4c4f1146",
+    "scripts/validate-content.mjs": "60d27dda56cbd3be8b012f63db701d9134dd90005295bb1adc6456c9b757c695",
+    "src/lib/content.js": "b6e63ebcce0991d56d2292f9b6356437142139426a9efb3b9c073233ccc5a7b1",
+    "src/lib/notebook-search.js": "3b01e4cb44d74086545765a66c97687795348e850fb5fa14b3bfb17ea129a409",
+    "src/lib/review-fingerprint.js": "12356d462ffd185c99f15fc630f070210e0361a76dfd56edd2d157ad1dc96a3f",
+    "src/lib/review-structure.js": "d237571a4770b03f5b2f753b15a8a619c41933a110b481775b2d02cba785dfed",
+    "src/pages/reviews/[id]/index.astro": "0451e1c817c7b5ae7867974dd6c161e109ab1f9057d02a4a5ddf22f67de4dc0b",
+    "src/styles/reading.css": "a92ce08c2a481e9f44d3c04c42b22fe9e9bf1ab5ee794e23619e34970f0ba6fc",
+    "test/review-center.test.mjs": "1f2b041729f84eeec8c49dcb9adc04e1c7cdc707314d9549f842f6fe716de6aa"
+  },
+  "snapshotFingerprint": "693a527cbbeb6e19e5a862fffaf85b94b9549ef5fc89ddf0819344d4b80e2aec",
+  "checked": [
+    {
+      "name": "variable-section-count and coverage",
+      "result": "passed",
+      "detail": "All 10 current directions use structureVersion 2 and pass reviewStructureErrors with 5, 6 or 7 sections. An explicit 5-section fixture passes; removing all outlook coverage fails."
+    },
+    {
+      "name": "historical anchor registry",
+      "result": "passed",
+      "detail": "Every config/review-anchors.json entry exactly matches the 6 section IDs, 6 title IDs and 4 question/takeaway IDs rendered by HEAD. Current historical IDs resolve; collision and missing-target fixtures fail."
+    },
+    {
+      "name": "browser desktop and mobile",
+      "result": "passed",
+      "detail": "Chrome at 1440x1000 and 390x1000 for /reviews/3d-reconstruction/: 7 sections, no duplicate DOM IDs, no page overflow, SVG natural dimensions 720x840; mobile tables scroll within 358px containers. Actual figure labels/captions and first table were visually inspected."
+    },
+    {
+      "name": "legacy hash and references",
+      "result": "passed",
+      "detail": "Fresh navigation to #taxonomy reaches time-models at 112px/116px viewport top. Clicking a body citation opens the bibliography and scrolls the referenced item into view after smooth scrolling."
+    },
+    {
+      "name": "search reachability",
+      "result": "passed",
+      "detail": "Query 高斯怎样表示运动 returns exactly the new 3D reconstruction review at desktop and 390px; selecting it reaches /reviews/3d-reconstruction/. Search projection includes every current section title and cited reference title."
+    },
+    {
+      "name": "legacy rendering compatibility",
+      "result": "passed",
+      "detail": "Before security content migration during this audit, the unchanged HEAD legacy security page rendered six sections, five questions, five takeaways, section theses and no duplicate IDs.",
+      "contentSha256": "30a1a55a839ee8c37c54c80d43ceb444ad833773103aa5b447592cf1b6054340"
+    },
+    {
+      "name": "figure byte binding",
+      "result": "passed-with-finding",
+      "detail": "SHA-256 is computed from actual SVG bytes; the review fingerprint includes declared figure hash metadata. The dimensions predicate is too broad, as recorded in R1."
+    },
+    {
+      "name": "live artifact SVG verification",
+      "result": "passed",
+      "detail": "A synthetic artifact hosted under /paper-digest/ discovers assets/reviews/sample.svg and verifies 10 resources including decoded JSON/gzip equality. Mutating only fetched SVG bytes fails with Live verification failed: assets/reviews/sample.svg: Does not match deployed artifact."
+    },
+    {
+      "name": "print inspection",
+      "result": "passed-with-advisory",
+      "detail": "A4 Chrome print export has 32 pages. Pages 1-4 were rendered and visually inspected, including figure, table continuation and formula. No clipped figure/table/formula was found in these pages, but persistent left sidebar space reduces usable width (R2)."
+    }
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "priority": 2,
+      "status": "open",
+      "file": "scripts/validate-content.mjs",
+      "line": 2475,
+      "title": "Read dimensions from the root SVG element",
+      "detail": "The validator accepts expected width/height anywhere in the SVG string. gaussian-time-models.svg repeats width=\"720\" height=\"840\" on the background rect. Changing only the root to 1440x1680 while recomputing figure.sha256 leaves the current dimension predicate true even though figure.width/height metadata still claims 720x840.",
+      "recommendation": "Parse or tightly match the root svg tag and compare its intrinsic width/height; check viewBox consistency if required."
+    },
+    {
+      "id": "R2",
+      "priority": 3,
+      "status": "advisory-existing",
+      "file": "src/styles/reading.css",
+      "line": 806,
+      "title": "Print layout retains hidden sidebar space",
+      "detail": "A4 output has roughly 37% left blank width on sampled pages. Sidebar/TOC are hidden but the Fumadocs parent grid still reserves a sidebar track. This pre-existed the shown CSS changes and is not classified as a v2 structure regression.",
+      "recommendation": "Collapse the notebook grid to one content column under print media and recheck figure/table pagination."
+    }
+  ],
+  "notChecked": [
+    "Full npm test, npm run validate and production build are being run by the parent; their final results were not yet supplied.",
+    "Production preview, final commit, GitHub Pages deployment and real live-site artifact verification were not performed by this reviewer.",
+    "Primary sources and the substantive claims of the ten rewritten articles are outside this implementation review.",
+    "The full 32-page print export was not visually inspected; only pages 1-4 and print-media DOM properties were checked.",
+    "After all ten articles were migrated, structural/anchor checks were rerun; browser content inspection remained the 3D reconstruction sample plus earlier legacy security page."
+  ],
+  "evidence": {
+    "localOnlyDirectory": "/tmp/paper-digest-implementation-review",
+    "contract": {
+      "registry": [
+        {
+          "id": "3d-reconstruction",
+          "matches": true
+        },
+        {
+          "id": "agentic-driving",
+          "matches": true
+        },
+        {
+          "id": "autonomous-driving-security",
+          "matches": true
+        },
+        {
+          "id": "autonomous-driving-testing",
+          "matches": true
+        },
+        {
+          "id": "cooperative-autonomous-driving",
+          "matches": true
+        },
+        {
+          "id": "dynamic-scene-representation",
+          "matches": true
+        },
+        {
+          "id": "end-to-end-autonomous-driving",
+          "matches": true
+        },
+        {
+          "id": "lidar-anomaly-segmentation",
+          "matches": true
+        },
+        {
+          "id": "radar-occupancy-representation",
+          "matches": true
+        },
+        {
+          "id": "world-models",
+          "matches": true
+        }
+      ],
+      "current": [
+        {
+          "id": "3d-reconstruction",
+          "version": 2,
+          "sections": 7,
+          "errors": []
+        },
+        {
+          "id": "agentic-driving",
+          "version": 2,
+          "sections": 5,
+          "errors": []
+        },
+        {
+          "id": "autonomous-driving-security",
+          "version": 2,
+          "sections": 5,
+          "errors": []
+        },
+        {
+          "id": "autonomous-driving-testing",
+          "version": 2,
+          "sections": 6,
+          "errors": []
+        },
+        {
+          "id": "cooperative-autonomous-driving",
+          "version": 2,
+          "sections": 6,
+          "errors": []
+        },
+        {
+          "id": "dynamic-scene-representation",
+          "version": 2,
+          "sections": 5,
+          "errors": []
+        },
+        {
+          "id": "end-to-end-autonomous-driving",
+          "version": 2,
+          "sections": 5,
+          "errors": []
+        },
+        {
+          "id": "lidar-anomaly-segmentation",
+          "version": 2,
+          "sections": 6,
+          "errors": []
+        },
+        {
+          "id": "radar-occupancy-representation",
+          "version": 2,
+          "sections": 6,
+          "errors": []
+        },
+        {
+          "id": "world-models",
+          "version": 2,
+          "sections": 6,
+          "errors": []
+        }
+      ],
+      "missingErrors": [
+        "missing review coverage: outlook"
+      ],
+      "collisionErrors": [
+        "invalid or duplicate legacy anchor: scene-models"
+      ],
+      "badTargetErrors": [
+        "missing legacy anchor target: missing-target"
+      ],
+      "dimensionReproduction": {
+        "rootChanged": true,
+        "dimensionPredicateStillPasses": true
+      }
+    },
+    "browser": [
+      {
+        "width": 1440,
+        "content": {
+          "title": "自动驾驶三维重建：动态表示、场景构建与仿真 · 综述中心",
+          "headings": [
+            "辐射场与驾驶场景",
+            "高斯怎样表示运动",
+            "对象组织与遮挡后的对应",
+            "逐场景优化、前馈构建与在线更新",
+            "多传感器渲染与物理交互",
+            "重建质量与仿真有效性",
+            "尚未解决的对应与外推问题"
+          ],
+          "duplicateIds": [],
+          "bodyWidth": 1440,
+          "viewport": 1440,
+          "figures": [
+            {
+              "url": "http://127.0.0.1:4321/assets/reviews/gaussian-time-models.svg",
+              "width": "720",
+              "height": "840",
+              "complete": true,
+              "naturalWidth": 720,
+              "naturalHeight": 840
+            }
+          ],
+          "tables": [
+            {
+              "containerWidth": 840,
+              "scrollWidth": 840,
+              "overflow": "auto"
+            },
+            {
+              "containerWidth": 840,
+              "scrollWidth": 840,
+              "overflow": "auto"
+            }
+          ]
+        },
+        "alias": {
+          "top": -1135.234375,
+          "parent": "time-models",
+          "heading": "高斯怎样表示运动"
+        },
+        "reference": {
+          "top": 9822.03125,
+          "visible": true,
+          "detailsOpen": true,
+          "text": "11外部文献↗ECCV 2020 · 2020 · 方法 · 已同行评审NeRF: Representing Scenes as Neural Radiance Fields for View Syn"
+        },
+        "print": {
+          "bodyWidth": 1440,
+          "viewport": 1440,
+          "visibleSections": 7,
+          "figureBreak": "avoid",
+          "tableWidths": [
+            {
+              "width": 840,
+              "scrollWidth": 840
+            },
+            {
+              "width": 840,
+              "scrollWidth": 840
+            }
+          ]
+        },
+        "errors": []
+      },
+      {
+        "width": 390,
+        "content": {
+          "title": "自动驾驶三维重建：动态表示、场景构建与仿真 · 综述中心",
+          "headings": [
+            "辐射场与驾驶场景",
+            "高斯怎样表示运动",
+            "对象组织与遮挡后的对应",
+            "逐场景优化、前馈构建与在线更新",
+            "多传感器渲染与物理交互",
+            "重建质量与仿真有效性",
+            "尚未解决的对应与外推问题"
+          ],
+          "duplicateIds": [],
+          "bodyWidth": 390,
+          "viewport": 390,
+          "figures": [
+            {
+              "url": "http://127.0.0.1:4321/assets/reviews/gaussian-time-models.svg",
+              "width": "720",
+              "height": "840",
+              "complete": true,
+              "naturalWidth": 720,
+              "naturalHeight": 840
+            }
+          ],
+          "tables": [
+            {
+              "containerWidth": 358,
+              "scrollWidth": 672,
+              "overflow": "auto"
+            },
+            {
+              "containerWidth": 358,
+              "scrollWidth": 672,
+              "overflow": "auto"
+            }
+          ]
+        },
+        "alias": {
+          "top": -579.859375,
+          "parent": "time-models",
+          "heading": "高斯怎样表示运动"
+        },
+        "reference": {
+          "top": 14773.359375,
+          "visible": true,
+          "detailsOpen": true,
+          "text": "11外部文献↗ECCV 2020 · 2020 · 方法 · 已同行评审NeRF: Representing Scenes as Neural Radiance Fields for View Syn"
+        },
+        "print": {
+          "bodyWidth": 390,
+          "viewport": 390,
+          "visibleSections": 7,
+          "figureBreak": "avoid",
+          "tableWidths": [
+            {
+              "width": 358,
+              "scrollWidth": 358
+            },
+            {
+              "width": 358,
+              "scrollWidth": 358
+            }
+          ]
+        },
+        "errors": []
+      }
+    ],
+    "settledHashNavigation": [
+      {
+        "width": 1440,
+        "alias": {
+          "top": 111.765625,
+          "parent": "time-models"
+        },
+        "reference": {
+          "top": 144.03125,
+          "visible": true,
+          "detailsOpen": true
+        }
+      },
+      {
+        "width": 390,
+        "alias": {
+          "top": 116.140625,
+          "parent": "time-models"
+        },
+        "reference": {
+          "top": 145.359375,
+          "visible": true,
+          "detailsOpen": true
+        }
+      }
+    ],
+    "search": [
+      {
+        "width": 1440,
+        "search": {
+          "text": "ESC\n全部\n方向\n论文\n简报\n综述\nIdea\n方向综述\n三维重建\n\n自动驾驶三维重建：动态表示、场景构建与仿真\n\n显示 1 / 1 条",
+          "resultVisible": true,
+          "destination": "http://127.0.0.1:4321/reviews/3d-reconstruction/"
+        }
+      },
+      {
+        "width": 390,
+        "search": {
+          "text": "ESC\n全部\n方向\n论文\n简报\n综述\nIdea\n方向综述\n三维重建\n\n自动驾驶三维重建：动态表示、场景构建与仿真\n\n显示 1 / 1 条",
+          "resultVisible": true,
+          "destination": "http://127.0.0.1:4321/reviews/3d-reconstruction/"
+        }
+      }
+    ]
+  },
+  "reviewBoundary": "This record binds only the listed hashes and actual checks. Later code/content changes require rechecking. Pending article approvals are not implementation defects."
+}
