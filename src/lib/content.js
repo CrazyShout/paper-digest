@@ -1282,7 +1282,9 @@ async function loadReviewCenter() {
       currentSnapshotFingerprint: reviewSnapshotFingerprint(review),
       sections: review.sections.map((section) => ({
         ...section,
-        bodyHtml: markdownToHtml(projectReviewCitations(section.body, references)),
+        bodyHtml: markdownToHtml(projectReviewCitations(section.body, references), {
+          images: new Map((review.figures || []).map(figure => [figure.url, figure]))
+        }),
         references: section.referenceIds
           .map((referenceId) => referenceMap.get(referenceId))
           .filter(Boolean)

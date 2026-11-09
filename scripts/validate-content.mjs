@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -28,6 +28,8 @@ import {
   unusedAuditedSourceFamilies
 } from "../src/lib/review-audit.js";
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
+import { reviewStructureErrors, reviewFigureDimensionErrors } from "../src/lib/review-structure.js";
+import { reviewCitedReferenceIds } from "../src/lib/review-citations.js";
 import { validateDirectionReading } from "../src/lib/direction-reading.js";
 import { validateFoundationsAudit } from "../src/lib/review-foundations.js";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
@@ -42,6 +44,7 @@ const ROOT = path.resolve(SCRIPT_DIR, "..");
 const CONTENT = path.join(ROOT, "content");
 const CONFIG = path.join(ROOT, "config");
 const PUBLIC = path.join(ROOT, "public");
+const REVIEW_HISTORICAL_ANCHORS = JSON.parse(readFileSync(path.join(CONFIG, "review-anchors.json"), "utf8"));
 
 const errors = [];
 let reviewCorpusResolver;
@@ -856,14 +859,6 @@ function validateIdeaCenter(config, knownTags, paperById, latestDigestDate, file
   }
 }
 
-const REVIEW_SECTION_KINDS = [
-  "scope",
-  "evolution",
-  "taxonomy",
-  "evidence",
-  "challenges",
-  "outlook"
-];
 const REVIEW_PUBLICATION_STATUSES = new Set([
   "peer-reviewed",
   "accepted",
@@ -1178,10 +1173,10 @@ function validateReviewCenter(
     ) {
       addError(`${label} is stale by workflow policy (${reviewAgeDays} days)`);
     }
-    if (!isStringArray(review.researchQuestions) || review.researchQuestions.length < 2) {
+    if (review.structureVersion !== 2 && (!isStringArray(review.researchQuestions) || review.researchQuestions.length < 2)) {
       addError(`${label} researchQuestions must contain at least 2 strings`);
     }
-    if (!isStringArray(review.takeaways) || review.takeaways.length < 3) {
+    if (review.structureVersion !== 2 && (!isStringArray(review.takeaways) || review.takeaways.length < 3)) {
       addError(`${label} takeaways must contain at least 3 strings`);
     }
 
@@ -2466,28 +2461,29 @@ function validateReviewCenter(
     }
 
     const sections = Array.isArray(review.sections) ? review.sections : [];
-    if (sections.length !== REVIEW_SECTION_KINDS.length) {
-      addError(`${label} must define exactly ${REVIEW_SECTION_KINDS.length} review sections`);
+    for (const error of reviewStructureErrors(review, REVIEW_HISTORICAL_ANCHORS[review.id] || [])) addError(`${label} ${error}`);
+    for (const figure of review.figures || []) {
+      if (!/^\.\.\/\.\.\/assets\/reviews\/[a-z0-9-]+\.svg$/.test(figure.url || "")) {
+        addError(`${label} has unsupported review figure URL`);
+        continue;
+      }
+      const file = path.join(PUBLIC, figure.url.replace(/^\.\.\/\.\.\//, ""));
+      if (!existsSync(file)) { addError(`${label} missing review figure: ${figure.url}`); continue; }
+      const bytes = readFileSync(file);
+      if (createHash("sha256").update(bytes).digest("hex") !== figure.sha256) addError(`${label} review figure changed after binding: ${figure.url}`);
+      const svg = bytes.toString("utf8");
+      for (const error of reviewFigureDimensionErrors(svg, figure)) addError(`${label} ${figure.url}: ${error}`);
+      if (!sections.some(section => section.body?.includes(`](${figure.url})`))) addError(`${label} review figure is not used in the article`);
+      if (!Array.isArray(figure.sourceReferenceIds) || !figure.sourceReferenceIds.length
+        || figure.sourceReferenceIds.some(id => !referenceById.has(id))) addError(`${label} review figure needs valid source references`);
     }
-    const sectionIds = new Set();
-    const sectionKinds = new Set();
+    const declaredFigures = new Set((review.figures || []).map(figure => figure.url));
+    for (const section of sections) for (const match of String(section.body || "").matchAll(/!\[[^\]]*\]\(([^\s)]+)\)/g)) {
+      if (!declaredFigures.has(match[1])) addError(`${label} unbound review figure: ${match[1]}`);
+    }
     const usedReferenceIds = new Set();
     for (const [index, section] of sections.entries()) {
       const sectionLabel = `${label} sections[${index}]`;
-      validateRequiredStrings(
-        section,
-        ["id", "kind", "title", "thesis", "body"],
-        sectionLabel
-      );
-      if (sectionIds.has(section?.id)) addError(`${label} has duplicate section id: ${section?.id}`);
-      sectionIds.add(section?.id);
-      if (!REVIEW_SECTION_KINDS.includes(section?.kind)) {
-        addError(`${sectionLabel} has unsupported kind: ${section?.kind}`);
-      }
-      if (sectionKinds.has(section?.kind)) {
-        addError(`${label} has duplicate section kind: ${section?.kind}`);
-      }
-      sectionKinds.add(section?.kind);
       if (!isStringArray(section?.referenceIds) || !section.referenceIds.length) {
         addError(`${sectionLabel}.referenceIds must be a non-empty string array`);
         continue;
@@ -2501,9 +2497,17 @@ function validateReviewCenter(
         }
         usedReferenceIds.add(referenceId);
       }
+      for (const id of reviewCitedReferenceIds(section.body, references)) {
+        if (!section.referenceIds.includes(id)) addError(`${sectionLabel} missing inline citation from referenceIds: ${id}`);
+      }
     }
-    for (const kind of REVIEW_SECTION_KINDS) {
-      if (!sectionKinds.has(kind)) addError(`${label} is missing section kind: ${kind}`);
+    if (review.structureVersion === 2) {
+      const additional = review.additionalReferenceIds;
+      if (!Array.isArray(additional) || new Set(additional).size !== additional.length) addError(`${label} additionalReferenceIds must be a distinct array`);
+      for (const id of additional || []) {
+        if (!referenceById.has(id) || usedReferenceIds.has(id)) addError(`${label} invalid or already cited additional reference: ${id}`);
+        usedReferenceIds.add(id);
+      }
     }
     for (const referenceId of referenceById.keys()) {
       if (!usedReferenceIds.has(referenceId)) {

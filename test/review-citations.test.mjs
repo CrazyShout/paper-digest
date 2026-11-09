@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
-import { projectReviewCitations } from "../src/lib/review-citations.js";
+import { projectReviewCitations, reviewCitedReferenceIds } from "../src/lib/review-citations.js";
 import { getReviewCenter, markdownToHtml } from "../src/lib/content.js";
 const references = [{ id: "first-2020" }, { id: "later-2026" }];
 
@@ -29,7 +29,10 @@ test("published review raw evidence is unchanged while visible citation IDs are 
     assert.equal(direction.abstractText, projectReviewCitations(raw.abstract, raw.references, { links: false }));
     assert.deepEqual(direction.sections.map(section => section.body), raw.sections.map(section => section.body));
     for (const section of direction.sections) {
-      assert.equal(section.bodyHtml, markdownToHtml(projectReviewCitations(section.body, raw.references)), `${direction.id}/${section.id}`);
+      assert.equal(section.bodyHtml, markdownToHtml(projectReviewCitations(section.body, raw.references), {
+        images: new Map((raw.figures || []).map(figure => [figure.url, figure]))
+      }), `${direction.id}/${section.id}`);
+      for (const id of reviewCitedReferenceIds(section.body, raw.references)) assert.ok(section.referenceIds.includes(id), `${direction.id}/${section.id}/${id}`);
     }
   }
 });

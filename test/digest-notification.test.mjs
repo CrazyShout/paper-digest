@@ -207,6 +207,24 @@ test("online gate follows new direction hubs without requiring them in older art
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test("online gate verifies original synthesis figures linked from review pages", async () => {
+  const { directory, files } = await fixture();
+  try {
+    files.set("reviews/example/index.html", Buffer.from('<img src="/paper-digest/assets/reviews/mechanism.svg">'));
+    files.set("assets/reviews/mechanism.svg", Buffer.from('<svg width="10" height="10"/>'));
+    for (const file of ["reviews/example/index.html", "assets/reviews/mechanism.svg"]) {
+      await mkdir(path.dirname(path.join(directory, file)), { recursive: true });
+      await writeFile(path.join(directory, file), files.get(file));
+    }
+    const fetchImpl = async (url) => new Response(files.get(url.pathname.replace("/paper-digest/", "")));
+    const result = await verifyLiveArtifact({ directory, siteUrl: "https://example.test/paper-digest", snapshots: [], retries: 0, fetchImpl });
+    assert.ok(result.resources.some(resource => resource.path === "assets/reviews/mechanism.svg"));
+    await assert.rejects(verifyLiveArtifact({ directory, siteUrl: "https://example.test/paper-digest", snapshots: [], retries: 0,
+      fetchImpl: async (url) => url.pathname.endsWith("mechanism.svg") ? new Response("outdated figure") : fetchImpl(url)
+    }), /Live verification failed: assets\/reviews\/mechanism\.svg/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test("frozen baseline is consistent with the existing published content", async () => {
   const baseline = JSON.parse(await readFile("config/digest-notification-baseline.json", "utf8"));
   // New issues may be added later; only assert that the recorded baseline is

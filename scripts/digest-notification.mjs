@@ -264,7 +264,7 @@ export async function verifyLiveArtifact({ directory, siteUrl, snapshots, fetchI
         }
         if (url.origin === base.origin && url.pathname.startsWith(`${base.pathname}assets/`)) {
           const relative = decodeURIComponent(url.pathname.slice(base.pathname.length));
-          if (relative.startsWith("assets/papers/") || relative.startsWith("assets/paper-previews/")) files.add(relative);
+          if (relative.startsWith("assets/papers/") || relative.startsWith("assets/paper-previews/") || relative.startsWith("assets/reviews/")) files.add(relative);
         }
       }
     }

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
+import { reviewStructureErrors } from "../src/lib/review-structure.js";
 import {
   buildPaperSourceLinks,
   buildReviewSourceLinks,
@@ -582,21 +583,10 @@ test("local-only review refreshes preserve core and external audit dates", async
 
 test("every direction has a complete narrative and mixed-source reading list", async () => {
   const center = await getReviewCenter();
-  const requiredKinds = [
-    "scope",
-    "evolution",
-    "taxonomy",
-    "evidence",
-    "challenges",
-    "outlook"
-  ];
+  const anchors = JSON.parse(await readFile("config/review-anchors.json", "utf8"));
 
   for (const direction of center.directions) {
-    assert.deepEqual(
-      direction.sections.map((section) => section.kind).sort(),
-      [...requiredKinds].sort(),
-      direction.id
-    );
+    assert.deepEqual(reviewStructureErrors(direction, anchors[direction.id]), [], direction.id);
     assert.ok(direction.references.length >= 10, direction.id);
     assert.ok(direction.references.some((reference) => reference.origin === "local"), direction.id);
     assert.ok(direction.references.some((reference) => reference.origin === "external"), direction.id);
@@ -633,7 +623,7 @@ test("every direction has a complete narrative and mixed-source reading list", a
     assert.ok(new Set(direction.searchAudit.sourceFamilies).size >= 4, direction.id);
 
     const usedReferences = new Set(
-      direction.sections.flatMap((section) => section.referenceIds)
+      [...direction.sections.flatMap((section) => section.referenceIds), ...(direction.additionalReferenceIds || [])]
     );
     for (const reference of direction.references) {
       assert.ok(reference.authors, `${direction.id}:${reference.id}:authors`);

@@ -4,6 +4,7 @@ import NotebookDocs from "../../../components/NotebookDocs.jsx";
 import ReviewReference from "../../../components/ReviewReference.astro";
 import { getReviewCenter } from "../../../lib/content.js";
 import { getNotebookData, routeUrl } from "../../../lib/navigation.js";
+import { reviewSectionAliases } from "../../../lib/review-structure.js";
 
 export async function getStaticPaths() {
   const center = await getReviewCenter();
@@ -33,14 +34,15 @@ const localReferenceCount = direction.references
   .filter((reference) => reference.origin === "local").length;
 const externalReferenceCount = direction.references.length - localReferenceCount;
 const referenceNumbers = new Map(direction.references.map((reference, index) => [reference.id, index + 1]));
+const articleStructure = direction.structureVersion === 2;
 const toc = [
-  { depth: 2, title: "主要问题", url: "#research-questions" },
+  ...(!articleStructure ? [{ depth: 2, title: "主要问题", url: "#research-questions" }] : []),
   ...direction.sections.map((section) => ({
     depth: 2,
     title: section.title,
     url: `#${section.id}`
   })),
-  { depth: 2, title: "综合结论", url: "#takeaways" },
+  ...(!articleStructure ? [{ depth: 2, title: "综合结论", url: "#takeaways" }] : []),
   { depth: 2, title: "检索记录", url: "#search-audit" },
   { depth: 2, title: "参考文献", url: "#references" }
 ];
@@ -76,19 +78,20 @@ const toc = [
     </dl>
 
     <article class="review-article">
-      <details class="reading-disclosure review-questions" id="research-questions">
+      {!articleStructure && <details class="reading-disclosure review-questions" id="research-questions">
         <summary id="researchQuestionsTitle">本文讨论的问题</summary>
         <ol>
           {direction.researchQuestions.map((question) => <li>{question}</li>)}
         </ol>
-      </details>
+      </details>}
 
 
       {direction.sections.map((section) => (
         <section class="review-section" id={section.id} aria-labelledby={`${section.id}-title`}>
+          {reviewSectionAliases(direction, section.id).map((id) => <span class="review-anchor-alias" id={id} aria-hidden="true" />)}
           <header>
             <h2 id={`${section.id}-title`}>{section.title}</h2>
-            <p>{section.thesis}</p>
+            {!articleStructure && <p>{section.thesis}</p>}
           </header>
           <div class="review-prose" set:html={section.bodyHtml} />
           {section.references.length > 0 && (
@@ -109,12 +112,12 @@ const toc = [
         </section>
       ))}
 
-      <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
+      {!articleStructure && <section class="review-takeaways" id="takeaways" aria-labelledby="takeawaysTitle">
         <h2 id="takeawaysTitle">综合结论</h2>
         <ol>
           {direction.takeaways.map((takeaway) => <li>{takeaway}</li>)}
         </ol>
-      </section>
+      </section>}
 
       <details class="reading-disclosure review-search-audit" id="search-audit">
         <summary id="searchAuditTitle">检索记录与来源说明</summary>
@@ -172,12 +175,15 @@ const toc = [
 
       <details class="reading-disclosure review-bibliography" id="references">
         <summary id="referencesTitle">参考文献（{direction.references.length}）</summary>
-        <p>已收录论文可阅读本站报告，其余链接前往原论文。</p>
+        <p>已收录论文可阅读本站报告，其余链接前往原论文。标为“延伸阅读”的文献保留作背景资料，正文未逐项展开。</p>
         <ol>
           {direction.references.map((reference, index) => (
             <li id={`reference-${reference.id}`}>
               <span class="review-reference-number">{String(index + 1).padStart(2, "0")}</span>
-              <ReviewReference reference={reference} />
+              <div>
+                {direction.additionalReferenceIds?.includes(reference.id) && <p class="review-reference-source">延伸阅读</p>}
+                <ReviewReference reference={reference} />
+              </div>
             </li>
           ))}
         </ol>
