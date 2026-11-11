@@ -4,6 +4,7 @@ import { renderToString } from "katex";
 import { memoizeContent } from "./content-cache.js";
 import { reviewSnapshotFingerprint } from "./review-fingerprint.js";
 import { projectReviewCitations } from "./review-citations.js";
+import { directionDisplayLabel } from "./reading-ui.js";
 import {
   canonicalUrlHostname,
   urlMatchesHostname
@@ -354,7 +355,8 @@ async function loadTags() {
   );
   return interestConfig.interests.map((interest) => ({
     id: interest.id,
-    label: interest.label,
+    label: directionDisplayLabel(interest),
+    ...(interest.displayLabel && interest.displayLabel !== interest.label ? { searchAliases: [interest.label] } : {}),
     color: interest.color,
     description: interest.description,
     priority: interest.priority,
@@ -1185,6 +1187,11 @@ async function loadIdeaCenter() {
   ]);
 
   const projected = await projectIdeaCenterData(ideaCenter, { papers, workflow });
+  const directionNames = new Map(interestConfig.interests.map(interest => [interest.id, directionDisplayLabel(interest)]));
+  const directions = projected.directions.map(direction => ({
+    ...direction,
+    label: directionNames.get(direction.id) || direction.label
+  }));
   let currentExploration = null;
   if (ideaCenter.currentExplorationId) {
     if (!isValidIsoDate(ideaCenter.currentExplorationId)) {
@@ -1197,8 +1204,9 @@ async function loadIdeaCenter() {
   }
   return {
     ...projected,
+    directions,
     currentExploration,
-    directionGroups: projectDirectionGroups(interestConfig, projected.directions)
+    directionGroups: projectDirectionGroups(interestConfig, directions)
   };
 }
 

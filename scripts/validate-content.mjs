@@ -2533,6 +2533,7 @@ const knownTags = new Set();
 for (const [index, interest] of interests.entries()) {
   const label = `research-interests.json interests[${index}]`;
   validateRequiredStrings(interest, ["id", "label", "color", "description"], label);
+  if (interest.displayLabel !== undefined) validateStringField(interest, "displayLabel", label);
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(interest?.id || "")) {
     addError(`${label} id must use lowercase letters, numbers, and hyphens`);
   }

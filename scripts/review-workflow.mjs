@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { directionDisplayLabel } from "../src/lib/reading-ui.js";
 
 const ROOT = process.cwd();
 const CONFIG_PATH = path.join(ROOT, "config", "literature-review-workflow.json");
@@ -235,7 +236,7 @@ export function buildPrompt(workflow, interest, review, runtime = "codex") {
   const requirements = workflow.requirements;
 
   return [
-    `更新 Paper Digest 的“${interest.label}”动态方向综述。`,
+    `更新 Paper Digest 的“${directionDisplayLabel(interest)}”动态方向综述。`,
     "",
     "开始前必须完整读取并遵循以下已安装 ARIS 技能：",
     ...skills.map((name) => `- ~/.${runtime}/skills/${name}/SKILL.md`),

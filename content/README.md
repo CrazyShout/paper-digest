@@ -94,6 +94,7 @@ content/papers/example-world-model.md
 
 - `id`：必须和文件名一致，不带 `.md`。
 - `tag`：主方向，必须来自 `config/research-interests.json` 里的某个 `id`。
+- 方向更名只改配置的 `displayLabel` 和当前范围说明，保留 `id`、稳定的 `label` 以及历史记录。页面、搜索、Idea 与生成提示使用展示名；邮件去重仍使用稳定名，避免纯改名重发历史简报。新邮件正文使用当前展示名。
 - `tags`：可选数组，用于跨方向论文；数组里的每个 id 都必须来自 `config/research-interests.json`。如果省略，构建脚本会退回使用 `tag`。
 - `title`：论文标题。
 - `source`：抓取来源，例如 `arXiv`、`OpenReview`、`CVF`、`project page`。

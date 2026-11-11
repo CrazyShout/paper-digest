@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
-import { getDigests, getPapers } from "../src/lib/content.js";
+import { getDigests, getPapers, getInterestConfig } from "../src/lib/content.js";
 import { digestPaperGroups } from "../src/lib/digest-reading.js";
 import { buildHtmlBody, buildTextBody } from "./email-publish.mjs";
 
@@ -28,7 +28,7 @@ export function gitBlobSha256(commit, file, cwd = process.cwd()) {
 }
 
 export async function digestSnapshots(root = process.cwd()) {
-  const [digests, papers] = await Promise.all([getDigests(), getPapers()]);
+  const [digests, papers, config] = await Promise.all([getDigests(), getPapers(), getInterestConfig()]);
   const cache = new Map();
   const hashFile = (file) => {
     if (!cache.has(file)) cache.set(file, readFile(path.join(root, file)).then(sha256));
@@ -51,10 +51,21 @@ export async function digestSnapshots(root = process.cwd()) {
       }
     }
     const sources = Object.fromEntries(await Promise.all([...files].sort().map(async (file) => [file, await hashFile(file)])));
-    const labels = digest.tags.map(({ id, label }) => ({ id, label })).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    const labels = notificationDirectionLabels(digest.tags, config.interests);
     const fingerprint = sha256(JSON.stringify({ sources, labels }));
     return { id: digest.id, fingerprint, sources, labels, digest };
   }));
+}
+
+export function notificationDirectionLabels(tags, interests) {
+  // Display-only renames must not turn published issues into new mail versions.
+  // Keep the original label bytes used by historical snapshots and receipts.
+  const canonical = new Map(interests.map(({ id, label }) => [id, label]));
+  return tags.map(({ id }) => {
+    const label = canonical.get(id);
+    if (typeof label !== "string" || !label.trim()) throw new Error(`Missing canonical notification label: ${id}`);
+    return { id, label };
+  }).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 
 export function publicSnapshot(snapshot) {

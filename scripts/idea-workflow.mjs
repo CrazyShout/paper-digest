@@ -1,6 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { directionDisplayLabel } from "../src/lib/reading-ui.js";
 
 const ROOT = process.cwd();
 const CONFIG_PATH = path.join(ROOT, "config", "idea-exploration-workflow.json");
@@ -133,7 +134,7 @@ function renderPrompt(
       .map((anchor) => `- ${anchor.range}: ${anchor.meaning}`)
       .join("\n");
     const prompt = [
-      `你是 ${direction.label} Idea 的独立盲评者。`,
+      `你是 ${directionDisplayLabel(direction)} Idea 的独立盲评者。`,
       `候选 ID：${candidateId}`,
       `本轮主审视角：${lens.focus}。`,
       "不要推测主流程如何接受或拒绝候选，也不要询问其他评估者的分数。",
@@ -158,7 +159,7 @@ function renderPrompt(
   const queryLines = queryConfig.queryFamilies.map((family) => `- ${family}`).join("\n");
   if (phase === "explore") {
     return [
-      `方向：${direction.label} (${directionId})`,
+      `方向：${directionDisplayLabel(direction)} (${directionId})`,
       "阶段：研究探索。先展开方法空间，再比较首项实验的投入价值。",
       workflow.currentExplorationPolicy.purpose,
       "检索主题：",
@@ -175,7 +176,7 @@ function renderPrompt(
     .map((rule) => `- ${rule.id}: ${rule.rule}`)
     .join("\n");
   return [
-    `方向：${direction.label} (${directionId})`,
+    `方向：${directionDisplayLabel(direction)} (${directionId})`,
     `阶段：${phase}`,
     "先把本库论文作为线索，再从外部一手来源重新建立边界；本库与外部证据必须分开标记。",
     "至少覆盖以下查询族：",

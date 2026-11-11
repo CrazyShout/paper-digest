@@ -8,6 +8,22 @@ import {
   markdownToHtml,
   sourceLinkLabelMatches
 } from "../src/lib/content.js";
+import { getTags, getIdeaCenter } from "../src/lib/content.js";
+import { directionDisplayLabel } from "../src/lib/reading-ui.js";
+import { getNotebookSearchIndex } from "../src/lib/navigation.js";
+
+test("direction display aliases reach navigation and Idea projections without changing IDs", async () => {
+  assert.equal(directionDisplayLabel({ label: "Existing" }), "Existing");
+  const tags = await getTags();
+  const ideas = await getIdeaCenter();
+  assert.equal(tags.find(tag => tag.id === "3d-reconstruction").label, "3D/4D 场景重建");
+  assert.equal(ideas.directions.find(direction => direction.id === "3d-reconstruction").label, "3D/4D 场景重建");
+  const index = await getNotebookSearchIndex("/paper-digest/");
+  const direction = index.find(record => record.id === "direction-3d-reconstruction");
+  assert.equal(direction.title, "3D/4D 场景重建");
+  assert.match(direction.content, /三维重建/);
+  assert.equal(direction.url, "/paper-digest/directions/3d-reconstruction/");
+});
 
 test("paper report headings receive stable unique anchors", () => {
   const markdown = "## Method Overview\n\nBody.\n\n## Method Overview";

@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process";
 import { isRetryableSmtpError, withSmtpRetry } from "../scripts/email-publish.mjs";
 import {
   assertDeploymentRun, createLedger, decryptReceipt, deliveryOutcome, digestSnapshots,
-  encryptReceipt, executeNotification, gitBlobSha256, notificationDecision, receiptKey, sha256, verifyLiveArtifact
+  encryptReceipt, executeNotification, gitBlobSha256, notificationDecision, notificationDirectionLabels, receiptKey, sha256, verifyLiveArtifact
 } from "../scripts/digest-notification.mjs";
 
 const version = sha256("version 1");
@@ -37,6 +37,19 @@ test("receipt import verifies large original images without an exec output buffe
 test("same content is deduplicated across reruns and recipient changes", () => {
   assert.deepEqual(notificationDecision(snapshot, [attempt(), receipt("sent")]), { action: "skip", reason: "already-sent" });
   assert.equal(notificationDecision({ ...snapshot, fingerprint: sha256("changed") }, [attempt(), receipt("sent")]).action, "send");
+});
+
+test("display-only direction renames preserve existing mail identities without suppressing content changes", () => {
+  const interests = [{ id: "reconstruction", label: "三维重建", displayLabel: "3D/4D 场景重建" }];
+  const oldLabels = notificationDirectionLabels([{ id: "reconstruction", label: "三维重建" }], interests);
+  const newLabels = notificationDirectionLabels([{ id: "reconstruction", label: "3D/4D 场景重建" }], interests);
+  assert.deepEqual(newLabels, oldLabels);
+  const oldVersion = sha256(JSON.stringify({ sources: { paper: "v1" }, labels: oldLabels }));
+  const same = { ...snapshot, fingerprint: sha256(JSON.stringify({ sources: { paper: "v1" }, labels: newLabels })) };
+  const records = [attempt(1, oldVersion), receipt("sent", 2, 1, oldVersion)];
+  assert.equal(notificationDecision(same, records).reason, "already-sent");
+  assert.equal(notificationDecision({ ...same, fingerprint: sha256(JSON.stringify({ sources: { paper: "v2" }, labels: newLabels })) }, records).action, "send");
+  assert.throws(() => notificationDirectionLabels([{ id: "unknown" }], interests), /Missing canonical/);
 });
 
 test("historical baseline suppresses only unchanged history without claiming it was sent", () => {

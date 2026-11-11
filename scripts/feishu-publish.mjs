@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { directionDisplayLabel } from "../src/lib/reading-ui.js";
 
 const execFile = promisify(execFileCallback);
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -137,7 +138,10 @@ function digestPublicationTitle(digest) {
 
 async function buildPublicationModel(digestId) {
   const interestConfig = await readInterestConfig();
-  const tagMap = new Map((interestConfig.interests || []).map((tag) => [tag.id, tag]));
+  const tagMap = new Map((interestConfig.interests || []).map((tag) => [tag.id, {
+    ...tag,
+    label: directionDisplayLabel(tag)
+  }]));
   const digest = await readContentMarkdown("digests", digestId);
   const papers = [];
 

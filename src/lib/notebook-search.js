@@ -37,7 +37,7 @@ export function buildNotebookSearchIndex(notebook) {
     ...(notebook.directionReading || []).map((direction) => record({
       id: `direction-${direction.id}`, kind: "direction", url: url(`directions/${direction.id}`),
       title: direction.label, description: direction.editorial?.changeSummary || "近期与历期论文",
-      content: [fields(direction.editorial || {}, ["changeSummary", "comparisons", "connections", "followUps"]),
+      content: [text(direction.searchAliases), fields(direction.editorial || {}, ["changeSummary", "comparisons", "connections", "followUps"]),
         ...direction.issues.map((issue) => [issue.date, ...issue.papers.map((paper) => paper.title)].join(" "))].join(" "),
       breadcrumbs: ["按方向阅读", "近期与历期"]
     })),

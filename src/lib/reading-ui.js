@@ -1,5 +1,9 @@
 export const HOME_DESCRIPTION = "按方向选读近期论文：先看短评，再读完整报告；需要系统背景时，从经典与前沿综述展开。";
 
+export function directionDisplayLabel(direction) {
+  return direction.displayLabel || direction.label;
+}
+
 export function sourceDisplayLabel(link) {
   if (link.label === "代码") return "仓库";
   if (link.label === "作者仓库（待发布）") return "仓库（待发布）";
