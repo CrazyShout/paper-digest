@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import NotebookDocs from "../../../components/NotebookDocs.jsx";
 import ReviewReference from "../../../components/ReviewReference.astro";
+import ReviewSurveyReading from "../../../components/ReviewSurveyReading.astro";
 import { getReviewCenter } from "../../../lib/content.js";
 import { getNotebookData, routeUrl } from "../../../lib/navigation.js";
 import { reviewSectionAliases } from "../../../lib/review-structure.js";
@@ -36,6 +37,7 @@ const externalReferenceCount = direction.references.length - localReferenceCount
 const referenceNumbers = new Map(direction.references.map((reference, index) => [reference.id, index + 1]));
 const articleStructure = direction.structureVersion === 2;
 const toc = [
+  ...(direction.surveyReading?.entries.length ? [{ depth: 2, title: "推荐综述阅读", url: "#recommended-surveys" }] : []),
   ...(!articleStructure ? [{ depth: 2, title: "主要问题", url: "#research-questions" }] : []),
   ...direction.sections.map((section) => ({
     depth: 2,
@@ -78,6 +80,7 @@ const toc = [
     </dl>
 
     <article class="review-article">
+      <ReviewSurveyReading reading={direction.surveyReading} />
       {!articleStructure && <details class="reading-disclosure review-questions" id="research-questions">
         <summary id="researchQuestionsTitle">本文讨论的问题</summary>
         <ol>

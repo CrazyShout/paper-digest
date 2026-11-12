@@ -1,5 +1,6 @@
 import { HOME_DESCRIPTION } from "./reading-ui.js";
 import { projectReviewCitations } from "./review-citations.js";
+import { surveyReadingSearchText } from "./survey-reading.js";
 
 function text(value) {
   if (value == null) return "";
@@ -67,6 +68,7 @@ export function buildNotebookSearchIndex(notebook) {
       title: direction.title, description: direction.abstractText,
       content: [
         text(direction.researchQuestions), text(direction.takeaways),
+        surveyReadingSearchText(direction.surveyReading),
         ...direction.sections.map((section) => [section.title, section.thesis, projectReviewCitations(section.body, direction.references, { links: false })].join(" ")),
         ...direction.references.map((reference) => fields(reference, [
           "title", "authors", "venue", "year", "supports", "limitation"

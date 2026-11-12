@@ -30,6 +30,7 @@ import {
 import { reviewSnapshotFingerprint } from "../src/lib/review-fingerprint.js";
 import { reviewStructureErrors, reviewFigureDimensionErrors } from "../src/lib/review-structure.js";
 import { reviewCitedReferenceIds } from "../src/lib/review-citations.js";
+import { surveyReadingErrors } from "../src/lib/survey-reading.js";
 import { validateDirectionReading } from "../src/lib/direction-reading.js";
 import { validateFoundationsAudit } from "../src/lib/review-foundations.js";
 import { createReviewCorpusResolver } from "../src/lib/review-corpus-snapshot.js";
@@ -1138,6 +1139,10 @@ function validateReviewCenter(
     const file = `reviews/${doc.file}`;
     const expectedId = path.basename(doc.file, ".json");
     const label = file;
+
+    for (const error of surveyReadingErrors(review.surveyReading, today)) {
+      addError(`${label} surveyReading: ${error}`);
+    }
 
     validateRequiredStrings(
       review,

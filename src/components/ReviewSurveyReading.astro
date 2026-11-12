@@ -1,0 +1,23 @@
+---
+import { sortedSurveyReadings } from "../lib/survey-reading.js";
+const { reading } = Astro.props;
+const entries = sortedSurveyReadings(reading);
+const basisLabels = { online: "在线发表", conference: "会议", preprint: "预印本首发", issue: "卷期" };
+---
+
+{entries.length > 0 && <section class="review-survey-reading" id="recommended-surveys" aria-labelledby="recommended-surveys-title">
+  <h2 id="recommended-surveys-title">推荐综述阅读</h2>
+  <p class="review-survey-note">近三年综述，按标注的发表时间由近到远。引用量来自 OpenAlex，核对于 {reading.checkedAt}。</p>
+  <ol>
+    {entries.map(entry => <li id={`survey-${entry.id}`}>
+      <h3><a href={entry.url}>{entry.title}</a></h3>
+      <p class="review-survey-meta">
+        <time datetime={entry.publishedAt}>{entry.publishedAt}</time>（{basisLabels[entry.dateBasis]}）
+        {" · "}{entry.publicationLabel}{" · "}
+        <a href={entry.citation.url}>引用 {entry.citation.count.toLocaleString("zh-CN")}</a>
+        {(entry.links || []).map(link => <>{" · "}<a href={link.url}>{link.label}</a></>)}
+      </p>
+      <p>{entry.readingNote}</p>
+    </li>)}
+  </ol>
+</section>}
