@@ -246,6 +246,8 @@ content/reviews/<direction-id>.json
 - 不要手填来源布尔值。本库状态以 `localPaperId` 为唯一依据；论文日后入库时补上该字段即可自动切换状态。
 - 每方向至少 10 篇参考文献，并同时包含本库论文、外部论文、基础工作、近期工作、正式发表成果和至少一篇 `survey` 或 `tutorial`；具体阈值以 `config/literature-review-workflow.json` 为准。
 - 数量阈值只是最低检查。每次实质更新还要对照互补的成熟与近期综述，检查方法源头、关键转折及基准是否遗漏；阅读分类与引用章节，再回到原论文核对。正文引入范围时给出有用途说明的综述阅读顺序，技术章节吸收补全的脉络。
+- 每篇开头用 `surveyReading` 提供近期综述阅读入口，默认取核对年份及之前两年，优先选择相关且已有引用积累的综述；新发表的论文可作为前沿补充，不能仅凭新日期称为高引用。每条写清适合阅读的内容，按正式在线发表日期（会议用会议发表日期；预印本用首次发布日期）倒序排列，版本修订日期不用于抬高排序。无法核实正式在线日时，使用一手来源确认的卷期日期并标为“卷期”，保留年/月精度，不猜日。较早的经典综述继续留在正文和参考文献中。保存一手日期来源、正式版与 arXiv 入口、OpenAlex 精确匹配的 work ID、引用数及核对日期；聚合器数据与一手作者或日期冲突时以一手来源为准。
+- 推荐阅读是有单独日期的编辑书目，`surveyReading` 的数据纳入整篇指纹和独立复核，检索与筛选证据另存本轮 `docs/` 目录。新增推荐不冒充整篇重新检索：未重新核对的正文 `reviewedAt`、历史查询、来源计数和方法引用维持原状。若新综述改变正文判断或补入正文引用，则按完整综述更新流程核对相关论断和候选台账。
 - `searchAudit.foundationsAudit` 保存 `surveyAnchors`（已有/前沿综述、实际阅读章节、用途与覆盖范围）、`milestones`、逐分支 `coverage`、可追溯的 `citationTrace` 和 `limitations`。领域较新或缺少匹配综述时，用 `surveyGap` 记录实际查询、已检查的一手链接及具体缺口，避免为了数量贴上“经典”标签。
 - `publicationType` 只使用 `survey`、`tutorial`、`method`、`benchmark`、`dataset`、`standard`、`position`。
 - `publicationStatus` 只使用 `peer-reviewed`、`accepted`、`workshop`、`workshop-accepted`、`preprint`、`technical-report`、`standard` 或 `dataset`。`peer-reviewed` 与 `workshop` 必须已有可核验的正式出版页；仅确认录用但正式页尚未发布时分别使用 `accepted` 或 `workshop-accepted`，并保留预印本证据边界。
